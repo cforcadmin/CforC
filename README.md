@@ -1,2 +1,1 @@
-# Cforc
-Website for CforC
+# CforC
