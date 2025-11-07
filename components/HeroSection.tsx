@@ -16,7 +16,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section className="relative pt-20">
+    <section className="absolute -top-20">
       {/* Orange Card with Rotating Text - 25% viewport height */}
       <div className="bg-coral h-[25vh] flex items-center rounded-b-3xl relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -33,7 +33,7 @@ export default function HeroSection() {
       </div>
 
       {/* Video Section */}
-      <div className="absolute top-0 w-full h-[85vh] bg-gray-900">
+      <div className="absolute top-0 w-full h-[100vh] bg-gray-900 -mt-18">
         <video
           className="w-full h-full object-cover object-[center_14rem]"
           autoPlay
