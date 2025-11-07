@@ -33,7 +33,7 @@ export default function HeroSection() {
       </div>
 
       {/* Video Section */}
-      <div className="relative bottom-56 w-full h-[80vh] bg-gray-900 -mt-10">
+      <div className="relative bottom-56 w-full h-[80vh] bg-gray-900 -mt-10 rounded-3xl overflow-hidden">
         <video
           className="w-full h-full object-cover object-[center_14rem]"
           autoPlay
