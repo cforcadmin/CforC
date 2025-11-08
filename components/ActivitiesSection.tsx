@@ -91,7 +91,8 @@ export default function ActivitiesSection() {
 
   return (
     <section id="activities" className="py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-gray-50 rounded-3xl py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-gray-50 rounded-3xl py-12 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-end mb-12">
           <div>
             <p className="text-coral text-sm font-medium mb-2">ΠΡΟΣΦΑΤΕΣ ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</p>
@@ -222,6 +223,7 @@ export default function ActivitiesSection() {
         <button className="md:hidden w-full mt-8 bg-coral text-white px-6 py-3 rounded-full font-medium">
           ΟΛΕΣ ΟΙ ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ
         </button>
+        </div>
       </div>
     </section>
   )
