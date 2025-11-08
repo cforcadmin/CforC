@@ -140,7 +140,7 @@ export default function ActivitiesSection() {
                                     alt={card.Visuals[0].alternativeText || card.Title}
                                     width={card.Visuals[0].width}
                                     height={card.Visuals[0].height}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-cover transition-transform duration-300 hover:duration-500 hover:scale-110"
                                   />
                                 </div>
                               ) : (
