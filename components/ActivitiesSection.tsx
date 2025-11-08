@@ -129,12 +129,12 @@ export default function ActivitiesSection() {
                         return (
                           <div
                             key={card.id}
-                            className="bg-orange-50 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+                            className="bg-orange-50 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow transform scale-105"
                           >
                             {/* Image with overlapping date */}
                             <div className="relative -mb-2">
                               {card.Visuals && card.Visuals.length > 0 ? (
-                                <div className="aspect-video rounded-lg overflow-hidden mx-4 mt-4">
+                                <div className="aspect-video rounded-2xl overflow-hidden mx-2 mt-2">
                                   <Image
                                     src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${card.Visuals[0].url}`}
                                     alt={card.Visuals[0].alternativeText || card.Title}
@@ -144,26 +144,26 @@ export default function ActivitiesSection() {
                                   />
                                 </div>
                               ) : (
-                                <div className="aspect-video bg-gray-200 rounded-lg mx-4 mt-4 flex items-center justify-center">
+                                <div className="aspect-video bg-gray-200 rounded-2xl mx-2 mt-2 flex items-center justify-center">
                                   <span className="text-gray-400">No image</span>
                                 </div>
                               )}
 
                               {/* Overlapping date badge */}
-                              <div className="absolute bottom-0 left-8 z-10">
+                              <div className="absolute bottom-0 left-6 z-10">
                                 <span className="inline-block bg-white px-4 py-2 rounded-full text-sm font-medium shadow-md">
                                   {new Date(card.Date).toLocaleDateString('el-GR')}
                                 </span>
                               </div>
                             </div>
 
-                            <div className="p-6 pt-8">
-                              <h3 className="text-lg font-bold mb-4 line-clamp-3">
+                            <div className="p-7 pt-9 flex flex-col h-[200px]">
+                              <h3 className="text-lg font-bold mb-4 line-clamp-3 flex-grow">
                                 {card.Title}
                               </h3>
 
-                              <div className="flex items-center text-sm text-gray-600">
-                                <div className="w-8 h-8 mr-2">
+                              <div className="flex items-center text-sm text-gray-600 mt-auto">
+                                <div className="w-8 h-8 mr-2 flex-shrink-0">
                                   <Image
                                     src="/cforc_logo_small.svg"
                                     alt="Culture for Change Logo"
