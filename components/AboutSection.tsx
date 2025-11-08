@@ -1,4 +1,50 @@
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+
 export default function AboutSection() {
+  const [isImageVisible, setIsImageVisible] = useState(false)
+  const [isContentVisible, setIsContentVisible] = useState(false)
+  const imageRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const imageObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsImageVisible(true)
+          }
+        })
+      },
+      { threshold: 0.1 }
+    )
+
+    const contentObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsContentVisible(true)
+          }
+        })
+      },
+      { threshold: 0.1 }
+    )
+
+    if (imageRef.current) {
+      imageObserver.observe(imageRef.current)
+    }
+
+    if (contentRef.current) {
+      contentObserver.observe(contentRef.current)
+    }
+
+    return () => {
+      imageObserver.disconnect()
+      contentObserver.disconnect()
+    }
+  }, [])
+
   return (
     <section id="about" className="py-24 bg-gray-50 -mt-[10%]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -11,14 +57,24 @@ export default function AboutSection() {
 
         <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
           {/* Image */}
-          <div className="aspect-[4/3] bg-gray-200 rounded-lg overflow-hidden">
+          <div
+            ref={imageRef}
+            className={`aspect-[4/3] bg-gray-200 rounded-lg overflow-hidden transition-all duration-1000 ${
+              isImageVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+            }`}
+          >
             <div className="w-full h-full flex items-center justify-center bg-charcoal/10">
               <span className="text-gray-500">Community Image</span>
             </div>
           </div>
 
           {/* Content */}
-          <div>
+          <div
+            ref={contentRef}
+            className={`transition-all duration-1000 delay-200 ${
+              isContentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+            }`}
+          >
             <h3 className="text-3xl font-bold mb-6">
               ΤΟ ΠΡΩΤΟ ΕΛΛΗΝΙΚΟ ΔΙΚΤΥΟ ΓΙΑ ΤΗΝ<br />
               ΚΟΙΝΩΝΙΚΗ ΚΑΙΝΟΤΟΜΙΑ ΣΤΗΝ<br />
