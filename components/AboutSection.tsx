@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 
 export default function AboutSection() {
   const [isImageVisible, setIsImageVisible] = useState(false)
@@ -63,9 +64,13 @@ export default function AboutSection() {
               isImageVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
             }`}
           >
-            <div className="w-full h-full flex items-center justify-center bg-charcoal/10">
-              <span className="text-gray-500">Community Image</span>
-            </div>
+            <Image
+              src="/Homepage_Block1.jpg"
+              alt="Culture for Change Community"
+              width={800}
+              height={600}
+              className="w-full h-full object-cover"
+            />
           </div>
 
           {/* Content */}
