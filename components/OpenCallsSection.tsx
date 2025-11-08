@@ -114,17 +114,21 @@ export default function OpenCallsSection() {
 
         <div className="space-y-0">
           {openCalls.map((call, index) => {
-            // Debug: Log the structure for first call
-            if (call.id === openCalls[0]?.id) {
-              console.log('Call structure:', call)
-              console.log('Call Description:', call.Description)
-              console.log('Call Image:', call.Image)
-            }
+            // Enhanced Debug: Log each call
+            console.log(`Open Call ${index}:`, {
+              id: call.id,
+              title: call.Title,
+              hasImage: call.Image && call.Image.length > 0,
+              imageData: call.Image
+            })
 
             const descriptionText = extractTextFromBlocks(call.Description)
             const imageUrl = call.Image && call.Image.length > 0
               ? `${process.env.NEXT_PUBLIC_STRAPI_URL}${call.Image[0].url}`
               : null
+
+            // Determine design option
+            const designOption = index % 4
 
             return (
               <div key={call.id}>
@@ -166,12 +170,15 @@ export default function OpenCallsSection() {
                           PRIORITY
                         </span>
                       )}
+
+                      {/* Debug Indicator */}
+                      <span className="text-xs text-gray-400">Option {designOption + 1}</span>
                     </div>
 
                     {/* DESIGN OPTION 1: Small square image on left (Entry 0) */}
-                    {index === 0 && imageUrl && (
+                    {designOption === 0 && imageUrl && (
                       <div className="flex-shrink-0">
-                        <div className="w-28 h-28 rounded-lg overflow-hidden">
+                        <div className="w-28 h-28 rounded-lg overflow-hidden border-2 border-blue-500">
                           <Image
                             src={imageUrl}
                             alt={call.Image?.[0]?.alternativeText || call.Title}
@@ -196,9 +203,9 @@ export default function OpenCallsSection() {
                       </div>
 
                       {/* DESIGN OPTION 2: Tall narrow image on right (Entry 1) */}
-                      {index === 1 && imageUrl && (
+                      {designOption === 1 && imageUrl && (
                         <div className="flex-shrink-0">
-                          <div className="w-32 h-28 rounded-lg overflow-hidden">
+                          <div className="w-32 h-28 rounded-lg overflow-hidden border-2 border-green-500">
                             <Image
                               src={imageUrl}
                               alt={call.Image?.[0]?.alternativeText || call.Title}
@@ -211,9 +218,9 @@ export default function OpenCallsSection() {
                       )}
 
                       {/* DESIGN OPTION 3: Circular image on right (Entry 2) */}
-                      {index === 2 && imageUrl && (
+                      {designOption === 2 && imageUrl && (
                         <div className="flex-shrink-0">
-                          <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-md">
+                          <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-purple-500 shadow-md">
                             <Image
                               src={imageUrl}
                               alt={call.Image?.[0]?.alternativeText || call.Title}
@@ -226,9 +233,9 @@ export default function OpenCallsSection() {
                       )}
 
                       {/* DESIGN OPTION 4: Wide short image below title (Entry 3) */}
-                      {index === 3 && imageUrl && (
+                      {designOption === 3 && imageUrl && (
                         <div className="flex-shrink-0 self-start mt-1">
-                          <div className="w-40 h-24 rounded-lg overflow-hidden">
+                          <div className="w-40 h-24 rounded-lg overflow-hidden border-2 border-orange-500">
                             <Image
                               src={imageUrl}
                               alt={call.Image?.[0]?.alternativeText || call.Title}
