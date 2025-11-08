@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
@@ -10,19 +11,19 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
-          <div className="flex items-center">
+          <Link href="/" className="flex items-center">
             <img
               src="/cforc_logo.svg"
               alt="Culture for Change"
               className="h-12"
             />
-          </div>
+          </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#about" className="text-sm font-medium hover:text-charcoal transition-colors">
+            <Link href="/about" className="text-sm font-medium hover:text-charcoal transition-colors">
               ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ
-            </a>
+            </Link>
             <a href="#activities" className="text-sm font-medium hover:text-charcoal transition-colors">
               ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ
             </a>
@@ -62,7 +63,7 @@ export default function Navigation() {
       {isOpen && (
         <div className="md:hidden bg-coral border-t border-coral-dark">
           <div className="px-4 py-4 space-y-3">
-            <a href="#about" className="block text-sm font-medium py-2">ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</a>
+            <Link href="/about" className="block text-sm font-medium py-2">ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</Link>
             <a href="#activities" className="block text-sm font-medium py-2">ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</a>
             <a href="#open-calls" className="block text-sm font-medium py-2">ΑΝΟΙΧΤΑ ΚΑΛΕΣΜΑΤΑ</a>
             <a href="#participate" className="block text-sm font-medium py-2">ΣΥΜΜΕΤΟΧΗ</a>
