@@ -106,8 +106,8 @@ export default function ActivitiesSection() {
         </div>
 
         {/* Carousel */}
-        <div className="relative mt-4">
-          <div className="overflow-hidden py-4">
+        <div className="relative mt-4" style={{ overflow: 'visible' }}>
+          <div className="py-4 relative" style={{ overflow: 'hidden', marginRight: '-15%' }}>
             <div
               className="flex transition-transform duration-500 ease-in-out"
               style={{ transform: `translateX(-${currentSlide * 100}%)` }}
@@ -118,7 +118,7 @@ export default function ActivitiesSection() {
 
                 return (
                   <div key={slideIndex} className="w-full flex-shrink-0 px-2">
-                    <div className="grid md:grid-cols-3 gap-10">
+                    <div className="flex gap-10">
                       {slideActivities.map((card) => {
                         // Debug: Log the Visuals structure for first card
                         if (card.id === activities[0]?.id) {
@@ -129,7 +129,8 @@ export default function ActivitiesSection() {
                         return (
                           <div
                             key={card.id}
-                            className="bg-orange-50 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow transform scale-105"
+                            className="bg-orange-50 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow transform scale-105 flex-shrink-0"
+                            style={{ width: 'calc((100% - 80px) / 3)' }}
                           >
                             {/* Image with overlapping date */}
                             <div className="relative -mb-2">
