@@ -34,6 +34,19 @@ export interface Activity extends StrapiData<Activity> {
   publishedAt: string;
 }
 
+// Open Call type - matches Strapi schema exactly (Strapi v5)
+export interface OpenCall extends StrapiData<OpenCall> {
+  Title: string;
+  Deadline: string;
+  Description: any;  // Strapi blocks type (rich text)
+  Priority?: boolean;
+  Link: string;
+  Image?: StrapiMediaArray;  // Single image (array with one item in Strapi v5)
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
 // Hero Section type
 export interface HeroSection {
   title: string;

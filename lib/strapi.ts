@@ -53,6 +53,21 @@ export async function getActivityById(id: string | number) {
 }
 
 /**
+ * Get all open calls
+ */
+export async function getOpenCalls() {
+  // Strapi v5: Explicitly populate Image field (media fields need explicit population)
+  return fetchStrapi('/open-calls?populate=Image');
+}
+
+/**
+ * Get a single open call by ID
+ */
+export async function getOpenCallById(id: string | number) {
+  return fetchStrapi(`/open-calls/${id}?populate=*`);
+}
+
+/**
  * Get hero section data
  */
 export async function getHeroSection() {
