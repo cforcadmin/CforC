@@ -17,7 +17,7 @@ export default function AboutSection() {
         // When section enters viewport, image starts at +100px and moves to 0
         if (rect.top < windowHeight && rect.bottom > 0) {
           const progress = Math.max(0, Math.min(1, (windowHeight - rect.top) / windowHeight))
-          setImageOffset(100 - (progress * 100))
+          setImageOffset(-200 + (progress * 200))
         }
       }
     }
@@ -29,7 +29,7 @@ export default function AboutSection() {
   }, [])
 
   return (
-    <section id="about" className="py-24 bg-gray-50 -mt-[20%]">
+    <section id="about" className="py-24 bg-gray-50 -mt-[10%]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-12">
           <p className="text-coral text-sm font-medium mb-2">ΠΟΙΟΙ ΕΙΜΑΣΤΕ</p>
@@ -39,13 +39,13 @@ export default function AboutSection() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
-          {/* Image with scroll animation */}
+          {/* Image with smooth scroll animation */}
           <div
             ref={imageRef}
             className="aspect-[4/3] rounded-3xl overflow-hidden"
             style={{
               transform: `translateY(${imageOffset}px)`,
-              transition: 'transform 0.1s ease-out'
+              transition: 'transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)'
             }}
           >
             <Image
