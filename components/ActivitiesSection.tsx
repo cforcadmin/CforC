@@ -106,8 +106,8 @@ export default function ActivitiesSection() {
         </div>
 
         {/* Carousel */}
-        <div className="relative">
-          <div className="overflow-hidden">
+        <div className="relative mt-4">
+          <div className="overflow-hidden py-4">
             <div
               className="flex transition-transform duration-500 ease-in-out"
               style={{ transform: `translateX(-${currentSlide * 100}%)` }}
@@ -118,7 +118,7 @@ export default function ActivitiesSection() {
 
                 return (
                   <div key={slideIndex} className="w-full flex-shrink-0 px-2">
-                    <div className="grid md:grid-cols-3 gap-6">
+                    <div className="grid md:grid-cols-3 gap-10">
                       {slideActivities.map((card) => {
                         // Debug: Log the Visuals structure for first card
                         if (card.id === activities[0]?.id) {
