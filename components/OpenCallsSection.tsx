@@ -56,7 +56,7 @@ export default function OpenCallsSection() {
 
   if (loading) {
     return (
-      <section id="open-calls" className="py-24 bg-white">
+      <section id="open-calls" className="py-24 bg-orange-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
@@ -74,7 +74,7 @@ export default function OpenCallsSection() {
 
   if (error || openCalls.length === 0) {
     return (
-      <section id="open-calls" className="py-24 bg-white">
+      <section id="open-calls" className="py-24 bg-orange-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-end mb-12">
             <div>
@@ -96,7 +96,7 @@ export default function OpenCallsSection() {
   }
 
   return (
-    <section id="open-calls" className="py-24 bg-white">
+    <section id="open-calls" className="py-24 bg-orange-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-end mb-12">
           <div>
@@ -129,7 +129,7 @@ export default function OpenCallsSection() {
                   href={call.Link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group block py-12 hover:bg-gray-50 transition-colors"
+                  className="group block py-12 hover:bg-white transition-colors"
                 >
                   <div className="flex items-start justify-between gap-8">
                     <div className="flex-1">
