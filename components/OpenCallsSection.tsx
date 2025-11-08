@@ -43,7 +43,13 @@ export default function OpenCallsSection() {
         console.log('Open calls data:', response.data)
         console.log('Number of open calls:', response.data?.length || 0)
 
-        setOpenCalls(response.data)
+        // Sort by createdAt (submission date) in descending order (most recent first)
+        // Then take only the 4 most recent entries
+        const sortedCalls = response.data
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 4)
+
+        setOpenCalls(sortedCalls)
       } catch (err) {
         setError('Failed to load open calls from Strapi')
         console.error('Error fetching open calls:', err)
@@ -121,10 +127,12 @@ export default function OpenCallsSection() {
             if (call.Image) {
               if (Array.isArray(call.Image) && call.Image.length > 0) {
                 // Multiple images - use first one
-                imageUrl = `${process.env.NEXT_PUBLIC_STRAPI_URL}${call.Image[0].url}`
+                const url = call.Image[0].url
+                imageUrl = url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
               } else if (typeof call.Image === 'object' && !Array.isArray(call.Image) && 'url' in call.Image) {
                 // Single image - direct object
-                imageUrl = `${process.env.NEXT_PUBLIC_STRAPI_URL}${call.Image.url}`
+                const url = call.Image.url
+                imageUrl = url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
               }
             }
 
@@ -135,7 +143,7 @@ export default function OpenCallsSection() {
                   href={call.Link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group block py-12 hover:bg-white transition-colors relative rounded-2xl"
+                  className="group block py-12 hover:bg-white hover:shadow-xl transition-all duration-300 relative rounded-2xl"
                 >
                   {/* Arrow Icon - Far Top Right Corner */}
                   <div className="absolute top-6 right-2">

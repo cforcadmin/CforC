@@ -137,7 +137,7 @@ export default function ActivitiesSection() {
                               {card.Visuals && card.Visuals.length > 0 ? (
                                 <div className="aspect-video rounded-2xl overflow-hidden mx-2 mt-2">
                                   <Image
-                                    src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${card.Visuals[0].url}`}
+                                    src={card.Visuals[0].url.startsWith('http') ? card.Visuals[0].url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${card.Visuals[0].url}`}
                                     alt={card.Visuals[0].alternativeText || card.Title}
                                     width={card.Visuals[0].width}
                                     height={card.Visuals[0].height}
