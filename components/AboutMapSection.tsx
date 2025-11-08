@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import Image from 'next/image'
 
-// Initial city positions with user-provided coordinates
+// Final city positions with user-provided coordinates
 const initialCityCircles = {
   thessaloniki: {
     name: 'ΘΕΣΣΑΛΟΝΙΚΗ',
@@ -67,14 +67,14 @@ const initialCityCircles = {
   },
   kyklades: {
     name: 'ΚΥΚΛΑΔΕΣ',
-    cx: 320,
-    cy: 370,
+    cx: 300,
+    cy: 385,
     r: 20,
   },
   dodekanisa: {
     name: 'ΔΩΔΕΚΑΝΗΣΑ',
-    cx: 400,
-    cy: 420,
+    cx: 397,
+    cy: 391,
     r: 20,
   },
   thraki: {
