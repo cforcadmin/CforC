@@ -114,7 +114,7 @@ export default function ActivitiesSection() {
             >
               {Array.from({ length: totalSlides }).map((_, slideIndex) => {
                 const startIndex = slideIndex * activitiesPerSlide
-                const slideActivities = activities.slice(startIndex, startIndex + activitiesPerSlide + 1)
+                const slideActivities = activities.slice(startIndex, startIndex + activitiesPerSlide)
 
                 return (
                   <div key={slideIndex} className="w-full flex-shrink-0 px-2">
