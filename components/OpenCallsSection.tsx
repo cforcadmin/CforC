@@ -149,11 +149,11 @@ export default function OpenCallsSection() {
 
                     {/* Title and Description Section */}
                     <div className="flex-1">
-                      <h3 className="text-xl md:text-2xl font-bold mb-3 text-charcoal">
+                      <h3 className="text-xl md:text-2xl font-bold mb-4 text-charcoal">
                         {call.Title}
                       </h3>
 
-                      <p className="text-gray-700 leading-relaxed text-base">
+                      <p className="text-gray-600 leading-relaxed text-base mt-2">
                         {descriptionText}
                       </p>
                     </div>
