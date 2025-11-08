@@ -21,16 +21,14 @@ export interface StrapiData<T> {
   attributes: T;
 }
 
-// Activity type
+// Activity type - matches Strapi schema exactly
 export interface Activity {
-  title: string;
-  description?: string;
-  date: string;
-  organization: string;
-  type?: string;
-  featured?: boolean;
-  icon?: string;
-  images?: StrapiMediaArray;  // Changed from single image to multiple images
+  Title: string;
+  Description: any;  // Strapi blocks type (rich text)
+  Date: string;
+  Visuals?: StrapiMediaArray;  // Multiple images/files
+  Category?: string;
+  Featured?: boolean;
   createdAt: string;
   updatedAt: string;
   publishedAt: string;

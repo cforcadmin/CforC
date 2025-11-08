@@ -120,13 +120,13 @@ export default function ActivitiesSection() {
                         >
                           {/* Image with overlapping date */}
                           <div className="relative -mb-2">
-                            {card.attributes.images?.data && card.attributes.images.data.length > 0 ? (
+                            {card.attributes.Visuals?.data && card.attributes.Visuals.data.length > 0 ? (
                               <div className="aspect-video rounded-lg overflow-hidden mx-4 mt-4">
                                 <Image
-                                  src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${card.attributes.images.data[0].attributes.url}`}
-                                  alt={card.attributes.images.data[0].attributes.alternativeText || card.attributes.title}
-                                  width={card.attributes.images.data[0].attributes.width}
-                                  height={card.attributes.images.data[0].attributes.height}
+                                  src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${card.attributes.Visuals.data[0].attributes.url}`}
+                                  alt={card.attributes.Visuals.data[0].attributes.alternativeText || card.attributes.Title}
+                                  width={card.attributes.Visuals.data[0].attributes.width}
+                                  height={card.attributes.Visuals.data[0].attributes.height}
                                   className="w-full h-full object-cover"
                                 />
                               </div>
@@ -139,20 +139,20 @@ export default function ActivitiesSection() {
                             {/* Overlapping date badge */}
                             <div className="absolute bottom-0 left-8 z-10">
                               <span className="inline-block bg-white px-4 py-2 rounded-full text-sm font-medium shadow-md">
-                                {card.attributes.date}
+                                {new Date(card.attributes.Date).toLocaleDateString('el-GR')}
                               </span>
                             </div>
                           </div>
 
                           <div className="p-6 pt-8">
-                            {card.attributes.featured && (
+                            {card.attributes.Featured && (
                               <div className="mb-4 aspect-video bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-2xl">
                                 PLATO
                               </div>
                             )}
 
                             <h3 className="text-lg font-bold mb-4 line-clamp-3">
-                              {card.attributes.title}
+                              {card.attributes.Title}
                             </h3>
 
                             <div className="flex items-center text-sm text-gray-600">
@@ -165,7 +165,7 @@ export default function ActivitiesSection() {
                                   className="w-full h-full"
                                 />
                               </div>
-                              <span>{card.attributes.organization}</span>
+                              <span>CULTURE FOR CHANGE</span>
                             </div>
                           </div>
                         </div>
