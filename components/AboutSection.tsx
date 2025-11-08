@@ -6,8 +6,12 @@ import Image from 'next/image'
 export default function AboutSection() {
   const [isImageVisible, setIsImageVisible] = useState(false)
   const [isContentVisible, setIsContentVisible] = useState(false)
+  const [isStatsVisible, setIsStatsVisible] = useState(false)
+  const [counter1, setCounter1] = useState(0)
+  const [counter2, setCounter2] = useState(0)
   const imageRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
+  const statsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const imageObserver = new IntersectionObserver(
@@ -32,6 +36,17 @@ export default function AboutSection() {
       { threshold: 0.1 }
     )
 
+    const statsObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsStatsVisible(true)
+          }
+        })
+      },
+      { threshold: 0.1 }
+    )
+
     if (imageRef.current) {
       imageObserver.observe(imageRef.current)
     }
@@ -40,11 +55,42 @@ export default function AboutSection() {
       contentObserver.observe(contentRef.current)
     }
 
+    if (statsRef.current) {
+      statsObserver.observe(statsRef.current)
+    }
+
     return () => {
       imageObserver.disconnect()
       contentObserver.disconnect()
+      statsObserver.disconnect()
     }
   }, [])
+
+  // Animate counters when stats become visible
+  useEffect(() => {
+    if (!isStatsVisible) return
+
+    const duration = 3000 // 3 seconds
+    const target1 = 10
+    const target2 = 101
+    const steps = 60 // 60 frames for smooth animation
+    const increment1 = target1 / steps
+    const increment2 = target2 / steps
+    const interval = duration / steps
+
+    let currentStep = 0
+    const timer = setInterval(() => {
+      currentStep++
+      if (currentStep <= steps) {
+        setCounter1(Math.min(Math.round(increment1 * currentStep), target1))
+        setCounter2(Math.min(Math.round(increment2 * currentStep), target2))
+      } else {
+        clearInterval(timer)
+      }
+    }, interval)
+
+    return () => clearInterval(timer)
+  }, [isStatsVisible])
 
   return (
     <section id="about" className="py-24 bg-gray-50 -mt-[10%]">
@@ -95,13 +141,18 @@ export default function AboutSection() {
         </div>
 
         {/* Statistics */}
-        <div className="grid md:grid-cols-2 gap-12 text-center">
+        <div
+          ref={statsRef}
+          className={`grid md:grid-cols-2 gap-12 text-center transition-opacity duration-500 ${
+            isStatsVisible ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
           <div>
-            <div className="text-8xl font-bold text-coral mb-2">10</div>
+            <div className="text-8xl font-bold text-coral mb-2">{counter1}</div>
             <p className="text-xl font-medium">ΕΡΓΑ</p>
           </div>
           <div>
-            <div className="text-8xl font-bold text-coral mb-2">101</div>
+            <div className="text-8xl font-bold text-coral mb-2">{counter2}</div>
             <p className="text-xl font-medium">ΜΕΛΗ</p>
           </div>
         </div>
