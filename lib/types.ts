@@ -34,6 +34,28 @@ export interface Activity extends StrapiData<Activity> {
   publishedAt: string;
 }
 
+// Single media object from Strapi v5
+export interface StrapiMediaObject {
+  id: number;
+  documentId?: string;
+  name: string;
+  alternativeText?: string;
+  caption?: string;
+  width: number;
+  height: number;
+  formats?: {
+    thumbnail?: MediaFormat;
+    small?: MediaFormat;
+    medium?: MediaFormat;
+    large?: MediaFormat;
+  };
+  url: string;
+  previewUrl?: string;
+  provider: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Open Call type - matches Strapi schema exactly (Strapi v5)
 export interface OpenCall extends StrapiData<OpenCall> {
   Title: string;
@@ -41,7 +63,7 @@ export interface OpenCall extends StrapiData<OpenCall> {
   Description: any;  // Strapi blocks type (rich text)
   Priority?: boolean;
   Link: string;
-  Image?: StrapiMediaArray;  // Single image (array with one item in Strapi v5)
+  Image?: StrapiMediaObject | StrapiMediaArray;  // Can be single object or array
   createdAt: string;
   updatedAt: string;
   publishedAt: string;

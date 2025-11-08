@@ -123,9 +123,18 @@ export default function OpenCallsSection() {
             })
 
             const descriptionText = extractTextFromBlocks(call.Description)
-            const imageUrl = call.Image && call.Image.length > 0
-              ? `${process.env.NEXT_PUBLIC_STRAPI_URL}${call.Image[0].url}`
-              : null
+
+            // Handle both single image (object) and multiple images (array) from Strapi v5
+            let imageUrl = null
+            if (call.Image) {
+              if (Array.isArray(call.Image) && call.Image.length > 0) {
+                // Multiple images - use first one
+                imageUrl = `${process.env.NEXT_PUBLIC_STRAPI_URL}${call.Image[0].url}`
+              } else if (typeof call.Image === 'object' && call.Image.url) {
+                // Single image - direct object
+                imageUrl = `${process.env.NEXT_PUBLIC_STRAPI_URL}${call.Image.url}`
+              }
+            }
 
             // Determine design option
             const designOption = index % 4
@@ -181,7 +190,7 @@ export default function OpenCallsSection() {
                         <div className="w-28 h-28 rounded-lg overflow-hidden border-2 border-blue-500">
                           <Image
                             src={imageUrl}
-                            alt={call.Image?.[0]?.alternativeText || call.Title}
+                            alt={(Array.isArray(call.Image) ? call.Image[0]?.alternativeText : call.Image?.alternativeText) || call.Title}
                             width={112}
                             height={112}
                             className="w-full h-full object-cover"
@@ -208,7 +217,7 @@ export default function OpenCallsSection() {
                           <div className="w-32 h-28 rounded-lg overflow-hidden border-2 border-green-500">
                             <Image
                               src={imageUrl}
-                              alt={call.Image?.[0]?.alternativeText || call.Title}
+                              alt={(Array.isArray(call.Image) ? call.Image[0]?.alternativeText : call.Image?.alternativeText) || call.Title}
                               width={128}
                               height={112}
                               className="w-full h-full object-cover"
@@ -223,7 +232,7 @@ export default function OpenCallsSection() {
                           <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-purple-500 shadow-md">
                             <Image
                               src={imageUrl}
-                              alt={call.Image?.[0]?.alternativeText || call.Title}
+                              alt={(Array.isArray(call.Image) ? call.Image[0]?.alternativeText : call.Image?.alternativeText) || call.Title}
                               width={112}
                               height={112}
                               className="w-full h-full object-cover"
@@ -238,7 +247,7 @@ export default function OpenCallsSection() {
                           <div className="w-40 h-24 rounded-lg overflow-hidden border-2 border-orange-500">
                             <Image
                               src={imageUrl}
-                              alt={call.Image?.[0]?.alternativeText || call.Title}
+                              alt={(Array.isArray(call.Image) ? call.Image[0]?.alternativeText : call.Image?.alternativeText) || call.Title}
                               width={160}
                               height={96}
                               className="w-full h-full object-cover"
