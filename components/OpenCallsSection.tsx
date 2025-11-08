@@ -135,7 +135,7 @@ export default function OpenCallsSection() {
                   href={call.Link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group block py-12 hover:bg-white transition-colors relative rounded-2xl"
+                  className="group block py-12 hover:bg-white hover:shadow-xl transition-all duration-300 relative rounded-2xl"
                 >
                   {/* Arrow Icon - Far Top Right Corner */}
                   <div className="absolute top-6 right-2">
