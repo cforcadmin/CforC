@@ -106,7 +106,7 @@ export default function AboutSection() {
           {/* Image */}
           <div
             ref={imageRef}
-            className={`aspect-[4/3] bg-gray-200 rounded-lg overflow-hidden transition-all duration-1000 ${
+            className={`aspect-[4/3] bg-gray-200 rounded-2xl overflow-hidden transition-all duration-1000 ${
               isImageVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
             }`}
           >
