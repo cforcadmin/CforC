@@ -121,10 +121,12 @@ export default function OpenCallsSection() {
             if (call.Image) {
               if (Array.isArray(call.Image) && call.Image.length > 0) {
                 // Multiple images - use first one
-                imageUrl = `${process.env.NEXT_PUBLIC_STRAPI_URL}${call.Image[0].url}`
+                const url = call.Image[0].url
+                imageUrl = url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
               } else if (typeof call.Image === 'object' && !Array.isArray(call.Image) && 'url' in call.Image) {
                 // Single image - direct object
-                imageUrl = `${process.env.NEXT_PUBLIC_STRAPI_URL}${call.Image.url}`
+                const url = call.Image.url
+                imageUrl = url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
               }
             }
 
