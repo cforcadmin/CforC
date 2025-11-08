@@ -15,14 +15,14 @@ export interface StrapiResponse<T> {
   };
 }
 
-// Strapi data wrapper
+// Strapi data wrapper (Strapi v5 - no attributes wrapper)
 export interface StrapiData<T> {
   id: number;
-  attributes: T;
+  documentId?: string;
 }
 
-// Activity type - matches Strapi schema exactly
-export interface Activity {
+// Activity type - matches Strapi schema exactly (Strapi v5)
+export interface Activity extends StrapiData<Activity> {
   Title: string;
   Description: any;  // Strapi blocks type (rich text)
   Date: string;

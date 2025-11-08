@@ -6,7 +6,7 @@ import { getActivities } from '@/lib/strapi'
 import type { StrapiResponse, StrapiData, Activity } from '@/lib/types'
 
 export default function ActivitiesSection() {
-  const [activities, setActivities] = useState<StrapiData<Activity>[]>([])
+  const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -18,7 +18,7 @@ export default function ActivitiesSection() {
         console.log('Fetching activities from Strapi...')
         console.log('Strapi URL:', process.env.NEXT_PUBLIC_STRAPI_URL)
 
-        const response: StrapiResponse<StrapiData<Activity>[]> = await getActivities()
+        const response: StrapiResponse<Activity[]> = await getActivities()
 
         console.log('Strapi response:', response)
         console.log('Activities data:', response.data)
@@ -117,8 +117,8 @@ export default function ActivitiesSection() {
                       const cardIndex = (index + offset) % activities.length
                       const card = activities[cardIndex]
 
-                      // Safety check: ensure card and attributes exist
-                      if (!card || !card.attributes) {
+                      // Safety check: ensure card exists
+                      if (!card) {
                         return null
                       }
 
@@ -129,13 +129,13 @@ export default function ActivitiesSection() {
                         >
                           {/* Image with overlapping date */}
                           <div className="relative -mb-2">
-                            {card.attributes.Visuals?.data && card.attributes.Visuals.data.length > 0 ? (
+                            {card.Visuals?.data && card.Visuals.data.length > 0 ? (
                               <div className="aspect-video rounded-lg overflow-hidden mx-4 mt-4">
                                 <Image
-                                  src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${card.attributes.Visuals.data[0].attributes.url}`}
-                                  alt={card.attributes.Visuals.data[0].attributes.alternativeText || card.attributes.Title}
-                                  width={card.attributes.Visuals.data[0].attributes.width}
-                                  height={card.attributes.Visuals.data[0].attributes.height}
+                                  src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${card.Visuals.data[0].attributes.url}`}
+                                  alt={card.Visuals.data[0].attributes.alternativeText || card.Title}
+                                  width={card.Visuals.data[0].attributes.width}
+                                  height={card.Visuals.data[0].attributes.height}
                                   className="w-full h-full object-cover"
                                 />
                               </div>
@@ -148,20 +148,20 @@ export default function ActivitiesSection() {
                             {/* Overlapping date badge */}
                             <div className="absolute bottom-0 left-8 z-10">
                               <span className="inline-block bg-white px-4 py-2 rounded-full text-sm font-medium shadow-md">
-                                {new Date(card.attributes.Date).toLocaleDateString('el-GR')}
+                                {new Date(card.Date).toLocaleDateString('el-GR')}
                               </span>
                             </div>
                           </div>
 
                           <div className="p-6 pt-8">
-                            {card.attributes.Featured && (
+                            {card.Featured && (
                               <div className="mb-4 aspect-video bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-2xl">
                                 PLATO
                               </div>
                             )}
 
                             <h3 className="text-lg font-bold mb-4 line-clamp-3">
-                              {card.attributes.Title}
+                              {card.Title}
                             </h3>
 
                             <div className="flex items-center text-sm text-gray-600">
