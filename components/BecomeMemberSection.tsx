@@ -7,7 +7,7 @@ export default function BecomeMemberSection() {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/Homepage_Block1.jpg"
+          src="/becomeamember.webp"
           alt="Landscape background"
           fill
           className="object-cover"
