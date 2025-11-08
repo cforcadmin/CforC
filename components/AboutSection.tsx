@@ -5,27 +5,29 @@ import Image from 'next/image'
 
 export default function AboutSection() {
   const imageRef = useRef<HTMLDivElement>(null)
-  const [imageOffset, setImageOffset] = useState(100)
+  const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (imageRef.current) {
-        const rect = imageRef.current.getBoundingClientRect()
-        const windowHeight = window.innerHeight
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true)
+          }
+        })
+      },
+      { threshold: 0.1 }
+    )
 
-        // Calculate offset based on scroll position
-        // When section enters viewport, image starts at +100px and moves to 0
-        if (rect.top < windowHeight && rect.bottom > 0) {
-          const progress = Math.max(0, Math.min(1, (windowHeight - rect.top) / windowHeight))
-          setImageOffset(-200 + (progress * 200))
-        }
-      }
+    if (imageRef.current) {
+      observer.observe(imageRef.current)
     }
 
-    window.addEventListener('scroll', handleScroll)
-    handleScroll() // Initial check
-
-    return () => window.removeEventListener('scroll', handleScroll)
+    return () => {
+      if (imageRef.current) {
+        observer.unobserve(imageRef.current)
+      }
+    }
   }, [])
 
   return (
@@ -39,13 +41,12 @@ export default function AboutSection() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
-          {/* Image with smooth scroll animation */}
+          {/* Image with fade-in animation */}
           <div
             ref={imageRef}
-            className="aspect-[4/3] rounded-3xl overflow-hidden"
+            className="aspect-[4/3] rounded-3xl overflow-hidden transition-opacity duration-1000 ease-out"
             style={{
-              transform: `translateY(${imageOffset}px)`,
-              transition: 'transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)'
+              opacity: isVisible ? 1 : 0
             }}
           >
             <Image
