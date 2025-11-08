@@ -81,30 +81,27 @@ export interface StrapiMedia {
   };
 }
 
-// Strapi Media/Image type (array for multiple images)
-export interface StrapiMediaArray {
-  data: Array<{
-    id: number;
-    attributes: {
-      name: string;
-      alternativeText?: string;
-      caption?: string;
-      width: number;
-      height: number;
-      formats?: {
-        thumbnail?: MediaFormat;
-        small?: MediaFormat;
-        medium?: MediaFormat;
-        large?: MediaFormat;
-      };
-      url: string;
-      previewUrl?: string;
-      provider: string;
-      createdAt: string;
-      updatedAt: string;
-    };
-  }>;
-}
+// Strapi Media/Image type (array for multiple images) - Strapi v5
+export interface StrapiMediaArray extends Array<{
+  id: number;
+  documentId?: string;
+  name: string;
+  alternativeText?: string;
+  caption?: string;
+  width: number;
+  height: number;
+  formats?: {
+    thumbnail?: MediaFormat;
+    small?: MediaFormat;
+    medium?: MediaFormat;
+    large?: MediaFormat;
+  };
+  url: string;
+  previewUrl?: string;
+  provider: string;
+  createdAt: string;
+  updatedAt: string;
+}> {}
 
 interface MediaFormat {
   name: string;

@@ -135,13 +135,13 @@ export default function ActivitiesSection() {
                         >
                           {/* Image with overlapping date */}
                           <div className="relative -mb-2">
-                            {card.Visuals?.data && card.Visuals.data.length > 0 ? (
+                            {card.Visuals && card.Visuals.length > 0 ? (
                               <div className="aspect-video rounded-lg overflow-hidden mx-4 mt-4">
                                 <Image
-                                  src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${card.Visuals.data[0].attributes.url}`}
-                                  alt={card.Visuals.data[0].attributes.alternativeText || card.Title}
-                                  width={card.Visuals.data[0].attributes.width}
-                                  height={card.Visuals.data[0].attributes.height}
+                                  src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${card.Visuals[0].url}`}
+                                  alt={card.Visuals[0].alternativeText || card.Title}
+                                  width={card.Visuals[0].width}
+                                  height={card.Visuals[0].height}
                                   className="w-full h-full object-cover"
                                 />
                               </div>
