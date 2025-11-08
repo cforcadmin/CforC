@@ -3,60 +3,54 @@
 import { useState, useRef } from 'react'
 import Image from 'next/image'
 
-// Initial city positions
+// Initial city positions with user-provided coordinates
 const initialCityCircles = {
   thessaloniki: {
     name: 'ΘΕΣΣΑΛΟΝΙΚΗ',
-    cx: 250,
-    cy: 100,
-    r: 20,
-  },
-  attiki: {
-    name: 'ΑΤΤΙΚΗ',
-    cx: 270,
-    cy: 280,
+    cx: 194,
+    cy: 159,
     r: 20,
   },
   athens: {
     name: 'ΑΘΗΝΑ',
-    cx: 270,
-    cy: 280,
+    cx: 233,
+    cy: 321,
     r: 20,
   },
   kalamata: {
     name: 'ΚΑΛΑΜΑΤΑ',
-    cx: 180,
-    cy: 370,
+    cx: 156,
+    cy: 385,
     r: 20,
   },
   volos: {
     name: 'ΒΟΛΟΣ',
-    cx: 270,
-    cy: 200,
+    cx: 204,
+    cy: 238,
     r: 20,
   },
   messolonghi: {
     name: 'ΜΕΣΟΛΟΓΓΙ',
-    cx: 160,
-    cy: 250,
+    cx: 129,
+    cy: 291,
     r: 20,
   },
   preveza: {
     name: 'ΠΡΕΒΕΖΑ',
-    cx: 130,
-    cy: 200,
+    cx: 103,
+    cy: 271,
     r: 20,
   },
   crete: {
-    name: 'ΚΡΗΤΗ/ΗΡΑΚΛΕΙΟ',
-    cx: 280,
-    cy: 520,
+    name: 'ΗΡΑΚΛΕΙΟ',
+    cx: 316,
+    cy: 487,
     r: 20,
   },
   chios: {
     name: 'ΧΙΟΣ',
-    cx: 420,
-    cy: 300,
+    cx: 354,
+    cy: 298,
     r: 20,
   },
   syros: {
@@ -67,8 +61,32 @@ const initialCityCircles = {
   },
   skopelos: {
     name: 'ΣΚΟΠΕΛΟΣ',
-    cx: 310,
-    cy: 150,
+    cx: 246,
+    cy: 242,
+    r: 20,
+  },
+  kyklades: {
+    name: 'ΚΥΚΛΑΔΕΣ',
+    cx: 320,
+    cy: 370,
+    r: 20,
+  },
+  dodekanisa: {
+    name: 'ΔΩΔΕΚΑΝΗΣΑ',
+    cx: 400,
+    cy: 420,
+    r: 20,
+  },
+  thraki: {
+    name: 'ΘΡΑΚΗ',
+    cx: 350,
+    cy: 120,
+    r: 20,
+  },
+  lasithi: {
+    name: 'ΛΑΣΙΘΙ',
+    cx: 360,
+    cy: 490,
     r: 20,
   },
 }
@@ -76,24 +94,22 @@ const initialCityCircles = {
 // City lists with region mappings
 const cities = {
   left: [
-    { name: 'ΑΤΤΙΚΗ', region: 'attiki' },
     { name: 'ΧΙΟΣ', region: 'chios' },
     { name: 'ΚΑΛΑΜΑΤΑ', region: 'kalamata' },
-    { name: 'ΒΡΥΣΕΛΛΕΣ', region: null },
-    { name: 'ΛΙΣΑΒΟΝΑ', region: null },
-    { name: 'ΚΥΠΡΟΣ', region: null },
     { name: 'ΣΥΡΟΣ', region: 'syros' },
     { name: 'ΒΟΛΟΣ', region: 'volos' },
+    { name: 'ΚΥΚΛΑΔΕΣ', region: 'kyklades' },
+    { name: 'ΘΡΑΚΗ', region: 'thraki' },
+    { name: 'ΛΑΣΙΘΙ', region: 'lasithi' },
   ],
   right: [
     { name: 'ΘΕΣΣΑΛΟΝΙΚΗ', region: 'thessaloniki' },
     { name: 'ΜΕΣΟΛΟΓΓΙ', region: 'messolonghi' },
     { name: 'ΣΚΟΠΕΛΟΣ', region: 'skopelos' },
     { name: 'ΠΡΕΒΕΖΑ', region: 'preveza' },
-    { name: 'ΚΡΗΤΗ/ΗΡΑΚΛΕΙΟ', region: 'crete' },
-    { name: 'ΘΕΣΣΑΛΟΝΙΚΗ', region: 'thessaloniki' },
+    { name: 'ΗΡΑΚΛΕΙΟ', region: 'crete' },
     { name: 'ΑΘΗΝΑ', region: 'athens' },
-    { name: 'ΠΟΡΤΟΓΑΛΙΑ', region: null },
+    { name: 'ΔΩΔΕΚΑΝΗΣΑ', region: 'dodekanisa' },
   ],
 }
 
