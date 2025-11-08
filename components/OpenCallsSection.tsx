@@ -131,27 +131,29 @@ export default function OpenCallsSection() {
                   rel="noopener noreferrer"
                   className="group block py-12 hover:bg-white transition-colors"
                 >
-                  <div className="flex items-start justify-between gap-8">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-6">
-                        {/* Date Badge */}
-                        <span className="inline-block bg-charcoal text-white px-5 py-2 rounded-full text-sm font-medium">
-                          {new Date(call.Deadline).toLocaleDateString('el-GR')}
+                  <div className="flex items-start gap-8">
+                    {/* Date and Priority Badges Section */}
+                    <div className="flex flex-col gap-3">
+                      {/* Date Badge */}
+                      <span className="inline-block bg-charcoal text-white px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
+                        {new Date(call.Deadline).toLocaleDateString('el-GR')}
+                      </span>
+
+                      {/* Priority Badge */}
+                      {call.Priority && (
+                        <span className="inline-block bg-white border-2 border-charcoal text-charcoal px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
+                          PRIORITY
                         </span>
+                      )}
+                    </div>
 
-                        {/* Priority Badge */}
-                        {call.Priority && (
-                          <span className="inline-block bg-white border-2 border-charcoal text-charcoal px-5 py-2 rounded-full text-sm font-medium">
-                            PRIORITY
-                          </span>
-                        )}
-                      </div>
-
-                      <h3 className="text-2xl md:text-3xl font-bold mb-4 text-charcoal">
+                    {/* Title and Description Section */}
+                    <div className="flex-1">
+                      <h3 className="text-xl md:text-2xl font-bold mb-3 text-charcoal">
                         {call.Title}
                       </h3>
 
-                      <p className="text-gray-700 leading-relaxed text-lg">
+                      <p className="text-gray-700 leading-relaxed text-base">
                         {descriptionText}
                       </p>
                     </div>
