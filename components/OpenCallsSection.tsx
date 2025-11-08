@@ -114,14 +114,6 @@ export default function OpenCallsSection() {
 
         <div className="space-y-0">
           {openCalls.map((call, index) => {
-            // Enhanced Debug: Log each call
-            console.log(`Open Call ${index}:`, {
-              id: call.id,
-              title: call.Title,
-              hasImage: call.Image && call.Image.length > 0,
-              imageData: call.Image
-            })
-
             const descriptionText = extractTextFromBlocks(call.Description)
 
             // Handle both single image (object) and multiple images (array) from Strapi v5
@@ -136,9 +128,6 @@ export default function OpenCallsSection() {
               }
             }
 
-            // Determine design option
-            const designOption = index % 4
-
             return (
               <div key={call.id}>
                 {index > 0 && <hr className="border-gray-300" />}
@@ -148,8 +137,8 @@ export default function OpenCallsSection() {
                   rel="noopener noreferrer"
                   className="group block py-12 hover:bg-white transition-colors relative"
                 >
-                  {/* Arrow Icon - Top Right Corner */}
-                  <div className="absolute top-8 right-4">
+                  {/* Arrow Icon - Far Top Right Corner */}
+                  <div className="absolute top-6 right-2">
                     <svg
                       className="w-8 h-8 text-charcoal group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"
                       fill="none"
@@ -166,8 +155,8 @@ export default function OpenCallsSection() {
                   </div>
 
                   <div className="flex items-start gap-6 pr-16">
-                    {/* Date and Priority Badges Section - More Space */}
-                    <div className="flex flex-col gap-3 min-w-[140px]">
+                    {/* Date and Priority Badges Section - Moved Right */}
+                    <div className="flex flex-col gap-3 min-w-[140px] ml-8">
                       {/* Date Badge */}
                       <span className="inline-block bg-charcoal text-white px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
                         {new Date(call.Deadline).toLocaleDateString('el-GR')}
@@ -179,30 +168,12 @@ export default function OpenCallsSection() {
                           PRIORITY
                         </span>
                       )}
-
-                      {/* Debug Indicator */}
-                      <span className="text-xs text-gray-400">Option {designOption + 1}</span>
                     </div>
-
-                    {/* DESIGN OPTION 1: Small square image on left (Entry 0) */}
-                    {designOption === 0 && imageUrl && (
-                      <div className="flex-shrink-0">
-                        <div className="w-28 h-28 rounded-lg overflow-hidden border-2 border-blue-500">
-                          <Image
-                            src={imageUrl}
-                            alt={(Array.isArray(call.Image) ? call.Image[0]?.alternativeText : call.Image?.alternativeText) || call.Title}
-                            width={112}
-                            height={112}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      </div>
-                    )}
 
                     {/* Title and Description Section */}
                     <div className="flex-1 flex gap-6">
                       <div className="flex-1">
-                        <h3 className="text-xl md:text-2xl font-bold mb-4 text-charcoal">
+                        <h3 className="text-xl md:text-2xl font-bold mb-4 text-charcoal group-hover:text-coral transition-colors duration-300">
                           {call.Title}
                         </h3>
 
@@ -211,45 +182,15 @@ export default function OpenCallsSection() {
                         </p>
                       </div>
 
-                      {/* DESIGN OPTION 2: Tall narrow image on right (Entry 1) */}
-                      {designOption === 1 && imageUrl && (
+                      {/* Circular image on right */}
+                      {imageUrl && (
                         <div className="flex-shrink-0">
-                          <div className="w-32 h-28 rounded-lg overflow-hidden border-2 border-green-500">
-                            <Image
-                              src={imageUrl}
-                              alt={(Array.isArray(call.Image) ? call.Image[0]?.alternativeText : call.Image?.alternativeText) || call.Title}
-                              width={128}
-                              height={112}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* DESIGN OPTION 3: Circular image on right (Entry 2) */}
-                      {designOption === 2 && imageUrl && (
-                        <div className="flex-shrink-0">
-                          <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-purple-500 shadow-md">
+                          <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-coral shadow-md">
                             <Image
                               src={imageUrl}
                               alt={(Array.isArray(call.Image) ? call.Image[0]?.alternativeText : call.Image?.alternativeText) || call.Title}
                               width={112}
                               height={112}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* DESIGN OPTION 4: Wide short image below title (Entry 3) */}
-                      {designOption === 3 && imageUrl && (
-                        <div className="flex-shrink-0 self-start mt-1">
-                          <div className="w-40 h-24 rounded-lg overflow-hidden border-2 border-orange-500">
-                            <Image
-                              src={imageUrl}
-                              alt={(Array.isArray(call.Image) ? call.Image[0]?.alternativeText : call.Image?.alternativeText) || call.Title}
-                              width={160}
-                              height={96}
                               className="w-full h-full object-cover"
                             />
                           </div>
