@@ -30,7 +30,7 @@ export interface Activity {
   type?: string;
   featured?: boolean;
   icon?: string;
-  image?: StrapiMedia;
+  images?: StrapiMediaArray;  // Changed from single image to multiple images
   createdAt: string;
   updatedAt: string;
   publishedAt: string;
@@ -58,7 +58,7 @@ export interface Page {
   publishedAt: string;
 }
 
-// Strapi Media/Image type
+// Strapi Media/Image type (single)
 export interface StrapiMedia {
   data: {
     id: number;
@@ -81,6 +81,31 @@ export interface StrapiMedia {
       updatedAt: string;
     };
   };
+}
+
+// Strapi Media/Image type (array for multiple images)
+export interface StrapiMediaArray {
+  data: Array<{
+    id: number;
+    attributes: {
+      name: string;
+      alternativeText?: string;
+      caption?: string;
+      width: number;
+      height: number;
+      formats?: {
+        thumbnail?: MediaFormat;
+        small?: MediaFormat;
+        medium?: MediaFormat;
+        large?: MediaFormat;
+      };
+      url: string;
+      previewUrl?: string;
+      provider: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+  }>;
 }
 
 interface MediaFormat {
