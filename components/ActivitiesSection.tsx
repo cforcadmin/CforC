@@ -150,8 +150,8 @@ export default function ActivitiesSection() {
                               )}
 
                               {/* Overlapping date badge */}
-                              <div className="absolute bottom-0 left-6 z-10">
-                                <span className="inline-block bg-white px-4 py-2 rounded-full text-sm font-medium shadow-md">
+                              <div className="absolute top-2 left-6 z-10">
+                                <span className="inline-block bg-orange-50 px-3 py-1 rounded-full text-xs font-medium shadow-md">
                                   {new Date(card.Date).toLocaleDateString('el-GR')}
                                 </span>
                               </div>
