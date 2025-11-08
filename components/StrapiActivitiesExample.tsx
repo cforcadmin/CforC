@@ -5,7 +5,7 @@ import { getActivities } from '@/lib/strapi'
 import type { StrapiResponse, StrapiData, Activity } from '@/lib/types'
 
 export default function StrapiActivitiesExample() {
-  const [activities, setActivities] = useState<StrapiData<Activity>[]>([])
+  const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -13,7 +13,7 @@ export default function StrapiActivitiesExample() {
     async function fetchActivities() {
       try {
         setLoading(true)
-        const response: StrapiResponse<StrapiData<Activity>[]> = await getActivities()
+        const response: StrapiResponse<Activity[]> = await getActivities()
         setActivities(response.data)
       } catch (err) {
         setError('Failed to load activities from Strapi')
@@ -92,33 +92,31 @@ export default function StrapiActivitiesExample() {
               key={activity.id}
               className="bg-white border-2 border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
             >
-              {activity.attributes.image?.data && (
+              {activity.Visuals && activity.Visuals.length > 0 && (
                 <div className="aspect-video bg-gray-100">
                   <img
-                    src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${activity.attributes.image.data.attributes.url}`}
-                    alt={activity.attributes.image.data.attributes.alternativeText || activity.attributes.title}
+                    src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${activity.Visuals[0].url}`}
+                    alt={activity.Visuals[0].alternativeText || activity.Title}
                     className="w-full h-full object-cover"
                   />
                 </div>
               )}
 
               <div className="p-6">
-                {activity.attributes.icon && (
-                  <div className="mb-4">
-                    <span className="text-2xl">{activity.attributes.icon}</span>
-                  </div>
-                )}
-
                 <h3 className="text-xl font-bold mb-3">
-                  {activity.attributes.title}
+                  {activity.Title}
                 </h3>
 
                 <p className="text-gray-600 mb-4 line-clamp-3">
-                  {activity.attributes.description}
+                  {activity.Category || 'No category'}
                 </p>
 
                 <p className="text-xs text-gray-400">
-                  Published: {new Date(activity.attributes.publishedAt).toLocaleDateString()}
+                  Date: {new Date(activity.Date).toLocaleDateString()}
+                </p>
+
+                <p className="text-xs text-gray-400">
+                  Published: {new Date(activity.publishedAt).toLocaleDateString()}
                 </p>
               </div>
             </div>
