@@ -15,11 +15,20 @@ export default function ActivitiesSection() {
     async function fetchActivities() {
       try {
         setLoading(true)
+        console.log('Fetching activities from Strapi...')
+        console.log('Strapi URL:', process.env.NEXT_PUBLIC_STRAPI_URL)
+
         const response: StrapiResponse<StrapiData<Activity>[]> = await getActivities()
+
+        console.log('Strapi response:', response)
+        console.log('Activities data:', response.data)
+        console.log('Number of activities:', response.data?.length || 0)
+
         setActivities(response.data)
       } catch (err) {
         setError('Failed to load activities from Strapi')
         console.error('Error fetching activities:', err)
+        console.error('Error details:', JSON.stringify(err, null, 2))
       } finally {
         setLoading(false)
       }
