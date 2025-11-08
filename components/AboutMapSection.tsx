@@ -55,8 +55,8 @@ const initialCityCircles = {
   },
   syros: {
     name: 'ΣΥΡΟΣ',
-    cx: 330,
-    cy: 350,
+    cx: 301,
+    cy: 357,
     r: 20,
   },
   skopelos: {
@@ -67,8 +67,8 @@ const initialCityCircles = {
   },
   kyklades: {
     name: 'ΚΥΚΛΑΔΕΣ',
-    cx: 300,
-    cy: 385,
+    cx: 318,
+    cy: 396,
     r: 20,
   },
   dodekanisa: {
@@ -116,9 +116,7 @@ const cities = {
 export default function AboutMapSection() {
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null)
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null)
-  const [cityPositions, setCityPositions] = useState(initialCityCircles)
-  const [draggingCity, setDraggingCity] = useState<string | null>(null)
-  const svgRef = useRef<SVGSVGElement>(null)
+  const [showAllLocations, setShowAllLocations] = useState(false)
 
   const handleCityHover = (region: string | null) => {
     setHoveredRegion(region)
@@ -132,44 +130,24 @@ export default function AboutMapSection() {
     return hoveredRegion === region || selectedRegion === region
   }
 
-  const handleMouseDown = (regionKey: string, e: React.MouseEvent) => {
-    e.preventDefault()
-    setDraggingCity(regionKey)
-  }
-
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!draggingCity || !svgRef.current) return
-
-    const svg = svgRef.current
-    const point = svg.createSVGPoint()
-    point.x = e.clientX
-    point.y = e.clientY
-    const svgPoint = point.matrixTransform(svg.getScreenCTM()?.inverse())
-
-    setCityPositions(prev => ({
-      ...prev,
-      [draggingCity]: {
-        ...prev[draggingCity as keyof typeof prev],
-        cx: Math.round(svgPoint.x),
-        cy: Math.round(svgPoint.y),
-      },
-    }))
-  }
-
-  const handleMouseUp = () => {
-    setDraggingCity(null)
-  }
-
   return (
     <section className="py-24 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 relative">
           <p className="text-coral text-sm font-medium mb-4">ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</p>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
             ΠΡΟΩΘΟΥΜΕ ΕΝΕΡΓΑ ΤΗΝ ΠΟΛΙΤΙΣΤΙΚΗ<br />
             ΑΛΛΑΓΗ ΣΕ ΟΛΟΚΛΗΡΗ ΤΗΝ ΕΛΛΑΔΑ
           </h2>
+          {/* Discrete toggle button */}
+          <button
+            onClick={() => setShowAllLocations(!showAllLocations)}
+            className="absolute top-0 right-0 text-xs text-gray-400 hover:text-coral transition-colors"
+            title={showAllLocations ? "Hide all locations" : "Show all locations"}
+          >
+            {showAllLocations ? '◉' : '○'}
+          </button>
         </div>
 
         {/* Map and Cities Grid */}
@@ -192,14 +170,7 @@ export default function AboutMapSection() {
                 onMouseLeave={() => city.region && handleCityHover(null)}
                 onClick={() => city.region && handleRegionClick(city.region)}
               >
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">{city.name}</span>
-                  {city.region && (
-                    <span className="text-xs text-gray-500 font-mono">
-                      ({cityPositions[city.region as keyof typeof cityPositions].cx}, {cityPositions[city.region as keyof typeof cityPositions].cy})
-                    </span>
-                  )}
-                </div>
+                <span className="text-sm font-medium">{city.name}</span>
               </div>
             ))}
           </div>
@@ -217,33 +188,29 @@ export default function AboutMapSection() {
 
               {/* SVG Overlay for Interactive Regions */}
               <svg
-                ref={svgRef}
                 viewBox="0 0 500 600"
                 className="absolute inset-0 w-full h-full"
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
+                style={{ pointerEvents: 'none' }}
               >
-                {/* All cities as circles - always visible and draggable */}
-                {Object.entries(cityPositions).map(([regionKey, city]) => (
+                {/* All cities as circles */}
+                {Object.entries(initialCityCircles).map(([regionKey, city]) => (
                   <circle
                     key={regionKey}
                     cx={city.cx}
                     cy={city.cy}
                     r={city.r}
                     fill={
-                      draggingCity === regionKey
-                        ? 'rgba(255, 107, 74, 0.8)'
-                        : isRegionActive(regionKey)
+                      isRegionActive(regionKey) || showAllLocations
                         ? 'rgba(255, 107, 74, 0.5)'
-                        : 'rgba(255, 107, 74, 0.3)'
+                        : 'transparent'
                     }
-                    stroke="rgba(255, 107, 74, 0.8)"
-                    strokeWidth="2"
-                    className="cursor-move transition-all duration-300"
-                    onMouseDown={(e) => handleMouseDown(regionKey, e)}
+                    stroke="transparent"
+                    strokeWidth="0"
+                    className="cursor-pointer transition-all duration-300"
+                    style={{ pointerEvents: 'auto' }}
                     onMouseEnter={() => handleCityHover(regionKey)}
-                    onMouseLeave={() => !draggingCity && handleCityHover(null)}
+                    onMouseLeave={() => handleCityHover(null)}
+                    onClick={() => handleRegionClick(regionKey)}
                   />
                 ))}
               </svg>
@@ -268,14 +235,7 @@ export default function AboutMapSection() {
                 onMouseLeave={() => city.region && handleCityHover(null)}
                 onClick={() => city.region && handleRegionClick(city.region)}
               >
-                <div className="flex justify-between items-center">
-                  {city.region && (
-                    <span className="text-xs text-gray-500 font-mono">
-                      ({cityPositions[city.region as keyof typeof cityPositions].cx}, {cityPositions[city.region as keyof typeof cityPositions].cy})
-                    </span>
-                  )}
-                  <span className="text-sm font-medium">{city.name}</span>
-                </div>
+                <span className="text-sm font-medium">{city.name}</span>
               </div>
             ))}
           </div>
