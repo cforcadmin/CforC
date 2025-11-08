@@ -96,7 +96,7 @@ export default function AboutSection() {
     <section id="about" className="py-24 bg-gray-50 -mt-[10%]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-12">
-          <p className="text-coral text-sm font-medium mb-2">ΠΡΟΣ ΕΙΚΑΣΤΕ</p>
+          <p className="text-coral text-sm font-medium mb-2">ΠΟΙΟΙ ΕΙΜΑΣΤΕ</p>
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
             ΤΟ CULTURE FOR CHANGE<br />ΜΕ ΜΙΑ ΜΑΤΙΑ
           </h2>

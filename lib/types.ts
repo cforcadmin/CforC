@@ -24,7 +24,11 @@ export interface StrapiData<T> {
 // Activity type
 export interface Activity {
   title: string;
-  description: string;
+  description?: string;
+  date: string;
+  organization: string;
+  type?: string;
+  featured?: boolean;
   icon?: string;
   image?: StrapiMedia;
   createdAt: string;

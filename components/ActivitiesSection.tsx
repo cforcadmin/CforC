@@ -1,34 +1,32 @@
 'use client'
 
-import { useState } from 'react'
-
-const activities = [
-  {
-    date: '30/9/2025',
-    title: 'ΣΥΝΕΡΓΑΤΙΚΟΙ ΠΟΛΙΤΙΣΤΙΚΟΙ ΠΕΙΡΑΜΑΤΙΣΜΟΙ: ΤΑ ΕΡΓΑΣΤΗΡΙΑ FUTURES LITERACY',
-    organization: 'CULTURE FOR CHANGE',
-    image: null,
-    type: 'workshop'
-  },
-  {
-    date: '22/9/2025',
-    title: 'ΤΟ CULTURE FOR CHANGE ΣΤΟ CREATIVE SKILLS WEEK 2025: CREATE. TRANSFORM. REGENERATE.',
-    organization: 'CULTURE FOR CHANGE',
-    image: null,
-    type: 'event'
-  },
-  {
-    date: '16/10/2025',
-    title: 'ΝΕΟ ΠΡΟΓΡΑΜΜΑ ΤΟΥ ΔΙΚΤΥΟΥ CULTURE FOR CHANGE ΜΕ ΧΡΗΜΑΤΟΔΟΤΗΣΗ PLATO',
-    organization: 'CULTURE FOR CHANGE',
-    image: null,
-    type: 'program',
-    featured: true
-  },
-]
+import { useEffect, useState } from 'react'
+import Image from 'next/image'
+import { getActivities } from '@/lib/strapi'
+import type { StrapiResponse, StrapiData, Activity } from '@/lib/types'
 
 export default function ActivitiesSection() {
+  const [activities, setActivities] = useState<StrapiData<Activity>[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [currentSlide, setCurrentSlide] = useState(0)
+
+  useEffect(() => {
+    async function fetchActivities() {
+      try {
+        setLoading(true)
+        const response: StrapiResponse<StrapiData<Activity>[]> = await getActivities()
+        setActivities(response.data)
+      } catch (err) {
+        setError('Failed to load activities from Strapi')
+        console.error('Error fetching activities:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchActivities()
+  }, [])
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % activities.length)
@@ -36,6 +34,47 @@ export default function ActivitiesSection() {
 
   const prevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + activities.length) % activities.length)
+  }
+
+  if (loading) {
+    return (
+      <section id="activities" className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+            <div className="h-12 bg-gray-200 rounded w-1/2 mb-12"></div>
+            <div className="grid md:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-96 bg-gray-200 rounded-lg"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (error || activities.length === 0) {
+    return (
+      <section id="activities" className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-end mb-12">
+            <div>
+              <p className="text-coral text-sm font-medium mb-2">ΠΡΟΣΦΑΤΕΣ ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</p>
+              <h2 className="text-4xl md:text-5xl font-bold">
+                ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ ΤΟΥ CULTURE<br />
+                FOR CHANGE
+              </h2>
+            </div>
+          </div>
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-center">
+            <p className="text-orange-600 font-medium">
+              {error || 'No activities available yet'}
+            </p>
+          </div>
+        </div>
+      </section>
+    )
   }
 
   return (
@@ -71,34 +110,56 @@ export default function ActivitiesSection() {
                       return (
                         <div
                           key={cardIndex}
-                          className={`bg-white border-2 rounded-lg overflow-hidden hover:shadow-lg transition-shadow ${
-                            card.featured ? 'border-blue-500' : 'border-gray-200'
-                          }`}
+                          className="bg-orange-50 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
                         >
-                          <div className="p-6">
-                            <div className="mb-4">
-                              <span className="inline-block bg-gray-100 px-4 py-1 rounded-full text-sm font-medium">
-                                {card.date}
+                          {/* Image with overlapping date */}
+                          <div className="relative -mb-2">
+                            {card.attributes.image?.data ? (
+                              <div className="aspect-video rounded-lg overflow-hidden mx-4 mt-4">
+                                <Image
+                                  src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${card.attributes.image.data.attributes.url}`}
+                                  alt={card.attributes.image.data.attributes.alternativeText || card.attributes.title}
+                                  width={card.attributes.image.data.attributes.width}
+                                  height={card.attributes.image.data.attributes.height}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="aspect-video bg-gray-200 rounded-lg mx-4 mt-4 flex items-center justify-center">
+                                <span className="text-gray-400">No image</span>
+                              </div>
+                            )}
+
+                            {/* Overlapping date badge */}
+                            <div className="absolute bottom-0 left-8 z-10">
+                              <span className="inline-block bg-white px-4 py-2 rounded-full text-sm font-medium shadow-md">
+                                {card.attributes.date}
                               </span>
                             </div>
+                          </div>
 
-                            {card.featured && (
+                          <div className="p-6 pt-8">
+                            {card.attributes.featured && (
                               <div className="mb-4 aspect-video bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-2xl">
                                 PLATO
                               </div>
                             )}
 
                             <h3 className="text-lg font-bold mb-4 line-clamp-3">
-                              {card.title}
+                              {card.attributes.title}
                             </h3>
 
                             <div className="flex items-center text-sm text-gray-600">
                               <div className="w-8 h-8 mr-2">
-                                <svg viewBox="0 0 100 100" className="w-full h-full">
-                                  <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="2"/>
-                                </svg>
+                                <Image
+                                  src="/cforc_logo_small.svg"
+                                  alt="Culture for Change Logo"
+                                  width={32}
+                                  height={32}
+                                  className="w-full h-full"
+                                />
                               </div>
-                              <span>{card.organization}</span>
+                              <span>{card.attributes.organization}</span>
                             </div>
                           </div>
                         </div>
