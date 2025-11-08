@@ -107,6 +107,12 @@ export default function ActivitiesSection() {
                     {[0, 1, 2].map((offset) => {
                       const cardIndex = (index + offset) % activities.length
                       const card = activities[cardIndex]
+
+                      // Safety check: ensure card and attributes exist
+                      if (!card || !card.attributes) {
+                        return null
+                      }
+
                       return (
                         <div
                           key={cardIndex}
