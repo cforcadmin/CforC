@@ -38,7 +38,7 @@ export interface Activity extends StrapiData<Activity> {
 export interface OpenCall extends StrapiData<OpenCall> {
   Title: string;
   Deadline: string;
-  Description: any;  // Strapi blocks type (rich text)
+  Discription: any;  // Strapi blocks type (rich text) - Note: spelled as "Discription" in Strapi
   Priority?: boolean;
   Link: string;
   Image?: StrapiMediaArray;  // Single image (array with one item in Strapi v5)

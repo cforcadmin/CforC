@@ -116,11 +116,11 @@ export default function OpenCallsSection() {
             // Debug: Log the structure for first call
             if (call.id === openCalls[0]?.id) {
               console.log('Call structure:', call)
-              console.log('Call Description:', call.Description)
+              console.log('Call Discription:', call.Discription)
               console.log('Call Image:', call.Image)
             }
 
-            const descriptionText = extractTextFromBlocks(call.Description)
+            const descriptionText = extractTextFromBlocks(call.Discription)
 
             return (
               <div key={call.id}>
