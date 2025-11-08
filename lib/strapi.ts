@@ -42,7 +42,7 @@ async function fetchStrapi(endpoint: string, options: RequestInit = {}) {
  */
 export async function getActivities() {
   // Strapi v5: Explicitly populate Visuals field (media fields need explicit population)
-  return fetchStrapi('/activities?populate[Visuals]=*');
+  return fetchStrapi('/activities?populate=Visuals');
 }
 
 /**
