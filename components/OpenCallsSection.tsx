@@ -122,7 +122,7 @@ export default function OpenCallsSection() {
               if (Array.isArray(call.Image) && call.Image.length > 0) {
                 // Multiple images - use first one
                 imageUrl = `${process.env.NEXT_PUBLIC_STRAPI_URL}${call.Image[0].url}`
-              } else if (typeof call.Image === 'object' && call.Image.url) {
+              } else if (typeof call.Image === 'object' && !Array.isArray(call.Image) && 'url' in call.Image) {
                 // Single image - direct object
                 imageUrl = `${process.env.NEXT_PUBLIC_STRAPI_URL}${call.Image.url}`
               }
@@ -135,7 +135,7 @@ export default function OpenCallsSection() {
                   href={call.Link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group block py-12 hover:bg-white transition-colors relative"
+                  className="group block py-12 hover:bg-white transition-colors relative rounded-2xl"
                 >
                   {/* Arrow Icon - Far Top Right Corner */}
                   <div className="absolute top-6 right-2">
