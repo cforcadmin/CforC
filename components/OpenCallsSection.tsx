@@ -113,9 +113,9 @@ export default function OpenCallsSection() {
               FOR CHANGE
             </h2>
           </div>
-          <button className="hidden md:block bg-coral text-white px-6 py-3 rounded-full font-medium hover:bg-coral-dark transition-colors">
+          <Link href="/open-calls" className="hidden md:block bg-coral text-white px-6 py-3 rounded-full font-medium hover:bg-coral-dark transition-colors">
             ΟΛΑ ΤΑ ΚΑΛΕΣΜΑΤΑ
-          </button>
+          </Link>
         </div>
 
         <div className="space-y-0">
@@ -212,9 +212,9 @@ export default function OpenCallsSection() {
           })}
         </div>
 
-        <button className="md:hidden w-full mt-8 bg-coral text-white px-6 py-3 rounded-full font-medium">
+        <Link href="/open-calls" className="md:hidden w-full mt-8 bg-coral text-white px-6 py-3 rounded-full font-medium text-center block">
           ΟΛΑ ΤΑ ΚΑΛΕΣΜΑΤΑ
-        </button>
+        </Link>
       </div>
     </section>
   )
