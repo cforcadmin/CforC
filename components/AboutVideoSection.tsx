@@ -44,7 +44,6 @@ export default function AboutVideoSection() {
               // Video player
               <video
                 className="w-full h-full rounded-2xl"
-                controls
                 autoPlay
                 src="/about-us-video.mp4"
               >
