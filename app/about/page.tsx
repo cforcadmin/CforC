@@ -8,6 +8,7 @@ import AboutOfferSection from '@/components/AboutOfferSection'
 import AboutCoreSection from '@/components/AboutCoreSection'
 import AboutGoalsSection from '@/components/AboutGoalsSection'
 import AboutPartnersSection from '@/components/AboutPartnersSection'
+import BecomeMemberSection from '@/components/BecomeMemberSection'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
 
@@ -24,6 +25,7 @@ export default function AboutPage() {
       <AboutCoreSection />
       <AboutGoalsSection />
       <AboutPartnersSection />
+      <BecomeMemberSection />
 
       <Footer />
       <CookieConsent />
