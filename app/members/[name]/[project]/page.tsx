@@ -45,6 +45,7 @@ export default function ProjectDetailPage() {
     title: string
     pictures: Array<{ url: string; alternativeText?: string }>
   } | null>(null)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   const memberName = decodeURIComponent(params.name as string)
   const projectName = decodeURIComponent(params.project as string)
@@ -158,15 +159,72 @@ export default function ProjectDetailPage() {
               ))}
             </div>
 
-            {/* Main Project Image */}
-            {projectData.pictures && projectData.pictures[0] && (
-              <div className="aspect-[16/9] relative rounded-3xl overflow-hidden mb-12">
-                <Image
-                  src={projectData.pictures[0].url}
-                  alt={projectData.pictures[0].alternativeText || projectData.title}
-                  fill
-                  className="object-cover"
-                />
+            {/* Project Image Carousel */}
+            {projectData.pictures && projectData.pictures.length > 0 && (
+              <div className="mb-12">
+                <div className="aspect-[16/9] relative rounded-3xl overflow-hidden bg-gray-200">
+                  <Image
+                    src={projectData.pictures[currentImageIndex].url}
+                    alt={projectData.pictures[currentImageIndex].alternativeText || projectData.title}
+                    fill
+                    className="object-cover"
+                  />
+
+                  {/* Navigation Arrows - only show if more than 1 image */}
+                  {projectData.pictures.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setCurrentImageIndex((prev) =>
+                          prev === 0 ? projectData.pictures!.length - 1 : prev - 1
+                        )}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all z-10"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => setCurrentImageIndex((prev) =>
+                          prev === projectData.pictures!.length - 1 ? 0 : prev + 1
+                        )}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all z-10"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+
+                      {/* Image Counter */}
+                      <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+                        {currentImageIndex + 1} / {projectData.pictures.length}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Thumbnail Strip - only show if more than 1 image */}
+                {projectData.pictures.length > 1 && (
+                  <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+                    {projectData.pictures.map((picture, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentImageIndex(index)}
+                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                          index === currentImageIndex ? 'border-coral' : 'border-transparent opacity-60 hover:opacity-100'
+                        }`}
+                      >
+                        <div className="relative w-full h-full">
+                          <Image
+                            src={picture.url}
+                            alt={picture.alternativeText || `${projectData.title} ${index + 1}`}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
