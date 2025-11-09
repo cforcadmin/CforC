@@ -168,52 +168,54 @@ export default function AboutMapSection() {
           </div>
 
           {/* Map in Center */}
-          <div className="relative w-full max-w-md aspect-[3/4]">
-            {/* Greece Map Background */}
-            <Image
-              src="/map-of-greece.jpg"
-              alt="Map of Greece"
-              fill
-              className="object-contain"
-            />
+          <div className="flex justify-center">
+            <div className="relative w-full max-w-md aspect-[3/4]">
+              {/* Greece Map Background */}
+              <Image
+                src="/map-of-greece.jpg"
+                alt="Map of Greece"
+                fill
+                className="object-contain"
+              />
 
-            {/* SVG Overlay for Interactive Regions */}
-            <svg
-              viewBox="0 0 500 600"
-              className="absolute inset-0 w-full h-full"
-              style={{ pointerEvents: 'none' }}
-            >
-              {/* All cities as circles */}
-              {Object.entries(initialCityCircles).map(([regionKey, city]) => (
-                <circle
-                  key={regionKey}
-                  cx={city.cx}
-                  cy={city.cy}
-                  r={city.r}
-                  fill={
-                    isRegionActive(regionKey) || showAllLocations
-                      ? 'rgba(255, 107, 74, 0.5)'
-                      : 'transparent'
-                  }
-                  stroke="transparent"
-                  strokeWidth="0"
-                  className="cursor-pointer transition-all duration-300"
-                  style={{ pointerEvents: 'auto' }}
-                  onMouseEnter={() => handleCityHover(regionKey)}
-                  onMouseLeave={() => handleCityHover(null)}
-                  onClick={() => handleRegionClick(regionKey)}
-                />
-              ))}
-            </svg>
+              {/* SVG Overlay for Interactive Regions */}
+              <svg
+                viewBox="0 0 500 600"
+                className="absolute inset-0 w-full h-full"
+                style={{ pointerEvents: 'none' }}
+              >
+                {/* All cities as circles */}
+                {Object.entries(initialCityCircles).map(([regionKey, city]) => (
+                  <circle
+                    key={regionKey}
+                    cx={city.cx}
+                    cy={city.cy}
+                    r={city.r}
+                    fill={
+                      isRegionActive(regionKey) || showAllLocations
+                        ? 'rgba(255, 107, 74, 0.5)'
+                        : 'transparent'
+                    }
+                    stroke="transparent"
+                    strokeWidth="0"
+                    className="cursor-pointer transition-all duration-300"
+                    style={{ pointerEvents: 'auto' }}
+                    onMouseEnter={() => handleCityHover(regionKey)}
+                    onMouseLeave={() => handleCityHover(null)}
+                    onClick={() => handleRegionClick(regionKey)}
+                  />
+                ))}
+              </svg>
 
-            {/* Discrete toggle button - ON TOP of map at bottom right */}
-            <button
-              onClick={() => setShowAllLocations(!showAllLocations)}
-              className="absolute bottom-4 right-4 text-sm text-gray-400 hover:text-coral transition-colors z-20"
-              title={showAllLocations ? "Hide all locations" : "Show all locations"}
-            >
-              {showAllLocations ? '◉' : '○'}
-            </button>
+              {/* Discrete toggle button - ON TOP of map at bottom right */}
+              <button
+                onClick={() => setShowAllLocations(!showAllLocations)}
+                className="absolute bottom-4 right-4 text-sm text-gray-400 hover:text-coral transition-colors z-20"
+                title={showAllLocations ? "Hide all locations" : "Show all locations"}
+              >
+                {showAllLocations ? '◉' : '○'}
+              </button>
+            </div>
           </div>
 
           {/* Right Cities List */}
