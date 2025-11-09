@@ -4,6 +4,7 @@ import AboutMapSection from '@/components/AboutMapSection'
 import AboutVideoSection from '@/components/AboutVideoSection'
 import AboutTextSection from '@/components/AboutTextSection'
 import AboutHowSection from '@/components/AboutHowSection'
+import AboutOfferSection from '@/components/AboutOfferSection'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
 
@@ -16,6 +17,7 @@ export default function AboutPage() {
       <AboutVideoSection />
       <AboutTextSection />
       <AboutHowSection />
+      <AboutOfferSection />
 
       <Footer />
       <CookieConsent />
