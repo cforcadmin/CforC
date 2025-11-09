@@ -1,9 +1,15 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-export default function Footer() {
+interface FooterProps {
+  variant?: 'default' | 'members'
+}
+
+export default function Footer({ variant = 'default' }: FooterProps) {
+  const bgColor = variant === 'members' ? 'bg-[#F5F0EB]' : 'bg-gray-100'
+
   return (
-    <footer className="bg-gray-100">
+    <footer className={bgColor}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex flex-col md:flex-row justify-between items-start mb-6">
           {/* Logo */}
