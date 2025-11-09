@@ -141,9 +141,61 @@ export default function CookiesPage() {
             </div>
 
             <h3 className="text-2xl font-bold mb-4 mt-12 text-charcoal">Στατιστικά Cookies</h3>
-            <p className="mb-12 leading-relaxed text-gray-500 italic">
-              Περιεχόμενο θα προστεθεί σύντομα...
+
+            <p className="mb-6 leading-relaxed">
+              Τα στατιστικά cookies (ή cookies ανάλυσης) συλλέγουν πληροφορίες σχετικά με τον τρόπο με τον οποίο οι χρήστες χρησιμοποιούν τον ιστότοπο, όπως ποιες σελίδες επισκέπτονται πιο συχνά και εάν λαμβάνουν μηνύματα σφάλματος από ιστοσελίδες. Αυτά τα cookies δεν συλλέγουν πληροφορίες που ταυτοποιούν έναν επισκέπτη. Όλες οι πληροφορίες που συλλέγουν αυτά τα cookies είναι συγκεντρωτικές και επομένως ανώνυμες. Χρησιμοποιούνται μόνο για τη βελτίωση της λειτουργίας του ιστότοπου.
             </p>
+
+            <div className="overflow-x-auto mb-12">
+              <table className="min-w-full bg-white border border-gray-300 rounded-lg">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-bold text-charcoal border-b border-gray-300">Όνομα Cookie</th>
+                    <th className="px-6 py-3 text-left text-sm font-bold text-charcoal border-b border-gray-300">Πάροχος</th>
+                    <th className="px-6 py-3 text-left text-sm font-bold text-charcoal border-b border-gray-300">Σκοπός</th>
+                    <th className="px-6 py-3 text-left text-sm font-bold text-charcoal border-b border-gray-300">Διάρκεια</th>
+                    <th className="px-6 py-3 text-left text-sm font-bold text-charcoal border-b border-gray-300">Τύπος</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-700">_ga</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">google-analytics.com</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">Χρησιμοποιείται για τη διάκριση μεμονωμένων χρηστών στον τομέα σας.</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">2 έτη</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">HTTP</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-700">_gat</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">google-analytics.com</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">Χρησιμοποιείται για τον περιορισμό του αριθμού των αιτημάτων χρηστών προκειμένου να διατηρηθεί η καλή απόδοση του ιστότοπου.</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">1 λεπτό</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">HTTP</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-700">_gid</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">google-analytics.com</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">Χρησιμοποιείται για τη διάκριση μεμονωμένων χρηστών στον τομέα σας.</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">24 ώρες</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">HTTP</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-700">AMP_TOKEN</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">google-analytics.com</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">Περιέχει μοναδικό ID που έχει ανατεθεί σε κάθε χρήστη στον τομέα σας.</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">Έως 1 έτος</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">HTTP</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-700">_gac_&lt;property-id&gt;</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">google-analytics.com</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">Περιέχει μοναδικό ID που κάνει το Google Analytics και τις διαφημίσεις να λειτουργούν μαζί.</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">90 ημέρες</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">HTTP</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
