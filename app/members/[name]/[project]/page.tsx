@@ -162,7 +162,7 @@ export default function ProjectDetailPage() {
             {projectData.pictures && projectData.pictures[0] && (
               <div className="aspect-[16/9] relative rounded-3xl overflow-hidden mb-12">
                 <Image
-                  src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${projectData.pictures[0].url}`}
+                  src={projectData.pictures[0].url}
                   alt={projectData.pictures[0].alternativeText || projectData.title}
                   fill
                   className="object-cover"
@@ -230,7 +230,7 @@ export default function ProjectDetailPage() {
                 {otherProject.pictures && otherProject.pictures[0] && (
                   <div className="aspect-[4/3] relative">
                     <Image
-                      src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${otherProject.pictures[0].url}`}
+                      src={otherProject.pictures[0].url}
                       alt={otherProject.pictures[0].alternativeText || otherProject.title}
                       fill
                       className="object-cover"

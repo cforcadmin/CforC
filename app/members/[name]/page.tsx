@@ -225,7 +225,7 @@ export default function MemberDetailPage() {
                   {member.Project1Pictures && member.Project1Pictures[0] && (
                     <div className="aspect-[4/3] relative">
                       <Image
-                        src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${member.Project1Pictures[0].url}`}
+                        src={member.Project1Pictures[0].url}
                         alt={member.Project1Pictures[0].alternativeText || member.Project1Title}
                         fill
                         className="object-cover"
@@ -246,7 +246,7 @@ export default function MemberDetailPage() {
                   {member.Project2Pictures && member.Project2Pictures[0] && (
                     <div className="aspect-[4/3] relative">
                       <Image
-                        src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${member.Project2Pictures[0].url}`}
+                        src={member.Project2Pictures[0].url}
                         alt={member.Project2Pictures[0].alternativeText || member.Project2Title}
                         fill
                         className="object-cover"
