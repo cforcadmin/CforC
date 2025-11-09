@@ -70,8 +70,8 @@ export default function AboutTextSection() {
     if (!isStatsVisible) return
 
     const duration = 3000 // 3 seconds
-    const target1 = 6
-    const target2 = 82
+    const target1 = 10
+    const target2 = 101
     const steps = 60 // 60 frames for smooth animation
     const increment1 = target1 / steps
     const increment2 = target2 / steps

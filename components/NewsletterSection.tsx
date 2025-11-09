@@ -49,7 +49,7 @@ export default function NewsletterSection() {
             {/* Left - Text */}
             <div>
               <p className="text-coral text-sm font-medium mb-4">ΟΛΑ TA NEA ΣTO EMAIL ΣΑΣ!</p>
-              <h2 className="text-3xl md:text-4xl font-bold leading-tight mb-6">
+              <h2 className="text-2xl md:text-3xl font-bold leading-tight mb-6">
                 Γραφτείτε στο newsletter μας, για να<br />
                 λαμβάνετε τις δράσεις του Δικτύου,<br />
                 ευκαιρίες για επαγγελματίες και νέα από<br />
