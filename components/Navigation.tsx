@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 interface NavigationProps {
@@ -9,12 +9,26 @@ interface NavigationProps {
 
 export default function Navigation({ variant = 'default' }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Detect if scrolled past hero section (approximately 25vh)
+      const scrollPosition = window.scrollY
+      setIsScrolled(scrollPosition > 150)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const bgColor = variant === 'members' ? 'bg-[#F5F0EB]' : 'bg-coral'
+  const bgOpacity = isScrolled ? (variant === 'members' ? 'bg-[#F5F0EB]/90' : 'bg-coral/90') : bgColor
 
   return (
-    <nav className={`fixed top-0 w-full ${bgColor} z-50 shadow-sm`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className={`fixed ${isScrolled ? 'top-2' : 'top-0'} w-full z-50 shadow-sm transition-all duration-300 ${isScrolled ? 'px-4' : ''}`}>
+      <div className={`${bgOpacity} ${isScrolled ? 'rounded-2xl scale-90' : ''} transition-all duration-300`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center">
@@ -62,12 +76,12 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
               )}
             </svg>
           </button>
+          </div>
         </div>
-      </div>
 
-      {/* Mobile menu */}
-      {isOpen && (
-        <div className={`md:hidden ${bgColor} border-t ${variant === 'members' ? 'border-gray-300' : 'border-coral-dark'}`}>
+        {/* Mobile menu */}
+        {isOpen && (
+          <div className={`md:hidden ${bgColor} border-t ${variant === 'members' ? 'border-gray-300' : 'border-coral-dark'}`}>
           <div className="px-4 py-4 space-y-3">
             <Link href="/about" className="block text-sm font-medium py-2">ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</Link>
             <Link href="/activities" className="block text-sm font-medium py-2">ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</Link>
@@ -76,9 +90,10 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
             <Link href="/members" className="block w-full bg-white text-charcoal px-6 py-2 rounded-full text-sm font-medium text-center">
               ΕΥΡΕΣΗ ΜΕΛΩΝ
             </Link>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </nav>
   )
 }
