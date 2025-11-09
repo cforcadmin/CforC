@@ -83,9 +83,62 @@ export default function CookiesPage() {
             </p>
 
             <h3 className="text-2xl font-bold mb-4 mt-12 text-charcoal">Απολύτως Απαραίτητα Cookies</h3>
-            <p className="mb-12 leading-relaxed text-gray-500 italic">
-              Περιεχόμενο θα προστεθεί σύντομα...
+
+            <p className="mb-6 leading-relaxed">
+              Τα απολύτως απαραίτητα cookies (strictly necessary cookies) είναι εκείνα τα cookies που είναι ουσιαστικής σημασίας για τη βασική λειτουργία μιας ιστοσελίδας και χωρίς τα οποία ο ιστότοπος δεν θα λειτουργούσε σωστά. Δεν συλλέγουν πληροφορίες προσωπικής ταυτοποίησης ούτε παρακολουθούν τις συνήθειες περιήγησης του χρήστη για σκοπούς μάρκετινγκ.
             </p>
+
+            <p className="mb-6 leading-relaxed">
+              Σύμφωνα με τον Γενικό Κανονισμό Προστασίας Δεδομένων (GDPR) και την Οδηγία ePrivacy, αυτά τα cookies εξαιρούνται από την απαίτηση συναίνεσης του χρήστη, επειδή είναι απαραίτητα για την παροχή μιας υπηρεσίας που έχει ζητήσει ρητά ο χρήστης (π.χ., λειτουργία καλαθιού αγορών). Ωστόσο, η ιστοσελίδα πρέπει να ενημερώνει τους χρήστες για τη χρήση τους στην πολιτική cookies.
+            </p>
+
+            <p className="mb-6 leading-relaxed">
+              Παραδείγματα απολύτως απαραίτητων cookies περιλαμβάνουν cookies συνεδρίας, cookies ελέγχου ταυτότητας, cookies ασφαλείας, cookies προτιμήσεων διεπαφής χρήστη, και cookies διαχείρισης φόρμας. Ουσιαστικά, κάθε cookie που, αν απενεργοποιηθεί, θα έκανε τον ιστότοπο μη λειτουργικό ή θα παρείχε μια πολύ κακή εμπειρία χρήστη, είναι πιθανώς απολύτως απαραίτητο.
+            </p>
+
+            <div className="overflow-x-auto mb-12">
+              <table className="min-w-full bg-white border border-gray-300 rounded-lg">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-bold text-charcoal border-b border-gray-300">Όνομα Cookie</th>
+                    <th className="px-6 py-3 text-left text-sm font-bold text-charcoal border-b border-gray-300">Πάροχος</th>
+                    <th className="px-6 py-3 text-left text-sm font-bold text-charcoal border-b border-gray-300">Σκοπός</th>
+                    <th className="px-6 py-3 text-left text-sm font-bold text-charcoal border-b border-gray-300">Διάρκεια</th>
+                    <th className="px-6 py-3 text-left text-sm font-bold text-charcoal border-b border-gray-300">Τύπος</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-700">session_id</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">cultureforchange.net</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">Διατηρεί τη σύνδεση του χρήστη κατά την περιήγηση.</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">Διάρκεια συνεδρίας</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">HTTP</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-700">cookie_consent</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">cultureforchange.net</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">Αποθηκεύει τις προτιμήσεις συγκατάθεσης cookies του χρήστη.</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">1 έτος</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">HTTP</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-700">security_token</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">cultureforchange.net</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">Χρησιμοποιείται για λόγους ασφαλείας και πρόληψης απάτης.</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">Διάρκεια συνεδρίας</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">HTTP</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-700">language_pref</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">cultureforchange.net</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">Θυμάται τη γλώσσα που επιλέξατε.</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">1 έτος</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">HTTP</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
             <h3 className="text-2xl font-bold mb-4 mt-12 text-charcoal">Στατιστικά Cookies</h3>
             <p className="mb-12 leading-relaxed text-gray-500 italic">
