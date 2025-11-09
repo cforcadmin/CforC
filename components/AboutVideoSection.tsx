@@ -25,7 +25,7 @@ export default function AboutVideoSection() {
                   src="/about-us-video-thumbnail.png"
                   alt="Video thumbnail"
                   fill
-                  className="object-cover rounded-lg"
+                  className="object-cover rounded-2xl"
                 />
                 {/* Play button overlay */}
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -43,7 +43,7 @@ export default function AboutVideoSection() {
             ) : (
               // Video player
               <video
-                className="w-full h-full rounded-lg"
+                className="w-full h-full rounded-2xl"
                 controls
                 autoPlay
                 src="/about-us-video.mp4"
