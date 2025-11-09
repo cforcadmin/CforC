@@ -21,6 +21,9 @@ export async function POST(request: Request) {
       )
     }
 
+    // Use Resend test domain for testing: onboarding@resend.dev
+    const fromEmail = 'onboarding@resend.dev'
+
     // Email to admin (notification)
     const adminEmailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -29,9 +32,9 @@ export async function POST(request: Request) {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Culture for Change <newsletter@cultureforchange.net>',
+        from: fromEmail,
         to: ['contact@yoryosstyl.com'],
-        subject: 'Νέα Εγγραφή στο Newsletter',
+        subject: 'Νέα Εγγραφή στο Newsletter - Culture for Change',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #2d3748;">Νέα Εγγραφή στο Newsletter</h2>
@@ -41,6 +44,9 @@ export async function POST(request: Request) {
             <div style="background-color: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <p style="margin: 0; color: #2d3748;">
                 <strong>Email:</strong> ${email}
+              </p>
+              <p style="margin: 10px 0 0 0; color: #718096; font-size: 14px;">
+                <strong>Ημερομηνία:</strong> ${new Date().toLocaleString('el-GR')}
               </p>
             </div>
           </div>
@@ -61,7 +67,7 @@ export async function POST(request: Request) {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Culture for Change <newsletter@cultureforchange.net>',
+        from: fromEmail,
         to: [email],
         subject: 'Καλώς ήρθες στο Culture for Change!',
         html: `
@@ -75,7 +81,9 @@ export async function POST(request: Request) {
               <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
                 <!-- Logo Section -->
                 <div style="background-color: #FF6B4A; padding: 40px 20px; text-align: center; border-radius: 24px 24px 0 0;">
-                  <img src="https://cultureforchange.net/cforc_logo.svg" alt="Culture for Change" style="max-width: 200px; height: auto;">
+                  <div style="background-color: white; display: inline-block; padding: 20px 40px; border-radius: 16px;">
+                    <h1 style="color: #2d3748; margin: 0; font-size: 24px;">CULTURE FOR CHANGE</h1>
+                  </div>
                 </div>
 
                 <!-- Content Section -->
