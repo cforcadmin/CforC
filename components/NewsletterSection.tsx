@@ -3,10 +3,16 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
-export default function NewsletterSection() {
+interface NewsletterSectionProps {
+  variant?: 'default' | 'members'
+}
+
+export default function NewsletterSection({ variant = 'default' }: NewsletterSectionProps) {
   const [email, setEmail] = useState('')
   const [showPopup, setShowPopup] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const bgColor = variant === 'members' ? 'bg-[#F5F0EB]' : 'bg-gray-50'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,7 +49,7 @@ export default function NewsletterSection() {
 
   return (
     <>
-      <section className="py-24 bg-gray-50">
+      <section className={`py-24 ${bgColor}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left - Text */}
