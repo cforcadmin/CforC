@@ -144,7 +144,7 @@ export default function LanguageSwitcher() {
                 onClick={resetToGreek}
                 className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors flex items-center gap-2"
               >
-                <span className="text-sm font-medium text-coral notranslate">← Back to Greek | Επιστροφή στα Ελληνικά</span>
+                <span className="text-sm font-medium text-coral notranslate">← Back to Greek</span>
               </button>
               <div className="border-t border-gray-200 my-2"></div>
             </>
