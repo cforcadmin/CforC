@@ -5,6 +5,7 @@ import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
 import ScrollToTop from '@/components/ScrollToTop'
+import LoadingIndicator from '@/components/LoadingIndicator'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -53,9 +54,7 @@ export default function MembersPage() {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        // Add a small delay to show loading state (for testing - can remove later)
-        await new Promise(resolve => setTimeout(resolve, 1500))
-
+        setIsLoading(true)
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/members?populate=*`,
           {
@@ -162,6 +161,9 @@ export default function MembersPage() {
       {/* Main Content */}
       <section className="pt-32 pb-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Loading Indicator */}
+          {isLoading && <LoadingIndicator />}
+
           {/* Info Box */}
           <div className="bg-white rounded-3xl p-8 mb-12 relative">
             <div className="absolute top-8 right-8 text-right">
@@ -224,57 +226,41 @@ export default function MembersPage() {
           </div>
 
           {/* Members Grid */}
-          {isLoading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="bg-white rounded-3xl overflow-hidden animate-pulse">
-                  <div className="aspect-[4/5] bg-gray-300"></div>
-                  <div className="p-6">
-                    <div className="h-3 bg-gray-300 rounded w-3/4 mb-2"></div>
-                    <div className="h-6 bg-gray-300 rounded w-full"></div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredMembers.map((member) => (
+              <Link
+                key={member.id}
+                href={`/members/${encodeURIComponent(member.Name)}`}
+                className="bg-white rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 group"
+              >
+                {member.Image && member.Image.length > 0 && member.Image[0].url ? (
+                  <div className="aspect-[4/5] relative bg-gray-200 overflow-hidden">
+                    <Image
+                      src={member.Image[0].url}
+                      alt={member.Image[0].alternativeText || member.Name}
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
                   </div>
+                ) : (
+                  <div className="aspect-[4/5] bg-gray-200 flex items-center justify-center">
+                    <span className="text-gray-400 text-4xl">{member.Name.charAt(0)}</span>
+                  </div>
+                )}
+                <div className="p-6">
+                  <p className="text-coral text-xs mb-2 uppercase">
+                    {member.FieldsOfWork}
+                  </p>
+                  <h3 className="text-xl font-bold">{member.Name}</h3>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {filteredMembers.map((member) => (
-                  <Link
-                    key={member.id}
-                    href={`/members/${encodeURIComponent(member.Name)}`}
-                    className="bg-white rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 group"
-                  >
-                    {member.Image && member.Image.length > 0 && member.Image[0].url ? (
-                      <div className="aspect-[4/5] relative bg-gray-200 overflow-hidden">
-                        <Image
-                          src={member.Image[0].url}
-                          alt={member.Image[0].alternativeText || member.Name}
-                          fill
-                          className="object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
-                      </div>
-                    ) : (
-                      <div className="aspect-[4/5] bg-gray-200 flex items-center justify-center">
-                        <span className="text-gray-400 text-4xl">{member.Name.charAt(0)}</span>
-                      </div>
-                    )}
-                    <div className="p-6">
-                      <p className="text-coral text-xs mb-2 uppercase">
-                        {member.FieldsOfWork}
-                      </p>
-                      <h3 className="text-xl font-bold">{member.Name}</h3>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+              </Link>
+            ))}
+          </div>
 
-              {filteredMembers.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-gray-600">Δεν βρέθηκαν μέλη με τα επιλεγμένα κριτήρια.</p>
-                </div>
-              )}
-            </>
+          {filteredMembers.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-600">Δεν βρέθηκαν μέλη με τα επιλεγμένα κριτήρια.</p>
+            </div>
           )}
         </div>
       </section>

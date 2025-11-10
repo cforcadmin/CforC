@@ -6,6 +6,7 @@ import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
 import NewsletterSection from '@/components/NewsletterSection'
 import ScrollToTop from '@/components/ScrollToTop'
+import LoadingIndicator from '@/components/LoadingIndicator'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getActivities } from '@/lib/strapi'
@@ -94,6 +95,9 @@ export default function ActivitiesPage() {
       {/* Activities Section with Filtering */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Loading Indicator */}
+          {loading && <LoadingIndicator />}
+
           {/* Filters Section */}
           <div className="mb-12 bg-gray-50 rounded-2xl p-6 shadow-md">
             <div className="grid md:grid-cols-4 gap-4">
@@ -168,15 +172,6 @@ export default function ActivitiesPage() {
               Βρέθηκαν {filteredActivities.length} δραστηριότητες
             </div>
           </div>
-
-          {/* Loading State */}
-          {loading && (
-            <div className="grid md:grid-cols-3 gap-10">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="h-96 bg-gray-200 rounded-2xl animate-pulse"></div>
-              ))}
-            </div>
-          )}
 
           {/* Error State */}
           {error && !loading && (

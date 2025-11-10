@@ -6,6 +6,7 @@ import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
 import NewsletterSection from '@/components/NewsletterSection'
 import ScrollToTop from '@/components/ScrollToTop'
+import LoadingIndicator from '@/components/LoadingIndicator'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getOpenCalls } from '@/lib/strapi'
@@ -105,6 +106,9 @@ export default function OpenCallsPage() {
       {/* Open Calls Section with Filtering */}
       <section className="py-24 bg-orange-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Loading Indicator */}
+          {loading && <LoadingIndicator />}
+
           {/* Filters Section */}
           <div className="mb-12 bg-white rounded-2xl p-6 shadow-md">
             <div className="grid md:grid-cols-3 gap-4">
@@ -161,15 +165,6 @@ export default function OpenCallsPage() {
               Βρέθηκαν {filteredCalls.length} καλέσματα
             </div>
           </div>
-
-          {/* Loading State */}
-          {loading && (
-            <div className="animate-pulse space-y-8">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-          )}
 
           {/* Error State */}
           {error && !loading && (
