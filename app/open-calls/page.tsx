@@ -93,18 +93,14 @@ export default function OpenCallsPage() {
 
   return (
     <main className="min-h-screen">
-      <Navigation
-        heroText="OPEN CALLS"
-        navbarText="ΑΝΟΙΧΤΑ ΚΑΛΕΣΜΑΤΑ"
-        enableMorph={true}
-      />
+      <Navigation pageTitle="OPEN CALLS" />
 
       {/* Hero Section */}
       <section className="relative -bottom-20">
         <div className="bg-coral h-[25vh] flex items-center rounded-b-3xl relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <h1 className={`text-5xl md:text-6xl lg:text-7xl font-bold leading-none ${
-              isScrolled ? 'invisible' : 'visible'
+            <h1 className={`text-5xl md:text-6xl lg:text-7xl font-bold leading-none transition-opacity duration-500 ${
+              isScrolled ? 'opacity-0' : 'opacity-100'
             }`}>
               <div>OPEN CALLS</div>
             </h1>

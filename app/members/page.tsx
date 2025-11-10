@@ -147,20 +147,15 @@ export default function MembersPage() {
 
   return (
     <main className="min-h-screen bg-[#F5F0EB]">
-      <Navigation
-        variant="members"
-        heroText="ΑΝΑΖΗΤΗΣΗ ΜΕΛΩΝ"
-        navbarText="ΕΥΡΕΣΗ ΜΕΛΩΝ"
-        enableMorph={true}
-      />
+      <Navigation variant="members" pageTitle="ΑΝΑΖΗΤΗΣΗ ΜΕΛΩΝ" />
 
       {/* Hero Section */}
       <section className="relative -bottom-20">
         <div className="relative h-[25vh] flex items-center rounded-b-3xl overflow-hidden z-10">
           <div className="absolute inset-0 bg-coral opacity-20"></div>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
-            <h1 className={`text-5xl md:text-6xl lg:text-7xl font-bold leading-none ${
-              isScrolled ? 'invisible' : 'visible'
+            <h1 className={`text-5xl md:text-6xl lg:text-7xl font-bold leading-none transition-opacity duration-500 ${
+              isScrolled ? 'opacity-0' : 'opacity-100'
             }`}>
               ΑΝΑΖΗΤΗΣΗ<br />ΜΕΛΩΝ
             </h1>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 
-const SCROLL_THRESHOLD = 40
+const SCROLL_THRESHOLD = 20
 
 export function useScrollAnimation() {
   const [scrollY, setScrollY] = useState(0)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import LanguageSwitcher from './LanguageSwitcher'
@@ -8,20 +8,13 @@ import { useScrollAnimation } from '@/lib/useScrollAnimation'
 
 interface NavigationProps {
   variant?: 'default' | 'members'
-  heroText?: string
-  navbarText?: string
-  enableMorph?: boolean
+  pageTitle?: string | React.ReactNode
 }
 
-export default function Navigation({ variant = 'default', heroText, navbarText, enableMorph = false }: NavigationProps) {
+export default function Navigation({ variant = 'default', pageTitle }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [isMorphing, setIsMorphing] = useState(false)
-  const [morphComplete, setMorphComplete] = useState(false)
-  const [morphStyle, setMorphStyle] = useState<React.CSSProperties>({})
   const { isScrolled } = useScrollAnimation()
   const pathname = usePathname()
-  const activeNavRef = useRef<HTMLAnchorElement>(null)
-  const morphTextRef = useRef<HTMLDivElement>(null)
 
   // Determine active menu item
   const isActive = (path: string) => {
@@ -30,40 +23,6 @@ export default function Navigation({ variant = 'default', heroText, navbarText, 
     return false
   }
 
-  // Handle morphing animation
-  useEffect(() => {
-    if (!enableMorph || !heroText || !navbarText) return
-
-    if (isScrolled && !isMorphing && !morphComplete) {
-      // Start morphing
-      setIsMorphing(true)
-
-      // Calculate position to morph to
-      if (activeNavRef.current) {
-        const navRect = activeNavRef.current.getBoundingClientRect()
-        const heroStartX = window.innerWidth < 768 ? 20 : 100 // Approximate hero starting position
-        const heroStartY = window.innerWidth < 768 ? 60 : 80
-
-        const morphX = navRect.left + navRect.width / 2 - heroStartX
-        const morphY = navRect.top + navRect.height / 2 - heroStartY - window.scrollY
-
-        setMorphStyle({
-          '--morph-x': `${morphX}px`,
-          '--morph-y': `${morphY}px`,
-        } as React.CSSProperties)
-      }
-
-      // Complete morph after animation
-      setTimeout(() => {
-        setIsMorphing(false)
-        setMorphComplete(true)
-      }, 800)
-    } else if (!isScrolled && morphComplete) {
-      // Reset when scrolling back up
-      setMorphComplete(false)
-    }
-  }, [isScrolled, enableMorph, heroText, navbarText, isMorphing, morphComplete])
-
   const bgColor = variant === 'members' ? 'bg-[#F5F0EB]' : 'bg-coral'
   const bgOpacity = isScrolled ? (variant === 'members' ? 'bg-[#F5F0EB]/95' : 'bg-coral/95') : bgColor
 
@@ -71,7 +30,7 @@ export default function Navigation({ variant = 'default', heroText, navbarText, 
     <nav className={`fixed ${isScrolled ? 'top-2' : 'top-0'} w-full z-50 shadow-sm transition-all duration-500 ${isScrolled ? 'px-4' : ''}`}>
       <div className={`${bgOpacity} ${isScrolled ? 'rounded-2xl' : ''} transition-all duration-500 backdrop-blur-sm`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20 relative overflow-visible">
+        <div className="flex justify-between items-center h-20 relative">
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <img
@@ -81,29 +40,11 @@ export default function Navigation({ variant = 'default', heroText, navbarText, 
             />
           </Link>
 
-          {/* Morphing Title - animates from hero to navbar */}
-          {enableMorph && isMorphing && heroText && navbarText && (
-            <div
-              className="fixed pointer-events-none z-[100]"
-              style={{
-                left: window.innerWidth < 768 ? '20px' : '100px',
-                top: window.innerWidth < 768 ? '60px' : '80px',
-              }}
-            >
-              <div
-                ref={morphTextRef}
-                className="text-5xl md:text-6xl lg:text-7xl font-bold whitespace-nowrap animate-morphToNav"
-                style={morphStyle}
-              >
-                {/* Crossfade from hero text to navbar text */}
-                <span className="relative inline-block">
-                  <span className="absolute inset-0 animate-[fadeOut_0.4s_ease-in-out_forwards]">
-                    {heroText}
-                  </span>
-                  <span className="animate-[fadeIn_0.4s_0.4s_ease-in-out_forwards] opacity-0">
-                    {navbarText}
-                  </span>
-                </span>
+          {/* Flying Title - appears when scrolled */}
+          {isScrolled && pageTitle && (
+            <div className="absolute left-24 md:left-32 top-1/2 -translate-y-1/2 pointer-events-none">
+              <div className="text-xl md:text-2xl font-bold animate-flyIn">
+                {pageTitle}
               </div>
             </div>
           )}
@@ -111,10 +52,9 @@ export default function Navigation({ variant = 'default', heroText, navbarText, 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-2">
             <Link
-              ref={isActive('/about') ? activeNavRef : null}
               href="/about"
               className={`text-sm font-medium hover:text-charcoal transition-all duration-300 px-3 py-2 ${
-                isActive('/about') && morphComplete
+                isActive('/about') && isScrolled
                   ? 'scale-125 font-extrabold'
                   : ''
               }`}
@@ -122,10 +62,9 @@ export default function Navigation({ variant = 'default', heroText, navbarText, 
               ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ
             </Link>
             <Link
-              ref={isActive('/activities') ? activeNavRef : null}
               href="/activities"
               className={`text-sm font-medium hover:text-charcoal transition-all duration-300 px-3 py-2 ${
-                isActive('/activities') && morphComplete
+                isActive('/activities') && isScrolled
                   ? 'scale-125 font-extrabold'
                   : ''
               }`}
@@ -133,10 +72,9 @@ export default function Navigation({ variant = 'default', heroText, navbarText, 
               ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ
             </Link>
             <Link
-              ref={isActive('/open-calls') ? activeNavRef : null}
               href="/open-calls"
               className={`text-sm font-medium hover:text-charcoal transition-all duration-300 px-3 py-2 ${
-                isActive('/open-calls') && morphComplete
+                isActive('/open-calls') && isScrolled
                   ? 'scale-125 font-extrabold'
                   : ''
               }`}
@@ -144,10 +82,9 @@ export default function Navigation({ variant = 'default', heroText, navbarText, 
               ΑΝΟΙΧΤΑ ΚΑΛΕΣΜΑΤΑ
             </Link>
             <Link
-              ref={isActive('/participation') ? activeNavRef : null}
               href="/participation"
               className={`text-sm font-medium hover:text-charcoal transition-all duration-300 px-3 py-2 ${
-                isActive('/participation') && morphComplete
+                isActive('/participation') && isScrolled
                   ? 'scale-125 font-extrabold'
                   : ''
               }`}
@@ -155,10 +92,9 @@ export default function Navigation({ variant = 'default', heroText, navbarText, 
               ΣΥΜΜΕΤΟΧΗ
             </Link>
             <Link
-              ref={isActive('/members') ? activeNavRef : null}
               href="/members"
               className={`bg-white text-charcoal px-6 py-2 rounded-full text-sm font-medium hover:bg-gray-100 transition-all duration-300 ${
-                isActive('/members') && morphComplete
+                isActive('/members') && isScrolled
                   ? 'scale-125 font-extrabold'
                   : ''
               }`}
