@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import LoadingIndicator from './LoadingIndicator'
 import { getActivities } from '@/lib/strapi'
 import type { StrapiResponse, StrapiData, Activity } from '@/lib/types'
 
@@ -16,6 +17,10 @@ export default function ActivitiesSection() {
     async function fetchActivities() {
       try {
         setLoading(true)
+
+        // TESTING DELAY - Remove this line when done testing
+        await new Promise(resolve => setTimeout(resolve, 3000))
+
         console.log('Fetching activities from Strapi...')
         console.log('Strapi URL:', process.env.NEXT_PUBLIC_STRAPI_URL)
 
@@ -53,15 +58,7 @@ export default function ActivitiesSection() {
     return (
       <section id="activities" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-            <div className="h-12 bg-gray-200 rounded w-1/2 mb-12"></div>
-            <div className="grid md:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-96 bg-gray-200 rounded-lg"></div>
-              ))}
-            </div>
-          </div>
+          <LoadingIndicator />
         </div>
       </section>
     )
