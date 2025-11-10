@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useScrollAnimation } from '@/lib/useScrollAnimation';
 
 const rotatingTexts = ["CHANGE", "INNOVATION", "PROGRESS", "CREATION"];
 
 export default function HeroSection() {
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
+  const { isScrolled } = useScrollAnimation();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -20,7 +22,9 @@ export default function HeroSection() {
       {/* Orange Card with Rotating Text - 25% viewport height */}
       <div className="bg-coral h-[25vh] flex items-center rounded-b-3xl relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none">
+          <h1 className={`text-5xl md:text-6xl lg:text-7xl font-bold leading-none transition-opacity duration-500 ${
+            isScrolled ? 'opacity-0' : 'opacity-100'
+          }`}>
             <div>CULTURE</div>
             <div className="flex items-center">
               <span>FOR&nbsp;</span>

@@ -2,35 +2,35 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import LanguageSwitcher from './LanguageSwitcher'
+import { useScrollAnimation } from '@/lib/useScrollAnimation'
 
 interface NavigationProps {
   variant?: 'default' | 'members'
+  pageTitle?: string | React.ReactNode
 }
 
-export default function Navigation({ variant = 'default' }: NavigationProps) {
+export default function Navigation({ variant = 'default', pageTitle }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [isScrolled, setIsScrolled] = useState(false)
+  const { isScrolled } = useScrollAnimation()
+  const pathname = usePathname()
 
-  useEffect(() => {
-    const handleScroll = () => {
-      // Detect if scrolled past hero section (approximately 25vh)
-      const scrollPosition = window.scrollY
-      setIsScrolled(scrollPosition > 150)
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  // Determine active menu item
+  const isActive = (path: string) => {
+    if (path === '/' && pathname === '/') return true
+    if (path !== '/' && pathname?.startsWith(path)) return true
+    return false
+  }
 
   const bgColor = variant === 'members' ? 'bg-[#F5F0EB]' : 'bg-coral'
-  const bgOpacity = isScrolled ? (variant === 'members' ? 'bg-[#F5F0EB]/90' : 'bg-coral/90') : bgColor
+  const bgOpacity = isScrolled ? (variant === 'members' ? 'bg-[#F5F0EB]/95' : 'bg-coral/95') : bgColor
 
   return (
-    <nav className={`fixed ${isScrolled ? 'top-2' : 'top-0'} w-full z-50 shadow-sm transition-all duration-300 ${isScrolled ? 'px-4' : ''}`}>
-      <div className={`${bgOpacity} ${isScrolled ? 'rounded-2xl scale-90' : ''} transition-all duration-300`}>
+    <nav className={`fixed ${isScrolled ? 'top-2' : 'top-0'} w-full z-50 shadow-sm transition-all duration-500 ${isScrolled ? 'px-4' : ''}`}>
+      <div className={`${bgOpacity} ${isScrolled ? 'rounded-2xl' : ''} transition-all duration-500 backdrop-blur-sm`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className="flex justify-between items-center h-20 relative">
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <img
@@ -40,21 +40,65 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
             />
           </Link>
 
+          {/* Flying Title - appears when scrolled */}
+          {isScrolled && pageTitle && (
+            <div className="absolute left-24 md:left-32 top-1/2 -translate-y-1/2 pointer-events-none">
+              <div className="text-xl md:text-2xl font-bold animate-flyIn">
+                {pageTitle}
+              </div>
+            </div>
+          )}
+
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link href="/about" className="text-sm font-medium hover:text-charcoal transition-colors">
+          <div className="hidden md:flex items-center gap-2">
+            <Link
+              href="/about"
+              className={`text-sm font-medium hover:text-charcoal transition-all duration-300 px-3 py-2 ${
+                isActive('/about') && isScrolled
+                  ? 'scale-125 font-extrabold'
+                  : ''
+              }`}
+            >
               ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ
             </Link>
-            <Link href="/activities" className="text-sm font-medium hover:text-charcoal transition-colors">
+            <Link
+              href="/activities"
+              className={`text-sm font-medium hover:text-charcoal transition-all duration-300 px-3 py-2 ${
+                isActive('/activities') && isScrolled
+                  ? 'scale-125 font-extrabold'
+                  : ''
+              }`}
+            >
               ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ
             </Link>
-            <Link href="/open-calls" className="text-sm font-medium hover:text-charcoal transition-colors">
+            <Link
+              href="/open-calls"
+              className={`text-sm font-medium hover:text-charcoal transition-all duration-300 px-3 py-2 ${
+                isActive('/open-calls') && isScrolled
+                  ? 'scale-125 font-extrabold'
+                  : ''
+              }`}
+            >
               ΑΝΟΙΧΤΑ ΚΑΛΕΣΜΑΤΑ
             </Link>
-            <Link href="/participation" className="text-sm font-medium hover:text-charcoal transition-colors">
+            <Link
+              href="/participation"
+              className={`text-sm font-medium hover:text-charcoal transition-all duration-300 px-3 py-2 ${
+                isActive('/participation') && isScrolled
+                  ? 'scale-125 font-extrabold'
+                  : ''
+              }`}
+            >
               ΣΥΜΜΕΤΟΧΗ
             </Link>
-            <Link href="/members" className="bg-white text-charcoal px-6 py-2 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors">
+            <Link
+              href="/members"
+              className={`bg-white text-charcoal px-6 py-2 rounded-full text-sm font-medium hover:bg-gray-100 transition-all duration-300 ${
+                isActive('/members') && isScrolled
+                  ? 'scale-125 font-extrabold'
+                  : ''
+              }`}
+            >
               ΕΥΡΕΣΗ ΜΕΛΩΝ
             </Link>
             <LanguageSwitcher />

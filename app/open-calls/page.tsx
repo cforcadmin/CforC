@@ -11,6 +11,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getOpenCalls } from '@/lib/strapi'
 import type { StrapiResponse, OpenCall } from '@/lib/types'
+import { useScrollAnimation } from '@/lib/useScrollAnimation'
 
 // Helper function to extract text from Strapi rich text blocks
 function extractTextFromBlocks(blocks: any): string {
@@ -37,6 +38,7 @@ export default function OpenCallsPage() {
   const [filteredCalls, setFilteredCalls] = useState<OpenCall[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { isScrolled } = useScrollAnimation()
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('')
@@ -91,13 +93,15 @@ export default function OpenCallsPage() {
 
   return (
     <main className="min-h-screen">
-      <Navigation />
+      <Navigation pageTitle="OPEN CALLS" />
 
       {/* Hero Section */}
       <section className="relative -bottom-20">
         <div className="bg-coral h-[25vh] flex items-center rounded-b-3xl relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none">
+            <h1 className={`text-5xl md:text-6xl lg:text-7xl font-bold leading-none transition-opacity duration-500 ${
+              isScrolled ? 'opacity-0' : 'opacity-100'
+            }`}>
               <div>OPEN CALLS</div>
             </h1>
           </div>
