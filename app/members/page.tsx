@@ -53,6 +53,9 @@ export default function MembersPage() {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
+        // Add a small delay to show loading state (for testing - can remove later)
+        await new Promise(resolve => setTimeout(resolve, 1500))
+
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/members?populate=*`,
           {
