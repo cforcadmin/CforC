@@ -55,6 +55,10 @@ export default function MembersPage() {
     const fetchMembers = async () => {
       try {
         setIsLoading(true)
+
+        // TESTING DELAY - Remove this line when done testing
+        await new Promise(resolve => setTimeout(resolve, 3000))
+
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/members?populate=*`,
           {
