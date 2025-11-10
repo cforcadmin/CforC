@@ -17,7 +17,7 @@ import ScrollToTop from '@/components/ScrollToTop'
 export default function AboutPage() {
   return (
     <main className="min-h-screen">
-      <Navigation />
+      <Navigation pageTitle="ABOUT US" />
       <AboutHeroSection />
       <AboutMapSection />
       <AboutVideoSection />

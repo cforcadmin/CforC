@@ -6,21 +6,26 @@ import CookieConsent from '@/components/CookieConsent'
 import NewsletterSection from '@/components/NewsletterSection'
 import ScrollToTop from '@/components/ScrollToTop'
 import Link from 'next/link'
+import { useScrollAnimation } from '@/lib/useScrollAnimation'
 
 export default function ParticipationPage() {
+  const { isScrolled } = useScrollAnimation()
+
   const handleOpenForm = () => {
     window.open('https://docs.google.com/forms/d/1J1Crq3_PIx0r2Qn8w3rv621m-_B30wan8x5xpVbxcSc/edit', '_blank')
   }
 
   return (
     <main className="min-h-screen">
-      <Navigation />
+      <Navigation pageTitle="GET INVOLVED" />
 
       {/* Hero Section */}
       <section className="relative -bottom-20">
         <div className="bg-coral h-[25vh] flex items-center rounded-b-3xl relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none">
+            <h1 className={`text-5xl md:text-6xl lg:text-7xl font-bold leading-none transition-opacity duration-500 ${
+              isScrolled ? 'opacity-0' : 'opacity-100'
+            }`}>
               GET INVOLVED
             </h1>
           </div>

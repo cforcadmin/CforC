@@ -11,12 +11,14 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getActivities } from '@/lib/strapi'
 import type { StrapiResponse, Activity } from '@/lib/types'
+import { useScrollAnimation } from '@/lib/useScrollAnimation'
 
 export default function ActivitiesPage() {
   const [allActivities, setAllActivities] = useState<Activity[]>([])
   const [filteredActivities, setFilteredActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { isScrolled } = useScrollAnimation()
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('')
@@ -80,13 +82,15 @@ export default function ActivitiesPage() {
 
   return (
     <main className="min-h-screen">
-      <Navigation />
+      <Navigation pageTitle="ACTIVITIES" />
 
       {/* Hero Section */}
       <section className="relative -bottom-20">
         <div className="bg-coral h-[25vh] flex items-center rounded-b-3xl relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none">
+            <h1 className={`text-5xl md:text-6xl lg:text-7xl font-bold leading-none transition-opacity duration-500 ${
+              isScrolled ? 'opacity-0' : 'opacity-100'
+            }`}>
               <div>ACTIVITIES</div>
             </h1>
           </div>
