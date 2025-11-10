@@ -43,36 +43,33 @@ body {
   }
 }
 
-/* Morphing title animation */
-@keyframes morphToNav {
-  0% {
+/* Flying title animation */
+@keyframes flyIn {
+  from {
+    opacity: 0;
+    transform: translate(-100px, 100px) scale(0.5);
+  }
+  to {
+    opacity: 1;
     transform: translate(0, 0) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(var(--morph-x), var(--morph-y)) scale(0.35);
-    opacity: 1;
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fadeOut {
+@keyframes flyOut {
   from {
     opacity: 1;
+    transform: translate(0, 0) scale(1);
   }
   to {
     opacity: 0;
+    transform: translate(-100px, 100px) scale(0.5);
   }
 }
 
-.animate-morphToNav {
-  animation: morphToNav 0.8s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+.animate-flyIn {
+  animation: flyIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-flyOut {
+  animation: flyOut 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
