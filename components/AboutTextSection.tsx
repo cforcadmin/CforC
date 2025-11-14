@@ -92,7 +92,7 @@ export default function AboutTextSection() {
   }, [isStatsVisible])
 
   return (
-    <section className="py-24 bg-white">
+    <section className="py-24 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div
@@ -101,8 +101,8 @@ export default function AboutTextSection() {
             isHeaderVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}
         >
-          <p className="text-coral text-sm font-medium mb-4">ΠΟΙΟΙ ΕΙΜΑΣΤΕ</p>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+          <p className="text-coral dark:text-coral-light text-sm font-medium mb-4">ΠΟΙΟΙ ΕΙΜΑΣΤΕ</p>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight dark:text-gray-100">
             ΛΙΓΑ ΛΟΓΙΑ ΓΙΑ ΤΟ<br />
             CULTURE FOR CHANGE
           </h2>
@@ -117,12 +117,12 @@ export default function AboutTextSection() {
         >
           {/* Left Column */}
           <div className="space-y-6">
-            <h3 className="text-2xl md:text-3xl font-bold leading-tight">
+            <h3 className="text-2xl md:text-3xl font-bold leading-tight dark:text-gray-100">
               Είμαστε το πρώτο ελληνικό Δίκτυο που<br />
               εκπροσωπεί τη φωνή περισσότερων από 100<br />
               επαγγελματιών
             </h3>
-            <p className="text-gray-700 leading-relaxed">
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
               διαφορετικού ακαδημαϊκού υπόβαθρου και πολλαπλών δεξιοτήτων από όλη
               τη χώρα, συμπεριλαμβανομένων ενδεικτικά, πολιτιστικών διαχειριστών,
               καλλιτεχνών, νομικών, επιστημόνων συμπεριφοράς, σχεδιαστών
@@ -134,7 +134,7 @@ export default function AboutTextSection() {
 
           {/* Right Column */}
           <div className="space-y-6">
-            <p className="text-gray-700 leading-relaxed">
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
               Υποστηρίζουμε και αναδεικνύουμε τις πρωτοβουλίες των μελών μας,
               παρέχοντάς τους δομές, πρακτικές, κατευθυντήριες γραμμές και ευκαιρίες
               συνεχιζόμενης εκπαίδευσης. Σκοπός μας είναι να τους βοηθήσουμε να
@@ -144,7 +144,7 @@ export default function AboutTextSection() {
               την υλοποίηση του Πολιτιστικού τομέα και της Πολιτιστικής Αλλαγής στην
               Ελλάδα και σε όλο τον κόσμο.
             </p>
-            <p className="text-gray-700 leading-relaxed">
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
               Ονομαζόμαστε Culture for Change (Πολιτισμός για την Αλλαγή) επειδή
               στοχεύουμε να προκαλέσουμε Αλλαγή στον τρόπο που βλέπουμε,
               αισθανόμαστε και αλληλεπιδρούμε μέσω των πολιτιστικών μας
@@ -164,12 +164,12 @@ export default function AboutTextSection() {
           }`}
         >
           <div>
-            <div className="text-8xl font-bold text-coral mb-2">{counter1}</div>
-            <p className="text-xl font-medium">ΕΡΓΑ</p>
+            <div className="text-8xl font-bold text-coral dark:text-coral-light mb-2">{counter1}</div>
+            <p className="text-xl font-medium dark:text-gray-200">ΕΡΓΑ</p>
           </div>
           <div>
-            <div className="text-8xl font-bold text-coral mb-2">{counter2}</div>
-            <p className="text-xl font-medium">ΜΕΛΗ</p>
+            <div className="text-8xl font-bold text-coral dark:text-coral-light mb-2">{counter2}</div>
+            <p className="text-xl font-medium dark:text-gray-200">ΜΕΛΗ</p>
           </div>
         </div>
       </div>

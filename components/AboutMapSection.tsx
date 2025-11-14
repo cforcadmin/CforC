@@ -131,12 +131,12 @@ export default function AboutMapSection() {
   }
 
   return (
-    <section className="py-24 bg-gray-50">
+    <section className="py-24 bg-gray-50 dark:bg-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
-          <p className="text-coral text-sm font-medium mb-4">ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</p>
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
+          <p className="text-coral dark:text-coral-light text-sm font-medium mb-4">ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</p>
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight dark:text-gray-100">
             ΠΡΟΩΘΟΥΜΕ ΕΝΕΡΓΑ ΤΗΝ ΠΟΛΙΤΙΣΤΙΚΗ<br />
             ΑΛΛΑΓΗ ΣΕ ΟΛΟΚΛΗΡΗ ΤΗΝ ΕΛΛΑΔΑ
           </h2>
@@ -149,14 +149,14 @@ export default function AboutMapSection() {
             {cities.left.map((city, idx) => (
               <div
                 key={`${city.name}-${idx}`}
-                className={`pb-3 border-b border-gray-300 ${
+                className={`pb-3 border-b border-gray-300 dark:border-gray-600 ${
                   city.region
                     ? `cursor-pointer transition-colors duration-300 ${
                         isRegionActive(city.region)
-                          ? 'text-coral border-coral'
-                          : 'text-charcoal hover:text-coral hover:border-coral'
+                          ? 'text-coral dark:text-coral-light border-coral'
+                          : 'text-charcoal dark:text-gray-200 hover:text-coral hover:border-coral'
                       }`
-                    : 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
                 }`}
                 onMouseEnter={() => city.region && handleCityHover(city.region)}
                 onMouseLeave={() => city.region && handleCityHover(null)}
@@ -224,14 +224,14 @@ export default function AboutMapSection() {
             {cities.right.map((city, idx) => (
               <div
                 key={`${city.name}-${idx}`}
-                className={`pb-3 border-b border-gray-300 text-right ${
+                className={`pb-3 border-b border-gray-300 dark:border-gray-600 text-right ${
                   city.region
                     ? `cursor-pointer transition-colors duration-300 ${
                         isRegionActive(city.region)
-                          ? 'text-coral border-coral'
-                          : 'text-charcoal hover:text-coral hover:border-coral'
+                          ? 'text-coral dark:text-coral-light border-coral'
+                          : 'text-charcoal dark:text-gray-200 hover:text-coral hover:border-coral'
                       }`
-                    : 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
                 }`}
                 onMouseEnter={() => city.region && handleCityHover(city.region)}
                 onMouseLeave={() => city.region && handleCityHover(null)}

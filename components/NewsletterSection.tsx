@@ -12,7 +12,7 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
   const [showPopup, setShowPopup] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const bgColor = variant === 'members' ? 'bg-[#F5F0EB]' : 'bg-gray-50'
+  const bgColor = variant === 'members' ? 'bg-[#F5F0EB] dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,8 +54,8 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left - Text */}
             <div>
-              <p className="text-coral text-sm font-medium mb-4">ΟΛΑ TA NEA ΣTO EMAIL ΣΑΣ!</p>
-              <h2 className="text-xl md:text-2xl font-bold leading-tight mb-6">
+              <p className="text-coral dark:text-coral-light text-sm font-medium mb-4">ΟΛΑ TA NEA ΣTO EMAIL ΣΑΣ!</p>
+              <h2 className="text-xl md:text-2xl font-bold leading-tight mb-6 dark:text-gray-100">
                 Γραφτείτε στο newsletter μας, για να<br />
                 λαμβάνετε τις δράσεις του Δικτύου,<br />
                 ευκαιρίες για επαγγελματίες και νέα από<br />
@@ -74,7 +74,7 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Το email σας: *"
                     required
-                    className="w-full px-6 py-4 pr-16 rounded-full border-2 border-gray-300 focus:border-coral focus:outline-none text-gray-700"
+                    className="w-full px-6 py-4 pr-16 rounded-full border-2 border-gray-300 dark:border-gray-600 focus:border-coral focus:outline-none text-gray-700 dark:text-gray-200 dark:bg-gray-700"
                   />
                   <button
                     type="submit"
@@ -119,9 +119,9 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
                     )}
                   </button>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   Με την υποβολή συμφωνείτε με τους{' '}
-                  <Link href="/terms" className="text-charcoal font-medium hover:text-coral transition-colors underline">
+                  <Link href="/terms" className="text-charcoal dark:text-gray-200 font-medium hover:text-coral transition-colors underline">
                     όρους και τις προϋποθέσεις
                   </Link>{' '}
                   μας.
@@ -142,10 +142,10 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
           />
 
           {/* Popup */}
-          <div className="relative bg-white rounded-3xl shadow-2xl p-8 md:p-12 max-w-md w-full animate-scale-in">
+          <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 md:p-12 max-w-md w-full animate-scale-in">
             <div className="text-center">
               {/* Icon */}
-              <div className="w-16 h-16 bg-coral/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="w-16 h-16 bg-coral/10 dark:bg-coral/20 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg
                   className="w-8 h-8 text-coral"
                   fill="none"
@@ -162,10 +162,10 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
               </div>
 
               {/* Message */}
-              <h3 className="text-2xl font-bold text-charcoal mb-3">
+              <h3 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-3">
                 Καλώς ήρθες στην κοινότητα του CforC!
               </h3>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                 Ευχαριστούμε για το ενδιαφέρον στην κοινότητά μας :-)
               </p>
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import LanguageSwitcher from './LanguageSwitcher'
 import { useTheme } from './ThemeProvider'
 
@@ -13,6 +14,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const { theme, toggleTheme } = useTheme()
+  const pathname = usePathname()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,7 +40,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
             <img
               src="/cforc_logo.svg"
               alt="Culture for Change"
-              className="h-12"
+              className="h-12 dark:invert"
             />
           </Link>
 
@@ -60,16 +62,16 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 </svg>
               )}
             </button>
-            <Link href="/about" className="text-sm font-medium hover:text-charcoal dark:text-gray-200 dark:hover:text-gray-300 transition-colors">
+            <Link href="/about" className={`text-sm transition-all ${pathname === '/about' ? 'text-coral dark:text-coral-light font-bold scale-110' : 'font-medium hover:text-coral dark:text-gray-200 dark:hover:text-coral-light'}`}>
               ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ
             </Link>
-            <Link href="/activities" className="text-sm font-medium hover:text-charcoal dark:text-gray-200 dark:hover:text-gray-300 transition-colors">
+            <Link href="/activities" className={`text-sm transition-all ${pathname?.startsWith('/activities') ? 'text-coral dark:text-coral-light font-bold scale-110' : 'font-medium hover:text-coral dark:text-gray-200 dark:hover:text-coral-light'}`}>
               ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ
             </Link>
-            <Link href="/open-calls" className="text-sm font-medium hover:text-charcoal dark:text-gray-200 dark:hover:text-gray-300 transition-colors">
+            <Link href="/open-calls" className={`text-sm transition-all ${pathname === '/open-calls' ? 'text-coral dark:text-coral-light font-bold scale-110' : 'font-medium hover:text-coral dark:text-gray-200 dark:hover:text-coral-light'}`}>
               ΑΝΟΙΧΤΑ ΚΑΛΕΣΜΑΤΑ
             </Link>
-            <Link href="/participation" className="text-sm font-medium hover:text-charcoal dark:text-gray-200 dark:hover:text-gray-300 transition-colors">
+            <Link href="/participation" className={`text-sm transition-all ${pathname === '/participation' ? 'text-coral dark:text-coral-light font-bold scale-110' : 'font-medium hover:text-coral dark:text-gray-200 dark:hover:text-coral-light'}`}>
               ΣΥΜΜΕΤΟΧΗ
             </Link>
             <Link href="/members" className="bg-white dark:bg-gray-700 text-charcoal dark:text-gray-200 px-6 py-2 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
@@ -119,10 +121,10 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 </>
               )}
             </button>
-            <Link href="/about" className="block text-sm font-medium py-2 dark:text-gray-200">ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</Link>
-            <Link href="/activities" className="block text-sm font-medium py-2 dark:text-gray-200">ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</Link>
-            <Link href="/open-calls" className="block text-sm font-medium py-2 dark:text-gray-200">ΑΝΟΙΧΤΑ ΚΑΛΕΣΜΑΤΑ</Link>
-            <Link href="/participation" className="block text-sm font-medium py-2 dark:text-gray-200">ΣΥΜΜΕΤΟΧΗ</Link>
+            <Link href="/about" className={`block text-sm py-2 transition-all ${pathname === '/about' ? 'text-coral dark:text-coral-light font-bold' : 'font-medium hover:text-coral dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</Link>
+            <Link href="/activities" className={`block text-sm py-2 transition-all ${pathname?.startsWith('/activities') ? 'text-coral dark:text-coral-light font-bold' : 'font-medium hover:text-coral dark:text-gray-200 dark:hover:text-coral-light'}`}>ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</Link>
+            <Link href="/open-calls" className={`block text-sm py-2 transition-all ${pathname === '/open-calls' ? 'text-coral dark:text-coral-light font-bold' : 'font-medium hover:text-coral dark:text-gray-200 dark:hover:text-coral-light'}`}>ΑΝΟΙΧΤΑ ΚΑΛΕΣΜΑΤΑ</Link>
+            <Link href="/participation" className={`block text-sm py-2 transition-all ${pathname === '/participation' ? 'text-coral dark:text-coral-light font-bold' : 'font-medium hover:text-coral dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΥΜΜΕΤΟΧΗ</Link>
             <Link href="/members" className="block w-full bg-white dark:bg-gray-700 text-charcoal dark:text-gray-200 px-6 py-2 rounded-full text-sm font-medium text-center">
               ΕΥΡΕΣΗ ΜΕΛΩΝ
             </Link>

@@ -102,7 +102,7 @@ export default function LanguageSwitcher() {
       {/* Globe Icon Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
+        className="flex items-center gap-2 px-3 py-2 rounded-md hover:text-coral dark:hover:text-coral-light transition-colors"
         aria-label="Change language"
       >
         <svg
@@ -136,17 +136,17 @@ export default function LanguageSwitcher() {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 max-h-96 overflow-y-auto">
+        <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-2 z-50 max-h-96 overflow-y-auto">
           {/* Reset to Greek option */}
           {currentLang !== 'el' && (
             <>
               <button
                 onClick={resetToGreek}
-                className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors flex items-center gap-2"
+                className="w-full text-left px-4 py-2 hover:text-coral dark:hover:text-coral-light transition-colors flex items-center gap-2"
               >
-                <span className="text-sm font-medium text-coral notranslate">← Back to Greek</span>
+                <span className="text-sm font-medium text-coral dark:text-coral-light notranslate">← Back to Greek</span>
               </button>
-              <div className="border-t border-gray-200 my-2"></div>
+              <div className="border-t border-gray-200 dark:border-gray-600 my-2"></div>
             </>
           )}
 
@@ -160,8 +160,8 @@ export default function LanguageSwitcher() {
                   changeLanguage(lang.code)
                   setIsOpen(false)
                 }}
-                className={`w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors flex items-center justify-between ${
-                  currentLang === lang.code ? 'bg-gray-50' : ''
+                className={`w-full text-left px-4 py-2 hover:text-coral dark:hover:text-coral-light dark:text-gray-200 transition-colors flex items-center justify-between ${
+                  currentLang === lang.code ? 'bg-gray-50 dark:bg-gray-700' : ''
                 }`}
               >
                 <span className="text-sm font-medium">{lang.nativeName}</span>
