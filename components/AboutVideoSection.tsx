@@ -11,9 +11,9 @@ export default function AboutVideoSection() {
   }
 
   return (
-    <section className="py-12 bg-gray-50">
+    <section className="py-12 bg-gray-50 dark:bg-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-coral rounded-3xl p-8 md:p-16 lg:p-24">
+        <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-700 dark:to-gray-800 rounded-3xl p-8 md:p-16 lg:p-24">
           <div className="relative w-full max-w-4xl mx-auto aspect-video">
             {!isPlaying ? (
               // Thumbnail with play button

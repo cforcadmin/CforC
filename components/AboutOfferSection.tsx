@@ -79,7 +79,7 @@ export default function AboutOfferSection() {
   }, [])
 
   return (
-    <section className="py-24 bg-gray-50">
+    <section className="py-24 bg-gray-50 dark:bg-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div
@@ -88,8 +88,8 @@ export default function AboutOfferSection() {
             isHeaderVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}
         >
-          <p className="text-coral text-sm font-medium mb-4">ΤΙ ΚΑΝΟΥΜΕ</p>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+          <p className="text-coral dark:text-coral-light text-sm font-medium mb-4">ΤΙ ΚΑΝΟΥΜΕ</p>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight dark:text-gray-100">
             ΤΙ ΠΡΟΣΦΕΡΟΥΜΕ
           </h2>
         </div>
@@ -123,10 +123,10 @@ export default function AboutOfferSection() {
 
                   {/* Text */}
                   <div>
-                    <h3 className="text-2xl md:text-3xl font-bold mb-6 whitespace-pre-line leading-tight">
+                    <h3 className="text-2xl md:text-3xl font-bold mb-6 whitespace-pre-line leading-tight dark:text-gray-100">
                       {offering.title}
                     </h3>
-                    <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
                       {offering.content}
                     </p>
                   </div>
@@ -135,10 +135,10 @@ export default function AboutOfferSection() {
                 <>
                   {/* Text */}
                   <div>
-                    <h3 className="text-2xl md:text-3xl font-bold mb-6 whitespace-pre-line leading-tight">
+                    <h3 className="text-2xl md:text-3xl font-bold mb-6 whitespace-pre-line leading-tight dark:text-gray-100">
                       {offering.title}
                     </h3>
-                    <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
                       {offering.content}
                     </p>
                   </div>

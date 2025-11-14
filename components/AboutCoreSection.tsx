@@ -65,7 +65,7 @@ export default function AboutCoreSection() {
   }, [])
 
   return (
-    <section className="py-24 bg-white">
+    <section className="py-24 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div
@@ -74,8 +74,8 @@ export default function AboutCoreSection() {
             isHeaderVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}
         >
-          <p className="text-coral text-sm font-medium mb-4">ΤΟ ΤΡΙΠΤΥΧΟ ΜΑΣ</p>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+          <p className="text-coral dark:text-coral-light text-sm font-medium mb-4">ΤΟ ΤΡΙΠΤΥΧΟ ΜΑΣ</p>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight dark:text-gray-100">
             Ο ΠΥΡΗΝΑΣ ΜΑΣ
           </h2>
         </div>
@@ -95,8 +95,8 @@ export default function AboutCoreSection() {
               }`}
               style={{ transitionDelay: `${index * 100}ms` }}
             >
-              <h3 className="text-xl md:text-2xl font-bold mb-4">{value.title}</h3>
-              <p className="text-gray-700 leading-relaxed text-sm">{value.content}</p>
+              <h3 className="text-xl md:text-2xl font-bold mb-4 dark:text-gray-100">{value.title}</h3>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm">{value.content}</p>
             </div>
           ))}
         </div>

@@ -73,7 +73,7 @@ export default function AboutHowSection() {
   }, [])
 
   return (
-    <section className="py-24 bg-gray-50">
+    <section className="py-24 bg-gray-50 dark:bg-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div
@@ -82,8 +82,8 @@ export default function AboutHowSection() {
             isHeaderVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}
         >
-          <p className="text-coral text-sm font-medium mb-4">ΠΩΣ ΤΟ ΚΑΝΟΥΜΕ</p>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+          <p className="text-coral dark:text-coral-light text-sm font-medium mb-4">ΠΩΣ ΤΟ ΚΑΝΟΥΜΕ</p>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight dark:text-gray-100">
             ΠΩΣ ΤΟ CFORC<br />
             ΠΡΟΩΘΕΙ ΤΗΝ ΑΛΛΑΓΗ;
           </h2>
@@ -104,8 +104,8 @@ export default function AboutHowSection() {
               }`}
               style={{ transitionDelay: `${index * 100}ms` }}
             >
-              <p className="text-coral text-3xl font-bold mb-4">{item.number}</p>
-              <h3 className="text-xl md:text-2xl font-bold leading-tight whitespace-pre-line">
+              <p className="text-coral dark:text-coral-light text-3xl font-bold mb-4">{item.number}</p>
+              <h3 className="text-xl md:text-2xl font-bold leading-tight whitespace-pre-line dark:text-gray-100">
                 {item.title}
               </h3>
             </div>

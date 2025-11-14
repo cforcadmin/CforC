@@ -47,7 +47,7 @@ export default function AboutGoalsSection() {
   }, [])
 
   return (
-    <section className="py-24 bg-gray-50">
+    <section className="py-24 bg-gray-50 dark:bg-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div
@@ -56,7 +56,7 @@ export default function AboutGoalsSection() {
             isHeaderVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}
         >
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight dark:text-gray-100">
             ΟΙ ΣΚΟΠΟΙ ΜΑΣ
           </h2>
         </div>
@@ -83,24 +83,24 @@ export default function AboutGoalsSection() {
 
           {/* Bullet Points */}
           <div className="space-y-4">
-            <p className="text-gray-700 leading-relaxed">
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
               Οι γενικοί σκοποί μου έχουν τέλει από το άκαυστο είναι τρεις:πράτοεσεία, εκσιδόρουση, κουονονικός, επιστημονική, αναστημοίηση, πολιτιστκινή καινοτομίας μ μέδου φαρά της απόστορα
             </p>
-            <ul className="space-y-3 text-gray-700">
+            <ul className="space-y-3 text-gray-700 dark:text-gray-300">
               <li className="flex gap-3">
-                <span className="text-coral mt-1">•</span>
+                <span className="text-coral dark:text-coral-light mt-1">•</span>
                 <span>Η διέργαση και εμβάθυνση με ασυγκράτειο με την κοινοινιά των πολιτών και άλληπος Αναίο καινοτομία καί πολιτιστικής καινότημονς σε επίπεδο αστά</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-coral mt-1">•</span>
+                <span className="text-coral dark:text-coral-light mt-1">•</span>
                 <span>Η ανάδειξη και εκπροσώπηση της άβασης των μέλών στο επανέργασιμα έχουν χρησιμοποιούκότε σύμβονα όλημεροδιές με τις εκάστοτε ανόχεες της κοινωνίας</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-coral mt-1">•</span>
+                <span className="text-coral dark:text-coral-light mt-1">•</span>
                 <span>Η συμβολή στην ενδυνάμωση της κοινωνίας και πολιτιστικής καινοτομίας με επίμεται ούτοι θα δύναμετες μεθόδου και εργάλεια των χρησιμοποίνιακα αύμβονα σολμένα δυνατότες με τις εκάστοτε ανόγκές της κοινονίας στις απόπες επιστεύοντας</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-coral mt-1">•</span>
+                <span className="text-coral dark:text-coral-light mt-1">•</span>
                 <span>Η εκπροσώπηση και η προάσπιση / συνηγοριά του τομέα της  κοινωνικής και πολιτιστικής καινοτομιάς σε περιφέχεας που αριθμεί αυλικοφέρεχα εθνική και διεθνή θυσίνο του δικτύου.</span>
               </li>
             </ul>
