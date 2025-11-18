@@ -70,20 +70,35 @@ export default function LanguageSwitcher() {
   }, [currentLang])
 
   const changeLanguage = (langCode: string) => {
-    // Set the language cookie that Google Translate uses
+    // Clear any existing translation cookies first
     const domain = window.location.hostname
-    document.cookie = `googtrans=/el/${langCode}; path=/; domain=${domain}`
+    const rootDomain = domain.split('.').slice(-2).join('.')
+
+    // Clear all possible cookie variations
+    document.cookie = `googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT`
+    document.cookie = `googtrans=; path=/; domain=${domain}; expires=Thu, 01 Jan 1970 00:00:01 GMT`
+    document.cookie = `googtrans=; path=/; domain=.${domain}; expires=Thu, 01 Jan 1970 00:00:01 GMT`
+    document.cookie = `googtrans=; path=/; domain=${rootDomain}; expires=Thu, 01 Jan 1970 00:00:01 GMT`
+    document.cookie = `googtrans=; path=/; domain=.${rootDomain}; expires=Thu, 01 Jan 1970 00:00:01 GMT`
+
+    // Set the new language cookie
     document.cookie = `googtrans=/el/${langCode}; path=/`
+    document.cookie = `googtrans=/el/${langCode}; path=/; domain=${domain}`
 
     // Reload the page to apply translation
     window.location.reload()
   }
 
   const resetToGreek = () => {
-    // Clear the cookie
+    // Clear all possible cookie variations to ensure complete reset
     const domain = window.location.hostname
-    document.cookie = `googtrans=; path=/; domain=${domain}; expires=Thu, 01 Jan 1970 00:00:01 GMT`
+    const rootDomain = domain.split('.').slice(-2).join('.')
+
     document.cookie = `googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT`
+    document.cookie = `googtrans=; path=/; domain=${domain}; expires=Thu, 01 Jan 1970 00:00:01 GMT`
+    document.cookie = `googtrans=; path=/; domain=.${domain}; expires=Thu, 01 Jan 1970 00:00:01 GMT`
+    document.cookie = `googtrans=; path=/; domain=${rootDomain}; expires=Thu, 01 Jan 1970 00:00:01 GMT`
+    document.cookie = `googtrans=; path=/; domain=.${rootDomain}; expires=Thu, 01 Jan 1970 00:00:01 GMT`
 
     // Reload the page
     window.location.reload()
