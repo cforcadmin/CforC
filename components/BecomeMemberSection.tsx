@@ -36,7 +36,7 @@ export default function BecomeMemberSection() {
             {/* Button */}
             <div className="flex-shrink-0">
               <Link
-                href="/membership"
+                href="/participation"
                 className="inline-block bg-transparent border-2 border-coral dark:border-coral-light text-coral dark:text-coral-light px-8 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-all duration-300"
               >
                 ΓΙΝΕ ΜΕΛΟΣ ΤΩΡΑ
