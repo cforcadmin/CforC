@@ -19,7 +19,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
               alt="Culture for Change Logo"
               width={160}
               height={64}
-              className="w-40"
+              className="w-40 dark:invert"
             />
           </div>
 

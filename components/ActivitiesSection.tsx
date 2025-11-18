@@ -165,7 +165,7 @@ export default function ActivitiesSection() {
                                     alt="Culture for Change Logo"
                                     width={32}
                                     height={32}
-                                    className="w-full h-full dark:invert"
+                                    className="w-full h-full"
                                   />
                                 </div>
                                 <span>CULTURE FOR CHANGE</span>
