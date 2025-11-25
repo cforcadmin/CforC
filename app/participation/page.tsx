@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
@@ -8,6 +9,8 @@ import ScrollToTop from '@/components/ScrollToTop'
 import Link from 'next/link'
 
 export default function ParticipationPage() {
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
+
   const handleOpenForm = () => {
     window.open('https://docs.google.com/forms/d/1J1Crq3_PIx0r2Qn8w3rv621m-_B30wan8x5xpVbxcSc/edit', '_blank')
   }
@@ -136,23 +139,32 @@ export default function ParticipationPage() {
             <p className="text-lg mb-8 max-w-2xl mx-auto dark:text-gray-200">
               Συμπλήρωσε τη φόρμα εγγραφής και θα επικοινωνήσουμε μαζί σου σύντομα για τα επόμενα βήματα!
             </p>
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <input
+                type="checkbox"
+                id="participation-terms-checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="w-4 h-4 text-coral bg-white border-gray-300 rounded focus:ring-coral focus:ring-2 cursor-pointer"
+              />
+              <label htmlFor="participation-terms-checkbox" className="text-sm dark:text-gray-200 cursor-pointer">
+                Συμφωνώ με τους{' '}
+                <Link href="/terms" className="underline hover:no-underline dark:text-coral-light">
+                  όρους
+                </Link>
+                {' '}και τις{' '}
+                <Link href="/privacy" className="underline hover:no-underline dark:text-coral-light">
+                  προϋποθέσεις
+                </Link>
+              </label>
+            </div>
             <button
               onClick={handleOpenForm}
-              className="bg-white text-coral dark:bg-coral-light dark:text-gray-900 px-8 py-4 rounded-full text-lg font-bold hover:bg-gray-100 dark:hover:bg-coral transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
+              disabled={!agreedToTerms}
+              className="bg-white text-coral dark:bg-coral-light dark:text-gray-900 px-8 py-4 rounded-full text-lg font-bold hover:bg-gray-100 dark:hover:bg-coral transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               ΣΥΜΠΛΗΡΩΣΕ ΤΗ ΦΟΡΜΑ ΕΓΓΡΑΦΗΣ
             </button>
-            <p className="text-sm mt-6 opacity-90 dark:text-gray-300">
-              Με την υποβολή συμφωνείτε με τους{' '}
-              <Link href="/terms" className="underline hover:no-underline dark:text-coral-light">
-                όρους
-              </Link>
-              {' '}και τις{' '}
-              <Link href="/privacy" className="underline hover:no-underline dark:text-coral-light">
-                προϋποθέσεις
-              </Link>
-              {' '}μας.
-            </p>
           </div>
         </div>
       </section>
