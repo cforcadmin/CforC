@@ -12,7 +12,7 @@ export default function ParticipationPage() {
   const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   const handleOpenForm = () => {
-    window.open('https://docs.google.com/forms/d/1J1Crq3_PIx0r2Qn8w3rv621m-_B30wan8x5xpVbxcSc/edit', '_blank')
+    window.open('https://docs.google.com/forms/d/e/1FAIpQLSfZt1bKl2vOOnztzSozcd1C0SCLEifXlvzUQgsG6gnQESbgMw/viewform', '_blank')
   }
 
   return (
