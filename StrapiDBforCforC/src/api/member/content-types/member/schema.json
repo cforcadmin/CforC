@@ -101,22 +101,22 @@
       "type": "string",
       "required": false
     },
-    "authHash": {
+    "password": {
       "type": "string",
       "required": false,
       "private": false
     },
-    "verificationCode": {
+    "magicLinkToken": {
       "type": "string",
       "required": false,
       "private": false
     },
-    "verificationExpiry": {
+    "magicLinkExpiry": {
       "type": "datetime",
       "required": false,
       "private": false
     },
-    "lastAccessAt": {
+    "lastLoginAt": {
       "type": "datetime",
       "required": false,
       "private": false

@@ -53,13 +53,13 @@ export async function POST(request: NextRequest) {
 
     // Check if token matches and hasn't expired
     console.log('Token comparison:', {
-      hasStoredToken: !!member.verificationCode,
-      tokensMatch: member.verificationCode === tokenHash,
-      storedToken: member.verificationCode?.substring(0, 20) + '...',
+      hasStoredToken: !!member.magicLinkToken,
+      tokensMatch: member.magicLinkToken === tokenHash,
+      storedToken: member.magicLinkToken?.substring(0, 20) + '...',
       computedHash: tokenHash.substring(0, 20) + '...'
     })
 
-    if (!member.verificationCode || member.verificationCode !== tokenHash) {
+    if (!member.magicLinkToken || member.magicLinkToken !== tokenHash) {
       return NextResponse.json(
         { error: 'Μη έγκυρος σύνδεσμος' },
         { status: 401 }
@@ -67,8 +67,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check expiry
-    if (member.verificationExpiry) {
-      const expiryDate = new Date(member.verificationExpiry)
+    if (member.magicLinkExpiry) {
+      const expiryDate = new Date(member.magicLinkExpiry)
       if (expiryDate < new Date()) {
         return NextResponse.json(
           { error: 'Ο σύνδεσμος έχει λήξει. Παρακαλώ ζητήστε έναν νέο.' },

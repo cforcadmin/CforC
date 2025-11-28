@@ -86,8 +86,8 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           data: {
-            verificationCode: tokenHash,
-            verificationExpiry: expiryTime.toISOString()
+            magicLinkToken: tokenHash,
+            magicLinkExpiry: expiryTime.toISOString()
           }
         })
       }

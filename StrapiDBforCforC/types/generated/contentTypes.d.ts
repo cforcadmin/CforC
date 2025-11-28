@@ -475,7 +475,6 @@ export interface ApiMemberMember extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
-    authHash: Schema.Attribute.String;
     Bio: Schema.Attribute.Blocks & Schema.Attribute.Required;
     City: Schema.Attribute.String & Schema.Attribute.Required;
     createdAt: Schema.Attribute.DateTime;
@@ -490,14 +489,17 @@ export interface ApiMemberMember extends Struct.CollectionTypeSchema {
       true
     > &
       Schema.Attribute.Required;
-    lastAccessAt: Schema.Attribute.DateTime;
+    lastLoginAt: Schema.Attribute.DateTime;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::member.member'
     > &
       Schema.Attribute.Private;
+    magicLinkExpiry: Schema.Attribute.DateTime;
+    magicLinkToken: Schema.Attribute.String;
     Name: Schema.Attribute.String & Schema.Attribute.Required;
+    password: Schema.Attribute.String;
     Phone: Schema.Attribute.String;
     Project1Description: Schema.Attribute.Blocks;
     Project1Pictures: Schema.Attribute.Media<
@@ -518,8 +520,6 @@ export interface ApiMemberMember extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    verificationCode: Schema.Attribute.String;
-    verificationExpiry: Schema.Attribute.DateTime;
     Websites: Schema.Attribute.Text;
   };
 }
