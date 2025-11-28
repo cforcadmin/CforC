@@ -103,19 +103,23 @@
     },
     "authHash": {
       "type": "string",
-      "required": false
+      "required": false,
+      "private": false
     },
     "verificationCode": {
       "type": "string",
-      "required": false
+      "required": false,
+      "private": false
     },
     "verificationExpiry": {
       "type": "datetime",
-      "required": false
+      "required": false,
+      "private": false
     },
     "lastAccessAt": {
       "type": "datetime",
-      "required": false
+      "required": false,
+      "private": false
     }
   }
 }
