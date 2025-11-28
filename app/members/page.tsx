@@ -231,27 +231,27 @@ export default function MembersPage() {
               <Link
                 key={member.id}
                 href={`/members/${encodeURIComponent(member.Name)}`}
-                className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden hover:shadow-xl dark:hover:shadow-gray-700/50 transition-all duration-300 group"
+                className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden hover:shadow-xl dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light"
               >
                 {member.Image && member.Image.length > 0 && member.Image[0].url ? (
-                  <div className="aspect-[4/5] relative bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                  <div className="aspect-[10/10] relative bg-gray-200 dark:bg-gray-700 overflow-hidden">
                     <Image
                       src={member.Image[0].url}
                       alt={member.Image[0].alternativeText || member.Name}
                       fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-300"
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
                 ) : (
-                  <div className="aspect-[4/5] bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                  <div className="aspect-[10/10] bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                     <span className="text-gray-400 dark:text-gray-500 text-4xl">{member.Name.charAt(0)}</span>
                   </div>
                 )}
                 <div className="p-6">
-                  <p className="text-coral dark:text-coral-light text-xs mb-2 uppercase">
-                    {member.FieldsOfWork}
-                  </p>
-                  <h3 className="text-xl font-bold dark:text-gray-100">{member.Name}</h3>
+                  <h3 className="text-xl font-light group-hover:font-bold text-charcoal dark:text-gray-100 mb-3 transition-all">{member.Name}</h3>
+                  <div className="inline-block bg-coral/10 dark:bg-coral/20 text-coral dark:text-coral-light text-[10px] px-3 py-1.5 rounded-2xl uppercase tracking-wide max-w-full">
+                    <p className="line-clamp-2">{member.FieldsOfWork}</p>
+                  </div>
                 </div>
               </Link>
             ))}
