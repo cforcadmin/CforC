@@ -60,15 +60,15 @@ export async function POST(request: NextRequest) {
     const member = memberData.data
 
     // Verify token matches and hasn't expired
-    if (!member.magicLinkToken || member.magicLinkToken !== tokenHash) {
+    if (!member.verificationCode || member.verificationCode !== tokenHash) {
       return NextResponse.json(
         { error: 'Μη έγκυρος σύνδεσμος' },
         { status: 401 }
       )
     }
 
-    if (member.magicLinkExpiry) {
-      const expiryDate = new Date(member.magicLinkExpiry)
+    if (member.verificationExpiry) {
+      const expiryDate = new Date(member.verificationExpiry)
       if (expiryDate < new Date()) {
         return NextResponse.json(
           { error: 'Ο σύνδεσμος έχει λήξει' },
@@ -91,10 +91,10 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           data: {
-            password: hashedPassword,
-            magicLinkToken: null,
-            magicLinkExpiry: null,
-            lastLoginAt: new Date().toISOString()
+            authHash: hashedPassword,
+            verificationCode: null,
+            verificationExpiry: null,
+            lastAccessAt: new Date().toISOString()
           }
         })
       }
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Return member data (excluding sensitive fields)
-    const { password: _, magicLinkToken: __, magicLinkExpiry: ___, ...safeMemberData } = member
+    const { authHash: _, verificationCode: __, verificationExpiry: ___, ...safeMemberData } = member
 
     return NextResponse.json({
       success: true,

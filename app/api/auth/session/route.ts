@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     const member = memberData.data
 
     // Return member data (excluding sensitive fields)
-    const { password, magicLinkToken, magicLinkExpiry, ...safeMemberData } = member
+    const { password, verificationCode, verificationExpiry, ...safeMemberData } = member
 
     return NextResponse.json({
       success: true,

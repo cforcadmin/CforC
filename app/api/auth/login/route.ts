@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     const member = membersData.data[0]
 
     // Check if member has set a password
-    if (!member.password) {
+    if (!member.authHash) {
       return NextResponse.json(
         { error: 'Δεν έχετε ορίσει κωδικό. Παρακαλώ ζητήστε σύνδεσμο σύνδεσης.' },
         { status: 401 }
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify password
-    const isPasswordValid = await verifyPassword(password, member.password)
+    const isPasswordValid = await verifyPassword(password, member.authHash)
     if (!isPasswordValid) {
       return NextResponse.json(
         { error: 'Λάθος email ή κωδικός' },
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           data: {
-            lastLoginAt: new Date().toISOString()
+            lastAccessAt: new Date().toISOString()
           }
         })
       }
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Return member data (excluding sensitive fields)
-    const { password: _, magicLinkToken: __, magicLinkExpiry: ___, ...safeMemberData } = member
+    const { authHash: _, verificationCode: __, verificationExpiry: ___, ...safeMemberData } = member
 
     return NextResponse.json({
       success: true,

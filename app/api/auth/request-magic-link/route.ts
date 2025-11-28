@@ -86,8 +86,8 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           data: {
-            magicLinkToken: tokenHash,
-            magicLinkExpiry: expiryTime.toISOString()
+            verificationCode: tokenHash,
+            verificationExpiry: expiryTime.toISOString()
           }
         })
       }
@@ -105,10 +105,22 @@ export async function POST(request: NextRequest) {
     }
 
     const updateResult = await updateResponse.json()
-    console.log('Update successful, result:', {
-      hasToken: !!updateResult.data?.magicLinkToken,
-      tokenPreview: updateResult.data?.magicLinkToken?.substring(0, 20) + '...'
-    })
+    console.log('Update result - allFields:', Object.keys(updateResult.data || {}))
+
+    // Verify if the data was actually saved by fetching it again
+    const verifyResponse = await fetch(
+      `${STRAPI_URL}/api/members/${member.documentId || member.id}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${STRAPI_API_TOKEN}`
+        }
+      }
+    )
+    const verifyData = await verifyResponse.json()
+    console.log('Verification fetch - allFields:', Object.keys(verifyData.data || {}))
+    console.log('Verification - has verificationCode:', !!verifyData.data?.verificationCode)
+    console.log('Verification - has verificationExpiry:', !!verifyData.data?.verificationExpiry)
 
     // Create magic link URL
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || request.nextUrl.origin
