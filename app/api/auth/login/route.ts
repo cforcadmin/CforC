@@ -137,8 +137,16 @@ export async function POST(request: NextRequest) {
       path: '/'
     })
 
-    // Return member data (excluding sensitive fields)
-    const { password: _, magicLinkToken: __, magicLinkExpiry: ___, ...safeMemberData } = member
+    // Return member data (excluding sensitive and blocks fields)
+    const {
+      password: _,
+      magicLinkToken: __,
+      magicLinkExpiry: ___,
+      Bio,
+      Project1Description,
+      Project2Description,
+      ...safeMemberData
+    } = member
 
     return NextResponse.json({
       success: true,
