@@ -45,7 +45,7 @@ export function generateSessionToken(memberId: string, email: string): string {
   }
 
   return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN
+    expiresIn: JWT_EXPIRES_IN as string
   })
 }
 
@@ -57,7 +57,7 @@ export function generateMagicLinkToken(memberId: string, email: string): string 
   }
 
   return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: MAGIC_LINK_EXPIRES_IN
+    expiresIn: MAGIC_LINK_EXPIRES_IN as string
   })
 }
 
