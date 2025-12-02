@@ -2,13 +2,11 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 
-const JWT_SECRET = process.env.JWT_SECRET!
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '30d'
-const MAGIC_LINK_EXPIRES_IN = process.env.MAGIC_LINK_EXPIRES_IN || '6h'
-
-if (!JWT_SECRET) {
+const JWT_SECRET: string = process.env.JWT_SECRET || (() => {
   throw new Error('JWT_SECRET environment variable is not set')
-}
+})()
+const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '30d'
+const MAGIC_LINK_EXPIRES_IN: string = process.env.MAGIC_LINK_EXPIRES_IN || '6h'
 
 // Password Hashing
 const SALT_ROUNDS = 10
@@ -45,7 +43,7 @@ export function generateSessionToken(memberId: string, email: string): string {
   }
 
   return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN as string
+    expiresIn: JWT_EXPIRES_IN
   })
 }
 
@@ -57,7 +55,7 @@ export function generateMagicLinkToken(memberId: string, email: string): string 
   }
 
   return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: MAGIC_LINK_EXPIRES_IN as string
+    expiresIn: MAGIC_LINK_EXPIRES_IN
   })
 }
 
