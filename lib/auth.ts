@@ -2,14 +2,17 @@ import bcrypt from 'bcrypt'
 import jwt, { Secret, SignOptions } from 'jsonwebtoken'
 import crypto from 'crypto'
 
-if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is not set')
-}
-
-const JWT_SECRET = process.env.JWT_SECRET as Secret
 // Using seconds instead of string notation (30 days = 2592000 seconds, 6 hours = 21600 seconds)
 const JWT_EXPIRES_IN = 2592000 // 30 days
 const MAGIC_LINK_EXPIRES_IN = 21600 // 6 hours
+
+function getJwtSecret(): Secret {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not set')
+  }
+  return secret as Secret
+}
 
 // Password Hashing
 const SALT_ROUNDS = 10
@@ -49,7 +52,7 @@ export function generateSessionToken(memberId: string, email: string): string {
     expiresIn: JWT_EXPIRES_IN
   }
 
-  return jwt.sign(payload, JWT_SECRET, options)
+  return jwt.sign(payload, getJwtSecret(), options)
 }
 
 export function generateMagicLinkToken(memberId: string, email: string): string {
@@ -63,12 +66,12 @@ export function generateMagicLinkToken(memberId: string, email: string): string 
     expiresIn: MAGIC_LINK_EXPIRES_IN
   }
 
-  return jwt.sign(payload, JWT_SECRET, options)
+  return jwt.sign(payload, getJwtSecret(), options)
 }
 
 export function verifyToken(token: string): TokenPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload
+    const decoded = jwt.verify(token, getJwtSecret()) as TokenPayload
     return decoded
   } catch (error) {
     return null
