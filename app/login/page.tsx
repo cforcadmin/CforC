@@ -265,6 +265,9 @@ export default function LoginPage() {
                   <p className="text-[11px] text-gray-600 dark:text-gray-400 text-center">
                     Ο σύνδεσμος θα σας επιτρέψει να ορίσετε κωδικό πρόσβασης. Λήγει σε 6 ώρες.
                   </p>
+                  <p className="text-[11px] text-gray-600 dark:text-gray-400 text-center mt-1.5 font-medium">
+                    ⚠️ Ελέγξτε τον φάκελο SPAM αν δεν το βρείτε
+                  </p>
                 </div>
               </form>
             </div>
@@ -367,6 +370,9 @@ export default function LoginPage() {
               <div className="p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
                 <p className="text-[11px] text-gray-600 dark:text-gray-400 text-center">
                   Ο σύνδεσμος θα σας επιτρέψει να ορίσετε νέο κωδικό πρόσβασης. Λήγει σε 6 ώρες.
+                </p>
+                <p className="text-[11px] text-gray-600 dark:text-gray-400 text-center mt-1.5 font-medium">
+                  ⚠️ Ελέγξτε τον φάκελο SPAM αν δεν το βρείτε
                 </p>
               </div>
             </form>
