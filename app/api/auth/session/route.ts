@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL
-const STRAPI_API_TOKEN = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN
+const STRAPI_URL = process.env.STRAPI_URL
+const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 export async function GET(request: NextRequest) {
   try {
