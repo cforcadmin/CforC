@@ -160,7 +160,7 @@ export default function LoginPage() {
                     onClick={() => setShowResetPassword(true)}
                     className="text-xs text-coral dark:text-coral-light hover:underline"
                   >
-                    Ξεχάσατε τον κωδικό σας;
+                    Ξεχάσες τον κωδικό σου;
                   </button>
                 </div>
 
@@ -206,7 +206,7 @@ export default function LoginPage() {
                   Πρώτη Σύνδεση
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 text-xs">
-                  Εισάγετε το email σας για να λάβετε σύνδεσμο
+                  Εισάγε το email σου για να λάβεις σύνδεσμο
                 </p>
               </div>
 
@@ -263,10 +263,10 @@ export default function LoginPage() {
                 {/* Info */}
                 <div className="p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
                   <p className="text-[11px] text-gray-600 dark:text-gray-400 text-center">
-                    Ο σύνδεσμος θα σας επιτρέψει να ορίσετε κωδικό πρόσβασης. Λήγει σε 6 ώρες.
+                    Ο σύνδεσμος θα σου επιτρέψει να ορίσεις κωδικό πρόσβασης. Λήγει σε 6 ώρες.
                   </p>
                   <p className="text-[11px] text-gray-600 dark:text-gray-400 text-center mt-1.5 font-medium">
-                    ⚠️ Ελέγξτε τον φάκελο SPAM αν δεν το βρείτε
+                    ⚠️ Έλεγξε τον φάκελο SPAM αν δεν το βρεις
                   </p>
                 </div>
               </form>
@@ -276,9 +276,9 @@ export default function LoginPage() {
           {/* Footer Links */}
           <div className="text-center space-y-2">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Δεν είστε μέλος;{' '}
+              Δεν είσαι μέλος;{' '}
               <Link href="/participation" className="text-coral dark:text-coral-light hover:underline font-medium">
-                Γίνετε μέλος
+                Γίνε μέλος
               </Link>
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -314,7 +314,7 @@ export default function LoginPage() {
             </div>
 
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              Εισάγετε το email σας και θα σας στείλουμε έναν σύνδεσμο για να επαναφέρετε τον κωδικό σας.
+              Εισάγε το email σου και θα σου στείλουμε έναν σύνδεσμο για να επαναφέρεις τον κωδικό σου.
             </p>
 
             {/* Reset Form */}
@@ -369,10 +369,10 @@ export default function LoginPage() {
 
               <div className="p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
                 <p className="text-[11px] text-gray-600 dark:text-gray-400 text-center">
-                  Ο σύνδεσμος θα σας επιτρέψει να ορίσετε νέο κωδικό πρόσβασης. Λήγει σε 6 ώρες.
+                  Ο σύνδεσμος θα σου επιτρέψει να ορίσεις νέο κωδικό πρόσβασης. Λήγει σε 6 ώρες.
                 </p>
                 <p className="text-[11px] text-gray-600 dark:text-gray-400 text-center mt-1.5 font-medium">
-                  ⚠️ Ελέγξτε τον φάκελο SPAM αν δεν το βρείτε
+                  ⚠️ Έλεγξε τον φάκελο SPAM αν δεν το βρεις
                 </p>
               </div>
             </form>
