@@ -1,12 +1,14 @@
 import bcrypt from 'bcrypt'
-import jwt, { SignOptions } from 'jsonwebtoken'
+import jwt, { Secret, SignOptions } from 'jsonwebtoken'
 import crypto from 'crypto'
 
-const JWT_SECRET: string = process.env.JWT_SECRET || (() => {
+if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is not set')
-})()
-const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '30d'
-const MAGIC_LINK_EXPIRES_IN: string = process.env.MAGIC_LINK_EXPIRES_IN || '6h'
+}
+
+const JWT_SECRET = process.env.JWT_SECRET as Secret
+const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || '30d') as string
+const MAGIC_LINK_EXPIRES_IN = (process.env.MAGIC_LINK_EXPIRES_IN || '6h') as string
 
 // Password Hashing
 const SALT_ROUNDS = 10
