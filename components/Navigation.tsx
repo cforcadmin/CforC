@@ -45,12 +45,15 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center gap-2">
             <img
               src="/cforc_logo.svg"
               alt="Culture for Change"
               className="h-12 dark:invert"
             />
+            <span className="text-[10px] font-semibold text-white/70 dark:text-gray-400 bg-white/10 dark:bg-gray-700/50 px-2 py-0.5 rounded-full">
+              BETA
+            </span>
           </Link>
 
           {/* Desktop Navigation */}

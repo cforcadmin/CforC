@@ -96,10 +96,27 @@ export default function AnnouncementsPage() {
           <h1 className="text-4xl md:text-5xl font-bold text-charcoal dark:text-gray-100 mb-4">
             Καλώς ήρθατε στη Νέα Ιστοσελίδα του Culture for Change!
           </h1>
-          <p className="text-lg text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
+          <p className="text-lg text-gray-700 dark:text-gray-300 max-w-3xl mx-auto mb-6">
             Η ιστοσελίδα μας έχει ανανεωθεί με πολλές βελτιώσεις και νέες δυνατότητες
             που θα κάνουν την εμπειρία σας ακόμα καλύτερη!
           </p>
+
+          {/* Beta Notice */}
+          <div className="inline-block bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-400 dark:border-amber-600 rounded-2xl px-6 py-4 max-w-2xl">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl flex-shrink-0">⚠️</span>
+              <div className="text-left">
+                <h3 className="font-bold text-amber-900 dark:text-amber-200 mb-1">
+                  Έκδοση Beta - Δοκιμαστική Λειτουργία
+                </h3>
+                <p className="text-sm text-amber-800 dark:text-amber-300">
+                  Αυτή είναι μια δοκιμαστική έκδοση της σελίδας που περιλαμβάνει test events,
+                  open calls και δοκιμαστικά προφίλ μελών. Εάν θέλετε να δοκιμάσετε το προφίλ σας,
+                  μπορείτε να επικοινωνήσετε μαζί μας για να δημιουργήσουμε τον λογαριασμό σας.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Main Content */}
