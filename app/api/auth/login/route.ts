@@ -8,6 +8,18 @@ const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 export async function POST(request: NextRequest) {
   try {
+    // Check required environment variables
+    if (!STRAPI_URL || !STRAPI_API_TOKEN) {
+      console.error('Missing environment variables:', {
+        STRAPI_URL: !!STRAPI_URL,
+        STRAPI_API_TOKEN: !!STRAPI_API_TOKEN
+      })
+      return NextResponse.json(
+        { error: 'Σφάλμα διαμόρφωσης διακομιστή' },
+        { status: 500 }
+      )
+    }
+
     const body = await request.json()
     const { email, password } = body
 
@@ -157,7 +169,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error in login:', error)
     return NextResponse.json(
-      { error: 'Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά.' },
+      {
+        error: 'Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά.',
+        details: process.env.NODE_ENV === 'development' ? String(error) : undefined
+      },
       { status: 500 }
     )
   }

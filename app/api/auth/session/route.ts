@@ -7,6 +7,18 @@ const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 export async function GET(request: NextRequest) {
   try {
+    // Check required environment variables
+    if (!STRAPI_URL || !STRAPI_API_TOKEN) {
+      console.error('Missing environment variables:', {
+        STRAPI_URL: !!STRAPI_URL,
+        STRAPI_API_TOKEN: !!STRAPI_API_TOKEN
+      })
+      return NextResponse.json(
+        { error: 'Σφάλμα διαμόρφωσης διακομιστή' },
+        { status: 500 }
+      )
+    }
+
     // Get session cookie
     const cookieStore = await cookies()
     const sessionCookie = cookieStore.get('session')
