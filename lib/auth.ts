@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken'
+import jwt, { SignOptions } from 'jsonwebtoken'
 import crypto from 'crypto'
 
 const JWT_SECRET: string = process.env.JWT_SECRET || (() => {
@@ -42,9 +42,11 @@ export function generateSessionToken(memberId: string, email: string): string {
     type: 'session'
   }
 
-  return jwt.sign(payload, JWT_SECRET, {
+  const options: SignOptions = {
     expiresIn: JWT_EXPIRES_IN
-  })
+  }
+
+  return jwt.sign(payload, JWT_SECRET, options)
 }
 
 export function generateMagicLinkToken(memberId: string, email: string): string {
@@ -54,9 +56,11 @@ export function generateMagicLinkToken(memberId: string, email: string): string 
     type: 'magic-link'
   }
 
-  return jwt.sign(payload, JWT_SECRET, {
+  const options: SignOptions = {
     expiresIn: MAGIC_LINK_EXPIRES_IN
-  })
+  }
+
+  return jwt.sign(payload, JWT_SECRET, options)
 }
 
 export function verifyToken(token: string): TokenPayload | null {
