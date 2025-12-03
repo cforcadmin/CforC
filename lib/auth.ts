@@ -7,8 +7,9 @@ if (!process.env.JWT_SECRET) {
 }
 
 const JWT_SECRET = process.env.JWT_SECRET as Secret
-const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || '30d') as string
-const MAGIC_LINK_EXPIRES_IN = (process.env.MAGIC_LINK_EXPIRES_IN || '6h') as string
+// Using seconds instead of string notation (30 days = 2592000 seconds, 6 hours = 21600 seconds)
+const JWT_EXPIRES_IN = 2592000 // 30 days
+const MAGIC_LINK_EXPIRES_IN = 21600 // 6 hours
 
 // Password Hashing
 const SALT_ROUNDS = 10
