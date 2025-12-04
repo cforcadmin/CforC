@@ -13,6 +13,8 @@
 
 const fs = require('fs')
 const path = require('path')
+const jwt = require('jsonwebtoken')
+const crypto = require('crypto')
 
 // Load environment variables
 require('dotenv').config({ path: '.env.local' })
@@ -20,10 +22,11 @@ require('dotenv').config({ path: '.env.local' })
 const STRAPI_URL = process.env.STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 const RESEND_API_KEY = process.env.RESEND_API_KEY
+const JWT_SECRET = process.env.JWT_SECRET
 
-if (!STRAPI_URL || !STRAPI_API_TOKEN || !RESEND_API_KEY) {
+if (!STRAPI_URL || !STRAPI_API_TOKEN || !RESEND_API_KEY || !JWT_SECRET) {
   console.error('❌ Error: Missing required environment variables')
-  console.error('   Required: STRAPI_URL, STRAPI_API_TOKEN, RESEND_API_KEY')
+  console.error('   Required: STRAPI_URL, STRAPI_API_TOKEN, RESEND_API_KEY, JWT_SECRET')
   process.exit(1)
 }
 
@@ -83,8 +86,32 @@ async function createMemberInStrapi(email, name = null) {
   return await response.json()
 }
 
-// Generate magic link token
+// Generate magic link JWT token (same as lib/auth.ts)
+function generateMagicLinkToken(memberId, email) {
+  const payload = {
+    memberId,
+    email,
+    type: 'magic-link'
+  }
+
+  const options = {
+    expiresIn: '6h'
+  }
+
+  return jwt.sign(payload, JWT_SECRET, options)
+}
+
+// Hash token function
+function hashToken(token) {
+  return crypto.createHash('sha256').update(token).digest('hex')
+}
+
+// Create auth-token record in Strapi
 async function generateMagicLink(email, memberId) {
+  const token = generateMagicLinkToken(memberId.toString(), email)
+  const tokenHash = hashToken(token)
+  const expiryTime = new Date(Date.now() + 6 * 60 * 60 * 1000) // 6 hours
+
   const response = await fetch(`${STRAPI_URL}/api/auth-tokens`, {
     method: 'POST',
     headers: {
@@ -93,27 +120,20 @@ async function generateMagicLink(email, memberId) {
     },
     body: JSON.stringify({
       data: {
-        member: memberId,
-        token: generateToken(),
-        expiresAt: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString() // 6 hours
+        email: email,
+        tokenHash: tokenHash,
+        tokenExpiry: expiryTime.toISOString(),
+        tokenType: 'magic-link'
       }
     })
   })
 
   if (!response.ok) {
     const error = await response.json()
-    throw new Error(`Failed to generate magic link token: ${error.error?.message || response.statusText}`)
+    throw new Error(`Failed to create auth token: ${error.error?.message || response.statusText}`)
   }
 
-  const data = await response.json()
-  return data.data.token
-}
-
-// Generate random token
-function generateToken() {
-  return Array.from({ length: 32 }, () =>
-    Math.floor(Math.random() * 16).toString(16)
-  ).join('')
+  return token
 }
 
 // Send onboarding email using Resend
@@ -165,6 +185,7 @@ async function sendOnboardingEmail(email, name, magicLinkToken) {
         <ul style="margin: 5px 0;">
           <li>Ο σύνδεσμος λήγει σε <strong>6 ώρες</strong></li>
           <li>Έλεγξε τον φάκελο <strong>SPAM</strong> αν δεν βρεις το email</li>
+          <li>Αν ο σύνδεσμος λήξει, μπορείς να ζητήσεις νέο <a href="https://www.cultureforchange.gr/login" style="color: #E8845C;">εδώ</a></li>
         </ul>
       </div>
 
@@ -212,6 +233,7 @@ ${magicLink}
 ⚠️ ΣΗΜΑΝΤΙΚΟ:
 - Ο σύνδεσμος λήγει σε 6 ώρες
 - Έλεγξε τον φάκελο SPAM αν δεν βρεις το email
+- Αν ο σύνδεσμος λήξει, μπορείς να ζητήσεις νέο στη σελίδα σύνδεσης: https://www.cultureforchange.gr/login
 
 📝 ΤΙ ΜΠΟΡΕΙΣ ΝΑ ΚΑΝΕΙΣ;
 - Επεξεργασία Προφίλ: Συμπλήρωσε τα στοιχεία σου (βιογραφικό, πεδία εργασίας, έργα, φωτογραφίες)
