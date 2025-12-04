@@ -111,9 +111,33 @@ export default function ProfilePage() {
     setSaveMessage(null)
   }
 
+  // Validation functions
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  const validatePhone = (phone: string): boolean => {
+    // Allow only numbers, spaces, dashes, and plus sign
+    const phoneRegex = /^[\d\s\-+]+$/
+    return phoneRegex.test(phone)
+  }
+
   // Save changes
   const handleSave = async () => {
     if (!hasUnsavedChanges()) return
+
+    // Validate email format
+    if (formData.Email && !validateEmail(formData.Email)) {
+      setSaveMessage({ type: 'error', text: 'Μη έγκυρη μορφή email' })
+      return
+    }
+
+    // Validate phone format
+    if (formData.Phone && formData.Phone.trim() !== '' && formData.Phone !== '-' && !validatePhone(formData.Phone)) {
+      setSaveMessage({ type: 'error', text: 'Το τηλέφωνο μπορεί να περιέχει μόνο αριθμούς και το σύμβολο +' })
+      return
+    }
 
     setIsSaving(true)
     setSaveMessage(null)
@@ -351,6 +375,7 @@ export default function ProfilePage() {
                 value={formData.FieldsOfWork}
                 placeholder="π.χ. Τέχνη, Πολιτισμός, Κοινωνική Καινοτομία"
                 onChange={(value) => handleFieldChange('FieldsOfWork', value)}
+                helperText="Διαχωρίστε με κόμμα (,)"
               />
             </div>
 
@@ -387,6 +412,7 @@ export default function ProfilePage() {
                 placeholder="https://example.com"
                 type="url"
                 onChange={(value) => handleFieldChange('Websites', value)}
+                helperText="Διαχωρίστε με κόμμα (,)"
               />
             </div>
 
@@ -414,6 +440,7 @@ export default function ProfilePage() {
                   value={formData.Project1Tags}
                   placeholder="Design, Development, Art"
                   onChange={(value) => handleFieldChange('Project1Tags', value)}
+                  helperText="Διαχωρίστε με κόμμα (,)"
                 />
 
                 <EditableField
@@ -453,6 +480,7 @@ export default function ProfilePage() {
                   value={formData.Project2Tags}
                   placeholder="Design, Development, Art"
                   onChange={(value) => handleFieldChange('Project2Tags', value)}
+                  helperText="Διαχωρίστε με κόμμα (,)"
                 />
 
                 <EditableField
