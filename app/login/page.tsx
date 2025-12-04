@@ -105,6 +105,16 @@ export default function LoginPage() {
 
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-12">
         <div className="w-full max-w-5xl">
+          {/* Members Only Notice */}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 bg-coral/10 dark:bg-coral-light/10 border border-coral/30 dark:border-coral-light/30 text-coral dark:text-coral-light px-4 py-2 rounded-full text-sm font-medium">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+              </svg>
+              <span>Περιοχή Μελών</span>
+            </div>
+          </div>
+
           {/* Cards Container - Side by Side on Desktop */}
           <div className="grid md:grid-cols-2 gap-6 mb-6">
             {/* Password Login Card */}
@@ -130,7 +140,7 @@ export default function LoginPage() {
                     id="login-email"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="to-email-sas@example.com"
+                    placeholder="to-email-sou@example.com"
                     required
                     className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-full text-sm text-charcoal dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
                     disabled={isLoginLoading}
@@ -206,7 +216,7 @@ export default function LoginPage() {
                   Πρώτη Σύνδεση
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 text-xs">
-                  Εισάγε το email σου για να λάβεις σύνδεσμο
+                  Βάλε το email σου για να λάβεις σύνδεσμο
                 </p>
               </div>
 
@@ -221,7 +231,7 @@ export default function LoginPage() {
                     id="magic-email"
                     value={magicEmail}
                     onChange={(e) => setMagicEmail(e.target.value)}
-                    placeholder="to-email-sas@example.com"
+                    placeholder="to-email-sou@example.com"
                     required
                     className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-full text-sm text-charcoal dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
                     disabled={isMagicLoading}
@@ -314,7 +324,7 @@ export default function LoginPage() {
             </div>
 
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              Εισάγε το email σου και θα σου στείλουμε έναν σύνδεσμο για να επαναφέρεις τον κωδικό σου.
+              Βάλε το email σου και θα σου στείλουμε έναν σύνδεσμο για να επαναφέρεις τον κωδικό σου.
             </p>
 
             {/* Reset Form */}
