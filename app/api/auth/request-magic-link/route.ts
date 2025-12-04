@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
     // Send email via Resend
     try {
       await resend.emails.send({
-        from: 'Culture for Change <onboarding@resend.dev>',
+        from: 'Culture for Change <noreply@cultureforchange.gr>',
         to: email,
         subject: 'Σύνδεσμος Σύνδεσης - Culture for Change',
         html: `
