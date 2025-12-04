@@ -101,7 +101,8 @@ async function generateMagicLink(email, memberId) {
   })
 
   if (!response.ok) {
-    throw new Error('Failed to generate magic link token')
+    const error = await response.json()
+    throw new Error(`Failed to generate magic link token: ${error.error?.message || response.statusText}`)
   }
 
   const data = await response.json()
