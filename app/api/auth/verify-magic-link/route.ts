@@ -17,9 +17,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify JWT token
+    console.log('[verify-magic-link] Token received, verifying...')
     const decoded = verifyToken(token)
+    console.log('[verify-magic-link] Decoded token:', JSON.stringify(decoded))
+
     if (!decoded || decoded.type !== 'magic-link') {
-      console.error('Token verification failed:', { decoded, hasType: decoded?.type })
+      console.error('[verify-magic-link] Token verification failed:', { decoded, hasType: decoded?.type })
       return NextResponse.json(
         { error: 'Μη έγκυρος ή ληγμένος σύνδεσμος' },
         { status: 401 }
@@ -28,20 +31,26 @@ export async function POST(request: NextRequest) {
 
     // Hash the token to compare with database
     const tokenHash = hashToken(token)
+    console.log('[verify-magic-link] TokenHash:', tokenHash)
+    console.log('[verify-magic-link] Email:', decoded.email)
+    console.log('[verify-magic-link] MemberId:', decoded.memberId)
 
     // Look up the auth token in the auth-tokens collection
-    const authTokenResponse = await fetch(
-      `${STRAPI_URL}/api/auth-tokens?filters[email][$eq]=${encodeURIComponent(decoded.email)}&filters[tokenHash][$eq]=${tokenHash}&filters[tokenType][$eq]=magic-link`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${STRAPI_API_TOKEN}`
-        }
+    const queryUrl = `${STRAPI_URL}/api/auth-tokens?filters[email][$eq]=${encodeURIComponent(decoded.email)}&filters[tokenHash][$eq]=${tokenHash}&filters[tokenType][$eq]=magic-link`
+    console.log('[verify-magic-link] Query URL:', queryUrl)
+
+    const authTokenResponse = await fetch(queryUrl, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${STRAPI_API_TOKEN}`
       }
-    )
+    })
+
+    console.log('[verify-magic-link] Strapi response status:', authTokenResponse.status)
 
     if (!authTokenResponse.ok) {
-      console.error('Auth token fetch failed:', await authTokenResponse.text())
+      const errorText = await authTokenResponse.text()
+      console.error('[verify-magic-link] Auth token fetch failed:', errorText)
       return NextResponse.json(
         { error: 'Σφάλμα επαλήθευσης συνδέσμου' },
         { status: 500 }
@@ -49,8 +58,10 @@ export async function POST(request: NextRequest) {
     }
 
     const authTokenData = await authTokenResponse.json()
+    console.log('[verify-magic-link] Auth token data:', JSON.stringify(authTokenData))
 
     if (!authTokenData.data || authTokenData.data.length === 0) {
+      console.error('[verify-magic-link] No matching auth token found in database')
       return NextResponse.json(
         { error: 'Μη έγκυρος σύνδεσμος' },
         { status: 401 }
