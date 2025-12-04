@@ -273,6 +273,30 @@ export default function ProfilePage() {
           </p>
         </div>
 
+        {/* Placeholder Data Warning */}
+        {(user.Name === 'Νέο Μέλος' || user.FieldsOfWork === 'Προς Συμπλήρωση' || user.City === '-') && (
+          <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-400 dark:border-amber-600 rounded-2xl p-6 mb-8">
+            <div className="flex items-start gap-4">
+              <span className="text-3xl flex-shrink-0">⚠️</span>
+              <div>
+                <h3 className="font-bold text-amber-900 dark:text-amber-200 mb-2 text-lg">
+                  Το προφίλ σου χρειάζεται συμπλήρωση
+                </h3>
+                <p className="text-sm text-amber-800 dark:text-amber-300 mb-3">
+                  Για την καλύτερη εμπειρία στο δίκτυο, παρακαλούμε συμπλήρωσε τα πραγματικά σου στοιχεία.
+                  Αυτό το προφίλ δημιουργήθηκε με placeholder δεδομένα για λόγους ασφαλείας.
+                </p>
+                <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1">
+                  {user.Name === 'Νέο Μέλος' && <li>• Συμπλήρωσε το όνομά σου</li>}
+                  {user.FieldsOfWork === 'Προς Συμπλήρωση' && <li>• Πρόσθεσε τα πεδία εργασίας σου</li>}
+                  {user.City === '-' && <li>• Προσθέσε την πόλη και την περιοχή σου</li>}
+                  {!user.Bio && <li>• Γράψε ένα σύντομο βιογραφικό</li>}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid md:grid-cols-3 gap-8">
           {/* Left Column - Profile Image */}
           <div className="md:col-span-1">
