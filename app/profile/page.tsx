@@ -274,7 +274,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Placeholder Data Warning */}
-        {(user.Name === 'Νέο Μέλος' || user.FieldsOfWork === 'Προς Συμπλήρωση' || user.City === '-') && (
+        {(user.Name === 'Νέο Μέλος' || user.FieldsOfWork === 'Προς Συμπλήρωση' || user.City === '-' || user.Province === '-') && (
           <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-400 dark:border-amber-600 rounded-2xl p-6 mb-8">
             <div className="flex items-start gap-4">
               <span className="text-3xl flex-shrink-0">⚠️</span>
@@ -289,7 +289,7 @@ export default function ProfilePage() {
                 <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1">
                   {user.Name === 'Νέο Μέλος' && <li>• Συμπλήρωσε το όνομά σου</li>}
                   {user.FieldsOfWork === 'Προς Συμπλήρωση' && <li>• Πρόσθεσε τα πεδία εργασίας σου</li>}
-                  {user.City === '-' && <li>• Προσθέσε την πόλη και την περιοχή σου</li>}
+                  {(user.City === '-' || user.Province === '-') && <li>• Προσθέσε την πόλη και την περιοχή σου</li>}
                   {!user.Bio && <li>• Γράψε ένα σύντομο βιογραφικό</li>}
                 </ul>
               </div>
