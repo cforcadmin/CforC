@@ -121,7 +121,11 @@ export default function ProfilePage() {
   const validatePhone = (phone: string): boolean => {
     // Allow only numbers, spaces, dashes, and plus sign
     const phoneRegex = /^[\d\s\-+]+$/
-    return phoneRegex.test(phone)
+    if (!phoneRegex.test(phone)) return false
+
+    // Check minimum 10 digits (excluding spaces, dashes, and plus)
+    const digitsOnly = phone.replace(/[\s\-+]/g, '')
+    return digitsOnly.length >= 10
   }
 
   // Save changes
@@ -138,7 +142,7 @@ export default function ProfilePage() {
 
     // Validate phone format
     if (formData.Phone && formData.Phone.trim() !== '' && formData.Phone !== '-' && !validatePhone(formData.Phone)) {
-      errors.push('Το τηλέφωνο μπορεί να περιέχει μόνο αριθμούς, κενά και το σύμβολο +')
+      errors.push('Το τηλέφωνο πρέπει να περιέχει τουλάχιστον 10 ψηφία και μόνο αριθμούς, κενά και το σύμβολο +')
     }
 
     // Check required fields
