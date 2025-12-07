@@ -47,9 +47,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find member by email
+    // Find member by email (populate all needed fields including project images)
     const membersResponse = await fetch(
-      `${STRAPI_URL}/api/members?filters[Email][$eq]=${encodeURIComponent(email)}&populate=Image`,
+      `${STRAPI_URL}/api/members?filters[Email][$eq]=${encodeURIComponent(email)}&populate[0]=Image&populate[1]=Project1Pictures&populate[2]=Project2Pictures`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -149,21 +149,50 @@ export async function POST(request: NextRequest) {
       path: '/'
     })
 
-    // Return member data (excluding sensitive and blocks fields)
+    // Helper function to convert Blocks format to plain text
+    const convertBlocksToText = (blocks: any) => {
+      if (!blocks || !Array.isArray(blocks)) return ''
+      return blocks
+        .map((block: any) => {
+          if (block.children && Array.isArray(block.children)) {
+            return block.children
+              .map((child: any) => child.text || '')
+              .join('')
+          }
+          return ''
+        })
+        .join('\n')
+    }
+
+    // Convert Bio from Blocks format to plain text
+    const bioText = convertBlocksToText(member.Bio)
+
+    // Convert Project descriptions from Blocks format to plain text
+    const project1DescriptionText = convertBlocksToText(member.Project1Description)
+    const project2DescriptionText = convertBlocksToText(member.Project2Description)
+
+    // Return member data (excluding sensitive fields and complex Blocks fields)
     const {
-      password: _,
-      magicLinkToken: __,
-      magicLinkExpiry: ___,
-      Bio,
-      Project1Description,
-      Project2Description,
+      password,
+      magicLinkToken,
+      magicLinkExpiry,
+      verificationCode,
+      verificationExpiry,
+      Bio: _,
+      Project1Description: _1,
+      Project2Description: _2,
       ...safeMemberData
     } = member
 
     return NextResponse.json({
       success: true,
       message: 'Επιτυχής σύνδεση',
-      member: safeMemberData
+      member: {
+        ...safeMemberData,
+        Bio: bioText,
+        Project1Description: project1DescriptionText,
+        Project2Description: project2DescriptionText
+      }
     })
 
   } catch (error) {
