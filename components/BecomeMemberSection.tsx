@@ -37,7 +37,7 @@ export default function BecomeMemberSection() {
             <div className="flex-shrink-0">
               <Link
                 href="/participation"
-                className="inline-block bg-transparent border-2 border-coral dark:border-coral-light text-coral dark:text-coral-light px-8 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-all duration-300"
+                className="inline-block bg-gray-200 dark:bg-gray-600 border-2 border-gray-300 dark:border-gray-500 text-charcoal dark:text-gray-100 px-8 py-3 rounded-full font-medium hover:bg-gray-300 dark:hover:bg-gray-500 transition-all duration-300"
               >
                 ΓΙΝΕ ΜΕΛΟΣ ΤΩΡΑ
               </Link>
