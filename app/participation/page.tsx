@@ -50,7 +50,7 @@ export default function ParticipationPage() {
                   target="_blank"
                   className="inline-block text-coral dark:text-coral-light hover:underline font-medium mt-4"
                 >
-                  Οδηγός Τσέπης (χρήσιμες πληροφορίες για τη συμμετοχή των μελλών)
+                  Οδηγός Τσέπης (χρήσιμες πληροφορίες για τη συμμετοχή των μελών)
                 </Link>
               </div>
 
