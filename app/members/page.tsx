@@ -189,16 +189,20 @@ export default function MembersPage() {
 
           {/* Filters */}
           <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 mb-12">
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
-              {/* Search + basic filters */}
-              <div className="flex-1 flex flex-wrap gap-4">
+            <div className="flex flex-col gap-4">
+              {/* Row 1: search field full width */}
+              <div className="w-full">
                 <input
                   type="text"
                   placeholder="Αναζήτηση ονόματος..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 min-w-[220px] px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400"
                 />
+              </div>
+
+              {/* Row 2: filters + sort, left-aligned */}
+              <div className="flex flex-wrap items-center gap-4">
                 <select
                   value={selectedField}
                   onChange={(e) => setSelectedField(e.target.value)}
@@ -235,10 +239,6 @@ export default function MembersPage() {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              {/* Sort dropdown */}
-              <div className="md:w-auto md:ml-auto">
                 <select
                   value={sortMode}
                   onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
