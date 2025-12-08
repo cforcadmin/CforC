@@ -142,6 +142,60 @@ Strapi Cloud's free tier automatically goes to sleep after 10-15 minutes of inac
 - **Ping Interval:** Every 5 minutes
 - **Expected Response Time:** < 2 seconds (when awake)
 
+## Member Management Scripts
+
+A set of Node scripts in the `scripts/` folder help manage member data in Strapi.
+
+> All scripts expect a `.env.local` file with at least:
+>
+> - `STRAPI_URL`
+> - `STRAPI_API_TOKEN`
+>
+> Run them from the project root with `node scripts/<script-name>.js`.
+
+### Fix member images from existing external URLs
+
+- File: `scripts/fix-member-images.js`
+- Purpose: Finds members whose `Image` field points to an external URL (e.g. Webflow CDN), downloads those images, uploads them to Strapi (`/api/upload`), and updates the member to point to the uploaded media.
+- Usage:
+  ```bash
+  node scripts/fix-member-images.js
+  ```
+
+### Set member images from CSV
+
+- File: `scripts/fix-member-images-from-csv.js`
+- Purpose: Reads `scripts/CforC_Members.csv`, matches rows by member name, downloads the `Profile Image` URL from the CSV, uploads to Strapi, and sets that file as the member’s profile image.
+- Notes:
+  - Auto-detects `;` vs `,` as CSV delimiter.
+  - Expects a `Profile Image` column for the profile photo URL.
+- Usage:
+  ```bash
+  node scripts/fix-member-images-from-csv.js
+  ```
+
+### Normalize member name casing (Greek)
+
+- File: `scripts/fix-member-names-case.js`
+- Purpose: Converts Greek member names stored in ALL CAPS (e.g. `ΓΙΩΡΓΟΣ ΣΤΥΛ`) into title case using Greek locale (e.g. `Γιώργος Στυλ`) and updates the `Name` field in Strapi.
+- Usage:
+  ```bash
+  node scripts/fix-member-names-case.js
+  ```
+
+### Other utility scripts
+
+Additional scripts exist in `scripts/` for slug population, image URL migration, testing and email sending. They follow the same pattern (Node script + `.env.local` Strapi config) and are intended for internal maintenance.
+
+## Member Detail Page Hero
+
+On individual member pages (`/members/[name]`):
+
+- The hero line shows the member’s name in **Greek ALL CAPS**, with punctuation stripped, using Greek locale uppercasing.
+- Directly below, the member’s name is shown **as stored in Strapi** (first-letter capital, with proper punctuation).
+
+Implementation details are in `app/members/[name]/page.tsx` via the `getHeroName` helper.
+
 ## Deployment
 
 ### Deploy to Vercel (Recommended - FREE)

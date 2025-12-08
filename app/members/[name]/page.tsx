@@ -42,6 +42,14 @@ interface Member {
   Project2Tags?: string
 }
 
+function getHeroName(name: string): string {
+  if (!name) return ''
+  // Remove punctuation we don't want emphasized in the hero
+  const withoutPunctuation = name.replace(/[.,;:!?"'«»·()\-–—]/g, '')
+  // Uppercase using Greek locale so tonos is handled appropriately
+  return withoutPunctuation.toLocaleUpperCase('el-GR')
+}
+
 export default function MemberDetailPage() {
   const params = useParams()
   const [member, setMember] = useState<Member | null>(null)
@@ -106,9 +114,14 @@ export default function MemberDetailPage() {
       <section className="relative -bottom-20">
         <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            {/* Top: name in Greek ALL CAPS, without punctuation */}
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
-              {member.Name}
+              {getHeroName(member.Name)}
             </h1>
+            {/* Below: name as stored in DB (first letter capital, etc.) */}
+            <p className="mt-3 text-xl md:text-2xl font-normal text-charcoal/90 dark:text-gray-100">
+              {member.Name}
+            </p>
           </div>
         </div>
       </section>
