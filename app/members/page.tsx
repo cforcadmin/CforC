@@ -220,24 +220,24 @@ export default function MembersPage() {
               <select
                 value={selectedCity}
                 onChange={(e) => setSelectedCity(e.target.value)}
-                className="px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 w-auto min-w-0 whitespace-nowrap"
+                className="px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 w-40 md:w-48 whitespace-nowrap"
               >
                 <option value="">Όλες οι πόλεις</option>
                 {uniqueCities.map((city) => (
                   <option key={city} value={city}>
-                    {city}
+                    {truncateLabel(city, 24)}
                   </option>
                 ))}
               </select>
               <select
                 value={selectedProvince}
                 onChange={(e) => setSelectedProvince(e.target.value)}
-                className="px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 w-auto min-w-0 whitespace-nowrap"
+                className="px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 w-40 md:w-48 whitespace-nowrap"
               >
                 <option value="">Όλες οι επαρχίες</option>
                 {uniqueProvinces.map((province) => (
                   <option key={province} value={province}>
-                    {province}
+                    {truncateLabel(province, 24)}
                   </option>
                 ))}
               </select>
