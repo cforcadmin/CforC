@@ -160,12 +160,41 @@ export default function AnnouncementsPage() {
               <span className="text-2xl mr-2">⭐</span>
               Η Πιο Σημαντική Αλλαγή
             </h3>
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
               Τα μέλη μπορούν πλέον να <strong>επεξεργάζονται το προφίλ τους</strong> μόνα τους!
               Δεν χρειάζεται πια να επικοινωνείς μαζί μας για διορθώσεις ή ενημερώσεις.
               Μπορείς να βελτιώσεις, ενημερώσεις και προσαρμόσεις το προφίλ σου όπως εσύ θέλεις,
               ανά πάσα στιγμή!
             </p>
+
+            <div className="mt-4 p-4 bg-white/50 dark:bg-gray-800/50 rounded-xl">
+              <h4 className="font-bold text-charcoal dark:text-gray-100 mb-3 flex items-center">
+                <span className="mr-2">💡</span>
+                Συμβουλές για το προφίλ σου
+              </h4>
+              <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                <li className="flex items-start">
+                  <span className="mr-2 text-coral dark:text-coral-light flex-shrink-0">•</span>
+                  <span>Αν θες να μην φαίνεται δημόσια το email σου επικοινώνησε με τον Γιώργο (Στυλ) για να το αφαιρέσει.</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2 text-coral dark:text-coral-light flex-shrink-0">•</span>
+                  <span>Μπαίνοντας στο προφίλ σου θα χρειαστεί ν' αλλάξεις το όνομα σε μικρά αντί κεφαλαία γράμματα.</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2 text-coral dark:text-coral-light flex-shrink-0">•</span>
+                  <span>Καλό είναι να υπάρχουν λίγα πεδιά εργασίας και πρέπει να χωρίζονται με κόμμα.</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2 text-coral dark:text-coral-light flex-shrink-0">•</span>
+                  <span>Χρειάζεται να προσθέσεις τίτλο, περιγραφή και φωτογραφίες για τα πρότζεκτ σου.</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2 text-coral dark:text-coral-light flex-shrink-0">•</span>
+                  <span>Προτείνουμε να βάλεις μια πρόσφατη, αντιπροσωπευτική στο τώρα φωτογραφία προφίλ. Μην ξεχνάς είναι η βιτρίνα σου!</span>
+                </li>
+              </ul>
+            </div>
           </div>
 
           {/* Footer Note */}
