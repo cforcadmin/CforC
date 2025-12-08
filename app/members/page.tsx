@@ -202,7 +202,7 @@ export default function MembersPage() {
                 <select
                   value={selectedField}
                   onChange={(e) => setSelectedField(e.target.value)}
-                  className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 w-auto"
+                  className="px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 w-auto min-w-0 whitespace-nowrap"
                 >
                   <option value="">Όλα τα πεδία εργασίας</option>
                   {uniqueFields.map((field) => (
@@ -214,7 +214,7 @@ export default function MembersPage() {
                 <select
                   value={selectedCity}
                   onChange={(e) => setSelectedCity(e.target.value)}
-                  className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 w-auto"
+                  className="px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 w-auto min-w-0 whitespace-nowrap"
                 >
                   <option value="">Όλες οι πόλεις</option>
                   {uniqueCities.map((city) => (
@@ -226,7 +226,7 @@ export default function MembersPage() {
                 <select
                   value={selectedProvince}
                   onChange={(e) => setSelectedProvince(e.target.value)}
-                  className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 w-auto"
+                  className="px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 w-auto min-w-0 whitespace-nowrap"
                 >
                   <option value="">Όλες οι επαρχίες</option>
                   {uniqueProvinces.map((province) => (
@@ -242,7 +242,7 @@ export default function MembersPage() {
                 <select
                   value={sortMode}
                   onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
-                  className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 w-auto"
+                  className="px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 w-auto min-w-0 whitespace-nowrap"
                 >
                   <option value="random">Τυχαία σειρά</option>
                   <option value="alpha-asc">Α → Ω</option>
