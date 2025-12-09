@@ -42,7 +42,8 @@ async function fetchStrapi(endpoint: string, options: RequestInit = {}) {
  */
 export async function getActivities() {
   // Strapi v5: Explicitly populate Visuals field (media fields need explicit population)
-  return fetchStrapi('/activities?populate=Visuals');
+  // Set pagination limit to 1000 to get all activities
+  return fetchStrapi('/activities?populate=Visuals&pagination[limit]=1000');
 }
 
 /**
@@ -57,7 +58,8 @@ export async function getActivityById(id: string | number) {
  */
 export async function getOpenCalls() {
   // Strapi v5: Explicitly populate Image field (media fields need explicit population)
-  return fetchStrapi('/open-calls?populate=Image');
+  // Set pagination limit to 1000 to get all open calls
+  return fetchStrapi('/open-calls?populate=Image&pagination[limit]=1000');
 }
 
 /**
