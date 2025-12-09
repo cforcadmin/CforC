@@ -140,15 +140,15 @@ export default function OpenCallsSection() {
               </div>
               <h3 className="text-2xl font-bold mb-4 dark:text-gray-100">Περιεχόμενο Μελών</h3>
               <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Οι ανοιχτές προσκλήσεις είναι διαθέσιμες μόνο για εγγεγραμμένα μέλη. Εγγραφείτε δωρεάν για πρόσβαση.
+                Οι ανοιχτές προσκλήσεις είναι διαθέσιμες μόνο για εγγεγραμμένα μέλη. Εγγραφείτε για πρόσβαση.
               </p>
               <div className="flex flex-col gap-3">
                 <Link
-                  href="/signup"
+                  href="/participation"
                   className="bg-coral dark:bg-coral-light text-white px-6 py-3 rounded-full font-medium hover:bg-coral-dark dark:hover:bg-coral transition-colors"
                   onClick={() => setShowMemberModal(false)}
                 >
-                  Εγγραφή Δωρεάν
+                  Εγγραφή
                 </Link>
                 <button
                   onClick={() => setShowMemberModal(false)}
@@ -186,8 +186,10 @@ export default function OpenCallsSection() {
             )}
           </div>
 
-        <div className="space-y-0">
-          {openCalls.map((call, index) => {
+        {/* Active Open Calls - Show only for logged-in users */}
+        {user && openCalls.length > 0 && (
+          <div className="space-y-0">
+            {openCalls.map((call, index) => {
             const descriptionText = extractTextFromBlocks(call.Description)
 
             // Handle both single image (object) and multiple images (array) from Strapi v5
@@ -277,20 +279,19 @@ export default function OpenCallsSection() {
                 </Link>
               </div>
             )
-          })}
-        </div>
+            })}
+          </div>
+        )}
 
-        {user ? (
-          <Link href="/open-calls" className="md:hidden w-full mt-8 bg-coral dark:bg-coral-light text-white px-6 py-3 rounded-full font-medium text-center block hover:bg-coral-dark dark:hover:bg-coral transition-colors">
-            ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
-          </Link>
-        ) : (
-          <button
-            onClick={handleViewAllClick}
-            className="md:hidden w-full mt-8 bg-coral dark:bg-coral-light text-white px-6 py-3 rounded-full font-medium text-center block hover:bg-coral-dark dark:hover:bg-coral transition-colors"
-          >
-            ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
-          </button>
+        {user && (
+          <>
+            <Link href="/open-calls" className="hidden md:block w-full mt-8 bg-coral dark:bg-coral-light text-white px-6 py-3 rounded-full font-medium text-center hover:bg-coral-dark dark:hover:bg-coral transition-colors">
+              ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
+            </Link>
+            <Link href="/open-calls" className="md:hidden w-full mt-8 bg-coral dark:bg-coral-light text-white px-6 py-3 rounded-full font-medium text-center block hover:bg-coral-dark dark:hover:bg-coral transition-colors">
+              ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
+            </Link>
+          </>
         )}
 
         {/* Teaser Banner for Non-Logged-In Users */}
@@ -328,17 +329,17 @@ export default function OpenCallsSection() {
               </div>
 
               <Link
-                href="/signup"
+                href="/participation"
                 className="inline-block bg-white text-coral px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-colors shadow-lg"
               >
-                Εγγραφή Δωρεάν
+                Εγγραφή
               </Link>
             </div>
           </div>
         )}
 
-        {/* Expired Open Calls Section - Show 3 Recent Expired */}
-        {expiredCalls.length > 0 && (
+        {/* Expired Open Calls Section - Show 3 Recent Expired (Non-logged-in users only) */}
+        {!user && expiredCalls.length > 0 && (
           <div className="mt-16">
             <div className="flex justify-between items-end mb-8">
               <div>
@@ -375,7 +376,7 @@ export default function OpenCallsSection() {
                           <span className="inline-block bg-gray-400 dark:bg-gray-600 text-white px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
                             {new Date(call.Deadline).toLocaleDateString('el-GR')}
                           </span>
-                          <span className="inline-block bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
+                          <span className="inline-block bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300 px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
                             ΕΛΗΞΕ
                           </span>
                         </div>
