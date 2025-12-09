@@ -294,50 +294,6 @@ export default function OpenCallsSection() {
           </>
         )}
 
-        {/* Teaser Banner for Non-Logged-In Users */}
-        {!user && (
-          <div className="mt-16 bg-gradient-to-r from-coral to-coral-dark dark:from-coral-light dark:to-coral rounded-3xl p-12 text-white text-center">
-            <div className="max-w-3xl mx-auto">
-              <div className="mb-6">
-                <div className="inline-block bg-white bg-opacity-20 backdrop-blur-sm px-6 py-2 rounded-full text-sm font-medium mb-4">
-                  Αποκλειστικό Περιεχόμενο Μελών
-                </div>
-                <h3 className="text-3xl md:text-4xl font-bold mb-4">
-                  {totalActiveCalls} Ενεργές Ανοιχτές Προσκλήσεις
-                </h3>
-                <p className="text-lg text-white text-opacity-90 mb-8">
-                  Αποκτήστε πρόσβαση σε ευκαιρίες χρηματοδότησης, υποτροφίες, residencies και διαγωνισμούς από όλη την Ευρώπη
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-6 mb-8 text-left">
-                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-6">
-                  <div className="text-3xl mb-2">🇪🇺</div>
-                  <div className="font-semibold mb-1">Ευρωπαϊκά Προγράμματα</div>
-                  <div className="text-sm text-white text-opacity-80">Creative Europe, Horizon, CERV</div>
-                </div>
-                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-6">
-                  <div className="text-3xl mb-2">💰</div>
-                  <div className="font-semibold mb-1">Χρηματοδότηση</div>
-                  <div className="text-sm text-white text-opacity-80">Grants & Funding Opportunities</div>
-                </div>
-                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-6">
-                  <div className="text-3xl mb-2">🎨</div>
-                  <div className="font-semibold mb-1">Residencies</div>
-                  <div className="text-sm text-white text-opacity-80">Καλλιτεχνικές Υποτροφίες</div>
-                </div>
-              </div>
-
-              <Link
-                href="/participation"
-                className="inline-block bg-white text-coral px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-colors shadow-lg"
-              >
-                Εγγραφή
-              </Link>
-            </div>
-          </div>
-        )}
-
         {/* Expired Open Calls Section - Show 3 Recent Expired (Non-logged-in users only) */}
         {!user && expiredCalls.length > 0 && (
           <div className="mt-16">
