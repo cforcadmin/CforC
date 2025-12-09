@@ -29,7 +29,7 @@ function extractTextFromBlocks(blocks: any): string {
 }
 
 export default function OpenCallsSection() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
   const [openCalls, setOpenCalls] = useState<OpenCall[]>([])
   const [expiredCalls, setExpiredCalls] = useState<OpenCall[]>([])
   const [totalActiveCalls, setTotalActiveCalls] = useState(0)
