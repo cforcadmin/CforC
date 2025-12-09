@@ -6,7 +6,7 @@ import Image from 'next/image'
 import LoadingIndicator from './LoadingIndicator'
 import { getOpenCalls } from '@/lib/strapi'
 import type { StrapiResponse, OpenCall } from '@/lib/types'
-import { useAuth } from '@/lib/AuthContext'
+import { useAuth } from './AuthProvider'
 
 // Helper function to extract text from Strapi rich text blocks
 function extractTextFromBlocks(blocks: any): string {
