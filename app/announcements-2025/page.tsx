@@ -212,6 +212,34 @@ export default function AnnouncementsPage() {
           </div>
         </div>
 
+        {/* Feedback Section */}
+        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 md:p-12 mb-8">
+          <div className="text-center">
+            <div className="inline-block mb-4">
+              <span className="text-4xl">💭</span>
+            </div>
+            <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-4">
+              Βρήκες κάποιο λάθος; Έχεις κάποια πρόταση;
+            </h2>
+            <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
+              Κάνε κλικ{' '}
+              <a
+                href="https://docs.google.com/document/d/1yhxZ--puZuLGIYS9-xZDbujoe250P7xyvLcZKcg1bj0/edit?usp=sharing"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-coral dark:text-coral-light font-bold underline hover:no-underline"
+              >
+                εδώ
+              </a>
+              {' '}για να μοιραστείς τις σκέψεις σου.
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 italic">
+              Όλες οι προτάσεις θα εξεταστούν προσεκτικά και θα ληφθούν υπόψη,
+              αλλά δεν μπορούμε να εγγυηθούμε ότι θα υλοποιηθούν όλες.
+            </p>
+          </div>
+        </div>
+
         {/* Timeline Section */}
         <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 md:p-12 mb-8">
           <h2 className="text-2xl font-bold text-coral dark:text-coral-light mb-8 text-center flex items-center justify-center">
