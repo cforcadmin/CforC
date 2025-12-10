@@ -283,16 +283,6 @@ export default function OpenCallsSection() {
           </div>
         )}
 
-        {user && (
-          <>
-            <Link href="/open-calls" className="hidden md:block w-full mt-8 bg-coral dark:bg-coral-light text-white px-6 py-3 rounded-full font-medium text-center hover:bg-coral-dark dark:hover:bg-coral transition-colors">
-              ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
-            </Link>
-            <Link href="/open-calls" className="md:hidden w-full mt-8 bg-coral dark:bg-coral-light text-white px-6 py-3 rounded-full font-medium text-center block hover:bg-coral-dark dark:hover:bg-coral transition-colors">
-              ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
-            </Link>
-          </>
-        )}
 
         {/* Expired Open Calls Section - Show 3 Recent Expired (Non-logged-in users only) */}
         {!user && expiredCalls.length > 0 && (

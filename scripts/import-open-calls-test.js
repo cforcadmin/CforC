@@ -23,9 +23,9 @@ async function fetchOpenCallsList() {
 
   const openCalls = []
 
-  // Find all open call containers - look for the pattern with date + h3 + p + link
-  // Date pattern: <div>DD</div><div>/</div><div>MM</div><div>/</div><div>YYYY</div>
-  const dateRegex = /<div>(\d{1,2})<\/div>\s*<div>\/<\/div>\s*<div>(\d{1,2})<\/div>\s*<div>\/<\/div>\s*<div>(\d{4})<\/div>/gi
+  // Find all open call containers - look for the pattern with carddate divs
+  // Date pattern: <div class="carddate">DD</div><div class="carddate">/</div><div class="carddate">MM</div><div class="carddate">/</div><div class="carddate">YYYY</div>
+  const dateRegex = /<div class="carddate">(\d{1,2})<\/div>\s*<div class="carddate">\/<\/div>\s*<div class="carddate">(\d{1,2})<\/div>\s*<div class="carddate">\/<\/div>\s*<div class="carddate">(\d{4})<\/div>/gi
 
   let match
   const dateMatches = []
@@ -39,28 +39,30 @@ async function fetchOpenCallsList() {
 
   console.log(`✅ Found ${dateMatches.length} date entries\n`)
 
-  // For each date, extract the following h3, p, and link
+  // For each date, extract the following h2, p, and link
   for (let i = 0; i < Math.min(2, dateMatches.length); i++) {
     const dateInfo = dateMatches[i]
-    const startPos = dateInfo.position
-    const endPos = i < dateMatches.length - 1 ? dateMatches[i + 1].position : html.length
 
-    const section = html.substring(startPos, endPos)
-
-    // Extract title from h3
-    const titleMatch = section.match(/<h3[^>]*>(.*?)<\/h3>/i)
-    const title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '').trim() : null
-
-    // Extract description from p
-    const descMatch = section.match(/<p[^>]*>(.*?)<\/p>/i)
-    const description = descMatch ? descMatch[1].replace(/<[^>]+>/g, '').trim() : null
-
-    // Extract link from a href
-    const linkMatch = section.match(/<a[^>]*href="([^"]*)"[^>]*>/i)
+    // Look backward from date to find the start of the <a> tag
+    const beforeDate = html.substring(Math.max(0, dateInfo.position - 500), dateInfo.position)
+    const linkMatch = beforeDate.match(/<a[^>]*href="([^"]*)"[^>]*target="_blank"[^>]*>(?!.*<a)/i)
     const link = linkMatch ? linkMatch[1] : null
 
+    // Look forward from date to get the rest of the content
+    const startPos = dateInfo.position
+    const endPos = i < dateMatches.length - 1 ? dateMatches[i + 1].position : html.length
+    const section = html.substring(startPos, endPos)
+
+    // Extract title from h2 with class="listheading"
+    const titleMatch = section.match(/<h2[^>]*class="[^"]*listheading[^"]*"[^>]*>(.*?)<\/h2>/i)
+    const title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '').trim() : null
+
+    // Extract description from p (first p tag after h2)
+    const descMatch = section.match(/<\/h2>\s*<p[^>]*>(.*?)<\/p>/i)
+    const description = descMatch ? descMatch[1].replace(/<[^>]+>/g, '').trim() : null
+
     // Check for PRIORITY badge
-    const hasPriority = section.includes('PRIORITY')
+    const hasPriority = section.includes('class="carddate">PRIORITY')
 
     if (title && description && link) {
       const date = `${dateInfo.year}-${dateInfo.month.padStart(2, '0')}-${dateInfo.day.padStart(2, '0')}`
