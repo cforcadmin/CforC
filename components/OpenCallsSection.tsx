@@ -150,6 +150,13 @@ export default function OpenCallsSection() {
                 >
                   Εγγραφή
                 </Link>
+                <Link
+                  href="/login"
+                  className="bg-white dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-white transition-colors"
+                  onClick={() => setShowMemberModal(false)}
+                >
+                  Σύνδεση
+                </Link>
                 <button
                   onClick={() => setShowMemberModal(false)}
                   className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
