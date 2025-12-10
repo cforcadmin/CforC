@@ -358,23 +358,16 @@ export default function OpenCallsSection() {
               })}
             </div>
 
-            <div className="mt-8 text-center">
-              {user ? (
+            {user && (
+              <div className="mt-8 text-center">
                 <Link
                   href="/open-calls"
                   className="inline-block bg-coral dark:bg-coral-light text-white px-8 py-3 rounded-full font-medium hover:bg-coral-dark dark:hover:bg-coral transition-colors"
                 >
                   ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
                 </Link>
-              ) : (
-                <button
-                  onClick={handleViewAllClick}
-                  className="inline-block bg-coral dark:bg-coral-light text-white px-8 py-3 rounded-full font-medium hover:bg-coral-dark dark:hover:bg-coral transition-colors"
-                >
-                  ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
-                </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
       </div>
