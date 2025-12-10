@@ -89,17 +89,17 @@ export default function ActivityDetailPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen">
+      <main className="min-h-screen dark:bg-gray-900">
         <Navigation />
         <div className="py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="animate-pulse">
-              <div className="h-12 bg-gray-200 rounded w-2/3 mb-8"></div>
-              <div className="h-96 bg-gray-200 rounded-2xl mb-8"></div>
+              <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-8"></div>
+              <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded-2xl mb-8"></div>
               <div className="space-y-4">
-                <div className="h-4 bg-gray-200 rounded w-full"></div>
-                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4/6"></div>
               </div>
             </div>
           </div>
@@ -111,15 +111,15 @@ export default function ActivityDetailPage() {
 
   if (error || !activity) {
     return (
-      <main className="min-h-screen">
+      <main className="min-h-screen dark:bg-gray-900">
         <Navigation />
         <div className="py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-center">
-              <p className="text-orange-600 font-medium">
+            <div className="bg-orange-50 dark:bg-gray-700 border border-orange-200 dark:border-gray-600 rounded-lg p-6 text-center">
+              <p className="text-orange-600 dark:text-orange-400 font-medium">
                 {error || 'Activity not found'}
               </p>
-              <Link href="/activities" className="inline-block mt-4 text-coral hover:underline">
+              <Link href="/activities" className="inline-block mt-4 text-coral dark:text-coral-light hover:underline">
                 ← Επιστροφή στις δραστηριότητες
               </Link>
             </div>
@@ -133,7 +133,7 @@ export default function ActivityDetailPage() {
   const description = extractTextFromBlocks(activity.Description)
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen dark:bg-gray-900">
       <Navigation />
 
       {/* Hero Section */}
@@ -148,10 +148,10 @@ export default function ActivityDetailPage() {
       </section>
 
       {/* Content Section */}
-      <section className="py-24 bg-white">
+      <section className="py-24 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Back link */}
-          <Link href="/activities" className="inline-flex items-center text-coral hover:underline mb-8">
+          <Link href="/activities" className="inline-flex items-center text-coral dark:text-coral-light hover:underline mb-8">
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -160,7 +160,7 @@ export default function ActivityDetailPage() {
 
           {/* Date */}
           <div className="mb-8">
-            <span className="inline-block bg-orange-50 px-4 py-2 rounded-full text-sm font-medium">
+            <span className="inline-block bg-orange-50 dark:bg-gray-700 dark:text-gray-200 px-4 py-2 rounded-full text-sm font-medium">
               {new Date(activity.Date).toLocaleDateString('el-GR', {
                 year: 'numeric',
                 month: 'long',
@@ -251,8 +251,8 @@ export default function ActivityDetailPage() {
 
           {/* Description */}
           <div className="prose prose-lg max-w-none">
-            <h2 className="text-2xl font-bold mb-6 text-charcoal">Περιγραφή</h2>
-            <div className="text-gray-700 leading-relaxed whitespace-pre-line">
+            <h2 className="text-2xl font-bold mb-6 text-charcoal dark:text-gray-100">Περιγραφή</h2>
+            <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
               {description}
             </div>
           </div>
@@ -261,9 +261,9 @@ export default function ActivityDetailPage() {
 
       {/* Related Activities Section */}
       {relatedActivities.length > 0 && (
-        <section className="py-24 bg-gray-50">
+        <section className="py-24 bg-gray-50 dark:bg-gray-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl md:text-4xl font-bold mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-12 dark:text-gray-100">
               Πρόσφατες Δραστηριότητες
             </h2>
 
@@ -272,7 +272,7 @@ export default function ActivityDetailPage() {
                 <Link
                   key={relatedActivity.id}
                   href={`/activities/${relatedActivity.documentId || relatedActivity.id}`}
-                  className="bg-orange-50 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow transform hover:scale-105"
+                  className="bg-orange-50 dark:bg-gray-700 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow transform hover:scale-105"
                 >
                   {/* Image with overlapping date */}
                   <div className="relative -mb-2">
@@ -289,25 +289,25 @@ export default function ActivityDetailPage() {
                         />
                       </div>
                     ) : (
-                      <div className="aspect-video bg-gray-200 rounded-2xl mx-2 mt-2 flex items-center justify-center">
-                        <span className="text-gray-400">No image</span>
+                      <div className="aspect-video bg-gray-200 dark:bg-gray-600 rounded-2xl mx-2 mt-2 flex items-center justify-center">
+                        <span className="text-gray-400 dark:text-gray-300">No image</span>
                       </div>
                     )}
 
                     {/* Overlapping date badge */}
                     <div className="absolute top-2 left-4 z-10">
-                      <span className="inline-block bg-orange-50 px-2.5 py-0.5 rounded-full text-xs font-medium shadow-md">
+                      <span className="inline-block bg-orange-50 dark:bg-gray-600 dark:text-gray-200 px-2.5 py-0.5 rounded-full text-xs font-medium shadow-md">
                         {new Date(relatedActivity.Date).toLocaleDateString('el-GR')}
                       </span>
                     </div>
                   </div>
 
                   <div className="p-7 pt-9 flex flex-col h-[200px]">
-                    <h3 className="text-lg font-bold mb-4 line-clamp-3 flex-grow">
+                    <h3 className="text-lg font-bold mb-4 line-clamp-3 flex-grow dark:text-gray-100">
                       {relatedActivity.Title}
                     </h3>
 
-                    <div className="flex items-center text-sm text-gray-600 mt-auto">
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mt-auto">
                       <div className="w-8 h-8 mr-2 flex-shrink-0">
                         <Image
                           src="/cforc_logo_small.svg"
