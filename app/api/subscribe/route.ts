@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     // Use verified domain
-    const fromEmail = 'no-reply@cultureforchange.gr'
+    const fromEmail = 'no-reply@cultureforchange.net'
 
     // Email to admin (notification)
     const adminEmailResponse = await fetch('https://api.resend.com/emails', {
