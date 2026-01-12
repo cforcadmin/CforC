@@ -39,3 +39,4 @@ StrapiDBforCforC/
 
 # member exports
 members-export-*.csv
+strapi-backup-*/
