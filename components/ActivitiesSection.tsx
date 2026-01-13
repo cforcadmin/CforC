@@ -116,16 +116,11 @@ export default function ActivitiesSection() {
                   <div key={slideIndex} className="w-full flex-shrink-0 px-2">
                     <div className="grid md:grid-cols-3 gap-10">
                       {slideActivities.map((card) => {
-                        // Debug: Log the Visuals structure for first card
-                        if (card.id === activities[0]?.id) {
-                          console.log('Card Visuals structure:', card.Visuals)
-                          console.log('Full card data:', card)
-                        }
-
                         return (
-                          <div
+                          <Link
                             key={card.id}
-                            className="bg-orange-50 dark:bg-gray-700 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow transform scale-105"
+                            href={`/activities/${card.documentId || card.id}`}
+                            className="bg-orange-50 dark:bg-gray-700 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow transform scale-105 block"
                           >
                             {/* Image with overlapping date */}
                             <div className="relative -mb-2">
@@ -171,7 +166,7 @@ export default function ActivitiesSection() {
                                 <span>CULTURE FOR CHANGE</span>
                               </div>
                             </div>
-                          </div>
+                          </Link>
                         )
                       })}
                     </div>
