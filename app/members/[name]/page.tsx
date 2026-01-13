@@ -163,7 +163,7 @@ export default function MemberDetailPage() {
                 <h2 className="text-4xl md:text-5xl font-bold mb-6 dark:text-gray-100">{member.Name}</h2>
 
                 <div className="mb-8">
-                  <h3 className="text-coral dark:text-coral-light text-sm font-bold mb-4 uppercase">Βιογραφία</h3>
+                  <h3 className="text-coral dark:text-coral-light text-sm font-bold mb-4 uppercase">Βιογραφικό</h3>
                   <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">{bioText}</p>
                 </div>
 
