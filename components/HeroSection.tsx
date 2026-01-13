@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 
 const rotatingTexts = ["CHANGE", "INNOVATION", "PROGRESS", "CREATION"];
 
 export default function HeroSection() {
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -14,6 +17,13 @@ export default function HeroSection() {
 
     return () => clearInterval(interval);
   }, []);
+
+  const handlePlay = () => {
+    setIsPlaying(true);
+    if (videoRef.current) {
+      videoRef.current.play();
+    }
+  };
 
   return (
     <section className="relative -bottom-20">
@@ -34,9 +44,10 @@ export default function HeroSection() {
 
       {/* Video Section */}
       <div className="relative bottom-56 w-full h-[80vh] bg-gray-900 -mt-10 rounded-3xl overflow-hidden">
+        {/* Video element */}
         <video
+          ref={videoRef}
           className="w-full h-full object-cover object-[center_14rem]"
-          autoPlay
           muted
           loop
           playsInline
@@ -44,57 +55,37 @@ export default function HeroSection() {
         >
           <source src="/hero-video.mp4" type="video/mp4" />
           <source src="/hero-video.webm" type="video/webm" />
-          {/* Fallback image if video doesn't load */}
-          <div className="absolute inset-0 flex items-center justify-center bg-charcoal/80">
-            <div className="text-white text-center p-8">
-              <svg
-                className="w-16 h-16 mx-auto mb-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <p className="text-sm">Hero Video</p>
-            </div>
-          </div>
         </video>
 
-        {/* Optional: Play button overlay */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none hidden">
-          <button
-            className="pointer-events-auto w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
-            onClick={(e) => {
-              const video = e.currentTarget.closest("div")?.querySelector("video");
-              if (video) {
-                if (video.paused) {
-                  video.play();
-                } else {
-                  video.pause();
-                }
-              }
-            }}
+        {/* Click-to-play overlay with thumbnail */}
+        {!isPlaying && (
+          <div
+            className="absolute inset-0 flex items-center justify-center cursor-pointer rounded-3xl overflow-hidden"
+            onClick={handlePlay}
           >
-            <svg
-              className="w-10 h-10 text-white ml-1"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </button>
-        </div>
+            {/* Thumbnail image */}
+            <Image
+              src="/video-poster.jpg"
+              alt="Video thumbnail"
+              fill
+              className="object-cover object-[center_14rem]"
+            />
+            {/* Dark overlay */}
+            <div className="absolute inset-0 bg-black/40" />
+            {/* Play button */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors hover:scale-110">
+                <svg
+                  className="w-10 h-10 text-charcoal ml-1"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
