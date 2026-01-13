@@ -233,9 +233,9 @@ export default function MemberDetailPage() {
         <section className="pb-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mb-8">
-              <p className="text-coral dark:text-coral-light text-sm mb-2 uppercase">Συναφή Έργα</p>
+              <p className="text-coral dark:text-coral-light text-sm mb-2 uppercase">Έργα</p>
               <h2 className="text-4xl md:text-5xl font-bold dark:text-gray-100">
-                ΣΥΝΑΦΗ ΕΡΓΑ ΑΠΟ {member.Name.toUpperCase()}
+                ΕΡΓΑ ΑΠΟ {member.Name.toUpperCase()}
               </h2>
             </div>
 
@@ -288,9 +288,9 @@ export default function MemberDetailPage() {
         <section className="pb-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mb-8">
-              <p className="text-coral dark:text-coral-light text-sm mb-2 uppercase">Συναφή Έργα</p>
+              <p className="text-coral dark:text-coral-light text-sm mb-2 uppercase">Έργα</p>
               <h2 className="text-4xl md:text-5xl font-bold dark:text-gray-100">
-                ΣΥΝΑΦΗ ΕΡΓΑ ΑΠΟ {member.Name.toUpperCase()}
+                ΕΡΓΑ ΑΠΟ {member.Name.toUpperCase()}
               </h2>
             </div>
             <div className="text-center py-12">
