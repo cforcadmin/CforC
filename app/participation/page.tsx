@@ -42,9 +42,37 @@ export default function ParticipationPage() {
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                   Θέλεις να συμμετέχεις στο πιο ενεργό δίκτυο με στόχο την πολιτιστική αλλαγή; Γίνε μέλος στο Σωματείο Culture for Change!
                 </p>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                  Το ετήσιο κόστος συμμετοχής στο Σωματείο είναι 35€, η εγγραφή είναι 10€. Η Γενική Συνέλευση λαμβάνει χώρα μία φορά το χρόνο κατά το πρώτο τρίμηνο του έτους και το ΔΣ έχει διετή θητεία. Κάθε χρόνο, πραγματοποιείται 1 interim meeting με κάλυψη μέρους των εξόδων των μελών σε διαφορετική πόλη/περιοχή της Ελλάδας κάθε φορά, με τη συνεργασία μελών του δικτύου που λειτουργούν ως local hosts. Τα μέλη έχουν πρόσβαση σε προνόμια όπως: Συμμετοχή, Δικτύωση, Ανάπτυξη Ικανοτήτων, Συνηγορία, Υποστήριξη, και ευκαιρίες Απασχόλησης.
-                </p>
+                {/* Οικονομικές υποχρεώσεις */}
+                <div className="bg-orange-50 dark:bg-gray-700 rounded-xl p-4 mb-4">
+                  <h4 className="font-bold text-coral dark:text-coral-light mb-2">Οικονομικές υποχρεώσεις μελών</h4>
+                  <ul className="text-gray-700 dark:text-gray-300 text-sm space-y-1">
+                    <li>• Κόστος εγγραφής (άπαξ): <span className="font-semibold">10€</span></li>
+                    <li>• Ετήσια συνδρομή μέλους: <span className="font-semibold">35€</span></li>
+                  </ul>
+                </div>
+
+                {/* Λειτουργία Δικτύου */}
+                <div className="bg-orange-50 dark:bg-gray-700 rounded-xl p-4 mb-4">
+                  <h4 className="font-bold text-coral dark:text-coral-light mb-2">Λειτουργία Δικτύου</h4>
+                  <ul className="text-gray-700 dark:text-gray-300 text-sm space-y-1">
+                    <li>• Το Δίκτυο διοικείται από 5μελές ΔΣ με υποστήριξη από ομάδες εργασίας στις οποίες έχουν την ευκαιρία να συμμετέχουν όλα τα μέλη</li>
+                    <li>• Ετήσια Γενική Συνέλευση στην Αθήνα (και υβριδικά)</li>
+                    <li>• Ετήσια Συνάντηση Midterm σε πόλη εκτός Αττικής με συνεργασία με μέλη του δικτύου</li>
+                  </ul>
+                </div>
+
+                {/* Προνόμια μελών */}
+                <div className="bg-orange-50 dark:bg-gray-700 rounded-xl p-4">
+                  <h4 className="font-bold text-coral dark:text-coral-light mb-2">Προνόμια μελών</h4>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm">Συμμετοχή</span>
+                    <span className="bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm">Δικτύωση</span>
+                    <span className="bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm">Ανάπτυξη Ικανοτήτων</span>
+                    <span className="bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm">Συνηγορία</span>
+                    <span className="bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm">Υποστήριξη</span>
+                    <span className="bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm">Ευκαιρίες</span>
+                  </div>
+                </div>
                 <Link
                   href="/OdigosTsepis2025.pdf"
                   target="_blank"
