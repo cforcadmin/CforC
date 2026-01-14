@@ -1,5 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      // Redirect old Webflow /en paths to new site
+      {
+        source: '/en',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/en/:path*',
+        destination: '/:path*',
+        permanent: true,
+      },
+    ]
+  },
   images: {
     remotePatterns: [
       {
