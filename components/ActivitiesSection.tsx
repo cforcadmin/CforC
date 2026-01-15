@@ -119,7 +119,7 @@ export default function ActivitiesSection() {
                         return (
                           <Link
                             key={card.id}
-                            href={`/activities/${card.documentId || card.id}`}
+                            href={`/activities/${card.Slug || card.documentId || card.id}`}
                             className="bg-orange-50 dark:bg-gray-700 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow transform scale-105 block"
                           >
                             {/* Image with overlapping date */}

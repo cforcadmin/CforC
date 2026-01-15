@@ -273,7 +273,7 @@ function ActivityDetailPageContent() {
               {relatedActivities.map((relatedActivity) => (
                 <Link
                   key={relatedActivity.id}
-                  href={`/activities/${relatedActivity.documentId || relatedActivity.id}?from=${fromTab}`}
+                  href={`/activities/${relatedActivity.Slug || relatedActivity.documentId || relatedActivity.id}?from=${fromTab}`}
                   className="bg-orange-50 dark:bg-gray-700 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow transform hover:scale-105"
                 >
                   {/* Image with overlapping date */}

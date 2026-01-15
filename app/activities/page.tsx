@@ -224,7 +224,7 @@ function ActivitiesPageContent() {
                 return (
                   <Link
                     key={activity.id}
-                    href={`/activities/${activity.documentId || activity.id}?from=${activeTab}`}
+                    href={`/activities/${activity.Slug || activity.documentId || activity.id}?from=${activeTab}`}
                     className="bg-orange-50 dark:bg-gray-700 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow transform hover:scale-105"
                   >
                     {/* Image with overlapping date */}
