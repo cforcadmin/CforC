@@ -29,6 +29,7 @@ export interface Activity extends StrapiData<Activity> {
   Visuals?: StrapiMediaArray;  // Multiple images/files
   Category?: string;
   Featured?: boolean;
+  Slug?: string;  // URL-friendly slug generated from title
   createdAt: string;
   updatedAt: string;
   publishedAt: string;
