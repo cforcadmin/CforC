@@ -47,10 +47,21 @@ export async function getActivities() {
 }
 
 /**
- * Get a single activity by ID
+ * Get a single activity by ID or Slug
+ * First tries by documentId, then falls back to searching by Slug field
  */
-export async function getActivityById(id: string | number) {
-  return fetchStrapi(`/activities/${id}?populate=*`);
+export async function getActivityById(idOrSlug: string | number) {
+  try {
+    // First try fetching by documentId (new format)
+    return await fetchStrapi(`/activities/${idOrSlug}?populate=*`);
+  } catch (error) {
+    // If not found, try searching by Slug field (old format from previous site)
+    const response = await fetchStrapi(`/activities?filters[Slug][$eq]=${idOrSlug}&populate=*`);
+    if (response.data && response.data.length > 0) {
+      return { data: response.data[0] };
+    }
+    throw new Error('Activity not found');
+  }
 }
 
 /**
@@ -63,10 +74,21 @@ export async function getOpenCalls() {
 }
 
 /**
- * Get a single open call by ID
+ * Get a single open call by ID or Slug
+ * First tries by documentId, then falls back to searching by Slug field
  */
-export async function getOpenCallById(id: string | number) {
-  return fetchStrapi(`/open-calls/${id}?populate=*`);
+export async function getOpenCallById(idOrSlug: string | number) {
+  try {
+    // First try fetching by documentId (new format)
+    return await fetchStrapi(`/open-calls/${idOrSlug}?populate=*`);
+  } catch (error) {
+    // If not found, try searching by Slug field (old format from previous site)
+    const response = await fetchStrapi(`/open-calls?filters[Slug][$eq]=${idOrSlug}&populate=*`);
+    if (response.data && response.data.length > 0) {
+      return { data: response.data[0] };
+    }
+    throw new Error('Open call not found');
+  }
 }
 
 /**
@@ -88,4 +110,30 @@ export async function getPages() {
  */
 export async function getPageBySlug(slug: string) {
   return fetchStrapi(`/pages?filters[slug][$eq]=${slug}&populate=*`);
+}
+
+/**
+ * Get all members
+ */
+export async function getMembers() {
+  return fetchStrapi('/members?populate=*&pagination[limit]=1000');
+}
+
+/**
+ * Get a single member by Slug or documentId
+ * First tries by Slug, then falls back to documentId
+ */
+export async function getMemberBySlugOrId(slugOrId: string) {
+  // First try by Slug (most common for member URLs)
+  const response = await fetchStrapi(`/members?filters[Slug][$eq]=${slugOrId}&populate=*`);
+  if (response.data && response.data.length > 0) {
+    return { data: response.data[0] };
+  }
+
+  // Fall back to documentId
+  try {
+    return await fetchStrapi(`/members/${slugOrId}?populate=*`);
+  } catch (error) {
+    throw new Error('Member not found');
+  }
 }
