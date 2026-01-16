@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import Navigation from '@/components/Navigation'
@@ -9,6 +9,7 @@ import EditableField from '@/components/profile/EditableField'
 import EditableImage from '@/components/profile/EditableImage'
 import EditableMultipleImages from '@/components/profile/EditableMultipleImages'
 import ConfirmationModal from '@/components/ConfirmationModal'
+import ProfileGuidelinesModal from '@/components/profile/ProfileGuidelinesModal'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -44,6 +45,8 @@ export default function ProfilePage() {
   const [showUnsavedModal, setShowUnsavedModal] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
+  const [showGuidelinesModal, setShowGuidelinesModal] = useState(false)
+  const hasShownGuidelinesRef = useRef(false)
 
   // Check authentication
   useEffect(() => {
@@ -51,6 +54,21 @@ export default function ProfilePage() {
       router.push('/login')
     }
   }, [isLoading, isAuthenticated, router])
+
+  // Show guidelines modal on login (only once per session, not after profile updates)
+  useEffect(() => {
+    if (isAuthenticated && user && !hasShownGuidelinesRef.current) {
+      const hasSeenGuidelines = sessionStorage.getItem(`profileGuidelines_${user.id}`)
+      if (!hasSeenGuidelines) {
+        setShowGuidelinesModal(true)
+        sessionStorage.setItem(`profileGuidelines_${user.id}`, 'true')
+        hasShownGuidelinesRef.current = true
+      } else {
+        // Already seen in this session, mark ref so we don't check again
+        hasShownGuidelinesRef.current = true
+      }
+    }
+  }, [isAuthenticated, user])
 
   // Initialize form data from user
   useEffect(() => {
@@ -119,13 +137,25 @@ export default function ProfilePage() {
   }
 
   const validatePhone = (phone: string): boolean => {
-    // Allow only numbers, spaces, dashes, and plus sign
-    const phoneRegex = /^[\d\s\-+]+$/
+    // Allow only numbers, spaces, and plus sign (NO dashes or other characters)
+    const phoneRegex = /^[\d\s+]+$/
     if (!phoneRegex.test(phone)) return false
 
-    // Check minimum 10 digits (excluding spaces, dashes, and plus)
-    const digitsOnly = phone.replace(/[\s\-+]/g, '')
+    // Check minimum 10 digits (excluding spaces and plus)
+    const digitsOnly = phone.replace(/[\s+]/g, '')
     return digitsOnly.length >= 10
+  }
+
+  // Count words in text
+  const countWords = (text: string): number => {
+    if (!text || text.trim() === '') return 0
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length
+  }
+
+  // Count comma-separated items
+  const countItems = (text: string): number => {
+    if (!text || text.trim() === '') return 0
+    return text.split(',').filter(item => item.trim().length > 0).length
   }
 
   // Save changes
@@ -140,9 +170,55 @@ export default function ProfilePage() {
       errors.push('Μη έγκυρη μορφή email')
     }
 
-    // Validate phone format
-    if (formData.Phone && formData.Phone.trim() !== '' && formData.Phone !== '-' && !validatePhone(formData.Phone)) {
-      errors.push('Το τηλέφωνο πρέπει να περιέχει τουλάχιστον 10 ψηφία και μόνο αριθμούς, κενά και το σύμβολο +')
+    // Validate phone format (only +, numbers, spaces allowed)
+    if (formData.Phone && formData.Phone.trim() !== '' && formData.Phone !== '-') {
+      // Check for invalid characters (anything except digits, spaces, and +)
+      if (!/^[\d\s+]*$/.test(formData.Phone)) {
+        errors.push('Το τηλέφωνο μπορεί να περιέχει μόνο αριθμούς, κενά και το σύμβολο + (όχι παύλες ή άλλα σύμβολα)')
+      } else if (!validatePhone(formData.Phone)) {
+        errors.push('Το τηλέφωνο πρέπει να περιέχει τουλάχιστον 10 ψηφία')
+      }
+    }
+
+    // Validate Bio limits
+    if (formData.Bio) {
+      const bioWordCount = countWords(formData.Bio)
+      const bioCharCount = formData.Bio.length
+      if (bioWordCount > 160) {
+        errors.push(`Το βιογραφικό έχει ${bioWordCount} λέξεις (μέγιστο 160)`)
+      }
+      if (bioCharCount > 1200) {
+        errors.push(`Το βιογραφικό έχει ${bioCharCount} χαρακτήρες (μέγιστο 1200)`)
+      }
+    }
+
+    // Validate FieldsOfWork (max 5 items)
+    if (formData.FieldsOfWork) {
+      const fieldsCount = countItems(formData.FieldsOfWork)
+      if (fieldsCount > 5) {
+        errors.push(`Οι τομείς εργασίας είναι ${fieldsCount} (μέγιστο 5)`)
+      }
+    }
+
+    // Validate Project1 Tags (max 5 items)
+    if (formData.Project1Tags) {
+      const tagsCount = countItems(formData.Project1Tags)
+      if (tagsCount > 5) {
+        errors.push(`Τα tags του Έργου 1 είναι ${tagsCount} (μέγιστο 5)`)
+      }
+    }
+
+    // Validate Project2 Tags (max 5 items)
+    if (formData.Project2Tags) {
+      const tagsCount = countItems(formData.Project2Tags)
+      if (tagsCount > 5) {
+        errors.push(`Τα tags του Έργου 2 είναι ${tagsCount} (μέγιστο 5)`)
+      }
+    }
+
+    // Validate Name (no ALL CAPS)
+    if (formData.Name && formData.Name === formData.Name.toUpperCase() && formData.Name.length > 2) {
+      errors.push('Το όνομα δεν πρέπει να είναι σε κεφαλαία (ALL CAPS). Χρησιμοποιήστε κανονική γραφή.')
     }
 
     // Check required fields
@@ -312,13 +388,24 @@ export default function ProfilePage() {
 
       <div className="max-w-4xl mx-auto px-4 py-24">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-charcoal dark:text-gray-100 mb-2">
-            Το Προφίλ Μου
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Επεξεργαστείτε τις πληροφορίες του προφίλ σας
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
+          <div className="text-center md:text-left">
+            <h1 className="text-4xl font-bold text-charcoal dark:text-gray-100 mb-2">
+              Το Προφίλ Μου
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300">
+              Επεξεργαστείτε τις πληροφορίες του προφίλ σας
+            </p>
+          </div>
+          <button
+            onClick={() => setShowGuidelinesModal(true)}
+            className="mt-4 md:mt-0 flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-charcoal dark:text-gray-200 rounded-full text-sm font-medium transition-colors mx-auto md:mx-0"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Οδηγίες συμπλήρωσης
+          </button>
         </div>
 
         {/* Validation Errors - Show at top */}
@@ -345,6 +432,22 @@ export default function ProfilePage() {
                   Κλείσιμο
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Save Message - Show at top */}
+        {saveMessage && (
+          <div
+            className={`p-4 rounded-2xl text-sm mb-8 ${
+              saveMessage.type === 'success'
+                ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800'
+                : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-xl">{saveMessage.type === 'success' ? '✓' : '✗'}</span>
+              <span>{saveMessage.text}</span>
             </div>
           </div>
         )}
@@ -420,6 +523,8 @@ export default function ProfilePage() {
                 placeholder="Γράψτε μια σύντομη περιγραφή για εσάς..."
                 type="textarea"
                 onChange={(value) => handleFieldChange('Bio', value)}
+                maxWords={160}
+                maxCharacters={1200}
               />
 
               <EditableField
@@ -427,7 +532,8 @@ export default function ProfilePage() {
                 value={formData.FieldsOfWork}
                 placeholder="π.χ. Τέχνη, Πολιτισμός, Κοινωνική Καινοτομία"
                 onChange={(value) => handleFieldChange('FieldsOfWork', value)}
-                helperText="Διαχωρίστε με κόμμα (,)"
+                helperText="Διαχωρίστε με κόμμα (,) - μέγιστο 5 τομείς"
+                maxItems={5}
               />
             </div>
 
@@ -492,7 +598,8 @@ export default function ProfilePage() {
                   value={formData.Project1Tags}
                   placeholder="Design, Development, Art"
                   onChange={(value) => handleFieldChange('Project1Tags', value)}
-                  helperText="Διαχωρίστε με κόμμα (,)"
+                  helperText="Διαχωρίστε με κόμμα (,) - μέγιστο 5 tags"
+                  maxItems={5}
                 />
 
                 <EditableField
@@ -532,7 +639,8 @@ export default function ProfilePage() {
                   value={formData.Project2Tags}
                   placeholder="Design, Development, Art"
                   onChange={(value) => handleFieldChange('Project2Tags', value)}
-                  helperText="Διαχωρίστε με κόμμα (,)"
+                  helperText="Διαχωρίστε με κόμμα (,) - μέγιστο 5 tags"
+                  maxItems={5}
                 />
 
                 <EditableField
@@ -554,19 +662,6 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
-
-            {/* Save Message */}
-            {saveMessage && (
-              <div
-                className={`p-4 rounded-2xl text-sm ${
-                  saveMessage.type === 'success'
-                    ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800'
-                    : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
-                }`}
-              >
-                {saveMessage.text}
-              </div>
-            )}
 
             {/* Save Button - Only show when there are unsaved changes */}
             {hasUnsavedChanges() && (
@@ -670,6 +765,12 @@ export default function ProfilePage() {
       )}
 
       <Footer />
+
+      {/* Profile Guidelines Modal */}
+      <ProfileGuidelinesModal
+        isOpen={showGuidelinesModal}
+        onClose={() => setShowGuidelinesModal(false)}
+      />
     </main>
   )
 }

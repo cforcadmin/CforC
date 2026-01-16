@@ -9,9 +9,13 @@ interface EditableFieldProps {
   type?: 'text' | 'email' | 'tel' | 'url' | 'textarea'
   onChange: (value: string) => void
   maxLength?: number
+  maxWords?: number
+  maxCharacters?: number
+  maxItems?: number  // For comma-separated fields
   required?: boolean
   disabled?: boolean
   helperText?: string
+  showCounters?: boolean
 }
 
 export default function EditableField({
@@ -21,12 +25,36 @@ export default function EditableField({
   type = 'text',
   onChange,
   maxLength,
+  maxWords,
+  maxCharacters,
+  maxItems,
   required = false,
   disabled = false,
-  helperText
+  helperText,
+  showCounters = false
 }: EditableFieldProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [tempValue, setTempValue] = useState(value)
+
+  // Count words in text
+  const countWords = (text: string): number => {
+    if (!text || text.trim() === '') return 0
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length
+  }
+
+  // Count comma-separated items
+  const countItems = (text: string): number => {
+    if (!text || text.trim() === '') return 0
+    return text.split(',').filter(item => item.trim().length > 0).length
+  }
+
+  const wordCount = countWords(tempValue)
+  const charCount = tempValue.length
+  const itemCount = countItems(tempValue)
+
+  const isOverWordLimit = maxWords && wordCount > maxWords
+  const isOverCharLimit = maxCharacters && charCount > maxCharacters
+  const isOverItemLimit = maxItems && itemCount > maxItems
 
   // Sync tempValue with value prop changes
   useEffect(() => {
@@ -94,12 +122,34 @@ export default function EditableField({
             />
           )}
 
-          {/* Character Counter */}
-          {maxLength && (
-            <div className="text-xs text-gray-500 dark:text-gray-400 text-right">
-              {tempValue.length} / {maxLength}
+          {/* Counters */}
+          <div className="flex justify-between text-xs">
+            {/* Item counter for comma-separated fields */}
+            {maxItems && (
+              <div className={`${isOverItemLimit ? 'text-red-500 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                {itemCount} / {maxItems} στοιχεία
+                {isOverItemLimit && ' (υπέρβαση!)'}
+              </div>
+            )}
+
+            <div className="flex gap-4 ml-auto">
+              {/* Word counter */}
+              {maxWords && (
+                <div className={`${isOverWordLimit ? 'text-red-500 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                  {wordCount} / {maxWords} λέξεις
+                  {isOverWordLimit && ' (υπέρβαση!)'}
+                </div>
+              )}
+
+              {/* Character counter */}
+              {(maxCharacters || maxLength) && (
+                <div className={`${isOverCharLimit ? 'text-red-500 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                  {charCount} / {maxCharacters || maxLength} χαρακτήρες
+                  {isOverCharLimit && ' (υπέρβαση!)'}
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Action Buttons */}
           <div className="flex gap-2">

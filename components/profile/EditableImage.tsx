@@ -107,8 +107,8 @@ export default function EditableImage({
       >
         {displayUrl ? (
           <>
-            {/* Image */}
-            <div className="relative w-full aspect-square">
+            {/* Image - aspect ratio matches members page preview (10:12 or 5:6) */}
+            <div className="relative w-full aspect-[10/12]">
               <Image
                 src={displayUrl}
                 alt={alt}
@@ -129,14 +129,14 @@ export default function EditableImage({
             </div>
           </>
         ) : (
-          // Placeholder
-          <div className="w-full aspect-square bg-gray-100 dark:bg-gray-700 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 p-8">
+          // Placeholder - aspect ratio matches members page preview (10:12 or 5:6)
+          <div className="w-full aspect-[10/12] bg-gray-100 dark:bg-gray-700 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 p-8">
             <svg className="w-16 h-16 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
             <p className="text-sm font-medium mb-1">Προσθήκη Φωτογραφίας</p>
             <p className="text-xs text-center">Κάντε κλικ ή σύρετε εικόνα εδώ</p>
-            <p className="text-xs text-center mt-1">Μέγιστο μέγεθος: 5MB</p>
+            <p className="text-xs text-center mt-1">Ιδανικό: 500×600px | Μέγιστο: 5MB</p>
           </div>
         )}
       </div>
@@ -173,9 +173,10 @@ export default function EditableImage({
       )}
 
       {/* Help Text */}
-      <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-        Υποστηριζόμενες μορφές: JPG, PNG, GIF, WebP
-      </p>
+      <div className="text-xs text-gray-500 dark:text-gray-400 text-center space-y-1">
+        <p>Ιδανικές διαστάσεις: <strong>500×600 pixels</strong> (αναλογία 5:6)</p>
+        <p>Υποστηριζόμενες μορφές: JPG, PNG, GIF, WebP</p>
+      </div>
     </div>
   )
 }
