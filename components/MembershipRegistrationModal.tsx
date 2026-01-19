@@ -1,27 +1,52 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface MembershipRegistrationModalProps {
   isOpen: boolean
   onClose: () => void
   onProceed: () => void
+  onFormSubmitted: () => void
+  isPolling?: boolean
 }
 
 export default function MembershipRegistrationModal({
   isOpen,
   onClose,
-  onProceed
+  onProceed,
+  onFormSubmitted,
+  isPolling = false
 }: MembershipRegistrationModalProps) {
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [formOpened, setFormOpened] = useState(false)
+
+  // Sync formOpened state with isPolling prop
+  useEffect(() => {
+    if (isPolling && !formOpened) {
+      setFormOpened(true)
+    }
+  }, [isPolling, formOpened])
 
   if (!isOpen) return null
 
   const handleProceed = () => {
     if (agreedToTerms) {
       onProceed()
-      onClose()
+      setFormOpened(true)
     }
+  }
+
+  const handleFormSubmitted = () => {
+    onFormSubmitted()
+    onClose()
+    setFormOpened(false)
+    setAgreedToTerms(false)
+  }
+
+  const handleClose = () => {
+    onClose()
+    setFormOpened(false)
+    setAgreedToTerms(false)
   }
 
   return (
@@ -29,7 +54,7 @@ export default function MembershipRegistrationModal({
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={handleClose}
       />
 
       {/* Modal */}
@@ -53,7 +78,7 @@ export default function MembershipRegistrationModal({
               </div>
             </div>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-2 hover:bg-white/20 rounded-full transition-colors"
             >
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -212,46 +237,89 @@ export default function MembershipRegistrationModal({
 
         {/* Footer with Checkbox and Button */}
         <div className="sticky bottom-0 bg-gray-50 dark:bg-gray-700 p-6 border-t border-gray-200 dark:border-gray-600 rounded-b-3xl">
-          {/* Checkbox */}
-          <div className="flex items-start gap-3 mb-4">
-            <input
-              type="checkbox"
-              id="membership-terms-checkbox"
-              checked={agreedToTerms}
-              onChange={(e) => setAgreedToTerms(e.target.checked)}
-              className="w-5 h-5 mt-0.5 text-coral bg-white border-gray-300 rounded focus:ring-coral focus:ring-2 cursor-pointer flex-shrink-0"
-            />
-            <label htmlFor="membership-terms-checkbox" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-              Διάβασα και συμφωνώ με το{' '}
-              <a
-                href="https://drive.google.com/file/d/1ZoV1-IPNDgQppqWqlNKqML8-hGUhPZ7K/view?usp=drive_link"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-coral dark:text-coral-light font-medium hover:underline"
+          {formOpened ? (
+            <>
+              {/* Form opened state - show polling status and confirmation button */}
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-800/30 flex items-center justify-center flex-shrink-0">
+                    {isPolling ? (
+                      <svg className="w-5 h-5 text-green-600 dark:text-green-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm text-green-800 dark:text-green-300">
+                      Η φόρμα εγγραφής άνοιξε σε νέα καρτέλα.
+                    </p>
+                    {isPolling && (
+                      <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                        Αναμονή για υποβολή... (θα ανιχνευθεί αυτόματα)
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleFormSubmitted}
+                className="w-full bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white px-6 py-4 rounded-full text-lg font-bold transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
               >
-                καταστατικό
-              </a>
-              {' '}και τον{' '}
-              <a
-                href="https://drive.google.com/file/d/1m5LtXNM8PomuBn4_ZfvpeQguTruoy3wd/view?usp=drive_link"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-coral dark:text-coral-light font-medium hover:underline"
-              >
-                εσωτερικό κανονισμό
-              </a>
-              {' '}του CforC.
-            </label>
-          </div>
+                ΥΠΕΒΑΛΑ ΤΗΝ ΑΙΤΗΣΗ ΜΟΥ
+              </button>
+              <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-3">
+                Η υποβολή θα ανιχνευθεί αυτόματα, ή πάτησε το κουμπί αν ήδη υπέβαλες
+              </p>
+            </>
+          ) : (
+            <>
+              {/* Checkbox */}
+              <div className="flex items-start gap-3 mb-4">
+                <input
+                  type="checkbox"
+                  id="membership-terms-checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="w-5 h-5 mt-0.5 text-coral bg-white border-gray-300 rounded focus:ring-coral focus:ring-2 cursor-pointer flex-shrink-0"
+                />
+                <label htmlFor="membership-terms-checkbox" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                  Διάβασα και συμφωνώ με το{' '}
+                  <a
+                    href="https://drive.google.com/file/d/1ZoV1-IPNDgQppqWqlNKqML8-hGUhPZ7K/view?usp=drive_link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-coral dark:text-coral-light font-medium hover:underline"
+                  >
+                    καταστατικό
+                  </a>
+                  {' '}και τον{' '}
+                  <a
+                    href="https://drive.google.com/file/d/1m5LtXNM8PomuBn4_ZfvpeQguTruoy3wd/view?usp=drive_link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-coral dark:text-coral-light font-medium hover:underline"
+                  >
+                    εσωτερικό κανονισμό
+                  </a>
+                  {' '}του CforC.
+                </label>
+              </div>
 
-          {/* Button */}
-          <button
-            onClick={handleProceed}
-            disabled={!agreedToTerms}
-            className="w-full bg-coral hover:bg-coral/90 dark:bg-coral-light dark:hover:bg-coral-light/90 text-white dark:text-gray-900 px-6 py-4 rounded-full text-lg font-bold transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
-          >
-            ΣΥΜΠΛΗΡΩΣΕ ΤΗ ΦΟΡΜΑ ΕΓΓΡΑΦΗΣ
-          </button>
+              {/* Button */}
+              <button
+                onClick={handleProceed}
+                disabled={!agreedToTerms}
+                className="w-full bg-coral hover:bg-coral/90 dark:bg-coral-light dark:hover:bg-coral-light/90 text-white dark:text-gray-900 px-6 py-4 rounded-full text-lg font-bold transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+              >
+                ΣΥΜΠΛΗΡΩΣΕ ΤΗ ΦΟΡΜΑ ΕΓΓΡΑΦΗΣ
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
