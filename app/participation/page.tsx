@@ -6,9 +6,11 @@ import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
 import NewsletterSection from '@/components/NewsletterSection'
 import ScrollToTop from '@/components/ScrollToTop'
+import MembershipRegistrationModal from '@/components/MembershipRegistrationModal'
 import Link from 'next/link'
 
 export default function ParticipationPage() {
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   const handleOpenForm = () => {
@@ -175,11 +177,11 @@ export default function ParticipationPage() {
               </label>
             </div>
             <button
-              onClick={handleOpenForm}
+              onClick={() => setShowRegistrationModal(true)}
               disabled={!agreedToTerms}
               className="bg-white text-coral dark:bg-coral-light dark:text-gray-900 px-8 py-4 rounded-full text-lg font-bold hover:bg-gray-100 dark:hover:bg-coral transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              ΣΥΜΠΛΗΡΩΣΕ ΤΗ ΦΟΡΜΑ ΕΓΓΡΑΦΗΣ
+              ΘΕΛΩ ΝΑ ΕΓΓΡΑΦΩ!
             </button>
           </div>
         </div>
@@ -189,6 +191,13 @@ export default function ParticipationPage() {
       <Footer />
       <CookieConsent />
       <ScrollToTop />
+
+      {/* Membership Registration Modal */}
+      <MembershipRegistrationModal
+        isOpen={showRegistrationModal}
+        onClose={() => setShowRegistrationModal(false)}
+        onProceed={handleOpenForm}
+      />
     </main>
   )
 }
