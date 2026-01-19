@@ -66,7 +66,7 @@ export default function ProfileGuidelinesModal({
                   <li>• Ιδανικές διαστάσεις: <strong>500×600 pixels</strong> (αναλογία 5:6)</li>
                   <li>• Μέγιστο μέγεθος: 5MB</li>
                   <li>• Μορφές: JPG, PNG, GIF, WebP</li>
-                  <li>• Tip: Η εικόνα θα περικοπεί σε πορτραίτο μορφή</li>
+                  <li>• Tip: Η εικόνα θα περικοπεί σε μορφή πορτραίτου</li>
                 </ul>
               </div>
             </div>
