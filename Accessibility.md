@@ -730,7 +730,149 @@ Added `aria-hidden="true"` to the Google Translate container element:
 
 ---
 
-### 13.7 Summary of accessScan Fixes
+### 13.7 Interactive Elements Button Identification
+
+#### Problem
+Screen reader users could not identify certain interactive elements as buttons, preventing them from understanding that elements were actionable. This affected form submissions, dialog openings, and other intended actions.
+
+#### WCAG Reference
+- **WCAG 4.1.2** - Name, Role, Value (Level A)
+- **WCAG 2.1.1** - Keyboard (Level A)
+
+#### Solution
+Added proper ARIA roles, keyboard handling, and focus indicators to interactive `<div>` elements that function as buttons.
+
+#### Files Modified
+
+| File | Element | Changes |
+|------|---------|---------|
+| `components/profile/EditableField.tsx` | Edit trigger wrapper | Added `role="button"`, `tabIndex`, `onKeyDown` (Enter/Space), `aria-label`, `aria-disabled`, focus ring |
+| `components/profile/EditableImage.tsx` | Image upload area | Added `role="button"`, `tabIndex`, `onKeyDown`, `aria-label`, focus ring |
+| `app/activities/[slug]/page.tsx` | Photo carousel image | Converted `<div>` to `<button>` with `aria-label` |
+| `app/activities/[slug]/page.tsx` | Carousel nav buttons | Added `aria-label`, `aria-hidden` to SVGs |
+| `app/activities/[slug]/page.tsx` | Carousel dot indicators | Added `aria-label`, `aria-current` |
+| `app/activities/[slug]/page.tsx` | Fullscreen modal | Added `role="dialog"`, `aria-modal`, `aria-label` |
+| `components/AboutMapSection.tsx` | City list items (left) | Added `role="button"`, `tabIndex`, `onKeyDown`, `aria-label`, focus ring |
+| `components/AboutMapSection.tsx` | City list items (right) | Added `role="button"`, `tabIndex`, `onKeyDown`, `aria-label`, focus ring |
+| `components/AboutMapSection.tsx` | SVG circle markers | Added `role="button"`, `tabIndex`, `onKeyDown`, `aria-label`, `aria-pressed` |
+| `components/AboutMapSection.tsx` | Toggle locations button | Added `aria-label`, `aria-pressed` |
+
+#### Code Example: EditableField.tsx
+
+**Before:**
+```jsx
+<div
+  onClick={() => !disabled && setIsEditing(true)}
+  className={`group flex items-start gap-2 px-4 py-3 rounded-2xl transition-colors ${
+    disabled ? 'bg-gray-100 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50'
+  }`}
+>
+```
+
+**After:**
+```jsx
+<div
+  onClick={() => !disabled && setIsEditing(true)}
+  onKeyDown={(e) => {
+    if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault()
+      setIsEditing(true)
+    }
+  }}
+  role="button"
+  tabIndex={disabled ? -1 : 0}
+  aria-label={`${label} επεξεργασία${value ? `: ${value}` : ''}`}
+  aria-disabled={disabled}
+  className={`group flex items-start gap-2 px-4 py-3 rounded-2xl transition-colors ${
+    disabled
+      ? 'bg-gray-100 cursor-not-allowed opacity-60'
+      : 'cursor-pointer hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-coral'
+  }`}
+>
+```
+
+#### Code Example: AboutMapSection.tsx SVG Circles
+
+**Before:**
+```jsx
+<circle
+  key={regionKey}
+  cx={city.cx}
+  cy={city.cy}
+  r={city.r}
+  className="cursor-pointer transition-all duration-300"
+  onClick={() => handleRegionClick(regionKey)}
+/>
+```
+
+**After:**
+```jsx
+<circle
+  key={regionKey}
+  cx={city.cx}
+  cy={city.cy}
+  r={city.r}
+  className="cursor-pointer transition-all duration-300 focus:outline-none"
+  onClick={() => handleRegionClick(regionKey)}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      handleRegionClick(regionKey)
+    }
+  }}
+  role="button"
+  tabIndex={0}
+  aria-label={`Επιλογή περιοχής ${regionKey}`}
+  aria-pressed={isRegionActive(regionKey)}
+/>
+```
+
+---
+
+### 13.8 Mailto/Tel Link Warning Enhancement
+
+#### Problem
+The accessibility checker flagged that users should be warned about the expected behavior when activating links that trigger external applications (email client, phone app). While screen-reader-only text was present, a visible warning was also needed.
+
+#### WCAG Reference
+- **WCAG 3.2.5** - Change on Request (Level AAA - best practice)
+- **WCAG 2.4.4** - Link Purpose (In Context) (Level A)
+
+#### Solution
+Added `title` attributes to mailto and tel links to provide visible tooltip warnings in addition to existing screen-reader text.
+
+#### File Modified
+- `components/Footer.tsx`
+
+**Before:**
+```jsx
+<a href="mailto:hello@cultureforchange.net" className="hover:text-coral transition-colors">
+  hello@cultureforchange.net
+  <span className="sr-only"> (ανοίγει εφαρμογή email)</span>
+</a>
+```
+
+**After:**
+```jsx
+<a
+  href="mailto:hello@cultureforchange.net"
+  className="hover:text-coral transition-colors"
+  title="Αποστολή email στο hello@cultureforchange.net (ανοίγει εφαρμογή email)"
+>
+  hello@cultureforchange.net
+  <span className="sr-only"> (ανοίγει εφαρμογή email)</span>
+</a>
+```
+
+#### Links Updated
+| Link Type | Title Attribute Added |
+|-----------|----------------------|
+| Email | `"Αποστολή email στο hello@cultureforchange.net (ανοίγει εφαρμογή email)"` |
+| Phone | `"Κλήση στο +306976225704 (ανοίγει εφαρμογή κλήσης)"` |
+
+---
+
+### 13.9 Summary of accessScan Fixes
 
 | Issue Category | Issues Fixed | Files Modified |
 |----------------|--------------|----------------|
@@ -740,7 +882,9 @@ Added `aria-hidden="true"` to the Google Translate container element:
 | Language Switcher ARIA | 3 attributes | 1 |
 | Screen Reader Link Text | 2 links | 1 |
 | Google Translate Hidden | 1 element | 1 |
-| **Total** | **~90 issues** | **32 files** |
+| Interactive Elements (role=button) | 11 elements | 4 |
+| Mailto/Tel Link Warnings | 2 links | 1 |
+| **Total** | **~103 issues** | **36 files** |
 
 ---
 
@@ -759,4 +903,4 @@ Consider for future iterations:
 
 *Last Updated: January 21, 2026*
 *WCAG Version: 2.2 AA*
-*accessScan Audit: 92 issues identified, all addressed*
+*accessScan Audit: 103+ issues identified, all addressed*
