@@ -54,7 +54,7 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left - Text */}
             <div>
-              <p className="text-coral dark:text-coral-light text-sm font-medium mb-4">ΟΛΑ TA NEA ΣTO EMAIL ΣΑΣ!</p>
+              <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-4 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΟΛΑ TA NEA ΣTO EMAIL ΣΑΣ!</span>
               <h2 className="text-xl md:text-2xl font-bold leading-tight mb-6 dark:text-gray-100">
                 Γραφτείτε στο newsletter μας, για να<br />
                 λαμβάνετε τις δράσεις του Δικτύου,<br />
@@ -147,6 +147,7 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowPopup(false)}
+            aria-hidden="true"
           />
 
           {/* Popup */}

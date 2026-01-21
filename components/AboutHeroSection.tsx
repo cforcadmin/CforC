@@ -40,7 +40,7 @@ export default function AboutHeroSection() {
         >
           <Image
             src="/about-us.jpg"
-            alt="Culture for Change Team"
+            alt="Ομαδική φωτογραφία μελών του δικτύου Culture for Change"
             fill
             className="object-cover"
             priority

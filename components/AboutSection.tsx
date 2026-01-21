@@ -96,7 +96,7 @@ export default function AboutSection() {
     <section id="about" className="py-24 bg-gray-50 dark:bg-gray-800 -mt-[10%]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-12">
-          <p className="text-coral dark:text-coral-light text-sm font-medium mb-2">ΠΟΙΟΙ ΕΙΜΑΣΤΕ</p>
+          <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΠΟΙΟΙ ΕΙΜΑΣΤΕ</span>
           <h2 className="text-4xl md:text-5xl font-bold mb-6 dark:text-gray-100">
             ΤΟ CULTURE FOR CHANGE<br />ΜΕ ΜΙΑ ΜΑΤΙΑ
           </h2>
@@ -112,7 +112,7 @@ export default function AboutSection() {
           >
             <Image
               src="/Homepage_Block1.jpg"
-              alt="Culture for Change Community"
+              alt="Μέλη του δικτύου Culture for Change σε συνάντηση εργασίας"
               width={800}
               height={600}
               className="w-full h-full object-cover"

@@ -30,7 +30,7 @@ export default function TermsPage() {
 
             <p className="mb-6 leading-relaxed">
               Ο παρών δικτυακός τόπος{' '}
-              <Link href="/" className="text-coral hover:underline font-medium">
+              <Link href="/" className="text-charcoal dark:text-coral-light hover:underline font-bold">
                 www.cultureforchange.net
               </Link>{' '}
               (εφεξής "ο δικτυακός τόπος") ανήκει νομικά στον μη κερδοσκοπικό οργανισμό (σωματείο) "Culture For Change" (εφεξής "CforC"), που εδρεύει στην Αθήνα, Ελλάδα (οδός Στρατηγοπούλου 7, 114 72).
@@ -38,11 +38,11 @@ export default function TermsPage() {
 
             <p className="mb-6 leading-relaxed">
               Τόσο στους παρόντες όρους χρήσης όσο και στην{' '}
-              <Link href="/privacy" className="text-coral hover:underline font-medium">
+              <Link href="/privacy" className="text-charcoal dark:text-coral-light hover:underline font-bold">
                 Πολιτική απορρήτου (Πολιτική προστασίας προσωπικών δεδομένων)
               </Link>{' '}
               καθώς και στην{' '}
-              <Link href="/cookies" className="text-coral hover:underline font-medium">
+              <Link href="/cookies" className="text-charcoal dark:text-coral-light hover:underline font-bold">
                 Πολιτική για τα cookies
               </Link>
               , οι οποίες αποτελούν αναπόσπαστο μέρος του παρόντος, μπορείτε να βρείτε περισσότερες πληροφορίες σχετικά με τις πολιτικές μας. Οποιαδήποτε περαιτέρω χρήση του παραπάνω ιστότοπου συνεπάγεται τη ρητή και ανεπιφύλακτη συγκατάθεση και συμφωνία σας με τους εν λόγω όρους χρήσης, οι οποίοι αναφέρονται στο πλαίσιο του ως οπή. To CforC διατηρεί το δικαίωμα να τροποποιεί ή να ανανεώνει μονομερώς τους παρόντες όρους χρήσης σύμφωνα με τις ανάγκες του και την επιχειρηματική του δεοντολογία. Όλες αυτές οι τροποποιήσεις θα τίθενται σε ισχύ από τη δημοσίευσή τους στον ιστότοπό μας. Μετά τη δημοσίευση των τροποποιήσεων, η χρήση του ιστοτόπου μας από εσάς συνεπάγεται την αποδοχή των εν λόγω τροποποιήσεων.
@@ -108,7 +108,7 @@ export default function TermsPage() {
             <h3 className="text-2xl font-bold mb-4 mt-12 text-charcoal">6.- ΣΥΛΛΟΓΗ ΚΑΙ ΕΠΕΞΕΡΓΑΣΙΑ ΔΕΔΟΜΕΝΩΝ ΠΡΟΣΩΠΙΚΟΥ ΧΑΡΑΚΤΗΡΑ</h3>
             <p className="mb-6 leading-relaxed">
               Το CforC μπορεί να συλλέγει και να επεξεργάζεται προσωπικά δεδομένα επισκεπτών/χρηστών ή τρίτων, προκειμένου να τους παρέχει τις υπηρεσίες που περιγράφονται ανωτέρω. Η συλλογή και επεξεργασία των προσωπικών δεδομένων πραγματοποιείται σε πλήρη συμμόρφωση με τον Ευρωπαϊκό Γενικό Κανονισμό για την Προστασία Δεδομένων (ΕΕ) 2016/679, τον ελληνικό εφαρμοστικό νόμο 4624/2019 και τις κατευθυντήριες γραμμές, συστάσεις και αποφάσεις της Αρχής Προστασίας Δεδομένων Προσωπικού Χαρακτήρα και με την εφαρμογή των νομικών βάσεων που προβλέπονται στο προαναφερθέν νομικό πλαίσιο, όπως περιγράφεται στην{' '}
-              <Link href="/privacy" className="text-coral hover:underline font-medium">
+              <Link href="/privacy" className="text-charcoal dark:text-coral-light hover:underline font-bold">
                 Πολιτική Προστασίας Δεδομένων Προσωπικού Χαρακτήρα
               </Link>{' '}
               του CforC, την οποία σας συμβουλεύουμε να διαβάσετε προσεκτικά.
@@ -116,7 +116,7 @@ export default function TermsPage() {
 
             <p className="mb-12 leading-relaxed">
               Ο ιστότοπος χρησιμοποιεί επίσης cookies προκειμένου να κάνει την εμπειρία περιήγησής σας πιο λειτουργική (λειτουργικά cookies), να εξατομικεύσει το περιεχόμενό του και τυχόν διαφημίσεις, να παρέχει λειτουργίες μέσων κοινωνικής δικτύωσης και να αναλύει την επισκεψιμότητα του ιστότοπου. Τα μη λειτουργικά (απαραίτητα) cookies είναι απενεργοποιημένα από προεπιλογή. Για περισσότερες πληροφορίες σχετικά με τη χρήση τους, ανατρέξτε στην{' '}
-              <Link href="/cookies" className="text-coral hover:underline font-medium">
+              <Link href="/cookies" className="text-charcoal dark:text-coral-light hover:underline font-bold">
                 Πολιτική Cookies
               </Link>{' '}
               του ιστότοπου και μάθετε πώς μπορείτε να ενεργοποιήσετε ή να διαχειριστείτε τα cookies.

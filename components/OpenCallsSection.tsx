@@ -93,7 +93,7 @@ export default function OpenCallsSection() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-end mb-12">
             <div>
-              <p className="text-coral dark:text-coral-light text-sm font-medium mb-2">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</p>
+              <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</span>
               <h2 className="text-4xl md:text-5xl font-bold dark:text-gray-100">
                 ΤΟΥ CULTURE<br />
                 FOR CHANGE
@@ -126,8 +126,9 @@ export default function OpenCallsSection() {
             <button
               onClick={() => setShowMemberModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              aria-label="Κλείσιμο"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -145,7 +146,7 @@ export default function OpenCallsSection() {
               <div className="flex flex-col gap-3">
                 <Link
                   href="/participation"
-                  className="bg-coral dark:bg-coral-light text-white px-6 py-3 rounded-full font-medium hover:bg-coral-dark dark:hover:bg-coral transition-colors"
+                  className="bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors"
                   onClick={() => setShowMemberModal(false)}
                 >
                   Εγγραφή
@@ -173,20 +174,20 @@ export default function OpenCallsSection() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-end mb-12">
             <div>
-              <p className="text-coral dark:text-coral-light text-sm font-medium mb-2">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</p>
+              <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</span>
               <h2 className="text-4xl md:text-5xl font-bold dark:text-gray-100">
                 ΤΟΥ CULTURE<br />
                 FOR CHANGE
               </h2>
             </div>
             {user ? (
-              <Link href="/open-calls" className="hidden md:block bg-coral dark:bg-coral-light text-white px-6 py-3 rounded-full font-medium hover:bg-coral-dark dark:hover:bg-coral transition-colors">
+              <Link href="/open-calls" className="hidden md:block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors">
                 ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
               </Link>
             ) : (
               <button
                 onClick={handleViewAllClick}
-                className="hidden md:block bg-coral dark:bg-coral-light text-white px-6 py-3 rounded-full font-medium hover:bg-coral-dark dark:hover:bg-coral transition-colors"
+                className="hidden md:block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors"
               >
                 ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
               </button>
@@ -273,7 +274,7 @@ export default function OpenCallsSection() {
                           <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-coral dark:border-coral-light shadow-md">
                             <Image
                               src={imageUrl}
-                              alt={(Array.isArray(call.Image) ? call.Image[0]?.alternativeText : call.Image?.alternativeText) || call.Title}
+                              alt={call.ImageAltText || call.Title}
                               width={112}
                               height={112}
                               className="w-full h-full object-cover"
@@ -349,7 +350,7 @@ export default function OpenCallsSection() {
                               <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-gray-300 dark:border-gray-600 shadow-md opacity-50">
                                 <Image
                                   src={imageUrl}
-                                  alt={(Array.isArray(call.Image) ? call.Image[0]?.alternativeText : call.Image?.alternativeText) || call.Title}
+                                  alt={call.ImageAltText || call.Title}
                                   width={112}
                                   height={112}
                                   className="w-full h-full object-cover"
@@ -369,7 +370,7 @@ export default function OpenCallsSection() {
               <div className="mt-8 text-center">
                 <Link
                   href="/open-calls"
-                  className="inline-block bg-coral dark:bg-coral-light text-white px-8 py-3 rounded-full font-medium hover:bg-coral-dark dark:hover:bg-coral transition-colors"
+                  className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-8 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors"
                 >
                   ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
                 </Link>

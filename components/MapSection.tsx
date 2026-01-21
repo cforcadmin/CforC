@@ -73,8 +73,18 @@ export default function MapSection() {
                       cy={region.y}
                       r={activeRegion === region.name ? 8 : 4}
                       fill={activeRegion === region.name ? '#FF8B6A' : '#9ca3af'}
-                      className="cursor-pointer transition-all"
+                      className="cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-coral"
                       onClick={() => setActiveRegion(region.name)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          setActiveRegion(region.name)
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Επιλογή περιοχής ${region.name}`}
+                      aria-pressed={activeRegion === region.name}
                     />
                   </g>
                 ))}

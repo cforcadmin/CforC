@@ -17,6 +17,7 @@ export default function ThankYouModal({
       <div
         className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Modal */}

@@ -51,10 +51,11 @@ export default function LoadingIndicator() {
         <div className="flex-shrink-0 animate-pulse">
           <Image
             src="/cforc_logo_small.svg"
-            alt="Loading"
+            alt="Διακοσμητικό στοιχείο"
             width={32}
             height={32}
             className="opacity-80"
+            aria-hidden="true"
           />
         </div>
 

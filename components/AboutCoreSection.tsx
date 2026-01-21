@@ -74,7 +74,7 @@ export default function AboutCoreSection() {
             isHeaderVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}
         >
-          <p className="text-coral dark:text-coral-light text-sm font-medium mb-4">ΤΟ ΤΡΙΠΤΥΧΟ ΜΑΣ</p>
+          <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-4 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΤΟ ΤΡΙΠΤΥΧΟ ΜΑΣ</span>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight dark:text-gray-100">
             Ο ΠΥΡΗΝΑΣ ΜΑΣ
           </h2>

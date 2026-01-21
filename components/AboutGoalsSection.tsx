@@ -73,7 +73,7 @@ export default function AboutGoalsSection() {
             <div className="aspect-[4/3] bg-gray-200 rounded-2xl overflow-hidden">
               <Image
                 src="/about-us-our-targets.jpg"
-                alt="Our Goals"
+                alt="Συμμετέχοντες σε δράση του Culture for Change συζητούν τους στόχους του δικτύου"
                 width={800}
                 height={600}
                 className="w-full h-full object-cover"

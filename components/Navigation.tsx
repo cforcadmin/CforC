@@ -45,15 +45,12 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center">
             <img
               src="/cforc_logo.svg"
               alt="Culture for Change"
               className="h-12 dark:invert"
             />
-            <span className="text-[10px] font-semibold text-white/70 dark:text-gray-400 bg-white/10 dark:bg-gray-700/50 px-2 py-0.5 rounded-full">
-              BETA
-            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -117,6 +114,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="md:hidden p-2 dark:text-gray-200"
+            aria-label={isOpen ? 'Κλείσιμο μενού' : 'Άνοιγμα μενού'}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isOpen ? (

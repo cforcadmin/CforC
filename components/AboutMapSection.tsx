@@ -172,7 +172,7 @@ export default function AboutMapSection() {
               {/* Greece Map Background */}
               <Image
                 src="/map-of-greece.jpg"
-                alt="Map of Greece"
+                alt="Χάρτης Ελλάδας με επισημασμένες τις τοποθεσίες των μελών του δικτύου"
                 fill
                 className="object-contain"
               />

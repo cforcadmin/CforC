@@ -67,7 +67,7 @@ export default function ActivitiesSection() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-end mb-12">
             <div>
-              <p className="text-coral dark:text-coral-light text-sm font-medium mb-2">ΠΡΟΣΦΑΤΕΣ ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</p>
+              <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΠΡΟΣΦΑΤΕΣ ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</span>
               <h2 className="text-4xl md:text-5xl font-bold dark:text-gray-100">
                 ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ ΤΟΥ CULTURE<br />
                 FOR CHANGE
@@ -90,13 +90,13 @@ export default function ActivitiesSection() {
         <div className="bg-gray-50 dark:bg-gray-800 rounded-3xl py-12 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-end mb-12">
           <div>
-            <p className="text-coral dark:text-coral-light text-sm font-medium mb-2">ΠΡΟΣΦΑΤΕΣ ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</p>
+            <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΠΡΟΣΦΑΤΕΣ ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</span>
             <h2 className="text-4xl md:text-5xl font-bold dark:text-gray-100">
               ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ ΤΟΥ CULTURE<br />
               FOR CHANGE
             </h2>
           </div>
-          <Link href="/activities" className="hidden md:block bg-coral dark:bg-coral-light text-white px-6 py-3 rounded-full font-medium hover:bg-coral-dark dark:hover:bg-coral transition-colors">
+          <Link href="/activities" className="hidden md:block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors">
             ΟΛΕΣ ΟΙ ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ
           </Link>
         </div>
@@ -128,7 +128,7 @@ export default function ActivitiesSection() {
                                 <div className="aspect-video rounded-2xl overflow-hidden mx-2 mt-2">
                                   <Image
                                     src={card.Visuals[0].url.startsWith('http') ? card.Visuals[0].url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${card.Visuals[0].url}`}
-                                    alt={card.Visuals[0].alternativeText || card.Title}
+                                    alt={card.ImageAltText || card.Title}
                                     width={card.Visuals[0].width}
                                     height={card.Visuals[0].height}
                                     className="w-full h-full object-cover transition-transform duration-300 hover:duration-500 hover:scale-110"
@@ -157,10 +157,11 @@ export default function ActivitiesSection() {
                                 <div className="w-8 h-8 mr-2 flex-shrink-0">
                                   <Image
                                     src="/cforc_logo_small.svg"
-                                    alt="Culture for Change Logo"
+                                    alt="Διακοσμητικό στοιχείο"
                                     width={32}
                                     height={32}
                                     className="w-full h-full"
+                                    aria-hidden="true"
                                   />
                                 </div>
                                 <span>CULTURE FOR CHANGE</span>
@@ -181,8 +182,9 @@ export default function ActivitiesSection() {
             <button
               onClick={prevSlide}
               className="w-10 h-10 rounded-full border-2 border-charcoal dark:border-gray-400 dark:text-gray-200 flex items-center justify-center hover:bg-charcoal hover:text-white dark:hover:bg-gray-600 transition-colors"
+              aria-label="Προηγούμενη σελίδα"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -195,6 +197,8 @@ export default function ActivitiesSection() {
                   className={`w-2 h-2 rounded-full transition-colors ${
                     index === currentSlide ? 'bg-coral dark:bg-coral-light' : 'bg-gray-300 dark:bg-gray-600'
                   }`}
+                  aria-label={`Μετάβαση στη σελίδα ${index + 1}`}
+                  aria-current={index === currentSlide ? 'true' : undefined}
                 />
               ))}
             </div>
@@ -202,15 +206,16 @@ export default function ActivitiesSection() {
             <button
               onClick={nextSlide}
               className="w-10 h-10 rounded-full border-2 border-charcoal dark:border-gray-400 dark:text-gray-200 flex items-center justify-center hover:bg-charcoal hover:text-white dark:hover:bg-gray-600 transition-colors"
+              aria-label="Επόμενη σελίδα"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
           </div>
         </div>
 
-        <Link href="/activities" className="md:hidden w-full mt-8 bg-coral dark:bg-coral-light text-white px-6 py-3 rounded-full font-medium text-center block hover:bg-coral-dark dark:hover:bg-coral transition-colors">
+        <Link href="/activities" className="md:hidden w-full mt-8 bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium text-center block hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors">
           ΟΛΕΣ ΟΙ ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ
         </Link>
         </div>

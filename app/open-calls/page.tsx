@@ -278,7 +278,7 @@ export default function OpenCallsPage() {
                               <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-coral dark:border-coral-light shadow-md">
                                 <Image
                                   src={imageUrl}
-                                  alt={(Array.isArray(call.Image) ? call.Image[0]?.alternativeText : call.Image?.alternativeText) || call.Title}
+                                  alt={call.ImageAltText || call.Title}
                                   width={112}
                                   height={112}
                                   className="w-full h-full object-cover"

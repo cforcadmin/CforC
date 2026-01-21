@@ -8,10 +8,11 @@ export default function BecomeMemberSection() {
       <div className="absolute inset-0 z-0">
         <Image
           src="/becomeamember.webp"
-          alt="Landscape background"
+          alt="Διακοσμητικό στοιχείο"
           fill
           className="object-cover"
           priority={false}
+          aria-hidden="true"
         />
         {/* Overlay for better text contrast */}
         <div className="absolute inset-0 bg-black/20" />
@@ -37,7 +38,7 @@ export default function BecomeMemberSection() {
             <div className="flex-shrink-0">
               <Link
                 href="/participation"
-                className="inline-block bg-coral/30 dark:bg-coral-light/30 border-2 border-gray-400 dark:border-coral-light/50 text-charcoal dark:text-gray-100 px-8 py-3 rounded-full font-medium hover:bg-white hover:text-coral hover:border-white dark:hover:bg-white dark:hover:text-coral dark:hover:border-white transition-all duration-300"
+                className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-8 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-all duration-300"
               >
                 ΓΙΝΕ ΜΕΛΟΣ ΤΩΡΑ
               </Link>

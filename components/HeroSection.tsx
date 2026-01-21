@@ -57,20 +57,22 @@ export default function HeroSection() {
 
         {/* Dark overlay with centered play button */}
         {!isPlaying && (
-          <div
+          <button
             className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer"
             onClick={handlePlay}
+            aria-label="Αναπαραγωγή βίντεο"
           >
             <div className="w-20 h-20 bg-black/30 rounded-full flex items-center justify-center hover:bg-black/40 transition-colors">
               <svg
                 className="w-10 h-10 text-white ml-1"
                 fill="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path d="M8 5v14l11-7z" />
               </svg>
             </div>
-          </div>
+          </button>
         )}
       </div>
     </section>

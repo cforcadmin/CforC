@@ -121,7 +121,7 @@ function ActivityDetailPageContent() {
               <p className="text-orange-600 dark:text-orange-400 font-medium">
                 {error || 'Activity not found'}
               </p>
-              <Link href={`/activities?from=${fromTab}`} className="inline-block mt-4 text-coral dark:text-coral-light hover:underline">
+              <Link href={`/activities?from=${fromTab}`} className="inline-block mt-4 text-charcoal dark:text-coral-light hover:underline font-bold">
                 ← Επιστροφή στις δραστηριότητες
               </Link>
             </div>
@@ -153,7 +153,7 @@ function ActivityDetailPageContent() {
       <section className="py-24 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Back link */}
-          <Link href={`/activities?from=${fromTab}`} className="inline-flex items-center text-coral dark:text-coral-light hover:underline mb-8">
+          <Link href={`/activities?from=${fromTab}`} className="inline-flex items-center text-charcoal dark:text-coral-light hover:underline font-bold mb-8">
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -183,7 +183,7 @@ function ActivityDetailPageContent() {
                     src={activity.Visuals[currentPhotoIndex].url.startsWith('http')
                       ? activity.Visuals[currentPhotoIndex].url
                       : `${process.env.NEXT_PUBLIC_STRAPI_URL}${activity.Visuals[currentPhotoIndex].url}`}
-                    alt={activity.Visuals[currentPhotoIndex].alternativeText || activity.Title}
+                    alt={activity.ImageAltText || activity.Title}
                     width={activity.Visuals[currentPhotoIndex].width}
                     height={activity.Visuals[currentPhotoIndex].height}
                     className="w-full h-full object-cover"
@@ -284,7 +284,7 @@ function ActivityDetailPageContent() {
                           src={relatedActivity.Visuals[0].url.startsWith('http')
                             ? relatedActivity.Visuals[0].url
                             : `${process.env.NEXT_PUBLIC_STRAPI_URL}${relatedActivity.Visuals[0].url}`}
-                          alt={relatedActivity.Visuals[0].alternativeText || relatedActivity.Title}
+                          alt={relatedActivity.ImageAltText || relatedActivity.Title}
                           width={relatedActivity.Visuals[0].width}
                           height={relatedActivity.Visuals[0].height}
                           className="w-full h-full object-cover transition-transform duration-300 hover:duration-500 hover:scale-110"
@@ -313,10 +313,11 @@ function ActivityDetailPageContent() {
                       <div className="w-8 h-8 mr-2 flex-shrink-0">
                         <Image
                           src="/cforc_logo_small.svg"
-                          alt="Culture for Change Logo"
+                          alt="Διακοσμητικό στοιχείο"
                           width={32}
                           height={32}
                           className="w-full h-full"
+                          aria-hidden="true"
                         />
                       </div>
                       <span>CULTURE FOR CHANGE</span>
@@ -338,8 +339,9 @@ function ActivityDetailPageContent() {
           <button
             onClick={() => setIsFullScreen(false)}
             className="absolute top-4 right-4 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
+            aria-label="Κλείσιμο"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -349,7 +351,7 @@ function ActivityDetailPageContent() {
               src={activity.Visuals[currentPhotoIndex].url.startsWith('http')
                 ? activity.Visuals[currentPhotoIndex].url
                 : `${process.env.NEXT_PUBLIC_STRAPI_URL}${activity.Visuals[currentPhotoIndex].url}`}
-              alt={activity.Visuals[currentPhotoIndex].alternativeText || activity.Title}
+              alt={activity.ImageAltText || activity.Title}
               width={activity.Visuals[currentPhotoIndex].width}
               height={activity.Visuals[currentPhotoIndex].height}
               className="max-w-full max-h-full object-contain rounded-2xl"
@@ -361,16 +363,18 @@ function ActivityDetailPageContent() {
                 <button
                   onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
                   className="absolute left-4 w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
+                  aria-label="Προηγούμενη φωτογραφία"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
                   className="absolute right-4 w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
+                  aria-label="Επόμενη φωτογραφία"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>

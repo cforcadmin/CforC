@@ -105,9 +105,12 @@ export default function LoginPage() {
 
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-12">
         <div className="w-full max-w-5xl">
+          {/* Page Title (visually hidden for screen readers) */}
+          <h1 className="sr-only">Περιοχή Μελών - Σύνδεση</h1>
+
           {/* Members Only Notice */}
           <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 bg-coral/10 dark:bg-coral-light/10 border border-coral/30 dark:border-coral-light/30 text-coral dark:text-coral-light px-4 py-2 rounded-full text-sm font-medium">
+            <div className="inline-flex items-center gap-2 bg-charcoal dark:bg-gray-700 border border-coral dark:border-coral-light text-coral dark:text-coral-light px-4 py-2 rounded-full text-sm font-medium shadow-[0_0_10px_4px_rgba(45,45,45,0.3)]" aria-hidden="true">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
               </svg>
@@ -121,9 +124,9 @@ export default function LoginPage() {
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
               {/* Header */}
               <div className="text-center mb-5">
-                <h1 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-1">
+                <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-1">
                   Σύνδεση
-                </h1>
+                </h2>
                 <p className="text-gray-600 dark:text-gray-300 text-xs">
                   Για χρήστες με κωδικό πρόσβασης
                 </p>
@@ -168,7 +171,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowResetPassword(true)}
-                    className="text-xs text-coral dark:text-coral-light hover:underline"
+                    className="text-xs text-charcoal dark:text-coral-light hover:underline font-medium"
                   >
                     Ξεχάσες τον κωδικό σου;
                   </button>
@@ -191,11 +194,11 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={isLoginLoading}
-                  className="w-full bg-coral hover:bg-coral/90 dark:bg-coral-light dark:hover:bg-coral-light/90 text-white py-2.5 rounded-full text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light py-2.5 rounded-full text-sm font-medium transition-all hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoginLoading ? (
                     <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin -ml-1 mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
@@ -255,11 +258,11 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={isMagicLoading}
-                  className="w-full bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white py-2.5 rounded-full text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light py-2.5 rounded-full text-sm font-medium transition-all hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isMagicLoading ? (
                     <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin -ml-1 mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
@@ -272,10 +275,10 @@ export default function LoginPage() {
 
                 {/* Info */}
                 <div className="p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                  <p className="text-[11px] text-gray-600 dark:text-gray-400 text-center">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
                     Ο σύνδεσμος θα σου επιτρέψει να ορίσεις κωδικό πρόσβασης. Λήγει σε 6 ώρες.
                   </p>
-                  <p className="text-[11px] text-gray-600 dark:text-gray-400 text-center mt-1.5 font-medium">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 text-center mt-1.5 font-medium">
                     ⚠️ Έλεγξε τον φάκελο SPAM αν δεν το βρεις
                   </p>
                 </div>
@@ -287,12 +290,12 @@ export default function LoginPage() {
           <div className="text-center space-y-2">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Δεν είσαι μέλος;{' '}
-              <Link href="/participation" className="text-coral dark:text-coral-light hover:underline font-medium">
+              <Link href="/participation" className="text-charcoal dark:text-coral-light hover:underline font-bold">
                 Γίνε μέλος
               </Link>
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              <Link href="/members" className="text-coral dark:text-coral-light hover:underline font-medium">
+              <Link href="/members" className="text-charcoal dark:text-coral-light hover:underline font-bold">
                 Περιήγηση Μελών
               </Link>
             </p>
@@ -316,8 +319,9 @@ export default function LoginPage() {
                   setResetEmail('')
                 }}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                aria-label="Κλείσιμο"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -362,11 +366,11 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isResetLoading}
-                className="w-full bg-coral hover:bg-coral/90 dark:bg-coral-light dark:hover:bg-coral-light/90 text-white py-2.5 rounded-full text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light py-2.5 rounded-full text-sm font-medium transition-all hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isResetLoading ? (
                   <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin -ml-1 mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -378,10 +382,10 @@ export default function LoginPage() {
               </button>
 
               <div className="p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                <p className="text-[11px] text-gray-600 dark:text-gray-400 text-center">
+                <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
                   Ο σύνδεσμος θα σου επιτρέψει να ορίσεις νέο κωδικό πρόσβασης. Λήγει σε 6 ώρες.
                 </p>
-                <p className="text-[11px] text-gray-600 dark:text-gray-400 text-center mt-1.5 font-medium">
+                <p className="text-xs text-gray-600 dark:text-gray-400 text-center mt-1.5 font-medium">
                   ⚠️ Έλεγξε τον φάκελο SPAM αν δεν το βρεις
                 </p>
               </div>

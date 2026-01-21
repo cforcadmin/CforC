@@ -16,10 +16,11 @@ export default function Footer({ variant = 'default' }: FooterProps) {
           <div className="mb-8 md:mb-0">
             <Image
               src="/cforc_logo.svg"
-              alt="Culture for Change Logo"
+              alt="Διακοσμητικό στοιχείο"
               width={160}
               height={64}
               className="w-40 dark:invert"
+              aria-hidden="true"
             />
           </div>
 

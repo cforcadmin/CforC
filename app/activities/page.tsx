@@ -233,7 +233,7 @@ function ActivitiesPageContent() {
                         <div className="aspect-video rounded-2xl overflow-hidden mx-2 mt-2">
                           <Image
                             src={activity.Visuals[0].url.startsWith('http') ? activity.Visuals[0].url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${activity.Visuals[0].url}`}
-                            alt={activity.Visuals[0].alternativeText || activity.Title}
+                            alt={activity.ImageAltText || activity.Title}
                             width={activity.Visuals[0].width}
                             height={activity.Visuals[0].height}
                             className="w-full h-full object-cover transition-transform duration-300 hover:duration-500 hover:scale-110"
@@ -262,10 +262,11 @@ function ActivitiesPageContent() {
                         <div className="w-8 h-8 mr-2 flex-shrink-0">
                           <Image
                             src="/cforc_logo_small.svg"
-                            alt="Culture for Change Logo"
+                            alt="Διακοσμητικό στοιχείο"
                             width={32}
                             height={32}
                             className="w-full h-full"
+                            aria-hidden="true"
                           />
                         </div>
                         <span>CULTURE FOR CHANGE</span>

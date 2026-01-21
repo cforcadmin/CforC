@@ -312,7 +312,7 @@ export default function MemberDetailPage() {
             </p>
             <Link
               href="/participation"
-              className="inline-block bg-white text-coral dark:bg-coral-light dark:text-gray-900 px-8 py-4 rounded-full text-lg font-bold hover:bg-gray-100 dark:hover:bg-coral transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="inline-block bg-charcoal dark:bg-gray-600 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-8 py-4 rounded-full text-lg font-bold hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
             >
               ΜΑΘΕ ΠΕΡΙΣΣΟΤΕΡΑ
             </Link>

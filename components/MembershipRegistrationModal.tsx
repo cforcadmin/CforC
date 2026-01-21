@@ -55,6 +55,7 @@ export default function MembershipRegistrationModal({
       <div
         className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
         onClick={handleClose}
+        aria-hidden="true"
       />
 
       {/* Modal */}
@@ -80,6 +81,7 @@ export default function MembershipRegistrationModal({
             <button
               onClick={handleClose}
               className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              aria-label="Κλείσιμο"
             >
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

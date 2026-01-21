@@ -133,6 +133,7 @@ function ParticipationContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section 1: Two-column layout with text */}
           <div className="mb-20">
+            <h2 className="sr-only">Πληροφορίες Εγγραφής</h2>
 
             <div className="grid md:grid-cols-2 gap-12">
               {/* Left Column */}
@@ -142,7 +143,7 @@ function ParticipationContent() {
                 </p>
                 {/* Οικονομικές υποχρεώσεις */}
                 <div className="bg-orange-50 dark:bg-gray-700 rounded-xl p-4 mb-4">
-                  <h4 className="font-bold text-coral dark:text-coral-light mb-2">Οικονομικές υποχρεώσεις μελών</h4>
+                  <h3 className="font-bold text-coral dark:text-coral-light mb-2">Οικονομικές υποχρεώσεις μελών</h3>
                   <ul className="text-gray-700 dark:text-gray-300 text-sm space-y-1">
                     <li>• Κόστος εγγραφής (άπαξ): <span className="font-semibold">10€</span></li>
                     <li>• Ετήσια συνδρομή μέλους: <span className="font-semibold">35€</span></li>
@@ -151,7 +152,7 @@ function ParticipationContent() {
 
                 {/* Λειτουργία Δικτύου */}
                 <div className="bg-orange-50 dark:bg-gray-700 rounded-xl p-4 mb-4">
-                  <h4 className="font-bold text-coral dark:text-coral-light mb-2">Λειτουργία Δικτύου</h4>
+                  <h3 className="font-bold text-coral dark:text-coral-light mb-2">Λειτουργία Δικτύου</h3>
                   <ul className="text-gray-700 dark:text-gray-300 text-sm space-y-1">
                     <li>• Το Δίκτυο διοικείται από 5μελές ΔΣ με υποστήριξη από ομάδες εργασίας στις οποίες έχουν την ευκαιρία να συμμετέχουν όλα τα μέλη</li>
                     <li>• Ετήσια Γενική Συνέλευση στην Αθήνα (και υβριδικά)</li>
@@ -161,7 +162,7 @@ function ParticipationContent() {
 
                 {/* Προνόμια μελών */}
                 <div className="bg-orange-50 dark:bg-gray-700 rounded-xl p-4">
-                  <h4 className="font-bold text-coral dark:text-coral-light mb-2">Προνόμια μελών</h4>
+                  <h3 className="font-bold text-coral dark:text-coral-light mb-2">Προνόμια μελών</h3>
                   <div className="flex flex-wrap gap-2">
                     <span className="bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm">Συμμετοχή</span>
                     <span className="bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm">Δικτύωση</span>
@@ -174,7 +175,7 @@ function ParticipationContent() {
                 <Link
                   href="/OdigosTsepis2025.pdf"
                   target="_blank"
-                  className="inline-block text-coral dark:text-coral-light hover:underline font-medium mt-4"
+                  className="inline-block text-charcoal dark:text-coral-light hover:underline font-bold mt-4"
                 >
                   Οδηγός Τσέπης (χρήσιμες πληροφορίες για τη συμμετοχή των μελών)
                 </Link>
@@ -194,6 +195,7 @@ function ParticipationContent() {
 
           {/* Section 2: Feature boxes with icons/visuals */}
           <div className="mb-20">
+            <h2 className="sr-only">Ποιος μπορεί να γίνει μέλος</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-orange-50 dark:bg-gray-700 rounded-2xl p-6">
                 <div className="w-12 h-12 bg-coral dark:bg-coral-light rounded-full flex items-center justify-center mb-4">
@@ -275,7 +277,7 @@ function ParticipationContent() {
             <button
               onClick={() => setShowRegistrationModal(true)}
               disabled={!agreedToTerms}
-              className="bg-white text-coral dark:bg-coral-light dark:text-gray-900 px-8 py-4 rounded-full text-lg font-bold hover:bg-gray-100 dark:hover:bg-coral transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="bg-charcoal dark:bg-gray-600 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-8 py-4 rounded-full text-lg font-bold hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               ΘΕΛΩ ΝΑ ΕΓΓΡΑΦΩ!
             </button>
