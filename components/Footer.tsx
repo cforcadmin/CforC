@@ -112,7 +112,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
 
         {/* Bottom section */}
         <div className="border-t border-gray-300 dark:border-gray-600 pt-6 flex flex-col md:flex-row justify-between items-center text-xs text-gray-700 dark:text-gray-400">
-          <p>ΠΝΕΥΜΑΤΙΚΑ ΔΙΚΑΙΩΜΑΤΑ © 2025 CULTURE FOR CHANGE</p>
+          <p>ΠΝΕΥΜΑΤΙΚΑ ΔΙΚΑΙΩΜΑΤΑ © 2026 CULTURE FOR CHANGE</p>
           <p className="mt-2 md:mt-0">
             Developed by <a href="https://yoryosstyl.com" target="_blank" rel="noopener noreferrer" className="font-medium hover:text-coral dark:hover:text-coral-light transition-colors">Yoryos Styl</a>
           </p>
