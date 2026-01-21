@@ -1,14 +1,78 @@
+'use client'
+
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useAuth } from './AuthProvider'
 
 interface FooterProps {
   variant?: 'default' | 'members'
 }
 
 export default function Footer({ variant = 'default' }: FooterProps) {
+  const { user } = useAuth()
+  const [showMemberModal, setShowMemberModal] = useState(false)
   const bgColor = variant === 'members' ? 'bg-[#F5F0EB] dark:bg-gray-800' : 'bg-gray-100 dark:bg-gray-800'
 
+  const handleOpenCallsClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault()
+      setShowMemberModal(true)
+    }
+  }
+
   return (
+    <>
+      {/* Member-Only Modal */}
+      {showMemberModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-8 relative">
+            <button
+              onClick={() => setShowMemberModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              aria-label="Κλείσιμο"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="text-center">
+              <div className="mb-4">
+                <svg className="w-16 h-16 text-coral dark:text-coral-light mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold mb-4 dark:text-gray-100">Περιεχόμενο Μελών</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                Οι ανοιχτές προσκλήσεις είναι διαθέσιμες μόνο για εγγεγραμμένα μέλη. Εγγραφείτε για πρόσβαση.
+              </p>
+              <div className="flex flex-col gap-3">
+                <Link
+                  href="/participation"
+                  className="bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors"
+                  onClick={() => setShowMemberModal(false)}
+                >
+                  Εγγραφή
+                </Link>
+                <Link
+                  href="/login"
+                  className="bg-white dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-white transition-colors"
+                  onClick={() => setShowMemberModal(false)}
+                >
+                  Σύνδεση
+                </Link>
+                <button
+                  onClick={() => setShowMemberModal(false)}
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                >
+                  Κλείσιμο
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     <footer role="contentinfo" aria-label="Πληροφορίες ιστότοπου" className={bgColor}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex flex-col md:flex-row justify-between items-start mb-6">
@@ -32,7 +96,13 @@ export default function Footer({ variant = 'default' }: FooterProps) {
               <li><Link href="/members" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΕΥΡΕΣΗ ΜΕΛΩΝ</Link></li>
               <li><Link href="/about" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</Link></li>
               <li><Link href="/activities" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</Link></li>
-              <li><Link href="/open-calls" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</Link></li>
+              <li>
+                {user ? (
+                  <Link href="/open-calls" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</Link>
+                ) : (
+                  <button onClick={handleOpenCallsClick} className="hover:text-coral dark:hover:text-coral-light transition-colors">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</button>
+                )}
+              </li>
               <li><Link href="/participation" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΣΥΜΜΕΤΟΧΗ</Link></li>
               <li><Link href="/transparency" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΔΙΑΦΑΝΕΙΑ</Link></li>
             </ul>
@@ -119,5 +189,6 @@ export default function Footer({ variant = 'default' }: FooterProps) {
         </div>
       </div>
     </footer>
+    </>
   )
 }
