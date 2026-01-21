@@ -18,12 +18,14 @@ interface Member {
     url: string
     alternativeText?: string
   }>
+  ProfileImageAltText?: string  // Accessibility alt text for profile image
   Project1Title?: string
   Project1Description?: string
   Project1Pictures?: Array<{
     url: string
     alternativeText?: string
   }>
+  Project1PicturesAltText?: string  // Accessibility alt text for project 1 images
   Project1Tags?: string
   Project2Title?: string
   Project2Description?: string
@@ -31,6 +33,7 @@ interface Member {
     url: string
     alternativeText?: string
   }>
+  Project2PicturesAltText?: string  // Accessibility alt text for project 2 images
   Project2Tags?: string
 }
 
@@ -41,11 +44,13 @@ export default function ProjectDetailPage() {
     title: string
     description: string
     pictures: Array<{ url: string; alternativeText?: string }>
+    picturesAltText?: string  // Accessibility alt text for project images
     tags: string[]
   } | null>(null)
   const [otherProject, setOtherProject] = useState<{
     title: string
     pictures: Array<{ url: string; alternativeText?: string }>
+    picturesAltText?: string  // Accessibility alt text for project images
   } | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
@@ -74,12 +79,14 @@ export default function ProjectDetailPage() {
               title: memberData.Project1Title,
               description: memberData.Project1Description || '',
               pictures: memberData.Project1Pictures || [],
+              picturesAltText: memberData.Project1PicturesAltText,
               tags: memberData.Project1Tags?.split(',').map((t: string) => t.trim()) || [],
             })
             if (memberData.Project2Title) {
               setOtherProject({
                 title: memberData.Project2Title,
                 pictures: memberData.Project2Pictures || [],
+                picturesAltText: memberData.Project2PicturesAltText,
               })
             }
           } else if (memberData.Project2Title === projectName) {
@@ -87,12 +94,14 @@ export default function ProjectDetailPage() {
               title: memberData.Project2Title,
               description: memberData.Project2Description || '',
               pictures: memberData.Project2Pictures || [],
+              picturesAltText: memberData.Project2PicturesAltText,
               tags: memberData.Project2Tags?.split(',').map((t: string) => t.trim()) || [],
             })
             if (memberData.Project1Title) {
               setOtherProject({
                 title: memberData.Project1Title,
                 pictures: memberData.Project1Pictures || [],
+                picturesAltText: memberData.Project1PicturesAltText,
               })
             }
           }
@@ -190,7 +199,7 @@ export default function ProjectDetailPage() {
                 <div className="aspect-[16/9] relative rounded-3xl overflow-hidden bg-gray-200 dark:bg-gray-700">
                   <Image
                     src={projectData.pictures[currentImageIndex].url}
-                    alt={projectData.pictures[currentImageIndex].alternativeText || projectData.title}
+                    alt={projectData.picturesAltText || projectData.title}
                     fill
                     className="object-cover"
                   />
@@ -241,7 +250,7 @@ export default function ProjectDetailPage() {
                         <div className="relative w-full h-full bg-gray-200 dark:bg-gray-700">
                           <Image
                             src={picture.url}
-                            alt={picture.alternativeText || `${projectData.title} ${index + 1}`}
+                            alt={projectData.picturesAltText || `${projectData.title} ${index + 1}`}
                             fill
                             className="object-cover"
                           />
@@ -262,7 +271,7 @@ export default function ProjectDetailPage() {
                     <div className="aspect-square relative rounded-full overflow-hidden hover:opacity-80 transition-opacity bg-gray-200 dark:bg-gray-700">
                       <Image
                         src={member.Image[0].url}
-                        alt={member.Image[0].alternativeText || member.Name}
+                        alt={member.ProfileImageAltText || member.Name}
                         fill
                         className="object-cover"
                       />
@@ -314,7 +323,7 @@ export default function ProjectDetailPage() {
                   <div className="aspect-[4/3] relative bg-gray-200 dark:bg-gray-700">
                     <Image
                       src={otherProject.pictures[0].url}
-                      alt={otherProject.pictures[0].alternativeText || otherProject.title}
+                      alt={otherProject.picturesAltText || otherProject.title}
                       fill
                       className="object-cover"
                     />

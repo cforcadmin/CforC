@@ -24,12 +24,15 @@ export default function ProfilePage() {
     Province: '',
     Phone: '',
     Websites: '',
+    ProfileImageAltText: '',
     Project1Title: '',
     Project1Tags: '',
     Project1Description: '',
+    Project1PicturesAltText: '',
     Project2Title: '',
     Project2Tags: '',
-    Project2Description: ''
+    Project2Description: '',
+    Project2PicturesAltText: ''
   })
 
   const [originalData, setOriginalData] = useState(formData)
@@ -82,12 +85,15 @@ export default function ProfilePage() {
         Province: user.Province || '',
         Phone: user.Phone || '',
         Websites: user.Websites || '',
+        ProfileImageAltText: user.ProfileImageAltText || '',
         Project1Title: user.Project1Title || '',
         Project1Tags: user.Project1Tags || '',
         Project1Description: user.Project1Description || '',
+        Project1PicturesAltText: user.Project1PicturesAltText || '',
         Project2Title: user.Project2Title || '',
         Project2Tags: user.Project2Tags || '',
-        Project2Description: user.Project2Description || ''
+        Project2Description: user.Project2Description || '',
+        Project2PicturesAltText: user.Project2PicturesAltText || ''
       }
       setFormData(data)
       setOriginalData(data)
@@ -488,6 +494,16 @@ export default function ProfilePage() {
                 alt={user.Name}
                 onChange={handleImageChange}
               />
+              <div className="mt-4">
+                <EditableField
+                  label="Εναλλακτικό κείμενο φωτογραφίας"
+                  value={formData.ProfileImageAltText}
+                  placeholder="π.χ. Γυναίκα με καστανά μαλλιά χαμογελάει"
+                  onChange={(value) => handleFieldChange('ProfileImageAltText', value)}
+                  helperText="Περιγραφή για άτομα με προβλήματα όρασης (μέγιστο 125 χαρακτήρες)"
+                  maxCharacters={125}
+                />
+              </div>
             </div>
           </div>
 
@@ -619,6 +635,15 @@ export default function ProfilePage() {
                     setProject1KeptImageIds(keptIds)
                   }}
                 />
+
+                <EditableField
+                  label="Εναλλακτικό κείμενο φωτο έργου 1"
+                  value={formData.Project1PicturesAltText}
+                  placeholder="π.χ. Παιδιά ζωγραφίζουν τοιχογραφία σε δημόσιο χώρο"
+                  onChange={(value) => handleFieldChange('Project1PicturesAltText', value)}
+                  helperText="Περιγραφή για άτομα με προβλήματα όρασης (μέγιστο 125 χαρακτήρες)"
+                  maxCharacters={125}
+                />
               </div>
 
               {/* Project 2 */}
@@ -659,6 +684,15 @@ export default function ProfilePage() {
                     setProject2Images(files)
                     setProject2KeptImageIds(keptIds)
                   }}
+                />
+
+                <EditableField
+                  label="Εναλλακτικό κείμενο φωτο έργου 2"
+                  value={formData.Project2PicturesAltText}
+                  placeholder="π.χ. Θεατρική παράσταση με 10 ηθοποιούς σε σκηνή"
+                  onChange={(value) => handleFieldChange('Project2PicturesAltText', value)}
+                  helperText="Περιγραφή για άτομα με προβλήματα όρασης (μέγιστο 125 χαρακτήρες)"
+                  maxCharacters={125}
                 />
               </div>
             </div>

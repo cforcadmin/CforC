@@ -25,12 +25,14 @@ interface Member {
     url: string
     alternativeText?: string
   }>
+  ProfileImageAltText?: string  // Accessibility alt text for profile image
   Project1Title?: string
   Project1Description?: string
   Project1Pictures?: Array<{
     url: string
     alternativeText?: string
   }>
+  Project1PicturesAltText?: string  // Accessibility alt text for project 1 images
   Project1Tags?: string
   Project2Title?: string
   Project2Description?: string
@@ -38,6 +40,7 @@ interface Member {
     url: string
     alternativeText?: string
   }>
+  Project2PicturesAltText?: string  // Accessibility alt text for project 2 images
   Project2Tags?: string
 }
 
@@ -266,7 +269,7 @@ export default function MembersPage() {
                   <div className="aspect-[10/12] relative bg-gray-200 dark:bg-gray-700 overflow-hidden">
                     <Image
                       src={member.Image[0].url}
-                      alt={member.Image[0].alternativeText || member.Name}
+                      alt={member.ProfileImageAltText || member.Name}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />

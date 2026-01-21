@@ -26,12 +26,14 @@ interface Member {
     url: string
     alternativeText?: string
   }>
+  ProfileImageAltText?: string  // Accessibility alt text for profile image
   Project1Title?: string
   Project1Description?: string
   Project1Pictures?: Array<{
     url: string
     alternativeText?: string
   }>
+  Project1PicturesAltText?: string  // Accessibility alt text for project 1 images
   Project1Tags?: string
   Project2Title?: string
   Project2Description?: string
@@ -39,6 +41,7 @@ interface Member {
     url: string
     alternativeText?: string
   }>
+  Project2PicturesAltText?: string  // Accessibility alt text for project 2 images
   Project2Tags?: string
 }
 
@@ -146,7 +149,7 @@ export default function MemberDetailPage() {
                   <div className="aspect-[3/4] relative rounded-2xl overflow-hidden bg-gray-200 dark:bg-gray-700">
                     <Image
                       src={member.Image[0].url}
-                      alt={member.Image[0].alternativeText || member.Name}
+                      alt={member.ProfileImageAltText || member.Name}
                       fill
                       className="object-cover"
                     />
@@ -249,7 +252,7 @@ export default function MemberDetailPage() {
                     <div className="aspect-[4/3] relative bg-gray-200 dark:bg-gray-700">
                       <Image
                         src={member.Project1Pictures[0].url}
-                        alt={member.Project1Pictures[0].alternativeText || member.Project1Title}
+                        alt={member.Project1PicturesAltText || member.Project1Title}
                         fill
                         className="object-cover"
                       />
@@ -270,7 +273,7 @@ export default function MemberDetailPage() {
                     <div className="aspect-[4/3] relative bg-gray-200 dark:bg-gray-700">
                       <Image
                         src={member.Project2Pictures[0].url}
-                        alt={member.Project2Pictures[0].alternativeText || member.Project2Title}
+                        alt={member.Project2PicturesAltText || member.Project2Title}
                         fill
                         className="object-cover"
                       />
