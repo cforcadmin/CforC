@@ -175,9 +175,10 @@ function ActivityDetailPageContent() {
           {activity.Visuals && activity.Visuals.length > 0 && (
             <div className="mb-12">
               <div className="relative">
-                <div
-                  className="aspect-video rounded-2xl overflow-hidden cursor-pointer"
+                <button
+                  className="aspect-video rounded-2xl overflow-hidden cursor-pointer w-full focus:outline-none focus:ring-4 focus:ring-coral dark:focus:ring-coral-light"
                   onClick={() => setIsFullScreen(true)}
+                  aria-label="Προβολή φωτογραφίας σε πλήρη οθόνη"
                 >
                   <Image
                     src={activity.Visuals[currentPhotoIndex].url.startsWith('http')
@@ -188,7 +189,7 @@ function ActivityDetailPageContent() {
                     height={activity.Visuals[currentPhotoIndex].height}
                     className="w-full h-full object-cover"
                   />
-                </div>
+                </button>
 
                 {/* Carousel Controls */}
                 {activity.Visuals.length > 1 && (
@@ -196,16 +197,18 @@ function ActivityDetailPageContent() {
                     <button
                       onClick={prevPhoto}
                       className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/80 hover:bg-white rounded-full flex items-center justify-center transition-colors shadow-lg"
+                      aria-label="Προηγούμενη φωτογραφία"
                     >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                       </svg>
                     </button>
                     <button
                       onClick={nextPhoto}
                       className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/80 hover:bg-white rounded-full flex items-center justify-center transition-colors shadow-lg"
+                      aria-label="Επόμενη φωτογραφία"
                     >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </button>
@@ -219,6 +222,8 @@ function ActivityDetailPageContent() {
                           className={`w-2 h-2 rounded-full transition-colors ${
                             index === currentPhotoIndex ? 'bg-white' : 'bg-white/50'
                           }`}
+                          aria-label={`Φωτογραφία ${index + 1}`}
+                          aria-current={index === currentPhotoIndex ? 'true' : undefined}
                         />
                       ))}
                     </div>
@@ -334,6 +339,9 @@ function ActivityDetailPageContent() {
         <div
           className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
           onClick={() => setIsFullScreen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Προβολή φωτογραφίας σε πλήρη οθόνη"
         >
           <button
             onClick={() => setIsFullScreen(false)}

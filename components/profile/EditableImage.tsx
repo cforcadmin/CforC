@@ -96,10 +96,19 @@ export default function EditableImage({
       {/* Image Display/Upload Area */}
       <div
         onClick={handleClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            handleClick()
+          }
+        }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`relative group cursor-pointer rounded-3xl overflow-hidden transition-all ${
+        role="button"
+        tabIndex={0}
+        aria-label={displayUrl ? 'Αλλαγή φωτογραφίας προφίλ' : 'Προσθήκη φωτογραφίας προφίλ'}
+        className={`relative group cursor-pointer rounded-3xl overflow-hidden transition-all focus:outline-none focus:ring-4 focus:ring-coral dark:focus:ring-coral-light ${
           isDragging
             ? 'ring-4 ring-coral dark:ring-coral-light'
             : 'hover:ring-4 hover:ring-gray-300 dark:hover:ring-gray-600'

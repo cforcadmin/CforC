@@ -170,10 +170,20 @@ export default function EditableField({
       ) : (
         <div
           onClick={() => !disabled && setIsEditing(true)}
+          onKeyDown={(e) => {
+            if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault()
+              setIsEditing(true)
+            }
+          }}
+          role="button"
+          tabIndex={disabled ? -1 : 0}
+          aria-label={`${label} επεξεργασία${value ? `: ${value}` : ''}`}
+          aria-disabled={disabled}
           className={`group flex items-start gap-2 px-4 py-3 rounded-2xl transition-colors ${
             disabled
               ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-60'
-              : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700'
+              : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light'
           }`}
         >
           {/* Display Value */}

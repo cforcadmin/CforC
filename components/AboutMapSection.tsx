@@ -150,7 +150,7 @@ export default function AboutMapSection() {
                 key={`${city.name}-${idx}`}
                 className={`pb-3 border-b border-gray-300 dark:border-gray-600 ${
                   city.region
-                    ? `cursor-pointer transition-colors duration-300 ${
+                    ? `cursor-pointer transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light rounded ${
                         isRegionActive(city.region)
                           ? 'text-coral dark:text-coral-light border-coral'
                           : 'text-charcoal dark:text-gray-200 hover:text-coral hover:border-coral'
@@ -160,6 +160,15 @@ export default function AboutMapSection() {
                 onMouseEnter={() => city.region && handleCityHover(city.region)}
                 onMouseLeave={() => city.region && handleCityHover(null)}
                 onClick={() => city.region && handleRegionClick(city.region)}
+                onKeyDown={(e) => {
+                  if (city.region && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault()
+                    handleRegionClick(city.region)
+                  }
+                }}
+                role={city.region ? 'button' : undefined}
+                tabIndex={city.region ? 0 : -1}
+                aria-label={city.region ? `Επιλογή περιοχής ${city.name}` : undefined}
               >
                 <span className="text-sm font-medium">{city.name}</span>
               </div>
@@ -197,11 +206,21 @@ export default function AboutMapSection() {
                     }
                     stroke="transparent"
                     strokeWidth="0"
-                    className="cursor-pointer transition-all duration-300"
+                    className="cursor-pointer transition-all duration-300 focus:outline-none"
                     style={{ pointerEvents: 'auto' }}
                     onMouseEnter={() => handleCityHover(regionKey)}
                     onMouseLeave={() => handleCityHover(null)}
                     onClick={() => handleRegionClick(regionKey)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleRegionClick(regionKey)
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Επιλογή περιοχής ${regionKey}`}
+                    aria-pressed={isRegionActive(regionKey)}
                   />
                 ))}
               </svg>
@@ -211,7 +230,9 @@ export default function AboutMapSection() {
                 onClick={() => setShowAllLocations(!showAllLocations)}
                 className="absolute right-4 text-sm text-gray-400 hover:text-coral transition-colors z-20"
                 style={{ bottom: '72px' }}
-                title={showAllLocations ? "Hide all locations" : "Show all locations"}
+                title={showAllLocations ? "Απόκρυψη τοποθεσιών" : "Εμφάνιση όλων των τοποθεσιών"}
+                aria-label={showAllLocations ? "Απόκρυψη τοποθεσιών" : "Εμφάνιση όλων των τοποθεσιών"}
+                aria-pressed={showAllLocations}
               >
                 {showAllLocations ? '◉' : '○'}
               </button>
@@ -225,7 +246,7 @@ export default function AboutMapSection() {
                 key={`${city.name}-${idx}`}
                 className={`pb-3 border-b border-gray-300 dark:border-gray-600 text-right ${
                   city.region
-                    ? `cursor-pointer transition-colors duration-300 ${
+                    ? `cursor-pointer transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light rounded ${
                         isRegionActive(city.region)
                           ? 'text-coral dark:text-coral-light border-coral'
                           : 'text-charcoal dark:text-gray-200 hover:text-coral hover:border-coral'
@@ -235,6 +256,15 @@ export default function AboutMapSection() {
                 onMouseEnter={() => city.region && handleCityHover(city.region)}
                 onMouseLeave={() => city.region && handleCityHover(null)}
                 onClick={() => city.region && handleRegionClick(city.region)}
+                onKeyDown={(e) => {
+                  if (city.region && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault()
+                    handleRegionClick(city.region)
+                  }
+                }}
+                role={city.region ? 'button' : undefined}
+                tabIndex={city.region ? 0 : -1}
+                aria-label={city.region ? `Επιλογή περιοχής ${city.name}` : undefined}
               >
                 <span className="text-sm font-medium">{city.name}</span>
               </div>
