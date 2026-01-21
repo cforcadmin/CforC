@@ -1,5 +1,7 @@
 'use client'
 
+import { useFocusTrap } from '@/hooks/useFocusTrap'
+
 interface ProfileGuidelinesModalProps {
   isOpen: boolean
   onClose: () => void
@@ -9,10 +11,12 @@ export default function ProfileGuidelinesModal({
   isOpen,
   onClose
 }: ProfileGuidelinesModalProps) {
+  const modalRef = useFocusTrap<HTMLDivElement>(isOpen)
+
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="guidelines-modal-title">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
@@ -21,7 +25,7 @@ export default function ProfileGuidelinesModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div ref={modalRef} className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white dark:bg-gray-800 p-6 border-b border-gray-200 dark:border-gray-700 rounded-t-3xl">
           <div className="flex items-center justify-between">
@@ -32,7 +36,7 @@ export default function ProfileGuidelinesModal({
                 </svg>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-charcoal dark:text-gray-100">
+                <h2 id="guidelines-modal-title" className="text-xl font-bold text-charcoal dark:text-gray-100">
                   Οδηγίες Συμπλήρωσης Προφίλ
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400">

@@ -18,7 +18,7 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen dark:bg-gray-900">
       <Navigation />
-      <main>
+      <main id="main-content">
         <AboutHeroSection />
         <AboutMapSection />
         <AboutVideoSection />

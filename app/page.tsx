@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <div className="min-h-screen dark:bg-gray-900">
       <Navigation />
-      <main>
+      <main id="main-content">
         <HeroSection />
         <AboutSection />
         <ActivitiesSection />

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 interface ConfirmationModalProps {
   isOpen: boolean
@@ -71,9 +72,10 @@ export default function ConfirmationModal({
   }
 
   const colors = getVariantColors()
+  const modalRef = useFocusTrap<HTMLDivElement>(isOpen)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
@@ -82,7 +84,7 @@ export default function ConfirmationModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-md w-full p-8 transform transition-all">
+      <div ref={modalRef} className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-md w-full p-8 transform transition-all">
         {/* Close button */}
         <button
           onClick={onCancel}
@@ -110,7 +112,7 @@ export default function ConfirmationModal({
         </div>
 
         {/* Title */}
-        <h3 className="text-xl font-bold text-center text-charcoal dark:text-gray-100 mb-3">
+        <h3 id="modal-title" className="text-xl font-bold text-center text-charcoal dark:text-gray-100 mb-3">
           {title}
         </h3>
 

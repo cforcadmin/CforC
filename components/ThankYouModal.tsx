@@ -1,5 +1,7 @@
 'use client'
 
+import { useFocusTrap } from '@/hooks/useFocusTrap'
+
 interface ThankYouModalProps {
   isOpen: boolean
   onClose: () => void
@@ -9,10 +11,12 @@ export default function ThankYouModal({
   isOpen,
   onClose
 }: ThankYouModalProps) {
+  const modalRef = useFocusTrap<HTMLDivElement>(isOpen)
+
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="thankyou-modal-title">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
@@ -21,7 +25,7 @@ export default function ThankYouModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden">
+      <div ref={modalRef} className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden">
         {/* Header with gradient */}
         <div className="bg-gradient-to-br from-coral to-orange-400 dark:from-coral-light dark:to-orange-500 p-8 text-center">
           {/* Success Icon */}
@@ -30,7 +34,7 @@ export default function ThankYouModal({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+          <h2 id="thankyou-modal-title" className="text-2xl md:text-3xl font-bold text-white mb-2">
             Ευχαριστούμε!
           </h2>
           <p className="text-white/90 text-lg">

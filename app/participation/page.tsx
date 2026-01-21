@@ -116,7 +116,7 @@ function ParticipationContent() {
   return (
     <div className="min-h-screen">
       <Navigation />
-      <main>
+      <main id="main-content">
         {/* Hero Section */}
         <section className="relative -bottom-20">
         <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">

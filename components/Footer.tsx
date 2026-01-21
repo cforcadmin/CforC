@@ -28,7 +28,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
             {/* Sitemap */}
             <div>
               <h3 className="font-bold mb-3 text-coral dark:text-coral-light text-xs">SITEMAP</h3>
-            <ul className="space-y-1.5 text-xs dark:text-gray-300">
+            <ul role="list" className="space-y-1.5 text-xs dark:text-gray-300">
               <li><Link href="/members" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΕΥΡΕΣΗ ΜΕΛΩΝ</Link></li>
               <li><Link href="/about" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</Link></li>
               <li><Link href="/activities" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</Link></li>
@@ -41,7 +41,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
             {/* Contact */}
             <div>
               <h3 className="font-bold mb-3 text-coral dark:text-coral-light text-xs">ΕΠΙΚΟΙΝΩΝΙΑ</h3>
-            <ul className="space-y-1.5 text-xs dark:text-gray-300">
+            <ul role="list" className="space-y-1.5 text-xs dark:text-gray-300">
               <li>
                 <a
                   href="https://www.google.com/maps/place/Leof.+Alexandras+48,+Athina+114+73/@37.9905657,23.7374602,1006m/data=!3m2!1e3!4b1!4m6!3m5!1s0x14a1bd3522c01fef:0x1734422b9fe058ad!8m2!3d37.9905657!4d23.7374602!16s%2Fg%2F11b8v65q35?entry=ttu&g_ep=EgoyMDI1MTEwNC4xIKXMDSoASAFQAw%3D%3D"
@@ -78,7 +78,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
             {/* Policy */}
             <div>
               <h3 className="font-bold mb-3 text-coral dark:text-coral-light text-xs">ΠΟΛΙΤΙΚΗ</h3>
-            <ul className="space-y-1.5 text-xs dark:text-gray-300">
+            <ul role="list" className="space-y-1.5 text-xs dark:text-gray-300">
               <li><Link href="/terms" className="hover:text-coral dark:hover:text-coral-light transition-colors">Όροι & Προϋποθέσεις</Link></li>
               <li><Link href="/privacy" className="hover:text-coral dark:hover:text-coral-light transition-colors">Πολιτική Απορρήτου</Link></li>
               <li><Link href="/cookies" className="hover:text-coral dark:hover:text-coral-light transition-colors">Πολιτική Cookies</Link></li>

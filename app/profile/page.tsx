@@ -454,7 +454,7 @@ export default function ProfilePage() {
 
         {/* Validation Errors - Show at top */}
         {validationErrors.length > 0 && (
-          <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-400 dark:border-red-600 rounded-2xl p-6 mb-8">
+          <div role="alert" aria-live="assertive" className="bg-red-50 dark:bg-red-900/20 border-2 border-red-400 dark:border-red-600 rounded-2xl p-6 mb-8">
             <div className="flex items-start gap-4">
               <span className="text-3xl flex-shrink-0">❌</span>
               <div className="flex-1">
@@ -483,6 +483,8 @@ export default function ProfilePage() {
         {/* Save Message - Show at top */}
         {saveMessage && (
           <div
+            role={saveMessage.type === 'success' ? 'status' : 'alert'}
+            aria-live={saveMessage.type === 'success' ? 'polite' : 'assertive'}
             className={`p-4 rounded-2xl text-sm mb-8 ${
               saveMessage.type === 'success'
                 ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800'
