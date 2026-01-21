@@ -46,8 +46,9 @@ export async function POST(request: NextRequest) {
       // Extract text fields
       const fields = [
         'Name', 'Bio', 'FieldsOfWork', 'City', 'Province', 'Email', 'Phone', 'Websites',
-        'Project1Title', 'Project1Tags', 'Project1Description',
-        'Project2Title', 'Project2Tags', 'Project2Description'
+        'ProfileImageAltText',
+        'Project1Title', 'Project1Tags', 'Project1Description', 'Project1PicturesAltText',
+        'Project2Title', 'Project2Tags', 'Project2Description', 'Project2PicturesAltText'
       ]
       fields.forEach(field => {
         const value = formData.get(field)
