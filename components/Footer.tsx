@@ -9,7 +9,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
   const bgColor = variant === 'members' ? 'bg-[#F5F0EB] dark:bg-gray-800' : 'bg-gray-100 dark:bg-gray-800'
 
   return (
-    <footer className={bgColor}>
+    <footer role="contentinfo" aria-label="Πληροφορίες ιστότοπου" className={bgColor}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex flex-col md:flex-row justify-between items-start mb-6">
           {/* Logo */}
@@ -82,6 +82,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
               <li><Link href="/terms" className="hover:text-coral dark:hover:text-coral-light transition-colors">Όροι & Προϋποθέσεις</Link></li>
               <li><Link href="/privacy" className="hover:text-coral dark:hover:text-coral-light transition-colors">Πολιτική Απορρήτου</Link></li>
               <li><Link href="/cookies" className="hover:text-coral dark:hover:text-coral-light transition-colors">Πολιτική Cookies</Link></li>
+              <li><Link href="/accessibility" className="hover:text-coral dark:hover:text-coral-light transition-colors">Προσβασιμότητα</Link></li>
             </ul>
             </div>
 

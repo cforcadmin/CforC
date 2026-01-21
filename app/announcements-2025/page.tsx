@@ -105,9 +105,9 @@ export default function AnnouncementsPage() {
             <div className="flex items-start gap-3">
               <span className="text-2xl flex-shrink-0">⚠️</span>
               <div className="text-left">
-                <h3 className="font-bold text-amber-900 dark:text-amber-200 mb-1">
+                <h2 className="font-bold text-amber-900 dark:text-amber-200 mb-1 text-base">
                   Έκδοση Beta - Δοκιμαστική Λειτουργία
-                </h3>
+                </h2>
                 <p className="text-sm text-amber-800 dark:text-amber-300">
                   Αυτή είναι μια δοκιμαστική έκδοση της σελίδας που περιλαμβάνει test events,
                   open calls και δοκιμαστικά προφίλ μελών. Εάν θέλεις να δοκιμάσεις το προφίλ σου,

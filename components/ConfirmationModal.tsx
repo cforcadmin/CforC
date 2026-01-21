@@ -49,6 +49,9 @@ export default function ConfirmationModal({
     }
   }, [isOpen])
 
+  // Focus trap must be called before any conditional returns (Rules of Hooks)
+  const modalRef = useFocusTrap<HTMLDivElement>(isOpen)
+
   if (!isOpen) return null
 
   const getVariantColors = () => {
@@ -72,7 +75,6 @@ export default function ConfirmationModal({
   }
 
   const colors = getVariantColors()
-  const modalRef = useFocusTrap<HTMLDivElement>(isOpen)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-title">

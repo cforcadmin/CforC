@@ -126,3 +126,55 @@ body {
   white-space: nowrap;
   border: 0;
 }
+
+/* Global focus indicators for all interactive elements */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+}
+
+/* Dark mode focus indicators */
+.dark a:focus-visible,
+.dark button:focus-visible,
+.dark input:focus-visible,
+.dark select:focus-visible,
+.dark textarea:focus-visible,
+.dark [role="button"]:focus-visible,
+.dark [tabindex]:not([tabindex="-1"]):focus-visible {
+  outline-color: #FF9B7A; /* coral-light */
+}
+
+/* Remove default outline for elements that have custom focus styles */
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Enhanced focus for inputs - keep border change */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: var(--coral);
+}
+
+/* Focus indicator for checkboxes and radio buttons */
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px white;
+}
+
+.dark input[type="checkbox"]:focus-visible,
+.dark input[type="radio"]:focus-visible {
+  box-shadow: 0 0 0 2px #1a1a1a;
+}
