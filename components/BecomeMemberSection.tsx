@@ -12,7 +12,6 @@ export default function BecomeMemberSection() {
           fill
           className="object-cover"
           priority={false}
-          aria-hidden="true"
         />
         {/* Overlay for better text contrast */}
         <div className="absolute inset-0 bg-black/20" />

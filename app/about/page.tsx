@@ -16,23 +16,24 @@ import ScrollToTop from '@/components/ScrollToTop'
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen dark:bg-gray-900">
+    <div className="min-h-screen dark:bg-gray-900">
       <Navigation />
-      <AboutHeroSection />
-      <AboutMapSection />
-      <AboutVideoSection />
-      <AboutTextSection />
-      <AboutHowSection />
-      <AboutOfferSection />
-      <AboutCoreSection />
-      <AboutGoalsSection />
-      <AboutPartnersSection />
-      <BecomeMemberSection />
-      <NewsletterSection />
-
+      <main>
+        <AboutHeroSection />
+        <AboutMapSection />
+        <AboutVideoSection />
+        <AboutTextSection />
+        <AboutHowSection />
+        <AboutOfferSection />
+        <AboutCoreSection />
+        <AboutGoalsSection />
+        <AboutPartnersSection />
+        <BecomeMemberSection />
+        <NewsletterSection />
+      </main>
       <Footer />
       <CookieConsent />
       <ScrollToTop />
-    </main>
+    </div>
   )
 }

@@ -6,10 +6,10 @@ import ScrollToTop from '@/components/ScrollToTop'
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen">
       <Navigation />
-
-      {/* Hero Section */}
+      <main>
+        {/* Hero Section */}
       <section className="relative -bottom-20">
         <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -200,9 +200,10 @@ export default function PrivacyPage() {
       </section>
 
       <NewsletterSection />
+      </main>
       <Footer />
       <CookieConsent />
       <ScrollToTop />
-    </main>
+    </div>
   )
 }

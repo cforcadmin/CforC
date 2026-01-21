@@ -84,10 +84,9 @@ export default function AnnouncementsPage() {
   ]
 
   return (
-    <main className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
+    <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
       <Navigation />
-
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-20">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-20">
         {/* Hero Section */}
         <div className="text-center mb-12">
           <div className="inline-block mb-4">
@@ -322,9 +321,9 @@ export default function AnnouncementsPage() {
             Καλή περιήγηση! 🚀
           </p>
         </div>
-      </div>
+      </main>
 
       <Footer />
-    </main>
+    </div>
   )
 }

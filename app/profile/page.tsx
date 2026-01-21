@@ -428,10 +428,9 @@ export default function ProfilePage() {
   const currentImageUrl = user.Image && user.Image.length > 0 ? user.Image[0].url : undefined
 
   return (
-    <main className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
+    <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
       <Navigation />
-
-      <div className="max-w-4xl mx-auto px-4 py-24">
+      <main className="max-w-4xl mx-auto px-4 py-24">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
           <div className="text-center md:text-left">
@@ -784,7 +783,7 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
-      </div>
+      </main>
 
       {/* Unsaved Changes Modal */}
       {showUnsavedModal && (
@@ -852,6 +851,6 @@ export default function ProfilePage() {
         isOpen={showGuidelinesModal}
         onClose={() => setShowGuidelinesModal(false)}
       />
-    </main>
+    </div>
   )
 }

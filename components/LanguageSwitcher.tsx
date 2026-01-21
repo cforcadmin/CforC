@@ -114,13 +114,15 @@ export default function LanguageSwitcher() {
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Hidden Google Translate Element */}
-      <div id="google_translate_element" style={{ display: 'none' }}></div>
+      <div id="google_translate_element" style={{ display: 'none' }} aria-hidden="true"></div>
 
       {/* Globe Icon Button with Overlays */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-md hover:text-white dark:hover:text-coral-light transition-colors"
-        aria-label="Change language"
+        aria-label={`Αλλαγή γλώσσας (${getCurrentLanguageCode()})`}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
       >
         {/* Globe Icon */}
         <svg
@@ -130,6 +132,7 @@ export default function LanguageSwitcher() {
           strokeWidth={1.5}
           stroke="currentColor"
           className="w-6 h-6"
+          aria-hidden="true"
         >
           <path
             strokeLinecap="round"
@@ -151,6 +154,7 @@ export default function LanguageSwitcher() {
           strokeWidth={2.5}
           stroke="currentColor"
           className={`absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          aria-hidden="true"
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
         </svg>
@@ -195,6 +199,7 @@ export default function LanguageSwitcher() {
                     strokeWidth={2}
                     stroke="currentColor"
                     className="w-4 h-4 text-coral"
+                    aria-hidden="true"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                   </svg>

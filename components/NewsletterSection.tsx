@@ -80,6 +80,7 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
                     type="submit"
                     disabled={isSubmitting || !agreedToTerms}
                     className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 bg-coral hover:bg-coral/90 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Εγγραφή στο newsletter"
                   >
                     {isSubmitting ? (
                       <svg
@@ -87,6 +88,7 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
+                        aria-hidden="true"
                       >
                         <circle
                           className="opacity-25"
@@ -108,6 +110,7 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
+                        aria-hidden="true"
                       >
                         <path
                           strokeLinecap="round"
@@ -160,6 +163,7 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"

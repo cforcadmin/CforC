@@ -11,17 +11,19 @@ import ScrollToTop from '@/components/ScrollToTop'
 
 export default function Home() {
   return (
-    <main className="min-h-screen dark:bg-gray-900">
+    <div className="min-h-screen dark:bg-gray-900">
       <Navigation />
-      <HeroSection />
-      <AboutSection />
-      <ActivitiesSection />
-      {/* <MapSection /> */}
-      <OpenCallsSection />
-      <BecomeMemberSection />
+      <main>
+        <HeroSection />
+        <AboutSection />
+        <ActivitiesSection />
+        {/* <MapSection /> */}
+        <OpenCallsSection />
+        <BecomeMemberSection />
+      </main>
       <Footer />
       <CookieConsent />
       <ScrollToTop />
-    </main>
+    </div>
   )
 }

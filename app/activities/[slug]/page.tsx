@@ -135,13 +135,13 @@ function ActivityDetailPageContent() {
   const description = extractTextFromBlocks(activity.Description)
 
   return (
-    <main className="min-h-screen dark:bg-gray-900">
+    <div className="min-h-screen dark:bg-gray-900">
       <Navigation />
-
-      {/* Hero Section */}
-      <section className="relative -bottom-20">
-        <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      <main>
+        {/* Hero Section */}
+        <section className="relative -bottom-20">
+          <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight dark:text-coral">
               {activity.Title}
             </h1>
@@ -317,7 +317,6 @@ function ActivityDetailPageContent() {
                           width={32}
                           height={32}
                           className="w-full h-full"
-                          aria-hidden="true"
                         />
                       </div>
                       <span>CULTURE FOR CHANGE</span>
@@ -385,10 +384,11 @@ function ActivityDetailPageContent() {
       )}
 
       <NewsletterSection />
+      </main>
       <Footer />
       <CookieConsent />
       <ScrollToTop />
-    </main>
+    </div>
   )
 }
 

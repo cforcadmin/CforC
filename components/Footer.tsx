@@ -20,7 +20,6 @@ export default function Footer({ variant = 'default' }: FooterProps) {
               width={160}
               height={64}
               className="w-40 dark:invert"
-              aria-hidden="true"
             />
           </div>
 
@@ -56,11 +55,13 @@ export default function Footer({ variant = 'default' }: FooterProps) {
               <li>
                 <a href="mailto:hello@cultureforchange.net" className="hover:text-coral dark:hover:text-coral-light transition-colors">
                   hello@cultureforchange.net
+                  <span className="sr-only"> (ανοίγει εφαρμογή email)</span>
                 </a>
               </li>
               <li>
                 <a href="tel:+306976225704" className="hover:text-coral dark:hover:text-coral-light transition-colors">
                   +306976225704
+                  <span className="sr-only"> (ανοίγει εφαρμογή κλήσης)</span>
                 </a>
               </li>
             </ul>

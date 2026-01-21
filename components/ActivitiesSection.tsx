@@ -161,7 +161,6 @@ export default function ActivitiesSection() {
                                     width={32}
                                     height={32}
                                     className="w-full h-full"
-                                    aria-hidden="true"
                                   />
                                 </div>
                                 <span>CULTURE FOR CHANGE</span>

@@ -55,7 +55,6 @@ export default function LoadingIndicator() {
             width={32}
             height={32}
             className="opacity-80"
-            aria-hidden="true"
           />
         </div>
 

@@ -125,11 +125,11 @@ function ActivitiesPageContent() {
   }, [allActivities, searchQuery, activeTab])
 
   return (
-    <main className="min-h-screen dark:bg-gray-900">
+    <div className="min-h-screen dark:bg-gray-900">
       <Navigation />
-
-      {/* Hero Section */}
-      <section className="relative -bottom-20">
+      <main>
+        {/* Hero Section */}
+        <section className="relative -bottom-20">
         <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
@@ -266,7 +266,6 @@ function ActivitiesPageContent() {
                             width={32}
                             height={32}
                             className="w-full h-full"
-                            aria-hidden="true"
                           />
                         </div>
                         <span>CULTURE FOR CHANGE</span>
@@ -281,34 +280,37 @@ function ActivitiesPageContent() {
       </section>
 
       <NewsletterSection />
+      </main>
       <Footer />
       <CookieConsent />
       <ScrollToTop />
-    </main>
+    </div>
   )
 }
 
 export default function ActivitiesPage() {
   return (
     <Suspense fallback={
-      <main className="min-h-screen dark:bg-gray-900">
+      <div className="min-h-screen dark:bg-gray-900">
         <Navigation />
-        <section className="relative -bottom-20">
-          <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
-                <div>ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</div>
-              </h1>
+        <main>
+          <section className="relative -bottom-20">
+            <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
+                  <div>ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</div>
+                </h1>
+              </div>
             </div>
-          </div>
-        </section>
-        <section className="py-24 bg-white dark:bg-gray-900">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <LoadingIndicator />
-          </div>
-        </section>
+          </section>
+          <section className="py-24 bg-white dark:bg-gray-900">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <LoadingIndicator />
+            </div>
+          </section>
+        </main>
         <Footer />
-      </main>
+      </div>
     }>
       <ActivitiesPageContent />
     </Suspense>

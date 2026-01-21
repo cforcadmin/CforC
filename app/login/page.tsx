@@ -100,10 +100,9 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
+    <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
       <Navigation />
-
-      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-12">
+      <main className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-12">
         <div className="w-full max-w-5xl">
           {/* Page Title (visually hidden for screen readers) */}
           <h1 className="sr-only">Περιοχή Μελών - Σύνδεση</h1>
@@ -301,7 +300,7 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
-      </div>
+      </main>
 
       {/* Password Reset Modal */}
       {showResetPassword && (
@@ -395,6 +394,6 @@ export default function LoginPage() {
       )}
 
       <Footer />
-    </main>
+    </div>
   )
 }
