@@ -1201,14 +1201,201 @@ Success/Error Messages:
 
 ---
 
-## 15. Future Improvements
+## 15. Additional WCAG Enhancements (January 21, 2026)
+
+### 15.1 Global Focus Indicators
+
+#### Purpose
+Ensures all interactive elements have visible focus indicators when navigated via keyboard, making it clear which element is currently focused.
+
+#### WCAG Reference
+- **WCAG 2.4.7** - Focus Visible (Level AA)
+
+#### Implementation
+
+**File: `app/globals.css`**
+```css
+/* Global focus indicators for all interactive elements */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+}
+
+/* Dark mode focus indicators */
+.dark a:focus-visible,
+.dark button:focus-visible,
+.dark input:focus-visible,
+.dark select:focus-visible,
+.dark textarea:focus-visible,
+.dark [role="button"]:focus-visible,
+.dark [tabindex]:not([tabindex="-1"]):focus-visible {
+  outline-color: #FF9B7A; /* coral-light */
+}
+
+/* Enhanced focus for checkboxes and radio buttons */
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px white;
+}
+```
+
+---
+
+### 15.2 Landmark Regions
+
+#### Purpose
+ARIA landmark roles help screen reader users quickly navigate to major page sections without having to tab through all content.
+
+#### WCAG Reference
+- **WCAG 1.3.1** - Info and Relationships (Level A)
+- **WCAG 2.4.1** - Bypass Blocks (Level A)
+
+#### Implementation
+
+**File: `components/Navigation.tsx`**
+```jsx
+<nav role="banner" aria-label="Κύρια πλοήγηση" className={...}>
+```
+
+**File: `components/Footer.tsx`**
+```jsx
+<footer role="contentinfo" aria-label="Πληροφορίες ιστότοπου" className={...}>
+```
+
+#### Landmarks Available
+| Landmark Role | Element | Purpose |
+|---------------|---------|---------|
+| `banner` | Navigation | Main site header/navigation |
+| `main` | `<main>` | Primary content area |
+| `contentinfo` | Footer | Site footer information |
+
+---
+
+### 15.3 Heading Hierarchy Fix
+
+#### Problem
+The announcements page (`/announcements-2025`) had an h3 element immediately following h1, skipping the h2 level. Screen readers rely on proper heading hierarchy for navigation.
+
+#### WCAG Reference
+- **WCAG 1.3.1** - Info and Relationships (Level A)
+
+#### Solution
+Changed the "Έκδοση Beta" heading from h3 to h2 while maintaining visual appearance with `text-base` class.
+
+**File: `app/announcements-2025/page.tsx`**
+
+**Before:**
+```jsx
+<h3 className="font-bold text-amber-900">
+  Έκδοση Beta - Δοκιμαστική Λειτουργία
+</h3>
+```
+
+**After:**
+```jsx
+<h2 className="font-bold text-amber-900 text-base">
+  Έκδοση Beta - Δοκιμαστική Λειτουργία
+</h2>
+```
+
+---
+
+### 15.4 Accessibility Statement Page
+
+#### Purpose
+Provides users with information about the site's accessibility commitment, features, known limitations, and how to report issues.
+
+#### WCAG Reference
+- Best practice for transparency and user support
+
+#### Implementation
+
+**New File: `app/accessibility/page.tsx`**
+
+Created a comprehensive accessibility statement page in Greek with the following sections:
+
+| Section | Content |
+|---------|---------|
+| Introduction | Commitment to accessibility |
+| Compliance Standards | WCAG 2.2 AA target |
+| Accessibility Features | Keyboard nav, screen readers, visual features, forms |
+| Known Limitations | Third-party content, user-uploaded images, PDFs |
+| Compatible Technologies | Browsers and screen readers tested |
+| Report Issues | Contact information (it@cultureforchange.net) |
+| Review Date | January 2026 |
+| Commitment Statement | Equality and inclusion statement |
+
+**File: `components/Footer.tsx`**
+
+Added link to accessibility page in the Policy section:
+```jsx
+<li>
+  <Link href="/accessibility" className="hover:text-coral transition-colors">
+    Προσβασιμότητα
+  </Link>
+</li>
+```
+
+---
+
+### 15.5 React Hooks Fix (ConfirmationModal)
+
+#### Problem
+The `useFocusTrap` hook was being called after a conditional `return null` statement, violating React's Rules of Hooks. This caused runtime errors when the modal state changed.
+
+#### Solution
+Moved the `useFocusTrap` hook call before the conditional return.
+
+**File: `components/ConfirmationModal.tsx`**
+
+**Before:**
+```jsx
+if (!isOpen) return null
+
+const colors = getVariantColors()
+const modalRef = useFocusTrap<HTMLDivElement>(isOpen)  // Called after return!
+```
+
+**After:**
+```jsx
+// Focus trap must be called before any conditional returns (Rules of Hooks)
+const modalRef = useFocusTrap<HTMLDivElement>(isOpen)
+
+if (!isOpen) return null
+
+const colors = getVariantColors()
+```
+
+---
+
+### 15.6 Summary of Section 15 Enhancements
+
+| Feature | Files Modified | Impact |
+|---------|----------------|--------|
+| Global Focus Indicators | `globals.css` | All interactive elements |
+| Landmark Regions | `Navigation.tsx`, `Footer.tsx` | Navigation structure |
+| Heading Hierarchy Fix | `announcements-2025/page.tsx` | 1 page |
+| Accessibility Statement | `accessibility/page.tsx` (new), `Footer.tsx` | New page + footer link |
+| React Hooks Fix | `ConfirmationModal.tsx` | Bug fix |
+
+---
+
+## 16. Future Improvements
 
 Consider for future iterations:
 1. Increase minimum text size to 14px (`text-sm`) for improved readability
-2. Add visual focus indicators to all interactive elements
-3. Implement proper heading hierarchy validation
-4. Add landmark regions (`role="banner"`, `role="contentinfo"`) where missing
-5. Create accessibility statement page
+2. Add automated accessibility testing to CI/CD pipeline
+3. Implement language-specific screen reader testing (Greek content)
+4. Add high contrast mode toggle
+5. Expand alt text guidelines for content editors in Strapi
 
 ---
 
@@ -1216,3 +1403,4 @@ Consider for future iterations:
 *WCAG Version: 2.2 AA*
 *accessScan Audit: 103+ issues identified, all addressed*
 *Advanced Features: 6 additional enhancements implemented*
+*Section 15: 5 additional improvements (focus indicators, landmarks, heading hierarchy, accessibility page, hooks fix)*
