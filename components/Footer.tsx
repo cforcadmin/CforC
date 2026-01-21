@@ -53,13 +53,21 @@ export default function Footer({ variant = 'default' }: FooterProps) {
                 </a>
               </li>
               <li>
-                <a href="mailto:hello@cultureforchange.net" className="hover:text-coral dark:hover:text-coral-light transition-colors">
+                <a
+                  href="mailto:hello@cultureforchange.net"
+                  className="hover:text-coral dark:hover:text-coral-light transition-colors"
+                  title="Αποστολή email στο hello@cultureforchange.net (ανοίγει εφαρμογή email)"
+                >
                   hello@cultureforchange.net
                   <span className="sr-only"> (ανοίγει εφαρμογή email)</span>
                 </a>
               </li>
               <li>
-                <a href="tel:+306976225704" className="hover:text-coral dark:hover:text-coral-light transition-colors">
+                <a
+                  href="tel:+306976225704"
+                  className="hover:text-coral dark:hover:text-coral-light transition-colors"
+                  title="Κλήση στο +306976225704 (ανοίγει εφαρμογή κλήσης)"
+                >
                   +306976225704
                   <span className="sr-only"> (ανοίγει εφαρμογή κλήσης)</span>
                 </a>
