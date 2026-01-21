@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import { TextSizeProvider } from '@/components/TextSizeProvider'
 import { AuthProvider } from '@/components/AuthProvider'
 import { AnnouncerProvider } from '@/components/Announcer'
 
@@ -23,11 +24,13 @@ export default function RootLayout({
           Μετάβαση στο κύριο περιεχόμενο
         </a>
         <ThemeProvider>
-          <AuthProvider>
-            <AnnouncerProvider>
-              {children}
-            </AnnouncerProvider>
-          </AuthProvider>
+          <TextSizeProvider>
+            <AuthProvider>
+              <AnnouncerProvider>
+                {children}
+              </AnnouncerProvider>
+            </AuthProvider>
+          </TextSizeProvider>
         </ThemeProvider>
         <Script
           id="google-translate-init"

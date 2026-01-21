@@ -7,6 +7,7 @@ import LanguageSwitcher from './LanguageSwitcher'
 import { useTheme } from './ThemeProvider'
 import { useAuth } from './AuthProvider'
 import ConfirmationModal from './ConfirmationModal'
+import TextSizeToggle from './TextSizeToggle'
 
 interface NavigationProps {
   variant?: 'default' | 'members'
@@ -55,6 +56,8 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
 
           {/* Desktop Navigation */}
           <div className={`hidden md:flex items-center ${isAuthenticated ? 'space-x-4' : 'space-x-8'}`}>
+            {/* Text Size Toggle */}
+            <TextSizeToggle variant={variant} />
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleTheme}
@@ -131,6 +134,11 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
         {isOpen && (
           <div className={`md:hidden ${bgColor} dark:bg-gray-800 border-t ${variant === 'members' ? 'border-gray-300 dark:border-gray-700' : 'border-coral-dark dark:border-gray-700'}`}>
           <div className="px-4 py-4 space-y-3">
+            {/* Text Size Toggle - Mobile */}
+            <div className="flex items-center space-x-2 py-2">
+              <span className="text-sm font-medium">ΜΕΓΕΘΟΣ ΚΕΙΜΕΝΟΥ</span>
+              <TextSizeToggle variant={variant} />
+            </div>
             {/* Dark Mode Toggle - Mobile */}
             <button
               onClick={toggleTheme}

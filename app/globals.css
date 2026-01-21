@@ -5,6 +5,18 @@
 :root {
   --coral: #FF8B6A;
   --charcoal: #2D2D2D;
+  --text-scale: 1;
+}
+
+/* Text size scaling - applies to all text elements */
+html {
+  font-size: calc(16px * var(--text-scale));
+  transition: font-size 300ms ease-in-out;
+}
+
+/* Scale specific text elements proportionally */
+h1, h2, h3, h4, h5, h6, p, span, a, li, td, th, label, button, input, textarea, select {
+  transition: font-size 300ms ease-in-out;
 }
 
 body {
