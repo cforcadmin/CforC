@@ -18,6 +18,7 @@ interface Member {
     url: string
     alternativeText?: string
   }>
+  ProfileImageAltText?: string
   Project1Title?: string
   Project1Tags?: string
   Project1Description?: string
@@ -26,6 +27,7 @@ interface Member {
     url: string
     alternativeText?: string
   }>
+  Project1PicturesAltText?: string
   Project2Title?: string
   Project2Tags?: string
   Project2Description?: string
@@ -34,6 +36,7 @@ interface Member {
     url: string
     alternativeText?: string
   }>
+  Project2PicturesAltText?: string
 }
 
 interface AuthContextType {

@@ -236,6 +236,45 @@ export default function ProfilePage() {
       errors.push('Το email είναι υποχρεωτικό')
     }
 
+    if (!formData.Bio || formData.Bio.trim() === '') {
+      errors.push('Το βιογραφικό είναι υποχρεωτικό')
+    }
+
+    if (!formData.FieldsOfWork || formData.FieldsOfWork.trim() === '' || formData.FieldsOfWork === 'Προς Συμπλήρωση') {
+      errors.push('Οι τομείς εργασίας είναι υποχρεωτικοί')
+    }
+
+    if (!formData.City || formData.City.trim() === '' || formData.City === '-') {
+      errors.push('Η πόλη είναι υποχρεωτική')
+    }
+
+    if (!formData.Province || formData.Province.trim() === '' || formData.Province === '-') {
+      errors.push('Η περιφέρεια είναι υποχρεωτική')
+    }
+
+    // Check if user has a profile image (either existing or uploading new one)
+    const hasProfileImage = (user?.Image && user.Image.length > 0) || imageFile
+    if (!hasProfileImage) {
+      errors.push('Η φωτογραφία προφίλ είναι υποχρεωτική')
+    }
+
+    // Profile image alt text is always required (since profile image is required)
+    if (!formData.ProfileImageAltText || formData.ProfileImageAltText.trim() === '') {
+      errors.push('Το εναλλακτικό κείμενο φωτογραφίας είναι υποχρεωτικό')
+    }
+
+    // Project 1 alt text required if project has images
+    const hasProject1Images = (project1KeptImageIds.length > 0) || (project1Images.length > 0)
+    if (hasProject1Images && (!formData.Project1PicturesAltText || formData.Project1PicturesAltText.trim() === '')) {
+      errors.push('Το εναλλακτικό κείμενο φωτο έργου 1 είναι υποχρεωτικό όταν υπάρχουν εικόνες')
+    }
+
+    // Project 2 alt text required if project has images
+    const hasProject2Images = (project2KeptImageIds.length > 0) || (project2Images.length > 0)
+    if (hasProject2Images && (!formData.Project2PicturesAltText || formData.Project2PicturesAltText.trim() === '')) {
+      errors.push('Το εναλλακτικό κείμενο φωτο έργου 2 είναι υποχρεωτικό όταν υπάρχουν εικόνες')
+    }
+
     // If there are validation errors, show them
     if (errors.length > 0) {
       setValidationErrors(errors)
@@ -502,6 +541,7 @@ export default function ProfilePage() {
                   onChange={(value) => handleFieldChange('ProfileImageAltText', value)}
                   helperText="Περιγραφή για άτομα με προβλήματα όρασης (μέγιστο 125 χαρακτήρες)"
                   maxCharacters={125}
+                  required
                 />
               </div>
             </div>
@@ -541,6 +581,7 @@ export default function ProfilePage() {
                 onChange={(value) => handleFieldChange('Bio', value)}
                 maxWords={160}
                 maxCharacters={1200}
+                required
               />
 
               <EditableField
@@ -550,6 +591,7 @@ export default function ProfilePage() {
                 onChange={(value) => handleFieldChange('FieldsOfWork', value)}
                 helperText="Διαχωρίστε με κόμμα (,) - μέγιστο 5 τομείς"
                 maxItems={5}
+                required
               />
             </div>
 
@@ -571,6 +613,7 @@ export default function ProfilePage() {
                 value={formData.City}
                 placeholder="Αθήνα"
                 onChange={(value) => handleFieldChange('City', value)}
+                required
               />
 
               <EditableField
@@ -578,6 +621,7 @@ export default function ProfilePage() {
                 value={formData.Province}
                 placeholder="Αττική"
                 onChange={(value) => handleFieldChange('Province', value)}
+                required
               />
 
               <EditableField
@@ -641,8 +685,9 @@ export default function ProfilePage() {
                   value={formData.Project1PicturesAltText}
                   placeholder="π.χ. Παιδιά ζωγραφίζουν τοιχογραφία σε δημόσιο χώρο"
                   onChange={(value) => handleFieldChange('Project1PicturesAltText', value)}
-                  helperText="Περιγραφή για άτομα με προβλήματα όρασης (μέγιστο 125 χαρακτήρες)"
+                  helperText="Υποχρεωτικό όταν υπάρχουν εικόνες - Περιγραφή για προσβασιμότητα (μέγιστο 125 χαρακτήρες)"
                   maxCharacters={125}
+                  required={(project1KeptImageIds.length > 0) || (project1Images.length > 0)}
                 />
               </div>
 
@@ -691,8 +736,9 @@ export default function ProfilePage() {
                   value={formData.Project2PicturesAltText}
                   placeholder="π.χ. Θεατρική παράσταση με 10 ηθοποιούς σε σκηνή"
                   onChange={(value) => handleFieldChange('Project2PicturesAltText', value)}
-                  helperText="Περιγραφή για άτομα με προβλήματα όρασης (μέγιστο 125 χαρακτήρες)"
+                  helperText="Υποχρεωτικό όταν υπάρχουν εικόνες - Περιγραφή για προσβασιμότητα (μέγιστο 125 χαρακτήρες)"
                   maxCharacters={125}
+                  required={(project2KeptImageIds.length > 0) || (project2Images.length > 0)}
                 />
               </div>
             </div>
