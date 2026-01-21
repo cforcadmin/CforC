@@ -226,7 +226,7 @@ export default function AccessibilityPage() {
                     it@cultureforchange.net
                   </a>
                 </p>
-                <p className="mb-2">
+                <p>
                   <strong>Τηλέφωνο:</strong>{' '}
                   <a
                     href="tel:+306976225704"
@@ -235,9 +235,6 @@ export default function AccessibilityPage() {
                   >
                     +30 697 622 5704
                   </a>
-                </p>
-                <p>
-                  <strong>Διεύθυνση:</strong> Λεωφόρος Αλεξάνδρας 48, 114 73, Αθήνα
                 </p>
               </div>
 
