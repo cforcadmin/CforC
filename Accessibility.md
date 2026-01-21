@@ -888,19 +888,331 @@ Added `title` attributes to mailto and tel links to provide visible tooltip warn
 
 ---
 
-## 14. Future Improvements
+## 14. Advanced Accessibility Features (January 21, 2026)
+
+This section documents additional accessibility enhancements implemented beyond the accessScan audit findings.
+
+### 14.1 Skip Navigation Link
+
+#### Purpose
+Allows keyboard users to skip repetitive navigation and jump directly to main content, significantly improving navigation efficiency.
+
+#### WCAG Reference
+- **WCAG 2.4.1** - Bypass Blocks (Level A)
+
+#### Implementation
+
+**File: `app/layout.tsx`**
+```jsx
+<body>
+  {/* Skip to main content link for keyboard users */}
+  <a href="#main-content" className="skip-link">
+    Μετάβαση στο κύριο περιεχόμενο
+  </a>
+  ...
+</body>
+```
+
+**File: `app/globals.css`**
+```css
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 1rem 2rem;
+  background-color: var(--coral);
+  color: white;
+  font-weight: 600;
+  border-radius: 0 0 0.5rem 0.5rem;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+```
+
+#### Pages with `id="main-content"`
+All main page elements now include `id="main-content"`:
+- Home (`/`)
+- About (`/about`)
+- Activities (`/activities`)
+- Members (`/members`)
+- Open Calls (`/open-calls`)
+- Participation (`/participation`)
+- Privacy (`/privacy`)
+- Terms (`/terms`)
+- Cookies (`/cookies`)
+- Transparency (`/transparency`)
+- Login (`/login`)
+
+---
+
+### 14.2 Focus Trap in Modals
+
+#### Purpose
+When a modal is open, keyboard focus is trapped within the modal, preventing users from accidentally tabbing to hidden content behind it. Focus is restored to the triggering element when the modal closes.
+
+#### WCAG Reference
+- **WCAG 2.4.3** - Focus Order (Level A)
+- **WCAG 2.1.2** - No Keyboard Trap (Level A)
+
+#### Implementation
+
+**New File: `hooks/useFocusTrap.ts`**
+```typescript
+import { useEffect, useRef, RefObject } from 'react'
+
+const FOCUSABLE_SELECTORS = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ')
+
+export function useFocusTrap<T extends HTMLElement>(isActive: boolean): RefObject<T> {
+  const containerRef = useRef<T>(null)
+  const previousActiveElement = useRef<HTMLElement | null>(null)
+
+  useEffect(() => {
+    if (!isActive || !containerRef.current) return
+
+    // Store the previously focused element
+    previousActiveElement.current = document.activeElement as HTMLElement
+
+    // Focus first focusable element
+    const focusableElements = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)
+    focusableElements[0]?.focus()
+
+    // Handle Tab key to trap focus
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return
+      // Cycle focus within modal
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      // Restore focus to previously focused element
+      previousActiveElement.current?.focus()
+    }
+  }, [isActive])
+
+  return containerRef
+}
+```
+
+#### Modals Updated
+
+| Modal Component | ARIA Attributes Added |
+|-----------------|----------------------|
+| `ConfirmationModal.tsx` | `role="dialog"`, `aria-modal="true"`, `aria-labelledby` |
+| `MembershipRegistrationModal.tsx` | `role="dialog"`, `aria-modal="true"`, `aria-labelledby` |
+| `ProfileGuidelinesModal.tsx` | `role="dialog"`, `aria-modal="true"`, `aria-labelledby` |
+| `ThankYouModal.tsx` | `role="dialog"`, `aria-modal="true"`, `aria-labelledby` |
+
+---
+
+### 14.3 Prefers-Reduced-Motion Support
+
+#### Purpose
+Respects user's system preference for reduced motion, disabling animations and transitions for users who experience motion sickness or vestibular disorders.
+
+#### WCAG Reference
+- **WCAG 2.3.3** - Animation from Interactions (Level AAA)
+
+#### Implementation
+
+**File: `app/globals.css`**
+```css
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+```
+
+---
+
+### 14.4 ARIA Live Regions for Dynamic Content
+
+#### Purpose
+Provides a way to announce dynamic content changes to screen reader users, ensuring they are informed of updates without losing their place.
+
+#### WCAG Reference
+- **WCAG 4.1.3** - Status Messages (Level AA)
+
+#### Implementation
+
+**New File: `components/Announcer.tsx`**
+```typescript
+'use client'
+
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+
+interface AnnouncerContextType {
+  announce: (message: string, priority?: 'polite' | 'assertive') => void
+}
+
+const AnnouncerContext = createContext<AnnouncerContextType | null>(null)
+
+export function useAnnouncer() {
+  const context = useContext(AnnouncerContext)
+  if (!context) {
+    throw new Error('useAnnouncer must be used within an AnnouncerProvider')
+  }
+  return context
+}
+
+export function AnnouncerProvider({ children }: { children: ReactNode }) {
+  const [politeMessage, setPoliteMessage] = useState('')
+  const [assertiveMessage, setAssertiveMessage] = useState('')
+
+  const announce = useCallback((message: string, priority: 'polite' | 'assertive' = 'polite') => {
+    // Clear and set message to trigger announcement
+  }, [])
+
+  return (
+    <AnnouncerContext.Provider value={{ announce }}>
+      {children}
+      {/* Polite announcements */}
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-announcer">
+        {politeMessage}
+      </div>
+      {/* Assertive announcements */}
+      <div role="alert" aria-live="assertive" aria-atomic="true" className="sr-announcer">
+        {assertiveMessage}
+      </div>
+    </AnnouncerContext.Provider>
+  )
+}
+```
+
+#### Usage
+```typescript
+import { useAnnouncer } from '@/components/Announcer'
+
+function MyComponent() {
+  const { announce } = useAnnouncer()
+
+  const handleSave = async () => {
+    await saveData()
+    announce('Οι αλλαγές αποθηκεύτηκαν επιτυχώς', 'polite')
+  }
+
+  const handleError = () => {
+    announce('Σφάλμα: Παρακαλώ δοκιμάστε ξανά', 'assertive')
+  }
+}
+```
+
+---
+
+### 14.5 Role="list" for Custom Lists
+
+#### Purpose
+Safari with VoiceOver may not announce lists that have `list-style: none` CSS applied. Adding explicit `role="list"` ensures proper announcement.
+
+#### WCAG Reference
+- **WCAG 1.3.1** - Info and Relationships (Level A)
+
+#### Implementation
+
+**File: `components/Footer.tsx`**
+```jsx
+<ul role="list" className="space-y-1.5 text-xs dark:text-gray-300">
+  <li>...</li>
+</ul>
+```
+
+#### Lists Updated
+- Sitemap navigation list
+- Contact information list
+- Policy links list
+
+---
+
+### 14.6 Error Announcements for Form Validation
+
+#### Purpose
+Ensures form validation errors and success messages are immediately announced to screen reader users.
+
+#### WCAG Reference
+- **WCAG 3.3.1** - Error Identification (Level A)
+- **WCAG 4.1.3** - Status Messages (Level AA)
+
+#### Implementation
+
+**File: `app/profile/page.tsx`**
+
+Validation Errors:
+```jsx
+<div
+  role="alert"
+  aria-live="assertive"
+  className="bg-red-50 border-2 border-red-400 rounded-2xl p-6 mb-8"
+>
+  <h3>Σφάλματα Επικύρωσης</h3>
+  <ul>
+    {validationErrors.map((error, index) => (
+      <li key={index}>• {error}</li>
+    ))}
+  </ul>
+</div>
+```
+
+Success/Error Messages:
+```jsx
+<div
+  role={saveMessage.type === 'success' ? 'status' : 'alert'}
+  aria-live={saveMessage.type === 'success' ? 'polite' : 'assertive'}
+  className={...}
+>
+  {saveMessage.text}
+</div>
+```
+
+---
+
+### 14.7 Summary of Advanced Features
+
+| Feature | Files Created | Files Modified |
+|---------|---------------|----------------|
+| Skip Navigation Link | - | `layout.tsx`, `globals.css`, 11 pages |
+| Focus Trap in Modals | `useFocusTrap.ts` | 4 modal components |
+| Prefers-Reduced-Motion | - | `globals.css` |
+| ARIA Live Regions | `Announcer.tsx` | `layout.tsx` |
+| Role="list" | - | `Footer.tsx` |
+| Error Announcements | - | `profile/page.tsx` |
+| **Total** | **2 new files** | **21 files modified** |
+
+---
+
+## 15. Future Improvements
 
 Consider for future iterations:
-1. Add skip navigation link
-2. Implement focus trap in modals
-3. Add `prefers-reduced-motion` media query support
-4. Increase minimum text size to 14px (`text-sm`)
-5. Implement ARIA live regions for dynamic content updates
-6. Add `role="list"` to custom lists if needed
-7. Implement proper error announcements for form validation
+1. Increase minimum text size to 14px (`text-sm`) for improved readability
+2. Add visual focus indicators to all interactive elements
+3. Implement proper heading hierarchy validation
+4. Add landmark regions (`role="banner"`, `role="contentinfo"`) where missing
+5. Create accessibility statement page
 
 ---
 
 *Last Updated: January 21, 2026*
 *WCAG Version: 2.2 AA*
 *accessScan Audit: 103+ issues identified, all addressed*
+*Advanced Features: 6 additional enhancements implemented*
