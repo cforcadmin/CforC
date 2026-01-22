@@ -31,6 +31,8 @@ export interface Activity extends StrapiData<Activity> {
   Featured?: boolean;
   Slug?: string;  // URL-friendly slug generated from title
   ImageAltText: string;  // Required alt text for accessibility
+  EngTitle?: string;  // Optional English title (manual translation)
+  EngDescription?: string;  // Optional English description (manual translation)
   createdAt: string;
   updatedAt: string;
   publishedAt: string;
@@ -67,6 +69,8 @@ export interface OpenCall extends StrapiData<OpenCall> {
   Link: string;
   Image?: StrapiMediaObject | StrapiMediaArray;  // Can be single object or array
   ImageAltText: string;  // Required alt text for accessibility
+  EngTitle?: string;  // Optional English title (manual translation)
+  EngDescription?: string;  // Optional English description (manual translation)
   createdAt: string;
   updatedAt: string;
   publishedAt: string;

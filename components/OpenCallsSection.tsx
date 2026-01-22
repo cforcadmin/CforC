@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import LoadingIndicator from './LoadingIndicator'
+import LocalizedText from './LocalizedText'
 import { getOpenCalls } from '@/lib/strapi'
 import type { StrapiResponse, OpenCall } from '@/lib/types'
 import { useAuth } from './AuthProvider'
@@ -261,7 +262,7 @@ export default function OpenCallsSection() {
                     <div className="flex-1 flex gap-6">
                       <div className="flex-1">
                         <h3 className="text-xl md:text-2xl font-bold mb-4 text-charcoal dark:text-gray-100 group-hover:text-coral dark:group-hover:text-coral-light transition-colors duration-300">
-                          {call.Title}
+                          <LocalizedText text={call.Title} engText={call.EngTitle} />
                         </h3>
 
                         <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mt-2">
@@ -339,7 +340,7 @@ export default function OpenCallsSection() {
                         <div className="flex-1 flex gap-6">
                           <div className="flex-1">
                             <h3 className="text-xl md:text-2xl font-bold mb-4 text-gray-500 dark:text-gray-400">
-                              {call.Title}
+                              <LocalizedText text={call.Title} engText={call.EngTitle} />
                             </h3>
                             <p className="text-gray-500 dark:text-gray-500 leading-relaxed text-base mt-2 line-clamp-2">
                               {descriptionText}

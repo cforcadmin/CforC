@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import LoadingIndicator from './LoadingIndicator'
+import LocalizedText from './LocalizedText'
 import { getActivities } from '@/lib/strapi'
 import type { StrapiResponse, StrapiData, Activity } from '@/lib/types'
 
@@ -150,7 +151,7 @@ export default function ActivitiesSection() {
 
                             <div className="p-7 pt-9 flex flex-col h-[200px]">
                               <h3 className="text-lg font-bold mb-4 line-clamp-3 flex-grow dark:text-gray-100">
-                                {card.Title}
+                                <LocalizedText text={card.Title} engText={card.EngTitle} />
                               </h3>
 
                               <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mt-auto">
