@@ -1388,19 +1388,178 @@ const colors = getVariantColors()
 
 ---
 
-## 16. Future Improvements
+## 16. Text Size Accessibility Toggle (January 22, 2026)
 
-Consider for future iterations:
-1. Increase minimum text size to 14px (`text-sm`) for improved readability
-2. Add automated accessibility testing to CI/CD pipeline
-3. Implement language-specific screen reader testing (Greek content)
-4. Add high contrast mode toggle
-5. Expand alt text guidelines for content editors in Strapi
+### Overview
+
+Implemented a user-controlled text size toggle allowing visitors to increase the base font size across all pages. This feature helps users with visual impairments read content more comfortably.
+
+### WCAG Reference
+- **WCAG 1.4.4** - Resize Text (Level AA): Text can be resized without assistive technology up to 200% without loss of content or functionality
+
+### Implementation
+
+#### New Components
+
+**TextSizeProvider (`components/TextSizeProvider.tsx`)**
+
+A React context provider that manages text size state across the application.
+
+```typescript
+type TextSize = 'small' | 'medium' | 'large'
+
+// Text scale values applied to CSS custom property
+const TEXT_SCALES = {
+  small: 1,      // 100% (default)
+  medium: 1.125, // 112.5%
+  large: 1.25,   // 125%
+}
+```
+
+Features:
+- Manages text size state globally
+- Persists user preference in `localStorage` (key: `textSize`)
+- Applies CSS custom property `--text-scale` to `<html>` element
+- Loads saved preference on initial render
+
+**TextSizeToggle (`components/TextSizeToggle.tsx`)**
+
+A visual toggle component with three "A" letters of different sizes.
+
+| Size | Font Size | Label (Greek) |
+|------|-----------|---------------|
+| Large | 18px | Μεγάλο μέγεθος κειμένου |
+| Medium | 16px | Μεσαίο μέγεθος κειμένου |
+| Small (default) | 14px | Κανονικό μέγεθος κειμένου |
+
+Visual Features:
+- **Active state:** White circle behind the A (black letter)
+- **Inactive state:** Just the letter (black in light mode, white in dark mode)
+- **Members page variant:** Orange/coral outline on the active circle
+- **Hover animation:** Bell-shake effect on inactive A's (1 second duration)
+
+#### CSS Implementation
+
+**globals.css additions:**
+
+```css
+:root {
+  --text-scale: 1;
+}
+
+html {
+  font-size: calc(16px * var(--text-scale));
+  transition: font-size 300ms ease-in-out;
+}
+
+h1, h2, h3, h4, h5, h6, p, span, a, li, td, th, label, button, input, textarea, select {
+  transition: font-size 300ms ease-in-out;
+}
+```
+
+### User Experience
+
+| Interaction | Effect |
+|-------------|--------|
+| Click inactive A | Text scales to selected size, circle fades to new position |
+| Hover inactive A | Bell-shake animation (rotates left-right, 1s) |
+| Page reload | Previous selection restored from localStorage |
+| Dark mode | Inactive A's appear white, active A stays black |
+
+### Animation Details
+
+| Animation | Duration | Easing | Description |
+|-----------|----------|--------|-------------|
+| Circle fade | 300ms | ease-in-out | Opacity transition between active states |
+| Text scaling | 300ms | ease-in-out | Font size change across all elements |
+| Color transition | 300ms | ease-in-out | Text color change (dark/light mode) |
+| Bell-shake hover | 1000ms | ease-in-out | Rotation from ±8° to ±1° |
+
+### Accessibility Features
+
+| Feature | Implementation |
+|---------|----------------|
+| ARIA group role | `role="group"` on container |
+| ARIA label | `aria-label="Επιλογή μεγέθους κειμένου"` |
+| Button labels | Each A has descriptive `aria-label` in Greek |
+| Pressed state | `aria-pressed={isActive}` indicates current selection |
+| Focus indicators | `focus-visible:ring-2 focus-visible:ring-coral` |
+| No translate | `notranslate` class prevents Google Translate from altering "A" |
+
+### Files Created
+
+| File | Description |
+|------|-------------|
+| `components/TextSizeProvider.tsx` | Context provider for text size state |
+| `components/TextSizeToggle.tsx` | Visual toggle component |
+
+### Files Modified
+
+| File | Changes |
+|------|---------|
+| `app/globals.css` | Added `--text-scale` CSS variable, text element transitions |
+| `app/layout.tsx` | Added `TextSizeProvider` wrapper |
+| `components/Navigation.tsx` | Added `TextSizeToggle` to desktop and mobile nav |
+
+### Location in UI
+
+- **Desktop:** Left of the dark/light mode toggle in navbar
+- **Mobile:** Top of mobile menu with label "ΜΕΓΕΘΟΣ ΚΕΙΜΕΝΟΥ"
+
+### localStorage Persistence
+
+```javascript
+// Key: 'textSize'
+// Values: 'small' | 'medium' | 'large'
+
+// Read on mount
+const saved = localStorage.getItem('textSize')
+
+// Save on change
+localStorage.setItem('textSize', newSize)
+```
+
+### Dark Mode Support
+
+| Element | Light Mode | Dark Mode |
+|---------|------------|-----------|
+| Active A (text) | Black (#000000) | Black (#000000) |
+| Active A (circle) | White background | White background |
+| Inactive A (text) | Black (#000000) | White (#FFFFFF) |
+
+### Git Commits
+
+| Commit | Description |
+|--------|-------------|
+| `5b546d4` | Add text size accessibility toggle with 3 levels |
+| `45fb7f7` | Add bell-shake hover animation to inactive text size buttons |
+
+### Branches
+
+- **Main:** `main` - Production branch with text size toggle
+- **Backup:** `Stable-backup-official_Accessibility2_V6_22-1-26` - Backup with accessibility features
 
 ---
 
-*Last Updated: January 21, 2026*
+## 17. Future Improvements
+
+Consider for future iterations:
+
+1. **Automated accessibility testing** - Add accessibility testing to CI/CD pipeline (axe-core, pa11y)
+2. **Language-specific screen reader testing** - Test Greek content with VoiceOver and NVDA
+3. **High contrast mode toggle** - Add user-controlled high contrast theme option
+4. **Expand alt text guidelines** - Create detailed guide for content editors in Strapi CMS
+5. **Increase minimum text to 14px** - Consider upgrading base text from 12px to 14px (`text-sm`)
+6. **Touch target size audit** - Ensure all interactive elements meet 44x44px minimum on mobile
+7. **Form error association** - Link error messages to inputs with `aria-describedby`
+8. **Keyboard shortcut documentation** - Add help dialog showing available keyboard shortcuts
+9. **Reading level analysis** - Audit content for readability (target: Grade 8 level or below)
+10. **Color blindness testing** - Test all color combinations with color blindness simulators
+
+---
+
+*Last Updated: January 22, 2026*
 *WCAG Version: 2.2 AA*
 *accessScan Audit: 103+ issues identified, all addressed*
 *Advanced Features: 6 additional enhancements implemented*
-*Section 15: 5 additional improvements (focus indicators, landmarks, heading hierarchy, accessibility page, hooks fix)*
+*Section 16: Text size accessibility toggle with 3 levels*

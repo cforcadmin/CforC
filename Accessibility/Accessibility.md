@@ -498,21 +498,7 @@ node scripts/update-image-alt-text.js
 
 ---
 
-## 14. Future Improvements
-
-Consider for future iterations:
-1. Add skip navigation link
-2. Implement focus trap in modals
-3. Add `prefers-reduced-motion` media query support
-4. Increase minimum text size to 14px (`text-sm`)
-5. ~~Add alt text audit for all images~~ ✓ Implemented
-6. Implement ARIA live regions for dynamic content updates
-7. Create script to update Member alt text fields for existing members
-8. Add alt text field for Activities and Open Calls visual images (not just member images)
-
----
-
-## 15. Git Commits
+## 14. Git Commits
 
 ### Accessibility Implementation Commits
 
@@ -521,13 +507,106 @@ Consider for future iterations:
 | `ceba722` | Add WCAG 2.2 AA accessibility improvements (color contrast, ARIA, keyboard nav) |
 | `8080ad1` | Add member alt text fields for accessibility |
 | `4e5ec71` | Add mandatory field validation for profile saving |
+| `5b546d4` | Add text size accessibility toggle with 3 levels |
+| `45fb7f7` | Add bell-shake hover animation to inactive text size buttons |
 
 ### Branches
 
 - **Main:** `main` - Production branch with all changes
-- **Backup:** `Stable-backup-official_AccessbilityI_V5_21-1-26` - Stable backup with accessibility changes
+- **Backup:** `Stable-backup-official_Accessibility2_V6_22-1-26` - Backup with accessibility features
 
 ---
 
-*Last Updated: January 21, 2026*
+## 15. Text Size Accessibility Toggle (January 22, 2026)
+
+### Overview
+
+Implemented a user-controlled text size toggle allowing visitors to increase the base font size across all pages. This feature helps users with visual impairments read content more comfortably.
+
+### WCAG Reference
+- **WCAG 1.4.4** - Resize Text (Level AA): Text can be resized without assistive technology up to 200% without loss of content or functionality
+
+### Implementation
+
+#### New Components
+
+**TextSizeProvider (`components/TextSizeProvider.tsx`)**
+
+A React context provider that manages text size state across the application.
+
+```typescript
+type TextSize = 'small' | 'medium' | 'large'
+
+const TEXT_SCALES = {
+  small: 1,      // 100% (default)
+  medium: 1.125, // 112.5%
+  large: 1.25,   // 125%
+}
+```
+
+Features:
+- Manages text size state globally
+- Persists user preference in `localStorage` (key: `textSize`)
+- Applies CSS custom property `--text-scale` to `<html>` element
+
+**TextSizeToggle (`components/TextSizeToggle.tsx`)**
+
+A visual toggle component with three "A" letters of different sizes.
+
+| Size | Font Size | Scale |
+|------|-----------|-------|
+| Large | 18px | 125% |
+| Medium | 16px | 112.5% |
+| Small (default) | 14px | 100% |
+
+Visual Features:
+- **Active state:** White circle behind the A (black letter)
+- **Inactive state:** Just the letter (black in light mode, white in dark mode)
+- **Members page variant:** Orange/coral outline on the active circle
+- **Hover animation:** Bell-shake effect on inactive A's (1 second duration)
+
+### Animation Details
+
+| Animation | Duration | Description |
+|-----------|----------|-------------|
+| Circle fade | 300ms | Opacity transition between active states |
+| Text scaling | 300ms | Font size change across all elements |
+| Bell-shake hover | 1000ms | Rotation from ±8° to ±1° |
+
+### Location in UI
+
+- **Desktop:** Left of the dark/light mode toggle in navbar
+- **Mobile:** Top of mobile menu with label "ΜΕΓΕΘΟΣ ΚΕΙΜΕΝΟΥ"
+
+### Files Modified
+
+| File | Changes |
+|------|---------|
+| `components/TextSizeProvider.tsx` | New - Context provider |
+| `components/TextSizeToggle.tsx` | New - Visual toggle component |
+| `app/globals.css` | Added `--text-scale` CSS variable |
+| `app/layout.tsx` | Added TextSizeProvider wrapper |
+| `components/Navigation.tsx` | Added TextSizeToggle to nav |
+
+---
+
+## 16. Future Improvements
+
+Consider for future iterations:
+
+1. **Automated accessibility testing** - Add accessibility testing to CI/CD pipeline (axe-core, pa11y)
+2. **Language-specific screen reader testing** - Test Greek content with VoiceOver and NVDA
+3. **High contrast mode toggle** - Add user-controlled high contrast theme option
+4. **Expand alt text guidelines** - Create detailed guide for content editors in Strapi CMS
+5. **Increase minimum text to 14px** - Consider upgrading base text from 12px to 14px (`text-sm`)
+6. **Touch target size audit** - Ensure all interactive elements meet 44x44px minimum on mobile
+7. **Form error association** - Link error messages to inputs with `aria-describedby`
+8. **Keyboard shortcut documentation** - Add help dialog showing available keyboard shortcuts
+9. **Reading level analysis** - Audit content for readability (target: Grade 8 level or below)
+10. **Color blindness testing** - Test all color combinations with color blindness simulators
+
+---
+
+*Last Updated: January 22, 2026*
 *WCAG Version: 2.2 AA*
+*Text Size Toggle: Section 15*
