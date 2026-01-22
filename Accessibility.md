@@ -1541,7 +1541,151 @@ localStorage.setItem('textSize', newSize)
 
 ---
 
-## 17. Future Improvements
+## 17. Color Blindness Testing & Icon Accessibility (January 22, 2026)
+
+### Overview
+
+Performed comprehensive color blindness analysis on the site's color palette and implemented SVG icons for all error/success messages to ensure accessibility for users with color vision deficiency (CVD).
+
+### WCAG Reference
+- **WCAG 1.4.1** - Use of Color (Level A): Color is not used as the only visual means of conveying information
+- **WCAG 1.4.11** - Non-text Contrast (Level AA): Visual information required to identify UI components has a contrast ratio of at least 3:1
+
+### Color Blindness Analysis Script
+
+**New File:** `scripts/color-blindness-test.js`
+
+A Node.js script that analyzes the site's color palette against different types of color vision deficiency.
+
+**Usage:**
+```bash
+node scripts/color-blindness-test.js
+```
+
+**Features:**
+- Simulates 4 types of color blindness (Protanopia, Deuteranopia, Tritanopia, Achromatopsia)
+- Calculates contrast ratios under each vision type
+- Tests color distinguishability between key color pairs
+- Outputs detailed report with WCAG compliance status
+
+### Color Blindness Types Tested
+
+| Type | Description | Affected Population |
+|------|-------------|---------------------|
+| Protanopia | Red-blind | ~2% of men |
+| Deuteranopia | Green-blind (most common) | ~6% of men |
+| Tritanopia | Blue-blind | Rare |
+| Achromatopsia | Complete color blindness | Very rare |
+
+### Test Results Summary
+
+#### How Coral (#FF8B6A) Appears
+
+| Vision Type | Appears As | Color Shift |
+|-------------|------------|-------------|
+| Normal | Coral/salmon | - |
+| Protanopia | #CDCC72 (olive/yellow) | 82 |
+| Deuteranopia | #D4DC74 (yellow-green) | 93 |
+| Tritanopia | #F9787A (pink) | 25 |
+| Achromatopsia | #AAAAAA (gray) | 111 |
+
+#### Contrast Ratios Under Color Blindness
+
+**Coral on Charcoal (buttons/badges):**
+
+| Vision Type | Contrast Ratio | WCAG Level |
+|-------------|----------------|------------|
+| Normal | 6.00:1 | ✓✓ AA |
+| Protanopia | 8.16:1 | ✓✓✓ AAA |
+| Deuteranopia | 9.37:1 | ✓✓✓ AAA |
+| Tritanopia | 5.26:1 | ✓✓ AA |
+| Achromatopsia | 5.92:1 | ✓✓ AA |
+
+**Result:** ✓ Coral on charcoal **PASSES** for all color blindness types.
+
+#### Problem Areas Identified
+
+| Issue | Normal Vision | Color Blind |
+|-------|---------------|-------------|
+| Error red on white | 3.76:1 (AA Large) | 2.09:1 - 2.64:1 (FAIL) |
+| Success green on white | 2.28:1 (FAIL) | Varies |
+
+**Solution:** Added shape-based indicators (SVG icons) to all error and success messages.
+
+### SVG Icons Implementation
+
+Replaced color-only indicators with SVG icons that convey meaning through shape.
+
+#### Files Modified
+
+| File | Changes |
+|------|---------|
+| `app/login/page.tsx` | Added icons to login, magic link, and reset password messages |
+| `app/auth/set-password/page.tsx` | Added warning icon to error message |
+| `app/profile/page.tsx` | Replaced emoji icons (❌, ⚠️, ✓, ✗) with SVG icons |
+
+#### Icon Types Used
+
+| Message Type | Icon | SVG Path | Color |
+|--------------|------|----------|-------|
+| **Success** | Checkmark in circle | `M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z` | Green |
+| **Error** | Exclamation in circle | `M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z` | Red |
+| **Validation Error** | X in circle | `M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z` | Red |
+| **Warning** | Exclamation in triangle | `M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z` | Amber |
+
+#### Implementation Pattern
+
+**Before (color-only):**
+```jsx
+<div className="bg-red-50 text-red-800">
+  {errorMessage}
+</div>
+```
+
+**After (color + shape):**
+```jsx
+<div className="bg-red-50 text-red-800">
+  <div className="flex items-center gap-2">
+    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>{errorMessage}</span>
+  </div>
+</div>
+```
+
+#### Icon Accessibility Attributes
+
+| Attribute | Value | Purpose |
+|-----------|-------|---------|
+| `aria-hidden="true"` | Always | Screen readers use text, not icon |
+| `flex-shrink-0` | Always | Prevents icon compression |
+| `fill="none"` | Always | Outline style icons |
+| `stroke="currentColor"` | Always | Inherits container color |
+
+### Existing Good Practices Confirmed
+
+The analysis confirmed these design decisions are already color-blind friendly:
+
+1. **Coral on charcoal** - Maintains AA+ contrast across all vision types
+2. **Text size toggle** - Uses white circle indicator (shape-based, not color-based)
+3. **Dark mode toggle** - Uses sun/moon icons (shape-based)
+4. **Charcoal text on white** - 13.77:1 contrast (AAA)
+5. **Link underlines** - Already using underlines, not just color
+
+### Report Output Location
+
+Full analysis report saved to: `~/Downloads/color-blindness-report.txt`
+
+### Git Commits
+
+| Commit | Description |
+|--------|-------------|
+| `542d696` | Add SVG icons to error and success messages for color blind accessibility |
+
+---
+
+## 18. Future Improvements
 
 Consider for future iterations:
 
@@ -1554,7 +1698,7 @@ Consider for future iterations:
 7. **Form error association** - Link error messages to inputs with `aria-describedby`
 8. **Keyboard shortcut documentation** - Add help dialog showing available keyboard shortcuts
 9. **Reading level analysis** - Audit content for readability (target: Grade 8 level or below)
-10. **Color blindness testing** - Test all color combinations with color blindness simulators
+10. ~~**Color blindness testing**~~ ✓ Completed - See Section 17
 
 ---
 
@@ -1563,3 +1707,4 @@ Consider for future iterations:
 *accessScan Audit: 103+ issues identified, all addressed*
 *Advanced Features: 6 additional enhancements implemented*
 *Section 16: Text size accessibility toggle with 3 levels*
+*Section 17: Color blindness testing and SVG icon implementation*

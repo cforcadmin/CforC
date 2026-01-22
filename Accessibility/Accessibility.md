@@ -590,23 +590,75 @@ Visual Features:
 
 ---
 
-## 16. Future Improvements
+## 16. Color Blindness Testing & Icon Accessibility (January 22, 2026)
+
+### Overview
+
+Performed comprehensive color blindness analysis and implemented SVG icons for error/success messages.
+
+### Analysis Script
+
+**New File:** `scripts/color-blindness-test.js`
+
+```bash
+node scripts/color-blindness-test.js
+```
+
+Tests site colors against: Protanopia, Deuteranopia, Tritanopia, Achromatopsia
+
+### Key Findings
+
+| Test | Result |
+|------|--------|
+| Coral on charcoal | ✓ PASSES all vision types (5.26:1 - 9.37:1) |
+| Error red on white | ⚠ FAILS for protanopia/deuteranopia |
+| Success green on white | ⚠ FAILS for normal vision |
+
+**Solution:** Added SVG icons to convey meaning through shape, not just color.
+
+### SVG Icons Added
+
+| Message Type | Icon | Files Updated |
+|--------------|------|---------------|
+| Success | ✓ Checkmark in circle | login, profile |
+| Error | ! Exclamation in circle | login, set-password, profile |
+| Warning | ⚠ Triangle | profile |
+
+### Files Modified
+
+| File | Changes |
+|------|---------|
+| `app/login/page.tsx` | Added icons to 3 message areas |
+| `app/auth/set-password/page.tsx` | Added error icon |
+| `app/profile/page.tsx` | Replaced ❌⚠️✓✗ emojis with SVG |
+| `scripts/color-blindness-test.js` | New analysis script |
+
+### Git Commits
+
+| Commit | Description |
+|--------|-------------|
+| `542d696` | Add SVG icons for color blind accessibility |
+
+---
+
+## 17. Future Improvements
 
 Consider for future iterations:
 
-1. **Automated accessibility testing** - Add accessibility testing to CI/CD pipeline (axe-core, pa11y)
-2. **Language-specific screen reader testing** - Test Greek content with VoiceOver and NVDA
-3. **High contrast mode toggle** - Add user-controlled high contrast theme option
-4. **Expand alt text guidelines** - Create detailed guide for content editors in Strapi CMS
-5. **Increase minimum text to 14px** - Consider upgrading base text from 12px to 14px (`text-sm`)
-6. **Touch target size audit** - Ensure all interactive elements meet 44x44px minimum on mobile
-7. **Form error association** - Link error messages to inputs with `aria-describedby`
-8. **Keyboard shortcut documentation** - Add help dialog showing available keyboard shortcuts
-9. **Reading level analysis** - Audit content for readability (target: Grade 8 level or below)
-10. **Color blindness testing** - Test all color combinations with color blindness simulators
+1. **Automated accessibility testing** - Add to CI/CD pipeline (axe-core, pa11y)
+2. **Language-specific screen reader testing** - Test Greek with VoiceOver/NVDA
+3. **High contrast mode toggle** - User-controlled high contrast theme
+4. **Expand alt text guidelines** - Guide for Strapi content editors
+5. **Increase minimum text to 14px** - Upgrade from 12px to 14px
+6. **Touch target size audit** - Ensure 44x44px minimum on mobile
+7. **Form error association** - Link errors with `aria-describedby`
+8. **Keyboard shortcut documentation** - Help dialog for shortcuts
+9. **Reading level analysis** - Target Grade 8 readability
+10. ~~**Color blindness testing**~~ ✓ Completed - See Section 16
 
 ---
 
 *Last Updated: January 22, 2026*
 *WCAG Version: 2.2 AA*
 *Text Size Toggle: Section 15*
+*Color Blindness: Section 16*
