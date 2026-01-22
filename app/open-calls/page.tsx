@@ -11,6 +11,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getOpenCalls } from '@/lib/strapi'
 import type { StrapiResponse, OpenCall } from '@/lib/types'
+import LocalizedText from '@/components/LocalizedText'
 
 // Helper function to extract text from Strapi rich text blocks
 function extractTextFromBlocks(blocks: any): string {
@@ -205,6 +206,7 @@ export default function OpenCallsPage() {
             <div className="space-y-0">
               {filteredCalls.map((call, index) => {
                 const descriptionText = extractTextFromBlocks(call.Description)
+                const engDescriptionText = call.EngDescription ? extractTextFromBlocks(call.EngDescription) : null
 
                 // Handle both single image (object) and multiple images (array) from Strapi v5
                 let imageUrl = null
@@ -264,11 +266,11 @@ export default function OpenCallsPage() {
                         <div className="flex-1 flex gap-6">
                           <div className="flex-1">
                             <h3 className="text-xl md:text-2xl font-bold mb-4 text-charcoal dark:text-gray-100 group-hover:text-coral dark:group-hover:text-coral-light transition-colors duration-300">
-                              {call.Title}
+                              <LocalizedText text={call.Title} engText={call.EngTitle} />
                             </h3>
 
                             <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mt-2">
-                              {descriptionText}
+                              <LocalizedText text={descriptionText} engText={engDescriptionText} />
                             </p>
                           </div>
 

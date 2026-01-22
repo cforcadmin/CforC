@@ -63,10 +63,12 @@ export default function LocalizedText({
 
   // If in English mode and English text is available, use it
   // The English text should be wrapped in notranslate to prevent double-translation
+  // Also process {word} syntax in English text
   if (mounted && isEnglish && engText) {
+    const processedEng = processEscape ? parseNoTranslate(engText) : engText
     return (
       <Component className={`notranslate ${className || ''}`}>
-        {engText}
+        {processedEng}
       </Component>
     )
   }

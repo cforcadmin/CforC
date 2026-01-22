@@ -200,6 +200,7 @@ export default function OpenCallsSection() {
           <div className="space-y-0">
             {openCalls.map((call, index) => {
             const descriptionText = extractTextFromBlocks(call.Description)
+            const engDescriptionText = call.EngDescription ? extractTextFromBlocks(call.EngDescription) : null
 
             // Handle both single image (object) and multiple images (array) from Strapi v5
             let imageUrl = null
@@ -266,7 +267,7 @@ export default function OpenCallsSection() {
                         </h3>
 
                         <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mt-2">
-                          {descriptionText}
+                          <LocalizedText text={descriptionText} engText={engDescriptionText} />
                         </p>
                       </div>
 
@@ -311,6 +312,7 @@ export default function OpenCallsSection() {
             <div className="space-y-0">
               {expiredCalls.map((call, index) => {
                 const descriptionText = extractTextFromBlocks(call.Description)
+                const engDescriptionText = call.EngDescription ? extractTextFromBlocks(call.EngDescription) : null
 
                 let imageUrl = null
                 if (call.Image) {
@@ -343,7 +345,7 @@ export default function OpenCallsSection() {
                               <LocalizedText text={call.Title} engText={call.EngTitle} />
                             </h3>
                             <p className="text-gray-500 dark:text-gray-500 leading-relaxed text-base mt-2 line-clamp-2">
-                              {descriptionText}
+                              <LocalizedText text={descriptionText} engText={engDescriptionText} />
                             </p>
                           </div>
 

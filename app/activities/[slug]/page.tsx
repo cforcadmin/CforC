@@ -11,6 +11,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getActivityById, getActivities } from '@/lib/strapi'
 import type { StrapiResponse, Activity } from '@/lib/types'
+import LocalizedText from '@/components/LocalizedText'
 
 // Helper function to extract text from Strapi rich text blocks
 function extractTextFromBlocks(blocks: any): string {
@@ -133,6 +134,7 @@ function ActivityDetailPageContent() {
   }
 
   const description = extractTextFromBlocks(activity.Description)
+  const engDescription = activity.EngDescription ? extractTextFromBlocks(activity.EngDescription) : null
 
   return (
     <div className="min-h-screen dark:bg-gray-900">
@@ -143,7 +145,7 @@ function ActivityDetailPageContent() {
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight dark:text-coral">
-              {activity.Title}
+              <LocalizedText text={activity.Title} engText={activity.EngTitle} />
             </h1>
           </div>
         </div>
@@ -260,7 +262,7 @@ function ActivityDetailPageContent() {
           <div className="prose prose-lg max-w-none">
             <h2 className="text-2xl font-bold mb-6 text-charcoal dark:text-gray-100">Περιγραφή</h2>
             <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-              {description}
+              <LocalizedText text={description} engText={engDescription} />
             </div>
           </div>
         </div>
@@ -311,7 +313,7 @@ function ActivityDetailPageContent() {
 
                   <div className="p-7 pt-9 flex flex-col h-[200px]">
                     <h3 className="text-lg font-bold mb-4 line-clamp-3 flex-grow dark:text-gray-100">
-                      {relatedActivity.Title}
+                      <LocalizedText text={relatedActivity.Title} engText={relatedActivity.EngTitle} />
                     </h3>
 
                     <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mt-auto">

@@ -12,6 +12,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getActivities } from '@/lib/strapi'
 import type { StrapiResponse, Activity } from '@/lib/types'
+import LocalizedText from '@/components/LocalizedText'
 
 // Helper function to extract text from Strapi rich text blocks
 function extractTextFromBlocks(blocks: any): string {
@@ -255,7 +256,7 @@ function ActivitiesPageContent() {
 
                     <div className="p-7 pt-9 flex flex-col h-[200px]">
                       <h3 className="text-lg font-bold mb-4 line-clamp-3 flex-grow dark:text-gray-100">
-                        {activity.Title}
+                        <LocalizedText text={activity.Title} engText={activity.EngTitle} />
                       </h3>
 
                       <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mt-auto">
