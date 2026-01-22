@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Git Push Rules
+
+- **IMPORTANT: Always ask user for confirmation before pushing to GitHub** - Never push automatically
+- **Default**: Push only to `main` branch
+- **Backup branch**: `Stable-bakcup-official_V1_13-01026` - Only push when user explicitly confirms
+- Never push to backup branch automatically
+
 ## Development Commands
 
 ```bash
