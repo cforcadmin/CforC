@@ -10,6 +10,7 @@ import ScrollToTop from '@/components/ScrollToTop'
 import MembershipRegistrationModal from '@/components/MembershipRegistrationModal'
 import ThankYouModal from '@/components/ThankYouModal'
 import Link from 'next/link'
+import { AccessibilityButton } from '@/components/AccessibilityMenu'
 
 // Google Form configuration
 const GOOGLE_FORM_BASE_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfZt1bKl2vOOnztzSozcd1C0SCLEifXlvzUQgsG6gnQESbgMw/viewform'
@@ -21,9 +22,31 @@ function ParticipationContent() {
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [isPolling, setIsPolling] = useState(false)
   const [trackingId, setTrackingId] = useState<string | null>(null)
+  const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const searchParams = useSearchParams()
   const router = useRouter()
+
+  // Handle scroll for accessibility button fade
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY
+      const fadeStart = 50
+      const fadeEnd = 150
+
+      if (scrollPosition <= fadeStart) {
+        setAccessibilityButtonScale(1)
+      } else if (scrollPosition >= fadeEnd) {
+        setAccessibilityButtonScale(0)
+      } else {
+        const progress = (scrollPosition - fadeStart) / (fadeEnd - fadeStart)
+        setAccessibilityButtonScale(1 - progress)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   // Generate a unique tracking ID
   const generateTrackingId = useCallback(() => {
@@ -119,14 +142,26 @@ function ParticipationContent() {
       <main id="main-content">
         {/* Hero Section */}
         <section className="relative -bottom-20">
-        <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
-              ΘΕΛΩ ΝΑ ΓΙΝΩ ΜΕΛΟΣ
-            </h1>
+          <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
+                ΘΕΛΩ ΝΑ ΓΙΝΩ ΜΕΛΟΣ
+              </h1>
+            </div>
+
+            {/* Accessibility Menu Trigger Button */}
+            <div
+              className="absolute right-6 lg:right-12 top-1/2 -translate-y-1/2 transition-all duration-200"
+              style={{
+                transform: `translateY(-50%) scale(${accessibilityButtonScale})`,
+                opacity: accessibilityButtonScale,
+                pointerEvents: accessibilityButtonScale < 0.1 ? 'none' : 'auto'
+              }}
+            >
+              <AccessibilityButton />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
       {/* Main Content Section */}
       <section className="pt-32 pb-24 bg-white dark:bg-gray-900">

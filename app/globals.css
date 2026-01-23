@@ -190,3 +190,1375 @@ input[type="radio"]:focus-visible {
 .dark input[type="radio"]:focus-visible {
   box-shadow: 0 0 0 2px #1a1a1a;
 }
+
+/* ========================================
+   ACCESSIBILITY MENU STYLES
+   ======================================== */
+
+/* ========================================
+   CONTRAST MODES
+   ======================================== */
+
+/* Invert Colors Mode - inverts everything including images */
+html.accessibility-contrast-invert {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* ========================================
+   DARK CONTRAST MODE
+   Black background, soft green (#5dba7d) and yellow (#ffcc00) text
+   ======================================== */
+
+/* Base styles for entire document */
+html.accessibility-contrast-dark {
+  background-color: #000 !important;
+}
+
+html.accessibility-contrast-dark body {
+  background-color: #000 !important;
+  color: #5dba7d !important;
+}
+
+/* All backgrounds black */
+html.accessibility-contrast-dark main,
+html.accessibility-contrast-dark section,
+html.accessibility-contrast-dark article,
+html.accessibility-contrast-dark aside,
+html.accessibility-contrast-dark div,
+html.accessibility-contrast-dark span,
+html.accessibility-contrast-dark p {
+  background-color: #000 !important;
+}
+
+/* Header/Navbar - solid black, non-transparent */
+html.accessibility-contrast-dark header,
+html.accessibility-contrast-dark nav {
+  background-color: #000 !important;
+  background: #000 !important;
+}
+
+/* Scrolled navbar - green outline */
+html.accessibility-contrast-dark nav .rounded-2xl,
+html.accessibility-contrast-dark nav.top-2 > div {
+  border: 3px solid #5dba7d !important;
+}
+
+/* Footer - solid black, non-transparent */
+html.accessibility-contrast-dark footer {
+  background-color: #000 !important;
+  background: #000 !important;
+}
+
+/* Hero sections - black with green outline (bottom, left, right) */
+html.accessibility-contrast-dark [class*="hero"],
+html.accessibility-contrast-dark [class*="Hero"],
+html.accessibility-contrast-dark .bg-coral,
+html.accessibility-contrast-dark .bg-charcoal {
+  background-color: #000 !important;
+  background: #000 !important;
+}
+
+html.accessibility-contrast-dark .bg-coral.h-\[25vh\],
+html.accessibility-contrast-dark .bg-coral.rounded-b-3xl,
+html.accessibility-contrast-dark section > .bg-coral:first-child,
+html.accessibility-contrast-dark .dark\:bg-gradient-to-r.h-\[25vh\] {
+  border-left: 3px solid #5dba7d !important;
+  border-right: 3px solid #5dba7d !important;
+  border-bottom: 3px solid #5dba7d !important;
+  border-top: none !important;
+}
+
+/* Titles - yellow */
+html.accessibility-contrast-dark h1,
+html.accessibility-contrast-dark h2,
+html.accessibility-contrast-dark h3,
+html.accessibility-contrast-dark h4,
+html.accessibility-contrast-dark h5,
+html.accessibility-contrast-dark h6 {
+  color: #ffcc00 !important;
+}
+
+/* Links - yellow */
+html.accessibility-contrast-dark a {
+  color: #ffcc00 !important;
+  text-decoration: underline !important;
+}
+
+/* Body text - soft green */
+html.accessibility-contrast-dark p,
+html.accessibility-contrast-dark span,
+html.accessibility-contrast-dark li,
+html.accessibility-contrast-dark td,
+html.accessibility-contrast-dark th,
+html.accessibility-contrast-dark label,
+html.accessibility-contrast-dark div {
+  color: #5dba7d !important;
+}
+
+/* Buttons - green outline */
+html.accessibility-contrast-dark button,
+html.accessibility-contrast-dark [role="button"] {
+  background-color: #000 !important;
+  color: #5dba7d !important;
+  border: 2px solid #5dba7d !important;
+}
+
+/* Form inputs */
+html.accessibility-contrast-dark input,
+html.accessibility-contrast-dark textarea,
+html.accessibility-contrast-dark select {
+  background-color: #111 !important;
+  color: #5dba7d !important;
+  border: 2px solid #5dba7d !important;
+}
+
+/* ALL Logos - invert to white (but NOT accessibility button) */
+html.accessibility-contrast-dark img[src*="logo"],
+html.accessibility-contrast-dark img[src*="Logo"],
+html.accessibility-contrast-dark img[alt*="logo"],
+html.accessibility-contrast-dark img[alt*="Logo"],
+html.accessibility-contrast-dark img[alt*="CforC"],
+html.accessibility-contrast-dark img[alt*="cforc"],
+html.accessibility-contrast-dark header img:not([src*="Accessibility"]),
+html.accessibility-contrast-dark footer img:not([src*="Accessibility"]),
+html.accessibility-contrast-dark nav img:not([src*="Accessibility"]) {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* Preserve actual content images, videos, and accessibility button */
+html.accessibility-contrast-dark main img:not([src*="logo"]):not([alt*="logo"]):not([alt*="Logo"]),
+html.accessibility-contrast-dark img[src*="Accessibility"],
+html.accessibility-contrast-dark video,
+html.accessibility-contrast-dark iframe {
+  filter: none !important;
+}
+
+/* Video previews and parallax images - ensure visibility */
+html.accessibility-contrast-dark [class*="video"] img,
+html.accessibility-contrast-dark [class*="Video"] img,
+html.accessibility-contrast-dark [class*="parallax"] img,
+html.accessibility-contrast-dark [class*="Parallax"] img,
+html.accessibility-contrast-dark picture img,
+html.accessibility-contrast-dark [class*="aspect-"] img,
+html.accessibility-contrast-dark [class*="relative"] > img {
+  filter: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Video/image containers - transparent background to show content */
+html.accessibility-contrast-dark [class*="video"],
+html.accessibility-contrast-dark [class*="Video"],
+html.accessibility-contrast-dark [class*="parallax"],
+html.accessibility-contrast-dark [class*="Parallax"],
+html.accessibility-contrast-dark [class*="aspect-"],
+html.accessibility-contrast-dark picture,
+html.accessibility-contrast-dark .h-\[80vh\],
+html.accessibility-contrast-dark .rounded-3xl.overflow-hidden,
+html.accessibility-contrast-dark .aspect-video,
+html.accessibility-contrast-dark .rounded-2xl.overflow-hidden {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Ensure video elements are visible with proper backgrounds */
+html.accessibility-contrast-dark video {
+  background-color: transparent !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Hero video section container - must stay transparent for video to show */
+html.accessibility-contrast-dark .bg-gray-900.rounded-3xl,
+html.accessibility-contrast-dark .bg-gray-900.h-\[80vh\],
+html.accessibility-contrast-dark div.relative.bottom-56,
+html.accessibility-contrast-dark .relative.bottom-56 {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Video wrapper div that contains the actual video - transparent */
+html.accessibility-contrast-dark div:has(> video),
+html.accessibility-contrast-dark div:has(> img) {
+  background-color: transparent !important;
+}
+
+/* Fallback selectors for video/image containers (for browsers without :has() support) */
+html.accessibility-contrast-dark .w-full.h-full.object-cover,
+html.accessibility-contrast-dark .object-cover,
+html.accessibility-contrast-dark .absolute.inset-0,
+html.accessibility-contrast-dark div.absolute.inset-0.w-full.h-full {
+  background-color: transparent !important;
+}
+
+/* Ensure images inside hero/video sections are visible */
+html.accessibility-contrast-dark section img,
+html.accessibility-contrast-dark .relative img {
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: none !important;
+}
+
+/* Navbar buttons and links styled as buttons - black background with green outline */
+html.accessibility-contrast-dark nav button,
+html.accessibility-contrast-dark header button,
+html.accessibility-contrast-dark nav a.rounded-full,
+html.accessibility-contrast-dark header a.rounded-full,
+html.accessibility-contrast-dark nav .bg-white,
+html.accessibility-contrast-dark header .bg-white {
+  background-color: #000 !important;
+  background: #000 !important;
+  color: #5dba7d !important;
+  border: 2px solid #5dba7d !important;
+}
+
+/* Back buttons with white/cream background - black with green outline */
+html.accessibility-contrast-dark .bg-white\/90,
+html.accessibility-contrast-dark a.rounded-full.bg-white\/90,
+html.accessibility-contrast-dark a.bg-white\/90 {
+  background-color: #000 !important;
+  background: #000 !important;
+  color: #5dba7d !important;
+  border: 2px solid #5dba7d !important;
+}
+
+html.accessibility-contrast-dark .bg-white\/90 svg,
+html.accessibility-contrast-dark a.rounded-full.bg-white\/90 svg {
+  color: #5dba7d !important;
+  stroke: #5dba7d !important;
+}
+
+/* "Έτοιμος να γίνεις μέλος;" section and gradient sections - black background */
+html.accessibility-contrast-dark .bg-gradient-to-br,
+html.accessibility-contrast-dark .bg-gradient-to-r,
+html.accessibility-contrast-dark .bg-gradient-to-l,
+html.accessibility-contrast-dark .bg-gradient-to-t,
+html.accessibility-contrast-dark .bg-gradient-to-b,
+html.accessibility-contrast-dark .from-coral,
+html.accessibility-contrast-dark .from-orange-400,
+html.accessibility-contrast-dark .bg-coral,
+html.accessibility-contrast-dark .bg-charcoal,
+html.accessibility-contrast-dark .bg-gray-900,
+html.accessibility-contrast-dark .bg-gray-800,
+html.accessibility-contrast-dark .bg-gray-700 {
+  background-color: #000 !important;
+  background: #000 !important;
+  background-image: none !important;
+}
+
+/* Popups/Modals - black background */
+html.accessibility-contrast-dark [role="dialog"],
+html.accessibility-contrast-dark [class*="modal"],
+html.accessibility-contrast-dark [class*="Modal"],
+html.accessibility-contrast-dark [class*="popup"],
+html.accessibility-contrast-dark [class*="Popup"] {
+  background-color: #000 !important;
+  background: #000 !important;
+}
+
+/* Accessibility Menu Popup - black background with green accents */
+html.accessibility-contrast-dark [role="dialog"][aria-label="Μενού Προσβασιμότητας"] {
+  background-color: #000 !important;
+  background: #000 !important;
+}
+
+html.accessibility-contrast-dark [role="dialog"][aria-label="Μενού Προσβασιμότητας"] button {
+  background-color: #111 !important;
+  color: #5dba7d !important;
+  border: 2px solid #5dba7d !important;
+}
+
+html.accessibility-contrast-dark [role="dialog"][aria-label="Μενού Προσβασιμότητας"] h2 {
+  color: #ffcc00 !important;
+}
+
+html.accessibility-contrast-dark [role="dialog"][aria-label="Μενού Προσβασιμότητας"] span {
+  color: #5dba7d !important;
+}
+
+/* Cards - dark background */
+html.accessibility-contrast-dark [class*="card"],
+html.accessibility-contrast-dark [class*="Card"] {
+  background-color: #111 !important;
+  border: 1px solid #333 !important;
+}
+
+/* Text size toggle buttons in navbar */
+html.accessibility-contrast-dark [class*="TextSize"] button,
+html.accessibility-contrast-dark nav button[aria-label*="text"],
+html.accessibility-contrast-dark nav .text-size-toggle button {
+  background-color: #000 !important;
+  color: #5dba7d !important;
+  border: 2px solid #5dba7d !important;
+}
+
+/* Dark/Light theme toggle button in navbar */
+html.accessibility-contrast-dark nav button[aria-label="Toggle dark mode"],
+html.accessibility-contrast-dark nav button[aria-label*="theme"],
+html.accessibility-contrast-dark nav button[aria-label*="dark"] {
+  background-color: #000 !important;
+  color: #5dba7d !important;
+  border: 2px solid #5dba7d !important;
+}
+
+html.accessibility-contrast-dark nav button[aria-label="Toggle dark mode"] svg,
+html.accessibility-contrast-dark nav button[aria-label*="theme"] svg {
+  color: #5dba7d !important;
+  stroke: #5dba7d !important;
+}
+
+/* Language dropdown and contents */
+html.accessibility-contrast-dark [class*="LanguageSwitcher"],
+html.accessibility-contrast-dark [class*="language"],
+html.accessibility-contrast-dark nav select,
+html.accessibility-contrast-dark nav [role="listbox"],
+html.accessibility-contrast-dark nav [role="menu"] {
+  background-color: #000 !important;
+  color: #5dba7d !important;
+  border: 2px solid #5dba7d !important;
+}
+
+html.accessibility-contrast-dark nav select option,
+html.accessibility-contrast-dark [class*="LanguageSwitcher"] option {
+  background-color: #000 !important;
+  color: #5dba7d !important;
+}
+
+/* Accessibility logo - preserve original colors */
+html.accessibility-contrast-dark img[src*="Accessibility"],
+html.accessibility-contrast-dark img[alt*="Accessibility"],
+html.accessibility-contrast-dark img[alt*="accessibility"],
+html.accessibility-contrast-dark .accessibility-button img {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+/* Image carousel navigation buttons (member projects, activities) */
+html.accessibility-contrast-dark .bg-white\/90.rounded-full,
+html.accessibility-contrast-dark button.rounded-full.bg-white\/90,
+html.accessibility-contrast-dark button[class*="rounded-full"][class*="bg-white"] {
+  background-color: #000 !important;
+  background: #000 !important;
+  color: #5dba7d !important;
+  border: 2px solid #5dba7d !important;
+}
+
+html.accessibility-contrast-dark .bg-white\/90.rounded-full svg,
+html.accessibility-contrast-dark button.rounded-full svg {
+  color: #5dba7d !important;
+  stroke: #5dba7d !important;
+}
+
+/* Login page buttons */
+html.accessibility-contrast-dark .bg-coral,
+html.accessibility-contrast-dark button.bg-coral,
+html.accessibility-contrast-dark [class*="bg-coral"]:not(nav):not(header):not(section > div:first-child) {
+  background-color: #000 !important;
+  background: #000 !important;
+  color: #5dba7d !important;
+  border: 2px solid #5dba7d !important;
+}
+
+/* Profile page buttons - Save, Cancel, etc. */
+html.accessibility-contrast-dark button[class*="bg-coral"],
+html.accessibility-contrast-dark button[class*="rounded-full"]:not(nav button) {
+  background-color: #000 !important;
+  background: #000 !important;
+  color: #5dba7d !important;
+  border: 2px solid #5dba7d !important;
+}
+
+/* Secondary/Cancel buttons with border only */
+html.accessibility-contrast-dark button[class*="border-gray"],
+html.accessibility-contrast-dark button[class*="bg-white"]:not(nav button),
+html.accessibility-contrast-dark button[class*="bg-gray"] {
+  background-color: #000 !important;
+  background: #000 !important;
+  color: #5dba7d !important;
+  border: 2px solid #5dba7d !important;
+}
+
+/* Modal buttons (logout, confirmation dialogs) */
+html.accessibility-contrast-dark [role="dialog"] button,
+html.accessibility-contrast-dark [class*="modal"] button,
+html.accessibility-contrast-dark [class*="Modal"] button {
+  background-color: #000 !important;
+  background: #000 !important;
+  color: #5dba7d !important;
+  border: 2px solid #5dba7d !important;
+}
+
+/* Profile instructions button */
+html.accessibility-contrast-dark button[class*="rounded-full"][class*="w-full"],
+html.accessibility-contrast-dark .rounded-full.w-full {
+  background-color: #000 !important;
+  background: #000 !important;
+  color: #5dba7d !important;
+  border: 2px solid #5dba7d !important;
+}
+
+/* Open calls circular image borders - green */
+html.accessibility-contrast-dark .rounded-full.border-coral,
+html.accessibility-contrast-dark .rounded-full[class*="border-coral"],
+html.accessibility-contrast-dark [class*="border-coral"].rounded-full,
+html.accessibility-contrast-dark .border-4.border-coral,
+html.accessibility-contrast-dark div.rounded-full.border-4,
+html.accessibility-contrast-dark .aspect-square.rounded-full {
+  border-color: #5dba7d !important;
+}
+
+/* CTA Section - "Έτοιμος να γίνεις μέλος;" - force black background and proper text colors */
+html.accessibility-contrast-dark .rounded-3xl.p-12,
+html.accessibility-contrast-dark section .bg-gradient-to-br {
+  background-color: #000 !important;
+  background-image: none !important;
+  background: #000 !important;
+}
+
+html.accessibility-contrast-dark .rounded-3xl.p-12 h2 {
+  color: #ffcc00 !important;
+}
+
+html.accessibility-contrast-dark .rounded-3xl.p-12 p,
+html.accessibility-contrast-dark .rounded-3xl.p-12 label,
+html.accessibility-contrast-dark .rounded-3xl.p-12 span {
+  color: #5dba7d !important;
+}
+
+html.accessibility-contrast-dark .rounded-3xl.p-12 a {
+  color: #ffcc00 !important;
+}
+
+/* CTA buttons - ensure green outline in dark contrast */
+html.accessibility-contrast-dark .rounded-3xl.p-12 button,
+html.accessibility-contrast-dark .bg-charcoal {
+  background-color: #000 !important;
+  background: #000 !important;
+  color: #5dba7d !important;
+  border: 2px solid #5dba7d !important;
+}
+
+/* ========================================
+   LIGHT CONTRAST MODE
+   White background, dark blue (#0000cc) and black text
+   ======================================== */
+
+/* Base styles for entire document */
+html.accessibility-contrast-light {
+  background-color: #fff !important;
+}
+
+html.accessibility-contrast-light body {
+  background-color: #fff !important;
+  color: #000 !important;
+}
+
+/* All backgrounds white */
+html.accessibility-contrast-light main,
+html.accessibility-contrast-light section,
+html.accessibility-contrast-light article,
+html.accessibility-contrast-light aside,
+html.accessibility-contrast-light div,
+html.accessibility-contrast-light span,
+html.accessibility-contrast-light p {
+  background-color: #fff !important;
+}
+
+/* Header/Navbar - solid white, non-transparent */
+html.accessibility-contrast-light header,
+html.accessibility-contrast-light nav {
+  background-color: #fff !important;
+  background: #fff !important;
+}
+
+/* Scrolled navbar - blue outline */
+html.accessibility-contrast-light nav .rounded-2xl,
+html.accessibility-contrast-light nav.top-2 > div {
+  border: 3px solid #0000cc !important;
+}
+
+/* Footer - solid white, non-transparent */
+html.accessibility-contrast-light footer {
+  background-color: #fff !important;
+  background: #fff !important;
+}
+
+/* Hero sections - white with blue outline (bottom, left, right) */
+html.accessibility-contrast-light [class*="hero"],
+html.accessibility-contrast-light [class*="Hero"],
+html.accessibility-contrast-light .bg-coral,
+html.accessibility-contrast-light .bg-charcoal {
+  background-color: #fff !important;
+  background: #fff !important;
+}
+
+html.accessibility-contrast-light .bg-coral.h-\[25vh\],
+html.accessibility-contrast-light .bg-coral.rounded-b-3xl,
+html.accessibility-contrast-light section > .bg-coral:first-child,
+html.accessibility-contrast-light .dark\:bg-gradient-to-r.h-\[25vh\] {
+  border-left: 3px solid #0000cc !important;
+  border-right: 3px solid #0000cc !important;
+  border-bottom: 3px solid #0000cc !important;
+  border-top: none !important;
+}
+
+/* Titles - dark blue */
+html.accessibility-contrast-light h1,
+html.accessibility-contrast-light h2,
+html.accessibility-contrast-light h3,
+html.accessibility-contrast-light h4,
+html.accessibility-contrast-light h5,
+html.accessibility-contrast-light h6 {
+  color: #0000cc !important;
+}
+
+/* Links - dark blue */
+html.accessibility-contrast-light a {
+  color: #0000cc !important;
+  text-decoration: underline !important;
+}
+
+/* Body text - black */
+html.accessibility-contrast-light p,
+html.accessibility-contrast-light span,
+html.accessibility-contrast-light li,
+html.accessibility-contrast-light td,
+html.accessibility-contrast-light th,
+html.accessibility-contrast-light label,
+html.accessibility-contrast-light div {
+  color: #000 !important;
+}
+
+/* Buttons - dark blue outline */
+html.accessibility-contrast-light button,
+html.accessibility-contrast-light [role="button"] {
+  background-color: #fff !important;
+  color: #000 !important;
+  border: 2px solid #0000cc !important;
+}
+
+/* Form inputs */
+html.accessibility-contrast-light input,
+html.accessibility-contrast-light textarea,
+html.accessibility-contrast-light select {
+  background-color: #fff !important;
+  color: #000 !important;
+  border: 2px solid #0000cc !important;
+}
+
+/* ALL Logos - make black (but NOT accessibility button) */
+html.accessibility-contrast-light img[src*="logo"],
+html.accessibility-contrast-light img[src*="Logo"],
+html.accessibility-contrast-light img[alt*="logo"],
+html.accessibility-contrast-light img[alt*="Logo"],
+html.accessibility-contrast-light img[alt*="CforC"],
+html.accessibility-contrast-light img[alt*="cforc"],
+html.accessibility-contrast-light header img:not([src*="Accessibility"]),
+html.accessibility-contrast-light footer img:not([src*="Accessibility"]),
+html.accessibility-contrast-light nav img:not([src*="Accessibility"]) {
+  filter: brightness(0) !important;
+}
+
+/* Preserve actual content images, videos, and accessibility button */
+html.accessibility-contrast-light main img:not([src*="logo"]):not([alt*="logo"]):not([alt*="Logo"]),
+html.accessibility-contrast-light img[src*="Accessibility"],
+html.accessibility-contrast-light video,
+html.accessibility-contrast-light iframe {
+  filter: none !important;
+}
+
+/* Video previews and parallax images - ensure visibility */
+html.accessibility-contrast-light [class*="video"] img,
+html.accessibility-contrast-light [class*="Video"] img,
+html.accessibility-contrast-light [class*="parallax"] img,
+html.accessibility-contrast-light [class*="Parallax"] img,
+html.accessibility-contrast-light picture img,
+html.accessibility-contrast-light [class*="aspect-"] img,
+html.accessibility-contrast-light [class*="relative"] > img {
+  filter: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Video/image containers - transparent background to show content */
+html.accessibility-contrast-light [class*="video"],
+html.accessibility-contrast-light [class*="Video"],
+html.accessibility-contrast-light [class*="parallax"],
+html.accessibility-contrast-light [class*="Parallax"],
+html.accessibility-contrast-light [class*="aspect-"],
+html.accessibility-contrast-light picture,
+html.accessibility-contrast-light .h-\[80vh\],
+html.accessibility-contrast-light .rounded-3xl.overflow-hidden,
+html.accessibility-contrast-light .aspect-video,
+html.accessibility-contrast-light .rounded-2xl.overflow-hidden {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Ensure video elements are visible with proper backgrounds */
+html.accessibility-contrast-light video {
+  background-color: transparent !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Hero video section container - must stay transparent for video to show */
+html.accessibility-contrast-light .bg-gray-900.rounded-3xl,
+html.accessibility-contrast-light .bg-gray-900.h-\[80vh\],
+html.accessibility-contrast-light div.relative.bottom-56,
+html.accessibility-contrast-light .relative.bottom-56 {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Video wrapper div that contains the actual video - transparent */
+html.accessibility-contrast-light div:has(> video),
+html.accessibility-contrast-light div:has(> img) {
+  background-color: transparent !important;
+}
+
+/* Fallback selectors for video/image containers (for browsers without :has() support) */
+html.accessibility-contrast-light .w-full.h-full.object-cover,
+html.accessibility-contrast-light .object-cover,
+html.accessibility-contrast-light .absolute.inset-0,
+html.accessibility-contrast-light div.absolute.inset-0.w-full.h-full {
+  background-color: transparent !important;
+}
+
+/* Ensure images inside hero/video sections are visible */
+html.accessibility-contrast-light section img,
+html.accessibility-contrast-light .relative img {
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: none !important;
+}
+
+/* Video play button - ensure visibility in light contrast mode */
+html.accessibility-contrast-light .bg-black\/30,
+html.accessibility-contrast-light .bg-black\/40 {
+  background-color: rgba(0, 0, 204, 0.7) !important;
+}
+
+html.accessibility-contrast-light .bg-black\/30 svg,
+html.accessibility-contrast-light .bg-black\/40 svg {
+  color: #fff !important;
+}
+
+/* Navbar buttons and links styled as buttons - white background with blue outline */
+html.accessibility-contrast-light nav button,
+html.accessibility-contrast-light header button,
+html.accessibility-contrast-light nav a.rounded-full,
+html.accessibility-contrast-light header a.rounded-full,
+html.accessibility-contrast-light nav .bg-white,
+html.accessibility-contrast-light header .bg-white {
+  background-color: #fff !important;
+  background: #fff !important;
+  color: #000 !important;
+  border: 2px solid #0000cc !important;
+}
+
+/* "Έτοιμος να γίνεις μέλος;" section and gradient sections - white background */
+html.accessibility-contrast-light .bg-gradient-to-br,
+html.accessibility-contrast-light .bg-gradient-to-r,
+html.accessibility-contrast-light .bg-gradient-to-l,
+html.accessibility-contrast-light .bg-gradient-to-t,
+html.accessibility-contrast-light .bg-gradient-to-b,
+html.accessibility-contrast-light .from-coral,
+html.accessibility-contrast-light .from-orange-400,
+html.accessibility-contrast-light .bg-coral,
+html.accessibility-contrast-light .bg-charcoal,
+html.accessibility-contrast-light .bg-gray-900,
+html.accessibility-contrast-light .bg-gray-800,
+html.accessibility-contrast-light .bg-gray-700 {
+  background-color: #fff !important;
+  background: #fff !important;
+  background-image: none !important;
+}
+
+/* Popups/Modals - white background */
+html.accessibility-contrast-light [role="dialog"],
+html.accessibility-contrast-light [class*="modal"],
+html.accessibility-contrast-light [class*="Modal"],
+html.accessibility-contrast-light [class*="popup"],
+html.accessibility-contrast-light [class*="Popup"] {
+  background-color: #fff !important;
+  background: #fff !important;
+}
+
+/* Accessibility Menu Popup - white background with blue accents */
+html.accessibility-contrast-light [role="dialog"][aria-label="Μενού Προσβασιμότητας"] {
+  background-color: #fff !important;
+  background: #fff !important;
+}
+
+html.accessibility-contrast-light [role="dialog"][aria-label="Μενού Προσβασιμότητας"] button {
+  background-color: #f5f5f5 !important;
+  color: #000 !important;
+  border: 2px solid #0000cc !important;
+}
+
+html.accessibility-contrast-light [role="dialog"][aria-label="Μενού Προσβασιμότητας"] h2 {
+  color: #0000cc !important;
+}
+
+html.accessibility-contrast-light [role="dialog"][aria-label="Μενού Προσβασιμότητας"] span {
+  color: #000 !important;
+}
+
+/* Cards - light background */
+html.accessibility-contrast-light [class*="card"],
+html.accessibility-contrast-light [class*="Card"] {
+  background-color: #f5f5f5 !important;
+  border: 1px solid #ccc !important;
+}
+
+/* Text size toggle buttons in navbar */
+html.accessibility-contrast-light [class*="TextSize"] button,
+html.accessibility-contrast-light nav button[aria-label*="text"],
+html.accessibility-contrast-light nav .text-size-toggle button {
+  background-color: #fff !important;
+  color: #0000cc !important;
+  border: 2px solid #0000cc !important;
+}
+
+/* Dark/Light theme toggle button in navbar */
+html.accessibility-contrast-light nav button[aria-label="Toggle dark mode"],
+html.accessibility-contrast-light nav button[aria-label*="theme"],
+html.accessibility-contrast-light nav button[aria-label*="dark"] {
+  background-color: #fff !important;
+  color: #0000cc !important;
+  border: 2px solid #0000cc !important;
+}
+
+html.accessibility-contrast-light nav button[aria-label="Toggle dark mode"] svg,
+html.accessibility-contrast-light nav button[aria-label*="theme"] svg {
+  color: #0000cc !important;
+  stroke: #0000cc !important;
+}
+
+/* Language dropdown and contents */
+html.accessibility-contrast-light [class*="LanguageSwitcher"],
+html.accessibility-contrast-light [class*="language"],
+html.accessibility-contrast-light nav select,
+html.accessibility-contrast-light nav [role="listbox"],
+html.accessibility-contrast-light nav [role="menu"] {
+  background-color: #fff !important;
+  color: #0000cc !important;
+  border: 2px solid #0000cc !important;
+}
+
+html.accessibility-contrast-light nav select option,
+html.accessibility-contrast-light [class*="LanguageSwitcher"] option {
+  background-color: #fff !important;
+  color: #0000cc !important;
+}
+
+/* Accessibility logo - preserve original colors */
+html.accessibility-contrast-light img[src*="Accessibility"],
+html.accessibility-contrast-light img[alt*="Accessibility"],
+html.accessibility-contrast-light img[alt*="accessibility"],
+html.accessibility-contrast-light .accessibility-button img {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+/* Image carousel navigation buttons (member projects, activities) */
+html.accessibility-contrast-light .bg-white\/90.rounded-full,
+html.accessibility-contrast-light button.rounded-full.bg-white\/90,
+html.accessibility-contrast-light button[class*="rounded-full"][class*="bg-white"] {
+  background-color: #fff !important;
+  background: #fff !important;
+  color: #0000cc !important;
+  border: 2px solid #0000cc !important;
+}
+
+html.accessibility-contrast-light .bg-white\/90.rounded-full svg,
+html.accessibility-contrast-light button.rounded-full svg {
+  color: #0000cc !important;
+  stroke: #0000cc !important;
+}
+
+/* Login page buttons */
+html.accessibility-contrast-light .bg-coral,
+html.accessibility-contrast-light button.bg-coral,
+html.accessibility-contrast-light [class*="bg-coral"]:not(nav):not(header):not(section > div:first-child) {
+  background-color: #fff !important;
+  background: #fff !important;
+  color: #0000cc !important;
+  border: 2px solid #0000cc !important;
+}
+
+/* Profile page buttons - Save, Cancel, etc. */
+html.accessibility-contrast-light button[class*="bg-coral"],
+html.accessibility-contrast-light button[class*="rounded-full"]:not(nav button) {
+  background-color: #fff !important;
+  background: #fff !important;
+  color: #0000cc !important;
+  border: 2px solid #0000cc !important;
+}
+
+/* Secondary/Cancel buttons with border only */
+html.accessibility-contrast-light button[class*="border-gray"],
+html.accessibility-contrast-light button[class*="bg-white"]:not(nav button),
+html.accessibility-contrast-light button[class*="bg-gray"] {
+  background-color: #fff !important;
+  background: #fff !important;
+  color: #0000cc !important;
+  border: 2px solid #0000cc !important;
+}
+
+/* Modal buttons (logout, confirmation dialogs) */
+html.accessibility-contrast-light [role="dialog"] button,
+html.accessibility-contrast-light [class*="modal"] button,
+html.accessibility-contrast-light [class*="Modal"] button {
+  background-color: #fff !important;
+  background: #fff !important;
+  color: #0000cc !important;
+  border: 2px solid #0000cc !important;
+}
+
+/* Profile instructions button */
+html.accessibility-contrast-light button[class*="rounded-full"][class*="w-full"],
+html.accessibility-contrast-light .rounded-full.w-full {
+  background-color: #fff !important;
+  background: #fff !important;
+  color: #0000cc !important;
+  border: 2px solid #0000cc !important;
+}
+
+/* Open calls circular image borders - blue */
+html.accessibility-contrast-light .rounded-full.border-coral,
+html.accessibility-contrast-light .rounded-full[class*="border-coral"],
+html.accessibility-contrast-light [class*="border-coral"].rounded-full,
+html.accessibility-contrast-light .border-4.border-coral,
+html.accessibility-contrast-light div.rounded-full.border-4,
+html.accessibility-contrast-light .aspect-square.rounded-full {
+  border-color: #0000cc !important;
+}
+
+/* CTA Section - "Έτοιμος να γίνεις μέλος;" - force white background and proper text colors */
+html.accessibility-contrast-light .rounded-3xl.p-12,
+html.accessibility-contrast-light section .bg-gradient-to-br {
+  background-color: #fff !important;
+  background-image: none !important;
+  background: #fff !important;
+}
+
+html.accessibility-contrast-light .rounded-3xl.p-12 h2 {
+  color: #0000cc !important;
+}
+
+html.accessibility-contrast-light .rounded-3xl.p-12 p,
+html.accessibility-contrast-light .rounded-3xl.p-12 label,
+html.accessibility-contrast-light .rounded-3xl.p-12 span {
+  color: #000 !important;
+}
+
+html.accessibility-contrast-light .rounded-3xl.p-12 a {
+  color: #0000cc !important;
+}
+
+/* CTA buttons - ensure blue outline in light contrast */
+html.accessibility-contrast-light .rounded-3xl.p-12 button,
+html.accessibility-contrast-light .bg-charcoal {
+  background-color: #fff !important;
+  background: #fff !important;
+  color: #000 !important;
+  border: 2px solid #0000cc !important;
+}
+
+/* CTA sections (ΓΙΝΕ ΜΕΛΟΣ, Έτοιμος να γίνεις μέλος) - white */
+html.accessibility-contrast-light [class*="cta"],
+html.accessibility-contrast-light [class*="CTA"],
+html.accessibility-contrast-light [class*="join"],
+html.accessibility-contrast-light [class*="Join"] {
+  background-color: #fff !important;
+  background: #fff !important;
+}
+
+/* Video sections - white background */
+html.accessibility-contrast-light video,
+html.accessibility-contrast-light [class*="video"],
+html.accessibility-contrast-light [class*="Video"] {
+  background-color: #fff !important;
+}
+
+/* Highlight Links - High contrast yellow background with black text */
+.accessibility-highlight-links a {
+  background-color: #ffcc00 !important;
+  color: #000 !important;
+  text-decoration: underline !important;
+  text-decoration-color: #000 !important;
+  text-decoration-thickness: 2px !important;
+  text-underline-offset: 3px !important;
+  outline: 3px solid #000 !important;
+  outline-offset: 2px !important;
+  padding: 2px 6px !important;
+  border-radius: 2px !important;
+}
+
+.accessibility-highlight-links a:hover {
+  background-color: #ffd633 !important;
+}
+
+/* Highlight Links + Dark Contrast Mode - yellow bg, black text, green outline */
+html.accessibility-contrast-dark.accessibility-highlight-links a,
+html.accessibility-contrast-dark .accessibility-highlight-links a,
+.accessibility-highlight-links html.accessibility-contrast-dark a {
+  background-color: #ffcc00 !important;
+  color: #000 !important;
+  outline: 3px solid #5dba7d !important;
+  text-decoration-color: #000 !important;
+}
+
+/* Highlight Links + Light Contrast Mode - blue bg, white text, blue outline */
+html.accessibility-contrast-light.accessibility-highlight-links a,
+html.accessibility-contrast-light .accessibility-highlight-links a,
+.accessibility-highlight-links html.accessibility-contrast-light a {
+  background-color: #0000cc !important;
+  color: #fff !important;
+  outline: 3px solid #000 !important;
+  text-decoration-color: #fff !important;
+}
+
+/* ========================================
+   HIGHLIGHT LINKS - BUTTONS & INTERACTIVE ELEMENTS
+   Yellow background, black text/outline, underlined
+   ======================================== */
+
+/* All buttons when highlight links is active */
+html.accessibility-highlight-links button,
+.accessibility-highlight-links button {
+  background-color: #ffcc00 !important;
+  color: #000 !important;
+  outline: 3px solid #000 !important;
+  text-decoration: underline !important;
+  text-decoration-color: #000 !important;
+}
+
+html.accessibility-highlight-links button svg,
+.accessibility-highlight-links button svg {
+  color: #000 !important;
+  stroke: #000 !important;
+}
+
+/* Language dropdown */
+html.accessibility-highlight-links select,
+.accessibility-highlight-links select,
+html.accessibility-highlight-links [class*="LanguageSwitcher"],
+.accessibility-highlight-links [class*="LanguageSwitcher"] {
+  background-color: #ffcc00 !important;
+  color: #000 !important;
+  outline: 3px solid #000 !important;
+}
+
+html.accessibility-highlight-links select option,
+.accessibility-highlight-links select option {
+  background-color: #ffcc00 !important;
+  color: #000 !important;
+}
+
+/* Accessibility button/logo */
+html.accessibility-highlight-links img[src*="Accessibility"],
+.accessibility-highlight-links img[src*="Accessibility"],
+html.accessibility-highlight-links [class*="accessibility-button"],
+.accessibility-highlight-links [class*="accessibility-button"] {
+  outline: 3px solid #000 !important;
+  border-radius: 50%;
+}
+
+/* Back buttons with bg-white/90 */
+html.accessibility-highlight-links .bg-white\/90,
+.accessibility-highlight-links .bg-white\/90 {
+  background-color: #ffcc00 !important;
+  color: #000 !important;
+  outline: 3px solid #000 !important;
+  text-decoration: underline !important;
+}
+
+html.accessibility-highlight-links .bg-white\/90 svg,
+.accessibility-highlight-links .bg-white\/90 svg {
+  color: #000 !important;
+  stroke: #000 !important;
+}
+
+/* Open calls circular image borders */
+html.accessibility-highlight-links .rounded-full.border-coral,
+.accessibility-highlight-links .rounded-full.border-coral,
+html.accessibility-highlight-links .border-4.border-coral,
+.accessibility-highlight-links .border-4.border-coral {
+  border-color: #000 !important;
+}
+
+/* Large Text Mode - 4 levels */
+.accessibility-large-text-1 {
+  --text-scale: 1.15 !important;
+}
+
+.accessibility-large-text-2 {
+  --text-scale: 1.35 !important;
+}
+
+.accessibility-large-text-3 {
+  --text-scale: 1.55 !important;
+}
+
+.accessibility-large-text-4 {
+  --text-scale: 1.75 !important;
+}
+
+/* Text Spacing - Level 1 */
+.accessibility-text-spacing-1 {
+  letter-spacing: 0.08em !important;
+  word-spacing: 0.1em !important;
+}
+
+.accessibility-text-spacing-1 p,
+.accessibility-text-spacing-1 span,
+.accessibility-text-spacing-1 li,
+.accessibility-text-spacing-1 td,
+.accessibility-text-spacing-1 th,
+.accessibility-text-spacing-1 label,
+.accessibility-text-spacing-1 a {
+  letter-spacing: 0.08em !important;
+  word-spacing: 0.1em !important;
+}
+
+/* Text Spacing - Level 2 */
+.accessibility-text-spacing-2 {
+  letter-spacing: 0.12em !important;
+  word-spacing: 0.16em !important;
+}
+
+.accessibility-text-spacing-2 p,
+.accessibility-text-spacing-2 span,
+.accessibility-text-spacing-2 li,
+.accessibility-text-spacing-2 td,
+.accessibility-text-spacing-2 th,
+.accessibility-text-spacing-2 label,
+.accessibility-text-spacing-2 a {
+  letter-spacing: 0.12em !important;
+  word-spacing: 0.16em !important;
+}
+
+/* Text Spacing - Level 3 */
+.accessibility-text-spacing-3 {
+  letter-spacing: 0.18em !important;
+  word-spacing: 0.24em !important;
+}
+
+.accessibility-text-spacing-3 p,
+.accessibility-text-spacing-3 span,
+.accessibility-text-spacing-3 li,
+.accessibility-text-spacing-3 td,
+.accessibility-text-spacing-3 th,
+.accessibility-text-spacing-3 label,
+.accessibility-text-spacing-3 a {
+  letter-spacing: 0.18em !important;
+  word-spacing: 0.24em !important;
+}
+
+/* Pause Animations */
+.accessibility-pause-animations *,
+.accessibility-pause-animations *::before,
+.accessibility-pause-animations *::after {
+  animation-play-state: paused !important;
+  transition: none !important;
+}
+
+.accessibility-pause-animations video,
+.accessibility-pause-animations .animate-spin,
+.accessibility-pause-animations [class*="animate-"] {
+  animation: none !important;
+}
+
+/* Hide Images */
+.accessibility-hide-images img:not(.accessibility-button-img),
+.accessibility-hide-images picture,
+.accessibility-hide-images video,
+.accessibility-hide-images [role="img"] {
+  visibility: hidden !important;
+}
+
+/* Show home icon when logo is hidden */
+.home-icon-fallback {
+  display: none;
+}
+
+.accessibility-hide-images .home-icon-fallback {
+  display: flex !important;
+}
+
+.accessibility-hide-images .header-logo {
+  display: none !important;
+}
+
+.accessibility-hide-images img::after,
+.accessibility-hide-images picture::after {
+  content: attr(alt);
+  display: block;
+  visibility: visible;
+  padding: 1rem;
+  background-color: #f3f4f6;
+  color: #374151;
+  font-style: italic;
+}
+
+/* Dyslexia Friendly Font - Level 1 (OpenDyslexic) */
+.accessibility-dyslexia-1 {
+  font-family: 'OpenDyslexic', 'Comic Sans MS', 'Arial', sans-serif !important;
+}
+
+.accessibility-dyslexia-1 * {
+  font-family: inherit !important;
+}
+
+/* Readable Font - Level 2 (Clean sans-serif) */
+.accessibility-dyslexia-2 {
+  font-family: Arial, Helvetica, 'Segoe UI', sans-serif !important;
+}
+
+.accessibility-dyslexia-2 * {
+  font-family: inherit !important;
+}
+
+/* Large Cursor - Mode 1 - Classic arrow pointer with line at base center */
+.accessibility-large-cursor,
+.accessibility-large-cursor * {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='52' viewBox='0 0 20 26'%3E%3Cpath d='M2 1 L2 19 L6 15 L9 22 L12 21 L9 14 L14 14 Z' fill='white' stroke='black' stroke-width='1.5' stroke-linejoin='round'/%3E%3Cline x1='10.5' y1='21.5' x2='10.5' y2='25' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") 2 1, auto !important;
+}
+
+.accessibility-large-cursor a,
+.accessibility-large-cursor button,
+.accessibility-large-cursor [role="button"],
+.accessibility-large-cursor input[type="submit"],
+.accessibility-large-cursor input[type="button"] {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='52' viewBox='0 0 20 26'%3E%3Cpath d='M2 1 L2 19 L6 15 L9 22 L12 21 L9 14 L14 14 Z' fill='white' stroke='black' stroke-width='1.5' stroke-linejoin='round'/%3E%3Cline x1='10.5' y1='21.5' x2='10.5' y2='25' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") 2 1, pointer !important;
+}
+
+/* Reading Mask - Mode 2 (overlay handled by JS component) */
+.accessibility-reading-mask {
+  cursor: none !important;
+}
+
+.accessibility-reading-mask * {
+  cursor: none !important;
+}
+
+/* Reading Guide - Mode 3 (overlay handled by JS component, cursor rendered in component) */
+.accessibility-reading-guide {
+  cursor: none !important;
+}
+
+.accessibility-reading-guide * {
+  cursor: none !important;
+}
+
+/* Line Height - Level 1 (2.0) */
+.accessibility-line-height-1 {
+  line-height: 2 !important;
+}
+
+.accessibility-line-height-1 p,
+.accessibility-line-height-1 span,
+.accessibility-line-height-1 li,
+.accessibility-line-height-1 td,
+.accessibility-line-height-1 th,
+.accessibility-line-height-1 label,
+.accessibility-line-height-1 a,
+.accessibility-line-height-1 h1,
+.accessibility-line-height-1 h2,
+.accessibility-line-height-1 h3,
+.accessibility-line-height-1 h4,
+.accessibility-line-height-1 h5,
+.accessibility-line-height-1 h6,
+.accessibility-line-height-1 div,
+.accessibility-line-height-1 article,
+.accessibility-line-height-1 section,
+.accessibility-line-height-1 header,
+.accessibility-line-height-1 footer,
+.accessibility-line-height-1 blockquote,
+.accessibility-line-height-1 figcaption {
+  line-height: 2 !important;
+}
+
+/* Line Height - Level 2 (2.5) */
+.accessibility-line-height-2 {
+  line-height: 2.5 !important;
+}
+
+.accessibility-line-height-2 p,
+.accessibility-line-height-2 span,
+.accessibility-line-height-2 li,
+.accessibility-line-height-2 td,
+.accessibility-line-height-2 th,
+.accessibility-line-height-2 label,
+.accessibility-line-height-2 a,
+.accessibility-line-height-2 h1,
+.accessibility-line-height-2 h2,
+.accessibility-line-height-2 h3,
+.accessibility-line-height-2 h4,
+.accessibility-line-height-2 h5,
+.accessibility-line-height-2 h6,
+.accessibility-line-height-2 div,
+.accessibility-line-height-2 article,
+.accessibility-line-height-2 section,
+.accessibility-line-height-2 header,
+.accessibility-line-height-2 footer,
+.accessibility-line-height-2 blockquote,
+.accessibility-line-height-2 figcaption {
+  line-height: 2.5 !important;
+}
+
+/* Line Height - Level 3 (3.0) */
+.accessibility-line-height-3 {
+  line-height: 3 !important;
+}
+
+.accessibility-line-height-3 p,
+.accessibility-line-height-3 span,
+.accessibility-line-height-3 li,
+.accessibility-line-height-3 td,
+.accessibility-line-height-3 th,
+.accessibility-line-height-3 label,
+.accessibility-line-height-3 a,
+.accessibility-line-height-3 h1,
+.accessibility-line-height-3 h2,
+.accessibility-line-height-3 h3,
+.accessibility-line-height-3 h4,
+.accessibility-line-height-3 h5,
+.accessibility-line-height-3 h6,
+.accessibility-line-height-3 div,
+.accessibility-line-height-3 article,
+.accessibility-line-height-3 section,
+.accessibility-line-height-3 header,
+.accessibility-line-height-3 footer,
+.accessibility-line-height-3 blockquote,
+.accessibility-line-height-3 figcaption {
+  line-height: 3 !important;
+}
+
+/* Text Alignment - Left */
+.accessibility-align-left p,
+.accessibility-align-left span,
+.accessibility-align-left li,
+.accessibility-align-left h1,
+.accessibility-align-left h2,
+.accessibility-align-left h3,
+.accessibility-align-left h4,
+.accessibility-align-left h5,
+.accessibility-align-left h6,
+.accessibility-align-left div,
+.accessibility-align-left td,
+.accessibility-align-left th,
+.accessibility-align-left label,
+.accessibility-align-left a,
+.accessibility-align-left blockquote,
+.accessibility-align-left figcaption {
+  text-align: left !important;
+}
+
+/* Text Alignment - Right */
+.accessibility-align-right p,
+.accessibility-align-right span,
+.accessibility-align-right li,
+.accessibility-align-right h1,
+.accessibility-align-right h2,
+.accessibility-align-right h3,
+.accessibility-align-right h4,
+.accessibility-align-right h5,
+.accessibility-align-right h6,
+.accessibility-align-right div,
+.accessibility-align-right td,
+.accessibility-align-right th,
+.accessibility-align-right label,
+.accessibility-align-right a,
+.accessibility-align-right blockquote,
+.accessibility-align-right figcaption {
+  text-align: right !important;
+}
+
+/* Text Alignment - Center */
+.accessibility-align-center p,
+.accessibility-align-center span,
+.accessibility-align-center li,
+.accessibility-align-center h1,
+.accessibility-align-center h2,
+.accessibility-align-center h3,
+.accessibility-align-center h4,
+.accessibility-align-center h5,
+.accessibility-align-center h6,
+.accessibility-align-center div,
+.accessibility-align-center td,
+.accessibility-align-center th,
+.accessibility-align-center label,
+.accessibility-align-center a,
+.accessibility-align-center blockquote,
+.accessibility-align-center figcaption {
+  text-align: center !important;
+}
+
+/* Text Alignment - Justify */
+.accessibility-align-justify p,
+.accessibility-align-justify span,
+.accessibility-align-justify li,
+.accessibility-align-justify h1,
+.accessibility-align-justify h2,
+.accessibility-align-justify h3,
+.accessibility-align-justify h4,
+.accessibility-align-justify h5,
+.accessibility-align-justify h6,
+.accessibility-align-justify div,
+.accessibility-align-justify td,
+.accessibility-align-justify th,
+.accessibility-align-justify label,
+.accessibility-align-justify a,
+.accessibility-align-justify blockquote,
+.accessibility-align-justify figcaption {
+  text-align: justify !important;
+}
+
+/* Saturation - High */
+.accessibility-saturation-high {
+  filter: saturate(1.5) !important;
+}
+
+/* Saturation - Low */
+.accessibility-saturation-low {
+  filter: saturate(0.5) !important;
+}
+
+/* Grayscale */
+.accessibility-grayscale {
+  filter: grayscale(1) !important;
+}
+
+/* Ensure accessibility menu is not affected by global settings */
+[role="dialog"][aria-label="Μενού Προσβασιμότητας"],
+[role="dialog"][aria-label="Μενού Προσβασιμότητας"] * {
+  filter: none !important;
+  letter-spacing: normal !important;
+  word-spacing: normal !important;
+  line-height: normal !important;
+  text-align: left !important;
+}
+
+/* Reset colors for accessibility menu in contrast modes */
+html.accessibility-contrast-dark [role="dialog"][aria-label="Μενού Προσβασιμότητας"],
+html.accessibility-contrast-dark [role="dialog"][aria-label="Μενού Προσβασιμότητας"] *,
+html.accessibility-contrast-light [role="dialog"][aria-label="Μενού Προσβασιμότητας"],
+html.accessibility-contrast-light [role="dialog"][aria-label="Μενού Προσβασιμότητας"] *,
+html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προσβασιμότητας"],
+html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προσβασιμότητας"] * {
+  background-color: revert !important;
+  color: revert !important;
+  border-color: revert !important;
+}
+
+[role="dialog"][aria-label="Μενού Προσβασιμότητας"] .text-xs {
+  line-height: 1.25 !important;
+}
+
+[role="dialog"][aria-label="Μενού Προσβασιμότητας"] svg.accessibility-icon {
+  visibility: visible !important;
+}

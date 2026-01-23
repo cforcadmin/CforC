@@ -1,15 +1,38 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { useRouter } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
+import { AccessibilityButton } from '@/components/AccessibilityMenu'
 
 export default function LoginPage() {
   const { login, requestMagicLink } = useAuth()
   const router = useRouter()
+  const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
+
+  // Handle scroll for accessibility button fade
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY
+      const fadeStart = 50
+      const fadeEnd = 150
+
+      if (scrollPosition <= fadeStart) {
+        setAccessibilityButtonScale(1)
+      } else if (scrollPosition >= fadeEnd) {
+        setAccessibilityButtonScale(0)
+      } else {
+        const progress = (scrollPosition - fadeStart) / (fadeEnd - fadeStart)
+        setAccessibilityButtonScale(1 - progress)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   // Password login state
   const [loginEmail, setLoginEmail] = useState('')
@@ -102,23 +125,35 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
       <Navigation />
-      <main id="main-content" className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-12">
-        <div className="w-full max-w-5xl">
-          {/* Page Title (visually hidden for screen readers) */}
-          <h1 className="sr-only">Περιοχή Μελών - Σύνδεση</h1>
+      <main id="main-content">
+        {/* Hero Section */}
+        <section className="relative -bottom-20">
+          <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
+                ΠΕΡΙΟΧΗ ΜΕΛΩΝ
+              </h1>
+            </div>
 
-          {/* Members Only Notice */}
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 bg-charcoal dark:bg-gray-700 border border-coral dark:border-coral-light text-coral dark:text-coral-light px-4 py-2 rounded-full text-sm font-medium shadow-[0_0_10px_4px_rgba(45,45,45,0.3)]" aria-hidden="true">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-              </svg>
-              <span>Περιοχή Μελών</span>
+            {/* Accessibility Menu Trigger Button */}
+            <div
+              className="absolute right-6 lg:right-12 top-1/2 -translate-y-1/2 transition-all duration-200"
+              style={{
+                transform: `translateY(-50%) scale(${accessibilityButtonScale})`,
+                opacity: accessibilityButtonScale,
+                pointerEvents: accessibilityButtonScale < 0.1 ? 'none' : 'auto'
+              }}
+            >
+              <AccessibilityButton />
             </div>
           </div>
+        </section>
 
-          {/* Cards Container - Side by Side on Desktop */}
-          <div className="grid md:grid-cols-2 gap-6 mb-6">
+        {/* Main Content */}
+        <div className="pt-32 pb-24 px-4">
+          <div className="w-full max-w-5xl mx-auto">
+            {/* Cards Container - Side by Side on Desktop */}
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
             {/* Password Login Card */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
               {/* Header */}
@@ -307,19 +342,20 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Footer Links */}
-          <div className="text-center space-y-2">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Δεν είσαι μέλος;{' '}
-              <Link href="/participation" className="text-charcoal dark:text-coral-light hover:underline font-bold">
-                Γίνε μέλος
-              </Link>
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              <Link href="/members" className="text-charcoal dark:text-coral-light hover:underline font-bold">
-                Περιήγηση Μελών
-              </Link>
-            </p>
+            {/* Footer Links */}
+            <div className="text-center space-y-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Δεν είσαι μέλος;{' '}
+                <Link href="/participation" className="text-charcoal dark:text-coral-light hover:underline font-bold">
+                  Γίνε μέλος
+                </Link>
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                <Link href="/members" className="text-charcoal dark:text-coral-light hover:underline font-bold">
+                  Περιήγηση Μελών
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </main>

@@ -641,24 +641,55 @@ Tests site colors against: Protanopia, Deuteranopia, Tritanopia, Achromatopsia
 
 ---
 
-## 17. Future Improvements
+## 18. Accessibility Menu Widget Controls (January 23, 2026)
 
-Consider for future iterations:
+### Widget Position
 
-1. **Automated accessibility testing** - Add to CI/CD pipeline (axe-core, pa11y)
-2. **Language-specific screen reader testing** - Test Greek with VoiceOver/NVDA
-3. **High contrast mode toggle** - User-controlled high contrast theme
-4. **Expand alt text guidelines** - Guide for Strapi content editors
-5. **Increase minimum text to 14px** - Upgrade from 12px to 14px
-6. **Touch target size audit** - Ensure 44x44px minimum on mobile
-7. **Form error association** - Link errors with `aria-describedby`
-8. **Keyboard shortcut documentation** - Help dialog for shortcuts
-9. **Reading level analysis** - Target Grade 8 readability
-10. ~~**Color blindness testing**~~ ✓ Completed - See Section 16
+The floating accessibility button can be moved between left and right sides of the screen.
+
+| Option | Greek Label | Position |
+|--------|-------------|----------|
+| Left | Αριστερά | Bottom-left corner |
+| Right (default) | Δεξιά | Bottom-right corner |
+
+### Widget Hide Options
+
+Users can hide the accessibility button for various durations:
+
+| Duration | Greek Label |
+|----------|-------------|
+| Session | Την τρέχουσα συνεδρία |
+| Day | Μια μέρα |
+| Week | Μια εβδομάδα |
+| Month | Έναν μήνα |
+| Forever | Πάντα |
+
+### Access Controls Location
+
+Found under the dropdown "μετακίνηση/απόκρυψη γραφικού στοιχείου" at bottom of accessibility menu.
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `components/AccessibilityProvider.tsx` | Settings: `widgetPosition`, `widgetHidden`, `widgetHiddenUntil` |
+| `components/AccessibilityMenu.tsx` | Dropdown UI with radio buttons and action buttons |
+
+### Keyboard Access
+
+- **CTRL+U:** Always opens menu (even when widget is hidden)
+- **Escape:** Closes menu
+
+### Restoring Hidden Widget
+
+- Session hide: Refresh page
+- Timed hide: Wait for duration to expire
+- Forever hide: Clear localStorage or use CTRL+U
 
 ---
 
-*Last Updated: January 22, 2026*
+*Last Updated: January 23, 2026*
 *WCAG Version: 2.2 AA*
 *Text Size Toggle: Section 15*
 *Color Blindness: Section 16*
+*Widget Controls: Section 18*

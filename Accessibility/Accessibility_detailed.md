@@ -1685,24 +1685,7 @@ Full analysis report saved to: `~/Downloads/color-blindness-report.txt`
 
 ---
 
-## 18. Future Improvements
-
-Consider for future iterations:
-
-1. **Automated accessibility testing** - Add accessibility testing to CI/CD pipeline (axe-core, pa11y)
-2. **Language-specific screen reader testing** - Test Greek content with VoiceOver and NVDA
-3. **High contrast mode toggle** - Add user-controlled high contrast theme option
-4. **Expand alt text guidelines** - Create detailed guide for content editors in Strapi CMS
-5. **Increase minimum text to 14px** - Consider upgrading base text from 12px to 14px (`text-sm`)
-6. **Touch target size audit** - Ensure all interactive elements meet 44x44px minimum on mobile
-7. **Form error association** - Link error messages to inputs with `aria-describedby`
-8. **Keyboard shortcut documentation** - Add help dialog showing available keyboard shortcuts
-9. **Reading level analysis** - Audit content for readability (target: Grade 8 level or below)
-10. ~~**Color blindness testing**~~ ✓ Completed - See Section 17
-
----
-
-## 19. Accessibility Menu Widget System (January 23, 2026)
+## 18. Accessibility Menu Widget System (January 23, 2026)
 
 ### Overview
 

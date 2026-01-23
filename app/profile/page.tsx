@@ -10,10 +10,33 @@ import EditableImage from '@/components/profile/EditableImage'
 import EditableMultipleImages from '@/components/profile/EditableMultipleImages'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import ProfileGuidelinesModal from '@/components/profile/ProfileGuidelinesModal'
+import { AccessibilityButton } from '@/components/AccessibilityMenu'
 
 export default function ProfilePage() {
   const router = useRouter()
   const { user, isAuthenticated, isLoading, refreshSession } = useAuth()
+  const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
+
+  // Handle scroll for accessibility button fade
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY
+      const fadeStart = 50
+      const fadeEnd = 150
+
+      if (scrollPosition <= fadeStart) {
+        setAccessibilityButtonScale(1)
+      } else if (scrollPosition >= fadeEnd) {
+        setAccessibilityButtonScale(0)
+      } else {
+        const progress = (scrollPosition - fadeStart) / (fadeEnd - fadeStart)
+        setAccessibilityButtonScale(1 - progress)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const [formData, setFormData] = useState({
     Name: '',
@@ -430,27 +453,49 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
       <Navigation />
-      <main className="max-w-4xl mx-auto px-4 py-24">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
-          <div className="text-center md:text-left">
-            <h1 className="text-4xl font-bold text-charcoal dark:text-gray-100 mb-2">
-              Το Προφίλ Μου
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Επεξεργαστείτε τις πληροφορίες του προφίλ σας
-            </p>
+      <main id="main-content">
+        {/* Hero Section */}
+        <section className="relative -bottom-20">
+          <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
+                ΤΟ ΠΡΟΦΙΛ ΜΟΥ
+              </h1>
+            </div>
+
+            {/* Accessibility Menu Trigger Button */}
+            <div
+              className="absolute right-6 lg:right-12 top-1/2 -translate-y-1/2 transition-all duration-200"
+              style={{
+                transform: `translateY(-50%) scale(${accessibilityButtonScale})`,
+                opacity: accessibilityButtonScale,
+                pointerEvents: accessibilityButtonScale < 0.1 ? 'none' : 'auto'
+              }}
+            >
+              <AccessibilityButton />
+            </div>
           </div>
-          <button
-            onClick={() => setShowGuidelinesModal(true)}
-            className="mt-4 md:mt-0 flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-charcoal dark:text-gray-200 rounded-full text-sm font-medium transition-colors mx-auto md:mx-0"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Οδηγίες συμπλήρωσης
-          </button>
-        </div>
+        </section>
+
+        {/* Main Content */}
+        <div className="pt-32 pb-24 max-w-4xl mx-auto px-4">
+          {/* Header with Guidelines Button */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
+            <div className="text-center md:text-left">
+              <p className="text-gray-600 dark:text-gray-300">
+                Επεξεργαστείτε τις πληροφορίες του προφίλ σας
+              </p>
+            </div>
+            <button
+              onClick={() => setShowGuidelinesModal(true)}
+              className="mt-4 md:mt-0 flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-charcoal dark:text-gray-200 rounded-full text-sm font-medium transition-colors mx-auto md:mx-0"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Οδηγίες συμπλήρωσης
+            </button>
+          </div>
 
         {/* Validation Errors - Show at top */}
         {validationErrors.length > 0 && (
@@ -796,6 +841,7 @@ export default function ProfilePage() {
               </div>
             )}
           </div>
+        </div>
         </div>
       </main>
 

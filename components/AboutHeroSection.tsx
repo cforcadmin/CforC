@@ -2,13 +2,29 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import { AccessibilityButton } from './AccessibilityMenu'
 
 export default function AboutHeroSection() {
   const [scrollY, setScrollY] = useState(0)
+  const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
 
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY)
+
+      // Handle accessibility button fade
+      const scrollPosition = window.scrollY
+      const fadeStart = 50
+      const fadeEnd = 150
+
+      if (scrollPosition <= fadeStart) {
+        setAccessibilityButtonScale(1)
+      } else if (scrollPosition >= fadeEnd) {
+        setAccessibilityButtonScale(0)
+      } else {
+        const progress = (scrollPosition - fadeStart) / (fadeEnd - fadeStart)
+        setAccessibilityButtonScale(1 - progress)
+      }
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
@@ -26,6 +42,18 @@ export default function AboutHeroSection() {
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
             <div>ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</div>
           </h1>
+        </div>
+
+        {/* Accessibility Menu Trigger Button */}
+        <div
+          className="absolute right-6 lg:right-12 top-1/2 -translate-y-1/2 transition-all duration-200"
+          style={{
+            transform: `translateY(-50%) scale(${accessibilityButtonScale})`,
+            opacity: accessibilityButtonScale,
+            pointerEvents: accessibilityButtonScale < 0.1 ? 'none' : 'auto'
+          }}
+        >
+          <AccessibilityButton />
         </div>
       </div>
 

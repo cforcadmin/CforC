@@ -12,6 +12,7 @@ import Image from 'next/image'
 import { getOpenCalls } from '@/lib/strapi'
 import type { StrapiResponse, OpenCall } from '@/lib/types'
 import LocalizedText from '@/components/LocalizedText'
+import { AccessibilityButton } from '@/components/AccessibilityMenu'
 
 // Helper function to extract text from Strapi rich text blocks
 function extractTextFromBlocks(blocks: any): string {
@@ -39,10 +40,32 @@ export default function OpenCallsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isGreek, setIsGreek] = useState(true)
+  const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'current' | 'previous'>('current')
+
+  // Handle scroll for accessibility button fade
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY
+      const fadeStart = 50
+      const fadeEnd = 150
+
+      if (scrollPosition <= fadeStart) {
+        setAccessibilityButtonScale(1)
+      } else if (scrollPosition >= fadeEnd) {
+        setAccessibilityButtonScale(0)
+      } else {
+        const progress = (scrollPosition - fadeStart) / (fadeEnd - fadeStart)
+        setAccessibilityButtonScale(1 - progress)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   // Detect language changes (e.g., Google Translate)
   useEffect(() => {
@@ -119,14 +142,26 @@ export default function OpenCallsPage() {
       <main id="main-content">
         {/* Hero Section */}
         <section className="relative -bottom-20">
-        <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
-              <div>ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</div>
-            </h1>
+          <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
+                <div>ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</div>
+              </h1>
+            </div>
+
+            {/* Accessibility Menu Trigger Button */}
+            <div
+              className="absolute right-6 lg:right-12 top-1/2 -translate-y-1/2 transition-all duration-200"
+              style={{
+                transform: `translateY(-50%) scale(${accessibilityButtonScale})`,
+                opacity: accessibilityButtonScale,
+                pointerEvents: accessibilityButtonScale < 0.1 ? 'none' : 'auto'
+              }}
+            >
+              <AccessibilityButton />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
       {/* Open Calls Section with Filtering */}
       <section className="py-24 bg-orange-50 dark:bg-gray-800">

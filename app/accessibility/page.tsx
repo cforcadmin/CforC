@@ -1,10 +1,37 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
 import NewsletterSection from '@/components/NewsletterSection'
 import ScrollToTop from '@/components/ScrollToTop'
+import { AccessibilityButton } from '@/components/AccessibilityMenu'
 
 export default function AccessibilityPage() {
+  const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
+
+  // Handle scroll for accessibility button fade
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY
+      const fadeStart = 50
+      const fadeEnd = 150
+
+      if (scrollPosition <= fadeStart) {
+        setAccessibilityButtonScale(1)
+      } else if (scrollPosition >= fadeEnd) {
+        setAccessibilityButtonScale(0)
+      } else {
+        const progress = (scrollPosition - fadeStart) / (fadeEnd - fadeStart)
+        setAccessibilityButtonScale(1 - progress)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   return (
     <div className="min-h-screen">
       <Navigation />
@@ -17,6 +44,18 @@ export default function AccessibilityPage() {
                 <div>ΔΗΛΩΣΗ</div>
                 <div>ΠΡΟΣΒΑΣΙΜΟΤΗΤΑΣ</div>
               </h1>
+            </div>
+
+            {/* Accessibility Menu Trigger Button */}
+            <div
+              className="absolute right-6 lg:right-12 top-1/2 -translate-y-1/2 transition-all duration-200"
+              style={{
+                transform: `translateY(-50%) scale(${accessibilityButtonScale})`,
+                opacity: accessibilityButtonScale,
+                pointerEvents: accessibilityButtonScale < 0.1 ? 'none' : 'auto'
+              }}
+            >
+              <AccessibilityButton />
             </div>
           </div>
         </section>

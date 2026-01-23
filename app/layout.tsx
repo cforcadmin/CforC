@@ -5,6 +5,9 @@ import { ThemeProvider } from '@/components/ThemeProvider'
 import { TextSizeProvider } from '@/components/TextSizeProvider'
 import { AuthProvider } from '@/components/AuthProvider'
 import { AnnouncerProvider } from '@/components/Announcer'
+import { AccessibilityProvider } from '@/components/AccessibilityProvider'
+import AccessibilityMenu from '@/components/AccessibilityMenu'
+import ReadingAids from '@/components/ReadingAids'
 
 export const metadata: Metadata = {
   title: 'Culture for Change',
@@ -25,11 +28,15 @@ export default function RootLayout({
         </a>
         <ThemeProvider>
           <TextSizeProvider>
-            <AuthProvider>
-              <AnnouncerProvider>
-                {children}
-              </AnnouncerProvider>
-            </AuthProvider>
+            <AccessibilityProvider>
+              <AuthProvider>
+                <AnnouncerProvider>
+                  {children}
+                  <AccessibilityMenu />
+                  <ReadingAids />
+                </AnnouncerProvider>
+              </AuthProvider>
+            </AccessibilityProvider>
           </TextSizeProvider>
         </ThemeProvider>
         <Script

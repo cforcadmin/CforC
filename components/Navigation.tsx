@@ -8,6 +8,8 @@ import { useTheme } from './ThemeProvider'
 import { useAuth } from './AuthProvider'
 import ConfirmationModal from './ConfirmationModal'
 import TextSizeToggle from './TextSizeToggle'
+import { useAccessibility } from './AccessibilityProvider'
+import { AccessibilityButton } from './AccessibilityMenu'
 
 interface NavigationProps {
   variant?: 'default' | 'members'
@@ -19,6 +21,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
   const { user, isAuthenticated, logout } = useAuth()
+  const { setIsMenuOpen } = useAccessibility()
   const pathname = usePathname()
 
   useEffect(() => {
@@ -42,7 +45,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
 
   return (
     <nav role="banner" aria-label="Κύρια πλοήγηση" className={`fixed ${isScrolled ? 'top-2' : 'top-0'} w-full z-50 ${isScrolled ? 'shadow-none' : 'shadow-sm dark:shadow-gray-700'} transition-all duration-300 ${isScrolled ? 'px-4' : ''}`}>
-      <div className={`${bgOpacity} ${isScrolled ? 'rounded-2xl scale-90' : ''} transition-all duration-300`}>
+      <div className={`${bgOpacity} ${isScrolled ? 'rounded-2xl scale-90' : ''} ${isScrolled && variant === 'members' ? 'ring-2 ring-coral' : ''} transition-all duration-300`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
@@ -50,8 +53,15 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
             <img
               src="/cforc_logo.svg"
               alt="Culture for Change"
-              className="h-12 dark:invert"
+              className="h-12 dark:invert header-logo"
             />
+            {/* Home icon fallback when images are hidden */}
+            <span className="home-icon-fallback items-center gap-2 text-charcoal dark:text-white">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span className="font-bold text-sm">ΑΡΧΙΚΗ</span>
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -111,22 +121,32 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
               </Link>
             )}
             <LanguageSwitcher />
+            {/* Accessibility Button - appears when scrolled */}
+            <div className={`transition-all duration-300 flex items-center ${isScrolled ? 'opacity-100 scale-100 ml-4' : 'opacity-0 scale-0 w-0 ml-0 overflow-hidden'}`}>
+              <AccessibilityButton size="small" />
+            </div>
           </div>
 
-          {/* Mobile menu button */}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 dark:text-gray-200"
-            aria-label={isOpen ? 'Κλείσιμο μενού' : 'Άνοιγμα μενού'}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              {isOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
+          {/* Mobile menu button with accessibility button */}
+          <div className="md:hidden flex items-center gap-3">
+            {/* Accessibility Button - appears when scrolled (mobile) */}
+            <div className={`transition-all duration-300 flex items-center ${isScrolled ? 'opacity-100 scale-100' : 'opacity-0 scale-0 w-0 overflow-hidden'}`}>
+              <AccessibilityButton size="small" />
+            </div>
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2 dark:text-gray-200"
+              aria-label={isOpen ? 'Κλείσιμο μενού' : 'Άνοιγμα μενού'}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                {isOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
           </div>
         </div>
 
