@@ -8,6 +8,7 @@ import { AnnouncerProvider } from '@/components/Announcer'
 import { AccessibilityProvider } from '@/components/AccessibilityProvider'
 import AccessibilityMenu from '@/components/AccessibilityMenu'
 import ReadingAids from '@/components/ReadingAids'
+import Sa11yDevChecker from '@/components/Sa11yDevChecker'
 
 export const metadata: Metadata = {
   title: 'Culture for Change',
@@ -34,6 +35,7 @@ export default function RootLayout({
                   {children}
                   <AccessibilityMenu />
                   <ReadingAids />
+                  <Sa11yDevChecker />
                 </AnnouncerProvider>
               </AuthProvider>
             </AccessibilityProvider>
