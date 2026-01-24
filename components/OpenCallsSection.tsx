@@ -125,6 +125,7 @@ export default function OpenCallsSection() {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-8 relative">
             <button
+              type="button"
               onClick={() => setShowMemberModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
               aria-label="Κλείσιμο"
@@ -160,6 +161,7 @@ export default function OpenCallsSection() {
                   Σύνδεση
                 </Link>
                 <button
+                  type="button"
                   onClick={() => setShowMemberModal(false)}
                   className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
                 >
@@ -187,6 +189,7 @@ export default function OpenCallsSection() {
               </Link>
             ) : (
               <button
+                type="button"
                 onClick={handleViewAllClick}
                 className="hidden md:block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors"
               >
@@ -328,30 +331,30 @@ export default function OpenCallsSection() {
                 return (
                   <div key={call.id}>
                     {index > 0 && <hr className="border-gray-300 dark:border-gray-600" aria-hidden="true" />}
-                    <div className="py-12 opacity-60 relative rounded-2xl">
+                    <div className="py-12 relative rounded-2xl">
                       <div className="flex items-start gap-6 pr-16">
                         <div className="flex flex-col gap-3 min-w-[140px] ml-8">
-                          <span className="inline-block bg-gray-400 dark:bg-gray-600 text-white px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
+                          <span className="inline-block bg-gray-500 dark:bg-gray-600 text-white px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
                             {new Date(call.Deadline).toLocaleDateString('el-GR')}
                           </span>
-                          <span className="inline-block bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300 px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
+                          <span className="inline-block bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
                             ΕΛΗΞΕ
                           </span>
                         </div>
 
                         <div className="flex-1 flex gap-6">
                           <div className="flex-1">
-                            <h3 className="text-xl md:text-2xl font-bold mb-4 text-gray-500 dark:text-gray-400">
+                            <h3 className="text-xl md:text-2xl font-bold mb-4 text-gray-600 dark:text-gray-400">
                               <LocalizedText text={call.Title} engText={call.EngTitle} />
                             </h3>
-                            <p className="text-gray-500 dark:text-gray-500 leading-relaxed text-base mt-2 line-clamp-2">
+                            <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-base mt-2 line-clamp-2">
                               <LocalizedText text={descriptionText} engText={engDescriptionText} />
                             </p>
                           </div>
 
                           {imageUrl && (
                             <div className="flex-shrink-0">
-                              <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-gray-300 dark:border-gray-600 shadow-md opacity-50">
+                              <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-gray-400 dark:border-gray-600 shadow-md grayscale">
                                 <Image
                                   src={imageUrl}
                                   alt={call.ImageAltText || call.Title}

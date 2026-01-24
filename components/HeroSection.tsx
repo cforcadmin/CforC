@@ -95,6 +95,7 @@ export default function HeroSection() {
         {/* Dark overlay with centered play button */}
         {!isPlaying && (
           <button
+            type="button"
             className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer"
             onClick={handlePlay}
             aria-label="Αναπαραγωγή βίντεο"

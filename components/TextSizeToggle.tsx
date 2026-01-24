@@ -42,7 +42,7 @@ export default function TextSizeToggle({ variant = 'default', className = '' }: 
       `}</style>
       <div
         className={`flex items-center relative ${className}`}
-        role="group"
+        role="radiogroup"
         aria-label="Επιλογή μεγέθους κειμένου"
         style={{ gap: '12px' }}
       >
@@ -55,10 +55,12 @@ export default function TextSizeToggle({ variant = 'default', className = '' }: 
           return (
             <button
               key={size}
+              type="button"
               onClick={() => setTextSize(size)}
               className={`relative w-8 h-8 flex items-center justify-center z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 ${!isActive ? 'inactive-a' : ''}`}
+              role="radio"
+              aria-checked={isActive}
               aria-label={label}
-              aria-pressed={isActive}
             >
               {/* Circle behind button - always rendered, opacity toggled */}
               <div

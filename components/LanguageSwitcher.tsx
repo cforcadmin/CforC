@@ -118,6 +118,7 @@ export default function LanguageSwitcher() {
 
       {/* Globe Icon Button with Overlays */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-md hover:text-white dark:hover:text-coral-light transition-colors"
         aria-label={`Αλλαγή γλώσσας (${getCurrentLanguageCode()})`}
@@ -162,17 +163,24 @@ export default function LanguageSwitcher() {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-2 z-50 max-h-96 overflow-y-auto">
+        <div
+          role="listbox"
+          aria-label="Επιλογή γλώσσας"
+          className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-2 z-50 max-h-96 overflow-y-auto"
+        >
           {/* Reset to Greek option */}
           {currentLang !== 'el' && (
             <>
               <button
+                type="button"
+                role="option"
+                aria-selected={currentLang === 'el'}
                 onClick={resetToGreek}
                 className="w-full text-left px-4 py-2 hover:text-coral dark:hover:text-coral-light transition-colors flex items-center gap-2"
               >
                 <span className="text-sm font-medium text-coral dark:text-coral-light notranslate">← Back to Greek</span>
               </button>
-              <div className="border-t border-gray-200 dark:border-gray-600 my-2"></div>
+              <div className="border-t border-gray-200 dark:border-gray-600 my-2" aria-hidden="true"></div>
             </>
           )}
 
@@ -181,6 +189,9 @@ export default function LanguageSwitcher() {
             .filter(lang => lang.code !== 'el') // Don't show Greek since it's the default
             .map((lang) => (
               <button
+                type="button"
+                role="option"
+                aria-selected={currentLang === lang.code}
                 key={lang.code}
                 onClick={() => {
                   changeLanguage(lang.code)

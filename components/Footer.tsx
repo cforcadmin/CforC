@@ -28,6 +28,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-8 relative">
             <button
+              type="button"
               onClick={() => setShowMemberModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
               aria-label="Κλείσιμο"
@@ -63,6 +64,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
                   Σύνδεση
                 </Link>
                 <button
+                  type="button"
                   onClick={() => setShowMemberModal(false)}
                   className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
                 >
@@ -100,7 +102,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
                 {user ? (
                   <Link href="/open-calls" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</Link>
                 ) : (
-                  <button onClick={handleOpenCallsClick} className="hover:text-coral dark:hover:text-coral-light transition-colors">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</button>
+                  <button type="button" onClick={handleOpenCallsClick} className="hover:text-coral dark:hover:text-coral-light transition-colors">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</button>
                 )}
               </li>
               <li><Link href="/participation" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΣΥΜΜΕΤΟΧΗ</Link></li>

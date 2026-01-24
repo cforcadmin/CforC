@@ -334,6 +334,7 @@ interface MenuItemProps {
 function MenuItem({ icon, label, active, onClick, oversized = false }: MenuItemProps) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={`
         relative rounded-xl border-2 transition-all duration-200
@@ -375,6 +376,7 @@ function ToggleSwitch({ enabled, onChange, label, oversized = false }: ToggleSwi
     <div className={`flex items-center justify-between bg-gray-200 dark:bg-gray-800 rounded-xl ${oversized ? 'py-5 px-6' : 'py-3 px-4'}`}>
       <span className={`font-medium text-charcoal dark:text-gray-200 ${oversized ? 'text-xl' : 'text-base'}`}>{label}</span>
       <button
+        type="button"
         onClick={onChange}
         className={`
           relative rounded-full transition-colors duration-200
@@ -823,6 +825,7 @@ export default function AccessibilityMenu() {
             <span className={`font-normal ml-2 opacity-80 ${settings.oversizedWidget ? 'text-lg' : 'text-sm'}`}>(CTRL+U)</span>
           </h2>
           <button
+            type="button"
             ref={closeButtonRef}
             onClick={() => setIsMenuOpen(false)}
             className={`bg-charcoal dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-charcoal/80 dark:hover:bg-gray-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-coral ${settings.oversizedWidget ? 'w-14 h-14' : 'w-10 h-10'}`}
@@ -946,6 +949,7 @@ export default function AccessibilityMenu() {
           {/* Reset button */}
           <div className={settings.oversizedWidget ? 'px-6 mt-1.5' : 'px-4 mt-1'}>
             <button
+              type="button"
               onClick={resetSettings}
               className={`w-full bg-coral hover:bg-coral-dark text-white font-medium rounded-xl flex items-center justify-center gap-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 ${settings.oversizedWidget ? 'py-5 px-6 text-lg' : 'py-3 px-4'}`}
             >
@@ -957,7 +961,9 @@ export default function AccessibilityMenu() {
           {/* Widget Position/Hide Dropdown */}
           <div className={settings.oversizedWidget ? 'px-6 mt-4' : 'px-4 mt-3'}>
             <button
+              type="button"
               onClick={() => setIsWidgetDropdownOpen(!isWidgetDropdownOpen)}
+              aria-expanded={isWidgetDropdownOpen}
               className={`w-full bg-gray-200 dark:bg-gray-700 text-charcoal dark:text-gray-200 font-medium rounded-xl flex items-center justify-between transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 ${settings.oversizedWidget ? 'py-4 px-5 text-base' : 'py-3 px-4 text-sm'}`}
             >
               <div className="flex items-center gap-3">
@@ -1061,6 +1067,7 @@ export default function AccessibilityMenu() {
                     {/* Action Buttons */}
                     <div className="flex gap-3 mt-6">
                       <button
+                        type="button"
                         onClick={() => {
                           updateSetting('widgetHidden', false)
                           setSelectedHideDuration('session')
@@ -1070,6 +1077,7 @@ export default function AccessibilityMenu() {
                         ΑΚΥΡΩΣΗ
                       </button>
                       <button
+                        type="button"
                         onClick={() => {
                           hideWidget(selectedHideDuration)
                           setIsMenuOpen(false)
@@ -1102,6 +1110,7 @@ export function AccessibilityButton({ size = 'default' }: AccessibilityButtonPro
 
   return (
     <button
+      type="button"
       onClick={() => setIsMenuOpen(true)}
       className={`
         ${sizeClasses} rounded-full overflow-hidden
@@ -1142,6 +1151,7 @@ export function FloatingAccessibilityButton() {
 
   return (
     <button
+      type="button"
       onClick={() => setIsMenuOpen(true)}
       className={`
         fixed bottom-6 ${positionClass} z-50

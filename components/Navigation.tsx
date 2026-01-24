@@ -44,7 +44,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
   const bgOpacity = isScrolled ? (variant === 'members' ? 'bg-[#F5F0EB]/90 dark:bg-gray-800/90' : 'bg-coral/90 dark:bg-gray-900/90') : bgColor
 
   return (
-    <nav role="banner" aria-label="Κύρια πλοήγηση" className={`fixed ${isScrolled ? 'top-2' : 'top-0'} w-full z-50 ${isScrolled ? 'shadow-none' : 'shadow-sm dark:shadow-gray-700'} transition-all duration-300 ${isScrolled ? 'px-4' : ''}`}>
+    <nav role="navigation" aria-label="Κύρια πλοήγηση" className={`fixed ${isScrolled ? 'top-2' : 'top-0'} w-full z-50 ${isScrolled ? 'shadow-none' : 'shadow-sm dark:shadow-gray-700'} transition-all duration-300 ${isScrolled ? 'px-4' : ''}`}>
       <div className={`${bgOpacity} ${isScrolled ? 'rounded-2xl scale-90' : ''} ${isScrolled && variant === 'members' ? 'ring-2 ring-coral' : ''} transition-all duration-300`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
@@ -70,6 +70,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
             <TextSizeToggle variant={variant} />
             {/* Dark Mode Toggle */}
             <button
+              type="button"
               onClick={toggleTheme}
               className="p-2 rounded-full hover:bg-white/20 transition-colors"
               aria-label="Toggle dark mode"
@@ -109,6 +110,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                   ΠΡΟΦΙΛ
                 </Link>
                 <button
+                  type="button"
                   onClick={() => setIsLogoutModalOpen(true)}
                   className="text-sm font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light transition-all"
                 >
@@ -134,9 +136,12 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
               <AccessibilityButton size="small" />
             </div>
             <button
+              type="button"
               onClick={() => setIsOpen(!isOpen)}
               className="p-2 dark:text-gray-200"
               aria-label={isOpen ? 'Κλείσιμο μενού' : 'Άνοιγμα μενού'}
+              aria-expanded={isOpen}
+              aria-controls="mobile-menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 {isOpen ? (
@@ -152,7 +157,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
 
         {/* Mobile menu */}
         {isOpen && (
-          <div className={`md:hidden ${bgColor} dark:bg-gray-800 border-t ${variant === 'members' ? 'border-gray-300 dark:border-gray-700' : 'border-coral-dark dark:border-gray-700'}`}>
+          <div id="mobile-menu" className={`md:hidden ${bgColor} dark:bg-gray-800 border-t ${variant === 'members' ? 'border-gray-300 dark:border-gray-700' : 'border-coral-dark dark:border-gray-700'}`}>
           <div className="px-4 py-4 space-y-3">
             {/* Text Size Toggle - Mobile */}
             <div className="flex items-center space-x-2 py-2">
@@ -161,8 +166,10 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
             </div>
             {/* Dark Mode Toggle - Mobile */}
             <button
+              type="button"
               onClick={toggleTheme}
               className="flex items-center space-x-2 text-sm font-medium py-2"
+              aria-label={theme === 'light' ? 'Ενεργοποίηση σκούρου θέματος' : 'Ενεργοποίηση ανοιχτού θέματος'}
             >
               {theme === 'light' ? (
                 <>
@@ -195,6 +202,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
               <>
                 <Link href="/profile" className={`block text-sm py-2 transition-all ${pathname === '/profile' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΠΡΟΦΙΛ</Link>
                 <button
+                  type="button"
                   onClick={() => setIsLogoutModalOpen(true)}
                   className="block text-sm py-2 font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light transition-all text-left"
                 >
