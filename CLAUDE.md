@@ -6,7 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **IMPORTANT: Always ask user for confirmation before pushing to GitHub** - Never push automatically
 - **Default**: Push only to `main` branch
-- **Backup branch**: `Stable-bakcup-official_V1_13-01026` - Only push when user explicitly confirms
+- **Backup branches**: When user requests push to "backup" without specifying which one, always push to the **most recent** backup branch (check dates in branch names using `git branch -r | grep -i backup`)
+- **Original backup**: `Stable-bakcup-official_V1_13-01026` - This is the original stable backup. NEVER push to this unless user explicitly names it
 - Never push to backup branch automatically
 
 ## Development Commands
