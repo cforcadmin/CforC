@@ -93,7 +93,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
           <div className="flex gap-6 md:gap-8">
             {/* Sitemap */}
             <div>
-              <h3 className="font-bold mb-3 text-coral dark:text-coral-light text-xs">SITEMAP</h3>
+              <h3 className="font-bold mb-3 text-charcoal dark:text-coral-light text-xs">SITEMAP</h3>
             <ul role="list" className="space-y-1.5 text-xs dark:text-gray-300">
               <li><Link href="/members" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΕΥΡΕΣΗ ΜΕΛΩΝ</Link></li>
               <li><Link href="/about" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</Link></li>
@@ -112,7 +112,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
 
             {/* Contact */}
             <div>
-              <h3 className="font-bold mb-3 text-coral dark:text-coral-light text-xs">ΕΠΙΚΟΙΝΩΝΙΑ</h3>
+              <h3 className="font-bold mb-3 text-charcoal dark:text-coral-light text-xs">ΕΠΙΚΟΙΝΩΝΙΑ</h3>
             <ul role="list" className="space-y-1.5 text-xs dark:text-gray-300">
               <li>
                 <a
@@ -149,7 +149,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
 
             {/* Policy */}
             <div>
-              <h3 className="font-bold mb-3 text-coral dark:text-coral-light text-xs">ΠΟΛΙΤΙΚΗ</h3>
+              <h3 className="font-bold mb-3 text-charcoal dark:text-coral-light text-xs">ΠΟΛΙΤΙΚΗ</h3>
             <ul role="list" className="space-y-1.5 text-xs dark:text-gray-300">
               <li><Link href="/terms" className="hover:text-coral dark:hover:text-coral-light transition-colors">Όροι & Προϋποθέσεις</Link></li>
               <li><Link href="/privacy" className="hover:text-coral dark:hover:text-coral-light transition-colors">Πολιτική Απορρήτου</Link></li>
@@ -160,7 +160,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
 
             {/* Social Media Icons */}
             <div className="relative" style={{marginRight: '-0.15em'}}>
-              <h3 className="font-bold mb-3 text-coral dark:text-coral-light text-xs text-right">SOCIAL MEDIA</h3>
+              <h3 className="font-bold mb-3 text-charcoal dark:text-coral-light text-xs text-right">SOCIAL MEDIA</h3>
               <div className="grid grid-cols-2 gap-3 justify-items-end">
                 <a href="https://www.linkedin.com/company/culture-for-change-gr/posts/?feedView=all" target="_blank" rel="noopener noreferrer" className="hover:opacity-70 transition-opacity w-6 h-6 flex items-center justify-center">
                   <Image src="/linkedin-icon-lg.png" alt="LinkedIn" width={24} height={24} className="dark:invert w-full h-full object-contain" />

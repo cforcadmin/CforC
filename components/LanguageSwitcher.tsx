@@ -143,7 +143,7 @@ export default function LanguageSwitcher() {
         </svg>
 
         {/* Language Code Overlay - Top Right */}
-        <span className="absolute -top-1 -right-1 text-[11px] font-bold bg-charcoal dark:bg-gray-600 text-coral dark:text-coral-light px-1.5 py-0.5 rounded">
+        <span className="absolute -top-1 -right-1 text-[11px] font-bold bg-charcoal dark:bg-gray-600 text-white px-1.5 py-0.5 rounded">
           {getCurrentLanguageCode()}
         </span>
 

@@ -148,11 +148,11 @@ export default function AboutSection() {
           }`}
         >
           <div>
-            <div className="text-8xl font-bold text-coral dark:text-coral-light mb-2">{counter1}</div>
+            <div className="text-8xl font-bold text-charcoal dark:text-coral-light mb-2">{counter1}</div>
             <p className="text-xl font-medium dark:text-gray-200">ΕΡΓΑ</p>
           </div>
           <div>
-            <div className="text-8xl font-bold text-coral dark:text-coral-light mb-2">{counter2}</div>
+            <div className="text-8xl font-bold text-charcoal dark:text-coral-light mb-2">{counter2}</div>
             <p className="text-xl font-medium dark:text-gray-200">ΜΕΛΗ</p>
           </div>
         </div>

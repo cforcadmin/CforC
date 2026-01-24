@@ -48,32 +48,36 @@ export default function TextSizeToggle({ variant = 'default', className = '' }: 
       >
         {sizes.map(({ size, fontSize, label }) => {
           const isActive = textSize === size
-          // In dark mode: inactive = white, active = black
-          // In light mode: all black
-          const textColor = isActive ? '#000000' : (theme === 'dark' ? '#FFFFFF' : '#000000')
+          // Active: black text on white circle background
+          // Inactive: depends on background color
+          //   - default variant (coral bg): white text
+          //   - members variant (light beige bg): charcoal text in light mode, white in dark
+          let textColor: string
+          if (isActive) {
+            textColor = '#000000' // Black on white circle
+          } else if (variant === 'members' && theme === 'light') {
+            textColor = '#2D2D2D' // Charcoal on light beige
+          } else {
+            textColor = '#FFFFFF' // White on coral or dark backgrounds
+          }
 
           return (
             <button
               key={size}
               type="button"
               onClick={() => setTextSize(size)}
-              className={`relative w-8 h-8 flex items-center justify-center z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 ${!isActive ? 'inactive-a' : ''}`}
+              className={`relative w-8 h-8 flex items-center justify-center z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 rounded-full ${!isActive ? 'inactive-a' : ''}`}
               role="radio"
               aria-checked={isActive}
               aria-label={label}
+              style={{
+                backgroundColor: isActive ? '#FFFFFF' : 'transparent',
+                boxShadow: isActive && variant === 'members' ? '0 0 0 2px #FF8B6A' : 'none',
+                transition: 'background-color 300ms ease-in-out, box-shadow 300ms ease-in-out',
+              }}
             >
-              {/* Circle behind button - always rendered, opacity toggled */}
-              <div
-                className="absolute inset-0 w-8 h-8 rounded-full bg-white pointer-events-none"
-                style={{
-                  boxShadow: variant === 'members' ? '0 0 0 2px #FF8B6A' : 'none',
-                  opacity: isActive ? 1 : 0,
-                  transition: 'opacity 300ms ease-in-out',
-                }}
-                aria-hidden="true"
-              />
               <span
-                className="font-bold notranslate relative z-10"
+                className="font-bold notranslate"
                 style={{
                   fontSize: `${fontSize}px`,
                   color: textColor,

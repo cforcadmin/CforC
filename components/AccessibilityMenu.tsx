@@ -401,7 +401,7 @@ function ToggleSwitch({ enabled, onChange, label, oversized = false }: ToggleSwi
               <path d="M5 13l4 4L19 7" />
             </svg>
           ) : (
-            <svg className={`text-gray-400 ${oversized ? 'w-5 h-5' : 'w-4 h-4'}`} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" aria-hidden="true">
+            <svg className={`text-gray-600 ${oversized ? 'w-5 h-5' : 'w-4 h-4'}`} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M6 18L18 6M6 6l12 12" />
             </svg>
           )}
@@ -951,7 +951,7 @@ export default function AccessibilityMenu() {
             <button
               type="button"
               onClick={resetSettings}
-              className={`w-full bg-coral hover:bg-coral-dark text-white font-medium rounded-xl flex items-center justify-center gap-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 ${settings.oversizedWidget ? 'py-5 px-6 text-lg' : 'py-3 px-4'}`}
+              className={`w-full bg-charcoal dark:bg-gray-700 hover:bg-charcoal/90 dark:hover:bg-gray-600 text-white font-medium rounded-xl flex items-center justify-center gap-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 ${settings.oversizedWidget ? 'py-5 px-6 text-lg' : 'py-3 px-4'}`}
             >
               <ResetIcon size={settings.oversizedWidget ? 'large' : 'default'} />
               <span>Επαναφορά όλων των ρυθμίσεων προσβασιμότητας</span>
