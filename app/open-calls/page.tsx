@@ -257,7 +257,7 @@ export default function OpenCallsPage() {
 
                 return (
                   <div key={call.id}>
-                    {index > 0 && <hr className="border-gray-300 dark:border-gray-600" />}
+                    {index > 0 && <hr className="border-gray-300 dark:border-gray-600" aria-hidden="true" />}
                     <Link
                       href={call.Link}
                       target="_blank"
@@ -271,6 +271,7 @@ export default function OpenCallsPage() {
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
+                          aria-hidden="true"
                         >
                           <path
                             strokeLinecap="round"

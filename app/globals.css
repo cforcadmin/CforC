@@ -126,6 +126,27 @@ body {
   outline-offset: 2px;
 }
 
+/* Prevent focused elements from being hidden under fixed header */
+/* The navigation bar is ~80px (5rem) high */
+a:focus,
+button:focus,
+input:focus,
+select:focus,
+textarea:focus,
+[tabindex]:focus,
+[role="button"]:focus,
+h1:target,
+h2:target,
+h3:target,
+h4:target,
+h5:target,
+h6:target,
+section:target,
+article:target,
+[id]:target {
+  scroll-margin-top: 6rem;
+}
+
 /* Screen reader only announcements container */
 .sr-announcer {
   position: absolute;

@@ -7,42 +7,42 @@ import { useAccessibility } from './AccessibilityProvider'
 
 // Contrast icons for different modes
 const ContrastNormalIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" aria-hidden="true">
     <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
     <path d="M12 2a10 10 0 0 1 0 20V2z" />
   </svg>
 )
 
 const ContrastInvertIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" aria-hidden="true">
     <circle cx="12" cy="12" r="10" fill="currentColor" stroke="currentColor" strokeWidth="2" />
     <path d="M12 2a10 10 0 0 0 0 20V2z" fill="white" />
   </svg>
 )
 
 const ContrastDarkIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" aria-hidden="true">
     <rect x="2" y="2" width="20" height="20" rx="3" fill="currentColor" stroke="currentColor" strokeWidth="2" />
     <circle cx="12" cy="12" r="4" fill="white" />
   </svg>
 )
 
 const ContrastLightIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" aria-hidden="true">
     <rect x="2" y="2" width="20" height="20" rx="3" fill="none" stroke="currentColor" strokeWidth="2" />
     <circle cx="12" cy="12" r="4" fill="currentColor" />
   </svg>
 )
 
 const LinksIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
     <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
   </svg>
 )
 
 const LargeTextIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" aria-hidden="true">
     <text x="2" y="18" fontSize="12" fontWeight="bold">T</text>
     <text x="12" y="20" fontSize="16" fontWeight="bold">T</text>
   </svg>
@@ -51,7 +51,7 @@ const LargeTextIcon = () => (
 // Text spacing icons for different levels
 // Default (0): ◀ ▶ (just arrows, no dash between)
 const TextSpacingIcon0 = () => (
-  <svg viewBox="0 0 48 24" className="w-8 h-8" fill="currentColor" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 48 24" className="w-8 h-8" fill="currentColor" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     {/* Left arrow ◀ */}
     <path d="M8 12l10-8v16z" fill="currentColor" stroke="none" />
     {/* Right arrow ▶ */}
@@ -61,7 +61,7 @@ const TextSpacingIcon0 = () => (
 
 // Level 1 (1/3): ◀ ▶ (arrows slightly apart)
 const TextSpacingIcon1 = () => (
-  <svg viewBox="0 0 48 24" className="w-8 h-8" fill="currentColor" stroke="none">
+  <svg viewBox="0 0 48 24" className="w-8 h-8" fill="currentColor" stroke="none" aria-hidden="true">
     {/* Left arrow ◀ */}
     <path d="M5 12l10-8v16z" fill="currentColor" />
     {/* Right arrow ▶ */}
@@ -71,7 +71,7 @@ const TextSpacingIcon1 = () => (
 
 // Level 2 (2/3): ◀  ▶ (arrows medium apart)
 const TextSpacingIcon2 = () => (
-  <svg viewBox="0 0 48 24" className="w-8 h-8" fill="currentColor" stroke="none">
+  <svg viewBox="0 0 48 24" className="w-8 h-8" fill="currentColor" stroke="none" aria-hidden="true">
     {/* Left arrow ◀ */}
     <path d="M2 12l10-8v16z" fill="currentColor" />
     {/* Right arrow ▶ */}
@@ -81,7 +81,7 @@ const TextSpacingIcon2 = () => (
 
 // Level 3 (3/3): ◀   ▶ (arrows at edges)
 const TextSpacingIcon3 = () => (
-  <svg viewBox="0 0 48 24" className="w-8 h-8" fill="currentColor" stroke="none">
+  <svg viewBox="0 0 48 24" className="w-8 h-8" fill="currentColor" stroke="none" aria-hidden="true">
     {/* Left arrow ◀ */}
     <path d="M-1 12l10-8v16z" fill="currentColor" />
     {/* Right arrow ▶ */}
@@ -90,7 +90,7 @@ const TextSpacingIcon3 = () => (
 )
 
 const PauseAnimationsIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" aria-hidden="true">
     <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
     <rect x="9" y="8" width="2" height="8" />
     <rect x="13" y="8" width="2" height="8" />
@@ -98,14 +98,14 @@ const PauseAnimationsIcon = () => (
 )
 
 const PlayAnimationsIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" aria-hidden="true">
     <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
     <path d="M10 8l6 4-6 4V8z" />
   </svg>
 )
 
 const HideImagesIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <rect x="3" y="3" width="18" height="18" rx="2" />
     <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
     <path d="M21 15l-5-5L5 21" />
@@ -115,40 +115,40 @@ const HideImagesIcon = () => (
 
 // Dyslexia icons - default shows dyslexia-style font, level 2 shows clean font
 const DyslexiaIcon0 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" aria-hidden="true">
     <text x="4" y="18" fontSize="14" fontFamily="'OpenDyslexic', 'Comic Sans MS', cursive" fontWeight="bold" style={{ letterSpacing: '0.05em' }}>Df</text>
   </svg>
 )
 
 const DyslexiaIcon1 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" aria-hidden="true">
     <text x="4" y="18" fontSize="14" fontFamily="'OpenDyslexic', 'Comic Sans MS', cursive" fontWeight="bold" style={{ letterSpacing: '0.05em' }}>Df</text>
   </svg>
 )
 
 const DyslexiaIcon2 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" aria-hidden="true">
     <text x="4" y="18" fontSize="14" fontFamily="Arial, Helvetica, sans-serif" fontWeight="bold">Df</text>
   </svg>
 )
 
 // Cursor icons for different modes
 const CursorIcon0 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" aria-hidden="true">
     <path d="M4 4l7 17 2.5-6.5L20 12 4 4z" />
   </svg>
 )
 
 // Large cursor icon (bigger arrow)
 const CursorIcon1 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" stroke="currentColor" strokeWidth="1">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" stroke="currentColor" strokeWidth="1" aria-hidden="true">
     <path d="M3 3l8 19 3-7 7-3L3 3z" />
   </svg>
 )
 
 // Reading mask icon (horizontal lines)
 const CursorIcon2 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <line x1="2" y1="8" x2="22" y2="8" />
     <line x1="2" y1="16" x2="22" y2="16" />
     <circle cx="12" cy="12" r="2" fill="currentColor" />
@@ -157,7 +157,7 @@ const CursorIcon2 = () => (
 
 // Reading guide icon (triangle pointer with line)
 const CursorIcon3 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" stroke="currentColor" strokeWidth="1">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" stroke="currentColor" strokeWidth="1" aria-hidden="true">
     <path d="M12 4l-4 6h8l-4-6z" />
     <line x1="12" y1="10" x2="12" y2="20" strokeWidth="2" />
   </svg>
@@ -166,7 +166,7 @@ const CursorIcon3 = () => (
 // Line height icons for different levels - double arrow on left, lines showing spacing
 // Default (0): Lines close together
 const LineHeightIcon0 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M8 7h14" />
     <path d="M8 12h14" />
     <path d="M8 17h14" />
@@ -178,7 +178,7 @@ const LineHeightIcon0 = () => (
 
 // Level 1 (1.5): Lines slightly apart
 const LineHeightIcon1 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M8 5h14" />
     <path d="M8 12h14" />
     <path d="M8 19h14" />
@@ -190,7 +190,7 @@ const LineHeightIcon1 = () => (
 
 // Level 2 (1.75): Lines medium apart
 const LineHeightIcon2 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M8 4h14" />
     <path d="M8 12h14" />
     <path d="M8 20h14" />
@@ -202,7 +202,7 @@ const LineHeightIcon2 = () => (
 
 // Level 3 (2.0): Lines far apart
 const LineHeightIcon3 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M8 2h14" />
     <path d="M8 12h14" />
     <path d="M8 22h14" />
@@ -215,7 +215,7 @@ const LineHeightIcon3 = () => (
 // Text alignment icons for different modes
 // Default (0): Mixed alignment lines
 const TextAlignIcon0 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M3 6h18" />
     <path d="M3 10h12" />
     <path d="M3 14h18" />
@@ -225,7 +225,7 @@ const TextAlignIcon0 = () => (
 
 // Left align (1): All lines start from left
 const TextAlignIcon1 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M3 6h18" />
     <path d="M3 10h12" />
     <path d="M3 14h16" />
@@ -235,7 +235,7 @@ const TextAlignIcon1 = () => (
 
 // Right align (2): All lines end at right
 const TextAlignIcon2 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M3 6h18" />
     <path d="M9 10h12" />
     <path d="M5 14h16" />
@@ -245,7 +245,7 @@ const TextAlignIcon2 = () => (
 
 // Center align (3): Lines centered
 const TextAlignIcon3 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M3 6h18" />
     <path d="M6 10h12" />
     <path d="M4 14h16" />
@@ -255,7 +255,7 @@ const TextAlignIcon3 = () => (
 
 // Justify (4): All lines full width
 const TextAlignIcon4 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M3 6h18" />
     <path d="M3 10h18" />
     <path d="M3 14h18" />
@@ -266,7 +266,7 @@ const TextAlignIcon4 = () => (
 // Saturation icons - droplet shape
 // Default (normal): Half full droplet
 const SaturationIcon0 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" fill="none" />
     <clipPath id="clip50default">
       <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
@@ -277,7 +277,7 @@ const SaturationIcon0 = () => (
 
 // High saturation (1/3): Droplet ~60% full (a little less than half)
 const SaturationIcon1 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" fill="none" />
     <clipPath id="clip60high">
       <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
@@ -288,7 +288,7 @@ const SaturationIcon1 = () => (
 
 // Low saturation (2/3): Droplet 1/4 full
 const SaturationIcon2 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" fill="none" />
     <clipPath id="clip25low">
       <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
@@ -299,7 +299,7 @@ const SaturationIcon2 = () => (
 
 // Grayscale (3/3): Empty droplet with 4 tiny dots inside
 const SaturationIcon3 = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" fill="none" />
     {/* 4 tiny dots */}
     <circle cx="12" cy="11" r="0.7" />
@@ -310,14 +310,14 @@ const SaturationIcon3 = () => (
 )
 
 const ResetIcon = ({ size = 'default' }: { size?: 'default' | 'large' }) => (
-  <svg viewBox="0 0 24 24" className={size === 'large' ? 'w-7 h-7' : 'w-5 h-5'} fill="none" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className={size === 'large' ? 'w-7 h-7' : 'w-5 h-5'} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
     <path d="M3 3v5h5" />
   </svg>
 )
 
 const CloseIcon = ({ size = 'default' }: { size?: 'default' | 'large' }) => (
-  <svg viewBox="0 0 24 24" className={size === 'large' ? 'w-8 h-8' : 'w-6 h-6'} fill="none" stroke="currentColor" strokeWidth="2.5">
+  <svg viewBox="0 0 24 24" className={size === 'large' ? 'w-8 h-8' : 'w-6 h-6'} fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
     <path d="M18 6L6 18M6 6l12 12" />
   </svg>
 )
@@ -350,7 +350,7 @@ function MenuItem({ icon, label, active, onClick, oversized = false }: MenuItemP
       {/* Active indicator */}
       {active && (
         <div className={`absolute bg-coral rounded-full flex items-center justify-center ${oversized ? 'top-3 right-3 w-8 h-8' : 'top-2 right-2 w-5 h-5'}`}>
-          <svg className={`text-white ${oversized ? 'w-5 h-5' : 'w-3 h-3'}`} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+          <svg className={`text-white ${oversized ? 'w-5 h-5' : 'w-3 h-3'}`} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M5 13l4 4L19 7" />
           </svg>
         </div>
@@ -395,11 +395,11 @@ function ToggleSwitch({ enabled, onChange, label, oversized = false }: ToggleSwi
           `}
         >
           {enabled ? (
-            <svg className={`text-charcoal ${oversized ? 'w-5 h-5' : 'w-4 h-4'}`} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+            <svg className={`text-charcoal ${oversized ? 'w-5 h-5' : 'w-4 h-4'}`} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M5 13l4 4L19 7" />
             </svg>
           ) : (
-            <svg className={`text-gray-400 ${oversized ? 'w-5 h-5' : 'w-4 h-4'}`} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <svg className={`text-gray-400 ${oversized ? 'w-5 h-5' : 'w-4 h-4'}`} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M6 18L18 6M6 6l12 12" />
             </svg>
           )}
@@ -932,7 +932,7 @@ export default function AccessibilityMenu() {
                 ${settings.oversizedWidget ? 'p-6 min-h-[160px]' : 'p-4'}
               `}>
                 <div className="flex flex-col items-center gap-2">
-                  <svg className={`${settings.oversizedWidget ? 'w-8 h-8' : 'w-5 h-5'} text-green-500`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <svg className={`${settings.oversizedWidget ? 'w-8 h-8' : 'w-5 h-5'} text-green-500`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                   <span className={`${settings.oversizedWidget ? 'text-base' : 'text-xs'} font-medium leading-tight`}>
@@ -961,13 +961,13 @@ export default function AccessibilityMenu() {
               className={`w-full bg-gray-200 dark:bg-gray-700 text-charcoal dark:text-gray-200 font-medium rounded-xl flex items-center justify-between transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 ${settings.oversizedWidget ? 'py-4 px-5 text-base' : 'py-3 px-4 text-sm'}`}
             >
               <div className="flex items-center gap-3">
-                <svg className={settings.oversizedWidget ? 'w-6 h-6' : 'w-5 h-5'} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <svg className={settings.oversizedWidget ? 'w-6 h-6' : 'w-5 h-5'} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <span>μετακίνηση/απόκρυψη γραφικού στοιχείου</span>
               </div>
-              <svg className={`transition-transform duration-200 ${isWidgetDropdownOpen ? 'rotate-180' : ''} ${settings.oversizedWidget ? 'w-5 h-5' : 'w-4 h-4'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <svg className={`transition-transform duration-200 ${isWidgetDropdownOpen ? 'rotate-180' : ''} ${settings.oversizedWidget ? 'w-5 h-5' : 'w-4 h-4'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
