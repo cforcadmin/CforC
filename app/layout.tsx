@@ -53,6 +53,48 @@ export default function RootLayout({
                   layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
                   autoDisplay: false
                 }, 'google_translate_element');
+
+                // Hide Google Translate widget elements from accessibility tree
+                // We use our own custom LanguageSwitcher for language selection
+                function hideGoogleTranslateA11y() {
+                  // Hide main containers
+                  var containers = document.querySelectorAll(
+                    '#google_translate_element, .goog-te-menu-frame, .goog-te-banner-frame, ' +
+                    '.skiptranslate, [class*="VIpgJd"], .goog-te-gadget, .goog-te-combo'
+                  );
+                  containers.forEach(function(el) {
+                    el.setAttribute('aria-hidden', 'true');
+                    el.setAttribute('role', 'presentation');
+                    el.setAttribute('tabindex', '-1');
+                  });
+
+                  // Fix href="#" links - add role and remove from tab order
+                  var links = document.querySelectorAll(
+                    '[class*="VIpgJd"] a[href="#"], ' +
+                    '.goog-te-menu-value a[href="#"], ' +
+                    '.goog-te-gadget a[href="#"]'
+                  );
+                  links.forEach(function(link) {
+                    link.setAttribute('role', 'presentation');
+                    link.setAttribute('tabindex', '-1');
+                    link.setAttribute('aria-hidden', 'true');
+                  });
+                }
+
+                // Run immediately and after delays to catch dynamically created elements
+                hideGoogleTranslateA11y();
+                setTimeout(hideGoogleTranslateA11y, 500);
+                setTimeout(hideGoogleTranslateA11y, 1000);
+                setTimeout(hideGoogleTranslateA11y, 2000);
+
+                // Also use MutationObserver to catch any new elements
+                var observer = new MutationObserver(function(mutations) {
+                  hideGoogleTranslateA11y();
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+
+                // Stop observing after 10 seconds to prevent performance issues
+                setTimeout(function() { observer.disconnect(); }, 10000);
               }
             `,
           }}

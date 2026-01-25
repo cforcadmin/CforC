@@ -44,7 +44,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
   const bgOpacity = isScrolled ? (variant === 'members' ? 'bg-[#F5F0EB]/90 dark:bg-gray-800/90' : 'bg-coral/90 dark:bg-gray-900/90') : bgColor
 
   return (
-    <nav role="navigation" aria-label="Κύρια πλοήγηση" className={`fixed ${isScrolled ? 'top-2' : 'top-0'} w-full z-50 ${isScrolled ? 'shadow-none' : 'shadow-sm dark:shadow-gray-700'} transition-all duration-300 ${isScrolled ? 'px-4' : ''}`}>
+    <header className={`fixed ${isScrolled ? 'top-2' : 'top-0'} w-full z-50 ${isScrolled ? 'shadow-none' : 'shadow-sm dark:shadow-gray-700'} transition-all duration-300 ${isScrolled ? 'px-4' : ''}`}>
       <div className={`${bgOpacity} ${isScrolled ? 'rounded-2xl scale-90' : ''} ${isScrolled ? (variant === 'members' ? 'ring-2 ring-coral' : 'ring-2 ring-black dark:ring-white') : ''} transition-all duration-300`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
@@ -85,43 +85,46 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 </svg>
               )}
             </button>
-            <Link href="/about" className={`text-sm transition-all ${pathname === '/about' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
-              ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ
-            </Link>
-            <Link href="/activities" className={`text-sm transition-all ${pathname?.startsWith('/activities') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
-              {isAuthenticated ? 'ΔΡΑΣΕΙΣ' : 'ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ'}
-            </Link>
-            {isAuthenticated && (
-              <Link href="/open-calls" className={`text-sm transition-all ${pathname === '/open-calls' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
-                ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ
+            {/* Navigation links wrapped in nav element */}
+            <nav aria-label="Κύρια πλοήγηση" className={`flex items-center ${isAuthenticated ? 'space-x-4' : 'space-x-8'}`}>
+              <Link href="/about" className={`text-sm transition-all ${pathname === '/about' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
+                ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ
               </Link>
-            )}
-            {!isAuthenticated && (
-              <Link href="/participation" className={`text-sm transition-all ${pathname === '/participation' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
-                ΣΥΜΜΕΤΟΧΗ
+              <Link href="/activities" className={`text-sm transition-all ${pathname?.startsWith('/activities') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
+                {isAuthenticated ? 'ΔΡΑΣΕΙΣ' : 'ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ'}
               </Link>
-            )}
-            <Link href="/members" className={`bg-white dark:bg-gray-700 text-charcoal dark:text-gray-200 ${isAuthenticated ? 'px-4' : 'px-6'} py-2 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors`}>
-              {isAuthenticated ? 'ΜΕΛΗ' : 'ΕΥΡΕΣΗ ΜΕΛΩΝ'}
-            </Link>
-            {isAuthenticated ? (
-              <>
-                <Link href="/profile" className={`text-sm transition-all ${pathname === '/profile' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
-                  ΠΡΟΦΙΛ
+              {isAuthenticated && (
+                <Link href="/open-calls" className={`text-sm transition-all ${pathname === '/open-calls' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
+                  ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => setIsLogoutModalOpen(true)}
-                  className="text-sm font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light transition-all"
-                >
-                  ΑΠΟΣΥΝΔΕΣΗ
-                </button>
-              </>
-            ) : (
-              <Link href="/login" className={`text-sm transition-all ${pathname === '/login' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
-                ΣΥΝΔΕΣΗ
+              )}
+              {!isAuthenticated && (
+                <Link href="/participation" className={`text-sm transition-all ${pathname === '/participation' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
+                  ΣΥΜΜΕΤΟΧΗ
+                </Link>
+              )}
+              <Link href="/members" className={`bg-white dark:bg-gray-700 text-charcoal dark:text-gray-200 ${isAuthenticated ? 'px-4' : 'px-6'} py-2 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors`}>
+                {isAuthenticated ? 'ΜΕΛΗ' : 'ΕΥΡΕΣΗ ΜΕΛΩΝ'}
               </Link>
-            )}
+              {isAuthenticated ? (
+                <>
+                  <Link href="/profile" className={`text-sm transition-all ${pathname === '/profile' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
+                    ΠΡΟΦΙΛ
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setIsLogoutModalOpen(true)}
+                    className="text-sm font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light transition-all"
+                  >
+                    ΑΠΟΣΥΝΔΕΣΗ
+                  </button>
+                </>
+              ) : (
+                <Link href="/login" className={`text-sm transition-all ${pathname === '/login' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
+                  ΣΥΝΔΕΣΗ
+                </Link>
+              )}
+            </nav>
             <LanguageSwitcher />
             {/* Accessibility Button - appears when scrolled */}
             <div className={`transition-all duration-300 flex items-center ${isScrolled ? 'opacity-100 scale-100 ml-4' : 'opacity-0 scale-0 w-0 ml-0 overflow-hidden'}`}>
@@ -155,9 +158,11 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
           </div>
         </div>
 
-        {/* Mobile menu */}
-        {isOpen && (
-          <div id="mobile-menu" className={`md:hidden ${bgColor} dark:bg-gray-800 border-t ${variant === 'members' ? 'border-gray-300 dark:border-gray-700' : 'border-coral-dark dark:border-gray-700'}`}>
+        {/* Mobile menu - always rendered for aria-controls, hidden when closed */}
+        <div
+          id="mobile-menu"
+          className={`md:hidden ${bgColor} dark:bg-gray-800 border-t ${variant === 'members' ? 'border-gray-300 dark:border-gray-700' : 'border-coral-dark dark:border-gray-700'} ${isOpen ? '' : 'hidden'}`}
+        >
           <div className="px-4 py-4 space-y-3">
             {/* Text Size Toggle - Mobile */}
             <div className="flex items-center space-x-2 py-2">
@@ -187,37 +192,39 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 </>
               )}
             </button>
-            <Link href="/about" className={`block text-sm py-2 transition-all ${pathname === '/about' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</Link>
-            <Link href="/activities" className={`block text-sm py-2 transition-all ${pathname?.startsWith('/activities') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>{isAuthenticated ? 'ΔΡΑΣΕΙΣ' : 'ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ'}</Link>
-            {isAuthenticated && (
-              <Link href="/open-calls" className={`block text-sm py-2 transition-all ${pathname === '/open-calls' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</Link>
-            )}
-            {!isAuthenticated && (
-              <Link href="/participation" className={`block text-sm py-2 transition-all ${pathname === '/participation' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΥΜΜΕΤΟΧΗ</Link>
-            )}
-            <Link href="/members" className="block w-full bg-white dark:bg-gray-700 text-charcoal dark:text-gray-200 px-6 py-2 rounded-full text-sm font-medium text-center">
-              {isAuthenticated ? 'ΜΕΛΗ' : 'ΕΥΡΕΣΗ ΜΕΛΩΝ'}
-            </Link>
-            {isAuthenticated ? (
-              <>
-                <Link href="/profile" className={`block text-sm py-2 transition-all ${pathname === '/profile' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΠΡΟΦΙΛ</Link>
-                <button
-                  type="button"
-                  onClick={() => setIsLogoutModalOpen(true)}
-                  className="block text-sm py-2 font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light transition-all text-left"
-                >
-                  ΑΠΟΣΥΝΔΕΣΗ
-                </button>
-              </>
-            ) : (
-              <Link href="/login" className={`block text-sm py-2 transition-all ${pathname === '/login' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΥΝΔΕΣΗ</Link>
-            )}
+            {/* Navigation links wrapped in nav element */}
+            <nav aria-label="Κύρια πλοήγηση κινητού" className="space-y-3">
+              <Link href="/about" className={`block text-sm py-2 transition-all ${pathname === '/about' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</Link>
+              <Link href="/activities" className={`block text-sm py-2 transition-all ${pathname?.startsWith('/activities') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>{isAuthenticated ? 'ΔΡΑΣΕΙΣ' : 'ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ'}</Link>
+              {isAuthenticated && (
+                <Link href="/open-calls" className={`block text-sm py-2 transition-all ${pathname === '/open-calls' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</Link>
+              )}
+              {!isAuthenticated && (
+                <Link href="/participation" className={`block text-sm py-2 transition-all ${pathname === '/participation' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΥΜΜΕΤΟΧΗ</Link>
+              )}
+              <Link href="/members" className="block w-full bg-white dark:bg-gray-700 text-charcoal dark:text-gray-200 px-6 py-2 rounded-full text-sm font-medium text-center">
+                {isAuthenticated ? 'ΜΕΛΗ' : 'ΕΥΡΕΣΗ ΜΕΛΩΝ'}
+              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link href="/profile" className={`block text-sm py-2 transition-all ${pathname === '/profile' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΠΡΟΦΙΛ</Link>
+                  <button
+                    type="button"
+                    onClick={() => setIsLogoutModalOpen(true)}
+                    className="block text-sm py-2 font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light transition-all text-left"
+                  >
+                    ΑΠΟΣΥΝΔΕΣΗ
+                  </button>
+                </>
+              ) : (
+                <Link href="/login" className={`block text-sm py-2 transition-all ${pathname === '/login' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΥΝΔΕΣΗ</Link>
+              )}
+            </nav>
             <div className="pt-2">
               <LanguageSwitcher />
             </div>
-            </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Logout Confirmation Modal */}
@@ -231,6 +238,6 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
         onCancel={() => setIsLogoutModalOpen(false)}
         variant="info"
       />
-    </nav>
+    </header>
   )
 }

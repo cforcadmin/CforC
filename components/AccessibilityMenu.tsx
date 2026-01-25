@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useAccessibility } from './AccessibilityProvider'
 
 // Icon components for each accessibility option
@@ -364,7 +364,7 @@ function MenuItem({ icon, label, active, onClick, oversized = false }: MenuItemP
   )
 }
 
-// Toggle switch component for oversized widget
+// Toggle switch component - uses div with click handler to avoid form control issues
 interface ToggleSwitchProps {
   enabled: boolean
   onChange: () => void
@@ -372,26 +372,44 @@ interface ToggleSwitchProps {
 }
 
 function ToggleSwitch({ enabled, onChange, label, oversized = false }: ToggleSwitchProps & { oversized?: boolean }) {
+  const baseId = useId()
+  const id = `a11y-toggle-${baseId}`
+
   return (
-    <div className={`flex items-center justify-between bg-gray-200 dark:bg-gray-800 rounded-xl ${oversized ? 'py-5 px-6' : 'py-3 px-4'}`}>
-      <span className={`font-medium text-charcoal dark:text-gray-200 ${oversized ? 'text-xl' : 'text-base'}`}>{label}</span>
-      <button
-        type="button"
+    <div
+      className={`flex items-center justify-between bg-gray-200 dark:bg-gray-800 rounded-xl ${oversized ? 'py-5 px-6' : 'py-3 px-4'}`}
+      role="group"
+      aria-labelledby={`${id}-label`}
+    >
+      <span
+        id={`${id}-label`}
+        className={`font-medium text-charcoal dark:text-gray-200 ${oversized ? 'text-xl' : 'text-base'}`}
+      >
+        {label}
+      </span>
+      <div
+        role="switch"
+        aria-checked={enabled}
+        aria-labelledby={`${id}-label`}
+        tabIndex={0}
         onClick={onChange}
+        onKeyDown={(e) => {
+          if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault()
+            onChange()
+          }
+        }}
         className={`
-          relative rounded-full transition-colors duration-200
+          relative rounded-full transition-colors duration-200 cursor-pointer
           focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2
           ${oversized ? 'w-20 h-11' : 'w-14 h-8'}
           ${enabled ? 'bg-charcoal dark:bg-coral' : 'bg-gray-400 dark:bg-gray-600'}
         `}
-        role="switch"
-        aria-checked={enabled}
-        aria-label={label}
       >
         <span
           className={`
             absolute bg-white rounded-full shadow transition-transform duration-200
-            flex items-center justify-center
+            flex items-center justify-center pointer-events-none
             ${oversized ? 'top-1.5 w-8 h-8' : 'top-1 w-6 h-6'}
             ${enabled ? (oversized ? 'translate-x-10' : 'translate-x-7') : 'translate-x-1'}
           `}
@@ -406,7 +424,7 @@ function ToggleSwitch({ enabled, onChange, label, oversized = false }: ToggleSwi
             </svg>
           )}
         </span>
-      </button>
+      </div>
     </div>
   )
 }
@@ -982,63 +1000,86 @@ export default function AccessibilityMenu() {
             {isWidgetDropdownOpen && (
               <div className={`mt-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden ${settings.oversizedWidget ? 'text-base' : 'text-sm'}`}>
                 {/* Position Options */}
-                <div className="p-4 space-y-3">
+                <div className="p-4 space-y-3" role="radiogroup" aria-label="Θέση γραφικού στοιχείου">
                   {/* Left Option */}
                   <label className="flex items-center justify-between cursor-pointer py-2">
                     <span className="text-charcoal dark:text-gray-200">Αριστερά</span>
-                    <div
-                      onClick={() => updateSetting('widgetPosition', 'left')}
+                    <input
+                      type="radio"
+                      name="widgetPosition"
+                      checked={settings.widgetPosition === 'left' && !settings.widgetHidden}
+                      onChange={() => updateSetting('widgetPosition', 'left')}
+                      className="sr-only"
+                      aria-label="Αριστερή θέση"
+                    />
+                    <span
                       className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
                         settings.widgetPosition === 'left' && !settings.widgetHidden
                           ? 'border-charcoal dark:border-white'
                           : 'border-gray-300 dark:border-gray-600'
                       }`}
+                      aria-hidden="true"
                     >
                       {settings.widgetPosition === 'left' && !settings.widgetHidden && (
-                        <div className="w-3 h-3 rounded-full bg-charcoal dark:bg-white" />
+                        <span className="w-3 h-3 rounded-full bg-charcoal dark:bg-white" />
                       )}
-                    </div>
+                    </span>
                   </label>
 
                   {/* Right Option */}
                   <label className="flex items-center justify-between cursor-pointer py-2">
                     <span className="text-charcoal dark:text-gray-200">Δεξιά</span>
-                    <div
-                      onClick={() => updateSetting('widgetPosition', 'right')}
+                    <input
+                      type="radio"
+                      name="widgetPosition"
+                      checked={settings.widgetPosition === 'right' && !settings.widgetHidden}
+                      onChange={() => updateSetting('widgetPosition', 'right')}
+                      className="sr-only"
+                      aria-label="Δεξιά θέση"
+                    />
+                    <span
                       className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
                         settings.widgetPosition === 'right' && !settings.widgetHidden
                           ? 'border-charcoal dark:border-white'
                           : 'border-gray-300 dark:border-gray-600'
                       }`}
+                      aria-hidden="true"
                     >
                       {settings.widgetPosition === 'right' && !settings.widgetHidden && (
-                        <div className="w-3 h-3 rounded-full bg-charcoal dark:bg-white" />
+                        <span className="w-3 h-3 rounded-full bg-charcoal dark:bg-white" />
                       )}
-                    </div>
+                    </span>
                   </label>
 
                   {/* Hide Option */}
                   <label className="flex items-center justify-between cursor-pointer py-2">
                     <span className="text-charcoal dark:text-gray-200">Κρύψε το εικονίδιο για...</span>
-                    <div
-                      onClick={() => updateSetting('widgetHidden', !settings.widgetHidden)}
+                    <input
+                      type="checkbox"
+                      checked={settings.widgetHidden}
+                      onChange={() => updateSetting('widgetHidden', !settings.widgetHidden)}
+                      className="sr-only"
+                      aria-label="Απόκρυψη εικονιδίου"
+                    />
+                    <span
                       className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
                         settings.widgetHidden
                           ? 'border-charcoal dark:border-white'
                           : 'border-gray-300 dark:border-gray-600'
                       }`}
+                      aria-hidden="true"
                     >
                       {settings.widgetHidden && (
-                        <div className="w-3 h-3 rounded-full bg-charcoal dark:bg-white" />
+                        <span className="w-3 h-3 rounded-full bg-charcoal dark:bg-white" />
                       )}
-                    </div>
+                    </span>
                   </label>
                 </div>
 
                 {/* Hide Duration Section - Only shown when "Κρύβω" is selected */}
                 {settings.widgetHidden && (
                   <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-                    <div className="space-y-3">
+                    <div className="space-y-3" role="radiogroup" aria-label="Διάρκεια απόκρυψης">
                       {[
                         { value: 'session', label: 'Την τρέχουσα συνεδρία' },
                         { value: 'day', label: 'Μια μέρα' },
@@ -1048,18 +1089,26 @@ export default function AccessibilityMenu() {
                       ].map((option) => (
                         <label key={option.value} className="flex items-center justify-between cursor-pointer py-2">
                           <span className="text-charcoal dark:text-gray-200">{option.label}</span>
-                          <div
-                            onClick={() => setSelectedHideDuration(option.value as typeof selectedHideDuration)}
+                          <input
+                            type="radio"
+                            name="hideDuration"
+                            checked={selectedHideDuration === option.value}
+                            onChange={() => setSelectedHideDuration(option.value as typeof selectedHideDuration)}
+                            className="sr-only"
+                            aria-label={option.label}
+                          />
+                          <span
                             className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
                               selectedHideDuration === option.value
                                 ? 'border-charcoal dark:border-white'
                                 : 'border-gray-300 dark:border-gray-600'
                             }`}
+                            aria-hidden="true"
                           >
                             {selectedHideDuration === option.value && (
-                              <div className="w-3 h-3 rounded-full bg-charcoal dark:bg-white" />
+                              <span className="w-3 h-3 rounded-full bg-charcoal dark:bg-white" />
                             )}
-                          </div>
+                          </span>
                         </label>
                       ))}
                     </div>
@@ -1118,7 +1167,6 @@ export function AccessibilityButton({ size = 'default' }: AccessibilityButtonPro
         focus:outline-none focus-visible:ring-2 focus-visible:ring-coral dark:focus-visible:ring-white focus-visible:ring-offset-2
       `}
       aria-label="Άνοιγμα μενού προσβασιμότητας (CTRL+U)"
-      title="Μενού Προσβασιμότητας"
     >
       {/* Light mode icon */}
       <img
@@ -1162,7 +1210,6 @@ export function FloatingAccessibilityButton() {
         border-2 border-white dark:border-gray-700
       `}
       aria-label="Άνοιγμα μενού προσβασιμότητας (CTRL+U)"
-      title="Μενού Προσβασιμότητας"
     >
       {/* Light mode icon */}
       <img

@@ -31,13 +31,45 @@ body {
   color: #e5e5e5;
 }
 
-/* Hide Google Translate toolbar and elements */
+/* Hide Google Translate toolbar and elements from view AND accessibility tree */
 .goog-te-banner-frame,
 .goog-te-balloon-frame,
 .goog-tooltip,
 .goog-tooltip:hover,
-.goog-text-highlight {
+.goog-text-highlight,
+.goog-te-gadget,
+.goog-te-combo,
+#google_translate_element,
+[class*="VIpgJd"] {
   display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Ensure Google Translate elements are removed from accessibility tree */
+.goog-te-banner-frame,
+.goog-te-balloon-frame,
+.goog-te-gadget,
+.goog-te-combo,
+.goog-te-menu-frame,
+#google_translate_element,
+[class*="VIpgJd"],
+.skiptranslate {
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  height: 1px !important;
+  width: 1px !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  white-space: nowrap !important;
+}
+
+/* Ensure Google Translate links are not focusable */
+[class*="VIpgJd"] a,
+.goog-te-gadget a,
+.goog-te-menu-value a {
+  pointer-events: none !important;
+  tabindex: -1;
 }
 
 body {
@@ -45,13 +77,9 @@ body {
   position: static !important;
 }
 
-/* Style the Google Translate widget if it appears */
-.skiptranslate {
-  display: none !important;
-}
-
 /* Remove Google Translate's iframe */
-.goog-te-banner-frame.skiptranslate {
+.goog-te-banner-frame.skiptranslate,
+.skiptranslate {
   display: none !important;
 }
 
@@ -127,7 +155,7 @@ body {
 }
 
 /* Prevent focused elements from being hidden under fixed header */
-/* The navigation bar is ~80px (5rem) high */
+/* The navigation bar is ~80px (5rem) high, using 7rem for extra breathing room */
 a:focus,
 button:focus,
 input:focus,
@@ -135,6 +163,9 @@ select:focus,
 textarea:focus,
 [tabindex]:focus,
 [role="button"]:focus,
+[role="radio"]:focus,
+[role="tab"]:focus,
+[role="switch"]:focus,
 h1:target,
 h2:target,
 h3:target,
@@ -144,7 +175,7 @@ h6:target,
 section:target,
 article:target,
 [id]:target {
-  scroll-margin-top: 6rem;
+  scroll-margin-top: 7rem;
 }
 
 /* Screen reader only announcements container */

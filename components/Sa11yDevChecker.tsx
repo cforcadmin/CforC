@@ -66,7 +66,11 @@ export default function Sa11yDevChecker() {
 
     loadSa11y()
 
-    // Cleanup on unmount
+    // No cleanup on dependency change - only clean up on unmount if needed
+  }, [user, isLoading, sa11yLoaded])
+
+  // Separate cleanup effect that only runs on unmount
+  useEffect(() => {
     return () => {
       const cssLink = document.getElementById('sa11y-css')
       if (cssLink) {
@@ -75,7 +79,7 @@ export default function Sa11yDevChecker() {
       // Sa11y creates elements with id="sa11y-*", remove them
       document.querySelectorAll('[id^="sa11y"]').forEach(el => el.remove())
     }
-  }, [user, isLoading, sa11yLoaded])
+  }, []) // Empty deps = only runs on unmount
 
   // This component doesn't render anything visible
   // Sa11y creates its own UI elements

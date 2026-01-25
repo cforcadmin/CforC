@@ -1,5 +1,6 @@
 'use client'
 
+import { useId } from 'react'
 import { useTextSize } from './TextSizeProvider'
 import { useTheme } from './ThemeProvider'
 
@@ -19,6 +20,7 @@ const sizes: { size: TextSize; fontSize: number; label: string }[] = [
 export default function TextSizeToggle({ variant = 'default', className = '' }: TextSizeToggleProps) {
   const { textSize, setTextSize } = useTextSize()
   const { theme } = useTheme()
+  const baseId = useId()
 
   return (
     <>
@@ -40,14 +42,14 @@ export default function TextSizeToggle({ variant = 'default', className = '' }: 
           animation: bellShake 1s ease-in-out;
         }
       `}</style>
-      <div
+      <fieldset
         className={`flex items-center relative ${className}`}
-        role="radiogroup"
-        aria-label="Επιλογή μεγέθους κειμένου"
-        style={{ gap: '12px' }}
+        style={{ gap: '12px', border: 'none', padding: 0, margin: 0 }}
       >
+        <legend className="sr-only">Επιλογή μεγέθους κειμένου</legend>
         {sizes.map(({ size, fontSize, label }) => {
           const isActive = textSize === size
+          const inputId = `${baseId}-${size}`
           // Active: black text on white circle background
           // Inactive: depends on background color
           //   - default variant (coral bg): white text
@@ -62,20 +64,25 @@ export default function TextSizeToggle({ variant = 'default', className = '' }: 
           }
 
           return (
-            <button
+            <label
               key={size}
-              type="button"
-              onClick={() => setTextSize(size)}
-              className={`relative w-8 h-8 flex items-center justify-center z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 rounded-full ${!isActive ? 'inactive-a' : ''}`}
-              role="radio"
-              aria-checked={isActive}
-              aria-label={label}
+              htmlFor={inputId}
+              className={`relative w-8 h-8 flex items-center justify-center z-10 cursor-pointer rounded-full has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-coral has-[:focus-visible]:ring-offset-2 ${!isActive ? 'inactive-a' : ''}`}
               style={{
                 backgroundColor: isActive ? '#FFFFFF' : 'transparent',
                 boxShadow: isActive && variant === 'members' ? '0 0 0 2px #FF8B6A' : 'none',
                 transition: 'background-color 300ms ease-in-out, box-shadow 300ms ease-in-out',
               }}
             >
+              <input
+                type="radio"
+                id={inputId}
+                name={`text-size-${baseId}`}
+                value={size}
+                checked={isActive}
+                onChange={() => setTextSize(size)}
+                className="sr-only peer"
+              />
               <span
                 className="font-bold notranslate"
                 style={{
@@ -83,13 +90,15 @@ export default function TextSizeToggle({ variant = 'default', className = '' }: 
                   color: textColor,
                   transition: 'color 300ms ease-in-out',
                 }}
+                aria-hidden="true"
               >
                 A
               </span>
-            </button>
+              <span className="sr-only">{label}</span>
+            </label>
           )
         })}
-      </div>
+      </fieldset>
     </>
   )
 }
