@@ -45,7 +45,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
 
   return (
     <nav role="navigation" aria-label="Κύρια πλοήγηση" className={`fixed ${isScrolled ? 'top-2' : 'top-0'} w-full z-50 ${isScrolled ? 'shadow-none' : 'shadow-sm dark:shadow-gray-700'} transition-all duration-300 ${isScrolled ? 'px-4' : ''}`}>
-      <div className={`${bgOpacity} ${isScrolled ? 'rounded-2xl scale-90' : ''} ${isScrolled && variant === 'members' ? 'ring-2 ring-coral' : ''} transition-all duration-300`}>
+      <div className={`${bgOpacity} ${isScrolled ? 'rounded-2xl scale-90' : ''} ${isScrolled ? (variant === 'members' ? 'ring-2 ring-coral' : 'ring-2 ring-black dark:ring-white') : ''} transition-all duration-300`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
