@@ -1,16 +1,19 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 
 export default function AboutTextSection() {
   const [isHeaderVisible, setIsHeaderVisible] = useState(false)
   const [isTextVisible, setIsTextVisible] = useState(false)
   const [isStatsVisible, setIsStatsVisible] = useState(false)
+  const [isTransparencyVisible, setIsTransparencyVisible] = useState(false)
   const [counter1, setCounter1] = useState(0)
   const [counter2, setCounter2] = useState(0)
   const headerRef = useRef<HTMLDivElement>(null)
   const textRef = useRef<HTMLDivElement>(null)
   const statsRef = useRef<HTMLDivElement>(null)
+  const transparencyRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const headerObserver = new IntersectionObserver(
@@ -46,6 +49,17 @@ export default function AboutTextSection() {
       { threshold: 0.1 }
     )
 
+    const transparencyObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsTransparencyVisible(true)
+          }
+        })
+      },
+      { threshold: 0.1 }
+    )
+
     if (headerRef.current) {
       headerObserver.observe(headerRef.current)
     }
@@ -58,10 +72,15 @@ export default function AboutTextSection() {
       statsObserver.observe(statsRef.current)
     }
 
+    if (transparencyRef.current) {
+      transparencyObserver.observe(transparencyRef.current)
+    }
+
     return () => {
       headerObserver.disconnect()
       textObserver.disconnect()
       statsObserver.disconnect()
+      transparencyObserver.disconnect()
     }
   }, [])
 
@@ -170,6 +189,28 @@ export default function AboutTextSection() {
             <div className="text-8xl font-bold text-coral dark:text-coral-light mb-2">{counter2}</div>
             <p className="text-xl font-medium dark:text-gray-200">ΜΕΛΗ</p>
           </div>
+        </div>
+
+        {/* Transparency Section */}
+        <div
+          ref={transparencyRef}
+          className={`mt-24 bg-gray-50 dark:bg-gray-800 rounded-3xl p-12 text-center transition-all duration-1000 ${
+            isTransparencyVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+          }`}
+        >
+          <h3 className="text-2xl md:text-3xl font-bold mb-6 dark:text-gray-100">ΔΙΑΦΑΝΕΙΑ</h3>
+          <p className="text-gray-700 dark:text-gray-300 text-lg max-w-3xl mx-auto leading-relaxed mb-8">
+            Η διαφάνεια αποτελεί θεμελιώδη αξία του Culture for Change. Πιστεύουμε στην ανοιχτή επικοινωνία
+            και στη λογοδοσία προς τα μέλη μας και την κοινότητά μας. Μοιραζόμαστε δημόσια τα οικονομικά μας
+            στοιχεία και το καταστατικό μας, ώστε να διασφαλίζουμε την εμπιστοσύνη και την ακεραιότητα
+            σε κάθε μας δράση.
+          </p>
+          <Link
+            href="/transparency"
+            className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-8 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-all duration-300"
+          >
+            ΜΑΘΕΤΕ ΠΕΡΙΣΣΟΤΕΡΑ
+          </Link>
         </div>
       </div>
     </section>

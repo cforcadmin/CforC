@@ -41,7 +41,7 @@ export default function TransparencyPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen dark:bg-gray-900">
       <Navigation />
       <main id="main-content">
         {/* Hero Section */}
@@ -68,35 +68,35 @@ export default function TransparencyPage() {
         </section>
 
       {/* Main Content Section */}
-      <section className="pt-32 pb-24 bg-white">
+      <section className="pt-32 pb-24 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           {/* Introduction Section */}
-          <div className="bg-gray-50 rounded-3xl p-12 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6">ΔΙΑΦΑΝΕΙΑ</h2>
-            <p className="text-gray-700 text-lg max-w-4xl mx-auto leading-relaxed">
+          <div className="bg-white dark:bg-gray-700 rounded-3xl p-12 text-center">
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 dark:text-gray-100">ΔΙΑΦΑΝΕΙΑ</h2>
+            <p className="text-gray-700 dark:text-gray-300 text-lg max-w-4xl mx-auto leading-relaxed">
               Η διαφάνεια είναι μία από τις κύριες αξίες του CforC, την οποία εφαρμόζουμε με τον διαμοιρασμό των οικονομικών μας στοιχείων και του καταστατικού χάρτη του οργανισμού μας.
             </p>
           </div>
 
           {/* Statute Section */}
-          <div className="bg-gray-50 rounded-3xl p-12 text-center">
-            <h3 className="text-2xl md:text-3xl font-bold mb-8">ΚΑΤΑΣΤΑΤΙΚΟ</h3>
+          <div className="bg-white dark:bg-gray-700 rounded-3xl p-12 text-center">
+            <h3 className="text-2xl md:text-3xl font-bold mb-8 dark:text-gray-100">ΚΑΤΑΣΤΑΤΙΚΟ</h3>
             <button
               onClick={handleOpenStatute}
-              className="bg-coral text-white px-8 py-4 rounded-full text-lg font-bold hover:bg-orange-500 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="bg-charcoal dark:bg-gray-600 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-8 py-4 rounded-full text-lg font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-all duration-300"
             >
               ΚΑΤΑΣΤΑΤΙΚΟ
             </button>
           </div>
 
           {/* Financial Report Section */}
-          <div className="bg-gray-50 rounded-3xl p-12 text-center">
-            <h3 className="text-2xl md:text-3xl font-bold mb-8">
+          <div className="bg-white dark:bg-gray-700 rounded-3xl p-12 text-center">
+            <h3 className="text-2xl md:text-3xl font-bold mb-8 dark:text-gray-100">
               ΟΙΚΟΝΟΜΙΚΟΣ ΑΠΟΛΟΓΙΣΜΟΣ 2024
             </h3>
             <button
               onClick={handleOpenFinancialReport}
-              className="bg-coral text-white px-8 py-4 rounded-full text-lg font-bold hover:bg-orange-500 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="bg-charcoal dark:bg-gray-600 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-8 py-4 rounded-full text-lg font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-all duration-300"
             >
               ΑΠΟΛΟΓΙΣΜΟΣ 2024
             </button>
