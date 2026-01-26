@@ -93,8 +93,8 @@ export default function ActivitiesSection() {
           <div>
             <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΠΡΟΣΦΑΤΕΣ ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</span>
             <h2 className="text-4xl md:text-5xl font-bold dark:text-gray-100">
-              ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ ΤΟΥ CULTURE<br />
-              FOR CHANGE
+              ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ ΤΟΥ<br />
+              CULTURE FOR CHANGE
             </h2>
           </div>
           <Link href="/activities" className="hidden md:block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors">
