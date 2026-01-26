@@ -95,18 +95,18 @@ export default function Footer({ variant = 'default' }: FooterProps) {
             <div>
               <h3 className="font-bold mb-3 text-charcoal dark:text-coral-light text-xs">SITEMAP</h3>
             <ul role="list" className="space-y-1.5 text-xs dark:text-gray-300">
-              <li><Link href="/members" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΕΥΡΕΣΗ ΜΕΛΩΝ</Link></li>
-              <li><Link href="/about" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</Link></li>
-              <li><Link href="/activities" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</Link></li>
+              <li><Link href="/about" className="hover:text-coral dark:hover:text-coral-light transition-colors">Σχετικά με εμάς</Link></li>
+              <li><Link href="/activities" className="hover:text-coral dark:hover:text-coral-light transition-colors">Δραστηριότητες</Link></li>
               <li>
                 {user ? (
-                  <Link href="/open-calls" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</Link>
+                  <Link href="/open-calls" className="hover:text-coral dark:hover:text-coral-light transition-colors">Ανοιχτές προσκλήσεις</Link>
                 ) : (
-                  <button type="button" onClick={handleOpenCallsClick} className="hover:text-coral dark:hover:text-coral-light transition-colors">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</button>
+                  <button type="button" onClick={handleOpenCallsClick} className="hover:text-coral dark:hover:text-coral-light transition-colors">Ανοιχτές προσκλήσεις</button>
                 )}
               </li>
-              <li><Link href="/participation" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΣΥΜΜΕΤΟΧΗ</Link></li>
-              <li><Link href="/transparency" className="hover:text-coral dark:hover:text-coral-light transition-colors">ΔΙΑΦΑΝΕΙΑ</Link></li>
+              <li><Link href="/participation" className="hover:text-coral dark:hover:text-coral-light transition-colors">Συμμετοχή</Link></li>
+              <li><Link href="/members" className="hover:text-coral dark:hover:text-coral-light transition-colors">Εύρεση μελών</Link></li>
+              <li><Link href="/transparency" className="hover:text-coral dark:hover:text-coral-light transition-colors">Διαφάνεια</Link></li>
             </ul>
             </div>
 
@@ -176,7 +176,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
 
         {/* Bottom section */}
         <div className="border-t border-gray-300 dark:border-gray-600 pt-6 flex flex-col md:flex-row justify-between items-center text-xs text-gray-700 dark:text-gray-400">
-          <p>ΠΝΕΥΜΑΤΙΚΑ ΔΙΚΑΙΩΜΑΤΑ © 2026 CULTURE FOR CHANGE</p>
+          <p>Πνευματικά δικαιώματα © 2026 Culture For Change</p>
           <p className="mt-2 md:mt-0">
             Developed by <a href="https://yoryosstyl.com" target="_blank" rel="noopener noreferrer" className="font-medium hover:text-coral dark:hover:text-coral-light transition-colors">Yoryos Styl</a>
           </p>
