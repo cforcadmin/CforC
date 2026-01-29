@@ -12,6 +12,7 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [showPopup, setShowPopup] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [website, setWebsite] = useState('') // Honeypot field
 
   const bgColor = variant === 'members' ? 'bg-[#F5F0EB] dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800'
 
@@ -26,7 +27,7 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ email, website }),
         })
 
         if (response.ok) {
@@ -67,6 +68,17 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
             {/* Right - Form */}
             <div>
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Honeypot field - hidden from humans, bots will fill it */}
+                <div className="absolute -left-[9999px]" aria-hidden="true">
+                  <input
+                    type="text"
+                    name="website"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
+                </div>
                 <div className="relative">
                   <input
                     type="email"

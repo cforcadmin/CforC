@@ -1,14 +1,45 @@
 import { NextResponse } from 'next/server'
+import { newsletterLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 
 export async function POST(request: Request) {
   try {
-    const { email } = await request.json()
+    // Get IP for rate limiting
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
+               request.headers.get('x-real-ip') ||
+               'unknown'
+
+    // Check rate limit
+    const rateLimitResult = newsletterLimiter.check(ip)
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: getRateLimitErrorMessage(rateLimitResult.resetTime) },
+        { status: 429 }
+      )
+    }
+
+    const { email, website } = await request.json()
+
+    // Honeypot check - if filled, it's a bot
+    if (website) {
+      // Silently reject but return success to not alert bots
+      console.log('Bot detected via honeypot:', email)
+      return NextResponse.json({ success: true })
+    }
 
     if (!email || !email.includes('@')) {
       return NextResponse.json(
         { error: 'Invalid email address' },
         { status: 400 }
       )
+    }
+
+    // Suspicious email pattern check - excessive dots in username
+    const username = email.split('@')[0]
+    const dotCount = (username.match(/\./g) || []).length
+    if (dotCount > 3) {
+      // Silently reject but return success to not alert spammers
+      console.log('Suspicious email pattern blocked:', email)
+      return NextResponse.json({ success: true })
     }
 
     const RESEND_API_KEY = process.env.RESEND_API_KEY

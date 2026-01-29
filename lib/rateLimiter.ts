@@ -81,10 +81,16 @@ export const loginLimiter = new RateLimiter(
   15 * 60 * 1000 // per 15 minutes
 )
 
+export const newsletterLimiter = new RateLimiter(
+  3, // 3 subscriptions
+  60 * 60 * 1000 // per hour per IP
+)
+
 // Clean up expired entries every 10 minutes
 setInterval(() => {
   magicLinkLimiter.cleanup()
   loginLimiter.cleanup()
+  newsletterLimiter.cleanup()
 }, 10 * 60 * 1000)
 
 // Helper function to get user-friendly error messages
