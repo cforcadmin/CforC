@@ -4,7 +4,7 @@ import AboutSection from '@/components/AboutSection'
 import ActivitiesSection from '@/components/ActivitiesSection'
 // import MapSection from '@/components/MapSection'
 import OpenCallsSection from '@/components/OpenCallsSection'
-import BecomeMemberSection from '@/components/BecomeMemberSection'
+import CombinedCtaSection from '@/components/CombinedCtaSection'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
 import ScrollToTop from '@/components/ScrollToTop'
@@ -19,7 +19,7 @@ export default function Home() {
         <ActivitiesSection />
         {/* <MapSection /> */}
         <OpenCallsSection />
-        <BecomeMemberSection />
+        <CombinedCtaSection />
       </main>
       <Footer />
       <CookieConsent />

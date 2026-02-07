@@ -8,8 +8,7 @@ import AboutOfferSection from '@/components/AboutOfferSection'
 import AboutCoreSection from '@/components/AboutCoreSection'
 import AboutGoalsSection from '@/components/AboutGoalsSection'
 import AboutPartnersSection from '@/components/AboutPartnersSection'
-import BecomeMemberSection from '@/components/BecomeMemberSection'
-import NewsletterSection from '@/components/NewsletterSection'
+import CombinedCtaSection from '@/components/CombinedCtaSection'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
 import ScrollToTop from '@/components/ScrollToTop'
@@ -28,8 +27,7 @@ export default function AboutPage() {
         <AboutCoreSection />
         <AboutGoalsSection />
         <AboutPartnersSection />
-        <BecomeMemberSection />
-        <NewsletterSection />
+        <CombinedCtaSection />
       </main>
       <Footer />
       <CookieConsent />

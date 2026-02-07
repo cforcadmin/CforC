@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
-import NewsletterSection from '@/components/NewsletterSection'
+import CombinedCtaSection from '@/components/CombinedCtaSection'
 import ScrollToTop from '@/components/ScrollToTop'
 import LoadingIndicator from '@/components/LoadingIndicator'
 import Link from 'next/link'
@@ -315,7 +315,7 @@ function ActivitiesPageContent() {
         </div>
       </section>
 
-      <NewsletterSection />
+      <CombinedCtaSection />
       </main>
       <Footer />
       <CookieConsent />

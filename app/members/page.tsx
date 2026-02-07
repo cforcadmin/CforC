@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
@@ -46,17 +47,34 @@ interface Member {
 }
 
 export default function MembersPage() {
+  return (
+    <Suspense>
+      <MembersPageContent />
+    </Suspense>
+  )
+}
+
+function MembersPageContent() {
   const [allMembers, setAllMembers] = useState<Member[]>([])
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedField, setSelectedField] = useState('')
   const [selectedCity, setSelectedCity] = useState('')
   const [selectedProvince, setSelectedProvince] = useState('')
+  const searchParams = useSearchParams()
   const [sortMode, setSortMode] = useState<'none' | 'alpha-asc' | 'alpha-desc' | 'random'>('random')
   const [totalCount, setTotalCount] = useState(0)
   const [displayCount, setDisplayCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
+
+  // Read ?field= URL param for pre-filtering from member profile tags
+  useEffect(() => {
+    const fieldParam = searchParams.get('field')
+    if (fieldParam) {
+      setSelectedField(fieldParam)
+    }
+  }, [searchParams])
 
   // Handle scroll for accessibility button fade
   useEffect(() => {
