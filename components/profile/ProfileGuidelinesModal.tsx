@@ -184,11 +184,11 @@ export default function ProfileGuidelinesModal({
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-charcoal dark:text-gray-100">Τομείς Εργασίας</h3>
+                <h3 className="font-semibold text-charcoal dark:text-gray-100">Πεδία Πρακτικής</h3>
                 <ul className="mt-2 text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                  <li>• Μέγιστο όριο: <strong>5 τομείς</strong></li>
-                  <li>• Διαχώρισε με κόμμα (,)</li>
-                  <li>• Παράδειγμα: "Τέχνη, Πολιτισμός, Εκπαίδευση"</li>
+                  <li>• Μέγιστο όριο: <strong>5 πεδία</strong></li>
+                  <li>• Κάνε κλικ στο (+) για να επιλέξεις κατηγορία ή υποκατηγορία</li>
+                  <li>• Πέρασε τον κέρσορα πάνω σε μια κατηγορία για να δεις τις υποκατηγορίες</li>
                 </ul>
               </div>
             </div>

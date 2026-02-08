@@ -2,8 +2,7 @@
  * UPLOAD: Apply the reviewed CSV data to Strapi.
  *
  * Reads the edited CSV (fields-of-work-cleanup-report-*.csv) and updates
- * FieldsOfWork, City, and Province for ALL members using the
- * "New FieldsOfWork", "New City", "New Province" columns.
+ * FieldsOfWork for ALL members using the "New FieldsOfWork NEW DESIGN" column.
  *
  * Uses the same two-step pattern as app/api/members/update:
  *   1. Filter by documentId to get the numeric ID
@@ -167,14 +166,15 @@ async function main() {
 
   const docIdCol = colIndex['Document ID']
   const nameCol = colIndex['Name']
-  const newFoWCol = colIndex['New FieldsOfWork']
-  const newCityCol = colIndex['New City']
-  const newProvinceCol = colIndex['New Province']
+  const newFoWCol = colIndex['New FieldsOfWork NEW DESIGN']
 
-  if (docIdCol === undefined || nameCol === undefined ||
-      newFoWCol === undefined || newCityCol === undefined || newProvinceCol === undefined) {
+  if (docIdCol === undefined || nameCol === undefined || newFoWCol === undefined) {
     throw new Error(`Missing required columns. Found: ${headers.join(', ')}`)
   }
+
+  // Count how many have non-empty NEW DESIGN values
+  const nonEmptyCount = dataRows.filter(r => (r[newFoWCol]?.trim() || '').length > 0).length
+  console.log(`   Non-empty "New FieldsOfWork NEW DESIGN" entries: ${nonEmptyCount}`)
 
   console.log(`📊 Found ${dataRows.length} members in CSV\n`)
 
@@ -185,8 +185,6 @@ async function main() {
     const documentId = row[docIdCol]?.trim()
     const name = row[nameCol]?.trim()
     const newFoW = row[newFoWCol]?.trim() || ''
-    const newCity = row[newCityCol]?.trim() || ''
-    const newProvince = row[newProvinceCol]?.trim() || ''
 
     if (!documentId || !name) {
       console.log(`   ⚠️  Skipping row with missing ID/Name`)
@@ -200,13 +198,11 @@ async function main() {
       // Step 2: PUT update using numeric id, including required fields to pass validation
       await updateMember(member.id, name, {
         FieldsOfWork: newFoW,
-        City: newCity,
-        Province: newProvince,
         ProfileImageAltText: member.ProfileImageAltText,
       })
 
       updatedCount++
-      console.log(`   ✅ ${name}`)
+      console.log(`   ✅ ${name} → ${newFoW || '(empty)'}`)
     } catch (err) {
       errorCount++
       console.error(`   ❌ ${name}: ${err.message}`)

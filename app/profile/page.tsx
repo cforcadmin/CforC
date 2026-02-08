@@ -6,6 +6,7 @@ import { useAuth } from '@/components/AuthProvider'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import EditableField from '@/components/profile/EditableField'
+import FieldsOfWorkSelector from '@/components/profile/FieldsOfWorkSelector'
 import CityAutocomplete from '@/components/profile/CityAutocomplete'
 import EditableImage from '@/components/profile/EditableImage'
 import EditableMultipleImages from '@/components/profile/EditableMultipleImages'
@@ -222,13 +223,8 @@ export default function ProfilePage() {
       }
     }
 
-    // Validate FieldsOfWork (max 5 items)
-    if (formData.FieldsOfWork) {
-      const fieldsCount = countItems(formData.FieldsOfWork)
-      if (fieldsCount > 5) {
-        errors.push(`Οι τομείς εργασίας είναι ${fieldsCount} (μέγιστο 5)`)
-      }
-    }
+    // Validate FieldsOfWork — temporarily allow more than 5 for legacy data
+    // (limit will be enforced later)
 
     // Validate Project1 Tags (max 5 items)
     if (formData.Project1Tags) {
@@ -265,7 +261,7 @@ export default function ProfilePage() {
     }
 
     if (!formData.FieldsOfWork || formData.FieldsOfWork.trim() === '' || formData.FieldsOfWork === 'Προς Συμπλήρωση') {
-      errors.push('Οι τομείς εργασίας είναι υποχρεωτικοί')
+      errors.push('Τα πεδία πρακτικής είναι υποχρεωτικά')
     }
 
     if (!formData.City || formData.City.trim() === '' || formData.City === '-') {
@@ -569,7 +565,7 @@ export default function ProfilePage() {
                 </p>
                 <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1">
                   {user.Name === 'Νέο Μέλος' && <li>• Συμπλήρωσε το όνομά σου</li>}
-                  {user.FieldsOfWork === 'Προς Συμπλήρωση' && <li>• Πρόσθεσε τα πεδία εργασίας σου</li>}
+                  {user.FieldsOfWork === 'Προς Συμπλήρωση' && <li>• Πρόσθεσε τα πεδία πρακτικής σου</li>}
                   {(user.City === '-' || user.Province === '-') && <li>• Προσθέσε την πόλη και την περιοχή σου</li>}
                   {!user.Bio && <li>• Γράψε ένα σύντομο βιογραφικό</li>}
                 </ul>
@@ -653,15 +649,9 @@ export default function ProfilePage() {
                 tooltip="Όριο: 160 λέξεις ή 1200 χαρακτήρες. Γράψε μια σύντομη περιγραφή της δραστηριότητάς σου."
               />
 
-              <EditableField
-                label="Τομείς Εργασίας"
+              <FieldsOfWorkSelector
                 value={formData.FieldsOfWork}
-                placeholder="π.χ. Τέχνη, Πολιτισμός, Κοινωνική Καινοτομία"
                 onChange={(value) => handleFieldChange('FieldsOfWork', value)}
-                helperText="Διαχώρισε με κόμμα (,) - μέγιστο 5 τομείς"
-                maxItems={5}
-                required
-                tooltip="Μέγιστο 5 τομείς, χωρισμένοι με κόμμα. Μη γράφεις πόλεις ή περιφέρειες εδώ."
               />
             </div>
 

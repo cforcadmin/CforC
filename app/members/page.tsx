@@ -10,6 +10,11 @@ import LoadingIndicator from '@/components/LoadingIndicator'
 import Link from 'next/link'
 import Image from 'next/image'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
+import FieldsFilter from '@/components/members/FieldsFilter'
+import CityFilter from '@/components/members/CityFilter'
+import ProvinceFilter from '@/components/members/ProvinceFilter'
+import SortFilter from '@/components/members/SortFilter'
+import { doesFieldMatchFilter } from '@/lib/memberTaxonomy'
 
 interface Member {
   id: number
@@ -58,24 +63,25 @@ function MembersPageContent() {
   const [allMembers, setAllMembers] = useState<Member[]>([])
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([])
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedField, setSelectedField] = useState('')
-  const [selectedCity, setSelectedCity] = useState('')
-  const [selectedProvince, setSelectedProvince] = useState('')
+  const [selectedFields, setSelectedFields] = useState<string[]>([])
+  const [selectedCities, setSelectedCities] = useState<string[]>([])
+  const [selectedProvinces, setSelectedProvinces] = useState<string[]>([])
   const searchParams = useSearchParams()
   const [sortMode, setSortMode] = useState<'none' | 'alpha-asc' | 'alpha-desc' | 'random'>('random')
   const [totalCount, setTotalCount] = useState(0)
   const [displayCount, setDisplayCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
+  const [filterLogic, setFilterLogic] = useState<'or' | 'and'>('and')
 
   // Read URL params for pre-filtering from member profile tags
   useEffect(() => {
     const fieldParam = searchParams.get('field')
     const cityParam = searchParams.get('city')
     const provinceParam = searchParams.get('province')
-    if (fieldParam) setSelectedField(fieldParam)
-    if (cityParam) setSelectedCity(cityParam)
-    if (provinceParam) setSelectedProvince(provinceParam)
+    if (fieldParam) setSelectedFields([fieldParam])
+    if (cityParam) setSelectedCities([cityParam])
+    if (provinceParam) setSelectedProvinces([provinceParam])
   }, [searchParams])
 
   // Handle scroll for accessibility button fade
@@ -134,23 +140,32 @@ function MembersPageContent() {
       )
     }
 
-    if (selectedField) {
-      result = result.filter((member) =>
-        member.FieldsOfWork?.toLowerCase().includes(selectedField.toLowerCase())
-      )
-    }
+    const hasFieldFilter = selectedFields.length > 0
+    const hasCityFilter = selectedCities.length > 0
+    const hasProvinceFilter = selectedProvinces.length > 0
 
-    if (selectedCity) {
+    if (hasFieldFilter || hasCityFilter || hasProvinceFilter) {
       result = result.filter((member) => {
-        const cities = member.City?.split(',').map(c => c.trim().toLowerCase()) || []
-        return cities.includes(selectedCity.toLowerCase())
-      })
-    }
+        const matchesFields = !hasFieldFilter || selectedFields.some(field => doesFieldMatchFilter(member.FieldsOfWork, field))
+        const matchesCities = !hasCityFilter || (() => {
+          const memberCities = member.City?.split(',').map(c => c.trim().toLowerCase()) || []
+          return selectedCities.some(sc => memberCities.includes(sc.toLowerCase()))
+        })()
+        const matchesProvinces = !hasProvinceFilter || (() => {
+          const memberProvinces = member.Province?.split(',').map(p => p.trim().toLowerCase()) || []
+          return selectedProvinces.some(sp => memberProvinces.includes(sp.toLowerCase()))
+        })()
 
-    if (selectedProvince) {
-      result = result.filter((member) => {
-        const provinces = member.Province?.split(',').map(p => p.trim().toLowerCase()) || []
-        return provinces.includes(selectedProvince.toLowerCase())
+        if (filterLogic === 'and') {
+          return matchesFields && matchesCities && matchesProvinces
+        } else {
+          // OR: match if member passes any of the active filter groups
+          const checks: boolean[] = []
+          if (hasFieldFilter) checks.push(matchesFields)
+          if (hasCityFilter) checks.push(matchesCities)
+          if (hasProvinceFilter) checks.push(matchesProvinces)
+          return checks.some(Boolean)
+        }
       })
     }
 
@@ -164,7 +179,7 @@ function MembersPageContent() {
     }
 
     setFilteredMembers(result)
-  }, [allMembers, searchQuery, selectedField, selectedCity, selectedProvince, sortMode])
+  }, [allMembers, searchQuery, selectedFields, selectedCities, selectedProvinces, sortMode, filterLogic])
 
   // Animated counter
   useEffect(() => {
@@ -192,13 +207,6 @@ function MembersPageContent() {
   }, [filteredMembers])
 
   // Get unique values for filters
-  const uniqueFields = Array.from(
-    new Set(
-      allMembers.flatMap((m) =>
-        m.FieldsOfWork?.split(',').map((f) => f.trim()) || []
-      )
-    )
-  )
   const uniqueCities = Array.from(
     new Set(
       allMembers.flatMap((m) =>
@@ -214,9 +222,13 @@ function MembersPageContent() {
     )
   ).sort((a, b) => a.localeCompare(b, 'el'))
 
-  const truncateLabel = (label: string, maxLength: number = 32) => {
-    if (!label) return ''
-    return label.length > maxLength ? `${label.slice(0, maxLength - 3)}...` : label
+  const totalActiveFilters = selectedFields.length + selectedCities.length + selectedProvinces.length
+
+  const clearAllFilters = () => {
+    setSelectedFields([])
+    setSelectedCities([])
+    setSelectedProvinces([])
+    setSearchQuery('')
   }
 
   return (
@@ -266,63 +278,74 @@ function MembersPageContent() {
 
           {/* Filters */}
           <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 mb-12">
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Search - slightly shorter, so filters fit on one line on desktop */}
+            <div className="flex flex-wrap items-center gap-3">
               <input
                 type="text"
                 placeholder="Αναζήτηση ονόματος..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 min-w-[200px] max-w-md px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400"
+                className="flex-1 min-w-[160px] max-w-[240px] px-4 py-3 border border-charcoal dark:border-gray-400 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 placeholder-charcoal dark:placeholder-gray-200"
               />
-
-              {/* Filters */}
-              <select
-                value={selectedField}
-                onChange={(e) => setSelectedField(e.target.value)}
-                className="px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 w-44 md:w-56 whitespace-nowrap"
-              >
-                <option value="">Όλα τα πεδία εργασίας</option>
-                {uniqueFields.map((field) => (
-                  <option key={field} value={field}>
-                    {truncateLabel(field)}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedCity}
-                onChange={(e) => setSelectedCity(e.target.value)}
-                className="px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 w-40 md:w-48 whitespace-nowrap"
-              >
-                <option value="">Όλες οι πόλεις</option>
-                {uniqueCities.map((city) => (
-                  <option key={city} value={city}>
-                    {truncateLabel(city, 24)}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedProvince}
-                onChange={(e) => setSelectedProvince(e.target.value)}
-                className="px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 w-40 md:w-48 whitespace-nowrap"
-              >
-                <option value="">Όλες οι επαρχίες</option>
-                {uniqueProvinces.map((province) => (
-                  <option key={province} value={province}>
-                    {truncateLabel(province, 24)}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={sortMode}
-                onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
-                className="px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 w-auto min-w-0 whitespace-nowrap"
-              >
-                <option value="random">Τυχαία σειρά</option>
-                <option value="alpha-asc">Α → Ω</option>
-                <option value="alpha-desc">Ω → Α</option>
-                <option value="none">Χωρίς ταξινόμηση</option>
-              </select>
+              <FieldsFilter
+                selectedFields={selectedFields}
+                onSelectionChange={setSelectedFields}
+              />
+              <CityFilter
+                cities={uniqueCities}
+                selectedCities={selectedCities}
+                onSelectionChange={setSelectedCities}
+              />
+              <ProvinceFilter
+                provinces={uniqueProvinces}
+                selectedProvinces={selectedProvinces}
+                onSelectionChange={setSelectedProvinces}
+              />
+              <SortFilter
+                sortMode={sortMode}
+                onSortChange={setSortMode}
+              />
+              {/* AND/OR Toggle */}
+              <div className="relative group">
+                <div className="flex rounded-full border border-charcoal dark:border-gray-400 overflow-hidden">
+                  <button
+                    onClick={() => setFilterLogic('and')}
+                    className={`px-3 py-3 text-xs font-medium transition-colors ${
+                      filterLogic === 'and'
+                        ? 'bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900'
+                        : 'text-charcoal dark:text-gray-200 hover:bg-charcoal/10 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    AND
+                  </button>
+                  <button
+                    onClick={() => setFilterLogic('or')}
+                    className={`px-3 py-3 text-xs font-medium transition-colors border-l border-charcoal dark:border-gray-400 ${
+                      filterLogic === 'or'
+                        ? 'bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900'
+                        : 'text-charcoal dark:text-gray-200 hover:bg-charcoal/10 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    OR
+                  </button>
+                </div>
+                {/* Tooltip */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-lg shadow-lg whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50">
+                  {filterLogic === 'and'
+                    ? 'AND: Εμφάνιση μελών που ταιριάζουν σε όλα τα φίλτρα'
+                    : 'OR: Εμφάνιση μελών που ταιριάζουν σε οποιοδήποτε φίλτρο'
+                  }
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-charcoal dark:border-t-gray-100" />
+                </div>
+              </div>
+              {/* Reset All */}
+              {totalActiveFilters > 0 && (
+                <button
+                  onClick={clearAllFilters}
+                  className="px-3 py-3 text-xs font-medium text-coral dark:text-coral-light hover:underline whitespace-nowrap"
+                >
+                  Καθαρισμός όλων των φίλτρων ({totalActiveFilters})
+                </button>
+              )}
             </div>
           </div>
 
