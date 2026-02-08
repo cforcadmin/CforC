@@ -27,15 +27,24 @@ export default function FieldsOfWorkSelector({ value, onChange }: FieldsOfWorkSe
     ? value.split(',').map(s => s.trim()).filter(s => s.length > 0 && s !== '-' && s !== 'Προς Συμπλήρωση')
     : []
 
+  // Track editing mode: when clicking a filled bubble, we "edit" that slot
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
+
+  // Items visible to the picker: when editing, exclude the item being edited
+  // so it's not grayed out / disabled in the picker
+  const pickerItems = editingIndex !== null
+    ? selectedItems.filter((_, i) => i !== editingIndex)
+    : selectedItems
+
   // Check if user already has a custom item (not in taxonomy)
-  const hasCustomItem = selectedItems.some(item => !isKnownTaxonomyValue(item))
+  const hasCustomItem = pickerItems.some(item => !isKnownTaxonomyValue(item))
 
   // Determine how many slots to show: at least 5, or more if user already has more
   const slotCount = Math.max(5, selectedItems.length)
 
   // Check if a splittable subcategory has any of its options already selected
   const getSplittableMatch = (sub: SplittableSubcategory): string | null => {
-    for (const item of selectedItems) {
+    for (const item of pickerItems) {
       const parts = item.split(' / ').map(s => s.trim())
       if (parts.some(part => sub.options.includes(part))) {
         return item
@@ -45,8 +54,15 @@ export default function FieldsOfWorkSelector({ value, onChange }: FieldsOfWorkSe
   }
 
   const addItem = (item: string) => {
-    if (selectedItems.includes(item)) return
-    const newItems = [...selectedItems, item]
+    if (pickerItems.includes(item)) return
+    let newItems: string[]
+    if (editingIndex !== null) {
+      // Replace the item at the editing index
+      newItems = [...selectedItems]
+      newItems[editingIndex] = item
+    } else {
+      newItems = [...selectedItems, item]
+    }
     onChange(newItems.join(', '))
     closePicker()
   }
@@ -60,14 +76,16 @@ export default function FieldsOfWorkSelector({ value, onChange }: FieldsOfWorkSe
     setIsPickerOpen(false)
     setHoveredCategory(null)
     setActiveSlotIndex(null)
+    setEditingIndex(null)
     setIsCustomMode(false)
     setCustomInput('')
     setExpandedSplittable(null)
     setCheckedOptions([])
   }
 
-  const openPicker = (slotIndex: number) => {
+  const openPicker = (slotIndex: number, editing = false) => {
     setActiveSlotIndex(slotIndex)
+    setEditingIndex(editing ? slotIndex : null)
     setIsPickerOpen(true)
     setHoveredCategory(null)
     setIsCustomMode(false)
@@ -78,7 +96,7 @@ export default function FieldsOfWorkSelector({ value, onChange }: FieldsOfWorkSe
 
   const handleCustomSubmit = () => {
     const trimmed = customInput.trim()
-    if (trimmed && !selectedItems.includes(trimmed)) {
+    if (trimmed && !pickerItems.includes(trimmed)) {
       addItem(trimmed)
     }
   }
@@ -198,14 +216,20 @@ export default function FieldsOfWorkSelector({ value, onChange }: FieldsOfWorkSe
             const item = selectedItems[index]
             if (item) {
               const custom = isCustomItemFn(item)
+              const isBeingEdited = editingIndex === index && isPickerOpen
               // Filled bubble
               return (
                 <div
                   key={index}
-                  className={`group/bubble relative inline-flex items-center gap-1 px-4 py-2 border rounded-full text-sm transition-colors ${
+                  onClick={() => openPicker(index, true)}
+                  className={`group/bubble relative inline-flex items-center gap-1 px-4 py-2 border rounded-full text-sm transition-colors cursor-pointer ${
+                    isBeingEdited
+                      ? 'ring-2 ring-coral dark:ring-coral-light ring-offset-1 dark:ring-offset-gray-900'
+                      : ''
+                  } ${
                     custom
-                      ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-600/40 text-charcoal dark:text-gray-200'
-                      : 'bg-coral/10 dark:bg-coral/20 border-coral/30 dark:border-coral/40 text-charcoal dark:text-gray-200'
+                      ? 'bg-amber-50 dark:bg-amber-900/20 border-black dark:border-white text-charcoal dark:text-gray-200'
+                      : 'bg-coral/10 dark:bg-coral/20 border-black dark:border-white text-charcoal dark:text-gray-200'
                   }`}
                 >
                   {custom && (
@@ -216,7 +240,7 @@ export default function FieldsOfWorkSelector({ value, onChange }: FieldsOfWorkSe
                   <span className="pr-5">{item}</span>
                   {/* X button overlay */}
                   <button
-                    onClick={() => removeItem(index)}
+                    onClick={(e) => { e.stopPropagation(); removeItem(index) }}
                     className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-gray-300/70 dark:bg-gray-600/70 hover:bg-red-400 hover:text-white text-gray-600 dark:text-gray-300 transition-colors"
                     aria-label={`Αφαίρεση: ${item}`}
                   >
@@ -346,10 +370,10 @@ export default function FieldsOfWorkSelector({ value, onChange }: FieldsOfWorkSe
                     <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Κατηγορίες</p>
                   </div>
                   {TAXONOMY.map((category, catIndex) => {
-                    const isCategorySelected = selectedItems.includes(category.label)
+                    const isCategorySelected = pickerItems.includes(category.label)
                     const hasSelectedSub = category.subcategories.some(sub => {
                       const label = getSubLabel(sub)
-                      if (selectedItems.includes(label)) return true
+                      if (pickerItems.includes(label)) return true
                       // Also check partial matches for splittable subs
                       if (isSplittable(sub)) {
                         return getSplittableMatch(sub) !== null
@@ -410,7 +434,7 @@ export default function FieldsOfWorkSelector({ value, onChange }: FieldsOfWorkSe
                 </div>
                 {TAXONOMY[hoveredCategory].subcategories.map((sub, subIndex) => {
                   const subLabel = getSubLabel(sub)
-                  const isSubSelected = selectedItems.includes(subLabel)
+                  const isSubSelected = pickerItems.includes(subLabel)
                   const splittable = isSplittable(sub)
                   const splittableMatch = splittable ? getSplittableMatch(sub) : null
                   const isAlreadyUsed = isSubSelected || !!splittableMatch
