@@ -267,7 +267,7 @@ function MembersPageContent() {
           {/* Info Box */}
           <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 mb-12 relative">
             <div className="absolute top-8 right-8 text-right">
-              <div className="bg-[#F5F0EB] dark:bg-gray-700 px-6 py-3 rounded-full border-2 border-gray-300 dark:border-gray-600 shadow-sm">
+              <div className="bg-white dark:bg-gray-700 px-6 py-3 rounded-full border-2 border-charcoal dark:border-gray-400">
                 <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Μέλη: <span className="text-coral dark:text-coral-light">{displayCount}</span></p>
               </div>
             </div>
@@ -373,7 +373,7 @@ function MembersPageContent() {
                 )}
                 <div className="p-4">
                   <h3 className="text-base font-light group-hover:font-bold text-charcoal dark:text-gray-100 mb-2 transition-all">{member.Name}</h3>
-                  <div className="inline-block bg-coral/10 dark:bg-coral/20 text-coral dark:text-coral-light text-xs px-3 py-1 rounded-2xl uppercase tracking-wide max-w-full">
+                  <div className="inline-block bg-coral/10 dark:bg-coral/20 text-coral dark:text-coral-light text-xs px-3 py-1 rounded-2xl tracking-wide max-w-full">
                     <p className="line-clamp-2">{member.FieldsOfWork}</p>
                   </div>
                 </div>
