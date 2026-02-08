@@ -373,7 +373,7 @@ function MembersPageContent() {
                 )}
                 <div className="p-4">
                   <h3 className="text-base font-light group-hover:font-bold text-charcoal dark:text-gray-100 mb-2 transition-all">{member.Name}</h3>
-                  <div className="inline-block bg-coral/10 dark:bg-coral/20 text-coral dark:text-coral-light text-xs px-3 py-1 rounded-2xl tracking-wide max-w-full">
+                  <div className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-2xl tracking-wide max-w-full">
                     <p className="line-clamp-2">{member.FieldsOfWork}</p>
                   </div>
                 </div>
