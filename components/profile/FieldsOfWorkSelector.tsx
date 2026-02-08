@@ -279,33 +279,41 @@ export default function FieldsOfWorkSelector({ value, onChange }: FieldsOfWorkSe
             {/* Categories panel */}
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl py-2 w-72 max-h-80 overflow-y-auto">
               {/* Custom entry option — at the top */}
-              {!isCustomMode && (
-                <>
-                  <button
-                    onClick={() => {
-                      if (!hasCustomItem) {
-                        setIsCustomMode(true)
-                        setHoveredCategory(null)
-                        setExpandedSplittable(null)
-                        setCheckedOptions([])
-                      }
-                    }}
-                    disabled={hasCustomItem}
-                    onMouseEnter={() => setHoveredCategory(null)}
-                    className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 transition-colors ${
-                      hasCustomItem
-                        ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                        : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer'
-                    }`}
-                  >
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    <span>{hasCustomItem ? 'Ήδη χρησιμοποιείται (1 μόνο)' : 'Προσθήκη δικού σου πεδίου'}</span>
-                  </button>
-                  <div className="border-b border-gray-100 dark:border-gray-700" />
-                </>
-              )}
+              {!isCustomMode && (() => {
+                const editingCustomValue = editingIndex !== null && !isKnownTaxonomyValue(selectedItems[editingIndex])
+                  ? selectedItems[editingIndex]
+                  : null
+                const isDisabled = hasCustomItem && !editingCustomValue
+
+                return (
+                  <>
+                    <button
+                      onClick={() => {
+                        if (!isDisabled) {
+                          setIsCustomMode(true)
+                          setCustomInput(editingCustomValue ?? '')
+                          setHoveredCategory(null)
+                          setExpandedSplittable(null)
+                          setCheckedOptions([])
+                        }
+                      }}
+                      disabled={isDisabled}
+                      onMouseEnter={() => setHoveredCategory(null)}
+                      className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 transition-colors ${
+                        isDisabled
+                          ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                          : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer'
+                      }`}
+                    >
+                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      <span>{isDisabled ? 'Ήδη χρησιμοποιείται (1 μόνο)' : editingCustomValue ?? 'Προσθήκη δικού σου πεδίου'}</span>
+                    </button>
+                    <div className="border-b border-gray-100 dark:border-gray-700" />
+                  </>
+                )
+              })()}
 
               {/* Custom input mode */}
               {isCustomMode && (
