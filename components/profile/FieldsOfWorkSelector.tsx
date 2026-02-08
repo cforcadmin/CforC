@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { TAXONOMY, isKnownTaxonomyValue, isSplittable, getSubLabel } from '@/lib/memberTaxonomy'
+import { TAXONOMY, isKnownTaxonomyValue, isSplittable, isHinted, getSubLabel, getSubDisplayLabel } from '@/lib/memberTaxonomy'
 import type { SplittableSubcategory } from '@/lib/memberTaxonomy'
 
 interface FieldsOfWorkSelectorProps {
@@ -442,6 +442,7 @@ export default function FieldsOfWorkSelector({ value, onChange }: FieldsOfWorkSe
                 </div>
                 {TAXONOMY[hoveredCategory].subcategories.map((sub, subIndex) => {
                   const subLabel = getSubLabel(sub)
+                  const subDisplay = getSubDisplayLabel(sub)
                   const isSubSelected = pickerItems.includes(subLabel)
                   const splittable = isSplittable(sub)
                   const splittableMatch = splittable ? getSplittableMatch(sub) : null
@@ -473,7 +474,7 @@ export default function FieldsOfWorkSelector({ value, onChange }: FieldsOfWorkSe
                                 : 'text-charcoal dark:text-gray-200 hover:bg-coral/10 dark:hover:bg-coral/20 hover:text-coral dark:hover:text-coral-light cursor-pointer'
                           }`}
                         >
-                          <span className={isAlreadyUsed ? 'line-through' : ''}>{subLabel}</span>
+                          <span className={isAlreadyUsed ? 'line-through' : ''}>{subDisplay}</span>
                           <div className="flex items-center gap-1">
                             {isAlreadyUsed && (
                               <svg className="w-4 h-4 text-coral dark:text-coral-light" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
@@ -547,7 +548,7 @@ export default function FieldsOfWorkSelector({ value, onChange }: FieldsOfWorkSe
                           : 'text-charcoal dark:text-gray-200 hover:bg-coral/10 dark:hover:bg-coral/20 hover:text-coral dark:hover:text-coral-light cursor-pointer'
                       }`}
                     >
-                      <span className={isSubSelected ? 'line-through' : ''}>{subLabel}</span>
+                      <span className={isSubSelected ? 'line-through' : ''}>{subDisplay}</span>
                       {isSubSelected && (
                         <svg className="w-4 h-4 text-coral dark:text-coral-light" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />

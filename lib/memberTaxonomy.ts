@@ -13,7 +13,13 @@ export interface SplittableSubcategory {
   options: string[]
 }
 
-export type SubcategoryEntry = string | SplittableSubcategory
+/** A subcategory with a display hint shown in the picker (e.g. examples) */
+export interface HintedSubcategory {
+  label: string
+  hint: string
+}
+
+export type SubcategoryEntry = string | SplittableSubcategory | HintedSubcategory
 
 export interface TaxonomyCategory {
   label: string
@@ -25,9 +31,20 @@ export function isSplittable(sub: SubcategoryEntry): sub is SplittableSubcategor
   return typeof sub === 'object' && 'options' in sub
 }
 
-/** Get the display label for a subcategory entry */
+/** Type guard: is this subcategory hinted (has display hint)? */
+export function isHinted(sub: SubcategoryEntry): sub is HintedSubcategory {
+  return typeof sub === 'object' && 'hint' in sub
+}
+
+/** Get the stored value label for a subcategory entry */
 export function getSubLabel(sub: SubcategoryEntry): string {
   return typeof sub === 'string' ? sub : sub.label
+}
+
+/** Get the display label for a subcategory entry (includes hint if present) */
+export function getSubDisplayLabel(sub: SubcategoryEntry): string {
+  if (isHinted(sub)) return `${sub.label} ${sub.hint}`
+  return getSubLabel(sub)
 }
 
 export const TAXONOMY: TaxonomyCategory[] = [
@@ -69,7 +86,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
     label: 'Υγεία',
     subcategories: [
       'Ψυχική Υγεία',
-      'Θεραπευτικές Πρακτικές (π.χ. Χοροθεραπεία, Φωτοθεραπεία, Ψυχοθεραπεία)',
+      { label: 'Θεραπευτικές Πρακτικές', hint: '(π.χ. Χοροθεραπεία ή Φωτοθεραπεία ή Ψυχοθεραπεία)' },
       'Αυτοβελτίωση',
     ],
   },
@@ -139,11 +156,14 @@ export function isKnownTaxonomyValue(value: string): boolean {
       if (typeof sub === 'string') {
         if (sub === value) return true
       } else {
-        // Splittable: the full label matches, or the value is a "/" combination of its options
+        // Splittable or hinted: the label matches
         if (sub.label === value) return true
-        const valueParts = value.split(' / ').map(s => s.trim())
-        if (valueParts.length > 0 && valueParts.every(part => sub.options.includes(part))) {
-          return true
+        // Splittable: the value may be a "/" combination of its options
+        if (isSplittable(sub)) {
+          const valueParts = value.split(' / ').map(s => s.trim())
+          if (valueParts.length > 0 && valueParts.every(part => sub.options.includes(part))) {
+            return true
+          }
         }
       }
     }
@@ -209,8 +229,10 @@ export function doesFieldMatchFilter(memberFieldsOfWork: string, filterValue: st
         matchingTerms.add(sub)
       } else {
         matchingTerms.add(sub.label)
-        for (const opt of sub.options) {
-          matchingTerms.add(opt)
+        if (isSplittable(sub)) {
+          for (const opt of sub.options) {
+            matchingTerms.add(opt)
+          }
         }
       }
     }
