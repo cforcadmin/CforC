@@ -81,10 +81,10 @@ export default function CombinedCtaSection({ variant = 'default' }: CombinedCtaS
             {/* Right: Newsletter */}
             <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-10 md:p-12 flex flex-col justify-center">
               <span className="inline-block self-start bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-xs font-medium mb-4">
-                ΟΛΑ TA NEA ΣTO EMAIL ΣΑΣ!
+                ΟΛΑ TA NEA ΣTO EMAIL ΣΟΥ!
               </span>
               <h3 className="text-xl font-bold mb-6 dark:text-gray-100 leading-tight">
-                Γραφτείτε στο newsletter μας για δράσεις, ευκαιρίες και νέα.
+                Γράψου στο newsletter μας για δράσεις, ευκαιρίες και νέα.
               </h3>
               <form onSubmit={handleSubmit} className="space-y-3">
                 {/* Honeypot */}

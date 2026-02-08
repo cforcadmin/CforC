@@ -89,8 +89,8 @@ export default function ProfileGuidelinesModal({
               <div>
                 <h3 className="font-semibold text-charcoal dark:text-gray-100">Όνομα</h3>
                 <ul className="mt-2 text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                  <li>• <strong>Μην χρησιμοποιείτε κεφαλαία</strong> (ALL CAPS)</li>
-                  <li>• Χρησιμοποιήστε σημεία στίξης όπου χρειάζεται</li>
+                  <li>• <strong>Μη χρησιμοποιείς κεφαλαία</strong> (ALL CAPS)</li>
+                  <li>• Χρησιμοποίησε σημεία στίξης όπου χρειάζεται</li>
                   <li>• Παράδειγμα: "Γιώργος Παπαδόπουλος" αντί για "ΓΙΩΡΓΟΣ ΠΑΠΑΔΟΠΟΥΛΟΣ"</li>
                 </ul>
               </div>
@@ -109,7 +109,7 @@ export default function ProfileGuidelinesModal({
                 <h3 className="font-semibold text-charcoal dark:text-gray-100">Email</h3>
                 <ul className="mt-2 text-sm text-gray-600 dark:text-gray-300 space-y-1">
                   <li>• Το email <strong>δεν μπορεί να αλλάξει</strong></li>
-                  <li>• Για αλλαγή email, επικοινωνήστε με τον διαχειριστή IT</li>
+                  <li>• Για αλλαγή email, επικοινώνησε με τον διαχειριστή IT</li>
                 </ul>
               </div>
             </div>
@@ -127,8 +127,8 @@ export default function ProfileGuidelinesModal({
                 <h3 className="font-semibold text-charcoal dark:text-gray-100">Βιογραφικό</h3>
                 <ul className="mt-2 text-sm text-gray-600 dark:text-gray-300 space-y-1">
                   <li>• Όριο: <strong>160 λέξεις</strong> ή <strong>1200 χαρακτήρες</strong></li>
-                  <li>• Θα βλέπετε μετρητή λέξεων/χαρακτήρων κατά την επεξεργασία</li>
-                  <li>• Γράψτε μια σύντομη περιγραφή της δραστηριότητάς σας</li>
+                  <li>• Θα βλέπεις μετρητή λέξεων/χαρακτήρων κατά την επεξεργασία</li>
+                  <li>• Γράψε μια σύντομη περιγραφή της δραστηριότητάς σου</li>
                 </ul>
               </div>
             </div>
@@ -153,6 +153,28 @@ export default function ProfileGuidelinesModal({
             </div>
           </div>
 
+          {/* City / Province */}
+          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-charcoal dark:text-gray-100">Πόλη & Περιφέρεια</h3>
+                <ul className="mt-2 text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                  <li>• Πληκτρολόγησε την πόλη σου και <strong>επέλεξε από τη λίστα</strong></li>
+                  <li>• Για πολλαπλές πόλεις, χώρισε με <strong>κόμμα (,)</strong></li>
+                  <li>• Η <strong>Περιφέρεια συμπληρώνεται αυτόματα</strong> από την πόλη</li>
+                  <li>• Παράδειγμα: "Αθήνα, Θεσσαλονίκη" → Αττική, Κεντρική Μακεδονία</li>
+                  <li>• <strong>Μη</strong> γράφεις πόλεις στα Πεδία Εργασίας</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
           {/* Fields of Work */}
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-4">
             <div className="flex items-start gap-3">
@@ -165,7 +187,7 @@ export default function ProfileGuidelinesModal({
                 <h3 className="font-semibold text-charcoal dark:text-gray-100">Τομείς Εργασίας</h3>
                 <ul className="mt-2 text-sm text-gray-600 dark:text-gray-300 space-y-1">
                   <li>• Μέγιστο όριο: <strong>5 τομείς</strong></li>
-                  <li>• Διαχωρίστε με κόμμα (,)</li>
+                  <li>• Διαχώρισε με κόμμα (,)</li>
                   <li>• Παράδειγμα: "Τέχνη, Πολιτισμός, Εκπαίδευση"</li>
                 </ul>
               </div>
@@ -181,9 +203,9 @@ export default function ProfileGuidelinesModal({
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-charcoal dark:text-gray-100">Ιστοσελίδες</h3>
+                <h3 className="font-semibold text-charcoal dark:text-gray-100">Ιστοσελίδες και Κοινωνικά Δίκτυα</h3>
                 <ul className="mt-2 text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                  <li>• Διαχωρίστε πολλαπλές ιστοσελίδες με κόμμα (,)</li>
+                  <li>• Διαχώρισε πολλαπλές ιστοσελίδες με κόμμα (,)</li>
                   <li>• Παράδειγμα: "https://example.com, https://portfolio.com"</li>
                 </ul>
               </div>
@@ -202,7 +224,7 @@ export default function ProfileGuidelinesModal({
                 <h3 className="font-semibold text-charcoal dark:text-gray-100">Tags Έργων</h3>
                 <ul className="mt-2 text-sm text-gray-600 dark:text-gray-300 space-y-1">
                   <li>• Μέγιστο όριο: <strong>5 tags ανά έργο</strong></li>
-                  <li>• Διαχωρίστε με κόμμα (,)</li>
+                  <li>• Διαχώρισε με κόμμα (,)</li>
                   <li>• Παράδειγμα: "Design, Development, Art"</li>
                 </ul>
               </div>
@@ -221,7 +243,7 @@ export default function ProfileGuidelinesModal({
               </h3>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              Τα παρακάτω πεδία βοηθούν άτομα με προβλήματα όρασης να κατανοήσουν τις εικόνες σας μέσω αναγνωστών οθόνης (screen readers).
+              Τα παρακάτω πεδία βοηθούν άτομα με προβλήματα όρασης να κατανοήσουν τις εικόνες σου μέσω αναγνωστών οθόνης (screen readers).
             </p>
           </div>
 
@@ -237,8 +259,8 @@ export default function ProfileGuidelinesModal({
                 <h3 className="font-semibold text-charcoal dark:text-gray-100">Εναλλακτικό κείμενο φωτογραφίας</h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Κάτω από τη φωτογραφία προφίλ</p>
                 <ul className="mt-2 text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                  <li>• Περιγράψτε <strong>τι απεικονίζει</strong> η φωτογραφία σας</li>
-                  <li>• Μην γράψετε απλώς το όνομά σας</li>
+                  <li>• Περίγραψε <strong>τι απεικονίζει</strong> η φωτογραφία σου</li>
+                  <li>• Μη γράψεις απλώς το όνομά σου</li>
                   <li>• Μέγιστο: <strong>125 χαρακτήρες</strong></li>
                 </ul>
                 <div className="mt-3 bg-white dark:bg-gray-800 rounded-lg p-3">
@@ -264,8 +286,8 @@ export default function ProfileGuidelinesModal({
                 <h3 className="font-semibold text-charcoal dark:text-gray-100">Εναλλακτικό κείμενο φωτο έργου 1 & 2</h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Κάτω από τις εικόνες κάθε έργου</p>
                 <ul className="mt-2 text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                  <li>• Περιγράψτε <strong>τι δείχνουν</strong> οι εικόνες του έργου</li>
-                  <li>• Μην επαναλάβετε απλώς τον τίτλο του έργου</li>
+                  <li>• Περίγραψε <strong>τι δείχνουν</strong> οι εικόνες του έργου</li>
+                  <li>• Μην επαναλάβεις απλώς τον τίτλο του έργου</li>
                   <li>• Μέγιστο: <strong>125 χαρακτήρες</strong></li>
                   <li>• Η ίδια περιγραφή χρησιμοποιείται για όλες τις εικόνες του έργου</li>
                 </ul>

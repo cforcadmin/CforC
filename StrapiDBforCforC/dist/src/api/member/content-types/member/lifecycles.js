@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Greek to Latin transliteration map
  */
@@ -76,7 +77,7 @@ function generateSlug(name) {
 /**
  * Lifecycle hooks for Member content type
  */
-module.exports = {
+exports.default = {
     async beforeCreate(event) {
         const { data } = event.params;
         // Auto-generate slug from Name if not provided
@@ -86,8 +87,8 @@ module.exports = {
     },
     async beforeUpdate(event) {
         const { data } = event.params;
-        // Regenerate slug if Name changed and Slug is not manually set
-        if (data.Name) {
+        // Only regenerate slug if Name is explicitly being updated in this request
+        if ('Name' in data && data.Name) {
             const newSlug = generateSlug(data.Name);
             // Only update if slug is empty or matches the old auto-generated pattern
             if (!data.Slug) {

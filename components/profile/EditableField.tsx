@@ -16,6 +16,7 @@ interface EditableFieldProps {
   disabled?: boolean
   helperText?: string
   showCounters?: boolean
+  tooltip?: string
 }
 
 export default function EditableField({
@@ -31,7 +32,8 @@ export default function EditableField({
   required = false,
   disabled = false,
   helperText,
-  showCounters = false
+  showCounters = false,
+  tooltip
 }: EditableFieldProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [tempValue, setTempValue] = useState(value)
@@ -180,21 +182,21 @@ export default function EditableField({
           tabIndex={disabled ? -1 : 0}
           aria-label={`${label} επεξεργασία${value ? `: ${value}` : ''}`}
           aria-disabled={disabled}
-          className={`group flex items-start gap-2 px-4 py-3 rounded-2xl transition-colors ${
+          className={`group relative flex items-start gap-2 px-4 py-3 rounded-2xl transition-colors ${
             disabled
-              ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-60'
+              ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed'
               : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light'
           }`}
         >
           {/* Display Value */}
-          <div className="flex-1">
+          <div className={`flex-1${disabled ? ' opacity-60' : ''}`}>
             {value ? (
               <p className="text-charcoal dark:text-gray-200 whitespace-pre-wrap break-words">
                 {value}
               </p>
             ) : (
               <p className="text-gray-400 dark:text-gray-500 italic">
-                {placeholder || `Προσθέστε ${label.toLowerCase()}`}
+                {placeholder || `Πρόσθεσε ${label.toLowerCase()}`}
               </p>
             )}
           </div>
@@ -220,7 +222,7 @@ export default function EditableField({
           {/* Lock Icon - show when disabled */}
           {disabled && (
             <svg
-              className="w-5 h-5 text-gray-400 flex-shrink-0"
+              className={`w-5 h-5 text-gray-400 flex-shrink-0${disabled ? ' opacity-60' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -233,6 +235,16 @@ export default function EditableField({
                 d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
               />
             </svg>
+          )}
+
+          {/* Hover tooltip */}
+          {tooltip && (
+            <div className="absolute bottom-full left-4 mb-2 hidden group-hover:block z-10">
+              <div className="bg-charcoal dark:bg-gray-600 text-white text-xs rounded-lg px-3 py-2 shadow-lg max-w-xs">
+                {tooltip}
+                <div className="absolute top-full left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-charcoal dark:border-t-gray-600"></div>
+              </div>
+            </div>
           )}
         </div>
       )}

@@ -60,6 +60,10 @@
                 "audios"
             ]
         },
+        "ProfileImageAltText": {
+            "type": "string",
+            "required": true
+        },
         "Project1Title": {
             "type": "string",
             "required": false
@@ -78,6 +82,9 @@
                 "videos",
                 "audios"
             ]
+        },
+        "Project1PicturesAltText": {
+            "type": "string"
         },
         "Project1Tags": {
             "type": "string",
@@ -102,29 +109,29 @@
                 "audios"
             ]
         },
+        "Project2PicturesAltText": {
+            "type": "string",
+            "required": false
+        },
         "Project2Tags": {
             "type": "string",
             "required": false
         },
         "password": {
             "type": "string",
-            "required": false,
-            "private": false
+            "required": false
         },
         "magicLinkToken": {
             "type": "string",
-            "required": false,
-            "private": false
+            "required": false
         },
         "magicLinkExpiry": {
             "type": "datetime",
-            "required": false,
-            "private": false
+            "required": false
         },
         "lastLoginAt": {
             "type": "datetime",
-            "required": false,
-            "private": false
+            "required": false
         }
     }
 }

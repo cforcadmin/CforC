@@ -6,6 +6,7 @@ import { useAuth } from '@/components/AuthProvider'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import EditableField from '@/components/profile/EditableField'
+import CityAutocomplete from '@/components/profile/CityAutocomplete'
 import EditableImage from '@/components/profile/EditableImage'
 import EditableMultipleImages from '@/components/profile/EditableMultipleImages'
 import ConfirmationModal from '@/components/ConfirmationModal'
@@ -247,7 +248,7 @@ export default function ProfilePage() {
 
     // Validate Name (no ALL CAPS)
     if (formData.Name && formData.Name === formData.Name.toUpperCase() && formData.Name.length > 2) {
-      errors.push('Το όνομα δεν πρέπει να είναι σε κεφαλαία (ALL CAPS). Χρησιμοποιήστε κανονική γραφή.')
+      errors.push('Το όνομα δεν πρέπει να είναι σε κεφαλαία (ALL CAPS). Χρησιμοποίησε κανονική γραφή.')
     }
 
     // Check required fields
@@ -271,9 +272,7 @@ export default function ProfilePage() {
       errors.push('Η πόλη είναι υποχρεωτική')
     }
 
-    if (!formData.Province || formData.Province.trim() === '' || formData.Province === '-') {
-      errors.push('Η περιφέρεια είναι υποχρεωτική')
-    }
+    // Province is auto-derived from city — no user validation needed
 
     // Check if user has a profile image (either existing or uploading new one)
     const hasProfileImage = (user?.Image && user.Image.length > 0) || imageFile
@@ -383,7 +382,7 @@ export default function ProfilePage() {
         setSaveMessage({ type: 'error', text: data.error || 'Αποτυχία αποθήκευσης' })
       }
     } catch (error) {
-      setSaveMessage({ type: 'error', text: 'Σφάλμα δικτύου. Παρακαλώ δοκιμάστε ξανά.' })
+      setSaveMessage({ type: 'error', text: 'Σφάλμα δικτύου. Παρακαλώ δοκίμασε ξανά.' })
     } finally {
       setIsSaving(false)
     }
@@ -483,7 +482,7 @@ export default function ProfilePage() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
             <div className="text-center md:text-left">
               <p className="text-gray-600 dark:text-gray-300">
-                Επεξεργαστείτε τις πληροφορίες του προφίλ σας
+                Επεξεργάσου τις πληροφορίες του προφίλ σου
               </p>
             </div>
             <button
@@ -509,7 +508,7 @@ export default function ProfilePage() {
                   Σφάλματα Επικύρωσης
                 </h3>
                 <p className="text-sm text-red-800 dark:text-red-300 mb-3">
-                  Παρακαλώ διορθώστε τα παρακάτω προβλήματα πριν αποθηκεύσετε:
+                  Παρακαλώ διόρθωσε τα παρακάτω προβλήματα πριν αποθηκεύσεις:
                 </p>
                 <ul className="text-sm text-red-800 dark:text-red-300 space-y-1">
                   {validationErrors.map((error, index) => (
@@ -583,9 +582,17 @@ export default function ProfilePage() {
           {/* Left Column - Profile Image */}
           <div className="md:col-span-1">
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-6">
-              <h2 className="text-lg font-bold text-charcoal dark:text-gray-100 mb-4">
-                Φωτογραφία Προφίλ
-              </h2>
+              <div className="group relative mb-4 w-fit">
+                <h2 className="text-lg font-bold text-charcoal dark:text-gray-100">
+                  Φωτογραφία Προφίλ
+                </h2>
+                <div className="absolute bottom-full left-4 mb-2 hidden group-hover:block z-10">
+                  <div className="bg-charcoal dark:bg-gray-600 text-white text-xs rounded-lg px-3 py-2 shadow-lg max-w-xs">
+                    Ιδανικές διαστάσεις: 500×600px (5:6). Μέγιστο 5MB. Μορφές: JPG, PNG, GIF, WebP.
+                    <div className="absolute top-full left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-charcoal dark:border-t-gray-600"></div>
+                  </div>
+                </div>
+              </div>
               <EditableImage
                 currentImageUrl={currentImageUrl}
                 alt={user.Name}
@@ -600,6 +607,7 @@ export default function ProfilePage() {
                   helperText="Περιγραφή για άτομα με προβλήματα όρασης (μέγιστο 125 χαρακτήρες)"
                   maxCharacters={125}
                   required
+                  tooltip="Περίγραψε τι απεικονίζει η φωτογραφία. Μη γράψεις απλώς το όνομά σου. Μέγιστο 125 χαρακτήρες."
                 />
               </div>
             </div>
@@ -618,6 +626,7 @@ export default function ProfilePage() {
                 placeholder="Το όνομά σας"
                 onChange={(value) => handleFieldChange('Name', value)}
                 required
+                tooltip="Μη χρησιμοποιείς κεφαλαία (ALL CAPS). Χρησιμοποίησε σημεία στίξης όπου χρειάζεται."
               />
 
               <EditableField
@@ -628,18 +637,20 @@ export default function ProfilePage() {
                 onChange={(value) => handleFieldChange('Email', value)}
                 required
                 disabled
-                helperText="Επικοινωνήστε με τον διαχειριστή για να αλλάξετε το email σας"
+                helperText="Επικοινώνησε με τον διαχειριστή για να αλλάξεις το email σου"
+                tooltip="Το email δεν μπορεί να αλλάξει. Για αλλαγή, επικοινώνησε με τον διαχειριστή IT."
               />
 
               <EditableField
                 label="Βιογραφικό"
                 value={formData.Bio}
-                placeholder="Γράψτε μια σύντομη περιγραφή για εσάς..."
+                placeholder="Γράψε μια σύντομη περιγραφή για εσένα..."
                 type="textarea"
                 onChange={(value) => handleFieldChange('Bio', value)}
                 maxWords={160}
                 maxCharacters={1200}
                 required
+                tooltip="Όριο: 160 λέξεις ή 1200 χαρακτήρες. Γράψε μια σύντομη περιγραφή της δραστηριότητάς σου."
               />
 
               <EditableField
@@ -647,9 +658,10 @@ export default function ProfilePage() {
                 value={formData.FieldsOfWork}
                 placeholder="π.χ. Τέχνη, Πολιτισμός, Κοινωνική Καινοτομία"
                 onChange={(value) => handleFieldChange('FieldsOfWork', value)}
-                helperText="Διαχωρίστε με κόμμα (,) - μέγιστο 5 τομείς"
+                helperText="Διαχώρισε με κόμμα (,) - μέγιστο 5 τομείς"
                 maxItems={5}
                 required
+                tooltip="Μέγιστο 5 τομείς, χωρισμένοι με κόμμα. Μη γράφεις πόλεις ή περιφέρειες εδώ."
               />
             </div>
 
@@ -664,31 +676,65 @@ export default function ProfilePage() {
                 placeholder="+30 123 456 7890"
                 type="tel"
                 onChange={(value) => handleFieldChange('Phone', value)}
+                tooltip="Μόνο αριθμοί, κενά και +. Απαγορεύονται παύλες, παρενθέσεις κλπ."
               />
 
-              <EditableField
-                label="Πόλη"
+              <CityAutocomplete
                 value={formData.City}
-                placeholder="Αθήνα"
                 onChange={(value) => handleFieldChange('City', value)}
+                onProvinceChange={(value) => handleFieldChange('Province', value)}
                 required
               />
 
-              <EditableField
-                label="Περιφέρεια"
-                value={formData.Province}
-                placeholder="Αττική"
-                onChange={(value) => handleFieldChange('Province', value)}
-                required
-              />
+              {/* Province - read-only, auto-derived from city */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-charcoal dark:text-gray-200">
+                  Περιφέρεια
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <div
+                  className="group relative flex items-start gap-2 px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                  aria-disabled="true"
+                >
+                  <div className="flex-1 opacity-60">
+                    {formData.Province && formData.Province !== '-' ? (
+                      <p className="text-charcoal dark:text-gray-200">{formData.Province}</p>
+                    ) : (
+                      <p className="text-gray-400 dark:text-gray-500 italic">Συμπληρώνεται αυτόματα</p>
+                    )}
+                  </div>
+                  <svg
+                    className="w-5 h-5 text-gray-400 flex-shrink-0 opacity-60"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
+                  </svg>
+                  {/* Hover tooltip */}
+                  <div className="absolute bottom-full left-4 mb-2 hidden group-hover:block z-10">
+                    <div className="bg-charcoal dark:bg-gray-600 text-white text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap">
+                      Συμπληρώνεται αυτόματα από την πόλη. Επικοινώνησε μαζί μας για αλλαγές.
+                      <div className="absolute top-full left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-charcoal dark:border-t-gray-600"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <EditableField
-                label="Ιστοσελίδες"
+                label="Ιστοσελίδες και Κοινωνικά Δίκτυα"
                 value={formData.Websites}
                 placeholder="https://example.com"
                 type="url"
                 onChange={(value) => handleFieldChange('Websites', value)}
-                helperText="Διαχωρίστε με κόμμα (,)"
+                helperText="Διαχώρισε με κόμμα (,)"
+                tooltip="Χώρισε πολλαπλές ιστοσελίδες και κοινωνικά δίκτυα με κόμμα."
               />
             </div>
 
@@ -716,14 +762,15 @@ export default function ProfilePage() {
                   value={formData.Project1Tags}
                   placeholder="Design, Development, Art"
                   onChange={(value) => handleFieldChange('Project1Tags', value)}
-                  helperText="Διαχωρίστε με κόμμα (,) - μέγιστο 5 tags"
+                  helperText="Διαχώρισε με κόμμα (,) - μέγιστο 5 tags"
                   maxItems={5}
+                  tooltip="Μέγιστο 5 tags ανά έργο, χωρισμένα με κόμμα."
                 />
 
                 <EditableField
                   label="Περιγραφή"
                   value={formData.Project1Description}
-                  placeholder="Περιγράψτε το έργο σας..."
+                  placeholder="Περίγραψε το έργο σου..."
                   type="textarea"
                   onChange={(value) => handleFieldChange('Project1Description', value)}
                 />
@@ -746,6 +793,7 @@ export default function ProfilePage() {
                   helperText="Υποχρεωτικό όταν υπάρχουν εικόνες - Περιγραφή για προσβασιμότητα (μέγιστο 125 χαρακτήρες)"
                   maxCharacters={125}
                   required={(project1KeptImageIds.length > 0) || (project1Images.length > 0)}
+                  tooltip="Περίγραψε τι δείχνουν οι εικόνες του έργου. Μην επαναλάβεις τον τίτλο. Μέγιστο 125 χαρακτήρες."
                 />
               </div>
 
@@ -767,14 +815,15 @@ export default function ProfilePage() {
                   value={formData.Project2Tags}
                   placeholder="Design, Development, Art"
                   onChange={(value) => handleFieldChange('Project2Tags', value)}
-                  helperText="Διαχωρίστε με κόμμα (,) - μέγιστο 5 tags"
+                  helperText="Διαχώρισε με κόμμα (,) - μέγιστο 5 tags"
                   maxItems={5}
+                  tooltip="Μέγιστο 5 tags ανά έργο, χωρισμένα με κόμμα."
                 />
 
                 <EditableField
                   label="Περιγραφή"
                   value={formData.Project2Description}
-                  placeholder="Περιγράψτε το έργο σας..."
+                  placeholder="Περίγραψε το έργο σου..."
                   type="textarea"
                   onChange={(value) => handleFieldChange('Project2Description', value)}
                 />
@@ -797,6 +846,7 @@ export default function ProfilePage() {
                   helperText="Υποχρεωτικό όταν υπάρχουν εικόνες - Περιγραφή για προσβασιμότητα (μέγιστο 125 χαρακτήρες)"
                   maxCharacters={125}
                   required={(project2KeptImageIds.length > 0) || (project2Images.length > 0)}
+                  tooltip="Περίγραψε τι δείχνουν οι εικόνες του έργου. Μην επαναλάβεις τον τίτλο. Μέγιστο 125 χαρακτήρες."
                 />
               </div>
             </div>
@@ -808,7 +858,7 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-coral dark:bg-coral-light animate-pulse"></div>
                     <span className="text-sm font-medium text-charcoal dark:text-gray-200">
-                      Έχετε μη αποθηκευμένες αλλαγές
+                      Έχεις μη αποθηκευμένες αλλαγές
                     </span>
                   </div>
                   <div className="flex gap-2">
@@ -873,7 +923,7 @@ export default function ProfilePage() {
 
             {/* Message */}
             <p className="text-center text-gray-600 dark:text-gray-300 mb-6">
-              Έχετε μη αποθηκευμένες αλλαγές. Τι θέλετε να κάνετε;
+              Έχεις μη αποθηκευμένες αλλαγές. Τι θέλεις να κάνεις;
             </p>
 
             {/* Actions */}

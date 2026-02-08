@@ -68,12 +68,14 @@ function MembersPageContent() {
   const [isLoading, setIsLoading] = useState(true)
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
 
-  // Read ?field= URL param for pre-filtering from member profile tags
+  // Read URL params for pre-filtering from member profile tags
   useEffect(() => {
     const fieldParam = searchParams.get('field')
-    if (fieldParam) {
-      setSelectedField(fieldParam)
-    }
+    const cityParam = searchParams.get('city')
+    const provinceParam = searchParams.get('province')
+    if (fieldParam) setSelectedField(fieldParam)
+    if (cityParam) setSelectedCity(cityParam)
+    if (provinceParam) setSelectedProvince(provinceParam)
   }, [searchParams])
 
   // Handle scroll for accessibility button fade
@@ -139,15 +141,17 @@ function MembersPageContent() {
     }
 
     if (selectedCity) {
-      result = result.filter((member) =>
-        member.City?.toLowerCase() === selectedCity.toLowerCase()
-      )
+      result = result.filter((member) => {
+        const cities = member.City?.split(',').map(c => c.trim().toLowerCase()) || []
+        return cities.includes(selectedCity.toLowerCase())
+      })
     }
 
     if (selectedProvince) {
-      result = result.filter((member) =>
-        member.Province?.toLowerCase() === selectedProvince.toLowerCase()
-      )
+      result = result.filter((member) => {
+        const provinces = member.Province?.split(',').map(p => p.trim().toLowerCase()) || []
+        return provinces.includes(selectedProvince.toLowerCase())
+      })
     }
 
     // Apply sorting
@@ -195,8 +199,20 @@ function MembersPageContent() {
       )
     )
   )
-  const uniqueCities = Array.from(new Set(allMembers.map((m) => m.City).filter(Boolean)))
-  const uniqueProvinces = Array.from(new Set(allMembers.map((m) => m.Province).filter(Boolean)))
+  const uniqueCities = Array.from(
+    new Set(
+      allMembers.flatMap((m) =>
+        m.City?.split(',').map((c) => c.trim()).filter((c) => c && c !== '-') || []
+      )
+    )
+  ).sort((a, b) => a.localeCompare(b, 'el'))
+  const uniqueProvinces = Array.from(
+    new Set(
+      allMembers.flatMap((m) =>
+        m.Province?.split(',').map((p) => p.trim()).filter((p) => p && p !== '-') || []
+      )
+    )
+  ).sort((a, b) => a.localeCompare(b, 'el'))
 
   const truncateLabel = (label: string, maxLength: number = 32) => {
     if (!label) return ''

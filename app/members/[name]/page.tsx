@@ -92,6 +92,39 @@ function getWebsiteDisplay(url: string): { label: string; icon: React.ReactNode 
     }
   }
 
+  if (lowerUrl.includes('linktr.ee') || lowerUrl.includes('linktree.com')) {
+    return {
+      label: 'Linktree',
+      icon: (
+        <svg className="w-4 h-4 text-coral dark:text-coral-light" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M7.953 15.066l-.038-4.079-4.86-.002v-2.97h4.86L3.954 3.99l2.19-2.307 4.032 4.17 3.96-4.17 2.305 2.307-4.07 4.025h4.96v2.97l-4.985.002-.025 4.079h-4.368zm2.184 7.63l-2.184-2.28 2.184-2.29 2.262 2.29-2.262 2.28z" />
+        </svg>
+      ),
+    }
+  }
+
+  if (lowerUrl.includes('tiktok.com')) {
+    return {
+      label: 'TikTok',
+      icon: (
+        <svg className="w-4 h-4 text-coral dark:text-coral-light" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
+        </svg>
+      ),
+    }
+  }
+
+  if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) {
+    return {
+      label: 'X',
+      icon: (
+        <svg className="w-4 h-4 text-coral dark:text-coral-light" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+      ),
+    }
+  }
+
   // For other URLs, extract and display the clean domain
   try {
     const domain = new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace('www.', '')
@@ -326,13 +359,6 @@ export default function MemberDetailPage() {
                         </a>
                       </p>
                     )}
-                    {member.City && member.City.trim() !== '-' && member.City.trim() !== '' && (
-                      <p className="flex items-center gap-2 dark:text-gray-300">
-                        <span className="text-coral dark:text-coral-light">📍</span>
-                        {member.City}
-                        {member.Province && member.Province.trim() !== '-' && member.Province.trim() !== '' && `, ${member.Province}`}
-                      </p>
-                    )}
                     {websites.map((website, index) => {
                       const { label, icon } = getWebsiteDisplay(website)
                       return (
@@ -352,20 +378,73 @@ export default function MemberDetailPage() {
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="text-coral dark:text-coral-light text-sm font-bold mb-4 uppercase">Πεδία Πρακτικής</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {fieldsOfWork.map((field, index) => (
-                      <Link
-                        key={index}
-                        href={`/members?field=${encodeURIComponent(field)}`}
-                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full text-sm dark:text-gray-200 hover:bg-coral hover:text-white hover:border-coral dark:hover:bg-coral-light dark:hover:text-gray-900 dark:hover:border-coral-light cursor-pointer transition-colors"
-                      >
-                        {field}
-                      </Link>
-                    ))}
+                {fieldsOfWork.length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="text-coral dark:text-coral-light text-sm font-bold mb-4 uppercase">Πεδία Πρακτικής</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {fieldsOfWork.map((field, index) => (
+                        <Link
+                          key={index}
+                          href={`/members?field=${encodeURIComponent(field)}`}
+                          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full text-sm dark:text-gray-200 hover:bg-coral hover:text-white hover:border-coral dark:hover:bg-coral-light dark:hover:text-gray-900 dark:hover:border-coral-light cursor-pointer transition-colors"
+                        >
+                          {field}
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Location Section */}
+                {(() => {
+                  const cities = member.City?.split(',').map(c => c.trim()).filter(c => c && c !== '-') || []
+                  const provinces = member.Province?.split(',').map(p => p.trim()).filter(p => p && p !== '-') || []
+                  if (cities.length === 0 && provinces.length === 0) return null
+                  return (
+                    <div>
+                      <h3 className="text-coral dark:text-coral-light text-sm font-bold mb-4 uppercase">Τοποθεσία</h3>
+                      <div className="space-y-3">
+                        {cities.length > 0 && (
+                          <div className="flex items-center gap-3">
+                            <svg className="w-4 h-4 text-coral dark:text-coral-light flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <div className="flex flex-wrap gap-2">
+                              {cities.map((city, index) => (
+                                <Link
+                                  key={`city-${index}`}
+                                  href={`/members?city=${encodeURIComponent(city)}`}
+                                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full text-sm dark:text-gray-200 hover:bg-coral hover:text-white hover:border-coral dark:hover:bg-coral-light dark:hover:text-gray-900 dark:hover:border-coral-light cursor-pointer transition-colors"
+                                >
+                                  {city}
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {provinces.length > 0 && (
+                          <div className="flex items-center gap-3">
+                            <svg className="w-4 h-4 text-coral dark:text-coral-light flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div className="flex flex-wrap gap-2">
+                              {provinces.map((province, index) => (
+                                <Link
+                                  key={`province-${index}`}
+                                  href={`/members?province=${encodeURIComponent(province)}`}
+                                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full text-sm dark:text-gray-200 hover:bg-coral hover:text-white hover:border-coral dark:hover:bg-coral-light dark:hover:text-gray-900 dark:hover:border-coral-light cursor-pointer transition-colors"
+                                >
+                                  {province}
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
             </div>
           </div>
@@ -451,7 +530,7 @@ export default function MemberDetailPage() {
             {/* Left: Become a Member */}
             <div className="bg-gradient-to-br from-coral to-orange-400 dark:from-gray-700 dark:to-gray-800 p-10 md:p-12 flex flex-col justify-center text-white">
               <h2 className="text-3xl md:text-4xl font-bold mb-4 dark:text-gray-100">
-                Έτοιμος να γίνεις μέλος;
+                Θες να γίνεις μέλος;
               </h2>
               <p className="text-white/90 dark:text-gray-300 mb-8 leading-relaxed">
                 Συμπλήρωσε τη φόρμα εγγραφής και θα επικοινωνήσουμε μαζί σου σύντομα για τα επόμενα βήματα!
@@ -469,10 +548,10 @@ export default function MemberDetailPage() {
             {/* Right: Newsletter */}
             <div className="bg-white dark:bg-gray-800 p-10 md:p-12 flex flex-col justify-center">
               <span className="inline-block self-start bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-xs font-medium mb-4">
-                ΟΛΑ TA NEA ΣTO EMAIL ΣΑΣ!
+                ΟΛΑ TA NEA ΣTO EMAIL ΣΟΥ!
               </span>
               <h3 className="text-xl font-bold mb-6 dark:text-gray-100 leading-tight">
-                Γραφτείτε στο newsletter μας για δράσεις, ευκαιρίες και νέα.
+                Γράψου στο newsletter μας για δράσεις, ευκαιρίες και νέα.
               </h3>
               <form onSubmit={handleNewsletterSubmit} className="space-y-3">
                 {/* Honeypot */}

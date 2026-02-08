@@ -285,7 +285,7 @@ function ParticipationContent() {
           {/* Section 3: Call-to-action with button */}
           <div className="bg-gradient-to-br from-coral to-orange-400 dark:from-gray-700 dark:to-gray-800 rounded-3xl p-12 text-white text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-6 dark:text-gray-100">
-              Έτοιμος να γίνεις μέλος;
+              Θες να γίνεις μέλος;
             </h2>
             <p className="text-lg mb-8 max-w-2xl mx-auto dark:text-gray-200">
               Συμπλήρωσε τη φόρμα εγγραφής και θα επικοινωνήσουμε μαζί σου σύντομα για τα επόμενα βήματα!
