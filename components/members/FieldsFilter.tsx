@@ -163,7 +163,7 @@ export default function FieldsFilter({ selectedFields, onSelectionChange }: Fiel
           </span>
         )}
         {selectedFields.length === 0 && (
-          <svg className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg className={`w-4 h-4 text-coral dark:text-coral-light transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         )}
@@ -215,7 +215,7 @@ export default function FieldsFilter({ selectedFields, onSelectionChange }: Fiel
                     {hasSelectedSub && !isCategorySelected && (
                       <div className="w-2 h-2 rounded-full bg-coral dark:bg-coral-light" />
                     )}
-                    <svg className={`w-4 h-4 ${isCategorySelected ? 'text-white/60' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <svg className={`w-4 h-4 ${isCategorySelected ? 'text-white/60' : 'text-black dark:text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
@@ -271,7 +271,7 @@ export default function FieldsFilter({ selectedFields, onSelectionChange }: Fiel
                         <span>{isAlreadyUsed ? splittableMatch : subLabel}</span>
                         <div className="flex items-center gap-1">
                           {!isAlreadyUsed && (
-                            <svg className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <svg className={`w-4 h-4 text-black dark:text-white transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                           )}

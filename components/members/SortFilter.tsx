@@ -63,7 +63,7 @@ export default function SortFilter({ sortMode, onSortChange }: SortFilterProps) 
         className="px-3 py-3 border border-charcoal dark:border-gray-400 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral text-left flex items-center gap-2 w-auto min-w-0 whitespace-nowrap transition-colors dark:bg-gray-700 text-charcoal dark:text-gray-200"
       >
         <span className="flex-1 truncate">{currentLabel}</span>
-        <svg className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <svg className={`w-4 h-4 text-coral dark:text-coral-light transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
