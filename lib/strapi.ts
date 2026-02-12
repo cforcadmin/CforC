@@ -74,6 +74,13 @@ export async function getOpenCalls() {
 }
 
 /**
+ * Get all newsletters
+ */
+export async function getNewsletters() {
+  return fetchStrapi('/newsletters?populate=Image&pagination[limit]=1000&sort=Date:desc');
+}
+
+/**
  * Get a single open call by ID or Slug
  * First tries by documentId, then falls back to searching by Slug field
  */

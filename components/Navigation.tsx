@@ -91,13 +91,8 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ
               </Link>
               <Link href="/activities" className={`text-sm transition-all ${pathname?.startsWith('/activities') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
-                {isAuthenticated ? 'ΔΡΑΣΕΙΣ' : 'ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ'}
+                ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ
               </Link>
-              {isAuthenticated && (
-                <Link href="/open-calls" className={`text-sm transition-all ${pathname === '/open-calls' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
-                  ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ
-                </Link>
-              )}
               {!isAuthenticated && (
                 <Link href="/participation" className={`text-sm transition-all ${pathname === '/participation' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
                   ΣΥΜΜΕΤΟΧΗ
@@ -109,7 +104,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
               {isAuthenticated ? (
                 <>
                   <Link href="/profile" className={`text-sm transition-all ${pathname === '/profile' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
-                    ΠΡΟΦΙΛ
+                    Ο ΧΩΡΟΣ ΜΟΥ
                   </Link>
                   <button
                     type="button"
@@ -195,10 +190,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
             {/* Navigation links wrapped in nav element */}
             <nav aria-label="Κύρια πλοήγηση κινητού" className="space-y-3">
               <Link href="/about" className={`block text-sm py-2 transition-all ${pathname === '/about' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</Link>
-              <Link href="/activities" className={`block text-sm py-2 transition-all ${pathname?.startsWith('/activities') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>{isAuthenticated ? 'ΔΡΑΣΕΙΣ' : 'ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ'}</Link>
-              {isAuthenticated && (
-                <Link href="/open-calls" className={`block text-sm py-2 transition-all ${pathname === '/open-calls' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</Link>
-              )}
+              <Link href="/activities" className={`block text-sm py-2 transition-all ${pathname?.startsWith('/activities') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</Link>
               {!isAuthenticated && (
                 <Link href="/participation" className={`block text-sm py-2 transition-all ${pathname === '/participation' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΥΜΜΕΤΟΧΗ</Link>
               )}
@@ -207,7 +199,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
               </Link>
               {isAuthenticated ? (
                 <>
-                  <Link href="/profile" className={`block text-sm py-2 transition-all ${pathname === '/profile' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΠΡΟΦΙΛ</Link>
+                  <Link href="/profile" className={`block text-sm py-2 transition-all ${pathname === '/profile' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>Ο ΧΩΡΟΣ ΜΟΥ</Link>
                   <button
                     type="button"
                     onClick={() => setIsLogoutModalOpen(true)}

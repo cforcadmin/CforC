@@ -12,12 +12,30 @@ import EditableImage from '@/components/profile/EditableImage'
 import EditableMultipleImages from '@/components/profile/EditableMultipleImages'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import ProfileGuidelinesModal from '@/components/profile/ProfileGuidelinesModal'
+import OpenCallsContent from '@/components/OpenCallsContent'
+import NewslettersContent from '@/components/NewslettersContent'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
+
+const DASHBOARD_SECTIONS = [
+  { key: 'profile', label: 'Προφίλ', heroTitle: 'ΤΟ ΠΡΟΦΙΛ ΜΟΥ' },
+  { key: 'open-calls', label: 'Ανοιχτές Προσκλήσεις', heroTitle: 'ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ' },
+  { key: 'educational', label: 'Εκπαιδευτικό Υλικό', heroTitle: 'ΕΚΠΑΙΔΕΥΤΙΚΟ ΥΛΙΚΟ' },
+  { key: 'networks', label: 'Δίκτυα / Κοινότητες', heroTitle: 'ΔΙΚΤΥΑ / ΚΟΙΝΟΤΗΤΕΣ' },
+  { key: 'working-groups', label: 'Ομάδες Εργασίας', heroTitle: 'ΟΜΑΔΕΣ ΕΡΓΑΣΙΑΣ' },
+  { key: 'related-members', label: 'Συναφή Μέλη', heroTitle: 'ΣΥΝΑΦΗ ΜΕΛΗ' },
+  { key: 'pocket-guide', label: 'Οδηγός Τσέπης', heroTitle: 'ΟΔΗΓΟΣ ΤΣΕΠΗΣ' },
+  { key: 'newsletters', label: 'Newsletters', heroTitle: 'NEWSLETTERS' },
+] as const
+
+type SectionKey = (typeof DASHBOARD_SECTIONS)[number]['key']
 
 export default function ProfilePage() {
   const router = useRouter()
   const { user, isAuthenticated, isLoading, refreshSession } = useAuth()
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
+  const [activeSection, setActiveSection] = useState<SectionKey>('profile')
+
+  const currentSection = DASHBOARD_SECTIONS.find(s => s.key === activeSection) ?? DASHBOARD_SECTIONS[0]
 
   // Handle scroll for accessibility button fade
   useEffect(() => {
@@ -449,13 +467,36 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
       <Navigation />
       <main id="main-content">
-        {/* Hero Section */}
+        {/* Dashboard Hero Section */}
         <section className="relative -bottom-20">
-          <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
-                ΤΟ ΠΡΟΦΙΛ ΜΟΥ
-              </h1>
+          <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 min-h-[25vh] flex items-center rounded-b-3xl relative z-10 py-8">
+            {/* Content area: same inset as accessibility button on both sides, minus space for the button itself on the right */}
+            <div className="w-full px-6 lg:px-12">
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6 lg:gap-8 pr-16 lg:pr-16">
+                {/* Left: Active section title (fixed half, shrinks to fit) */}
+                <div className="flex items-center min-w-0">
+                  <h1 className="text-[clamp(1.25rem,3.5vw,3.75rem)] font-bold leading-none whitespace-nowrap dark:text-coral">
+                    {currentSection.heroTitle}
+                  </h1>
+                </div>
+
+                {/* Right: Navigation buttons (fixed half) */}
+                <div className="flex flex-wrap gap-2 items-center">
+                  {DASHBOARD_SECTIONS.map((section) => (
+                    <button
+                      key={section.key}
+                      onClick={() => setActiveSection(section.key)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                        activeSection === section.key
+                          ? 'bg-charcoal dark:bg-coral text-coral dark:text-white shadow-md'
+                          : 'bg-charcoal/60 dark:bg-white/10 text-white dark:text-gray-300 hover:bg-charcoal/80 dark:hover:bg-white/20'
+                      }`}
+                    >
+                      {section.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Accessibility Menu Trigger Button */}
@@ -472,7 +513,39 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        {/* Main Content */}
+        {/* Section Content */}
+        {activeSection === 'open-calls' && (
+          <div className="pt-20">
+            <OpenCallsContent />
+          </div>
+        )}
+
+        {activeSection === 'newsletters' && (
+          <div className="pt-20">
+            <NewslettersContent />
+          </div>
+        )}
+
+        {activeSection !== 'profile' && activeSection !== 'open-calls' && activeSection !== 'newsletters' && (
+          <div className="pt-32 pb-24 max-w-4xl mx-auto px-4">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-12 text-center">
+              <div className="w-20 h-20 rounded-full bg-coral/10 dark:bg-coral/20 flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-coral dark:text-coral-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-3">
+                {currentSection.heroTitle}
+              </h2>
+              <p className="text-gray-500 dark:text-gray-400 text-lg">
+                Σύντομα διαθέσιμο
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Profile Content */}
+        {activeSection === 'profile' && (
         <div className="pt-32 pb-24 max-w-4xl mx-auto px-4">
           {/* Header with Guidelines Button */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
@@ -883,6 +956,7 @@ export default function ProfilePage() {
           </div>
         </div>
         </div>
+        )}
       </main>
 
       {/* Unsaved Changes Modal */}

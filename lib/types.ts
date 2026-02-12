@@ -76,6 +76,18 @@ export interface OpenCall extends StrapiData<OpenCall> {
   publishedAt: string;
 }
 
+// Newsletter type - matches Strapi schema
+export interface Newsletter extends StrapiData<Newsletter> {
+  Title: string;
+  Date: string;
+  DriveLink: string;
+  Slug: string;
+  Image?: StrapiMediaObject | StrapiMediaArray;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
 // Hero Section type
 export interface HeroSection {
   title: string;
