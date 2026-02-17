@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import LanguageSwitcher from './LanguageSwitcher'
 import { useTheme } from './ThemeProvider'
@@ -10,6 +11,8 @@ import ConfirmationModal from './ConfirmationModal'
 import TextSizeToggle from './TextSizeToggle'
 import { useAccessibility } from './AccessibilityProvider'
 import { AccessibilityButton } from './AccessibilityMenu'
+import { getFeaturedProjects } from '@/lib/strapi'
+import type { Project, StrapiResponse } from '@/lib/types'
 
 interface NavigationProps {
   variant?: 'default' | 'members'
@@ -19,10 +22,19 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
+  const [projectsDropdownOpen, setProjectsDropdownOpen] = useState(false)
+  const [mobileProjectsExpanded, setMobileProjectsExpanded] = useState(false)
+  const [featuredProjects, setFeaturedProjects] = useState<Project[]>([])
   const { theme, toggleTheme } = useTheme()
   const { user, isAuthenticated, logout } = useAuth()
   const { setIsMenuOpen } = useAccessibility()
   const pathname = usePathname()
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const dropdownItemsRef = useRef<(HTMLAnchorElement | null)[]>([])
+  const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // TODO: Remove testing condition — make permanently visible
+  const showProjects = pathname?.startsWith('/projects')
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,9 +47,82 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Fetch featured projects for dropdown when on /projects routes
+  useEffect(() => {
+    if (!showProjects) return
+    async function fetchProjects() {
+      try {
+        const response: StrapiResponse<Project[]> = await getFeaturedProjects()
+        setFeaturedProjects(response.data)
+      } catch (err) {
+        console.error('Error fetching featured projects:', err)
+      }
+    }
+    fetchProjects()
+  }, [showProjects])
+
+  // Open/close dropdown with delay to prevent flickering
+  const openDropdown = useCallback(() => {
+    if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current)
+    setProjectsDropdownOpen(true)
+  }, [])
+
+  const closeDropdown = useCallback(() => {
+    dropdownTimeoutRef.current = setTimeout(() => {
+      setProjectsDropdownOpen(false)
+    }, 150)
+  }, [])
+
+  // Keyboard navigation for dropdown
+  const handleDropdownKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!projectsDropdownOpen && (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown')) {
+      e.preventDefault()
+      setProjectsDropdownOpen(true)
+      setTimeout(() => dropdownItemsRef.current[0]?.focus(), 50)
+      return
+    }
+    if (!projectsDropdownOpen) return
+
+    const items = dropdownItemsRef.current.filter(Boolean) as HTMLAnchorElement[]
+    const currentIndex = items.findIndex(item => item === document.activeElement)
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        items[(currentIndex + 1) % items.length]?.focus()
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        items[(currentIndex - 1 + items.length) % items.length]?.focus()
+        break
+      case 'Escape':
+        e.preventDefault()
+        setProjectsDropdownOpen(false)
+        dropdownRef.current?.querySelector('a')?.focus()
+        break
+      case 'Tab':
+        setProjectsDropdownOpen(false)
+        break
+    }
+  }, [projectsDropdownOpen])
+
   const handleLogout = async () => {
     await logout()
     setIsLogoutModalOpen(false)
+  }
+
+  // Helper to get image URL from Strapi media field
+  const getImageUrl = (image: Project['cover_image']): string | null => {
+    if (!image) return null
+    if (Array.isArray(image) && image.length > 0) {
+      const url = image[0].url
+      return url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
+    }
+    if (typeof image === 'object' && !Array.isArray(image) && 'url' in image) {
+      const url = image.url
+      return url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
+    }
+    return null
   }
 
   const bgColor = variant === 'members' ? 'bg-[#F5F0EB] dark:bg-gray-800' : 'bg-coral dark:bg-gray-900'
@@ -93,6 +178,71 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
               <Link href="/activities" className={`text-sm transition-all ${pathname?.startsWith('/activities') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
                 ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ
               </Link>
+              {/* TODO: Remove testing condition — make permanently visible */}
+              {showProjects && (
+                <div
+                  ref={dropdownRef}
+                  className="relative inline-flex items-center"
+                  onMouseEnter={openDropdown}
+                  onMouseLeave={closeDropdown}
+                  onKeyDown={handleDropdownKeyDown}
+                >
+                  <Link
+                    href="/projects"
+                    className={`text-sm transition-all inline-flex items-center gap-1 ${pathname?.startsWith('/projects') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}
+                    aria-haspopup="true"
+                    aria-expanded={projectsDropdownOpen}
+                  >
+                    ΕΡΓΑ
+                    <svg className={`w-3 h-3 transition-transform ${projectsDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </Link>
+                  {projectsDropdownOpen && featuredProjects.length > 0 && (
+                    <div
+                      role="menu"
+                      aria-label="Έργα"
+                      className="absolute top-full left-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50"
+                    >
+                      {featuredProjects.map((project, index) => {
+                        const imgUrl = getImageUrl(project.cover_image)
+                        return (
+                          <Link
+                            key={project.id}
+                            href={`/projects/${project.slug}`}
+                            role="menuitem"
+                            ref={(el) => { dropdownItemsRef.current[index] = el }}
+                            className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:bg-gray-100 dark:focus:bg-gray-700 focus:outline-none"
+                            onClick={() => setProjectsDropdownOpen(false)}
+                          >
+                            {imgUrl ? (
+                              <Image
+                                src={imgUrl}
+                                alt={project.title}
+                                width={48}
+                                height={48}
+                                className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-lg bg-coral/20 dark:bg-coral/10 flex items-center justify-center flex-shrink-0">
+                                <svg className="w-6 h-6 text-coral" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                                </svg>
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-charcoal dark:text-gray-100 truncate">{project.title}</p>
+                              {project.short_description && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{project.short_description}</p>
+                              )}
+                            </div>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
               {!isAuthenticated && (
                 <Link href="/participation" className={`text-sm transition-all ${pathname === '/participation' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
                   ΣΥΜΜΕΤΟΧΗ
@@ -191,6 +341,36 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
             <nav aria-label="Κύρια πλοήγηση κινητού" className="space-y-3">
               <Link href="/about" className={`block text-sm py-2 transition-all ${pathname === '/about' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</Link>
               <Link href="/activities" className={`block text-sm py-2 transition-all ${pathname?.startsWith('/activities') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</Link>
+              {/* TODO: Remove testing condition — make permanently visible */}
+              {showProjects && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setMobileProjectsExpanded(!mobileProjectsExpanded)}
+                    className={`flex items-center justify-between w-full text-sm py-2 transition-all ${pathname?.startsWith('/projects') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}
+                    aria-expanded={mobileProjectsExpanded}
+                  >
+                    <Link href="/projects" onClick={(e) => { e.stopPropagation(); setIsOpen(false) }}>ΕΡΓΑ</Link>
+                    <svg className={`w-4 h-4 transition-transform ${mobileProjectsExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {mobileProjectsExpanded && featuredProjects.length > 0 && (
+                    <div className="pl-4 space-y-1 pb-2">
+                      {featuredProjects.map((project) => (
+                        <Link
+                          key={project.id}
+                          href={`/projects/${project.slug}`}
+                          className="block text-sm py-1.5 text-gray-200 hover:text-white dark:text-gray-400 dark:hover:text-coral-light transition-colors"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          {project.title}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               {!isAuthenticated && (
                 <Link href="/participation" className={`block text-sm py-2 transition-all ${pathname === '/participation' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΥΜΜΕΤΟΧΗ</Link>
               )}

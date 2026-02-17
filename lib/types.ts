@@ -88,6 +88,64 @@ export interface Newsletter extends StrapiData<Newsletter> {
   publishedAt: string;
 }
 
+// Partner component (used in Project)
+export interface Partner {
+  id: number;
+  name: string;
+  logo?: StrapiMediaObject;
+  url?: string;
+}
+
+// External Link component (used in Project)
+export interface ExternalLink {
+  id: number;
+  label: string;
+  url: string;
+}
+
+// Project type - matches Strapi schema (Strapi v5)
+export interface Project extends StrapiData<Project> {
+  title: string;
+  slug: string;
+  short_description?: string;
+  full_description?: any;  // Strapi blocks type (rich text)
+  cover_image?: StrapiMediaObject | StrapiMediaArray;
+  project_images?: StrapiMediaArray;
+  project_link?: string;
+  project_status?: 'active' | 'in_progress' | 'completed';
+  start_date?: string;
+  end_date?: string;
+  category?: string;  // comma-separated, parsed on frontend
+  sort_order?: number;
+  featured?: boolean;
+  partners?: Partner[];
+  external_links?: ExternalLink[];
+  project_entries?: ProjectEntry[];
+  supporters_banner?: StrapiMediaObject | StrapiMediaArray;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+// ΣΗΜΑ Entry type - matches Strapi schema (Strapi v5)
+export interface ProjectEntry extends StrapiData<ProjectEntry> {
+  title: string;
+  slug: string;
+  description?: any;  // Strapi blocks type (rich text)
+  cover_image?: StrapiMediaObject | StrapiMediaArray;
+  images?: StrapiMediaArray;
+  category?: string;
+  tags?: string;  // comma-separated, parsed on frontend
+  entry_link?: string;
+  visibility?: 'public' | 'private';
+  publication_date?: string;
+  expiration_date?: string;
+  project?: Project;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
 // Hero Section type
 export interface HeroSection {
   title: string;

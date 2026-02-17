@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<title>Οδηγός Έργων και Καταχωρήσεων</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #2D2D2D; line-height: 1.6; font-size: 14px; }
+  h1 { color: #FF8B6A; border-bottom: 2px solid #FF8B6A; padding-bottom: 8px; font-size: 24px; }
+  h2 { color: #2D2D2D; margin-top: 30px; font-size: 20px; }
+  h3 { color: #555; font-size: 16px; }
+  code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
+  pre { background: #f4f4f4; padding: 12px; border-radius: 6px; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+  th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+  th { background: #FF8B6A; color: white; }
+  hr { border: none; border-top: 1px solid #eee; margin: 24px 0; }
+  ul, ol { padding-left: 24px; }
+  li { margin-bottom: 4px; }
+  strong { color: #2D2D2D; }
+  @media print { body { margin: 20px; } }
+</style>
+</head>
+<body>
+<h1>Οδηγός Έργων και Καταχωρήσεων</h1>
+<h2>Πώς λειτουργεί</h2>
+<p>Το σύστημα έχει δύο επίπεδα:</p>
+<ul>
+<li><strong>Έργο (Project)</strong> = ένας &quot;φάκελος&quot; (π.χ. ΣΗΜΑ, Humanitarium)</li>
+<li><strong>Καταχώρηση Έργου (Project Entry)</strong> = μια σελίδα/άρθρο μέσα σε αυτόν τον φάκελο</li>
+</ul>
+<p>Στο website εμφανίζονται:</p>
+<ul>
+<li><code>/projects</code> — Λίστα με όλα τα έργα</li>
+<li><code>/projects/sima</code> — Η σελίδα του έργου ΣΗΜΑ με τις δημόσιες καταχωρήσεις του</li>
+<li><code>/projects/sima/entries/katagrafes-2026</code> — Μια μεμονωμένη καταχώρηση</li>
+</ul>
+<hr />
+<h2>Πώς να προσθέσετε ένα νέο Έργο</h2>
+<ol>
+<li>Συνδεθείτε στο Strapi admin panel</li>
+<li>Μεταβείτε στο <strong>Content Manager</strong> → <strong>Project</strong></li>
+<li>Πατήστε <strong>Create new entry</strong></li>
+<li>Συμπληρώστε τα πεδία:
+<ul>
+<li><strong>title</strong>: Τίτλος του έργου (υποχρεωτικό)</li>
+<li><strong>slug</strong>: Δημιουργείται αυτόματα από τον τίτλο — χρησιμοποιείται στο URL</li>
+<li><strong>short_description</strong>: Σύντομη περιγραφή (εμφανίζεται στις κάρτες και στο dropdown πλοήγησης)</li>
+<li><strong>full_description</strong>: Πλήρης περιγραφή (rich text, εμφανίζεται στη σελίδα του έργου)</li>
+<li><strong>cover_image</strong>: Κύρια εικόνα (εμφανίζεται σε κάρτες και hero)</li>
+<li><strong>project_images</strong>: Επιπλέον φωτογραφίες (γκαλερί στη σελίδα του έργου)</li>
+<li><strong>project_link</strong>: Εξωτερικός σύνδεσμος ιστοσελίδας (προαιρετικό — κρύβεται αν είναι κενό)</li>
+<li><strong>project_status</strong>: <code>active</code>, <code>in_progress</code>, ή <code>completed</code></li>
+<li><strong>start_date</strong> / <strong>end_date</strong>: Ημερομηνίες έργου</li>
+<li><strong>category</strong>: Tags χωρισμένα με κόμμα, π.χ. <code>AI, culture, education</code></li>
+<li><strong>sort_order</strong>: Αριθμός για τη σειρά εμφάνισης (μικρότερος = πρώτα)</li>
+<li><strong>featured</strong>: Αν είναι <code>true</code>, εμφανίζεται στο dropdown πλοήγησης</li>
+<li><strong>partners</strong>: Επαναλαμβανόμενο component (όνομα, λογότυπο, URL)</li>
+<li><strong>external_links</strong>: Επαναλαμβανόμενο component (ετικέτα, URL)</li>
+</ul>
+</li>
+<li>Πατήστε <strong>Save</strong> και μετά <strong>Publish</strong></li>
+</ol>
+<hr />
+<h2>Πώς να προσθέσετε μια Καταχώρηση Έργου</h2>
+<ol>
+<li>Μεταβείτε στο <strong>Content Manager</strong> → <strong>Project Entry</strong></li>
+<li>Πατήστε <strong>Create new entry</strong></li>
+<li>Συμπληρώστε τα πεδία:
+<ul>
+<li><strong>title</strong>: Τίτλος (υποχρεωτικό)</li>
+<li><strong>slug</strong>: Δημιουργείται αυτόματα από τον τίτλο</li>
+<li><strong>description</strong>: Περιγραφή (rich text)</li>
+<li><strong>cover_image</strong>: Κύρια εικόνα</li>
+<li><strong>images</strong>: Επιπλέον φωτογραφίες (γκαλερί)</li>
+<li><strong>category</strong>: Κατηγορία (π.χ. Έρευνα, Ανακοίνωση)</li>
+<li><strong>tags</strong>: Tags χωρισμένα με κόμμα, π.χ. <code>σημα, cforc, bodosaki</code></li>
+<li><strong>entry_link</strong>: Εξωτερικός σύνδεσμος (προαιρετικό — κρύβεται αν είναι κενό)</li>
+<li><strong>visibility</strong>: <code>public</code> ή <code>private</code> (βλ. παρακάτω)</li>
+<li><strong>publication_date</strong>: Ημερομηνία δημοσίευσης</li>
+<li><strong>expiration_date</strong>: Ημερομηνία λήξης (προαιρετικό)</li>
+<li><strong>project</strong>: Επιλέξτε σε ποιο Έργο ανήκει</li>
+</ul>
+</li>
+<li>Πατήστε <strong>Save</strong> και <strong>Publish</strong></li>
+</ol>
+<hr />
+<h2>Visibility: Public vs Private</h2>
+<ul>
+<li><strong>public</strong>: Η καταχώρηση εμφανίζεται στη σελίδα του έργου και στα αποτελέσματα αναζήτησης</li>
+<li><strong>private</strong>: Η καταχώρηση ΔΕΝ εμφανίζεται στη σελίδα του έργου. Είναι προσβάσιμη μόνο μέσω direct link: <code>/projects/[slug-εργου]/entries/[slug-καταχωρησης]</code>. Οι μηχανές αναζήτησης δεν την ευρετηριάζουν (noindex).</li>
+</ul>
+<h3>Πώς να κάνετε μια private καταχώρηση public:</h3>
+<ol>
+<li>Μεταβείτε στην καταχώρηση στο Strapi</li>
+<li>Αλλάξτε το πεδίο <strong>visibility</strong> από <code>private</code> σε <code>public</code></li>
+<li>Πατήστε <strong>Save</strong></li>
+</ol>
+<hr />
+<h2>Σύστημα Λήξης (Expiration)</h2>
+<p>Αν ορίσετε <strong>expiration_date</strong> και αυτή περάσει:</p>
+<ul>
+<li>Η σελίδα εξακολουθεί να είναι προσβάσιμη</li>
+<li>Αντί για το περιεχόμενο, εμφανίζεται μήνυμα: &quot;Αυτή η καταχώρηση δεν είναι πλέον διαθέσιμη&quot;</li>
+</ul>
+<hr />
+<h2>Πώς να αλλάξετε τη σειρά των Έργων</h2>
+<ol>
+<li>Ανοίξτε κάθε Έργο στο Strapi</li>
+<li>Τροποποιήστε το πεδίο <strong>sort_order</strong></li>
+<li>Μικρότερος αριθμός = εμφανίζεται πρώτα (0, 1, 2, ...)</li>
+<li>Η σειρά ισχύει τόσο στο dropdown πλοήγησης όσο και στη σελίδα λίστας</li>
+</ol>
+<hr />
+<h2>Πώς να κάνετε το &quot;ΕΡΓΑ&quot; μόνιμα ορατό στην πλοήγηση</h2>
+<p>Αυτή τη στιγμή, το &quot;ΕΡΓΑ&quot; εμφανίζεται μόνο όταν ο χρήστης βρίσκεται στη διαδρομή <code>/projects</code> (λειτουργία δοκιμών).</p>
+<p>Για να γίνει μόνιμα ορατό:</p>
+<ol>
+<li>Ανοίξτε το αρχείο <code>components/Navigation.tsx</code></li>
+<li>Βρείτε τη γραμμή: <code>// TODO: Remove testing condition — make permanently visible</code></li>
+<li>Αλλάξτε <code>const showProjects = pathname?.startsWith('/projects')</code> σε <code>const showProjects = true</code></li>
+<li>Αφαιρέστε τα σχόλια TODO</li>
+</ol>
+
+</body>
+</html>

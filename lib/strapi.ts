@@ -99,6 +99,34 @@ export async function getOpenCallById(idOrSlug: string | number) {
 }
 
 /**
+ * Get all projects, ordered by sort_order
+ */
+export async function getProjects() {
+  return fetchStrapi('/projects?populate[cover_image]=true&populate[partners][populate]=logo&populate[external_links]=true&pagination[limit]=1000&sort=sort_order:asc');
+}
+
+/**
+ * Get featured projects only (for navbar dropdown)
+ */
+export async function getFeaturedProjects() {
+  return fetchStrapi('/projects?populate[cover_image]=true&filters[featured][$eq]=true&pagination[limit]=1000&sort=sort_order:asc');
+}
+
+/**
+ * Get a single project by slug with all relations populated
+ */
+export async function getProjectBySlug(slug: string) {
+  return fetchStrapi(`/projects?filters[slug][$eq]=${slug}&populate[cover_image]=true&populate[project_images]=true&populate[partners][populate]=logo&populate[external_links]=true&populate[project_entries][populate][cover_image]=true`);
+}
+
+/**
+ * Get a single ΣΗΜΑ entry by slug (returns regardless of visibility)
+ */
+export async function getProjectEntryBySlug(slug: string) {
+  return fetchStrapi(`/project-entries?filters[slug][$eq]=${slug}&populate=*`);
+}
+
+/**
  * Get hero section data
  */
 export async function getHeroSection() {

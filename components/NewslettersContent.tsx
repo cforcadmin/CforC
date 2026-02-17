@@ -72,7 +72,7 @@ export default function NewslettersContent() {
                   {/* Image with overlapping date */}
                   <div className="relative -mb-2">
                     {imageUrl ? (
-                      <div className="aspect-video rounded-2xl overflow-hidden mx-2 mt-2">
+                      <div className="aspect-video rounded-2xl overflow-hidden mx-2 mt-2 border border-black dark:border-white">
                         <Image
                           src={imageUrl}
                           alt={newsletter.Title}
