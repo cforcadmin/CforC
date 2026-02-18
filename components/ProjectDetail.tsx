@@ -167,7 +167,7 @@ export default function ProjectDetail({ slug }: Props) {
       <main id="main-content">
         {/* Hero Section */}
         <section className="relative -bottom-20">
-          <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
+          <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 min-h-[25vh] flex items-center rounded-b-3xl relative z-10 py-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-none dark:text-coral">
                 {project?.title || '...'}

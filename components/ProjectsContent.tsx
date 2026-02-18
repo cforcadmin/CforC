@@ -156,9 +156,29 @@ export default function ProjectsContent() {
                       </div>
 
                       <div className="p-7 pt-9">
-                        <h3 className="text-lg font-bold line-clamp-2 text-charcoal dark:text-gray-100">
-                          {project.title}
-                        </h3>
+                        <div className="relative group/title">
+                          <h3
+                            className="text-lg font-bold line-clamp-2 text-charcoal dark:text-gray-100"
+                            onMouseEnter={(e) => {
+                              const el = e.currentTarget
+                              const tooltip = el.nextElementSibling as HTMLElement
+                              if (tooltip) {
+                                tooltip.style.display = el.scrollHeight > el.clientHeight ? '' : 'none'
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              const tooltip = e.currentTarget.nextElementSibling as HTMLElement
+                              if (tooltip) tooltip.style.display = 'none'
+                            }}
+                          >
+                            {project.title}
+                          </h3>
+                          <div className="absolute bottom-full left-0 mb-2 z-20 pointer-events-none" style={{ display: 'none' }}>
+                            <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-sm rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white max-w-xs font-normal">
+                              {project.title}
+                            </div>
+                          </div>
+                        </div>
 
                         {/* Info bar */}
                         {(project.CforC_project_role || partners.length > 0) && (

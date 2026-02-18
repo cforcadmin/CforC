@@ -230,8 +230,28 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                                 </svg>
                               </div>
                             )}
-                            <div className="min-w-0">
-                              <p className="text-sm font-bold text-charcoal dark:text-gray-100 truncate">{project.title}</p>
+                            <div className="min-w-0 relative group/navtitle">
+                              <p
+                                className="text-sm font-bold text-charcoal dark:text-gray-100 truncate"
+                                onMouseEnter={(e) => {
+                                  const el = e.currentTarget
+                                  const tooltip = el.nextElementSibling as HTMLElement
+                                  if (tooltip) {
+                                    tooltip.style.display = el.scrollWidth > el.clientWidth ? '' : 'none'
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  const tooltip = e.currentTarget.nextElementSibling as HTMLElement
+                                  if (tooltip) tooltip.style.display = 'none'
+                                }}
+                              >
+                                {project.title}
+                              </p>
+                              <div className="absolute bottom-full left-0 mb-2 z-[60] pointer-events-none" style={{ display: 'none' }}>
+                                <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-sm rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white max-w-xs font-normal">
+                                  {project.title}
+                                </div>
+                              </div>
                             </div>
                           </Link>
                         )
