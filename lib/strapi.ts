@@ -116,7 +116,7 @@ export async function getFeaturedProjects() {
  * Get a single project by slug with all relations populated
  */
 export async function getProjectBySlug(slug: string) {
-  return fetchStrapi(`/projects?filters[slug][$eq]=${slug}&populate[cover_image]=true&populate[project_images]=true&populate[partners][populate]=logo&populate[external_links]=true&populate[project_entries][populate][cover_image]=true&populate[supporters_banner]=true`);
+  return fetchStrapi(`/projects?filters[slug][$eq]=${slug}&populate[cover_image]=true&populate[project_images]=true&populate[partners][populate]=logo&populate[external_links]=true&populate[project_entries][populate][cover_image]=true&populate[supporters_banner_light]=true&populate[supporters_banner_dark]=true`);
 }
 
 /**

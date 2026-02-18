@@ -11,6 +11,7 @@ import ScrollToTop from '@/components/ScrollToTop'
 import LoadingIndicator from '@/components/LoadingIndicator'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import { getProjectBySlug } from '@/lib/strapi'
+import { useTheme } from '@/components/ThemeProvider'
 import type { Project, ProjectEntry } from '@/lib/types'
 
 function extractTextFromBlocks(blocks: any): string {
@@ -81,6 +82,7 @@ interface Props {
 }
 
 export default function ProjectDetail({ slug }: Props) {
+  const { theme } = useTheme()
   const [project, setProject] = useState<Project | null>(null)
   const [publicEntries, setPublicEntries] = useState<ProjectEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -331,7 +333,8 @@ export default function ProjectDetail({ slug }: Props) {
                   )}
                   {/* Supporters Banner */}
                   {(() => {
-                    const bannerUrl = getImageUrl(project.supporters_banner as any)
+                    const bannerSource = theme === 'dark' ? project.supporters_banner_dark : project.supporters_banner_light
+                    const bannerUrl = getImageUrl(bannerSource as any)
                     return bannerUrl ? (
                       <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
                         <Image

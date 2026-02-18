@@ -107,7 +107,8 @@ export interface ExternalLink {
 export interface Project extends StrapiData<Project> {
   title: string;
   slug: string;
-  short_description?: string;
+  CforC_project_role?: string;
+  project_partners?: string;  // comma-separated, parsed on frontend
   full_description?: any;  // Strapi blocks type (rich text)
   cover_image?: StrapiMediaObject | StrapiMediaArray;
   project_images?: StrapiMediaArray;
@@ -121,7 +122,8 @@ export interface Project extends StrapiData<Project> {
   partners?: Partner[];
   external_links?: ExternalLink[];
   project_entries?: ProjectEntry[];
-  supporters_banner?: StrapiMediaObject | StrapiMediaArray;
+  supporters_banner_light?: StrapiMediaObject | StrapiMediaArray;
+  supporters_banner_dark?: StrapiMediaObject | StrapiMediaArray;
   createdAt: string;
   updatedAt: string;
   publishedAt: string;

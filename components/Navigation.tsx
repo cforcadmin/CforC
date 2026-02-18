@@ -232,9 +232,6 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                             )}
                             <div className="min-w-0">
                               <p className="text-sm font-bold text-charcoal dark:text-gray-100 truncate">{project.title}</p>
-                              {project.short_description && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{project.short_description}</p>
-                              )}
                             </div>
                           </Link>
                         )

@@ -116,6 +116,10 @@ export default function ProjectsContent() {
                   const imageUrl = getImageUrl(project.cover_image)
                   const statusInfo = project.project_status ? STATUS_LABELS[project.project_status] : null
 
+                  const partners = project.project_partners
+                    ? project.project_partners.split(',').map((p: string) => p.trim()).filter(Boolean)
+                    : []
+
                   return (
                     <Link
                       key={project.id}
@@ -151,15 +155,33 @@ export default function ProjectsContent() {
                         )}
                       </div>
 
-                      <div className="p-7 pt-9 flex flex-col h-[140px]">
-                        <h3 className="text-lg font-bold mb-2 line-clamp-2 flex-grow text-charcoal dark:text-gray-100">
+                      <div className="p-7 pt-9">
+                        <h3 className="text-lg font-bold mb-4 line-clamp-2 text-charcoal dark:text-gray-100">
                           {project.title}
                         </h3>
-                        {project.short_description && (
-                          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mt-auto">
-                            {project.short_description}
-                          </p>
-                        )}
+
+                        {/* Role and Partners row */}
+                        <div className="flex items-end justify-between gap-2">
+                          {/* CforC Role - bottom left */}
+                          <div className="flex-shrink-0">
+                            {project.CforC_project_role && (
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium shadow-md border border-black dark:border-white bg-white text-charcoal dark:bg-gray-900 dark:text-gray-300">
+                                {project.CforC_project_role}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Partners - bottom right */}
+                          {partners.length > 0 && (
+                            <div className="flex flex-wrap justify-end gap-1">
+                              {partners.map((partner: string) => (
+                                <span key={partner} className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium shadow-md border border-black dark:border-white bg-white text-charcoal dark:bg-gray-900 dark:text-gray-300">
+                                  {partner}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </Link>
                   )
