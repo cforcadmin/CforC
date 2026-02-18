@@ -156,32 +156,45 @@ export default function ProjectsContent() {
                       </div>
 
                       <div className="p-7 pt-9">
-                        <h3 className="text-lg font-bold mb-4 line-clamp-2 text-charcoal dark:text-gray-100">
+                        <h3 className="text-lg font-bold line-clamp-2 text-charcoal dark:text-gray-100">
                           {project.title}
                         </h3>
 
-                        {/* Role and Partners row */}
-                        <div className="flex items-end justify-between gap-2">
-                          {/* CforC Role - bottom left */}
-                          <div className="flex-shrink-0">
-                            {project.CforC_project_role && (
-                              <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium shadow-md border border-black dark:border-white bg-white text-charcoal dark:bg-gray-900 dark:text-gray-300">
-                                {project.CforC_project_role}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Partners - bottom right */}
-                          {partners.length > 0 && (
-                            <div className="flex flex-wrap justify-end gap-1">
-                              {partners.map((partner: string) => (
-                                <span key={partner} className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium shadow-md border border-black dark:border-white bg-white text-charcoal dark:bg-gray-900 dark:text-gray-300">
-                                  {partner}
-                                </span>
-                              ))}
+                        {/* Info bar */}
+                        {(project.CforC_project_role || partners.length > 0) && (
+                          <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
+                            {/* Labels row */}
+                            <div className="flex justify-between gap-4 mb-1.5">
+                              {project.CforC_project_role ? (
+                                <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-600 dark:text-gray-300">Ρόλος CforC</p>
+                              ) : <div />}
+                              {partners.length > 0 && (
+                                <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-600 dark:text-gray-300">Εταίροι</p>
+                              )}
                             </div>
-                          )}
-                        </div>
+                            {/* Values row */}
+                            <div className="flex items-center justify-between gap-4">
+                              {project.CforC_project_role ? (
+                                <span className="flex-shrink-0 inline-block px-2.5 py-0.5 rounded-full text-xs font-medium shadow-md border border-black dark:border-white bg-white text-charcoal dark:bg-gray-900 dark:text-gray-300">
+                                  {project.CforC_project_role}
+                                </span>
+                              ) : <div />}
+                              {partners.length > 0 && (
+                                <div className="relative group/partners min-w-0 ml-auto">
+                                  <span className="block px-2.5 py-0.5 rounded-full text-xs font-medium shadow-md border border-black dark:border-white bg-white text-charcoal dark:bg-gray-900 dark:text-gray-300 truncate cursor-default">
+                                    {partners.join(' · ')}
+                                  </span>
+                                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover/partners:block z-20">
+                                    <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-xs rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white max-w-xs whitespace-nowrap">
+                                      {partners.join(', ')}
+                                      <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black dark:border-t-white"></div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </Link>
                   )

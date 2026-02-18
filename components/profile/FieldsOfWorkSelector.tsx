@@ -569,9 +569,9 @@ export default function FieldsOfWorkSelector({ value, onChange }: FieldsOfWorkSe
           Πώς λειτουργεί;
         </p>
         <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
-          <div className="bg-charcoal dark:bg-gray-600 text-white text-xs rounded-lg px-3 py-2 shadow-lg max-w-xs">
+          <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-xs rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white max-w-xs">
             Κάνε κλικ σε ένα κενό πεδίο (+) για να δεις τις κατηγορίες. Πέρασε τον κέρσορα πάνω σε μια κατηγορία για να δεις τις υποκατηγορίες. Ορισμένες υποκατηγορίες έχουν επιπλέον επιλογές. Μπορείς να προσθέσεις και ένα δικό σου πεδίο (εμφανίζεται μόνο στο προφίλ). Πάτα Escape για κλείσιμο.
-            <div className="absolute top-full left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-charcoal dark:border-t-gray-600"></div>
+            <div className="absolute top-full left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black dark:border-t-white"></div>
           </div>
         </div>
       </div>

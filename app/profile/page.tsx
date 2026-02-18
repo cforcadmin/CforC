@@ -22,7 +22,6 @@ const DASHBOARD_SECTIONS = [
   { key: 'educational', label: 'Εκπαιδευτικό Υλικό', heroTitle: 'ΕΚΠΑΙΔΕΥΤΙΚΟ ΥΛΙΚΟ' },
   { key: 'networks', label: 'Δίκτυα / Κοινότητες', heroTitle: 'ΔΙΚΤΥΑ / ΚΟΙΝΟΤΗΤΕΣ' },
   { key: 'working-groups', label: 'Ομάδες Εργασίας', heroTitle: 'ΟΜΑΔΕΣ ΕΡΓΑΣΙΑΣ' },
-  { key: 'related-members', label: 'Συναφή Μέλη', heroTitle: 'ΣΥΝΑΦΗ ΜΕΛΗ' },
   { key: 'pocket-guide', label: 'Οδηγός Τσέπης', heroTitle: 'ΟΔΗΓΟΣ ΤΣΕΠΗΣ' },
   { key: 'newsletters', label: 'Newsletters', heroTitle: 'NEWSLETTERS' },
 ] as const
@@ -656,9 +655,9 @@ export default function ProfilePage() {
                   Φωτογραφία Προφίλ
                 </h2>
                 <div className="absolute bottom-full left-4 mb-2 hidden group-hover:block z-10">
-                  <div className="bg-charcoal dark:bg-gray-600 text-white text-xs rounded-lg px-3 py-2 shadow-lg max-w-xs">
+                  <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-xs rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white max-w-xs">
                     Ιδανικές διαστάσεις: 500×600px (5:6). Μέγιστο 5MB. Μορφές: JPG, PNG, GIF, WebP.
-                    <div className="absolute top-full left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-charcoal dark:border-t-gray-600"></div>
+                    <div className="absolute top-full left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black dark:border-t-white"></div>
                   </div>
                 </div>
               </div>
@@ -782,9 +781,9 @@ export default function ProfilePage() {
                   </svg>
                   {/* Hover tooltip */}
                   <div className="absolute bottom-full left-4 mb-2 hidden group-hover:block z-10">
-                    <div className="bg-charcoal dark:bg-gray-600 text-white text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap">
+                    <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-xs rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white whitespace-nowrap">
                       Συμπληρώνεται αυτόματα από την πόλη. Επικοινώνησε μαζί μας για αλλαγές.
-                      <div className="absolute top-full left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-charcoal dark:border-t-gray-600"></div>
+                      <div className="absolute top-full left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black dark:border-t-white"></div>
                     </div>
                   </div>
                 </div>
