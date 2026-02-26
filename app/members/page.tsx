@@ -49,6 +49,7 @@ interface Member {
   }>
   Project2PicturesAltText?: string  // Accessibility alt text for project 2 images
   Project2Tags?: string
+  HideProfile?: boolean
 }
 
 export default function MembersPage() {
@@ -119,8 +120,9 @@ function MembersPageContent() {
           }
         )
         const data = await response.json()
-        setAllMembers(data.data || [])
-        setTotalCount(data.data?.length || 0)
+        const visibleMembers = (data.data || []).filter((m: Member) => !m.HideProfile)
+        setAllMembers(visibleMembers)
+        setTotalCount(visibleMembers.length)
       } catch (error) {
         console.error('Error fetching members:', error)
       } finally {

@@ -43,6 +43,7 @@ interface Member {
   }>
   Project2PicturesAltText?: string  // Accessibility alt text for project 2 images
   Project2Tags?: string
+  HideProfile?: boolean
 }
 
 function getWebsiteDisplay(url: string): { label: string; icon: React.ReactNode } {
@@ -194,7 +195,9 @@ export default function MemberDetailPage() {
         )
         const data = await response.json()
         if (data.data && data.data.length > 0) {
-          setMember(data.data[0])
+          const m = data.data[0]
+          if (m.HideProfile) return // Hidden profile — treat as not found
+          setMember(m)
         }
       } catch (error) {
         console.error('Error fetching member:', error)

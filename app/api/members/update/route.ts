@@ -307,6 +307,9 @@ export async function POST(request: NextRequest) {
     console.log('[UPDATE] Found existing member with numeric ID:', updateId)
     console.log('[UPDATE] Member documentId:', existingMember.documentId)
 
+    // Always unhide profile when member saves — makes profile visible after first edit
+    updateData.HideProfile = false
+
     // Update member in Strapi using numeric ID
     console.log('[UPDATE] Updating member with data:', updateData)
     console.log('[UPDATE] Strapi URL:', `${STRAPI_URL}/api/members/${updateId}`)
