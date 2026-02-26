@@ -145,21 +145,50 @@ export default function ProjectDetailPage() {
     )
   }
 
-  // Safely extract description text (in case it's a rich text object)
-  const getDescriptionText = (description: any): string => {
-    if (typeof description === 'string') return description
-    if (Array.isArray(description)) {
-      return description.map(block => {
-        if (block.type === 'paragraph' && block.children) {
-          return block.children.map((child: any) => child.type === 'link' && child.children ? child.children.map((c: any) => c.text || '').join('') : child.text || '').join('')
-        }
-        return ''
-      }).join('\n')
+  const renderInlineChild = (child: any, i: number): React.ReactNode => {
+    if (child.type === 'link') {
+      return (
+        <a key={i} href={child.url} target="_blank" rel="noopener noreferrer" className="text-coral hover:text-coral-dark dark:text-coral-light dark:hover:text-coral underline">
+          {child.children?.map((linkChild: any, j: number) => renderInlineChild(linkChild, j))}
+        </a>
+      )
     }
-    return ''
+    let content: React.ReactNode = child.text || ''
+    if (child.bold) content = <strong key={`${i}-b`}>{content}</strong>
+    if (child.italic) content = <em key={`${i}-i`}>{content}</em>
+    if (child.underline) content = <u key={`${i}-u`}>{content}</u>
+    return <span key={i}>{content}</span>
   }
 
-  const descriptionText = getDescriptionText(projectData.description)
+  const renderDescription = (desc: any): React.ReactNode => {
+    if (!desc) return null
+    if (typeof desc === 'string') return <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{desc}</p>
+    if (Array.isArray(desc)) {
+      return desc.map((block: any, index: number) => {
+        if (block.type === 'paragraph') {
+          return (
+            <p key={index} className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">
+              {block.children?.map((child: any, i: number) => renderInlineChild(child, i))}
+            </p>
+          )
+        }
+        if (block.type === 'list') {
+          const ListTag = block.format === 'ordered' ? 'ol' : 'ul'
+          return (
+            <ListTag key={index} className={`mb-4 pl-6 ${block.format === 'ordered' ? 'list-decimal' : 'list-disc'} text-gray-700 dark:text-gray-300`}>
+              {block.children?.map((item: any, i: number) => (
+                <li key={i} className="mb-1">
+                  {item.children?.map((child: any, j: number) => renderInlineChild(child, j))}
+                </li>
+              ))}
+            </ListTag>
+          )
+        }
+        return null
+      })
+    }
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
@@ -329,9 +358,9 @@ export default function ProjectDetailPage() {
 
               {/* Description */}
               <div>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-                  {descriptionText}
-                </p>
+                <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                  {renderDescription(projectData.description)}
+                </div>
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, Suspense, useMemo } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
@@ -14,7 +14,7 @@ import type { StrapiResponse, Activity } from '@/lib/types'
 import LocalizedText from '@/components/LocalizedText'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 
-// Helper function to extract text from Strapi rich text blocks
+// Helper function to extract text from Strapi rich text blocks (for metadata/SEO)
 function extractTextFromBlocks(blocks: any): string {
   if (!blocks) return ''
   if (typeof blocks === 'string') return blocks
@@ -32,6 +32,57 @@ function extractTextFromBlocks(blocks: any): string {
   }
 
   return ''
+}
+
+// Render inline children with link/bold/italic/underline support
+function renderInlineChild(child: any, i: number): React.ReactNode {
+  if (child.type === 'link') {
+    return (
+      <a key={i} href={child.url} target="_blank" rel="noopener noreferrer" className="text-coral hover:text-coral-dark dark:text-coral-light dark:hover:text-coral underline">
+        {child.children?.map((linkChild: any, j: number) => renderInlineChild(linkChild, j))}
+      </a>
+    )
+  }
+  let content: React.ReactNode = child.text || ''
+  if (child.bold) content = <strong key={`${i}-b`}>{content}</strong>
+  if (child.italic) content = <em key={`${i}-i`}>{content}</em>
+  if (child.underline) content = <u key={`${i}-u`}>{content}</u>
+  return <span key={i}>{content}</span>
+}
+
+// Render Strapi rich text blocks as React elements with full formatting
+function renderBlocks(blocks: any): React.ReactNode {
+  if (!blocks || !Array.isArray(blocks)) return null
+  return blocks.map((block: any, index: number) => {
+    if (block.type === 'paragraph') {
+      return (
+        <p key={index} className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">
+          {block.children?.map((child: any, i: number) => renderInlineChild(child, i))}
+        </p>
+      )
+    }
+    if (block.type === 'heading') {
+      const Tag = `h${block.level || 2}` as keyof JSX.IntrinsicElements
+      return (
+        <Tag key={index} className="text-xl font-bold mb-3 text-charcoal dark:text-gray-100">
+          {block.children?.map((child: any, i: number) => renderInlineChild(child, i))}
+        </Tag>
+      )
+    }
+    if (block.type === 'list') {
+      const ListTag = block.format === 'ordered' ? 'ol' : 'ul'
+      return (
+        <ListTag key={index} className={`mb-4 pl-6 ${block.format === 'ordered' ? 'list-decimal' : 'list-disc'} text-gray-700 dark:text-gray-300`}>
+          {block.children?.map((item: any, i: number) => (
+            <li key={i} className="mb-1">
+              {item.children?.map((child: any, j: number) => renderInlineChild(child, j))}
+            </li>
+          ))}
+        </ListTag>
+      )
+    }
+    return null
+  })
 }
 
 function ActivityDetailPageContent() {
@@ -156,6 +207,7 @@ function ActivityDetailPageContent() {
     )
   }
 
+  // Plain text versions for metadata/SEO only
   const description = extractTextFromBlocks(activity.Description)
   const engDescription = activity.EngDescription ? extractTextFromBlocks(activity.EngDescription) : null
 
@@ -296,8 +348,8 @@ function ActivityDetailPageContent() {
           {/* Description */}
           <div className="prose prose-lg max-w-none">
             <h2 className="text-2xl font-bold mb-6 text-charcoal dark:text-gray-100">Περιγραφή</h2>
-            <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-              <LocalizedText text={description} engText={engDescription} />
+            <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              {renderBlocks(activity.Description)}
             </div>
           </div>
         </div>
