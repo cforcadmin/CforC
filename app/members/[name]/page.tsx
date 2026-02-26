@@ -245,7 +245,7 @@ export default function MemberDetailPage() {
     if (Array.isArray(bio)) {
       return bio.map(block => {
         if (block.type === 'paragraph' && block.children) {
-          return block.children.map((child: any) => child.text || '').join('')
+          return block.children.map((child: any) => child.type === 'link' && child.children ? child.children.map((c: any) => c.text || '').join('') : child.text || '').join('')
         }
         return ''
       }).join('\n')

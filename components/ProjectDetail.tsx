@@ -14,6 +14,13 @@ import { getProjectBySlug } from '@/lib/strapi'
 import { useTheme } from '@/components/ThemeProvider'
 import type { Project, ProjectEntry } from '@/lib/types'
 
+function extractChildText(child: any): string {
+  if (child.type === 'link' && child.children) {
+    return child.children.map((c: any) => extractChildText(c)).join('')
+  }
+  return child.text || ''
+}
+
 function extractTextFromBlocks(blocks: any): string {
   if (!blocks) return ''
   if (typeof blocks === 'string') return blocks
@@ -21,7 +28,7 @@ function extractTextFromBlocks(blocks: any): string {
     return blocks
       .map((block: any) => {
         if (block.type === 'paragraph' && block.children) {
-          return block.children.map((child: any) => child.text || '').join('')
+          return block.children.map((child: any) => extractChildText(child)).join('')
         }
         return ''
       })
@@ -31,19 +38,28 @@ function extractTextFromBlocks(blocks: any): string {
   return ''
 }
 
+function renderInlineChild(child: any, i: number): React.ReactNode {
+  if (child.type === 'link') {
+    return (
+      <a key={i} href={child.url} target="_blank" rel="noopener noreferrer" className="text-coral hover:text-coral-dark dark:text-coral-light dark:hover:text-coral underline">
+        {child.children?.map((linkChild: any, j: number) => renderInlineChild(linkChild, j))}
+      </a>
+    )
+  }
+  let content: React.ReactNode = child.text || ''
+  if (child.bold) content = <strong key={`${i}-b`}>{content}</strong>
+  if (child.italic) content = <em key={`${i}-i`}>{content}</em>
+  if (child.underline) content = <u key={`${i}-u`}>{content}</u>
+  return <span key={i}>{content}</span>
+}
+
 function renderBlocks(blocks: any): React.ReactNode {
   if (!blocks || !Array.isArray(blocks)) return null
   return blocks.map((block: any, index: number) => {
     if (block.type === 'paragraph') {
       return (
         <p key={index} className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">
-          {block.children?.map((child: any, i: number) => {
-            let content: React.ReactNode = child.text || ''
-            if (child.bold) content = <strong key={i}>{content}</strong>
-            if (child.italic) content = <em key={i}>{content}</em>
-            if (child.underline) content = <u key={i}>{content}</u>
-            return <span key={i}>{content}</span>
-          })}
+          {block.children?.map((child: any, i: number) => renderInlineChild(child, i))}
         </p>
       )
     }
@@ -51,7 +67,7 @@ function renderBlocks(blocks: any): React.ReactNode {
       const Tag = `h${block.level || 2}` as keyof JSX.IntrinsicElements
       return (
         <Tag key={index} className="text-xl font-bold mb-3 text-charcoal dark:text-gray-100">
-          {block.children?.map((child: any) => child.text || '').join('')}
+          {block.children?.map((child: any, i: number) => renderInlineChild(child, i))}
         </Tag>
       )
     }
@@ -61,7 +77,7 @@ function renderBlocks(blocks: any): React.ReactNode {
         <ListTag key={index} className={`mb-4 pl-6 ${block.format === 'ordered' ? 'list-decimal' : 'list-disc'} text-gray-700 dark:text-gray-300`}>
           {block.children?.map((item: any, i: number) => (
             <li key={i} className="mb-1">
-              {item.children?.map((child: any) => child.text || '').join('')}
+              {item.children?.map((child: any, j: number) => renderInlineChild(child, j))}
             </li>
           ))}
         </ListTag>
