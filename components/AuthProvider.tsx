@@ -6,6 +6,7 @@ interface Member {
   id: number
   documentId?: string
   Name: string
+  Slug?: string
   Email: string
   Bio?: string
   FieldsOfWork?: string

@@ -14,6 +14,11 @@ import ConfirmationModal from '@/components/ConfirmationModal'
 import ProfileGuidelinesModal from '@/components/profile/ProfileGuidelinesModal'
 import OpenCallsContent from '@/components/OpenCallsContent'
 import NewslettersContent from '@/components/NewslettersContent'
+import EducationalMaterialContent from '@/components/EducationalMaterialContent'
+import NetworksContent from '@/components/NetworksContent'
+import WorkingGroupsContent from '@/components/WorkingGroupsContent'
+import PocketGuideContent from '@/components/PocketGuideContent'
+import ScrollToTop from '@/components/ScrollToTop'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 
 const DASHBOARD_SECTIONS = [
@@ -482,17 +487,42 @@ export default function ProfilePage() {
                 {/* Right: Navigation buttons (fixed half) */}
                 <div className="flex flex-wrap gap-2 items-center">
                   {DASHBOARD_SECTIONS.map((section) => (
-                    <button
-                      key={section.key}
-                      onClick={() => setActiveSection(section.key)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
-                        activeSection === section.key
-                          ? 'bg-charcoal dark:bg-coral text-coral dark:text-white shadow-md'
-                          : 'bg-charcoal/60 dark:bg-white/10 text-white dark:text-gray-300 hover:bg-charcoal/80 dark:hover:bg-white/20'
-                      }`}
-                    >
-                      {section.label}
-                    </button>
+                    <div key={section.key} className="relative group/tab">
+                      <button
+                        onClick={() => setActiveSection(section.key)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                          activeSection === section.key
+                            ? 'bg-charcoal dark:bg-coral text-coral dark:text-white shadow-md'
+                            : 'bg-charcoal/60 dark:bg-white/10 text-white dark:text-gray-300 hover:bg-charcoal/80 dark:hover:bg-white/20'
+                        }`}
+                      >
+                        {section.label}
+                      </button>
+                      {section.key === 'educational' && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tab:block z-10">
+                          <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-xs rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white whitespace-nowrap">
+                            Εργαλεία, εκπαιδεύσεις, καλές πρακτικές
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black dark:border-t-white"></div>
+                          </div>
+                        </div>
+                      )}
+                      {section.key === 'networks' && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tab:block z-10">
+                          <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-xs rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white whitespace-nowrap">
+                            Μέλη, σχετικά δίκτυα, κατάλογος
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black dark:border-t-white"></div>
+                          </div>
+                        </div>
+                      )}
+                      {section.key === 'working-groups' && (
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover/tab:block z-10">
+                          <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-xs rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white whitespace-nowrap">
+                            Ομάδες εργασίας, αίτημα συμμετοχής
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-black dark:border-b-white"></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -525,7 +555,31 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {activeSection !== 'profile' && activeSection !== 'open-calls' && activeSection !== 'newsletters' && (
+        {activeSection === 'educational' && (
+          <div className="pt-20">
+            <EducationalMaterialContent />
+          </div>
+        )}
+
+        {activeSection === 'networks' && (
+          <div className="pt-20">
+            <NetworksContent />
+          </div>
+        )}
+
+        {activeSection === 'working-groups' && (
+          <div className="pt-20">
+            <WorkingGroupsContent />
+          </div>
+        )}
+
+        {activeSection === 'pocket-guide' && (
+          <div className="pt-20">
+            <PocketGuideContent />
+          </div>
+        )}
+
+        {activeSection !== 'profile' && activeSection !== 'open-calls' && activeSection !== 'newsletters' && activeSection !== 'educational' && activeSection !== 'networks' && activeSection !== 'working-groups' && activeSection !== 'pocket-guide' && (
           <div className="pt-32 pb-24 max-w-4xl mx-auto px-4">
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-12 text-center">
               <div className="w-20 h-20 rounded-full bg-coral/10 dark:bg-coral/20 flex items-center justify-center mx-auto mb-6">
@@ -1017,6 +1071,7 @@ export default function ProfilePage() {
         </div>
       )}
 
+      <ScrollToTop />
       <Footer />
 
       {/* Profile Guidelines Modal */}

@@ -166,7 +166,7 @@ export default function LanguageSwitcher() {
         <div
           role="listbox"
           aria-label="Επιλογή γλώσσας"
-          className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-2 z-50 max-h-96 overflow-y-auto"
+          className="absolute left-0 md:left-auto md:right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-2 z-50 max-h-96 overflow-y-auto"
         >
           {/* Reset to Greek option */}
           {currentLang !== 'el' && (
