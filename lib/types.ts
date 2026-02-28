@@ -217,6 +217,35 @@ export interface StrapiMediaArray extends Array<{
   updatedAt: string;
 }> {}
 
+// Working Group member reference (populated relation)
+export interface WorkingGroupMemberRef {
+  id: number
+  documentId?: string
+  Name: string
+  Slug: string
+  Email?: string
+  Image?: StrapiMediaObject[] | StrapiMediaArray
+  ProfileImageAltText?: string
+  HideProfile?: boolean
+}
+
+// Working Group type - matches Strapi schema (Strapi v5)
+export interface WorkingGroup extends StrapiData<WorkingGroup> {
+  Name: string
+  EngName?: string
+  Description: string
+  EngDescription?: string
+  Image?: StrapiMediaObject | StrapiMediaArray
+  ImageAltText?: string
+  Coordinator?: WorkingGroupMemberRef
+  Members?: WorkingGroupMemberRef[]
+  SortOrder?: number
+  Slug: string
+  createdAt: string
+  updatedAt: string
+  publishedAt: string
+}
+
 interface MediaFormat {
   name: string;
   hash: string;

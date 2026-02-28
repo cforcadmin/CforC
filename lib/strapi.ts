@@ -155,6 +155,13 @@ export async function getMembers() {
 }
 
 /**
+ * Get all working groups with coordinator and members populated
+ */
+export async function getWorkingGroups() {
+  return fetchStrapi('/working-groups?populate[Image]=true&populate[Coordinator][populate]=Image&populate[Members][populate]=Image&pagination[limit]=1000&sort=SortOrder:asc')
+}
+
+/**
  * Get a single member by Slug or documentId
  * First tries by Slug, then falls back to documentId
  */
