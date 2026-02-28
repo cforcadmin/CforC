@@ -210,7 +210,7 @@ function WorkingGroupCard({
         {coordinator && !coordinator.HideProfile && (
           <div className="mb-3">
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-              Συντονιστής
+              Συντονίστρια/Συντονιστής
             </span>
             <div className="flex items-center gap-2 mt-1">
               {coordinatorImageUrl ? (
