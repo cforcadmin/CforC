@@ -8,7 +8,7 @@ interface Member {
   Name: string
   Slug?: string
   Email: string
-  Bio?: string
+  Bio?: any
   FieldsOfWork?: string
   City?: string
   Province?: string
@@ -22,7 +22,8 @@ interface Member {
   ProfileImageAltText?: string
   Project1Title?: string
   Project1Tags?: string
-  Project1Description?: string
+  Project1Links?: string
+  Project1Description?: any
   Project1Pictures?: Array<{
     id?: number
     url: string
@@ -31,7 +32,8 @@ interface Member {
   Project1PicturesAltText?: string
   Project2Title?: string
   Project2Tags?: string
-  Project2Description?: string
+  Project2Links?: string
+  Project2Description?: any
   Project2Pictures?: Array<{
     id?: number
     url: string

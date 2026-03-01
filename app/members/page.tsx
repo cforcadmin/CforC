@@ -236,7 +236,7 @@ function MembersPageContent() {
 
   return (
     <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
-      <Navigation variant="members" />
+      <Navigation />
       <main id="main-content">
         {/* Hero Section */}
         <section className="relative -bottom-20">

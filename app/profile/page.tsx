@@ -6,6 +6,7 @@ import { useAuth } from '@/components/AuthProvider'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import EditableField from '@/components/profile/EditableField'
+import RichTextEditor from '@/components/profile/RichTextEditor'
 import FieldsOfWorkSelector from '@/components/profile/FieldsOfWorkSelector'
 import CityAutocomplete from '@/components/profile/CityAutocomplete'
 import EditableImage from '@/components/profile/EditableImage'
@@ -19,6 +20,7 @@ import NetworksContent from '@/components/NetworksContent'
 import WorkingGroupsContent from '@/components/WorkingGroupsContent'
 import PocketGuideContent from '@/components/PocketGuideContent'
 import ScrollToTop from '@/components/ScrollToTop'
+import { blocksToPlainText } from '@/lib/richTextConvert'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 
 const DASHBOARD_SECTIONS = [
@@ -62,7 +64,7 @@ export default function ProfilePage() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Record<string, any>>({
     Name: '',
     Email: '',
     Bio: '',
@@ -75,14 +77,16 @@ export default function ProfilePage() {
     Project1Title: '',
     Project1Tags: '',
     Project1Description: '',
+    Project1Links: '',
     Project1PicturesAltText: '',
     Project2Title: '',
     Project2Tags: '',
     Project2Description: '',
+    Project2Links: '',
     Project2PicturesAltText: ''
   })
 
-  const [originalData, setOriginalData] = useState(formData)
+  const [originalData, setOriginalData] = useState<Record<string, any>>(formData)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [project1Images, setProject1Images] = useState<File[]>([])
   const [project2Images, setProject2Images] = useState<File[]>([])
@@ -123,7 +127,7 @@ export default function ProfilePage() {
   // Initialize form data from user
   useEffect(() => {
     if (user) {
-      const data = {
+      const data: Record<string, any> = {
         Name: user.Name || '',
         Email: user.Email || '',
         Bio: user.Bio || '',
@@ -136,10 +140,12 @@ export default function ProfilePage() {
         Project1Title: user.Project1Title || '',
         Project1Tags: user.Project1Tags || '',
         Project1Description: user.Project1Description || '',
+        Project1Links: user.Project1Links || '',
         Project1PicturesAltText: user.Project1PicturesAltText || '',
         Project2Title: user.Project2Title || '',
         Project2Tags: user.Project2Tags || '',
         Project2Description: user.Project2Description || '',
+        Project2Links: user.Project2Links || '',
         Project2PicturesAltText: user.Project2PicturesAltText || ''
       }
       setFormData(data)
@@ -172,7 +178,7 @@ export default function ProfilePage() {
   }
 
   // Handle field changes
-  const handleFieldChange = (field: string, value: string) => {
+  const handleFieldChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     setSaveMessage(null)
   }
@@ -235,8 +241,9 @@ export default function ProfilePage() {
 
     // Validate Bio limits
     if (formData.Bio) {
-      const bioWordCount = countWords(formData.Bio)
-      const bioCharCount = formData.Bio.length
+      const bioPlainText = typeof formData.Bio === 'string' ? formData.Bio : blocksToPlainText(formData.Bio)
+      const bioWordCount = countWords(bioPlainText)
+      const bioCharCount = bioPlainText.length
       if (bioWordCount > 160) {
         errors.push(`Το βιογραφικό έχει ${bioWordCount} λέξεις (μέγιστο 160)`)
       }
@@ -278,7 +285,8 @@ export default function ProfilePage() {
       errors.push('Το email είναι υποχρεωτικό')
     }
 
-    if (!formData.Bio || formData.Bio.trim() === '') {
+    const bioText = typeof formData.Bio === 'string' ? formData.Bio : blocksToPlainText(formData.Bio)
+    if (!bioText || bioText.trim() === '') {
       errors.push('Το βιογραφικό είναι υποχρεωτικό')
     }
 
@@ -339,8 +347,14 @@ export default function ProfilePage() {
       if (imageFile || project1Images.length > 0 || project2Images.length > 0 || project1IdsChanged || project2IdsChanged) {
         // Use FormData if there are any images
         const formDataWithImages = new FormData()
+        const blocksFields = ['Bio', 'Project1Description', 'Project2Description']
         Object.entries(dataToUpdate).forEach(([key, value]) => {
-          formDataWithImages.append(key, value)
+          // Serialize blocks arrays as JSON strings for FormData transport
+          if (blocksFields.includes(key) && Array.isArray(value)) {
+            formDataWithImages.append(key, JSON.stringify(value))
+          } else {
+            formDataWithImages.append(key, typeof value === 'string' ? value : JSON.stringify(value))
+          }
         })
 
         // Add profile image
@@ -373,7 +387,7 @@ export default function ProfilePage() {
           body: formDataWithImages
         })
       } else {
-        // Use JSON if no images
+        // Use JSON if no images — blocks arrays are sent directly (no stringify needed for JSON body)
         response = await fetch('/api/members/update', {
           method: 'POST',
           headers: {
@@ -763,16 +777,15 @@ export default function ProfilePage() {
                 tooltip="Το email δεν μπορεί να αλλάξει. Για αλλαγή, επικοινώνησε με τον διαχειριστή IT."
               />
 
-              <EditableField
+              <RichTextEditor
                 label="Βιογραφικό"
-                value={formData.Bio}
+                content={formData.Bio}
                 placeholder="Γράψε μια σύντομη περιγραφή για εσένα..."
-                type="textarea"
-                onChange={(value) => handleFieldChange('Bio', value)}
+                onChange={(blocks) => handleFieldChange('Bio', blocks)}
                 maxWords={160}
                 maxCharacters={1200}
                 required
-                tooltip="Όριο: 160 λέξεις ή 1200 χαρακτήρες. Γράψε μια σύντομη περιγραφή της δραστηριότητάς σου."
+                tooltip="Όριο: 160 λέξεις ή 1200 χαρακτήρες. Υποστηρίζεται μορφοποίηση: έντονα, πλάγια, λίστες, σύνδεσμοι κ.ά."
               />
 
               <FieldsOfWorkSelector
@@ -883,12 +896,20 @@ export default function ProfilePage() {
                   tooltip="Μέγιστο 5 tags ανά έργο, χωρισμένα με κόμμα."
                 />
 
-                <EditableField
+                <RichTextEditor
                   label="Περιγραφή"
-                  value={formData.Project1Description}
+                  content={formData.Project1Description}
                   placeholder="Περίγραψε το έργο σου..."
-                  type="textarea"
-                  onChange={(value) => handleFieldChange('Project1Description', value)}
+                  onChange={(blocks) => handleFieldChange('Project1Description', blocks)}
+                  tooltip="Υποστηρίζεται μορφοποίηση. Ενσωμάτωση εικόνας: [IMAGE: url | alt text]"
+                />
+
+                <EditableField
+                  label="Links Έργου"
+                  value={formData.Project1Links}
+                  placeholder="https://example.com, https://instagram.com/project"
+                  onChange={(value) => handleFieldChange('Project1Links', value)}
+                  helperText="URLs χωρισμένα με κόμμα — αναγνωρίζονται αυτόματα social media, ιστοσελίδες κλπ."
                 />
 
                 <EditableMultipleImages
@@ -936,12 +957,20 @@ export default function ProfilePage() {
                   tooltip="Μέγιστο 5 tags ανά έργο, χωρισμένα με κόμμα."
                 />
 
-                <EditableField
+                <RichTextEditor
                   label="Περιγραφή"
-                  value={formData.Project2Description}
+                  content={formData.Project2Description}
                   placeholder="Περίγραψε το έργο σου..."
-                  type="textarea"
-                  onChange={(value) => handleFieldChange('Project2Description', value)}
+                  onChange={(blocks) => handleFieldChange('Project2Description', blocks)}
+                  tooltip="Υποστηρίζεται μορφοποίηση. Ενσωμάτωση εικόνας: [IMAGE: url | alt text]"
+                />
+
+                <EditableField
+                  label="Links Έργου"
+                  value={formData.Project2Links}
+                  placeholder="https://example.com, https://instagram.com/project"
+                  onChange={(value) => handleFieldChange('Project2Links', value)}
+                  helperText="URLs χωρισμένα με κόμμα — αναγνωρίζονται αυτόματα social media, ιστοσελίδες κλπ."
                 />
 
                 <EditableMultipleImages

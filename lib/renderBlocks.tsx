@@ -30,10 +30,21 @@ export function renderInlineChild(child: any, i: number): React.ReactNode {
       </a>
     )
   }
-  let content: React.ReactNode = child.text || ''
+  const rawText = child.text || ''
+  // Split by newlines and insert <br /> between parts
+  const parts = rawText.split('\n')
+  let content: React.ReactNode = parts.length > 1
+    ? parts.map((part: string, j: number) => (
+        <span key={`${i}-line-${j}`}>
+          {part}
+          {j < parts.length - 1 && <br />}
+        </span>
+      ))
+    : rawText
   if (child.bold) content = <strong key={`${i}-b`}>{content}</strong>
   if (child.italic) content = <em key={`${i}-i`}>{content}</em>
   if (child.underline) content = <u key={`${i}-u`}>{content}</u>
+  if (child.strikethrough) content = <s key={`${i}-s`}>{content}</s>
   return <span key={i}>{content}</span>
 }
 
@@ -44,7 +55,12 @@ export function renderInlineChild(child: any, i: number): React.ReactNode {
  */
 export function renderBlocks(blocks: any): React.ReactNode {
   if (!blocks) return null
-  if (typeof blocks === 'string') return <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{blocks}</p>
+  if (typeof blocks === 'string') {
+    const lines = blocks.split('\n')
+    return lines.length > 1
+      ? <>{lines.map((line, i) => <p key={i} className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">{line}</p>)}</>
+      : <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{blocks}</p>
+  }
   if (!Array.isArray(blocks)) return null
 
   return blocks.map((block: any, index: number) => {

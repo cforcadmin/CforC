@@ -47,8 +47,8 @@ export async function POST(request: NextRequest) {
       const fields = [
         'Name', 'Bio', 'FieldsOfWork', 'City', 'Province', 'Email', 'Phone', 'Websites',
         'ProfileImageAltText',
-        'Project1Title', 'Project1Tags', 'Project1Description', 'Project1PicturesAltText',
-        'Project2Title', 'Project2Tags', 'Project2Description', 'Project2PicturesAltText'
+        'Project1Title', 'Project1Tags', 'Project1Links', 'Project1Description', 'Project1PicturesAltText',
+        'Project2Title', 'Project2Tags', 'Project2Links', 'Project2Description', 'Project2PicturesAltText'
       ]
       fields.forEach(field => {
         const value = formData.get(field)
@@ -107,48 +107,67 @@ export async function POST(request: NextRequest) {
     }
 
     // Helper function to convert text to Blocks format
+    // Splits by newlines so each line becomes its own paragraph block,
+    // preserving the formatting from the edit form
     const convertTextToBlocks = (text: string) => {
-      return [
-        {
-          type: 'paragraph',
-          children: [
-            {
-              type: 'text',
-              text: text
-            }
-          ]
+      const lines = text.split('\n')
+      return lines.map(line => ({
+        type: 'paragraph',
+        children: [
+          {
+            type: 'text',
+            text: line
+          }
+        ]
+      }))
+    }
+
+    // Helper: process a Blocks field — parse JSON if string, convert plain text, or pass through
+    const processBlocksField = (fieldName: string) => {
+      if (updateData[fieldName] === undefined) return
+
+      let value = updateData[fieldName]
+
+      // If it's a string, try JSON.parse first (blocks from FormData come as JSON strings)
+      if (typeof value === 'string') {
+        try {
+          const parsed = JSON.parse(value)
+          if (Array.isArray(parsed)) {
+            value = parsed
+          }
+        } catch {
+          // Not JSON — treat as plain text
         }
-      ]
-    }
+      }
 
-    // Handle Bio field - it's a Blocks field in Strapi, expects an array
-    if (updateData.Bio !== undefined) {
-      if (!updateData.Bio || updateData.Bio.trim() === '') {
-        // If Bio is empty, don't send it (keep existing value)
-        delete updateData.Bio
-      } else {
-        // Convert Bio string to Blocks format (rich text array)
-        updateData.Bio = convertTextToBlocks(updateData.Bio)
+      if (Array.isArray(value)) {
+        // Already blocks format — check if empty
+        const hasText = value.some((block: any) =>
+          block.children?.some((child: any) => {
+            if (child.type === 'link') {
+              return child.children?.some((c: any) => (c.text || '').trim() !== '')
+            }
+            return (child.text || '').trim() !== ''
+          })
+        )
+        if (!hasText) {
+          delete updateData[fieldName]
+        } else {
+          updateData[fieldName] = value
+        }
+      } else if (typeof value === 'string') {
+        if (!value.trim()) {
+          delete updateData[fieldName]
+        } else {
+          // Legacy plain text — convert to blocks
+          updateData[fieldName] = convertTextToBlocks(value)
+        }
       }
     }
 
-    // Handle Project1Description - Blocks field
-    if (updateData.Project1Description !== undefined) {
-      if (!updateData.Project1Description || updateData.Project1Description.trim() === '') {
-        delete updateData.Project1Description
-      } else {
-        updateData.Project1Description = convertTextToBlocks(updateData.Project1Description)
-      }
-    }
-
-    // Handle Project2Description - Blocks field
-    if (updateData.Project2Description !== undefined) {
-      if (!updateData.Project2Description || updateData.Project2Description.trim() === '') {
-        delete updateData.Project2Description
-      } else {
-        updateData.Project2Description = convertTextToBlocks(updateData.Project2Description)
-      }
-    }
+    processBlocksField('Bio')
+    processBlocksField('Project1Description')
+    processBlocksField('Project2Description')
 
     // Handle image upload if present
     let imageId: number | null = null

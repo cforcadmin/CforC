@@ -246,7 +246,7 @@ export default function MemberDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
-      <Navigation variant="members" />
+      <Navigation />
       <main>
         {/* Hero Section */}
         <section className="relative -bottom-20">
@@ -310,8 +310,6 @@ export default function MemberDetailPage() {
 
               {/* Info */}
               <div>
-                <h2 className="text-4xl md:text-5xl font-bold mb-6 dark:text-gray-100">{member.Name}</h2>
-
                 <div className="mb-8">
                   <h3 className="text-coral dark:text-coral-light text-sm font-bold mb-4 uppercase">Βιογραφικό</h3>
                   <div className="text-gray-700 dark:text-gray-300 leading-relaxed">{renderBlocks(member.Bio)}</div>

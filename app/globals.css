@@ -1614,3 +1614,80 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
 [role="dialog"][aria-label="Μενού Προσβασιμότητας"] svg.accessibility-icon {
   visibility: visible !important;
 }
+
+/* ========================================
+   TIPTAP RICH TEXT EDITOR STYLES
+   ======================================== */
+
+.rich-text-editor .tiptap {
+  outline: none;
+  min-height: 100px;
+}
+
+.rich-text-editor .tiptap p {
+  margin-bottom: 0.5rem;
+}
+
+.rich-text-editor .tiptap h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.rich-text-editor .tiptap h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.rich-text-editor .tiptap h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.rich-text-editor .tiptap ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rich-text-editor .tiptap ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rich-text-editor .tiptap li {
+  margin-bottom: 0.125rem;
+}
+
+.rich-text-editor .tiptap blockquote {
+  border-left: 3px solid var(--coral);
+  padding-left: 1rem;
+  margin-bottom: 0.5rem;
+  font-style: italic;
+  color: #6b7280;
+}
+
+.dark .rich-text-editor .tiptap blockquote {
+  border-left-color: #FF9B7A;
+  color: #9ca3af;
+}
+
+.rich-text-editor .tiptap a {
+  color: var(--coral);
+  text-decoration: underline;
+}
+
+.rich-text-editor .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9ca3af;
+  pointer-events: none;
+  height: 0;
+}
+
+.dark .rich-text-editor .tiptap p.is-editor-empty:first-child::before {
+  color: #6b7280;
+}
