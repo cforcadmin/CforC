@@ -9,6 +9,7 @@ import { AccessibilityProvider } from '@/components/AccessibilityProvider'
 import AccessibilityMenu from '@/components/AccessibilityMenu'
 import ReadingAids from '@/components/ReadingAids'
 import Sa11yDevChecker from '@/components/Sa11yDevChecker'
+import FeedbackButton from '@/components/FeedbackButton'
 
 export const metadata: Metadata = {
   title: 'Culture for Change',
@@ -34,6 +35,7 @@ export default function RootLayout({
                 <AnnouncerProvider>
                   {children}
                   <AccessibilityMenu />
+                  <FeedbackButton />
                   <ReadingAids />
                   <Sa11yDevChecker />
                 </AnnouncerProvider>
