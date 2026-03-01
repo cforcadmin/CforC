@@ -6,6 +6,7 @@ import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
 import ScrollToTop from '@/components/ScrollToTop'
+import CombinedCtaSection from '@/components/CombinedCtaSection'
 import LoadingIndicator from '@/components/LoadingIndicator'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -390,6 +391,7 @@ function MembersPageContent() {
           )}
         </div>
       </section>
+      <CombinedCtaSection />
       </main>
       <Footer variant="members" />
       <CookieConsent />

@@ -24,6 +24,8 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
   const [projectsDropdownOpen, setProjectsDropdownOpen] = useState(false)
   const [mobileProjectsExpanded, setMobileProjectsExpanded] = useState(false)
+  const [aboutDropdownOpen, setAboutDropdownOpen] = useState(false)
+  const [mobileAboutExpanded, setMobileAboutExpanded] = useState(false)
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([])
   const { theme, toggleTheme } = useTheme()
   const { user, isAuthenticated, logout } = useAuth()
@@ -32,6 +34,9 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const dropdownItemsRef = useRef<(HTMLAnchorElement | null)[]>([])
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const aboutDropdownRef = useRef<HTMLDivElement>(null)
+  const aboutDropdownItemsRef = useRef<(HTMLAnchorElement | null)[]>([])
+  const aboutDropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // TODO: Remove testing condition — make permanently visible
   const showProjects = pathname?.startsWith('/projects')
@@ -106,6 +111,59 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
     }
   }, [projectsDropdownOpen])
 
+  // About dropdown handlers
+  const openAboutDropdown = useCallback(() => {
+    if (aboutDropdownTimeoutRef.current) clearTimeout(aboutDropdownTimeoutRef.current)
+    setAboutDropdownOpen(true)
+  }, [])
+
+  const closeAboutDropdown = useCallback(() => {
+    aboutDropdownTimeoutRef.current = setTimeout(() => {
+      setAboutDropdownOpen(false)
+    }, 150)
+  }, [])
+
+  const handleAboutDropdownKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!aboutDropdownOpen && (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown')) {
+      e.preventDefault()
+      setAboutDropdownOpen(true)
+      setTimeout(() => aboutDropdownItemsRef.current[0]?.focus(), 50)
+      return
+    }
+    if (!aboutDropdownOpen) return
+
+    const items = aboutDropdownItemsRef.current.filter(Boolean) as HTMLAnchorElement[]
+    const currentIndex = items.findIndex(item => item === document.activeElement)
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        items[(currentIndex + 1) % items.length]?.focus()
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        items[(currentIndex - 1 + items.length) % items.length]?.focus()
+        break
+      case 'Escape':
+        e.preventDefault()
+        setAboutDropdownOpen(false)
+        aboutDropdownRef.current?.querySelector('a')?.focus()
+        break
+      case 'Tab':
+        setAboutDropdownOpen(false)
+        break
+    }
+  }, [aboutDropdownOpen])
+
+  // About section sub-pages
+  const aboutSubPages = [
+    { label: 'Το δίκτυο', href: '/about' },
+    { label: 'Ομάδα Συντονισμού', href: '/coordination-team' },
+    { label: 'Διαφάνεια', href: '/transparency' },
+  ]
+
+  const isAboutActive = pathname === '/about' || pathname === '/coordination-team' || pathname === '/transparency'
+
   const handleLogout = async () => {
     await logout()
     setIsLogoutModalOpen(false)
@@ -172,11 +230,52 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
             </button>
             {/* Navigation links wrapped in nav element */}
             <nav aria-label="Κύρια πλοήγηση" className={`flex items-center ${isAuthenticated ? 'space-x-4' : 'space-x-8'}`}>
-              <Link href="/about" className={`text-sm transition-all ${pathname === '/about' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
-                ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ
-              </Link>
+              {/* About Dropdown */}
+              <div
+                ref={aboutDropdownRef}
+                className="relative inline-flex items-center"
+                onMouseEnter={openAboutDropdown}
+                onMouseLeave={closeAboutDropdown}
+                onKeyDown={handleAboutDropdownKeyDown}
+              >
+                <Link
+                  href="/about"
+                  className={`text-sm transition-all inline-flex items-center gap-1 ${isAboutActive ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}
+                  aria-haspopup="true"
+                  aria-expanded={aboutDropdownOpen}
+                >
+                  ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ
+                  <svg className={`w-3 h-3 transition-transform ${aboutDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </Link>
+                {aboutDropdownOpen && (
+                  <div
+                    role="menu"
+                    aria-label="Σχετικά με εμάς"
+                    className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50"
+                  >
+                    {aboutSubPages.map((item, index) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        role="menuitem"
+                        ref={(el) => { aboutDropdownItemsRef.current[index] = el }}
+                        className={`block px-4 py-3 text-sm transition-colors focus:outline-none ${
+                          pathname === item.href
+                            ? 'text-coral dark:text-coral-light font-bold bg-gray-50 dark:bg-gray-700'
+                            : 'text-charcoal dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700'
+                        }`}
+                        onClick={() => setAboutDropdownOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
               <Link href="/activities" className={`text-sm transition-all ${pathname?.startsWith('/activities') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
-                ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ
+                ΔΡΑΣΕΙΣ
               </Link>
               {/* TODO: Remove testing condition — make permanently visible */}
               {showProjects && (
@@ -356,8 +455,39 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
             </button>
             {/* Navigation links wrapped in nav element */}
             <nav aria-label="Κύρια πλοήγηση κινητού" className="space-y-3">
-              <Link href="/about" className={`block text-sm py-2 transition-all ${pathname === '/about' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</Link>
-              <Link href="/activities" className={`block text-sm py-2 transition-all ${pathname?.startsWith('/activities') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</Link>
+              {/* About expandable section - Mobile */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setMobileAboutExpanded(!mobileAboutExpanded)}
+                  className={`flex items-center justify-between w-full text-sm py-2 transition-all ${isAboutActive ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}
+                  aria-expanded={mobileAboutExpanded}
+                >
+                  <Link href="/about" onClick={(e) => { e.stopPropagation(); setIsOpen(false) }}>ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</Link>
+                  <svg className={`w-4 h-4 transition-transform ${mobileAboutExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {mobileAboutExpanded && (
+                  <div className="pl-4 space-y-1 pb-2">
+                    {aboutSubPages.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`block text-sm py-1.5 transition-colors ${
+                          pathname === item.href
+                            ? 'text-white dark:text-coral-light font-medium'
+                            : 'text-gray-200 hover:text-white dark:text-gray-400 dark:hover:text-coral-light'
+                        }`}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <Link href="/activities" className={`block text-sm py-2 transition-all ${pathname?.startsWith('/activities') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΔΡΑΣΕΙΣ</Link>
               {/* TODO: Remove testing condition — make permanently visible */}
               {showProjects && (
                 <div>

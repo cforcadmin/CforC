@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
-import NewsletterSection from '@/components/NewsletterSection'
+import CombinedCtaSection from '@/components/CombinedCtaSection'
 import ScrollToTop from '@/components/ScrollToTop'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 
@@ -49,7 +49,7 @@ export default function TransparencyPage() {
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
-                TRANSPARENCY
+                ΔΙΑΦΑΝΕΙΑ
               </h1>
             </div>
 
@@ -72,7 +72,6 @@ export default function TransparencyPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           {/* Introduction Section */}
           <div className="bg-white dark:bg-gray-700 rounded-3xl p-12 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 dark:text-gray-100">ΔΙΑΦΑΝΕΙΑ</h2>
             <p className="text-gray-700 dark:text-gray-300 text-lg max-w-4xl mx-auto leading-relaxed">
               Η διαφάνεια είναι μία από τις κύριες αξίες του CforC, την οποία εφαρμόζουμε με τον διαμοιρασμό των οικονομικών μας στοιχείων και του καταστατικού χάρτη του οργανισμού μας.
             </p>
@@ -104,7 +103,7 @@ export default function TransparencyPage() {
         </div>
       </section>
 
-      <NewsletterSection />
+      <CombinedCtaSection />
       </main>
       <Footer />
       <CookieConsent />

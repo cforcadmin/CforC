@@ -246,6 +246,25 @@ export interface WorkingGroup extends StrapiData<WorkingGroup> {
   publishedAt: string
 }
 
+// Coordination Team type - matches Strapi schema (Strapi v5)
+export interface CoordinationTeam extends StrapiData<CoordinationTeam> {
+  Name: string
+  EngName?: string
+  Description?: string
+  EngDescription?: string
+  Period: string
+  IsCurrent?: boolean
+  Image?: StrapiMediaObject | StrapiMediaArray
+  ImageAltText?: string
+  Coordinator?: WorkingGroupMemberRef
+  Members?: WorkingGroupMemberRef[]
+  SortOrder?: number
+  Slug: string
+  createdAt: string
+  updatedAt: string
+  publishedAt: string
+}
+
 interface MediaFormat {
   name: string;
   hash: string;
