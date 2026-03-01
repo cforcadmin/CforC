@@ -44,6 +44,22 @@ export default function RootLayout({
           </TextSizeProvider>
         </ThemeProvider>
         <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-42JX4R6R4F"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-42JX4R6R4F');
+            `,
+          }}
+        />
+        <Script
           id="google-translate-init"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
