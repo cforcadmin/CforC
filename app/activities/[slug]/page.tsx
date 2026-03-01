@@ -347,7 +347,6 @@ function ActivityDetailPageContent() {
 
           {/* Description */}
           <div className="prose prose-lg max-w-none">
-            <h2 className="text-2xl font-bold mb-6 text-charcoal dark:text-gray-100">Περιγραφή</h2>
             <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
               {renderBlocks(activity.Description)}
             </div>
