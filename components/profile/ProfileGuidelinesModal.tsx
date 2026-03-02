@@ -130,6 +130,10 @@ export default function ProfileGuidelinesModal({
                   <li>• Θα βλέπεις μετρητή λέξεων/χαρακτήρων κατά την επεξεργασία</li>
                   <li>• Γράψε μια σύντομη περιγραφή της δραστηριότητάς σου</li>
                   <li>• Υποστηρίζεται μορφοποίηση: <strong>έντονα</strong>, <em>πλάγια</em>, λίστες, σύνδεσμοι κ.ά.</li>
+                  <li>• Ενσωμάτωση εικόνας: <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded text-xs">[IMAGE: url | alt text]</code></li>
+                  <li className="ml-4 text-xs text-gray-500 dark:text-gray-400">Μέγεθος: <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">small</code> (33%), <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">medium</code> (50%), <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">large</code> (75%), <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">full</code> (100%)</li>
+                  <li className="ml-4 text-xs text-gray-500 dark:text-gray-400">Στοίχιση: <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">left</code>, <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">center</code>, <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">right</code></li>
+                  <li className="ml-4 text-xs text-gray-500 dark:text-gray-400">Πλήρης μορφή: <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded text-xs">[IMAGE: url | alt text | size | alignment]</code></li>
                 </ul>
               </div>
             </div>
@@ -245,6 +249,9 @@ export default function ProfileGuidelinesModal({
                 <ul className="mt-2 text-sm text-gray-600 dark:text-gray-300 space-y-1">
                   <li>• Υποστηρίζεται μορφοποίηση: <strong>έντονα</strong>, <em>πλάγια</em>, λίστες, σύνδεσμοι κ.ά.</li>
                   <li>• Ενσωμάτωση εικόνας: <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded text-xs">[IMAGE: url | alt text]</code></li>
+                  <li className="ml-4 text-xs text-gray-500 dark:text-gray-400">Μέγεθος: <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">small</code> (33%), <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">medium</code> (50%), <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">large</code> (75%), <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">full</code> (100%)</li>
+                  <li className="ml-4 text-xs text-gray-500 dark:text-gray-400">Στοίχιση: <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">left</code>, <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">center</code>, <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">right</code></li>
+                  <li className="ml-4 text-xs text-gray-500 dark:text-gray-400">Πλήρης μορφή: <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded text-xs">[IMAGE: url | alt text | size | alignment]</code></li>
                 </ul>
               </div>
             </div>
