@@ -215,6 +215,10 @@ Strapi Cloud free tier sleeps after 10-15 minutes of inactivity.
 - Extract reusable logic to `lib/` utilities
 - Context providers go in `components/` (AuthProvider, ThemeProvider)
 
+**Deployment (Vercel):**
+- When changing, adding, or removing environment variables locally (`.env.local`), always include the corresponding changes needed in Vercel project settings (Settings → Environment Variables) as part of the implementation steps
+- Don't treat deployment config as a "post-deploy reminder" — treat it as a required step in the task
+
 ## Common Gotchas
 
 1. **Strapi v5 Breaking Changes**: No `attributes` wrapper, explicit media population required

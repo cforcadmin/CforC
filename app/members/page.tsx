@@ -11,6 +11,7 @@ import LoadingIndicator from '@/components/LoadingIndicator'
 import Link from 'next/link'
 import Image from 'next/image'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
+import { getMembers } from '@/lib/strapi'
 import FieldsFilter from '@/components/members/FieldsFilter'
 import CityFilter from '@/components/members/CityFilter'
 import ProvinceFilter from '@/components/members/ProvinceFilter'
@@ -111,16 +112,7 @@ function MembersPageContent() {
     const fetchMembers = async () => {
       try {
         setIsLoading(true)
-
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/members?populate=*&pagination[limit]=1000`,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.NEXT_PUBLIC_STRAPI_API_TOKEN}`,
-            },
-          }
-        )
-        const data = await response.json()
+        const data = await getMembers()
         const visibleMembers = (data.data || []).filter((m: Member) => !m.HideProfile)
         setAllMembers(visibleMembers)
         setTotalCount(visibleMembers.length)

@@ -9,6 +9,7 @@ import ScrollToTop from '@/components/ScrollToTop'
 import Link from 'next/link'
 import Image from 'next/image'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
+import { getMemberBySlugOrId } from '@/lib/strapi'
 import { renderBlocks } from '@/lib/renderBlocks'
 
 interface Member {
@@ -182,17 +183,9 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     const fetchMemberAndProject = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/members?populate=*&filters[Slug][$eq]=${memberSlug}`,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.NEXT_PUBLIC_STRAPI_API_TOKEN}`,
-            },
-          }
-        )
-        const data = await response.json()
-        if (data.data && data.data.length > 0) {
-          const memberData = data.data[0]
+        const result = await getMemberBySlugOrId(memberSlug)
+        if (result.data) {
+          const memberData = result.data
           setMember(memberData)
 
           // Determine which project to show

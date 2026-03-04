@@ -3,22 +3,35 @@
  * Centralized functions for fetching data from Strapi CMS
  */
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
-const STRAPI_API_TOKEN = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN;
+const isServer = typeof window === 'undefined';
 
 /**
- * Base fetch function for Strapi API calls
+ * Base fetch function for Strapi API calls.
+ * - Server-side: calls Strapi directly with the API token
+ * - Client-side: calls /api/strapi/... proxy (token stays server-side)
  */
 async function fetchStrapi(endpoint: string, options: RequestInit = {}) {
-  const url = `${STRAPI_URL}/api${endpoint}`;
+  let url: string;
+  let headers: HeadersInit;
 
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...(STRAPI_API_TOKEN && {
-      Authorization: `Bearer ${STRAPI_API_TOKEN}`,
-    }),
-    ...options.headers,
-  };
+  if (isServer) {
+    // Server-side: call Strapi directly with server-only env vars
+    const strapiUrl = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+    const strapiToken = process.env.STRAPI_API_TOKEN;
+    url = `${strapiUrl}/api${endpoint}`;
+    headers = {
+      'Content-Type': 'application/json',
+      ...(strapiToken && { Authorization: `Bearer ${strapiToken}` }),
+      ...options.headers,
+    };
+  } else {
+    // Client-side: call the Next.js proxy route (no token needed)
+    url = `/api/strapi${endpoint}`;
+    headers = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+  }
 
   try {
     const response = await fetch(url, {
