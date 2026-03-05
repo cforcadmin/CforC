@@ -20,6 +20,7 @@ import NetworksContent from '@/components/NetworksContent'
 import WorkingGroupsContent from '@/components/WorkingGroupsContent'
 import PocketGuideContent from '@/components/PocketGuideContent'
 import ScrollToTop from '@/components/ScrollToTop'
+import ProfilePreviewModal from '@/components/profile/ProfilePreviewModal'
 import { blocksToPlainText } from '@/lib/richTextConvert'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 
@@ -97,6 +98,7 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [showUnsavedModal, setShowUnsavedModal] = useState(false)
+  const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const [showGuidelinesModal, setShowGuidelinesModal] = useState(false)
@@ -671,15 +673,15 @@ export default function ProfilePage() {
             ref={saveMessageRef}
             role={saveMessage.type === 'success' ? 'status' : 'alert'}
             aria-live={saveMessage.type === 'success' ? 'polite' : 'assertive'}
-            className={`p-4 rounded-2xl text-sm mb-8 ${
+            className={`rounded-2xl mb-8 ${
               saveMessage.type === 'success'
-                ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800'
-                : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
+                ? 'p-3 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800'
+                : 'p-4 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
             }`}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {saveMessage.type === 'success' ? (
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               ) : (
@@ -687,7 +689,15 @@ export default function ProfilePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               )}
-              <span>{saveMessage.text}</span>
+              <span className={saveMessage.type === 'success' ? 'text-xs' : 'text-sm'}>{saveMessage.text}</span>
+              {saveMessage.type === 'success' && (
+                <button
+                  onClick={() => setShowPreviewModal(true)}
+                  className="ml-auto flex-shrink-0 text-xs font-medium px-3 py-1 rounded-full bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white transition-colors"
+                >
+                  Προεπισκόπηση Προφίλ
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -1111,6 +1121,13 @@ export default function ProfilePage() {
       <ProfileGuidelinesModal
         isOpen={showGuidelinesModal}
         onClose={() => setShowGuidelinesModal(false)}
+      />
+
+      {/* Profile Preview Modal */}
+      <ProfilePreviewModal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        user={user}
       />
     </div>
   )
