@@ -527,21 +527,71 @@ export async function POST(request: NextRequest) {
 
     if (changedFields.length > 0) {
       const displayNames = changedFields.map(f => FIELD_DISPLAY_NAMES[f] || f)
-      fetch(`${STRAPI_URL}/api/profile-change-logs`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${STRAPI_API_TOKEN}`,
-        },
-        body: JSON.stringify({
-          data: {
-            memberName: existingPopulated.Name || 'Unknown',
-            memberEmail: existingPopulated.Email || '',
-            changedFields: displayNames.join(', '),
-            changedAt: new Date().toISOString(),
-          },
-        }),
-      }).catch(err => console.error('[UPDATE] Failed to log profile change:', err))
+      const memberEmail = existingPopulated.Email || ''
+      const memberName = existingPopulated.Name || 'Unknown'
+
+      // Check if there's already a log entry for this member in the current month
+      // If so, merge changed fields into it instead of creating a duplicate
+      const now = new Date()
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
+
+      (async () => {
+        try {
+          const existingLogRes = await fetch(
+            `${STRAPI_URL}/api/profile-change-logs?filters[memberEmail][$eq]=${encodeURIComponent(memberEmail)}&filters[changedAt][$gte]=${encodeURIComponent(monthStart)}&filters[changedAt][$lte]=${encodeURIComponent(monthEnd)}&pagination[limit]=1`,
+            { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` } }
+          )
+
+          if (existingLogRes.ok) {
+            const existingLogData = await existingLogRes.json()
+            const existingLog = existingLogData.data?.[0]
+
+            if (existingLog) {
+              // Merge: combine existing fields with new ones, deduplicate
+              const existingFields = (existingLog.changedFields || '').split(',').map((f: string) => f.trim()).filter(Boolean)
+              const mergedFields = [...new Set([...existingFields, ...displayNames])]
+
+              await fetch(`${STRAPI_URL}/api/profile-change-logs/${existingLog.id}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${STRAPI_API_TOKEN}`,
+                },
+                body: JSON.stringify({
+                  data: {
+                    changedFields: mergedFields.join(', '),
+                    changedAt: now.toISOString(),
+                    memberName: memberName,
+                  },
+                }),
+              })
+              console.log('[UPDATE] Merged profile change log for', memberEmail)
+              return
+            }
+          }
+
+          // No existing entry this month — create new
+          await fetch(`${STRAPI_URL}/api/profile-change-logs`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${STRAPI_API_TOKEN}`,
+            },
+            body: JSON.stringify({
+              data: {
+                memberName,
+                memberEmail,
+                changedFields: displayNames.join(', '),
+                changedAt: now.toISOString(),
+              },
+            }),
+          })
+          console.log('[UPDATE] Created profile change log for', memberEmail)
+        } catch (err) {
+          console.error('[UPDATE] Failed to log profile change:', err)
+        }
+      })()
     }
 
     return NextResponse.json({

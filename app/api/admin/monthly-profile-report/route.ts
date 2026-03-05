@@ -56,36 +56,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'No changes to report', month: `${monthName} ${year}` })
     }
 
-    // Group by member name
-    const grouped: Record<string, { fields: Set<string>; dates: string[] }> = {}
+    // Each log entry is already one-per-member-per-month (merged on update)
+    // Build summary lines directly
+    const summaryLines: string[] = []
 
     for (const log of logs) {
       const name = log.memberName || 'Άγνωστο μέλος'
-      if (!grouped[name]) {
-        grouped[name] = { fields: new Set(), dates: [] }
-      }
-
-      // Add changed fields
-      const fields = (log.changedFields || '').split(',').map((f: string) => f.trim()).filter(Boolean)
-      for (const f of fields) {
-        grouped[name].fields.add(f)
-      }
-
-      // Add date (day/month format)
+      const fields = (log.changedFields || '').trim()
       const d = new Date(log.changedAt)
-      grouped[name].dates.push(`${d.getDate()}/${d.getMonth() + 1}`)
-    }
-
-    // Build summary lines
-    const memberNames = Object.keys(grouped)
-    let totalUpdates = 0
-    const summaryLines: string[] = []
-
-    for (const name of memberNames) {
-      const { fields, dates } = grouped[name]
-      totalUpdates += dates.length
-      const uniqueDates = [...new Set(dates)]
-      summaryLines.push(`${name} — ${[...fields].join(', ')} (${uniqueDates.join(', ')})`)
+      const lastUpdated = `${d.getDate()}/${d.getMonth() + 1}`
+      summaryLines.push(`${name} — ${fields} (τελευταία ενημέρωση: ${lastUpdated})`)
     }
 
     // Build HTML email
@@ -122,7 +102,7 @@ export async function GET(request: NextRequest) {
 
               <div style="background-color: #f7fafc; padding: 16px; border-radius: 8px; margin-top: 24px;">
                 <p style="margin: 0; color: #2d3748; font-size: 15px;">
-                  <strong>Σύνολο:</strong> ${memberNames.length} μέλη, ${totalUpdates} ενημερώσεις
+                  <strong>Σύνολο:</strong> ${logs.length} μέλη
                 </p>
               </div>
             </div>
@@ -159,13 +139,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to send email' }, { status: 500 })
     }
 
-    console.log(`[MONTHLY-REPORT] Sent report for ${monthName} ${year}: ${memberNames.length} members, ${totalUpdates} updates`)
+    console.log(`[MONTHLY-REPORT] Sent report for ${monthName} ${year}: ${logs.length} members`)
 
     return NextResponse.json({
       success: true,
       month: `${monthName} ${year}`,
-      members: memberNames.length,
-      updates: totalUpdates,
+      members: logs.length,
     })
   } catch (error) {
     console.error('[MONTHLY-REPORT] Error:', error)
