@@ -66,10 +66,10 @@ export async function getActivities() {
 export async function getActivityById(idOrSlug: string | number) {
   try {
     // First try fetching by documentId (new format)
-    return await fetchStrapi(`/activities/${idOrSlug}?populate=*`);
+    return await fetchStrapi(`/activities/${encodeURIComponent(idOrSlug)}?populate=*`);
   } catch (error) {
     // If not found, try searching by Slug field (old format from previous site)
-    const response = await fetchStrapi(`/activities?filters[Slug][$eq]=${idOrSlug}&populate=*`);
+    const response = await fetchStrapi(`/activities?filters[Slug][$eq]=${encodeURIComponent(idOrSlug)}&populate=*`);
     if (response.data && response.data.length > 0) {
       return { data: response.data[0] };
     }
@@ -100,10 +100,10 @@ export async function getNewsletters() {
 export async function getOpenCallById(idOrSlug: string | number) {
   try {
     // First try fetching by documentId (new format)
-    return await fetchStrapi(`/open-calls/${idOrSlug}?populate=*`);
+    return await fetchStrapi(`/open-calls/${encodeURIComponent(idOrSlug)}?populate=*`);
   } catch (error) {
     // If not found, try searching by Slug field (old format from previous site)
-    const response = await fetchStrapi(`/open-calls?filters[Slug][$eq]=${idOrSlug}&populate=*`);
+    const response = await fetchStrapi(`/open-calls?filters[Slug][$eq]=${encodeURIComponent(idOrSlug)}&populate=*`);
     if (response.data && response.data.length > 0) {
       return { data: response.data[0] };
     }
@@ -129,14 +129,14 @@ export async function getFeaturedProjects() {
  * Get a single project by slug with all relations populated
  */
 export async function getProjectBySlug(slug: string) {
-  return fetchStrapi(`/projects?filters[slug][$eq]=${slug}&populate[cover_image]=true&populate[project_images]=true&populate[partners][populate]=logo&populate[external_links]=true&populate[project_entries][populate][cover_image]=true&populate[supporters_banner_light]=true&populate[supporters_banner_dark]=true`);
+  return fetchStrapi(`/projects?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[cover_image]=true&populate[project_images]=true&populate[partners][populate]=logo&populate[external_links]=true&populate[project_entries][populate][cover_image]=true&populate[supporters_banner_light]=true&populate[supporters_banner_dark]=true`);
 }
 
 /**
  * Get a single ΣΗΜΑ entry by slug (returns regardless of visibility)
  */
 export async function getProjectEntryBySlug(slug: string) {
-  return fetchStrapi(`/project-entries?filters[slug][$eq]=${slug}&populate=*`);
+  return fetchStrapi(`/project-entries?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`);
 }
 
 /**
@@ -157,7 +157,7 @@ export async function getPages() {
  * Get a single page by slug
  */
 export async function getPageBySlug(slug: string) {
-  return fetchStrapi(`/pages?filters[slug][$eq]=${slug}&populate=*`);
+  return fetchStrapi(`/pages?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`);
 }
 
 /**
@@ -187,7 +187,7 @@ export async function getCoordinationTeams() {
  */
 export async function getMemberBySlugOrId(slugOrId: string) {
   // First try by Slug (most common for member URLs)
-  const response = await fetchStrapi(`/members?filters[Slug][$eq]=${slugOrId}&populate=*`);
+  const response = await fetchStrapi(`/members?filters[Slug][$eq]=${encodeURIComponent(slugOrId)}&populate=*`);
   if (response.data && response.data.length > 0) {
     return { data: response.data[0] };
   }

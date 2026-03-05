@@ -2,10 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { addSubmission } from '@/lib/membershipSubmissions'
 
 // Webhook secret - should match your Google Apps Script
-const WEBHOOK_SECRET = process.env.MEMBERSHIP_WEBHOOK_SECRET || 'cforc-membership-2024-xyz'
+const WEBHOOK_SECRET = process.env.MEMBERSHIP_WEBHOOK_SECRET
 
 export async function POST(request: NextRequest) {
   try {
+    if (!WEBHOOK_SECRET) {
+      console.error('MEMBERSHIP_WEBHOOK_SECRET not configured')
+      return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 })
+    }
+
     const body = await request.json()
     const { trackingId, submittedAt, secret } = body
 

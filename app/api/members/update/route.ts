@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
+import { checkCsrf } from '@/lib/csrf'
 
 const STRAPI_URL = process.env.STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 export async function POST(request: NextRequest) {
   try {
+    const csrfError = checkCsrf(request)
+    if (csrfError) return NextResponse.json({ error: csrfError }, { status: 403 })
+
     // Get session token from cookie
     const sessionToken = request.cookies.get('session')?.value
     console.log('[UPDATE] Session cookie found:', !!sessionToken)
@@ -20,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     // Verify token
     const payload = verifyToken(sessionToken)
-    console.log('[UPDATE] Token verified:', !!payload, payload)
+    console.log('[UPDATE] Token verified:', !!payload)
     if (!payload) {
       console.log('[UPDATE] Invalid token')
       return NextResponse.json(
@@ -78,6 +82,31 @@ export async function POST(request: NextRequest) {
       // Extract project 2 kept image IDs
       const project2KeptIds = formData.getAll('project2KeptImageIds')
       updateData.project2KeptImageIds = project2KeptIds.map(id => parseInt(id.toString(), 10)).filter(id => !isNaN(id))
+
+      // Validate uploaded files (type and size)
+      const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif']
+      const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+
+      const allFiles = [
+        ...(imageFile ? [imageFile] : []),
+        ...project1ImageFiles,
+        ...project2ImageFiles,
+      ]
+
+      for (const file of allFiles) {
+        if (!ALLOWED_TYPES.includes(file.type)) {
+          return NextResponse.json(
+            { error: `Μη αποδεκτός τύπος αρχείου: ${file.type}. Επιτρέπονται: JPEG, PNG, WebP, GIF.` },
+            { status: 400 }
+          )
+        }
+        if (file.size > MAX_FILE_SIZE) {
+          return NextResponse.json(
+            { error: `Το αρχείο "${file.name}" υπερβαίνει το όριο μεγέθους (10 MB).` },
+            { status: 400 }
+          )
+        }
+      }
     } else {
       // Handle JSON
       updateData = await request.json()
@@ -104,6 +133,27 @@ export async function POST(request: NextRequest) {
         { error: 'Μη έγκυρη διεύθυνση email' },
         { status: 400 }
       )
+    }
+
+    // Check email uniqueness if email is being changed
+    if (updateData.Email) {
+      const emailCheckResponse = await fetch(
+        `${STRAPI_URL}/api/members?filters[Email][$eq]=${encodeURIComponent(updateData.Email)}&filters[documentId][$ne]=${encodeURIComponent(memberId)}&fields[0]=id`,
+        {
+          headers: {
+            Authorization: `Bearer ${STRAPI_API_TOKEN}`
+          }
+        }
+      )
+      if (emailCheckResponse.ok) {
+        const emailCheckData = await emailCheckResponse.json()
+        if (emailCheckData.data && emailCheckData.data.length > 0) {
+          return NextResponse.json(
+            { error: 'Αυτό το email χρησιμοποιείται ήδη από άλλο μέλος' },
+            { status: 409 }
+          )
+        }
+      }
     }
 
     // Helper function to convert text to Blocks format
@@ -296,7 +346,7 @@ export async function POST(request: NextRequest) {
     // Find member by documentId first to ensure we're updating the right one
     console.log('[UPDATE] Finding member by documentId:', memberId)
     const findResponse = await fetch(
-      `${STRAPI_URL}/api/members?filters[documentId][$eq]=${memberId}`,
+      `${STRAPI_URL}/api/members?filters[documentId][$eq]=${encodeURIComponent(memberId)}`,
       {
         headers: {
           'Authorization': `Bearer ${STRAPI_API_TOKEN}`
@@ -329,10 +379,6 @@ export async function POST(request: NextRequest) {
     // Always unhide profile when member saves — makes profile visible after first edit
     updateData.HideProfile = false
 
-    // Update member in Strapi using numeric ID
-    console.log('[UPDATE] Updating member with data:', updateData)
-    console.log('[UPDATE] Strapi URL:', `${STRAPI_URL}/api/members/${updateId}`)
-
     const updateResponse = await fetch(`${STRAPI_URL}/api/members/${updateId}`, {
       method: 'PUT',
       headers: {
@@ -344,33 +390,19 @@ export async function POST(request: NextRequest) {
       })
     })
 
-    console.log('[UPDATE] Strapi response status:', updateResponse.status)
-
     if (!updateResponse.ok) {
       const errorText = await updateResponse.text()
-      console.error('[UPDATE] Strapi update error (raw):', errorText)
-      console.error('[UPDATE] Request body was:', JSON.stringify({ data: updateData }, null, 2))
-      console.error('[UPDATE] Update URL was:', `${STRAPI_URL}/api/members/${memberId}`)
+      console.error('[UPDATE] Strapi update failed with status:', updateResponse.status)
 
       let errorData
       try {
         errorData = JSON.parse(errorText)
-        console.error('[UPDATE] Strapi error details:', JSON.stringify(errorData, null, 2))
-
-        // Log specific error details if available
-        if (errorData.error) {
-          console.error('[UPDATE] Error name:', errorData.error.name)
-          console.error('[UPDATE] Error message:', errorData.error.message)
-          if (errorData.error.details) {
-            console.error('[UPDATE] Error details:', JSON.stringify(errorData.error.details, null, 2))
-          }
-        }
-      } catch (e) {
-        console.error('[UPDATE] Could not parse error as JSON')
+      } catch {
+        // not JSON
       }
 
       return NextResponse.json(
-        { error: 'Αποτυχία ενημέρωσης προφίλ', details: errorData || errorText },
+        { error: 'Αποτυχία ενημέρωσης προφίλ' },
         { status: 500 }
       )
     }

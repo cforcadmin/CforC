@@ -1,8 +1,21 @@
 import { NextResponse } from 'next/server'
 import { newsletterLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
+import { checkCsrf } from '@/lib/csrf'
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
 
 export async function POST(request: Request) {
   try {
+    const csrfError = checkCsrf(request)
+    if (csrfError) return NextResponse.json({ error: csrfError }, { status: 403 })
+
     // Get IP for rate limiting
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
                request.headers.get('x-real-ip') ||
@@ -22,7 +35,7 @@ export async function POST(request: Request) {
     // Honeypot check - if filled, it's a bot
     if (website) {
       // Silently reject but return success to not alert bots
-      console.log('Bot detected via honeypot:', email)
+      console.log('Bot detected via honeypot')
       return NextResponse.json({ success: true })
     }
 
@@ -38,7 +51,7 @@ export async function POST(request: Request) {
     const dotCount = (username.match(/\./g) || []).length
     if (dotCount > 3) {
       // Silently reject but return success to not alert spammers
-      console.log('Suspicious email pattern blocked:', email)
+      console.log('Suspicious email pattern blocked')
       return NextResponse.json({ success: true })
     }
 
@@ -74,7 +87,7 @@ export async function POST(request: Request) {
             </p>
             <div style="background-color: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <p style="margin: 0; color: #2d3748;">
-                <strong>Email:</strong> ${email}
+                <strong>Email:</strong> ${escapeHtml(email)}
               </p>
               <p style="margin: 10px 0 0 0; color: #718096; font-size: 14px;">
                 <strong>Ημερομηνία:</strong> ${new Date().toLocaleString('el-GR')}

@@ -1,9 +1,33 @@
 import { NextResponse } from 'next/server'
+import { feedbackLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
+import { checkCsrf } from '@/lib/csrf'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 export async function POST(request: Request) {
   try {
+    const csrfError = checkCsrf(request)
+    if (csrfError) return NextResponse.json({ error: csrfError }, { status: 403 })
+
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
+               request.headers.get('x-real-ip') || 'unknown'
+    const rateLimitResult = feedbackLimiter.check(ip)
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: getRateLimitErrorMessage(rateLimitResult.resetTime) },
+        { status: 429 }
+      )
+    }
+
     if (!RESEND_API_KEY) {
       console.error('RESEND_API_KEY is not set')
       return NextResponse.json(
@@ -31,7 +55,7 @@ export async function POST(request: Request) {
         from: 'Culture for Change <noreply@cultureforchange.net>',
         reply_to: senderEmail || undefined,
         to: ['it@cultureforchange.net'],
-        subject: `Αναφορά / Πρόταση — ${senderName || 'Ανώνυμος επισκέπτης'}`,
+        subject: `Αναφορά / Πρόταση — ${senderName ? escapeHtml(senderName) : 'Ανώνυμος επισκέπτης'}`,
         html: `
           <!DOCTYPE html>
           <html>
@@ -46,12 +70,12 @@ export async function POST(request: Request) {
                 <div style="padding:30px;">
                   <h2 style="color:#2d3748;font-size:20px;margin-bottom:8px;">Αναφορά / Πρόταση Βελτίωσης</h2>
                   <p style="color:#718096;font-size:13px;margin-bottom:20px;">
-                    ${senderName ? `Από: <strong>${senderName}</strong>` : 'Ανώνυμος επισκέπτης'}
-                    ${senderEmail ? ` &lt;${senderEmail}&gt;` : ''}
-                    ${pageUrl ? `<br>Σελίδα: <a href="${pageUrl}" style="color:#FF8B6A;">${pageUrl}</a>` : ''}
+                    ${senderName ? `Από: <strong>${escapeHtml(senderName)}</strong>` : 'Ανώνυμος επισκέπτης'}
+                    ${senderEmail ? ` &lt;${escapeHtml(senderEmail)}&gt;` : ''}
+                    ${pageUrl ? `<br>Σελίδα: <a href="${escapeHtml(pageUrl)}" style="color:#FF8B6A;">${escapeHtml(pageUrl)}</a>` : ''}
                   </p>
                   <div style="background-color:#f7fafc;padding:20px;border-radius:12px;border-left:4px solid #FF8B6A;">
-                    <p style="color:#2d3748;font-size:15px;line-height:1.7;margin:0;white-space:pre-line;">${message}</p>
+                    <p style="color:#2d3748;font-size:15px;line-height:1.7;margin:0;white-space:pre-line;">${escapeHtml(message)}</p>
                   </div>
                 </div>
                 <div style="background-color:#f7fafc;padding:16px;text-align:center;border-radius:0 0 24px 24px;">

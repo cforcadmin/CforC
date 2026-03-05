@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch member from database using documentId
     const memberResponse = await fetch(
-      `${STRAPI_URL}/api/members?filters[documentId][$eq]=${decoded.memberId}&populate[0]=Image&populate[1]=Project1Pictures&populate[2]=Project2Pictures`,
+      `${STRAPI_URL}/api/members?filters[documentId][$eq]=${encodeURIComponent(decoded.memberId)}&populate[0]=Image&populate[1]=Project1Pictures&populate[2]=Project2Pictures`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -79,6 +79,8 @@ export async function GET(request: NextRequest) {
       password,
       verificationCode,
       verificationExpiry,
+      magicLinkToken,
+      magicLinkExpiry,
       ...safeMemberData
     } = member
 

@@ -1,11 +1,35 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
+import { workingGroupJoinLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
+import { checkCsrf } from '@/lib/csrf'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 export async function POST(request: Request) {
   try {
+    const csrfError = checkCsrf(request)
+    if (csrfError) return NextResponse.json({ error: csrfError }, { status: 403 })
+
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
+               request.headers.get('x-real-ip') || 'unknown'
+    const rateLimitResult = workingGroupJoinLimiter.check(ip)
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: getRateLimitErrorMessage(rateLimitResult.resetTime) },
+        { status: 429 }
+      )
+    }
+
     // Verify session
     const cookieStore = await cookies()
     const sessionCookie = cookieStore.get('session')
@@ -55,7 +79,7 @@ export async function POST(request: Request) {
         reply_to: userEmail,
         to: [coordinatorEmail],
         cc: ['hello@cultureforchange.net', userEmail],
-        subject: `Αίτημα Συμμετοχής στην Ομάδα Εργασίας: ${groupName} — ${userName}`,
+        subject: `Αίτημα Συμμετοχής στην Ομάδα Εργασίας: ${escapeHtml(groupName)} — ${escapeHtml(userName)}`,
         html: `
           <!DOCTYPE html>
           <html>
@@ -78,16 +102,16 @@ export async function POST(request: Request) {
                     Αίτημα Συμμετοχής
                   </h2>
                   <p style="color: #718096; font-size: 14px; margin-bottom: 25px;">
-                    Ομάδα Εργασίας: <strong>${groupName}</strong>
+                    Ομάδα Εργασίας: <strong>${escapeHtml(groupName)}</strong>
                   </p>
 
                   <div style="background-color: #f7fafc; padding: 20px; border-radius: 12px; margin-bottom: 25px; border-left: 4px solid #FF8B6A;">
-                    <p style="color: #2d3748; font-size: 15px; line-height: 1.7; margin: 0; white-space: pre-line;">${messageBody}</p>
+                    <p style="color: #2d3748; font-size: 15px; line-height: 1.7; margin: 0; white-space: pre-line;">${escapeHtml(messageBody)}</p>
                   </div>
 
                   ${userProfileUrl ? `
                   <div style="text-align: center; margin: 30px 0;">
-                    <a href="${userProfileUrl}"
+                    <a href="${escapeHtml(userProfileUrl)}"
                        style="display: inline-block; background-color: #FF8B6A; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 50px; font-size: 14px; font-weight: 600;">
                       Προβολή Προφίλ
                     </a>

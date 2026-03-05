@@ -86,11 +86,35 @@ export const newsletterLimiter = new RateLimiter(
   60 * 60 * 1000 // per hour per IP
 )
 
+export const verifyMagicLinkLimiter = new RateLimiter(
+  10, // 10 attempts
+  15 * 60 * 1000 // per 15 minutes
+)
+
+export const setPasswordLimiter = new RateLimiter(
+  5, // 5 attempts
+  15 * 60 * 1000 // per 15 minutes
+)
+
+export const feedbackLimiter = new RateLimiter(
+  5, // 5 submissions
+  60 * 60 * 1000 // per hour
+)
+
+export const workingGroupJoinLimiter = new RateLimiter(
+  5, // 5 requests
+  60 * 60 * 1000 // per hour
+)
+
 // Clean up expired entries every 10 minutes
 setInterval(() => {
   magicLinkLimiter.cleanup()
   loginLimiter.cleanup()
   newsletterLimiter.cleanup()
+  verifyMagicLinkLimiter.cleanup()
+  setPasswordLimiter.cleanup()
+  feedbackLimiter.cleanup()
+  workingGroupJoinLimiter.cleanup()
 }, 10 * 60 * 1000)
 
 // Helper function to get user-friendly error messages

@@ -218,6 +218,7 @@ Strapi Cloud free tier sleeps after 10-15 minutes of inactivity.
 **Deployment (Vercel):**
 - When changing, adding, or removing environment variables locally (`.env.local`), always include the corresponding changes needed in Vercel project settings (Settings → Environment Variables) as part of the implementation steps
 - Don't treat deployment config as a "post-deploy reminder" — treat it as a required step in the task
+- When guiding the user through Vercel dashboard changes, always verify they're on the correct page (Project-level vs Team-level settings). If the user shares a screenshot, check the page context before confirming it's correct.
 
 ## Common Gotchas
 

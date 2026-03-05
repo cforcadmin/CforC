@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken, hashToken, validatePassword, hashPassword, generateSessionToken } from '@/lib/auth'
+import { setPasswordLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
+import { checkCsrf } from '@/lib/csrf'
 import { cookies } from 'next/headers'
 
 const STRAPI_URL = process.env.STRAPI_URL
@@ -7,6 +9,19 @@ const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 export async function POST(request: NextRequest) {
   try {
+    const csrfError = checkCsrf(request)
+    if (csrfError) return NextResponse.json({ error: csrfError }, { status: 403 })
+
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
+               request.headers.get('x-real-ip') || 'unknown'
+    const rateLimitResult = setPasswordLimiter.check(ip)
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: getRateLimitErrorMessage(rateLimitResult.resetTime) },
+        { status: 429 }
+      )
+    }
+
     const body = await request.json()
     const { token, password } = body
 

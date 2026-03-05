@@ -1,11 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken, hashToken } from '@/lib/auth'
+import { verifyMagicLinkLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
+import { checkCsrf } from '@/lib/csrf'
 
 const STRAPI_URL = process.env.STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 export async function POST(request: NextRequest) {
   try {
+    const csrfError = checkCsrf(request)
+    if (csrfError) return NextResponse.json({ error: csrfError }, { status: 403 })
+
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
+               request.headers.get('x-real-ip') || 'unknown'
+    const rateLimitResult = verifyMagicLinkLimiter.check(ip)
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: getRateLimitErrorMessage(rateLimitResult.resetTime) },
+        { status: 429 }
+      )
+    }
+
     const body = await request.json()
     const { token } = body
 
@@ -17,12 +32,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify JWT token
-    console.log('[verify-magic-link] Token received, verifying...')
     const decoded = verifyToken(token)
-    console.log('[verify-magic-link] Decoded token:', JSON.stringify(decoded))
 
     if (!decoded || decoded.type !== 'magic-link') {
-      console.error('[verify-magic-link] Token verification failed:', { decoded, hasType: decoded?.type })
+      console.error('[verify-magic-link] Token verification failed')
       return NextResponse.json(
         { error: 'Μη έγκυρος ή ληγμένος σύνδεσμος' },
         { status: 401 }
@@ -31,13 +44,9 @@ export async function POST(request: NextRequest) {
 
     // Hash the token to compare with database
     const tokenHash = hashToken(token)
-    console.log('[verify-magic-link] TokenHash:', tokenHash)
-    console.log('[verify-magic-link] Email:', decoded.email)
-    console.log('[verify-magic-link] MemberId:', decoded.memberId)
 
     // Look up the auth token in the auth-tokens collection
     const queryUrl = `${STRAPI_URL}/api/auth-tokens?filters[email][$eq]=${encodeURIComponent(decoded.email)}&filters[tokenHash][$eq]=${tokenHash}&filters[tokenType][$eq]=magic-link`
-    console.log('[verify-magic-link] Query URL:', queryUrl)
 
     const authTokenResponse = await fetch(queryUrl, {
       headers: {
@@ -45,8 +54,6 @@ export async function POST(request: NextRequest) {
         Authorization: `Bearer ${STRAPI_API_TOKEN}`
       }
     })
-
-    console.log('[verify-magic-link] Strapi response status:', authTokenResponse.status)
 
     if (!authTokenResponse.ok) {
       const errorText = await authTokenResponse.text()
@@ -58,7 +65,6 @@ export async function POST(request: NextRequest) {
     }
 
     const authTokenData = await authTokenResponse.json()
-    console.log('[verify-magic-link] Auth token data:', JSON.stringify(authTokenData))
 
     if (!authTokenData.data || authTokenData.data.length === 0) {
       console.error('[verify-magic-link] No matching auth token found in database')
@@ -79,6 +85,19 @@ export async function POST(request: NextRequest) {
           { status: 401 }
         )
       }
+    }
+
+    // Invalidate the token so it can't be reused
+    try {
+      await fetch(`${STRAPI_URL}/api/auth-tokens/${authToken.documentId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${STRAPI_API_TOKEN}`
+        }
+      })
+    } catch {
+      // Non-blocking — login still succeeds even if cleanup fails
+      console.error('[verify-magic-link] Failed to invalidate token')
     }
 
     // Token is valid

@@ -101,6 +101,8 @@ export default function ProfilePage() {
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const [showGuidelinesModal, setShowGuidelinesModal] = useState(false)
   const hasShownGuidelinesRef = useRef(false)
+  const errorsRef = useRef<HTMLDivElement>(null)
+  const saveMessageRef = useRef<HTMLDivElement>(null)
 
   // Check authentication
   useEffect(() => {
@@ -326,8 +328,7 @@ export default function ProfilePage() {
     // If there are validation errors, show them
     if (errors.length > 0) {
       setValidationErrors(errors)
-      // Scroll to top to show errors
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      setTimeout(() => errorsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
       return
     }
 
@@ -412,9 +413,11 @@ export default function ProfilePage() {
         // After refresh, the new original IDs and kept IDs will be set by the useEffect that watches user data
       } else {
         setSaveMessage({ type: 'error', text: data.error || 'Αποτυχία αποθήκευσης' })
+        setTimeout(() => saveMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
       }
     } catch (error) {
       setSaveMessage({ type: 'error', text: 'Σφάλμα δικτύου. Παρακαλώ δοκίμασε ξανά.' })
+      setTimeout(() => saveMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
     } finally {
       setIsSaving(false)
     }
@@ -634,7 +637,7 @@ export default function ProfilePage() {
 
         {/* Validation Errors - Show at top */}
         {validationErrors.length > 0 && (
-          <div role="alert" aria-live="assertive" className="bg-red-50 dark:bg-red-900/20 border-2 border-red-400 dark:border-red-600 rounded-2xl p-6 mb-8">
+          <div ref={errorsRef} role="alert" aria-live="assertive" className="bg-red-50 dark:bg-red-900/20 border-2 border-red-400 dark:border-red-600 rounded-2xl p-6 mb-8">
             <div className="flex items-start gap-4">
               <svg className="w-8 h-8 flex-shrink-0 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -665,6 +668,7 @@ export default function ProfilePage() {
         {/* Save Message - Show at top */}
         {saveMessage && (
           <div
+            ref={saveMessageRef}
             role={saveMessage.type === 'success' ? 'status' : 'alert'}
             aria-live={saveMessage.type === 'success' ? 'polite' : 'assertive'}
             className={`p-4 rounded-2xl text-sm mb-8 ${

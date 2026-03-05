@@ -19,13 +19,22 @@ const ALIGN_MAP: Record<string, string> = {
   right: 'ml-auto',
 }
 
+function sanitizeUrl(url: string): string {
+  if (!url) return '#'
+  const trimmed = url.trim().toLowerCase()
+  if (trimmed.startsWith('javascript:') || trimmed.startsWith('data:') || trimmed.startsWith('vbscript:')) {
+    return '#'
+  }
+  return url
+}
+
 /**
  * Render inline children with link/bold/italic/underline support.
  */
 export function renderInlineChild(child: any, i: number): React.ReactNode {
   if (child.type === 'link') {
     return (
-      <a key={i} href={child.url} target="_blank" rel="noopener noreferrer" className="text-coral hover:text-coral-dark dark:text-coral-light dark:hover:text-coral underline">
+      <a key={i} href={sanitizeUrl(child.url)} target="_blank" rel="noopener noreferrer" className="text-coral hover:text-coral-dark dark:text-coral-light dark:hover:text-coral underline">
         {child.children?.map((linkChild: any, j: number) => renderInlineChild(linkChild, j))}
       </a>
     )

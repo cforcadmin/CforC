@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isValidEmail, verifyPassword, generateSessionToken } from '@/lib/auth'
 import { loginLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
+import { checkCsrf } from '@/lib/csrf'
 import { cookies } from 'next/headers'
 
 const STRAPI_URL = process.env.STRAPI_URL
@@ -8,6 +9,9 @@ const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 export async function POST(request: NextRequest) {
   try {
+    const csrfError = checkCsrf(request)
+    if (csrfError) return NextResponse.json({ error: csrfError }, { status: 403 })
+
     // Check required environment variables
     if (!STRAPI_URL || !STRAPI_API_TOKEN) {
       console.error('Missing environment variables:', {

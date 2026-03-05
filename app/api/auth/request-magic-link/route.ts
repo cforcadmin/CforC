@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { isValidEmail, generateMagicLinkToken, hashToken } from '@/lib/auth'
 import { magicLinkLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
+import { checkCsrf } from '@/lib/csrf'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const STRAPI_URL = process.env.STRAPI_URL
@@ -9,6 +10,9 @@ const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 export async function POST(request: NextRequest) {
   try {
+    const csrfError = checkCsrf(request)
+    if (csrfError) return NextResponse.json({ error: csrfError }, { status: 403 })
+
     const body = await request.json()
     const { email } = body
 

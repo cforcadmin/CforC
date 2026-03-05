@@ -1,8 +1,11 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { checkCsrf } from '@/lib/csrf'
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    const csrfError = checkCsrf(request)
+    if (csrfError) return NextResponse.json({ error: csrfError }, { status: 403 })
     // Clear session cookie
     const cookieStore = await cookies()
     cookieStore.delete('session')

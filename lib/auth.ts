@@ -49,6 +49,7 @@ export function generateSessionToken(memberId: string, email: string): string {
   }
 
   const options: SignOptions = {
+    algorithm: 'HS256',
     expiresIn: JWT_EXPIRES_IN
   }
 
@@ -63,6 +64,7 @@ export function generateMagicLinkToken(memberId: string, email: string): string 
   }
 
   const options: SignOptions = {
+    algorithm: 'HS256',
     expiresIn: MAGIC_LINK_EXPIRES_IN
   }
 
@@ -71,7 +73,7 @@ export function generateMagicLinkToken(memberId: string, email: string): string 
 
 export function verifyToken(token: string): TokenPayload | null {
   try {
-    const decoded = jwt.verify(token, getJwtSecret()) as TokenPayload
+    const decoded = jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] }) as TokenPayload
     return decoded
   } catch (error) {
     return null
