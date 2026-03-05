@@ -5,6 +5,39 @@ import { checkCsrf } from '@/lib/csrf'
 const STRAPI_URL = process.env.STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
+// Human-readable field name mapping (Greek) for change log emails
+const FIELD_DISPLAY_NAMES: Record<string, string> = {
+  Name: 'Όνομα',
+  Bio: 'Βιογραφικό',
+  City: 'Πόλη',
+  Province: 'Περιφέρεια',
+  Email: 'Email',
+  Phone: 'Τηλέφωνο',
+  Websites: 'Ιστοσελίδες',
+  FieldsOfWork: 'Πεδία Πράκτικής',
+  Image: 'Φωτογραφία Προφίλ',
+  ProfileImageAltText: 'Alt Text Φωτογραφίας',
+  Project1Title: 'Τίτλος Έργου 1',
+  Project1Tags: 'Ετικέτες Έργου 1',
+  Project1Links: 'Σύνδεσμοι Έργου 1',
+  Project1Description: 'Περιγραφή Έργου 1',
+  Project1Pictures: 'Φωτογραφίες Έργου 1',
+  Project1PicturesAltText: 'Alt Text Φωτογραφιών Έργου 1',
+  Project2Title: 'Τίτλος Έργου 2',
+  Project2Tags: 'Ετικέτες Έργου 2',
+  Project2Links: 'Σύνδεσμοι Έργου 2',
+  Project2Description: 'Περιγραφή Έργου 2',
+  Project2Pictures: 'Φωτογραφίες Έργου 2',
+  Project2PicturesAltText: 'Alt Text Φωτογραφιών Έργου 2',
+}
+
+// Fields to skip when detecting changes (internal/auto-set fields)
+const SKIP_CHANGE_FIELDS = new Set([
+  'project1KeptImageIds',
+  'project2KeptImageIds',
+  'HideProfile',
+])
+
 export async function POST(request: NextRequest) {
   try {
     const csrfError = checkCsrf(request)
@@ -383,6 +416,64 @@ export async function POST(request: NextRequest) {
     console.log('[UPDATE] Found existing member with numeric ID:', updateId)
     console.log('[UPDATE] Member documentId:', existingMember.documentId)
 
+    // Fetch existing member with all fields populated for change detection
+    let existingPopulated: any = existingMember
+    try {
+      const populatedRes = await fetch(
+        `${STRAPI_URL}/api/members/${memberId}?populate=*`,
+        { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` } }
+      )
+      if (populatedRes.ok) {
+        const populatedData = await populatedRes.json()
+        if (populatedData.data) existingPopulated = populatedData.data
+      }
+    } catch (e) {
+      console.error('[UPDATE] Failed to fetch populated member for change detection:', e)
+    }
+
+    // Detect which fields actually changed
+    const changedFields: string[] = []
+    for (const key of Object.keys(updateData)) {
+      if (SKIP_CHANGE_FIELDS.has(key)) continue
+
+      const oldVal = existingPopulated[key]
+      const newVal = updateData[key]
+
+      // For media fields (arrays of objects with ids), compare by ID sets
+      if (Array.isArray(newVal) && newVal.length > 0 && typeof newVal[0] === 'number') {
+        const oldIds = Array.isArray(oldVal)
+          ? oldVal.map((item: any) => (typeof item === 'object' ? item.id : item)).sort()
+          : []
+        const newIds = [...newVal].sort()
+        if (JSON.stringify(oldIds) !== JSON.stringify(newIds)) {
+          changedFields.push(key)
+        }
+        continue
+      }
+
+      // For blocks fields (Bio, descriptions), compare JSON
+      if (Array.isArray(newVal) && newVal.length > 0 && newVal[0]?.type) {
+        if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+          changedFields.push(key)
+        }
+        continue
+      }
+
+      // For simple string/text fields
+      const oldStr = (oldVal ?? '').toString()
+      const newStr = (newVal ?? '').toString()
+      if (oldStr !== newStr) {
+        changedFields.push(key)
+      }
+    }
+
+    // If a new profile image was uploaded, mark it as changed
+    if (imageFile && !changedFields.includes('Image')) {
+      changedFields.push('Image')
+    }
+
+    console.log('[UPDATE] Changed fields:', changedFields)
+
     // Always unhide profile when member saves — makes profile visible after first edit
     updateData.HideProfile = false
 
@@ -414,9 +505,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update was successful - return success without fetching
-    // (We're skipping the fetch because Strapi 5 populate syntax is causing issues)
+    // Update was successful - log profile changes (fire-and-forget)
     console.log('[UPDATE] Update successful, returning success response')
+
+    if (changedFields.length > 0) {
+      const displayNames = changedFields.map(f => FIELD_DISPLAY_NAMES[f] || f)
+      fetch(`${STRAPI_URL}/api/profile-change-logs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${STRAPI_API_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            memberName: existingPopulated.Name || 'Unknown',
+            memberEmail: existingPopulated.Email || '',
+            changedFields: displayNames.join(', '),
+            changedAt: new Date().toISOString(),
+          },
+        }),
+      }).catch(err => console.error('[UPDATE] Failed to log profile change:', err))
+    }
 
     return NextResponse.json({
       success: true,

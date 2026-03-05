@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/admin/monthly-profile-report",
+      "schedule": "0 9 1 * *"
+    }
+  ]
+}
