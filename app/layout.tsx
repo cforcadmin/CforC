@@ -24,9 +24,38 @@ import ReadingAids from '@/components/ReadingAids'
 import Sa11yDevChecker from '@/components/Sa11yDevChecker'
 import FeedbackButton from '@/components/FeedbackButton'
 
+const BASE_URL = 'https://cultureforchange.net'
+
 export const metadata: Metadata = {
-  title: 'Culture for Change',
-  description: 'First Greek social innovation network for cultural and political change',
+  metadataBase: new URL(BASE_URL),
+  title: {
+    default: 'Culture for Change',
+    template: '%s | Culture for Change',
+  },
+  description: 'Το πρώτο ελληνικό δίκτυο κοινωνικής καινοτομίας για πολιτιστική και πολιτική αλλαγή.',
+  openGraph: {
+    type: 'website',
+    locale: 'el_GR',
+    url: BASE_URL,
+    siteName: 'Culture for Change',
+    title: 'Culture for Change',
+    description: 'Το πρώτο ελληνικό δίκτυο κοινωνικής καινοτομίας για πολιτιστική και πολιτική αλλαγή.',
+    images: [{ url: '/Homepage_Block1.jpg', width: 1200, height: 630, alt: 'Culture for Change' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Culture for Change',
+    description: 'Το πρώτο ελληνικό δίκτυο κοινωνικής καινοτομίας για πολιτιστική και πολιτική αλλαγή.',
+    images: ['/Homepage_Block1.jpg'],
+  },
+  alternates: {
+    canonical: BASE_URL,
+    languages: { 'el': BASE_URL },
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export default function RootLayout({
@@ -37,6 +66,24 @@ export default function RootLayout({
   return (
     <html lang="el" className={foundersGrotesk.variable}>
       <body>
+        <Script
+          id="organization-jsonld"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Culture for Change',
+              url: BASE_URL,
+              logo: `${BASE_URL}/cforc_logo_small.svg`,
+              description: 'Το πρώτο ελληνικό δίκτυο κοινωνικής καινοτομίας για πολιτιστική και πολιτική αλλαγή.',
+              sameAs: [
+                'https://www.instagram.com/cultureforchange/',
+                'https://www.facebook.com/cultureforchange',
+              ],
+            }),
+          }}
+        />
         {/* Skip to main content link for keyboard users */}
         <a href="#main-content" className="skip-link">
           Μετάβαση στο κύριο περιεχόμενο

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>SEO Audit Report — Culture for Change</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="data:text/css,body{font-family:Arial,sans-serif;max-width:800px;margin:0 auto;padding:40px;color:#2d2d2d;line-height:1.6}h1,h2,h3{color:#1a1a1a}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px 12px;text-align:left}th{background:#f5f5f5}code{background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:0.9em}hr{border:none;border-top:1px solid #ddd;margin:24px 0}" />
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">SEO Audit Report — Culture for Change</h1>
+</header>
+<h1 id="seo-audit-report-culture-for-change-website">SEO Audit Report —
+Culture for Change Website</h1>
+<p><strong>Date:</strong> 2026-03-06 <strong>URL:</strong>
+https://cultureforchange.net <strong>Framework:</strong> Next.js 15 (App
+Router)</p>
+<hr />
+<h2 id="summary">Summary</h2>
+<p>The website has a solid foundation (sitemap, robots.txt, semantic
+HTML, image optimization) but is missing critical SEO elements on most
+pages. The biggest issue is that the most content-rich pages
+(activities, members) are client-rendered with no server-side metadata,
+making them nearly invisible to search engines.</p>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sitemap</td>
+<td>Partial</td>
+</tr>
+<tr>
+<td>robots.txt</td>
+<td>OK</td>
+</tr>
+<tr>
+<td>Root metadata</td>
+<td>Partial</td>
+</tr>
+<tr>
+<td>Page-level metadata</td>
+<td>Poor</td>
+</tr>
+<tr>
+<td>Open Graph / Twitter cards</td>
+<td>Missing</td>
+</tr>
+<tr>
+<td>JSON-LD structured data</td>
+<td>Missing</td>
+</tr>
+<tr>
+<td>Canonical URLs</td>
+<td>Missing</td>
+</tr>
+<tr>
+<td>Semantic HTML</td>
+<td>Good</td>
+</tr>
+<tr>
+<td>Image optimization</td>
+<td>Good</td>
+</tr>
+<tr>
+<td>Internationalization SEO</td>
+<td>Partial</td>
+</tr>
+<tr>
+<td>Performance (loading.tsx)</td>
+<td>Missing</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="critical-issues">Critical Issues</h2>
+<h3 id="no-metadata-on-most-pages">1. No metadata on most pages</h3>
+<p><strong>Impact:</strong> High <strong>Current state:</strong> Only
+<code>/projects</code> and its dynamic sub-routes export metadata. All
+other pages (activities, members, open calls, about, privacy, terms,
+etc.) rely solely on the root layout’s generic title “Culture for
+Change”.</p>
+<p><strong>Affected pages (no metadata):</strong> -
+<code>app/activities/page.tsx</code> -
+<code>app/activities/[slug]/page.tsx</code> -
+<code>app/members/page.tsx</code> -
+<code>app/members/[name]/page.tsx</code> -
+<code>app/members/[name]/[project]/page.tsx</code> -
+<code>app/open-calls/page.tsx</code> - <code>app/about/page.tsx</code> -
+<code>app/privacy/page.tsx</code> - <code>app/terms/page.tsx</code> -
+<code>app/transparency/page.tsx</code> -
+<code>app/accessibility/page.tsx</code> -
+<code>app/participation/page.tsx</code> -
+<code>app/cookies/page.tsx</code> -
+<code>app/coordination-team/page.tsx</code> -
+<code>app/announcements-2025/page.tsx</code> -
+<code>app/login/page.tsx</code> - <code>app/profile/page.tsx</code></p>
+<p><strong>Fix:</strong> Add <code>export const metadata</code> to
+static pages, and <code>generateMetadata()</code> to dynamic routes.</p>
+<hr />
+<h3 id="dynamic-routes-are-client-components-cant-export-metadata">2.
+Dynamic routes are client components — can’t export metadata</h3>
+<p><strong>Impact:</strong> High <strong>Current state:</strong>
+<code>/activities/[slug]</code>, <code>/members/[name]</code>, and
+<code>/members/[name]/[project]</code> are marked
+<code>'use client'</code>, which makes it impossible to export metadata.
+Google sees a blank title/description for these pages.</p>
+<p><strong>Fix:</strong> Refactor these into a server component wrapper
++ client component pattern: - Server component fetches data and exports
+<code>generateMetadata()</code> - Client component receives data as
+props and handles interactivity</p>
+<hr />
+<h3 id="no-open-graph-or-twitter-card-tags">3. No Open Graph or Twitter
+Card tags</h3>
+<p><strong>Impact:</strong> High <strong>Current state:</strong> No
+og:image, og:title, og:description, or Twitter card tags anywhere except
+<code>/projects/[slug]</code>.</p>
+<p><strong>Fix:</strong> Add Open Graph and Twitter metadata to root
+layout and all page-level metadata exports.</p>
+<hr />
+<h3 id="no-json-ld-structured-data">4. No JSON-LD structured data</h3>
+<p><strong>Impact:</strong> High <strong>Current state:</strong> No
+schema.org markup on any page.</p>
+<p><strong>Recommended schemas:</strong> - <strong>Organization</strong>
+— on homepage/layout (name, logo, url, sameAs for social links) -
+<strong>Person</strong> — on member detail pages (name, image, jobTitle,
+url) - <strong>Event/Article</strong> — on activity detail pages (name,
+description, image, datePublished) - <strong>BreadcrumbList</strong> —
+on all pages with navigation depth</p>
+<p><strong>Fix:</strong> Add
+<code>&lt;script type="application/ld+json"&gt;</code> blocks to
+relevant pages.</p>
+<hr />
+<h3 id="sitemap-missing-dynamic-activity-and-member-routes">5. Sitemap
+missing dynamic activity and member routes</h3>
+<p><strong>Impact:</strong> High <strong>Current state:</strong>
+<code>app/sitemap.ts</code> includes static pages and project routes,
+but <strong>not</strong> activities or members — potentially hundreds of
+missing URLs.</p>
+<p><strong>Fix:</strong> Add dynamic generation for: -
+<code>/activities/[slug]</code> — fetch all activities from Strapi -
+<code>/members/[name]</code> — fetch all visible members from Strapi</p>
+<hr />
+<h2 id="medium-issues">Medium Issues</h2>
+<h3 id="no-canonical-urls">6. No canonical URLs</h3>
+<p><strong>Impact:</strong> Medium <strong>Current state:</strong> No
+canonical tags on any page. Risk of duplicate content from query
+parameters (e.g., <code>?field=</code>, <code>?from=</code>).</p>
+<p><strong>Fix:</strong> Add <code>alternates.canonical</code> to
+metadata on all pages.</p>
+<hr />
+<h3 id="no-hreflang-tags">7. No hreflang tags</h3>
+<p><strong>Impact:</strong> Medium <strong>Current state:</strong> The
+site is in Greek with Google Translate for other languages, but no
+hreflang tags indicate language variants to search engines.</p>
+<p><strong>Fix:</strong> Since the site uses client-side translation
+(not separate URLs per language), hreflang tags are not strictly
+necessary. However, adding
+<code>&lt;link rel="alternate" hreflang="el" href="..."&gt;</code> for
+the default language confirms the primary language to crawlers.</p>
+<hr />
+<h3 id="no-loading.tsx-files">8. No loading.tsx files</h3>
+<p><strong>Impact:</strong> Medium <strong>Current state:</strong> No
+<code>loading.tsx</code> files exist for any route segment. Users see no
+visual feedback during server-side rendering.</p>
+<p><strong>Fix:</strong> Add <code>loading.tsx</code> files to key route
+groups (activities, members, projects) with the existing
+<code>LoadingIndicator</code> component.</p>
+<hr />
+<h2 id="whats-already-good">What’s Already Good</h2>
+<h3 id="sitemap-partial">Sitemap (partial)</h3>
+<ul>
+<li><code>app/sitemap.ts</code> generates URLs for static pages and
+project routes</li>
+<li>Includes priorities, change frequencies, and last modified
+dates</li>
+</ul>
+<h3 id="robots.txt">robots.txt</h3>
+<ul>
+<li><code>app/robots.ts</code> allows all crawlers and points to
+sitemap</li>
+</ul>
+<h3 id="semantic-html">Semantic HTML</h3>
+<ul>
+<li>Proper heading hierarchy (h1 &gt; h2 &gt; h3) across pages</li>
+<li><code>&lt;main id="main-content"&gt;</code> landmark on all
+pages</li>
+<li>Skip-to-content link for accessibility</li>
+<li>Proper use of <code>&lt;section&gt;</code>,
+<code>&lt;article&gt;</code>, <code>&lt;nav&gt;</code>,
+<code>&lt;footer&gt;</code></li>
+</ul>
+<h3 id="image-optimization">Image Optimization</h3>
+<ul>
+<li>Next.js <code>Image</code> component used consistently</li>
+<li>Strapi CDN domains configured in <code>next.config.js</code></li>
+<li>Alt text present on most images</li>
+</ul>
+<h3 id="language">Language</h3>
+<ul>
+<li>Root <code>&lt;html lang="el"&gt;</code> correctly set</li>
+</ul>
+<hr />
+<h2 id="proposed-fix-plan-priority-order">Proposed Fix Plan (Priority
+Order)</h2>
+<h3 id="phase-1-quick-wins-no-refactoring-needed">Phase 1 — Quick Wins
+(no refactoring needed)</h3>
+<ol type="1">
+<li>Add Open Graph + Twitter card metadata to root
+<code>app/layout.tsx</code></li>
+<li>Add <code>export const metadata</code> to all static pages (about,
+privacy, terms, etc.)</li>
+<li>Add activities and members to <code>app/sitemap.ts</code></li>
+<li>Add Organization JSON-LD to root layout</li>
+<li>Add canonical URLs to root metadata</li>
+</ol>
+<h3 id="phase-2-dynamic-route-metadata-refactoring-needed">Phase 2 —
+Dynamic Route Metadata (refactoring needed)</h3>
+<ol start="6" type="1">
+<li>Refactor <code>/activities/[slug]/page.tsx</code> — server/client
+split for <code>generateMetadata()</code></li>
+<li>Refactor <code>/members/[name]/page.tsx</code> — server/client split
+for <code>generateMetadata()</code></li>
+<li>Refactor <code>/members/[name]/[project]/page.tsx</code> —
+server/client split for <code>generateMetadata()</code></li>
+<li>Add Person JSON-LD to member detail pages</li>
+<li>Add Article/Event JSON-LD to activity detail pages</li>
+</ol>
+<h3 id="phase-3-polish">Phase 3 — Polish</h3>
+<ol start="11" type="1">
+<li>Add <code>loading.tsx</code> to activities, members, projects route
+groups</li>
+<li>Add BreadcrumbList JSON-LD to nested pages</li>
+<li>Verify all pages with Google Search Console after deployment</li>
+</ol>
+<hr />
+<h2 id="estimated-impact">Estimated Impact</h2>
+<table>
+<colgroup>
+<col style="width: 27%" />
+<col style="width: 72%" />
+</colgroup>
+<thead>
+<tr>
+<th>Fix</th>
+<th>SEO Benefit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Page-level metadata</td>
+<td>Google shows proper titles/descriptions in search results</td>
+</tr>
+<tr>
+<td>Open Graph tags</td>
+<td>Social sharing shows images/titles on Facebook, LinkedIn, etc.</td>
+</tr>
+<tr>
+<td>JSON-LD structured data</td>
+<td>Rich snippets in search results (knowledge panels, events,
+people)</td>
+</tr>
+<tr>
+<td>Sitemap expansion</td>
+<td>Google discovers and indexes all activity/member pages</td>
+</tr>
+<tr>
+<td>Canonical URLs</td>
+<td>Prevents duplicate content penalties from query parameters</td>
+</tr>
+<tr>
+<td>Dynamic route metadata</td>
+<td>Activity and member pages become fully indexable</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

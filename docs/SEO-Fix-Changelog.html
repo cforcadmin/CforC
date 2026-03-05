@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>SEO Fix Changelog — Culture for Change</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 900px; margin: 2em auto; padding: 0 1.5em; line-height: 1.6; color: #2D2D2D; }
+    h1 { color: #FF6B47; border-bottom: 3px solid #FF8B6A; padding-bottom: 0.3em; }
+    h2 { color: #FF6B47; margin-top: 2em; border-bottom: 1px solid #eee; padding-bottom: 0.3em; }
+    h3 { color: #4A4A4A; }
+    table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+    th, td { border: 1px solid #ddd; padding: 0.6em 1em; text-align: left; }
+    th { background: #FF8B6A; color: white; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    code { background: #f4f4f4; padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.9em; }
+    hr { border: none; border-top: 2px solid #FF8B6A; margin: 2em 0; }
+    strong { color: #2D2D2D; }
+    a { color: #FF6B47; }
+    @media print { body { max-width: 100%; } }
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="" />
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">SEO Fix Changelog — Culture for Change</h1>
+</header>
+<h1 id="seo-fix-changelog-culture-for-change-website">SEO Fix Changelog
+— Culture for Change Website</h1>
+<p><strong>Date:</strong> 2026-03-06 <strong>URL:</strong>
+https://cultureforchange.net <strong>Framework:</strong> Next.js 15 (App
+Router)</p>
+<hr />
+<h2 id="summary">Summary</h2>
+<p>All SEO issues identified in the SEO Audit Report have been fixed.
+The changes fall into three categories: root-level metadata
+enhancements, static page metadata, and dynamic route refactoring for
+server-side metadata generation.</p>
+<p><strong>Total files created:</strong> 18 <strong>Total files
+modified:</strong> 4 <strong>Build status:</strong> Passing (no
+errors)</p>
+<hr />
+<h2 id="phase-1-root-layout-quick-wins">Phase 1 — Root Layout &amp;
+Quick Wins</h2>
+<h3 id="enhanced-root-layout-metadata-applayout.tsx">1. Enhanced root
+layout metadata (<code>app/layout.tsx</code>)</h3>
+<p><strong>What changed:</strong> - Added <code>metadataBase</code>
+pointing to <code>https://cultureforchange.net</code> - Changed
+<code>title</code> from a plain string to a template object
+(<code>{ default: 'Culture for Change', template: '%s | Culture for Change' }</code>)
+— child pages now automatically get ” | Culture for Change” appended -
+Updated <code>description</code> to Greek - Added <strong>Open
+Graph</strong> tags: <code>type</code>, <code>locale</code>,
+<code>url</code>, <code>siteName</code>, <code>title</code>,
+<code>description</code>, <code>images</code> - Added <strong>Twitter
+Card</strong> tags: <code>card</code>, <code>title</code>,
+<code>description</code>, <code>images</code> - Added
+<code>alternates.canonical</code> and <code>alternates.languages</code>
+for canonical URL and hreflang - Added
+<code>robots: { index: true, follow: true }</code> - Added
+<strong>Organization JSON-LD</strong> structured data
+(<code>schema.org/Organization</code>) with name, url, logo,
+description, and social media links (Instagram, Facebook) - OG image set
+to <code>/Homepage_Block1.jpg</code> (existing public asset)</p>
+<p><strong>SEO impact:</strong> Google and social platforms now display
+proper titles, descriptions, and images when the site is shared or
+indexed.</p>
+<hr />
+<h3
+id="static-page-metadata-12-layout-files-1-direct-metadata-export">2.
+Static page metadata (12 layout files + 1 direct metadata export)</h3>
+<p>For pages that are <code>'use client'</code> components (cannot
+export metadata directly), a <code>layout.tsx</code> file was created in
+each route directory. For the <code>about</code> page (already a server
+component), metadata was added directly.</p>
+<table>
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 51%" />
+<col style="width: 34%" />
+</colgroup>
+<thead>
+<tr>
+<th>Page</th>
+<th>File Created/Modified</th>
+<th>Title (Greek)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/about</code></td>
+<td><code>app/about/page.tsx</code> (modified)</td>
+<td>Σχετικά με εμάς</td>
+</tr>
+<tr>
+<td><code>/activities</code></td>
+<td><code>app/activities/layout.tsx</code> (created)</td>
+<td>Δραστηριότητες</td>
+</tr>
+<tr>
+<td><code>/members</code></td>
+<td><code>app/members/layout.tsx</code> (created)</td>
+<td>Μέλη</td>
+</tr>
+<tr>
+<td><code>/open-calls</code></td>
+<td><code>app/open-calls/layout.tsx</code> (created)</td>
+<td>Ανοιχτές Προσκλήσεις</td>
+</tr>
+<tr>
+<td><code>/privacy</code></td>
+<td><code>app/privacy/layout.tsx</code> (created)</td>
+<td>Πολιτική Απορρήτου</td>
+</tr>
+<tr>
+<td><code>/terms</code></td>
+<td><code>app/terms/layout.tsx</code> (created)</td>
+<td>Όροι Χρήσης</td>
+</tr>
+<tr>
+<td><code>/transparency</code></td>
+<td><code>app/transparency/layout.tsx</code> (created)</td>
+<td>Διαφάνεια</td>
+</tr>
+<tr>
+<td><code>/accessibility</code></td>
+<td><code>app/accessibility/layout.tsx</code> (created)</td>
+<td>Προσβασιμότητα</td>
+</tr>
+<tr>
+<td><code>/participation</code></td>
+<td><code>app/participation/layout.tsx</code> (created)</td>
+<td>Συμμετοχή</td>
+</tr>
+<tr>
+<td><code>/cookies</code></td>
+<td><code>app/cookies/layout.tsx</code> (created)</td>
+<td>Πολιτική Cookies</td>
+</tr>
+<tr>
+<td><code>/coordination-team</code></td>
+<td><code>app/coordination-team/layout.tsx</code> (created)</td>
+<td>Ομάδα Συντονισμού</td>
+</tr>
+<tr>
+<td><code>/login</code></td>
+<td><code>app/login/layout.tsx</code> (created)</td>
+<td>Σύνδεση</td>
+</tr>
+<tr>
+<td><code>/profile</code></td>
+<td><code>app/profile/layout.tsx</code> (created)</td>
+<td>Προφίλ</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Notes:</strong> - Each layout exports <code>metadata</code>
+with <code>title</code>, <code>description</code>, and
+<code>alternates.canonical</code> - <code>/login</code> and
+<code>/profile</code> are marked
+<code>robots: { index: false, follow: false }</code> to prevent indexing
+of auth/private pages - All titles use the root layout’s template —
+e.g., “Δραστηριότητες | Culture for Change”</p>
+<p><strong>SEO impact:</strong> Every page now has a unique, descriptive
+title and meta description instead of the generic “Culture for
+Change”.</p>
+<hr />
+<h3 id="sitemap-expansion-appsitemap.ts">3. Sitemap expansion
+(<code>app/sitemap.ts</code>)</h3>
+<p><strong>What changed:</strong> - Imported <code>getActivities</code>
+and <code>getMembers</code> from <code>lib/strapi.ts</code> - Added
+dynamic URL generation for all <code>/activities/[slug]</code> routes
+(fetches all activities from Strapi) - Added dynamic URL generation for
+all <code>/members/[name]</code> routes (fetches all visible members,
+skips hidden profiles) - Each entry includes <code>lastModified</code>,
+<code>changeFrequency: 'monthly'</code>, and appropriate
+<code>priority</code></p>
+<p><strong>SEO impact:</strong> Google can now discover and index all
+activity and member pages (potentially hundreds of URLs that were
+previously missing from the sitemap).</p>
+<hr />
+<h2 id="phase-2-dynamic-route-refactoring">Phase 2 — Dynamic Route
+Refactoring</h2>
+<h3 id="activity-detail-page-appactivitiesslug">4. Activity detail page
+(<code>app/activities/[slug]/</code>)</h3>
+<p><strong>Problem:</strong> Page was a <code>'use client'</code>
+component — cannot export <code>generateMetadata()</code>.</p>
+<p><strong>Solution:</strong> Split into two files: -
+<code>page.tsx</code> — <strong>Server component</strong> (new, 80
+lines) - Exports <code>generateMetadata()</code> that fetches the
+activity from Strapi - Returns: <code>title</code>,
+<code>description</code> (first 160 chars of content),
+<code>canonical</code>, Open Graph (<code>type: 'article'</code>,
+<code>publishedTime</code>), Twitter Card, and activity image - Renders
+<strong>Article JSON-LD</strong> (<code>schema.org/Article</code>) with
+headline, description, datePublished, dateModified, image, author,
+publisher - <code>ActivityDetailClient.tsx</code> — <strong>Client
+component</strong> (445 lines, original code moved here unchanged) -
+Renamed default export from <code>ActivityDetailPage</code> to
+<code>ActivityDetailClient</code> - All functionality preserved: photo
+carousel, fullscreen modal, related activities, accessibility button,
+newsletter section</p>
+<p><strong>No code was removed or modified in the client
+component.</strong></p>
+<hr />
+<h3 id="member-detail-page-appmembersname">5. Member detail page
+(<code>app/members/[name]/</code>)</h3>
+<p><strong>Problem:</strong> Page was a <code>'use client'</code>
+component — cannot export <code>generateMetadata()</code>.</p>
+<p><strong>Solution:</strong> Split into two files: -
+<code>page.tsx</code> — <strong>Server component</strong> (new, 80
+lines) - Exports <code>generateMetadata()</code> that fetches the member
+from Strapi - Returns: <code>title</code> (member name),
+<code>description</code> (name + fields of work),
+<code>canonical</code>, Open Graph (<code>type: 'profile'</code>),
+Twitter Card, and member image - Renders <strong>Person JSON-LD</strong>
+(<code>schema.org/Person</code>) with name, url, image, address (city),
+and memberOf (Culture for Change) - Respects <code>HideProfile</code>
+flag — returns generic metadata for hidden profiles -
+<code>MemberDetailClient.tsx</code> — <strong>Client component</strong>
+(629 lines, original code moved here unchanged) - Renamed default export
+from <code>MemberDetailPage</code> to <code>MemberDetailClient</code> -
+All functionality preserved: hero section, accessibility button with
+scroll fade, bio, contact info, email copy-to-clipboard, fields of work
+tags, location tags, projects section, newsletter form with honeypot,
+success popup, cookie consent, scroll-to-top</p>
+<p><strong>No code was removed or modified in the client
+component.</strong></p>
+<hr />
+<h3 id="member-project-detail-page-appmembersnameproject">6. Member
+project detail page (<code>app/members/[name]/[project]/</code>)</h3>
+<p><strong>Problem:</strong> Page was a <code>'use client'</code>
+component — cannot export <code>generateMetadata()</code>.</p>
+<p><strong>Solution:</strong> Split into two files: -
+<code>page.tsx</code> — <strong>Server component</strong> (new, 55
+lines) - Exports <code>generateMetadata()</code> that fetches the member
+and identifies which project to show - Returns: <code>title</code>
+(project title + member name), <code>description</code>,
+<code>canonical</code>, Open Graph, Twitter Card, and project image -
+<code>ProjectDetailClient.tsx</code> — <strong>Client component</strong>
+(488 lines, original code moved here unchanged) - Renamed default export
+from <code>ProjectDetailPage</code> to <code>ProjectDetailClient</code>
+- All functionality preserved: hero section, accessibility button, image
+carousel with thumbnails, member thumbnail link, project description,
+project links, other projects section</p>
+<p><strong>No code was removed or modified in the client
+component.</strong></p>
+<hr />
+<h2 id="phase-3-polish">Phase 3 — Polish</h2>
+<h3 id="loading-states-4-loading.tsx-files">7. Loading states (4
+<code>loading.tsx</code> files)</h3>
+<p>Created <code>loading.tsx</code> files in key route directories, all
+using the existing <code>LoadingIndicator</code> component:</p>
+<table>
+<colgroup>
+<col style="width: 46%" />
+<col style="width: 53%" />
+</colgroup>
+<thead>
+<tr>
+<th>File</th>
+<th>Route</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>app/activities/loading.tsx</code></td>
+<td><code>/activities</code> and <code>/activities/[slug]</code></td>
+</tr>
+<tr>
+<td><code>app/members/loading.tsx</code></td>
+<td><code>/members</code>, <code>/members/[name]</code>,
+<code>/members/[name]/[project]</code></td>
+</tr>
+<tr>
+<td><code>app/projects/loading.tsx</code></td>
+<td><code>/projects</code> and <code>/projects/[slug]</code></td>
+</tr>
+<tr>
+<td><code>app/open-calls/loading.tsx</code></td>
+<td><code>/open-calls</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>SEO impact:</strong> Users see visual feedback during
+server-side rendering, reducing perceived load time and bounce
+rates.</p>
+<hr />
+<h2 id="complete-file-list">Complete File List</h2>
+<h3 id="files-created-18">Files Created (18)</h3>
+<table>
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 60%" />
+</colgroup>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>app/activities/layout.tsx</code></td>
+<td>Activities listing metadata</td>
+</tr>
+<tr>
+<td><code>app/activities/loading.tsx</code></td>
+<td>Activities loading state</td>
+</tr>
+<tr>
+<td><code>app/activities/[slug]/ActivityDetailClient.tsx</code></td>
+<td>Activity detail client component (moved from page.tsx)</td>
+</tr>
+<tr>
+<td><code>app/members/layout.tsx</code></td>
+<td>Members listing metadata</td>
+</tr>
+<tr>
+<td><code>app/members/loading.tsx</code></td>
+<td>Members loading state</td>
+</tr>
+<tr>
+<td><code>app/members/[name]/MemberDetailClient.tsx</code></td>
+<td>Member detail client component (moved from page.tsx)</td>
+</tr>
+<tr>
+<td><code>app/members/[name]/[project]/ProjectDetailClient.tsx</code></td>
+<td>Member project client component (moved from page.tsx)</td>
+</tr>
+<tr>
+<td><code>app/open-calls/layout.tsx</code></td>
+<td>Open calls metadata</td>
+</tr>
+<tr>
+<td><code>app/open-calls/loading.tsx</code></td>
+<td>Open calls loading state</td>
+</tr>
+<tr>
+<td><code>app/privacy/layout.tsx</code></td>
+<td>Privacy page metadata</td>
+</tr>
+<tr>
+<td><code>app/terms/layout.tsx</code></td>
+<td>Terms page metadata</td>
+</tr>
+<tr>
+<td><code>app/transparency/layout.tsx</code></td>
+<td>Transparency page metadata</td>
+</tr>
+<tr>
+<td><code>app/accessibility/layout.tsx</code></td>
+<td>Accessibility page metadata</td>
+</tr>
+<tr>
+<td><code>app/participation/layout.tsx</code></td>
+<td>Participation page metadata</td>
+</tr>
+<tr>
+<td><code>app/cookies/layout.tsx</code></td>
+<td>Cookies page metadata</td>
+</tr>
+<tr>
+<td><code>app/coordination-team/layout.tsx</code></td>
+<td>Coordination team metadata</td>
+</tr>
+<tr>
+<td><code>app/login/layout.tsx</code></td>
+<td>Login page metadata (noindex)</td>
+</tr>
+<tr>
+<td><code>app/profile/layout.tsx</code></td>
+<td>Profile page metadata (noindex)</td>
+</tr>
+<tr>
+<td><code>app/projects/loading.tsx</code></td>
+<td>Projects loading state</td>
+</tr>
+</tbody>
+</table>
+<h3 id="files-modified-4">Files Modified (4)</h3>
+<table>
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 60%" />
+</colgroup>
+<thead>
+<tr>
+<th>File</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>app/layout.tsx</code></td>
+<td>Enhanced metadata (OG, Twitter, canonical, JSON-LD, title
+template)</td>
+</tr>
+<tr>
+<td><code>app/about/page.tsx</code></td>
+<td>Added <code>export const metadata</code></td>
+</tr>
+<tr>
+<td><code>app/sitemap.ts</code></td>
+<td>Added activity and member dynamic routes</td>
+</tr>
+<tr>
+<td><code>app/activities/[slug]/page.tsx</code></td>
+<td>Replaced with server component wrapper +
+<code>generateMetadata()</code></td>
+</tr>
+<tr>
+<td><code>app/members/[name]/page.tsx</code></td>
+<td>Replaced with server component wrapper +
+<code>generateMetadata()</code> + Person JSON-LD</td>
+</tr>
+<tr>
+<td><code>app/members/[name]/[project]/page.tsx</code></td>
+<td>Replaced with server component wrapper +
+<code>generateMetadata()</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="before-vs-after">Before vs After</h2>
+<table>
+<colgroup>
+<col style="width: 46%" />
+<col style="width: 28%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>SEO Element</th>
+<th>Before</th>
+<th>After</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Page titles</td>
+<td>Generic “Culture for Change” on all pages</td>
+<td>Unique Greek titles per page</td>
+</tr>
+<tr>
+<td>Meta descriptions</td>
+<td>Single generic description</td>
+<td>Unique descriptions per page</td>
+</tr>
+<tr>
+<td>Open Graph tags</td>
+<td>Missing (except /projects/[slug])</td>
+<td>Present on all pages</td>
+</tr>
+<tr>
+<td>Twitter Cards</td>
+<td>Missing</td>
+<td>Present on all pages</td>
+</tr>
+<tr>
+<td>JSON-LD structured data</td>
+<td>None</td>
+<td>Organization (root), Person (members), Article (activities)</td>
+</tr>
+<tr>
+<td>Canonical URLs</td>
+<td>Missing</td>
+<td>Present on all pages</td>
+</tr>
+<tr>
+<td>Sitemap coverage</td>
+<td>Static pages + projects only</td>
+<td>+ all activities + all members</td>
+</tr>
+<tr>
+<td>Dynamic route metadata</td>
+<td>Impossible (client components)</td>
+<td>Full metadata via server/client split</td>
+</tr>
+<tr>
+<td>Loading states</td>
+<td>None</td>
+<td>LoadingIndicator on 4 route groups</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="verification-steps">Verification Steps</h2>
+<ol type="1">
+<li>Run <code>npm run build</code> — should complete with no errors</li>
+<li>Run <code>npm run dev</code> and check individual pages:
+<ul>
+<li>View page source to confirm <code>&lt;title&gt;</code>,
+<code>&lt;meta&gt;</code> OG/Twitter tags, and JSON-LD scripts</li>
+<li>Test <code>/activities/[any-slug]</code> — should show activity
+title in browser tab</li>
+<li>Test <code>/members/[any-slug]</code> — should show member name in
+browser tab</li>
+</ul></li>
+<li>After deployment:
+<ul>
+<li>Check <code>/sitemap.xml</code> — should include activity and member
+URLs</li>
+<li>Use <a href="https://search.google.com/test/rich-results">Google
+Rich Results Test</a> to validate JSON-LD</li>
+<li>Use <a href="https://developers.facebook.com/tools/debug/">Facebook
+Sharing Debugger</a> to verify OG tags</li>
+<li>Submit updated sitemap in Google Search Console</li>
+</ul></li>
+</ol>
+</body>
+</html>

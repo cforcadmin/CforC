@@ -96,7 +96,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
               <h3 className="font-bold mb-3 text-charcoal dark:text-coral-light text-xs">SITEMAP</h3>
             <ul role="list" className="space-y-1.5 text-xs dark:text-gray-300">
               <li><Link href="/about" className="hover:text-coral dark:hover:text-coral-light transition-colors">Σχετικά με εμάς</Link></li>
-              <li><Link href="/activities" className="hover:text-coral dark:hover:text-coral-light transition-colors">Δραστηριότητες</Link></li>
+              <li><Link href="/activities" className="hover:text-coral dark:hover:text-coral-light transition-colors">Νέα</Link></li>
               <li>
                 {user ? (
                   <Link href="/open-calls" className="hover:text-coral dark:hover:text-coral-light transition-colors">Ανοιχτές προσκλήσεις</Link>
@@ -107,6 +107,9 @@ export default function Footer({ variant = 'default' }: FooterProps) {
               <li><Link href="/participation" className="hover:text-coral dark:hover:text-coral-light transition-colors">Συμμετοχή</Link></li>
               <li><Link href="/members" className="hover:text-coral dark:hover:text-coral-light transition-colors">Εύρεση μελών</Link></li>
               <li><Link href="/transparency" className="hover:text-coral dark:hover:text-coral-light transition-colors">Διαφάνεια</Link></li>
+              {user && (
+                <li><Link href="/profile" className="hover:text-coral dark:hover:text-coral-light transition-colors">Προφίλ</Link></li>
+              )}
             </ul>
             </div>
 

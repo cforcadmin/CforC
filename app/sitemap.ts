@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
-import { getProjects, getProjectBySlug } from '@/lib/strapi'
-import type { Project, ProjectEntry } from '@/lib/types'
+import { getProjects, getProjectBySlug, getActivities, getMembers } from '@/lib/strapi'
+import type { Project, ProjectEntry, Activity } from '@/lib/types'
 
 const BASE_URL = 'https://cultureforchange.net'
 
@@ -54,7 +54,42 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     }
   } catch {
-    // Return static pages only if project fetch fails
+    // Skip projects if fetch fails
+  }
+
+  // Add activity detail pages
+  try {
+    const activitiesResponse = await getActivities()
+    const activities: Activity[] = activitiesResponse.data || []
+    for (const activity of activities) {
+      const slug = activity.Slug || activity.documentId || activity.id
+      dynamicPages.push({
+        url: `${BASE_URL}/activities/${encodeURIComponent(String(slug))}`,
+        lastModified: new Date(activity.updatedAt),
+        changeFrequency: 'monthly',
+        priority: 0.6,
+      })
+    }
+  } catch {
+    // Skip activities if fetch fails
+  }
+
+  // Add member profile pages
+  try {
+    const membersResponse = await getMembers()
+    const members = membersResponse.data || []
+    for (const member of members) {
+      if (member.HideProfile) continue
+      const slug = member.Slug || member.documentId || member.id
+      dynamicPages.push({
+        url: `${BASE_URL}/members/${encodeURIComponent(String(slug))}`,
+        lastModified: new Date(member.updatedAt),
+        changeFrequency: 'monthly',
+        priority: 0.5,
+      })
+    }
+  } catch {
+    // Skip members if fetch fails
   }
 
   return [...staticPages, ...dynamicPages]

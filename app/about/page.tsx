@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Navigation from '@/components/Navigation'
 import AboutHeroSection from '@/components/AboutHeroSection'
 import AboutMapSection from '@/components/AboutMapSection'
@@ -12,6 +13,12 @@ import CombinedCtaSection from '@/components/CombinedCtaSection'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
 import ScrollToTop from '@/components/ScrollToTop'
+
+export const metadata: Metadata = {
+  title: 'Σχετικά με εμάς',
+  description: 'Μάθετε για το Culture for Change — το πρώτο ελληνικό δίκτυο κοινωνικής καινοτομίας για πολιτιστική και πολιτική αλλαγή.',
+  alternates: { canonical: '/about' },
+}
 
 export default function AboutPage() {
   return (
