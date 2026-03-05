@@ -431,6 +431,21 @@ export async function POST(request: NextRequest) {
       console.error('[UPDATE] Failed to fetch populated member for change detection:', e)
     }
 
+    // Helper: extract plain text from a Strapi blocks array for comparison
+    const extractBlocksText = (blocks: any): string => {
+      if (!Array.isArray(blocks)) return ''
+      return blocks.map((block: any) => {
+        if (!block.children) return ''
+        return block.children.map((child: any) => {
+          if (child.type === 'link') {
+            const linkText = child.children?.map((c: any) => c.text || '').join('') || ''
+            return `[${linkText}](${child.url || ''})`
+          }
+          return child.text || ''
+        }).join('')
+      }).join('\n')
+    }
+
     // Detect which fields actually changed
     const changedFields: string[] = []
     for (const key of Object.keys(updateData)) {
@@ -451,9 +466,11 @@ export async function POST(request: NextRequest) {
         continue
       }
 
-      // For blocks fields (Bio, descriptions), compare JSON
+      // For blocks fields (Bio, descriptions), compare extracted text content
       if (Array.isArray(newVal) && newVal.length > 0 && newVal[0]?.type) {
-        if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+        const oldText = extractBlocksText(oldVal)
+        const newText = extractBlocksText(newVal)
+        if (oldText !== newText) {
           changedFields.push(key)
         }
         continue
