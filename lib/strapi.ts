@@ -61,20 +61,17 @@ export async function getActivities() {
 
 /**
  * Get a single activity by ID or Slug
- * First tries by documentId, then falls back to searching by Slug field
+ * First tries by Slug field, then falls back to documentId lookup
  */
 export async function getActivityById(idOrSlug: string | number) {
-  try {
-    // First try fetching by documentId (new format)
-    return await fetchStrapi(`/activities/${encodeURIComponent(idOrSlug)}?populate=*`);
-  } catch (error) {
-    // If not found, try searching by Slug field (old format from previous site)
-    const response = await fetchStrapi(`/activities?filters[Slug][$eq]=${encodeURIComponent(idOrSlug)}&populate=*`);
-    if (response.data && response.data.length > 0) {
-      return { data: response.data[0] };
-    }
-    throw new Error('Activity not found');
+  // First try searching by Slug field (most common path from listing pages)
+  const response = await fetchStrapi(`/activities?filters[Slug][$eq]=${encodeURIComponent(idOrSlug)}&populate=*`);
+  if (response.data && response.data.length > 0) {
+    return { data: response.data[0] };
   }
+
+  // Fall back to documentId lookup
+  return await fetchStrapi(`/activities/${encodeURIComponent(idOrSlug)}?populate=*`);
 }
 
 /**

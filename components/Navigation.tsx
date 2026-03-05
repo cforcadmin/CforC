@@ -275,7 +275,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 )}
               </div>
               <Link href="/activities" className={`text-sm transition-all ${pathname?.startsWith('/activities') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
-                ΔΡΑΣΕΙΣ
+                ΝΕΑ
               </Link>
               {/* TODO: Remove testing condition — make permanently visible */}
               {showProjects && (
@@ -487,7 +487,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                   </div>
                 )}
               </div>
-              <Link href="/activities" className={`block text-sm py-2 transition-all ${pathname?.startsWith('/activities') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΔΡΑΣΕΙΣ</Link>
+              <Link href="/activities" className={`block text-sm py-2 transition-all ${pathname?.startsWith('/activities') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΝΕΑ</Link>
               {/* TODO: Remove testing condition — make permanently visible */}
               {showProjects && (
                 <div>

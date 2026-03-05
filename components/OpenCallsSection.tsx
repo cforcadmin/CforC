@@ -99,6 +99,9 @@ export default function OpenCallsSection() {
                 ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ ΤΟΥ<br />
                 CULTURE FOR CHANGE
               </h2>
+              <p className="text-gray-600 dark:text-gray-300 mt-4 max-w-2xl text-base leading-relaxed">
+                Ανακάλυψε ευκαιρίες χρηματοδότησης, συνεργασίας και συμμετοχής σε πολιτιστικά προγράμματα στην Ελλάδα και το εξωτερικό. Οι ανοιχτές προσκλήσεις ανανεώνονται τακτικά και είναι διαθέσιμες αποκλειστικά για τα μέλη του Δικτύου.
+              </p>
             </div>
           </div>
           <div className="bg-orange-50 dark:bg-gray-700 border border-orange-200 dark:border-gray-600 rounded-lg p-6 text-center">
@@ -182,6 +185,9 @@ export default function OpenCallsSection() {
                 ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ ΤΟΥ<br />
                 CULTURE FOR CHANGE
               </h2>
+              <p className="text-gray-600 dark:text-gray-300 mt-4 max-w-2xl text-base leading-relaxed">
+                Ανακάλυψε ευκαιρίες χρηματοδότησης, συνεργασίας και συμμετοχής σε πολιτιστικά προγράμματα στην Ελλάδα και το εξωτερικό. Οι ανοιχτές προσκλήσεις ανανεώνονται τακτικά και είναι διαθέσιμες αποκλειστικά για τα μέλη του Δικτύου.
+              </p>
             </div>
             {user ? (
               <Link href="/open-calls" className="hidden md:block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors">
@@ -307,7 +313,7 @@ export default function OpenCallsSection() {
                   Πρόσφατες Προσκλήσεις
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mt-2">
-                  Δείτε ενδεικτικά κάποιες από τις παρελθούσες ανοιχτές προσκλήσεις. Το σύνολο των ανοιχτών προσκλήσεων είναι προσβάσιμες μόνο για μέλη.
+                  Δες ενδεικτικά κάποιες από τις παρελθούσες ανοιχτές προσκλήσεις. Το σύνολο των ανοιχτών προσκλήσεων είναι προσβάσιμο μόνο για μέλη.
                 </p>
               </div>
             </div>
@@ -331,7 +337,11 @@ export default function OpenCallsSection() {
                 return (
                   <div key={call.id}>
                     {index > 0 && <hr className="border-gray-300 dark:border-gray-600" aria-hidden="true" />}
-                    <div className="py-12 relative rounded-2xl">
+                    <button
+                      type="button"
+                      onClick={() => setShowMemberModal(true)}
+                      className="w-full text-left py-12 relative rounded-2xl hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl transition-all duration-300 cursor-pointer"
+                    >
                       <div className="flex items-start gap-6 pr-16">
                         <div className="flex flex-col gap-3 min-w-[140px] ml-8">
                           <span className="inline-block bg-gray-500 dark:bg-gray-600 text-white px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
@@ -367,7 +377,7 @@ export default function OpenCallsSection() {
                           )}
                         </div>
                       </div>
-                    </div>
+                    </button>
                   </div>
                 )
               })}

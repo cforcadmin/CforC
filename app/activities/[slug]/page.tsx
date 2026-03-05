@@ -18,7 +18,7 @@ import { renderBlocks, extractTextFromBlocks } from '@/lib/renderBlocks'
 function ActivityDetailPageContent() {
   const params = useParams()
   const searchParams = useSearchParams()
-  const slug = params.slug as string
+  const slug = decodeURIComponent(params.slug as string)
   const fromTab = searchParams.get('from') || 'current' // Default to 'current' if not specified
 
   const [activity, setActivity] = useState<Activity | null>(null)

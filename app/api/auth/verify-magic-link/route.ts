@@ -87,20 +87,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Invalidate the token so it can't be reused
-    try {
-      await fetch(`${STRAPI_URL}/api/auth-tokens/${authToken.documentId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${STRAPI_API_TOKEN}`
-        }
-      })
-    } catch {
-      // Non-blocking — login still succeeds even if cleanup fails
-      console.error('[verify-magic-link] Failed to invalidate token')
-    }
-
-    // Token is valid
+    // Token is valid (token cleanup happens in set-password after password is saved)
     return NextResponse.json({
       success: true,
       email: decoded.email,

@@ -42,6 +42,37 @@ export default function HeroSection() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Auto-play video when cookie consent is dismissed (or already given)
+  useEffect(() => {
+    if (isPlaying) return;
+
+    // If consent was already given in a previous visit, autoplay on first click anywhere
+    const consent = localStorage.getItem('cookieConsent');
+    if (consent) {
+      const handleFirstClick = () => {
+        if (videoRef.current) {
+          videoRef.current.play()
+            .then(() => setIsPlaying(true))
+            .catch(() => {});
+        }
+      };
+      window.addEventListener('click', handleFirstClick, { once: true });
+      return () => window.removeEventListener('click', handleFirstClick);
+    }
+
+    // Otherwise wait for cookie consent button click
+    const handleCookieConsent = () => {
+      if (videoRef.current) {
+        videoRef.current.play()
+          .then(() => setIsPlaying(true))
+          .catch(() => {});
+      }
+    };
+
+    window.addEventListener('cookie-consent-dismissed', handleCookieConsent);
+    return () => window.removeEventListener('cookie-consent-dismissed', handleCookieConsent);
+  }, [isPlaying]);
+
   const handlePlay = () => {
     setIsPlaying(true);
     if (videoRef.current) {

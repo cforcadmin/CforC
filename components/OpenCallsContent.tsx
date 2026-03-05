@@ -104,6 +104,11 @@ export default function OpenCallsContent() {
         {/* Loading Indicator */}
         {loading && <LoadingIndicator />}
 
+        {/* Description */}
+        <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-3xl text-base leading-relaxed">
+          Εδώ θα βρεις τις τρέχουσες ευκαιρίες χρηματοδότησης, συνεργασίας και συμμετοχής σε πολιτιστικά προγράμματα. Φιλτράρισε ανά κατηγορία ή αναζήτησε αυτό που σε ενδιαφέρει. Οι προσκλήσεις ανανεώνονται τακτικά — μείνε συντονισμένος/η!
+        </p>
+
         {/* Tabs and Search Section */}
         <div className="mb-12">
           {/* Tabs */}

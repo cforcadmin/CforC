@@ -72,7 +72,7 @@ export default function AboutPartnersSection() {
 
           {/* Right Column - Members (3/4) */}
           <div className="lg:col-span-3">
-            <h3 className="text-lg font-bold mb-6 dark:text-gray-100">Το δύκτιο CforC είναι μέλος των:</h3>
+            <h3 className="text-lg font-bold mb-6 dark:text-gray-100">Το δίκτυο CforC είναι μέλος των:</h3>
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
               {/* Specific order as requested */}
               <div className="text-center">
