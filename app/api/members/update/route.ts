@@ -551,8 +551,11 @@ export async function POST(request: NextRequest) {
               // Merge: combine existing fields with new ones, deduplicate
               const existingFields = (existingLog.changedFields || '').split(',').map((f: string) => f.trim()).filter(Boolean)
               const mergedFields = [...new Set([...existingFields, ...displayNames])]
+              const logId = existingLog.documentId || existingLog.id
 
-              await fetch(`${STRAPI_URL}/api/profile-change-logs/${existingLog.id}`, {
+              console.log('[UPDATE] Found existing log entry, merging. logId:', logId, 'existingFields:', existingFields, 'newFields:', displayNames)
+
+              const mergeRes = await fetch(`${STRAPI_URL}/api/profile-change-logs/${logId}`, {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json',
@@ -566,7 +569,13 @@ export async function POST(request: NextRequest) {
                   },
                 }),
               })
-              console.log('[UPDATE] Merged profile change log for', memberEmail)
+
+              if (!mergeRes.ok) {
+                const errText = await mergeRes.text()
+                console.error('[UPDATE] Failed to merge profile change log:', mergeRes.status, errText)
+              } else {
+                console.log('[UPDATE] Merged profile change log for', memberEmail)
+              }
               return
             }
           }
