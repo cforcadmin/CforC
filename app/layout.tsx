@@ -1,6 +1,19 @@
 import type { Metadata } from 'next'
+import localFont from 'next/font/local'
 import Script from 'next/script'
 import './globals.css'
+
+const foundersGrotesk = localFont({
+  src: [
+    { path: '../fonts/TestFoundersGrotesk-Light.otf', weight: '300', style: 'normal' },
+    { path: '../fonts/TestFoundersGrotesk-Regular.otf', weight: '400', style: 'normal' },
+    { path: '../fonts/TestFoundersGrotesk-Medium.otf', weight: '500', style: 'normal' },
+    { path: '../fonts/TestFoundersGrotesk-Semibold.otf', weight: '600', style: 'normal' },
+    { path: '../fonts/TestFoundersGrotesk-Bold.otf', weight: '700', style: 'normal' },
+  ],
+  variable: '--font-founders',
+  display: 'swap',
+})
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { TextSizeProvider } from '@/components/TextSizeProvider'
 import { AuthProvider } from '@/components/AuthProvider'
@@ -22,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="el">
+    <html lang="el" className={foundersGrotesk.variable}>
       <body>
         {/* Skip to main content link for keyboard users */}
         <a href="#main-content" className="skip-link">

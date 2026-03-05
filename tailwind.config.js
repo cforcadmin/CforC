@@ -21,7 +21,7 @@ module.exports = {
         }
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-founders)', 'Arial Nova', 'Arial', 'system-ui', 'sans-serif'],
       },
       keyframes: {
         flyIn: {

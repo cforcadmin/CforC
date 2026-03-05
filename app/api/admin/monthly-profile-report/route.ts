@@ -117,6 +117,19 @@ export async function GET(request: NextRequest) {
       </html>
     `
 
+    // Build CSV attachment
+    const csvHeader = 'Μέλος,Email,Αλλαγμένα Πεδία,Τελευταία Ενημέρωση'
+    const csvRows = logs.map((log: any) => {
+      const name = (log.memberName || '').replace(/"/g, '""')
+      const email = (log.memberEmail || '').replace(/"/g, '""')
+      const fields = (log.changedFields || '').replace(/"/g, '""')
+      const d = new Date(log.changedAt)
+      const date = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`
+      return `"${name}","${email}","${fields}","${date}"`
+    })
+    const csvContent = [csvHeader, ...csvRows].join('\n')
+    const csvBase64 = Buffer.from('\uFEFF' + csvContent, 'utf-8').toString('base64')
+
     // Send email via Resend
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -130,6 +143,12 @@ export async function GET(request: NextRequest) {
         cc: ['it@cultureforchange.net', 'communication@cultureforchange.net'],
         subject: `Αναφορά Αλλαγών Προφίλ — ${monthName} ${year}`,
         html: htmlBody,
+        attachments: [
+          {
+            filename: `profile-changes-${monthName}-${year}.csv`,
+            content: csvBase64,
+          },
+        ],
       }),
     })
 
