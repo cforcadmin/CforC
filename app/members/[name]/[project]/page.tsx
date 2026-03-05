@@ -156,7 +156,7 @@ export default function ProjectDetailPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
 
-  const memberSlug = params.name as string
+  const memberSlug = decodeURIComponent(params.name as string)
   const projectName = decodeURIComponent(params.project as string)
 
   // Handle scroll for accessibility button fade

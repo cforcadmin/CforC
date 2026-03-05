@@ -161,7 +161,7 @@ export default function MemberDetailPage() {
   const [showPopup, setShowPopup] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [honeypot, setHoneypot] = useState('')
-  const memberSlug = params.name as string
+  const memberSlug = decodeURIComponent(params.name as string)
 
   // Handle scroll for accessibility button fade
   useEffect(() => {
