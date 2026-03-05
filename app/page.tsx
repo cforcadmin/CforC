@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Navigation from '@/components/Navigation'
 import HeroSection from '@/components/HeroSection'
 import AboutSection from '@/components/AboutSection'
@@ -8,10 +9,14 @@ import CombinedCtaSection from '@/components/CombinedCtaSection'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
 import ScrollToTop from '@/components/ScrollToTop'
+import SubscriptionToast from '@/components/SubscriptionToast'
 
 export default function Home() {
   return (
     <div className="min-h-screen dark:bg-gray-900">
+      <Suspense>
+        <SubscriptionToast />
+      </Suspense>
       <Navigation />
       <main id="main-content">
         <HeroSection />

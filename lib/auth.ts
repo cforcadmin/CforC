@@ -2,9 +2,10 @@ import bcrypt from 'bcrypt'
 import jwt, { Secret, SignOptions } from 'jsonwebtoken'
 import crypto from 'crypto'
 
-// Using seconds instead of string notation (30 days = 2592000 seconds, 6 hours = 21600 seconds)
+// Using seconds instead of string notation (30 days = 2592000 seconds, 6 hours = 21600 seconds, 24 hours = 86400 seconds)
 const JWT_EXPIRES_IN = 2592000 // 30 days
 const MAGIC_LINK_EXPIRES_IN = 21600 // 6 hours
+const NEWSLETTER_TOKEN_EXPIRES_IN = 86400 // 24 hours
 
 function getJwtSecret(): Secret {
   const secret = process.env.JWT_SECRET
@@ -39,7 +40,12 @@ interface MagicLinkPayload {
   type: 'magic-link'
 }
 
-type TokenPayload = SessionPayload | MagicLinkPayload
+interface NewsletterPayload {
+  email: string
+  type: 'newsletter'
+}
+
+type TokenPayload = SessionPayload | MagicLinkPayload | NewsletterPayload
 
 export function generateSessionToken(memberId: string, email: string): string {
   const payload: SessionPayload = {
@@ -66,6 +72,20 @@ export function generateMagicLinkToken(memberId: string, email: string): string 
   const options: SignOptions = {
     algorithm: 'HS256',
     expiresIn: MAGIC_LINK_EXPIRES_IN
+  }
+
+  return jwt.sign(payload, getJwtSecret(), options)
+}
+
+export function generateNewsletterToken(email: string): string {
+  const payload: NewsletterPayload = {
+    email,
+    type: 'newsletter'
+  }
+
+  const options: SignOptions = {
+    algorithm: 'HS256',
+    expiresIn: NEWSLETTER_TOKEN_EXPIRES_IN
   }
 
   return jwt.sign(payload, getJwtSecret(), options)

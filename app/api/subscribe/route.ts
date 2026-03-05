@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { newsletterLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 import { checkCsrf } from '@/lib/csrf'
+import { generateNewsletterToken } from '@/lib/auth'
 
 function escapeHtml(str: string): string {
   return str
@@ -65,46 +66,17 @@ export async function POST(request: Request) {
       )
     }
 
+    const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://cultureforchange.net'
+
+    // Generate confirmation token
+    const token = generateNewsletterToken(email)
+    const confirmUrl = `${SITE_URL}/api/subscribe/confirm?token=${encodeURIComponent(token)}`
+
     // Use verified domain
     const fromEmail = 'no-reply@cultureforchange.net'
 
-    // Email to admin (notification)
-    const adminEmailResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: ['hello@cultureforchange.net', 'finance@cultureforchange.net'],
-        subject: 'Νέα Εγγραφή στο Newsletter - Culture for Change',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #2d3748;">Νέα Εγγραφή στο Newsletter</h2>
-            <p style="color: #4a5568; font-size: 16px;">
-              Ένας νέος χρήστης εγγράφηκε στο newsletter του Culture for Change.
-            </p>
-            <div style="background-color: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; color: #2d3748;">
-                <strong>Email:</strong> ${escapeHtml(email)}
-              </p>
-              <p style="margin: 10px 0 0 0; color: #718096; font-size: 14px;">
-                <strong>Ημερομηνία:</strong> ${new Date().toLocaleString('el-GR')}
-              </p>
-            </div>
-          </div>
-        `,
-      }),
-    })
-
-    if (!adminEmailResponse.ok) {
-      const errorText = await adminEmailResponse.text()
-      console.error('Failed to send admin email:', errorText)
-    }
-
-    // Welcome email to user
-    const welcomeEmailResponse = await fetch('https://api.resend.com/emails', {
+    // Send confirmation email only (double opt-in)
+    const confirmEmailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -113,7 +85,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         from: fromEmail,
         to: [email],
-        subject: 'Καλώς ήρθες στο Culture for Change!',
+        subject: 'Επιβεβαίωσε την εγγραφή σου - Culture for Change',
         html: `
           <!DOCTYPE html>
           <html>
@@ -133,31 +105,29 @@ export async function POST(request: Request) {
                 <!-- Content Section -->
                 <div style="padding: 40px 30px;">
                   <h1 style="color: #2d3748; font-size: 28px; margin-bottom: 20px;">
-                    Καλώς ήρθες στην κοινότητα του Culture for Change!
+                    Επιβεβαίωσε την εγγραφή σου
                   </h1>
 
                   <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-                    Χαιρόμαστε που αποφάσισες να γίνεις μέλος της κοινότητάς μας! Από εδώ και πέρα θα λαμβάνεις τακτικά ενημερώσεις για:
+                    Λάβαμε αίτημα εγγραφής στο newsletter του Culture for Change με αυτό το email (${escapeHtml(email)}).
                   </p>
 
-                  <ul style="color: #4a5568; font-size: 16px; line-height: 1.8; margin-bottom: 30px;">
-                    <li>Τις δράσεις και τα προγράμματα του Δικτύου</li>
-                    <li>Ευκαιρίες για επαγγελματίες του πολιτισμού</li>
-                    <li>Νέα από το ελληνικό και παγκόσμιο πολιτιστικό περιβάλλον</li>
-                    <li>Εκδηλώσεις και ανοιχτά καλέσματα</li>
-                  </ul>
-
-                  <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-                    Μείνε συντονισμένος/η για περισσότερα!
+                  <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                    Κάνε κλικ στο παρακάτω κουμπί για να ολοκληρώσεις την εγγραφή σου:
                   </p>
 
                   <!-- CTA Button -->
                   <div style="text-align: center; margin: 40px 0;">
-                    <a href="https://cultureforchange.net"
+                    <a href="${confirmUrl}"
                        style="display: inline-block; background-color: #FF6B4A; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 50px; font-size: 16px; font-weight: 600;">
-                      Επισκέψου την ιστοσελίδα μας
+                      ΕΠΙΒΕΒΑΙΩΣΗ ΕΓΓΡΑΦΗΣ
                     </a>
                   </div>
+
+                  <p style="color: #718096; font-size: 14px; line-height: 1.6;">
+                    Αν δεν ζήτησες εσύ αυτή την εγγραφή, μπορείς απλά να αγνοήσεις αυτό το email.
+                    Ο σύνδεσμος λήγει σε 24 ώρες.
+                  </p>
 
                   <!-- Signature -->
                   <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #e2e8f0;">
@@ -186,9 +156,13 @@ export async function POST(request: Request) {
       }),
     })
 
-    if (!welcomeEmailResponse.ok) {
-      const errorText = await welcomeEmailResponse.text()
-      console.error('Failed to send welcome email:', errorText)
+    if (!confirmEmailResponse.ok) {
+      const errorText = await confirmEmailResponse.text()
+      console.error('Failed to send confirmation email:', errorText)
+      return NextResponse.json(
+        { error: 'Failed to send confirmation email' },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json({ success: true })

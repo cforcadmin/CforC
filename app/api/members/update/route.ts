@@ -33,6 +33,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (payload.type !== 'session') {
+      return NextResponse.json(
+        { error: 'Μη έγκυρη σύνοδος' },
+        { status: 401 }
+      )
+    }
+
     const memberId = payload.memberId
     console.log('[UPDATE] Member ID:', memberId)
 
