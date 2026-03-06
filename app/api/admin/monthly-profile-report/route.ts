@@ -51,8 +51,23 @@ export async function GET(request: NextRequest) {
     const logsData = await logsResponse.json()
     const logs = logsData.data || []
 
-    if (logs.length === 0) {
-      console.log('[MONTHLY-REPORT] No profile changes in previous month')
+    // Query Strapi for new newsletter subscribers in the previous month
+    const subsUrl = `${STRAPI_URL}/api/newsletter-subscribers?filters[ConfirmedAt][$gte]=${encodeURIComponent(startISO)}&filters[ConfirmedAt][$lte]=${encodeURIComponent(endISO)}&pagination[limit]=1000&sort=ConfirmedAt:asc`
+
+    const subsResponse = await fetch(subsUrl, {
+      headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
+    })
+
+    let newSubscribers: any[] = []
+    if (subsResponse.ok) {
+      const subsData = await subsResponse.json()
+      newSubscribers = subsData.data || []
+    } else {
+      console.error('[MONTHLY-REPORT] Failed to fetch subscribers:', await subsResponse.text())
+    }
+
+    if (logs.length === 0 && newSubscribers.length === 0) {
+      console.log('[MONTHLY-REPORT] No profile changes or new subscribers in previous month')
       return NextResponse.json({ message: 'No changes to report', month: `${monthName} ${year}` })
     }
 
@@ -69,13 +84,53 @@ export async function GET(request: NextRequest) {
     }
 
     // Build HTML email
-    const listItems = summaryLines.map(line => {
+    const profileListItems = summaryLines.map(line => {
       const escaped = line
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
       return `<li style="margin-bottom: 8px; color: #2d3748;">${escaped}</li>`
     }).join('\n')
+
+    const subscriberListItems = newSubscribers.map(sub => {
+      const email = (sub.Email || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      const d = new Date(sub.ConfirmedAt)
+      const date = `${d.getDate()}/${d.getMonth() + 1}`
+      return `<li style="margin-bottom: 8px; color: #2d3748;">${email} (${date})</li>`
+    }).join('\n')
+
+    const profileSection = logs.length > 0 ? `
+              <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                Κατά τη διάρκεια του μήνα <strong>${monthName} ${year}</strong>, τα παρακάτω μέλη ενημέρωσαν το προφίλ τους:
+              </p>
+
+              <ul style="list-style: disc; padding-left: 20px; font-size: 15px; line-height: 1.8;">
+                ${profileListItems}
+              </ul>
+
+              <div style="background-color: #f7fafc; padding: 16px; border-radius: 8px; margin-top: 24px;">
+                <p style="margin: 0; color: #2d3748; font-size: 15px;">
+                  <strong>Σύνολο αλλαγών προφίλ:</strong> ${logs.length} μέλη
+                </p>
+              </div>
+    ` : `
+              <p style="color: #718096; font-size: 15px; margin-bottom: 20px;">
+                Δεν υπήρξαν αλλαγές προφίλ τον ${monthName} ${year}.
+              </p>
+    `
+
+    const subscriberSection = newSubscribers.length > 0 ? `
+              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+
+              <h2 style="color: #2d3748; font-size: 18px; margin-bottom: 16px;">Νέοι Συνδρομητές Newsletter</h2>
+              <p style="color: #4a5568; font-size: 15px; line-height: 1.6; margin-bottom: 16px;">
+                Τον ${monthName} ${year} εγγράφηκαν <strong>${newSubscribers.length}</strong> νέοι συνδρομητές:
+              </p>
+
+              <ul style="list-style: disc; padding-left: 20px; font-size: 15px; line-height: 1.8;">
+                ${subscriberListItems}
+              </ul>
+    ` : ''
 
     const htmlBody = `
       <!DOCTYPE html>
@@ -87,24 +142,14 @@ export async function GET(request: NextRequest) {
         <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f7fafc;">
           <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
             <div style="background-color: #FF6B4A; padding: 30px 20px; text-align: center; border-radius: 24px 24px 0 0;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 20px;">Αναφορά Αλλαγών Προφίλ</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 20px;">Μηνιαία Αναφορά</h1>
               <p style="color: #ffffff; margin: 8px 0 0; font-size: 16px; opacity: 0.9;">${monthName} ${year}</p>
             </div>
 
             <div style="padding: 30px;">
-              <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-                Κατά τη διάρκεια του μήνα <strong>${monthName} ${year}</strong>, τα παρακάτω μέλη ενημέρωσαν το προφίλ τους:
-              </p>
-
-              <ul style="list-style: disc; padding-left: 20px; font-size: 15px; line-height: 1.8;">
-                ${listItems}
-              </ul>
-
-              <div style="background-color: #f7fafc; padding: 16px; border-radius: 8px; margin-top: 24px;">
-                <p style="margin: 0; color: #2d3748; font-size: 15px;">
-                  <strong>Σύνολο:</strong> ${logs.length} μέλη
-                </p>
-              </div>
+              <h2 style="color: #2d3748; font-size: 18px; margin-bottom: 16px;">Αλλαγές Προφίλ Μελών</h2>
+              ${profileSection}
+              ${subscriberSection}
             </div>
 
             <div style="background-color: #f7fafc; padding: 20px; text-align: center; border-radius: 0 0 24px 24px;">
@@ -117,18 +162,40 @@ export async function GET(request: NextRequest) {
       </html>
     `
 
-    // Build CSV attachment
-    const csvHeader = 'Μέλος,Email,Αλλαγμένα Πεδία,Τελευταία Ενημέρωση'
-    const csvRows = logs.map((log: any) => {
-      const name = (log.memberName || '').replace(/"/g, '""')
-      const email = (log.memberEmail || '').replace(/"/g, '""')
-      const fields = (log.changedFields || '').replace(/"/g, '""')
-      const d = new Date(log.changedAt)
-      const date = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`
-      return `"${name}","${email}","${fields}","${date}"`
-    })
-    const csvContent = [csvHeader, ...csvRows].join('\n')
-    const csvBase64 = Buffer.from('\uFEFF' + csvContent, 'utf-8').toString('base64')
+    // Build CSV attachments
+    const attachments: { filename: string; content: string }[] = []
+
+    if (logs.length > 0) {
+      const csvHeader = 'Μέλος,Email,Αλλαγμένα Πεδία,Τελευταία Ενημέρωση'
+      const csvRows = logs.map((log: any) => {
+        const name = (log.memberName || '').replace(/"/g, '""')
+        const email = (log.memberEmail || '').replace(/"/g, '""')
+        const fields = (log.changedFields || '').replace(/"/g, '""')
+        const d = new Date(log.changedAt)
+        const date = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`
+        return `"${name}","${email}","${fields}","${date}"`
+      })
+      const csvContent = [csvHeader, ...csvRows].join('\n')
+      attachments.push({
+        filename: `profile-changes-${monthName}-${year}.csv`,
+        content: Buffer.from('\uFEFF' + csvContent, 'utf-8').toString('base64'),
+      })
+    }
+
+    if (newSubscribers.length > 0) {
+      const subsCsvHeader = 'Email,Ημερομηνία Εγγραφής'
+      const subsCsvRows = newSubscribers.map((sub: any) => {
+        const email = (sub.Email || '').replace(/"/g, '""')
+        const d = new Date(sub.ConfirmedAt)
+        const date = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`
+        return `"${email}","${date}"`
+      })
+      const subsCsvContent = [subsCsvHeader, ...subsCsvRows].join('\n')
+      attachments.push({
+        filename: `new-subscribers-${monthName}-${year}.csv`,
+        content: Buffer.from('\uFEFF' + subsCsvContent, 'utf-8').toString('base64'),
+      })
+    }
 
     // Send email via Resend
     const emailResponse = await fetch('https://api.resend.com/emails', {
@@ -141,14 +208,9 @@ export async function GET(request: NextRequest) {
         from: 'no-reply@cultureforchange.net',
         to: ['media@cultureforchange.net'],
         cc: ['it@cultureforchange.net', 'communication@cultureforchange.net'],
-        subject: `Αναφορά Αλλαγών Προφίλ — ${monthName} ${year}`,
+        subject: `Μηνιαία Αναφορά — ${monthName} ${year}`,
         html: htmlBody,
-        attachments: [
-          {
-            filename: `profile-changes-${monthName}-${year}.csv`,
-            content: csvBase64,
-          },
-        ],
+        attachments,
       }),
     })
 
@@ -158,12 +220,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to send email' }, { status: 500 })
     }
 
-    console.log(`[MONTHLY-REPORT] Sent report for ${monthName} ${year}: ${logs.length} members`)
+    console.log(`[MONTHLY-REPORT] Sent report for ${monthName} ${year}: ${logs.length} profile changes, ${newSubscribers.length} new subscribers`)
 
     return NextResponse.json({
       success: true,
       month: `${monthName} ${year}`,
-      members: logs.length,
+      profileChanges: logs.length,
+      newSubscribers: newSubscribers.length,
     })
   } catch (error) {
     console.error('[MONTHLY-REPORT] Error:', error)
