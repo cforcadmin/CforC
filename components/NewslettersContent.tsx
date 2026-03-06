@@ -126,7 +126,7 @@ export default function NewslettersContent() {
                               alt="Διακοσμητικό στοιχείο"
                               width={32}
                               height={32}
-                              className="w-full h-full"
+                              className="w-full h-full dark:invert"
                             />
                           </div>
                           <span>CULTURE FOR CHANGE</span>

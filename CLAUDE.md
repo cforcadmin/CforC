@@ -177,6 +177,7 @@ Strapi Cloud free tier sleeps after 10-15 minutes of inactivity.
 
 ### Testing
 - **Ask before writing tests** - not all features need tests immediately
+- After implementing new features, check if relevant tests exist (`__tests__/` directory) and **suggest running them** to the user — let them decide whether to run
 - When tests are needed, focus on:
   - Authentication flows
   - Data mutations (profile updates, subscriptions)

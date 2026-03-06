@@ -54,7 +54,7 @@ export default function LoadingIndicator() {
             alt="Διακοσμητικό στοιχείο"
             width={32}
             height={32}
-            className="opacity-80"
+            className="opacity-80 dark:invert"
           />
         </div>
 

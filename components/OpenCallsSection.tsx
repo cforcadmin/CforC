@@ -9,7 +9,6 @@ import { getOpenCalls } from '@/lib/strapi'
 import type { StrapiResponse, OpenCall } from '@/lib/types'
 import { useAuth } from './AuthProvider'
 
-// Helper function to extract text from Strapi rich text blocks
 function extractTextFromBlocks(blocks: any): string {
   if (!blocks) return ''
   if (typeof blocks === 'string') return blocks
@@ -29,9 +28,150 @@ function extractTextFromBlocks(blocks: any): string {
   return ''
 }
 
+function getImageUrl(call: OpenCall): string | null {
+  if (!call.Image) return null
+  if (Array.isArray(call.Image) && call.Image.length > 0) {
+    const url = call.Image[0].url
+    return url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
+  }
+  if (typeof call.Image === 'object' && !Array.isArray(call.Image) && 'url' in call.Image) {
+    const url = call.Image.url
+    return url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
+  }
+  return null
+}
+
+function OpenCallCard({ call, expired, onClick }: { call: OpenCall; expired?: boolean; onClick?: () => void }) {
+  const descriptionText = extractTextFromBlocks(call.Description)
+  const engDescriptionText = call.EngDescription ? extractTextFromBlocks(call.EngDescription) : null
+  const imageUrl = getImageUrl(call)
+
+  const cardContent = (
+    <div className={`bg-white dark:bg-gray-800 rounded-3xl overflow-hidden hover:shadow-xl dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full ${expired ? 'opacity-75' : ''}`}>
+      {/* Image */}
+      {imageUrl ? (
+        <div className="aspect-video overflow-hidden relative">
+          <Image
+            src={imageUrl}
+            alt={call.ImageAltText || call.Title}
+            width={400}
+            height={225}
+            className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${expired ? 'grayscale' : ''}`}
+          />
+          {/* Deadline badge overlay */}
+          <div className="absolute top-3 left-3">
+            <time
+              dateTime={call.Deadline}
+              className={`inline-block px-3 py-1 rounded-full text-xs font-medium shadow-md ${
+                expired
+                  ? 'bg-gray-500 text-white'
+                  : 'bg-charcoal dark:bg-gray-600 text-white'
+              }`}
+            >
+              {new Date(call.Deadline).toLocaleDateString('el-GR')}
+            </time>
+          </div>
+          {expired && (
+            <div className="absolute top-3 right-3">
+              <span className="inline-block bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                ΕΛΗΞΕ
+              </span>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="aspect-video bg-gray-100 dark:bg-gray-700 flex items-center justify-center relative">
+          <svg className="w-12 h-12 text-gray-300 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+          </svg>
+          <div className="absolute top-3 left-3">
+            <time
+              dateTime={call.Deadline}
+              className={`inline-block px-3 py-1 rounded-full text-xs font-medium shadow-md ${
+                expired
+                  ? 'bg-gray-500 text-white'
+                  : 'bg-charcoal dark:bg-gray-600 text-white'
+              }`}
+            >
+              {new Date(call.Deadline).toLocaleDateString('el-GR')}
+            </time>
+          </div>
+          {expired && (
+            <div className="absolute top-3 right-3">
+              <span className="inline-block bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                ΕΛΗΞΕ
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="p-5 flex flex-col flex-1">
+        {/* Category pill */}
+        {call.Category && (
+          <div className="mb-3">
+            <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-full">
+              {call.Category}
+            </span>
+          </div>
+        )}
+
+        {/* Title */}
+        <h3 className={`text-lg font-bold mb-2 line-clamp-2 transition-colors ${
+          expired
+            ? 'text-gray-500 dark:text-gray-400 group-hover:text-coral dark:group-hover:text-coral-light'
+            : 'text-charcoal dark:text-gray-100 group-hover:text-coral dark:group-hover:text-coral-light'
+        }`}>
+          <LocalizedText text={call.Title} engText={call.EngTitle} />
+        </h3>
+
+        {/* Description preview */}
+        <p className={`text-sm line-clamp-2 mb-3 flex-1 ${
+          expired ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-300'
+        }`}>
+          <LocalizedText text={descriptionText} engText={engDescriptionText} />
+        </p>
+
+        {/* External link arrow */}
+        <div className="flex items-center justify-end mt-auto pt-2">
+          <svg
+            className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-coral dark:group-hover:text-coral-light group-hover:translate-x-1 group-hover:-translate-y-1 transition-all"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  )
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className="text-left h-full">
+        {cardContent}
+      </button>
+    )
+  }
+
+  return (
+    <a
+      href={call.Link}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="h-full"
+      aria-label={`${call.Title} (ανοίγει σε νέα καρτέλα)`}
+    >
+      {cardContent}
+    </a>
+  )
+}
+
 export default function OpenCallsSection() {
-  const { user, isLoading: authLoading } = useAuth()
-  const [openCalls, setOpenCalls] = useState<OpenCall[]>([])
+  const { user } = useAuth()
+  const [activeCalls, setActiveCalls] = useState<OpenCall[]>([])
   const [expiredCalls, setExpiredCalls] = useState<OpenCall[]>([])
   const [totalActiveCalls, setTotalActiveCalls] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -42,33 +182,25 @@ export default function OpenCallsSection() {
     async function fetchOpenCalls() {
       try {
         setLoading(true)
-
-        console.log('Fetching open calls from Strapi...')
-
         const response: StrapiResponse<OpenCall[]> = await getOpenCalls()
 
-        console.log('Open calls response:', response)
-        console.log('Open calls data:', response.data)
-        console.log('Number of open calls:', response.data?.length || 0)
-
-        // Separate active and expired calls
         const today = new Date()
-        today.setHours(0, 0, 0, 0) // Reset time to start of day
+        today.setHours(0, 0, 0, 0)
 
-        const activeCalls = response.data
+        const active = response.data
           .filter(call => new Date(call.Deadline) >= today)
           .sort((a, b) => new Date(a.Deadline).getTime() - new Date(b.Deadline).getTime())
 
-        const expiredCallsList = response.data
+        const expired = response.data
           .filter(call => new Date(call.Deadline) < today)
           .sort((a, b) => new Date(b.Deadline).getTime() - new Date(a.Deadline).getTime())
-          .slice(0, 3) // Take 3 most recent expired
+          .slice(0, 3)
 
-        setTotalActiveCalls(activeCalls.length)
-        setOpenCalls(activeCalls.slice(0, 4)) // Show top 4 active for logged-in users
-        setExpiredCalls(expiredCallsList)
+        setTotalActiveCalls(active.length)
+        setActiveCalls(active.slice(0, 6))
+        setExpiredCalls(expired)
       } catch (err) {
-        setError('Failed to load open calls from Strapi')
+        setError('Failed to load open calls')
         console.error('Error fetching open calls:', err)
       } finally {
         setLoading(false)
@@ -88,25 +220,21 @@ export default function OpenCallsSection() {
     )
   }
 
-  if (error || openCalls.length === 0) {
+  // Show section even if no active calls (expired cards for non-logged-in)
+  if (error || (activeCalls.length === 0 && expiredCalls.length === 0)) {
     return (
       <section id="open-calls" className="py-24 bg-orange-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-end mb-12">
-            <div>
-              <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</span>
-              <h2 className="text-4xl md:text-5xl font-bold dark:text-gray-100">
-                ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ ΤΟΥ<br />
-                CULTURE FOR CHANGE
-              </h2>
-              <p className="text-gray-600 dark:text-gray-300 mt-4 max-w-2xl text-base leading-relaxed">
-                Ανακάλυψε ευκαιρίες χρηματοδότησης, συνεργασίας και συμμετοχής σε πολιτιστικά προγράμματα στην Ελλάδα και το εξωτερικό. Οι ανοιχτές προσκλήσεις ανανεώνονται τακτικά και είναι διαθέσιμες αποκλειστικά για τα μέλη του Δικτύου.
-              </p>
-            </div>
+          <div className="mb-12">
+            <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</span>
+            <h2 className="text-4xl md:text-5xl font-bold dark:text-gray-100">
+              ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ ΤΟΥ<br />
+              CULTURE FOR CHANGE
+            </h2>
           </div>
-          <div className="bg-orange-50 dark:bg-gray-700 border border-orange-200 dark:border-gray-600 rounded-lg p-6 text-center">
+          <div className="bg-white dark:bg-gray-700 border border-orange-200 dark:border-gray-600 rounded-2xl p-6 text-center">
             <p className="text-orange-600 dark:text-orange-400 font-medium">
-              {error || 'No open calls available at the moment'}
+              {error || 'Δεν υπάρχουν διαθέσιμες προσκλήσεις αυτή τη στιγμή.'}
             </p>
           </div>
         </div>
@@ -120,6 +248,9 @@ export default function OpenCallsSection() {
       setShowMemberModal(true)
     }
   }
+
+  // Determine which calls to show
+  const displayCalls = user ? activeCalls : expiredCalls
 
   return (
     <>
@@ -178,7 +309,8 @@ export default function OpenCallsSection() {
 
       <section id="open-calls" className="py-24 bg-orange-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-end mb-12">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-12">
             <div>
               <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</span>
               <h2 className="text-4xl md:text-5xl font-bold dark:text-gray-100">
@@ -188,215 +320,67 @@ export default function OpenCallsSection() {
               <p className="text-gray-600 dark:text-gray-300 mt-4 max-w-2xl text-base leading-relaxed">
                 Ανακάλυψε ευκαιρίες χρηματοδότησης, συνεργασίας και συμμετοχής σε πολιτιστικά προγράμματα στην Ελλάδα και το εξωτερικό. Οι ανοιχτές προσκλήσεις ανανεώνονται τακτικά και είναι διαθέσιμες αποκλειστικά για τα μέλη του Δικτύου.
               </p>
+              {user && totalActiveCalls > 0 && (
+                <p className="mt-3 text-sm font-medium text-coral dark:text-coral-light">
+                  {totalActiveCalls} ενεργές προσκλήσεις
+                </p>
+              )}
             </div>
             {user ? (
-              <Link href="/open-calls" className="hidden md:block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors">
+              <Link href="/open-calls" className="hidden md:block flex-shrink-0 bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors">
                 ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
               </Link>
             ) : (
               <button
                 type="button"
                 onClick={handleViewAllClick}
-                className="hidden md:block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors"
+                className="hidden md:block flex-shrink-0 bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors"
               >
                 ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
               </button>
             )}
           </div>
 
-        {/* Active Open Calls - Show only for logged-in users */}
-        {user && openCalls.length > 0 && (
-          <div className="space-y-0">
-            {openCalls.map((call, index) => {
-            const descriptionText = extractTextFromBlocks(call.Description)
-            const engDescriptionText = call.EngDescription ? extractTextFromBlocks(call.EngDescription) : null
-
-            // Handle both single image (object) and multiple images (array) from Strapi v5
-            let imageUrl = null
-            if (call.Image) {
-              if (Array.isArray(call.Image) && call.Image.length > 0) {
-                // Multiple images - use first one
-                const url = call.Image[0].url
-                imageUrl = url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
-              } else if (typeof call.Image === 'object' && !Array.isArray(call.Image) && 'url' in call.Image) {
-                // Single image - direct object
-                const url = call.Image.url
-                imageUrl = url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
-              }
-            }
-
-            return (
-              <div key={call.id}>
-                {index > 0 && <hr className="border-gray-300 dark:border-gray-600" aria-hidden="true" />}
-                <Link
-                  href={call.Link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group block py-12 hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl transition-all duration-300 relative rounded-2xl"
-                >
-                  {/* Arrow Icon - Far Top Right Corner */}
-                  <div className="absolute top-6 right-2">
-                    <svg
-                      className="w-8 h-8 text-charcoal dark:text-gray-300 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 17L17 7M17 7H7M17 7V17"
-                      />
-                    </svg>
-                  </div>
-
-                  <div className="flex items-start gap-6 pr-16">
-                    {/* Date and Category Badges Section */}
-                    <div className="flex flex-col gap-3 min-w-[140px] ml-8">
-                      {/* Date Badge */}
-                      <span className="inline-block bg-charcoal dark:bg-gray-600 text-white px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
-                        {new Date(call.Deadline).toLocaleDateString('el-GR')}
-                      </span>
-
-                      {/* Category Badge */}
-                      {call.Category && (
-                        <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap">
-                          {call.Category}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Title and Description Section */}
-                    <div className="flex-1 flex gap-6">
-                      <div className="flex-1">
-                        <h3 className="text-xl md:text-2xl font-bold mb-4 text-charcoal dark:text-gray-100 group-hover:text-coral dark:group-hover:text-coral-light transition-colors duration-300">
-                          <LocalizedText text={call.Title} engText={call.EngTitle} />
-                        </h3>
-
-                        <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mt-2">
-                          <LocalizedText text={descriptionText} engText={engDescriptionText} />
-                        </p>
-                      </div>
-
-                      {/* Circular image on right */}
-                      {imageUrl && (
-                        <div className="flex-shrink-0">
-                          <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-coral dark:border-coral-light shadow-md">
-                            <Image
-                              src={imageUrl}
-                              alt={call.ImageAltText || call.Title}
-                              width={112}
-                              height={112}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              </div>
-            )
-            })}
-          </div>
-        )}
-
-
-        {/* Expired Open Calls Section - Show 3 Recent Expired (Non-logged-in users only) */}
-        {!user && expiredCalls.length > 0 && (
-          <div className="mt-16">
-            <div className="flex justify-between items-end mb-8">
-              <div>
-                <h3 className="text-2xl md:text-3xl font-bold dark:text-gray-100">
-                  Πρόσφατες Προσκλήσεις
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mt-2">
-                  Δες ενδεικτικά κάποιες από τις παρελθούσες ανοιχτές προσκλήσεις. Το σύνολο των ανοιχτών προσκλήσεων είναι προσβάσιμο μόνο για μέλη.
-                </p>
-              </div>
+          {/* Non-logged-in: subtitle for expired calls */}
+          {!user && expiredCalls.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-2xl md:text-3xl font-bold dark:text-gray-100">
+                Πρόσφατες Προσκλήσεις
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">
+                Δες ενδεικτικά κάποιες από τις παρελθούσες ανοιχτές προσκλήσεις. Το σύνολο των ανοιχτών προσκλήσεων είναι προσβάσιμο μόνο για μέλη.
+              </p>
             </div>
+          )}
 
-            <div className="space-y-0">
-              {expiredCalls.map((call, index) => {
-                const descriptionText = extractTextFromBlocks(call.Description)
-                const engDescriptionText = call.EngDescription ? extractTextFromBlocks(call.EngDescription) : null
-
-                let imageUrl = null
-                if (call.Image) {
-                  if (Array.isArray(call.Image) && call.Image.length > 0) {
-                    const url = call.Image[0].url
-                    imageUrl = url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
-                  } else if (typeof call.Image === 'object' && !Array.isArray(call.Image) && 'url' in call.Image) {
-                    const url = call.Image.url
-                    imageUrl = url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
-                  }
-                }
-
-                return (
-                  <div key={call.id}>
-                    {index > 0 && <hr className="border-gray-300 dark:border-gray-600" aria-hidden="true" />}
-                    <button
-                      type="button"
-                      onClick={() => setShowMemberModal(true)}
-                      className="w-full text-left py-12 relative rounded-2xl hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl transition-all duration-300 cursor-pointer"
-                    >
-                      <div className="flex items-start gap-6 pr-16">
-                        <div className="flex flex-col gap-3 min-w-[140px] ml-8">
-                          <span className="inline-block bg-gray-500 dark:bg-gray-600 text-white px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
-                            {new Date(call.Deadline).toLocaleDateString('el-GR')}
-                          </span>
-                          <span className="inline-block bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
-                            ΕΛΗΞΕ
-                          </span>
-                        </div>
-
-                        <div className="flex-1 flex gap-6">
-                          <div className="flex-1">
-                            <h3 className="text-xl md:text-2xl font-bold mb-4 text-gray-600 dark:text-gray-400">
-                              <LocalizedText text={call.Title} engText={call.EngTitle} />
-                            </h3>
-                            <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-base mt-2 line-clamp-2">
-                              <LocalizedText text={descriptionText} engText={engDescriptionText} />
-                            </p>
-                          </div>
-
-                          {imageUrl && (
-                            <div className="flex-shrink-0">
-                              <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-gray-400 dark:border-gray-600 shadow-md grayscale">
-                                <Image
-                                  src={imageUrl}
-                                  alt={call.ImageAltText || call.Title}
-                                  width={112}
-                                  height={112}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-
-            {user && (
-              <div className="mt-8 text-center">
-                <Link
-                  href="/open-calls"
-                  className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-8 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors"
-                >
-                  ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
-                </Link>
-              </div>
-            )}
+          {/* Card Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayCalls.map((call) => (
+              <OpenCallCard
+                key={call.id}
+                call={call}
+                expired={!user}
+                onClick={!user ? () => setShowMemberModal(true) : undefined}
+              />
+            ))}
           </div>
-        )}
-      </div>
-    </section>
+
+          {/* Mobile CTA */}
+          {user ? (
+            <Link href="/open-calls" className="md:hidden w-full mt-8 bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium text-center block hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors">
+              ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowMemberModal(true)}
+              className="md:hidden w-full mt-8 bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium text-center block hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors"
+            >
+              ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
+            </button>
+          )}
+        </div>
+      </section>
     </>
   )
 }
