@@ -6,7 +6,7 @@ interface RateLimitEntry {
   resetTime: number
 }
 
-class RateLimiter {
+export class RateLimiter {
   private storage: Map<string, RateLimitEntry> = new Map()
   private readonly maxRequests: number
   private readonly windowMs: number

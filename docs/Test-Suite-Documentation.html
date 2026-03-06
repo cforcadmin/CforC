@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CforC Website &mdash; Test Suite Documentation</title>
+  <style>
+    :root { --coral: #FF8B6A; --charcoal: #2D2D2D; --bg: #fafafa; --card: #fff; --border: #e5e7eb; --code-bg: #f3f4f6; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--charcoal); background: var(--bg); line-height: 1.6; padding: 2rem; max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 2rem; color: var(--coral); margin-bottom: 0.5rem; border-bottom: 3px solid var(--coral); padding-bottom: 0.5rem; }
+    h2 { font-size: 1.5rem; margin: 2rem 0 0.75rem; color: var(--charcoal); border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { font-size: 1.15rem; margin: 1.5rem 0 0.5rem; }
+    h4 { font-size: 1rem; margin: 1rem 0 0.4rem; color: #555; }
+    p, li { margin-bottom: 0.4rem; }
+    ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
+    th, td { text-align: left; padding: 0.5rem 0.75rem; border: 1px solid var(--border); }
+    th { background: var(--charcoal); color: #fff; font-weight: 600; }
+    tr:nth-child(even) { background: #f9fafb; }
+    code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.88em; background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 4px; }
+    pre { background: var(--charcoal); color: #e5e7eb; padding: 1rem 1.25rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; font-size: 0.88rem; line-height: 1.5; }
+    pre code { background: none; padding: 0; color: inherit; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin: 1rem 0; }
+    .badge { display: inline-block; padding: 0.2em 0.6em; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+    .badge-unit { background: #dbeafe; color: #1d4ed8; }
+    .badge-api { background: #fef3c7; color: #92400e; }
+    .badge-e2e { background: #d1fae5; color: #065f46; }
+    .badge-pass { background: #d1fae5; color: #065f46; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    .summary-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; text-align: center; }
+    .summary-card .number { font-size: 2.5rem; font-weight: 700; color: var(--coral); }
+    .summary-card .label { font-size: 0.9rem; color: #666; margin-top: 0.25rem; }
+    .status-row td:first-child { font-family: monospace; font-weight: 700; text-align: center; width: 60px; }
+    .note { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 0.75rem 1rem; border-radius: 0 6px 6px 0; margin: 1rem 0; font-size: 0.92rem; }
+    .file-tree { font-family: monospace; font-size: 0.88rem; line-height: 1.8; }
+    .file-tree .dir { color: #2563eb; font-weight: 600; }
+    .file-tree .file { color: var(--charcoal); }
+    .file-tree .comment { color: #9ca3af; font-style: italic; }
+    a { color: var(--coral); }
+    @media (max-width: 600px) { body { padding: 1rem; } pre { font-size: 0.8rem; padding: 0.75rem; } }
+  </style>
+</head>
+<body>
+
+<h1>CforC Website &mdash; Test Suite Documentation</h1>
+<p style="color:#666; margin-bottom:2rem;">Automated testing for the Culture for Change website (Next.js 15 + Strapi v5)</p>
+
+<!-- Summary -->
+<div class="summary-grid">
+  <div class="summary-card">
+    <div class="number">~159</div>
+    <div class="label">Total Tests</div>
+  </div>
+  <div class="summary-card">
+    <div class="number">12</div>
+    <div class="label">Jest Test Suites</div>
+  </div>
+  <div class="summary-card">
+    <div class="number">6</div>
+    <div class="label">Playwright Specs</div>
+  </div>
+  <div class="summary-card">
+    <div class="number">3</div>
+    <div class="label">Testing Tiers</div>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr><th>Tier</th><th>Tool</th><th>Tests</th><th>What it validates</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><span class="badge badge-unit">Unit</span></td><td>Jest</td><td>~60</td><td>Pure library functions (auth, CSRF, rate limiting, taxonomy, submissions)</td></tr>
+    <tr><td><span class="badge badge-api">API</span></td><td>Jest</td><td>~59</td><td>Every API route handler with mocked Strapi/Resend calls</td></tr>
+    <tr><td><span class="badge badge-e2e">E2E</span></td><td>Playwright</td><td>~40</td><td>Real browser flows against running dev server + live Strapi</td></tr>
+  </tbody>
+</table>
+
+<!-- Quick Start -->
+<h2>Quick Start</h2>
+
+<h3>Install dependencies (first time only)</h3>
+<pre><code>npm install
+npx playwright install chromium</code></pre>
+
+<h3>Run tests</h3>
+<pre><code># All Jest tests (unit + API)
+npm test
+
+# Unit tests only
+npm run test:unit
+
+# API route tests only
+npm run test:api
+
+# Jest in watch mode (re-runs on file changes)
+npm run test:watch
+
+# E2E tests (requires dev server + Strapi)
+npm run test:e2e
+
+# E2E with interactive UI
+npm run test:e2e:ui
+
+# Full suite (Jest + Playwright)
+npm run test:all</code></pre>
+
+<!-- File Structure -->
+<h2>Test Structure</h2>
+<div class="card file-tree">
+  <span class="dir">__tests__/</span><br>
+  &nbsp;&nbsp;<span class="file">setup.ts</span> <span class="comment">&mdash; Test environment variables</span><br>
+  &nbsp;&nbsp;<span class="dir">helpers/</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">mockStrapi.ts</span> <span class="comment">&mdash; Shared fetch mock + NextRequest builder</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">testAccount.ts</span> <span class="comment">&mdash; E2E test account credentials</span><br>
+  &nbsp;&nbsp;<span class="dir">unit/</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">auth.test.ts</span> <span class="comment">&mdash; lib/auth.ts (19 tests)</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">rateLimiter.test.ts</span> <span class="comment">&mdash; lib/rateLimiter.ts (7 tests)</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">csrf.test.ts</span> <span class="comment">&mdash; lib/csrf.ts (8 tests)</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">memberTaxonomy.test.ts</span> <span class="comment">&mdash; lib/memberTaxonomy.ts (12 tests)</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">membershipSubmissions.test.ts</span> <span class="comment">&mdash; lib/membershipSubmissions.ts (4 tests)</span><br>
+  &nbsp;&nbsp;<span class="dir">api/</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">auth-login.test.ts</span> <span class="comment">&mdash; /api/auth/login (7 tests)</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">auth-session.test.ts</span> <span class="comment">&mdash; /api/auth/session + logout (7 tests)</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">auth-magic-link.test.ts</span> <span class="comment">&mdash; /api/auth/request + verify (8 tests)</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">auth-set-password.test.ts</span> <span class="comment">&mdash; /api/auth/set-password (7 tests)</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">subscribe.test.ts</span> <span class="comment">&mdash; /api/subscribe + confirm (9 tests)</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">members-update.test.ts</span> <span class="comment">&mdash; /api/members/update (8 tests)</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">monthly-report.test.ts</span> <span class="comment">&mdash; /api/admin/monthly-profile-report (3 tests)</span><br>
+  &nbsp;&nbsp;<span class="dir">e2e/</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">navigation.spec.ts</span> <span class="comment">&mdash; Nav links, dark mode, hamburger, skip-to-content</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">activities.spec.ts</span> <span class="comment">&mdash; Listing, detail pages, back navigation</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">members.spec.ts</span> <span class="comment">&mdash; Listing, search, detail, tag links</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">open-calls.spec.ts</span> <span class="comment">&mdash; Listing page</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">auth-flow.spec.ts</span> <span class="comment">&mdash; Login, session, logout, wrong password</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">seo-metadata.spec.ts</span> <span class="comment">&mdash; OG tags, Twitter card, JSON-LD, lang</span><br>
+</div>
+
+<!-- Tier 1 -->
+<h2><span class="badge badge-unit">Tier 1</span> Unit Tests</h2>
+<p>Run in isolation with no network calls. Import functions directly from <code>lib/</code>.</p>
+
+<h3><code>auth.test.ts</code> &rarr; <code>lib/auth.ts</code></h3>
+<table>
+  <thead><tr><th>Test Group</th><th>What it checks</th></tr></thead>
+  <tbody>
+    <tr><td>hashPassword + verifyPassword</td><td>Correct password passes, wrong fails, different salts produce different hashes</td></tr>
+    <tr><td>generateSessionToken</td><td>Returns valid JWT, payload has memberId/email/type:'session', 30-day expiry</td></tr>
+    <tr><td>generateMagicLinkToken</td><td>type:'magic-link', 6-hour expiry</td></tr>
+    <tr><td>generateNewsletterToken</td><td>type:'newsletter' with email, 24-hour expiry</td></tr>
+    <tr><td>verifyToken</td><td>Valid returns payload; expired/wrong-secret/malformed return null</td></tr>
+    <tr><td>hashToken</td><td>Deterministic SHA256, 64-char hex, different inputs differ</td></tr>
+    <tr><td>validatePassword</td><td>Passes "Passw0rd"; fails short/no-upper/no-lower/no-number; reports multiple</td></tr>
+    <tr><td>isValidEmail</td><td>Accepts valid formats, rejects invalid</td></tr>
+  </tbody>
+</table>
+
+<h3><code>rateLimiter.test.ts</code> &rarr; <code>lib/rateLimiter.ts</code></h3>
+<table>
+  <thead><tr><th>Test</th><th>What it checks</th></tr></thead>
+  <tbody>
+    <tr><td>Allows up to maxRequests</td><td>3 requests pass before blocking</td></tr>
+    <tr><td>Blocks after exceeded</td><td>4th request blocked, remaining=0, resetTime in future</td></tr>
+    <tr><td>Resets after window</td><td>Fake timers advance past window, requests allowed again</td></tr>
+    <tr><td>cleanup()</td><td>Removes expired entries, preserves active ones</td></tr>
+    <tr><td>getRateLimitErrorMessage</td><td>Greek "&#955;&#949;&#960;&#964;&#940;" for minutes, "&#974;&#961;&#945;" for &gt;60min</td></tr>
+  </tbody>
+</table>
+
+<h3><code>csrf.test.ts</code> &rarr; <code>lib/csrf.ts</code></h3>
+<table>
+  <thead><tr><th>Test</th><th>What it checks</th></tr></thead>
+  <tbody>
+    <tr><td>Allowed origins</td><td>localhost:3000, cultureforchange.net, www subdomain</td></tr>
+    <tr><td>Blocked origin</td><td>evil.com returns "Forbidden"</td></tr>
+    <tr><td>No origin/referer</td><td>Allowed (same-origin assumption)</td></tr>
+    <tr><td>Referer fallback</td><td>Valid referer passes, invalid/malformed blocked</td></tr>
+  </tbody>
+</table>
+
+<h3><code>memberTaxonomy.test.ts</code> &rarr; <code>lib/memberTaxonomy.ts</code></h3>
+<table>
+  <thead><tr><th>Test</th><th>What it checks</th></tr></thead>
+  <tbody>
+    <tr><td>Type guards</td><td>isSplittable/isHinted identify correct types</td></tr>
+    <tr><td>Label extraction</td><td>getSubLabel/getSubDisplayLabel return correct values</td></tr>
+    <tr><td>isKnownTaxonomyValue</td><td>Categories, subcategories, splittable labels, partial combos, unknown rejected</td></tr>
+    <tr><td>doesFieldMatchFilter</td><td>Exact match, category filter, splittable options, empty inputs</td></tr>
+  </tbody>
+</table>
+
+<h3><code>membershipSubmissions.test.ts</code> &rarr; <code>lib/membershipSubmissions.ts</code></h3>
+<table>
+  <thead><tr><th>Test</th><th>What it checks</th></tr></thead>
+  <tbody>
+    <tr><td>add + check</td><td>Returns true after adding</td></tr>
+    <tr><td>Unknown ID</td><td>Returns false</td></tr>
+    <tr><td>removeSubmission</td><td>Clears entry</td></tr>
+    <tr><td>Expiry cleanup</td><td>Fake timers advance past EXPIRY_TIME, entry gone</td></tr>
+  </tbody>
+</table>
+
+<!-- Tier 2 -->
+<h2><span class="badge badge-api">Tier 2</span> API Route Integration Tests</h2>
+<p>Import route handlers directly. Mock <code>global.fetch</code> to intercept Strapi/Resend calls. Mock <code>next/headers</code> cookies.</p>
+
+<h3><code>auth-login.test.ts</code> &rarr; <code>POST /api/auth/login</code></h3>
+<table class="status-row">
+  <thead><tr><th>Status</th><th>Scenario</th></tr></thead>
+  <tbody>
+    <tr><td>403</td><td>Disallowed CSRF origin</td></tr>
+    <tr><td>400</td><td>Missing email/password</td></tr>
+    <tr><td>400</td><td>Invalid email format</td></tr>
+    <tr><td>401</td><td>Member not found in Strapi</td></tr>
+    <tr><td>401</td><td>No passwordHash in auth-tokens</td></tr>
+    <tr><td>401</td><td>Wrong password (bcrypt mismatch)</td></tr>
+    <tr><td>200</td><td>Correct credentials &rarr; session cookie set, member data returned</td></tr>
+    <tr><td>429</td><td>Rate limit exceeded (5 attempts)</td></tr>
+  </tbody>
+</table>
+
+<h3><code>auth-session.test.ts</code> &rarr; <code>GET /api/auth/session</code> + <code>POST /api/auth/logout</code></h3>
+<table class="status-row">
+  <thead><tr><th>Status</th><th>Scenario</th></tr></thead>
+  <tbody>
+    <tr><td>401</td><td>No session cookie</td></tr>
+    <tr><td>401</td><td>Invalid token &rarr; cookie deleted</td></tr>
+    <tr><td>401</td><td>Wrong token type (magic-link instead of session)</td></tr>
+    <tr><td>404</td><td>Member not found in Strapi</td></tr>
+    <tr><td>200</td><td>Valid session &rarr; member data returned</td></tr>
+    <tr><td>200</td><td>Logout &rarr; cookie deleted</td></tr>
+    <tr><td>403</td><td>Logout with bad CSRF</td></tr>
+  </tbody>
+</table>
+
+<h3><code>auth-magic-link.test.ts</code> &rarr; request + verify routes</h3>
+<table class="status-row">
+  <thead><tr><th>Status</th><th>Scenario</th></tr></thead>
+  <tbody>
+    <tr><td>400</td><td>Invalid email (request)</td></tr>
+    <tr><td>200</td><td>Email not found &rarr; still success (no enumeration)</td></tr>
+    <tr><td>200</td><td>Member exists &rarr; email sent</td></tr>
+    <tr><td>400</td><td>Missing token (verify)</td></tr>
+    <tr><td>401</td><td>Invalid/expired JWT (verify)</td></tr>
+    <tr><td>401</td><td>Token not in database (verify)</td></tr>
+    <tr><td>200</td><td>Valid token &rarr; returns email + memberId</td></tr>
+    <tr><td>401</td><td>Expired token in database (verify)</td></tr>
+  </tbody>
+</table>
+
+<h3><code>auth-set-password.test.ts</code> &rarr; <code>POST /api/auth/set-password</code></h3>
+<table class="status-row">
+  <thead><tr><th>Status</th><th>Scenario</th></tr></thead>
+  <tbody>
+    <tr><td>403</td><td>Bad CSRF origin</td></tr>
+    <tr><td>400</td><td>Missing token or password</td></tr>
+    <tr><td>400</td><td>Weak password (validation fails)</td></tr>
+    <tr><td>401</td><td>Invalid JWT</td></tr>
+    <tr><td>401</td><td>Token not in database</td></tr>
+    <tr><td>401</td><td>Expired database token</td></tr>
+    <tr><td>200</td><td>Valid &rarr; password saved, session cookie set, member returned</td></tr>
+  </tbody>
+</table>
+
+<h3><code>subscribe.test.ts</code> &rarr; subscribe + confirm routes</h3>
+<table class="status-row">
+  <thead><tr><th>Status</th><th>Scenario</th></tr></thead>
+  <tbody>
+    <tr><td>400</td><td>Invalid email</td></tr>
+    <tr><td>200</td><td>Honeypot filled &rarr; silent success (bot rejected)</td></tr>
+    <tr><td>200</td><td>Suspicious email pattern &rarr; silent success</td></tr>
+    <tr><td>200</td><td>Valid email &rarr; confirmation email sent</td></tr>
+    <tr><td>403</td><td>Bad CSRF origin</td></tr>
+    <tr><td>307</td><td>Confirm: missing/invalid token &rarr; redirect with error</td></tr>
+    <tr><td>307</td><td>Confirm: already subscribed &rarr; redirect with error</td></tr>
+    <tr><td>307</td><td>Confirm: success &rarr; creates subscriber, welcome email, redirects</td></tr>
+  </tbody>
+</table>
+
+<h3><code>members-update.test.ts</code> &rarr; <code>POST /api/members/update</code></h3>
+<table class="status-row">
+  <thead><tr><th>Status</th><th>Scenario</th></tr></thead>
+  <tbody>
+    <tr><td>401</td><td>No session cookie / invalid token / wrong type</td></tr>
+    <tr><td>403</td><td>CSRF violation</td></tr>
+    <tr><td>400</td><td>Empty name / empty email / invalid email format</td></tr>
+    <tr><td>409</td><td>Duplicate email</td></tr>
+    <tr><td>200</td><td>Valid update &rarr; detects changed fields, logs changes</td></tr>
+  </tbody>
+</table>
+
+<h3><code>monthly-report.test.ts</code> &rarr; <code>GET /api/admin/monthly-profile-report</code></h3>
+<table class="status-row">
+  <thead><tr><th>Status</th><th>Scenario</th></tr></thead>
+  <tbody>
+    <tr><td>401</td><td>Missing/wrong authorization</td></tr>
+    <tr><td>200</td><td>No changes &rarr; "No changes to report"</td></tr>
+    <tr><td>200</td><td>Logs exist &rarr; email sent with CSV attachment</td></tr>
+  </tbody>
+</table>
+
+<!-- Tier 3 -->
+<h2><span class="badge badge-e2e">Tier 3</span> E2E Tests (Playwright)</h2>
+<p>Real Chromium browser (desktop + mobile viewport) against live dev server and Strapi.</p>
+
+<h3><code>navigation.spec.ts</code></h3>
+<ul>
+  <li>Homepage loads with "Culture for Change" in title</li>
+  <li>Desktop nav links navigate to /about, /activities, /members (skipped on mobile)</li>
+  <li>Dark mode toggle adds/removes <code>dark</code> class on <code>&lt;html&gt;</code></li>
+  <li>Skip-to-content link and <code>#main-content</code> target exist in DOM</li>
+  <li>Mobile hamburger menu opens and closes</li>
+</ul>
+
+<h3><code>activities.spec.ts</code></h3>
+<ul>
+  <li>Activities page loads with visible heading</li>
+  <li>Clicking an activity card navigates to <code>/activities/[slug]</code></li>
+  <li>Browser back button returns to listing</li>
+</ul>
+
+<h3><code>members.spec.ts</code></h3>
+<ul>
+  <li>Members page loads with visible heading</li>
+  <li>Search input filters member cards</li>
+  <li>Clicking a member card navigates to detail page with name heading</li>
+  <li>Field-of-work tags link back to <code>/members?field=...</code></li>
+</ul>
+
+<h3><code>open-calls.spec.ts</code></h3>
+<ul>
+  <li>Open calls page loads with visible heading</li>
+</ul>
+
+<h3><code>auth-flow.spec.ts</code></h3>
+<ul>
+  <li>Login page renders email and password inputs</li>
+  <li>Empty form submission triggers validation</li>
+  <li><strong>Successful login</strong> with test account &rarr; redirects to /profile</li>
+  <li><strong>Session persists</strong> &mdash; profile/logout link visible after navigating away</li>
+  <li><strong>Logout</strong> &mdash; clears session, profile link disappears</li>
+  <li><strong>Wrong password</strong> &mdash; stays on /login, shows error message</li>
+</ul>
+
+<h3><code>seo-metadata.spec.ts</code></h3>
+<ul>
+  <li>Homepage has <code>og:title</code>, <code>og:description</code>, <code>og:image</code> meta tags</li>
+  <li>Homepage has <code>twitter:card</code> meta tag</li>
+  <li>Homepage has Organization JSON-LD script</li>
+  <li>Activities page has a non-empty <code>&lt;title&gt;</code></li>
+  <li><code>&lt;html lang="el"&gt;</code> is set</li>
+</ul>
+
+<!-- Test Account -->
+<h2>E2E Test Account</h2>
+<div class="card">
+  <table>
+    <thead><tr><th>Field</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Email</td><td><code>e2e-test@cultureforchange.net</code></td></tr>
+      <tr><td>Password</td><td><code>TestPass1!</code></td></tr>
+      <tr><td>HideProfile</td><td><code>true</code> (invisible on the website)</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:0.75rem"><strong>To create or reset:</strong></p>
+  <pre><code>node scripts/setup-test-account.js</code></pre>
+</div>
+<div class="note">
+  <strong>Note:</strong> The profile update route (<code>/api/members/update</code>) sets <code>HideProfile = false</code> on save. If you write E2E tests that save the test profile, re-run the setup script afterward to re-hide it.
+</div>
+
+<!-- Config Files -->
+<h2>Configuration Files</h2>
+<table>
+  <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>jest.config.ts</code></td><td>ts-jest preset, <code>@/</code> path alias, node environment</td></tr>
+    <tr><td><code>playwright.config.ts</code></td><td>Chromium desktop + mobile (iPhone 14), auto-starts dev server</td></tr>
+    <tr><td><code>__tests__/setup.ts</code></td><td>Sets test env vars (JWT_SECRET, STRAPI_URL, etc.)</td></tr>
+    <tr><td><code>__tests__/helpers/mockStrapi.ts</code></td><td>Shared <code>global.fetch</code> spy + <code>NextRequest</code> builder</td></tr>
+    <tr><td><code>__tests__/helpers/testAccount.ts</code></td><td>E2E test credentials constant</td></tr>
+  </tbody>
+</table>
+
+<!-- Source Modification -->
+<h2>Source Modification</h2>
+<p>One source file was modified to support testing:</p>
+<ul>
+  <li><strong><code>lib/rateLimiter.ts</code></strong> &mdash; Added <code>export</code> to <code>class RateLimiter</code> so tests can create isolated instances without touching shared singletons.</li>
+</ul>
+
+<!-- Troubleshooting -->
+<h2>Troubleshooting</h2>
+
+<h4>"A worker process has failed to exit gracefully"</h4>
+<p>Caused by the <code>setInterval</code> cleanup timer in <code>rateLimiter.ts</code>. The <code>--forceExit</code> flag handles this. Harmless.</p>
+
+<h4>E2E tests fail with "Executable doesn't exist"</h4>
+<p>Run <code>npx playwright install chromium</code> to download the browser.</p>
+
+<h4>Rate limit errors (429) in API tests</h4>
+<p>API tests use unique IPs (<code>x-forwarded-for</code> header) or unique email addresses to avoid hitting the shared in-memory rate limiters.</p>
+
+<h4>E2E auth tests fail</h4>
+<p>Ensure the test account exists: <code>node scripts/setup-test-account.js</code>. Also ensure the dev server is running and can reach Strapi Cloud.</p>
+
+</body>
+</html>
