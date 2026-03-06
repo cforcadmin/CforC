@@ -113,7 +113,7 @@ export default function WorkingGroupsContent() {
                   return (
                     <div
                       key={group.id}
-                      className="bg-orange-50 dark:bg-gray-700 rounded-2xl border border-black dark:border-white hover:shadow-lg transition-all duration-300 flex items-center gap-5 p-4 border-l-4 border-l-transparent hover:border-l-coral dark:hover:border-l-coral-light"
+                      className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-lg transition-all duration-300 flex items-center gap-5 p-4 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light"
                     >
                       {groupImageUrl ? (
                         <div className="w-20 h-14 relative rounded-xl overflow-hidden flex-shrink-0">
@@ -228,7 +228,7 @@ function WorkingGroupCard({
   const displayedMembers = expanded ? members : members.slice(0, VISIBLE_LIMIT)
 
   return (
-    <div className="bg-orange-50 dark:bg-gray-700 rounded-2xl border border-black dark:border-white hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col">
+    <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light">
       {/* Group Image */}
       {groupImageUrl && (
         <div className="aspect-video relative overflow-hidden">

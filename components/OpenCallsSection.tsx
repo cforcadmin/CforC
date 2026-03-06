@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import LoadingIndicator from './LoadingIndicator'
@@ -41,131 +41,170 @@ function getImageUrl(call: OpenCall): string | null {
   return null
 }
 
-function OpenCallCard({ call, expired, onClick }: { call: OpenCall; expired?: boolean; onClick?: () => void }) {
+function FlipCard({ call, expired, onClick }: { call: OpenCall; expired?: boolean; onClick?: () => void }) {
+  const [isFlipped, setIsFlipped] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const backRef = useRef<HTMLDivElement>(null)
+  const [hoverHeight, setHoverHeight] = useState<number | null>(null)
+  const flipTimeout = useRef<NodeJS.Timeout | null>(null)
+
   const descriptionText = extractTextFromBlocks(call.Description)
   const engDescriptionText = call.EngDescription ? extractTextFromBlocks(call.EngDescription) : null
   const imageUrl = getImageUrl(call)
 
-  const cardContent = (
-    <div className={`bg-white dark:bg-gray-800 rounded-3xl overflow-hidden hover:shadow-xl dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full ${expired ? 'opacity-75' : ''}`}>
-      {/* Image */}
-      {imageUrl ? (
-        <div className="aspect-video overflow-hidden relative">
-          <Image
-            src={imageUrl}
-            alt={call.ImageAltText || call.Title}
-            width={400}
-            height={225}
-            className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${expired ? 'grayscale' : ''}`}
-          />
-          {/* Deadline badge overlay */}
-          <div className="absolute top-3 left-3">
-            <time
-              dateTime={call.Deadline}
-              className={`inline-block px-3 py-1 rounded-full text-xs font-medium shadow-md ${
-                expired
-                  ? 'bg-gray-500 text-white'
-                  : 'bg-charcoal dark:bg-gray-600 text-white'
-              }`}
-            >
-              {new Date(call.Deadline).toLocaleDateString('el-GR')}
-            </time>
-          </div>
-          {expired && (
-            <div className="absolute top-3 right-3">
-              <span className="inline-block bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-3 py-1 rounded-full text-xs font-bold shadow-md">
-                ΕΛΗΞΕ
-              </span>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="aspect-video bg-gray-100 dark:bg-gray-700 flex items-center justify-center relative">
-          <svg className="w-12 h-12 text-gray-300 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-          </svg>
-          <div className="absolute top-3 left-3">
-            <time
-              dateTime={call.Deadline}
-              className={`inline-block px-3 py-1 rounded-full text-xs font-medium shadow-md ${
-                expired
-                  ? 'bg-gray-500 text-white'
-                  : 'bg-charcoal dark:bg-gray-600 text-white'
-              }`}
-            >
-              {new Date(call.Deadline).toLocaleDateString('el-GR')}
-            </time>
-          </div>
-          {expired && (
-            <div className="absolute top-3 right-3">
-              <span className="inline-block bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-3 py-1 rounded-full text-xs font-bold shadow-md">
-                ΕΛΗΞΕ
-              </span>
-            </div>
-          )}
-        </div>
-      )}
+  const handleMouseEnter = () => {
+    flipTimeout.current = setTimeout(() => {
+      const containerH = containerRef.current?.offsetHeight || 0
+      const backH = backRef.current?.scrollHeight || 0
+      setHoverHeight(backH > containerH ? backH : null)
+      setIsFlipped(true)
+    }, 300)
+  }
 
-      <div className="p-5 flex flex-col flex-1">
-        {/* Category pill */}
-        {call.Category && (
-          <div className="mb-3">
-            <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-full">
-              {call.Category}
-            </span>
-          </div>
-        )}
+  const handleMouseLeave = () => {
+    if (flipTimeout.current) clearTimeout(flipTimeout.current)
+    setIsFlipped(false)
+    setHoverHeight(null)
+  }
 
-        {/* Title */}
-        <h3 className={`text-lg font-bold mb-2 line-clamp-2 transition-colors ${
-          expired
-            ? 'text-gray-500 dark:text-gray-400 group-hover:text-coral dark:group-hover:text-coral-light'
-            : 'text-charcoal dark:text-gray-100 group-hover:text-coral dark:group-hover:text-coral-light'
-        }`}>
-          <LocalizedText text={call.Title} engText={call.EngTitle} />
-        </h3>
+  const Wrapper = onClick ? 'button' : 'a'
+  const wrapperProps = onClick
+    ? { type: 'button' as const, onClick }
+    : { href: call.Link, target: '_blank', rel: 'noopener noreferrer' }
 
-        {/* Description preview */}
-        <p className={`text-sm line-clamp-2 mb-3 flex-1 ${
-          expired ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-300'
-        }`}>
-          <LocalizedText text={descriptionText} engText={engDescriptionText} />
-        </p>
-
-        {/* External link arrow */}
-        <div className="flex items-center justify-end mt-auto pt-2">
-          <svg
-            className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-coral dark:group-hover:text-coral-light group-hover:translate-x-1 group-hover:-translate-y-1 transition-all"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
+  return (
+    <div
+      ref={containerRef}
+      className="[perspective:1200px]"
+      style={{
+        height: hoverHeight ? `${hoverHeight}px` : undefined,
+        transition: 'height 0.4s ease',
+      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div
+        className="relative w-full h-full transition-transform duration-500 [transform-style:preserve-3d]"
+        style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+      >
+        {/* Front */}
+        <div className="[backface-visibility:hidden] w-full h-full">
+          <Wrapper
+            {...wrapperProps as any}
+            className={`bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-gray-700/50 transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full text-left ${expired ? 'opacity-75' : ''}`}
+            aria-label={`${call.Title}${onClick ? '' : ' (ανοίγει σε νέα καρτέλα)'}`}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
+            {imageUrl ? (
+              <div className="aspect-video overflow-hidden relative">
+                <Image
+                  src={imageUrl}
+                  alt={call.ImageAltText || call.Title}
+                  width={400}
+                  height={225}
+                  className={`w-full h-full object-cover ${expired ? 'grayscale' : ''}`}
+                />
+                {expired && (
+                  <div className="absolute top-3 right-3">
+                    <span className="inline-block bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                      ΕΛΗΞΕ
+                    </span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="aspect-video bg-gray-100 dark:bg-gray-700 flex items-center justify-center relative">
+                <svg className="w-12 h-12 text-gray-300 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+                {expired && (
+                  <div className="absolute top-3 right-3">
+                    <span className="inline-block bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-3 py-1 rounded-full text-xs font-bold shadow-md">ΕΛΗΞΕ</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="p-5 flex flex-col flex-1">
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <time
+                  dateTime={call.Deadline}
+                  className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${expired ? 'bg-gray-500 text-white' : 'bg-charcoal dark:bg-gray-600 text-white'}`}
+                >
+                  {new Date(call.Deadline).toLocaleDateString('el-GR')}
+                </time>
+                {call.Category && (
+                  <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-full">
+                    {call.Category}
+                  </span>
+                )}
+              </div>
+
+              <h3 className={`text-lg font-bold mb-2 line-clamp-2 ${expired ? 'text-gray-500 dark:text-gray-400' : 'text-charcoal dark:text-gray-100'}`}>
+                <LocalizedText text={call.Title} engText={call.EngTitle} />
+              </h3>
+
+              <p className={`text-sm line-clamp-3 mb-3 ${expired ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-300'}`}>
+                <LocalizedText text={descriptionText} engText={engDescriptionText} />
+              </p>
+
+              <div className="flex-1" />
+              <div className="flex items-center justify-end pt-2">
+                <svg className="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </div>
+            </div>
+          </Wrapper>
+        </div>
+
+        {/* Back */}
+        <div ref={backRef} className="absolute top-0 left-0 w-full [backface-visibility:hidden] [transform:rotateY(180deg)]">
+          <Wrapper
+            {...wrapperProps as any}
+            className={`bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-700/50 border-l-4 border-coral dark:border-coral-light flex flex-col text-left ${expired ? 'opacity-75' : ''}`}
+            aria-label={`${call.Title} — πλήρης περιγραφή`}
+          >
+            <div className="p-6 flex flex-col">
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <time
+                  dateTime={call.Deadline}
+                  className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${expired ? 'bg-gray-500 text-white' : 'bg-charcoal dark:bg-gray-600 text-white'}`}
+                >
+                  {new Date(call.Deadline).toLocaleDateString('el-GR')}
+                </time>
+                {call.Category && (
+                  <span className={`inline-block text-xs px-3 py-1 rounded-full ${expired ? 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 border border-gray-400 dark:border-gray-500' : 'bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400'}`}>
+                    {call.Category}
+                  </span>
+                )}
+                {expired && (
+                  <span className="inline-block bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-3 py-1 rounded-full text-xs font-bold">
+                    ΕΛΗΞΕ
+                  </span>
+                )}
+              </div>
+
+              <h3 className={`text-base font-bold mb-3 line-clamp-1 ${expired ? 'text-gray-500 dark:text-gray-400' : 'text-coral dark:text-coral-light'}`}>
+                <LocalizedText text={call.Title} engText={call.EngTitle} />
+              </h3>
+
+              <p className={`text-sm leading-relaxed mb-4 ${expired ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>
+                <LocalizedText text={descriptionText} engText={engDescriptionText} />
+              </p>
+
+              <div className={`flex items-center justify-between mt-auto pt-3 border-t ${expired ? 'border-gray-300 dark:border-gray-600' : 'border-gray-200 dark:border-gray-600'}`}>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {onClick ? 'Κάνε κλικ για εγγραφή' : 'Κάνε κλικ για περισσότερα'}
+                </span>
+                <svg className={`w-5 h-5 ${expired ? 'text-gray-400 dark:text-gray-500' : 'text-coral dark:text-coral-light'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </div>
+            </div>
+          </Wrapper>
         </div>
       </div>
     </div>
-  )
-
-  if (onClick) {
-    return (
-      <button type="button" onClick={onClick} className="text-left h-full">
-        {cardContent}
-      </button>
-    )
-  }
-
-  return (
-    <a
-      href={call.Link}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="h-full"
-      aria-label={`${call.Title} (ανοίγει σε νέα καρτέλα)`}
-    >
-      {cardContent}
-    </a>
   )
 }
 
@@ -356,7 +395,7 @@ export default function OpenCallsSection() {
           {/* Card Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {displayCalls.map((call) => (
-              <OpenCallCard
+              <FlipCard
                 key={call.id}
                 call={call}
                 expired={!user}

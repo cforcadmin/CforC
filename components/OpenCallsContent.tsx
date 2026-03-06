@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getOpenCalls } from '@/lib/strapi'
@@ -33,6 +33,163 @@ const SORT_OPTIONS = [
   { value: 'deadline-asc', label: 'Πιο κοντινή προθεσμία' },
   { value: 'deadline-desc', label: 'Πιο μακρινή προθεσμία' },
 ]
+
+function FlipCard({ call, getImageUrl }: { call: OpenCall; getImageUrl: (call: OpenCall) => string | null }) {
+  const [isFlipped, setIsFlipped] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const backRef = useRef<HTMLDivElement>(null)
+  const [hoverHeight, setHoverHeight] = useState<number | null>(null)
+  const flipTimeout = useRef<NodeJS.Timeout | null>(null)
+
+  const descriptionText = extractTextFromBlocks(call.Description)
+  const engDescriptionText = call.EngDescription ? extractTextFromBlocks(call.EngDescription) : null
+  const imageUrl = getImageUrl(call)
+
+  const handleMouseEnter = () => {
+    flipTimeout.current = setTimeout(() => {
+      // Measure if back needs more space than the grid-assigned height
+      const containerH = containerRef.current?.offsetHeight || 0
+      const backH = backRef.current?.scrollHeight || 0
+      setHoverHeight(backH > containerH ? backH : null)
+      setIsFlipped(true)
+    }, 300)
+  }
+
+  const handleMouseLeave = () => {
+    if (flipTimeout.current) clearTimeout(flipTimeout.current)
+    setIsFlipped(false)
+    setHoverHeight(null)
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="[perspective:1200px]"
+      style={{
+        height: hoverHeight ? `${hoverHeight}px` : undefined,
+        transition: 'height 0.4s ease',
+      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div
+        className="relative w-full h-full transition-transform duration-500 [transform-style:preserve-3d]"
+        style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+      >
+        {/* Front */}
+        <div className="[backface-visibility:hidden] w-full h-full">
+          <a
+            href={call.Link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-gray-700/50 transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full"
+            aria-label={`${call.Title} (ανοίγει σε νέα καρτέλα)`}
+          >
+            {imageUrl && (
+              <div className="aspect-video overflow-hidden">
+                <Image
+                  src={imageUrl}
+                  alt={call.ImageAltText || call.Title}
+                  width={400}
+                  height={225}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
+            <div className="p-5 flex flex-col flex-1">
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <time
+                  dateTime={call.Deadline}
+                  className="inline-block bg-charcoal dark:bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-medium"
+                >
+                  {new Date(call.Deadline).toLocaleDateString('el-GR')}
+                </time>
+                {call.Category && (
+                  <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-full">
+                    {call.Category}
+                  </span>
+                )}
+              </div>
+
+              <h3 className="text-lg font-bold mb-2 text-charcoal dark:text-gray-100 line-clamp-2">
+                <LocalizedText text={call.Title} engText={call.EngTitle} />
+              </h3>
+
+              <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mb-3">
+                <LocalizedText text={descriptionText} engText={engDescriptionText} />
+              </p>
+
+              <div className="flex-1" />
+              <div className="flex items-center justify-end pt-2">
+                <svg
+                  className="w-5 h-5 text-gray-400 dark:text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        {/* Back */}
+        <div ref={backRef} className="absolute top-0 left-0 w-full [backface-visibility:hidden] [transform:rotateY(180deg)]">
+          <a
+            href={call.Link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-700/50 border-l-4 border-coral dark:border-coral-light flex flex-col"
+            aria-label={`${call.Title} — πλήρης περιγραφή (ανοίγει σε νέα καρτέλα)`}
+          >
+            <div className="p-6 flex flex-col">
+              {/* Compact header */}
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <time
+                  dateTime={call.Deadline}
+                  className="inline-block bg-charcoal dark:bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-medium"
+                >
+                  {new Date(call.Deadline).toLocaleDateString('el-GR')}
+                </time>
+                {call.Category && (
+                  <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-full">
+                    {call.Category}
+                  </span>
+                )}
+              </div>
+
+              <h3 className="text-base font-bold mb-3 text-coral dark:text-coral-light line-clamp-1">
+                <LocalizedText text={call.Title} engText={call.EngTitle} />
+              </h3>
+
+              {/* Full description */}
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+                <LocalizedText text={descriptionText} engText={engDescriptionText} />
+              </p>
+
+              {/* Link prompt */}
+              <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-200 dark:border-gray-600">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Κάνε κλικ για περισσότερα</span>
+                <svg
+                  className="w-5 h-5 text-coral dark:text-coral-light"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function OpenCallsContent() {
   const [allOpenCalls, setAllOpenCalls] = useState<OpenCall[]>([])
@@ -283,75 +440,9 @@ export default function OpenCallsContent() {
         {/* Grid View */}
         {!loading && !error && filteredCalls.length > 0 && viewMode === 'grid' && (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCalls.map((call) => {
-              const descriptionText = extractTextFromBlocks(call.Description)
-              const engDescriptionText = call.EngDescription ? extractTextFromBlocks(call.EngDescription) : null
-              const imageUrl = getImageUrl(call)
-
-              return (
-                <a
-                  key={call.id}
-                  href={call.Link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden hover:shadow-xl dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col"
-                  aria-label={`${call.Title} (ανοίγει σε νέα καρτέλα)`}
-                >
-                  {/* Image if exists */}
-                  {imageUrl && (
-                    <div className="aspect-video overflow-hidden">
-                      <Image
-                        src={imageUrl}
-                        alt={call.ImageAltText || call.Title}
-                        width={400}
-                        height={225}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                  )}
-
-                  <div className="p-5 flex flex-col flex-1">
-                    {/* Date + Category badges */}
-                    <div className="flex items-center gap-2 mb-3 flex-wrap">
-                      <time
-                        dateTime={call.Deadline}
-                        className="inline-block bg-charcoal dark:bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-medium"
-                      >
-                        {new Date(call.Deadline).toLocaleDateString('el-GR')}
-                      </time>
-                      {call.Category && (
-                        <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-full">
-                          {call.Category}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Title */}
-                    <h3 className="text-lg font-bold mb-2 text-charcoal dark:text-gray-100 group-hover:text-coral dark:group-hover:text-coral-light transition-colors line-clamp-2">
-                      <LocalizedText text={call.Title} engText={call.EngTitle} />
-                    </h3>
-
-                    {/* Description preview */}
-                    <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mb-3 flex-1">
-                      <LocalizedText text={descriptionText} engText={engDescriptionText} />
-                    </p>
-
-                    {/* External link arrow */}
-                    <div className="flex items-center justify-end mt-auto pt-2">
-                      <svg
-                        className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-coral dark:group-hover:text-coral-light group-hover:translate-x-1 group-hover:-translate-y-1 transition-all"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                    </div>
-                  </div>
-                </a>
-              )
-            })}
+            {filteredCalls.map((call) => (
+              <FlipCard key={call.id} call={call} getImageUrl={getImageUrl} />
+            ))}
           </div>
         )}
 

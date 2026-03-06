@@ -210,6 +210,9 @@ Strapi Cloud free tier sleeps after 10-15 minutes of inactivity.
 - Greek text operations must use `'el'` locale (`.toLocaleUpperCase('el')`)
 - Test features with Google Translate active to ensure layout doesn't break
 
+**UI/UX Preferences:**
+- When text is truncated or overflows, always show `…` (ellipsis) — never cut text abruptly. Use CSS `line-clamp` for fixed-line truncation, or a fade-out gradient overlay for overflow containers
+
 **Component Patterns:**
 - Keep Server Components as default (App Router best practice)
 - Only use `'use client'` when needed (useState, useEffect, event handlers, context)
@@ -223,7 +226,7 @@ Strapi Cloud free tier sleeps after 10-15 minutes of inactivity.
 
 ## Common Gotchas
 
-1. **Strapi v5 Breaking Changes**: No `attributes` wrapper, explicit media population required
+1. **Strapi v5 Breaking Changes**: No `attributes` wrapper, explicit media population required. **API uses `documentId` (not numeric `id`) for single-entry operations** (GET/PUT/DELETE). When writing scripts, first fetch all entries to build an `id → documentId` map, then use `documentId` in API paths (e.g. `/api/open-calls/${documentId}`)
 2. **Greek Text Handling**: Use Greek locale for uppercasing/lowercasing (`toLocaleUpperCase('el')`)
 3. **Auth Cookie Domain**: Cookies must match deployment domain (localhost vs production)
 4. **Google Translate**: Don't wrap entire page in `notranslate` - be selective

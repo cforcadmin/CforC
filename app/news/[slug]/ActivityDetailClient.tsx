@@ -5,13 +5,14 @@ import { useParams, useSearchParams } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
-import NewsletterSection from '@/components/NewsletterSection'
+import CombinedCtaSection from '@/components/CombinedCtaSection'
 import ScrollToTop from '@/components/ScrollToTop'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getActivityById, getActivities } from '@/lib/strapi'
 import type { StrapiResponse, Activity } from '@/lib/types'
 import LocalizedText from '@/components/LocalizedText'
+import NewsFlipCard from '@/components/shared/NewsFlipCard'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import { renderBlocks, extractTextFromBlocks } from '@/lib/renderBlocks'
 
@@ -64,10 +65,10 @@ function ActivityDetailPageContent() {
         // Fetch all activities for related section
         const allActivitiesResponse: StrapiResponse<Activity[]> = await getActivities()
 
-        // Get 3 most recent activities (excluding current one)
+        // Get 3 most recent activities (excluding current one), sorted by Date descending
         const related = allActivitiesResponse.data
           .filter(a => a.id !== activityResponse.data.id)
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .sort((a, b) => new Date(b.Date).getTime() - new Date(a.Date).getTime())
           .slice(0, 3)
 
         setRelatedActivities(related)
@@ -292,60 +293,9 @@ function ActivityDetailPageContent() {
               Πρόσφατα Νέα
             </h2>
 
-            <div className="grid md:grid-cols-3 gap-10">
+            <div className="grid md:grid-cols-3 gap-8">
               {relatedActivities.map((relatedActivity) => (
-                <Link
-                  key={relatedActivity.id}
-                  href={`/news/${relatedActivity.Slug || relatedActivity.documentId || relatedActivity.id}?from=${fromTab}`}
-                  className="bg-orange-50 dark:bg-gray-700 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow transform hover:scale-105"
-                >
-                  {/* Image with overlapping date */}
-                  <div className="relative -mb-2">
-                    {relatedActivity.Visuals && relatedActivity.Visuals.length > 0 ? (
-                      <div className="aspect-video rounded-2xl overflow-hidden mx-2 mt-2">
-                        <Image
-                          src={relatedActivity.Visuals[0].url.startsWith('http')
-                            ? relatedActivity.Visuals[0].url
-                            : `${process.env.NEXT_PUBLIC_STRAPI_URL}${relatedActivity.Visuals[0].url}`}
-                          alt={relatedActivity.ImageAltText || relatedActivity.Title}
-                          width={relatedActivity.Visuals[0].width}
-                          height={relatedActivity.Visuals[0].height}
-                          className="w-full h-full object-cover transition-transform duration-300 hover:duration-500 hover:scale-110"
-                        />
-                      </div>
-                    ) : (
-                      <div className="aspect-video bg-gray-200 dark:bg-gray-600 rounded-2xl mx-2 mt-2 flex items-center justify-center">
-                        <span className="text-gray-400 dark:text-gray-300">No image</span>
-                      </div>
-                    )}
-
-                    {/* Overlapping date badge */}
-                    <div className="absolute top-2 left-4 z-10">
-                      <span className="inline-block bg-orange-50 dark:bg-gray-600 dark:text-gray-200 px-2.5 py-0.5 rounded-full text-xs font-medium shadow-md">
-                        {new Date(relatedActivity.Date).toLocaleDateString('el-GR')}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-7 pt-9 flex flex-col h-[200px]">
-                    <h3 className="text-lg font-bold mb-4 line-clamp-3 flex-grow dark:text-gray-100">
-                      <LocalizedText text={relatedActivity.Title} engText={relatedActivity.EngTitle} />
-                    </h3>
-
-                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mt-auto">
-                      <div className="w-8 h-8 mr-2 flex-shrink-0">
-                        <Image
-                          src="/cforc_logo_small.svg"
-                          alt="Διακοσμητικό στοιχείο"
-                          width={32}
-                          height={32}
-                          className="w-full h-full dark:invert"
-                        />
-                      </div>
-                      <span>CULTURE FOR CHANGE</span>
-                    </div>
-                  </div>
-                </Link>
+                <NewsFlipCard key={relatedActivity.id} activity={relatedActivity} fromTab={fromTab} />
               ))}
             </div>
           </div>
@@ -409,7 +359,7 @@ function ActivityDetailPageContent() {
         </div>
       )}
 
-      <NewsletterSection />
+      <CombinedCtaSection />
       </main>
       <Footer />
       <CookieConsent />

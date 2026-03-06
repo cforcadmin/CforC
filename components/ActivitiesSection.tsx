@@ -2,37 +2,31 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import LoadingIndicator from './LoadingIndicator'
-import LocalizedText from './LocalizedText'
+import NewsFlipCard from './shared/NewsFlipCard'
 import { getActivities } from '@/lib/strapi'
-import type { StrapiResponse, StrapiData, Activity } from '@/lib/types'
+import type { StrapiResponse, Activity } from '@/lib/types'
 
 export default function ActivitiesSection() {
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentSlide, setCurrentSlide] = useState(0)
 
   useEffect(() => {
     async function fetchActivities() {
       try {
         setLoading(true)
-
-        console.log('Fetching activities from Strapi...')
-        console.log('Strapi URL:', process.env.NEXT_PUBLIC_STRAPI_URL)
-
         const response: StrapiResponse<Activity[]> = await getActivities()
 
-        console.log('Strapi response:', response)
-        console.log('Activities data:', response.data)
-        console.log('Number of activities:', response.data?.length || 0)
+        // Sort by date descending (most recent first), take 6
+        const sorted = response.data
+          .sort((a, b) => new Date(b.Date).getTime() - new Date(a.Date).getTime())
+          .slice(0, 6)
 
-        setActivities(response.data)
+        setActivities(sorted)
       } catch (err) {
         setError('Failed to load activities from Strapi')
         console.error('Error fetching activities:', err)
-        console.error('Error details:', JSON.stringify(err, null, 2))
       } finally {
         setLoading(false)
       }
@@ -40,17 +34,6 @@ export default function ActivitiesSection() {
 
     fetchActivities()
   }, [])
-
-  const activitiesPerSlide = 3
-  const totalSlides = Math.ceil(activities.length / activitiesPerSlide)
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % totalSlides)
-  }
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides)
-  }
 
   if (loading) {
     return (
@@ -88,7 +71,6 @@ export default function ActivitiesSection() {
   return (
     <section id="activities" className="py-24 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-3xl py-12 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-end mb-12">
           <div>
             <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΠΡΟΣΦΑΤΑ ΝΕΑ</span>
@@ -102,123 +84,16 @@ export default function ActivitiesSection() {
           </Link>
         </div>
 
-        {/* Carousel */}
-        <div className="relative mt-4">
-          <div className="overflow-hidden py-4">
-            <div
-              className="flex transition-transform duration-500 ease-in-out"
-              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-            >
-              {Array.from({ length: totalSlides }).map((_, slideIndex) => {
-                const startIndex = slideIndex * activitiesPerSlide
-                const slideActivities = activities.slice(startIndex, startIndex + activitiesPerSlide)
-
-                return (
-                  <div key={slideIndex} className="w-full flex-shrink-0 px-2">
-                    <div className="grid md:grid-cols-3 gap-10">
-                      {slideActivities.map((card) => {
-                        return (
-                          <Link
-                            key={card.id}
-                            href={`/news/${card.Slug || card.documentId || card.id}`}
-                            className="bg-orange-50 dark:bg-gray-700 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow transform scale-105 block"
-                          >
-                            {/* Image with overlapping date */}
-                            <div className="relative -mb-2">
-                              {card.Visuals && card.Visuals.length > 0 ? (
-                                <div className="aspect-video rounded-2xl overflow-hidden mx-2 mt-2">
-                                  <Image
-                                    src={card.Visuals[0].url.startsWith('http') ? card.Visuals[0].url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${card.Visuals[0].url}`}
-                                    alt={card.ImageAltText || card.Title}
-                                    width={card.Visuals[0].width}
-                                    height={card.Visuals[0].height}
-                                    className="w-full h-full object-cover transition-transform duration-300 hover:duration-500 hover:scale-110"
-                                  />
-                                </div>
-                              ) : (
-                                <div className="aspect-video bg-gray-200 dark:bg-gray-600 rounded-2xl mx-2 mt-2 flex items-center justify-center">
-                                  <span className="text-gray-400 dark:text-gray-300">No image</span>
-                                </div>
-                              )}
-
-                              {/* Overlapping date badge */}
-                              <div className="absolute top-2 left-4 z-10">
-                                <span className="inline-block bg-orange-50 dark:bg-gray-600 dark:text-gray-200 px-2.5 py-0.5 rounded-full text-xs font-medium shadow-md">
-                                  {new Date(card.Date).toLocaleDateString('el-GR')}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="p-7 pt-9 flex flex-col h-[200px]">
-                              <h3 className="text-lg font-bold mb-4 line-clamp-3 flex-grow dark:text-gray-100">
-                                <LocalizedText text={card.Title} engText={card.EngTitle} />
-                              </h3>
-
-                              <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mt-auto">
-                                <div className="w-8 h-8 mr-2 flex-shrink-0">
-                                  <Image
-                                    src="/cforc_logo_small.svg"
-                                    alt="Διακοσμητικό στοιχείο"
-                                    width={32}
-                                    height={32}
-                                    className="w-full h-full dark:invert"
-                                  />
-                                </div>
-                                <span>CULTURE FOR CHANGE</span>
-                              </div>
-                            </div>
-                          </Link>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Navigation buttons */}
-          <div className="flex justify-center items-center gap-4 mt-8">
-            <button
-              onClick={prevSlide}
-              className="w-10 h-10 rounded-full border-2 border-charcoal dark:border-gray-400 dark:text-gray-200 flex items-center justify-center hover:bg-charcoal hover:text-white dark:hover:bg-gray-600 transition-colors"
-              aria-label="Προηγούμενη σελίδα"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-
-            <div className="flex gap-2">
-              {Array.from({ length: totalSlides }).map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentSlide(index)}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    index === currentSlide ? 'bg-coral dark:bg-coral-light' : 'bg-gray-300 dark:bg-gray-600'
-                  }`}
-                  aria-label={`Μετάβαση στη σελίδα ${index + 1}`}
-                  aria-current={index === currentSlide ? 'true' : undefined}
-                />
-              ))}
-            </div>
-
-            <button
-              onClick={nextSlide}
-              className="w-10 h-10 rounded-full border-2 border-charcoal dark:border-gray-400 dark:text-gray-200 flex items-center justify-center hover:bg-charcoal hover:text-white dark:hover:bg-gray-600 transition-colors"
-              aria-label="Επόμενη σελίδα"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
+        {/* Card Grid */}
+        <div className="grid md:grid-cols-3 gap-8">
+          {activities.map((activity) => (
+            <NewsFlipCard key={activity.id} activity={activity} />
+          ))}
         </div>
 
         <Link href="/news" className="md:hidden w-full mt-8 bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium text-center block hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors">
           ΟΛΑ ΤΑ ΝΕΑ
         </Link>
-        </div>
       </div>
     </section>
   )

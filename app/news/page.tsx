@@ -13,6 +13,7 @@ import Image from 'next/image'
 import { getActivities } from '@/lib/strapi'
 import type { StrapiResponse, Activity } from '@/lib/types'
 import LocalizedText from '@/components/LocalizedText'
+import NewsFlipCard from '@/components/shared/NewsFlipCard'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import ViewToggle from '@/components/shared/ViewToggle'
 import CategoryFilter from '@/components/shared/CategoryFilter'
@@ -268,7 +269,7 @@ function ActivitiesPageContent() {
                     role="tab"
                     aria-selected={activeTab === 'current'}
                   >
-                    Τρέχουσες
+                    Τρέχοντα
                   </button>
                   <button
                     onClick={() => setActiveTab('previous')}
@@ -280,7 +281,7 @@ function ActivitiesPageContent() {
                     role="tab"
                     aria-selected={activeTab === 'previous'}
                   >
-                    Προηγούμενες
+                    Προηγούμενα
                   </button>
                 </div>
 
@@ -345,51 +346,7 @@ function ActivitiesPageContent() {
             {!loading && !error && filteredActivities.length > 0 && viewMode === 'grid' && (
               <div className="grid md:grid-cols-3 gap-8">
                 {filteredActivities.map((activity) => (
-                  <Link
-                    key={activity.id}
-                    href={`/news/${activity.Slug || activity.documentId || activity.id}?from=${activeTab}`}
-                    className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden hover:shadow-xl dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light"
-                  >
-                    {/* Image */}
-                    <div className="relative">
-                      {activity.Visuals && activity.Visuals.length > 0 ? (
-                        <div className="aspect-video overflow-hidden">
-                          <Image
-                            src={activity.Visuals[0].url.startsWith('http') ? activity.Visuals[0].url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${activity.Visuals[0].url}`}
-                            alt={activity.ImageAltText || activity.Title}
-                            width={activity.Visuals[0].width}
-                            height={activity.Visuals[0].height}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        </div>
-                      ) : (
-                        <div className="aspect-video bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                          <span className="text-gray-400 dark:text-gray-500 text-4xl">{activity.Title.charAt(0)}</span>
-                        </div>
-                      )}
-                      {/* Date badge */}
-                      <div className="absolute top-3 left-3">
-                        <time
-                          dateTime={activity.Date}
-                          className="inline-block bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-charcoal dark:text-gray-200 shadow-sm"
-                        >
-                          {new Date(activity.Date).toLocaleDateString('el-GR')}
-                        </time>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-5">
-                      <h3 className="text-base font-light group-hover:font-bold text-charcoal dark:text-gray-100 mb-3 line-clamp-3 transition-all">
-                        <LocalizedText text={activity.Title} engText={activity.EngTitle} />
-                      </h3>
-                      {activity.Category && (
-                        <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-2xl tracking-wide">
-                          {activity.Category}
-                        </span>
-                      )}
-                    </div>
-                  </Link>
+                  <NewsFlipCard key={activity.id} activity={activity} fromTab={activeTab} />
                 ))}
               </div>
             )}
@@ -422,19 +379,19 @@ function ActivitiesPageContent() {
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm md:text-base font-light group-hover:font-bold text-charcoal dark:text-gray-100 line-clamp-2 transition-all">
-                        <LocalizedText text={activity.Title} engText={activity.EngTitle} />
-                      </h3>
-                      <div className="flex items-center gap-3 mt-1.5">
-                        <time dateTime={activity.Date} className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <time dateTime={activity.Date} className="inline-block bg-charcoal dark:bg-gray-600 text-white px-3 py-0.5 rounded-full text-xs font-medium">
                           {new Date(activity.Date).toLocaleDateString('el-GR')}
                         </time>
                         {activity.Category && (
-                          <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-2 py-0.5 rounded-xl">
+                          <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-2 py-0.5 rounded-full">
                             {activity.Category}
                           </span>
                         )}
                       </div>
+                      <h3 className="text-sm md:text-base font-bold text-charcoal dark:text-gray-100 group-hover:text-coral dark:group-hover:text-coral-light line-clamp-2 transition-colors">
+                        <LocalizedText text={activity.Title} engText={activity.EngTitle} />
+                      </h3>
                     </div>
                   </Link>
                 ))}

@@ -61,7 +61,7 @@ export default function NetworksContent() {
             <button
               key={group.key}
               onClick={() => scrollTo(`networks-${group.key}`)}
-              className="flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-gray-700 rounded-full text-sm font-medium text-charcoal dark:text-gray-200 border border-black dark:border-white hover:shadow-md hover:bg-orange-100 dark:hover:bg-gray-600 transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-full text-sm font-medium text-charcoal dark:text-gray-200 border border-charcoal/30 dark:border-gray-600 hover:shadow-md hover:border-coral dark:hover:border-coral-light transition-all"
             >
               {GROUP_ICONS[group.key]?.('w-4 h-4 text-coral dark:text-coral-light')}
               <LocalizedText text={group.label} engText={group.engLabel} />
@@ -69,7 +69,7 @@ export default function NetworksContent() {
           ))}
           <button
             onClick={() => scrollTo('networks-all')}
-            className="flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-gray-700 rounded-full text-sm font-medium text-charcoal dark:text-gray-200 border border-black dark:border-white hover:shadow-md hover:bg-orange-100 dark:hover:bg-gray-600 transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-full text-sm font-medium text-charcoal dark:text-gray-200 border border-charcoal/30 dark:border-gray-600 hover:shadow-md hover:border-coral dark:hover:border-coral-light transition-all"
           >
             <TableIcon className="w-4 h-4 text-coral dark:text-coral-light" />
             <LocalizedText text="Όλα τα δίκτυα" engText="All networks" />
@@ -93,7 +93,7 @@ export default function NetworksContent() {
                   href={network.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group bg-orange-50 dark:bg-gray-700 rounded-2xl border border-black dark:border-white hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] p-6 flex flex-col"
+                  className="group bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] p-6 flex flex-col border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light"
                 >
                   {/* Title + external link icon */}
                   <div className="flex items-start gap-3 mb-3">
@@ -129,7 +129,7 @@ export default function NetworksContent() {
             href={ALL_NETWORKS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-4 bg-orange-50 dark:bg-gray-700 rounded-2xl border border-black dark:border-white hover:shadow-lg transition-all duration-200 transform hover:scale-[1.01] p-6"
+            className="group flex items-center gap-4 bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-lg transition-all duration-200 transform hover:scale-[1.01] p-6 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light"
           >
             <div className="w-12 h-12 rounded-xl bg-coral/10 dark:bg-coral/20 flex items-center justify-center flex-shrink-0">
               <TableIcon className="w-6 h-6 text-coral dark:text-coral-light" />

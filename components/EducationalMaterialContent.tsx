@@ -70,7 +70,7 @@ export default function EducationalMaterialContent() {
                 href={resource.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group bg-orange-50 dark:bg-gray-700 rounded-2xl border border-black dark:border-white hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] p-6 flex flex-col"
+                className="group bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] p-6 flex flex-col border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light"
               >
                 {/* Title + external link icon */}
                 <div className="flex items-start gap-3 mb-3">
@@ -125,8 +125,8 @@ export default function EducationalMaterialContent() {
                 onMouseEnter={() => setHoveredCategory(category.key)}
                 onMouseLeave={() => setHoveredCategory(null)}
               >
-                <div className={`bg-orange-50 dark:bg-gray-700 rounded-2xl border border-black dark:border-white transition-all duration-200 p-6 flex flex-col ${
-                  showSubcategories ? 'shadow-lg' : 'shadow-md hover:shadow-lg'
+                <div className={`bg-white dark:bg-gray-800 rounded-3xl transition-all duration-200 p-6 flex flex-col border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light ${
+                  showSubcategories ? 'shadow-lg border-coral dark:border-coral-light' : 'shadow-sm hover:shadow-lg'
                 }`}>
                   {/* Fixed-height top section so all cards start the same size */}
                   <div className="min-h-[200px] flex flex-col">
@@ -143,7 +143,7 @@ export default function EducationalMaterialContent() {
                     {/* Subcategory count badge — hidden on mobile since subcategories are always shown */}
                     {!isMobile && (
                       <div className="mt-4">
-                        <span className="inline-block bg-white/80 dark:bg-gray-600 px-3 py-1 rounded-full text-xs font-medium text-charcoal dark:text-gray-200 border border-black dark:border-white shadow-sm">
+                        <span className="inline-block bg-gray-100 dark:bg-gray-600 px-3 py-1 rounded-full text-xs font-medium text-charcoal dark:text-gray-200 shadow-sm">
                           {category.subcategories.length}{' '}
                           <LocalizedText text="υποκατηγορίες" engText="subcategories" />
                         </span>
