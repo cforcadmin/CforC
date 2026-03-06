@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { useAuth } from '@/components/AuthProvider'
 
 const FUNDING_RESOURCES = [
   {
@@ -42,30 +44,43 @@ const FUNDING_RESOURCES = [
 ]
 
 export default function FundingGuidelinesModal() {
+  const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
+  const [showMemberModal, setShowMemberModal] = useState(false)
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen || showMemberModal) {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
     }
     return () => { document.body.style.overflow = '' }
-  }, [isOpen])
+  }, [isOpen, showMemberModal])
 
   useEffect(() => {
     function handleEscape(e: KeyboardEvent) {
-      if (e.key === 'Escape') setIsOpen(false)
+      if (e.key === 'Escape') {
+        setIsOpen(false)
+        setShowMemberModal(false)
+      }
     }
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
   }, [])
 
+  const handleClick = () => {
+    if (user) {
+      setIsOpen(true)
+    } else {
+      setShowMemberModal(true)
+    }
+  }
+
   return (
     <>
       <button
-        onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 px-4 py-3 rounded-full border border-coral dark:border-coral-light text-sm font-medium text-coral dark:text-coral-light hover:bg-coral/10 dark:hover:bg-coral/20 transition-colors whitespace-nowrap"
+        onClick={handleClick}
+        className="flex items-center gap-2 px-4 py-3 rounded-full border border-charcoal dark:border-gray-400 text-sm font-medium text-charcoal dark:text-gray-200 hover:bg-charcoal/10 dark:hover:bg-gray-600 transition-colors whitespace-nowrap"
         aria-label="Οδηγίες χρηματοδότησης"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -74,6 +89,66 @@ export default function FundingGuidelinesModal() {
         <span>Οδηγίες Χρηματοδότησης</span>
       </button>
 
+      {/* Members-Only Modal (logged out) */}
+      {showMemberModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowMemberModal(false) }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Περιεχόμενο μελών"
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-8 relative">
+            <button
+              type="button"
+              onClick={() => setShowMemberModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              aria-label="Κλείσιμο"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="text-center">
+              <div className="mb-4">
+                <svg className="w-16 h-16 text-coral dark:text-coral-light mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold mb-4 dark:text-gray-100">Περιεχόμενο Μελών</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                Οι οδηγίες χρηματοδότησης είναι διαθέσιμες μόνο για εγγεγραμμένα μέλη. Εγγραφείτε για πρόσβαση.
+              </p>
+              <div className="flex flex-col gap-3">
+                <Link
+                  href="/participation"
+                  className="bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors"
+                  onClick={() => setShowMemberModal(false)}
+                >
+                  Εγγραφή
+                </Link>
+                <Link
+                  href="/login"
+                  className="bg-white dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-white transition-colors"
+                  onClick={() => setShowMemberModal(false)}
+                >
+                  Σύνδεση
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setShowMemberModal(false)}
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                >
+                  Κλείσιμο
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Funding Guidelines Modal (logged in) */}
       {isOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
@@ -82,9 +157,9 @@ export default function FundingGuidelinesModal() {
           aria-modal="true"
           aria-label="Οδηγίες χρηματοδότησης"
         >
-          <div className="bg-white dark:bg-gray-800 rounded-3xl max-w-4xl w-full max-h-[85vh] overflow-y-auto shadow-2xl">
+          <div className="bg-[#F5F0EB] dark:bg-gray-900 rounded-3xl max-w-4xl w-full max-h-[85vh] overflow-y-auto shadow-2xl">
             {/* Header */}
-            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 rounded-t-3xl px-8 py-6 flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-[#F5F0EB] dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 rounded-t-3xl px-8 py-6 flex items-center justify-between z-10">
               <div>
                 <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Οδηγίες Χρηματοδότησης</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Χρήσιμοι πόροι για ευκαιρίες χρηματοδότησης</p>
@@ -109,24 +184,28 @@ export default function FundingGuidelinesModal() {
                     href={resource.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group block bg-gray-50 dark:bg-gray-700 rounded-2xl p-6 hover:shadow-lg hover:bg-white dark:hover:bg-gray-600 transition-all duration-300 border border-transparent hover:border-coral/30"
+                    className="group bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-lg transition-all duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light p-5 flex flex-col"
                     aria-label={`${resource.title} (ανοίγει σε νέα καρτέλα)`}
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-coral/10 dark:bg-coral/20 flex items-center justify-center flex-shrink-0">
-                        <svg className="w-6 h-6 text-coral dark:text-coral-light" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-charcoal dark:text-gray-100 group-hover:text-coral dark:group-hover:text-coral-light transition-colors mb-1 flex items-center gap-2">
-                          <span className="truncate">{resource.title}</span>
-                          <svg className="w-4 h-4 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{resource.description}</p>
-                      </div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-full">
+                        Χρηματοδότηση
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-bold mb-2 text-charcoal dark:text-gray-100 group-hover:text-coral dark:group-hover:text-coral-light transition-colors line-clamp-2">
+                      {resource.title}
+                    </h3>
+
+                    <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mb-3 leading-relaxed">
+                      {resource.description}
+                    </p>
+
+                    <div className="flex-1" />
+                    <div className="flex items-center justify-end pt-2">
+                      <svg className="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
                     </div>
                   </a>
                 ))}
