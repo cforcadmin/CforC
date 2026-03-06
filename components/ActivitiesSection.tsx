@@ -68,9 +68,9 @@ export default function ActivitiesSection() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-end mb-12">
             <div>
-              <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΠΡΟΣΦΑΤΕΣ ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</span>
+              <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΠΡΟΣΦΑΤΑ ΝΕΑ</span>
               <h2 className="text-4xl md:text-5xl font-bold dark:text-gray-100">
-                ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ ΤΟΥ<br />
+                ΝΕΑ ΤΟΥ<br />
                 CULTURE FOR CHANGE
               </h2>
             </div>
@@ -91,14 +91,14 @@ export default function ActivitiesSection() {
         <div className="bg-gray-50 dark:bg-gray-800 rounded-3xl py-12 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-end mb-12">
           <div>
-            <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΠΡΟΣΦΑΤΕΣ ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ</span>
+            <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΠΡΟΣΦΑΤΑ ΝΕΑ</span>
             <h2 className="text-4xl md:text-5xl font-bold dark:text-gray-100">
-              ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ ΤΟΥ<br />
+              ΝΕΑ ΤΟΥ<br />
               CULTURE FOR CHANGE
             </h2>
           </div>
-          <Link href="/activities" className="hidden md:block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors">
-            ΟΛΕΣ ΟΙ ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ
+          <Link href="/news" className="hidden md:block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors">
+            ΟΛΑ ΤΑ ΝΕΑ
           </Link>
         </div>
 
@@ -120,7 +120,7 @@ export default function ActivitiesSection() {
                         return (
                           <Link
                             key={card.id}
-                            href={`/activities/${card.Slug || card.documentId || card.id}`}
+                            href={`/news/${card.Slug || card.documentId || card.id}`}
                             className="bg-orange-50 dark:bg-gray-700 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow transform scale-105 block"
                           >
                             {/* Image with overlapping date */}
@@ -215,8 +215,8 @@ export default function ActivitiesSection() {
           </div>
         </div>
 
-        <Link href="/activities" className="md:hidden w-full mt-8 bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium text-center block hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors">
-          ΟΛΕΣ ΟΙ ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ
+        <Link href="/news" className="md:hidden w-full mt-8 bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium text-center block hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors">
+          ΟΛΑ ΤΑ ΝΕΑ
         </Link>
         </div>
       </div>

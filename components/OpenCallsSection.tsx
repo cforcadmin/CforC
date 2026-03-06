@@ -253,17 +253,17 @@ export default function OpenCallsSection() {
                   </div>
 
                   <div className="flex items-start gap-6 pr-16">
-                    {/* Date and Priority Badges Section - Moved Right */}
+                    {/* Date and Category Badges Section */}
                     <div className="flex flex-col gap-3 min-w-[140px] ml-8">
                       {/* Date Badge */}
                       <span className="inline-block bg-charcoal dark:bg-gray-600 text-white px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
                         {new Date(call.Deadline).toLocaleDateString('el-GR')}
                       </span>
 
-                      {/* Priority Badge */}
-                      {call.Priority && (
-                        <span className="inline-block bg-white dark:bg-gray-700 border-2 border-charcoal dark:border-gray-400 text-charcoal dark:text-gray-200 px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
-                          PRIORITY
+                      {/* Category Badge */}
+                      {call.Category && (
+                        <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap">
+                          {call.Category}
                         </span>
                       )}
                     </div>

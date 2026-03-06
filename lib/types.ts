@@ -65,7 +65,7 @@ export interface OpenCall extends StrapiData<OpenCall> {
   Title: string;
   Deadline: string;
   Description: any;  // Strapi blocks type (rich text)
-  Priority?: boolean;
+  Category: string;
   Link: string;
   Image?: StrapiMediaObject | StrapiMediaArray;  // Can be single object or array
   ImageAltText: string;  // Required alt text for accessibility

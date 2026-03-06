@@ -32,7 +32,7 @@ test.describe('SEO Metadata', () => {
   })
 
   test('activities page has page-specific title', async ({ page }) => {
-    await page.goto('/activities')
+    await page.goto('/news')
 
     const title = await page.title()
     expect(title).toBeTruthy()

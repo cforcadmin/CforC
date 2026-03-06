@@ -8,6 +8,7 @@ import { getWorkingGroups } from '@/lib/strapi'
 import type { StrapiResponse, WorkingGroup, WorkingGroupMemberRef } from '@/lib/types'
 import LocalizedText from '@/components/LocalizedText'
 import LoadingIndicator from '@/components/LoadingIndicator'
+import ViewToggle from '@/components/shared/ViewToggle'
 
 const PROPOSE_GROUP_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSe6vrAA7jPT4n6NH4FUIoKrYOs38drzBNR80paQz_gqLObWQg/viewform?usp=share_link&ouid=104930524495740710113'
 
@@ -38,6 +39,7 @@ export default function WorkingGroupsContent() {
 
   // Join modal state
   const [joinModalGroup, setJoinModalGroup] = useState<WorkingGroup | null>(null)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   useEffect(() => {
     async function fetchGroups() {
@@ -84,17 +86,73 @@ export default function WorkingGroupsContent() {
           </div>
         )}
 
-        {/* Groups Grid */}
+        {/* Groups Grid/List */}
         {!loading && !error && groups.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {groups.map((group) => (
-              <WorkingGroupCard
-                key={group.id}
-                group={group}
-                onJoinClick={() => setJoinModalGroup(group)}
-              />
-            ))}
-          </div>
+          <>
+            <div className="flex justify-end mb-4">
+              <ViewToggle view={viewMode} onViewChange={setViewMode} />
+            </div>
+
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {groups.map((group) => (
+                  <WorkingGroupCard
+                    key={group.id}
+                    group={group}
+                    onJoinClick={() => setJoinModalGroup(group)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {groups.map((group) => {
+                  const groupImageUrl = getImageUrl(group.Image)
+                  const coordinator = group.Coordinator
+                  const members = visibleMembers(group.Members)
+
+                  return (
+                    <div
+                      key={group.id}
+                      className="bg-orange-50 dark:bg-gray-700 rounded-2xl border border-black dark:border-white hover:shadow-lg transition-all duration-300 flex items-center gap-5 p-4 border-l-4 border-l-transparent hover:border-l-coral dark:hover:border-l-coral-light"
+                    >
+                      {groupImageUrl ? (
+                        <div className="w-20 h-14 relative rounded-xl overflow-hidden flex-shrink-0">
+                          <Image src={groupImageUrl} alt={group.ImageAltText || group.Name} fill className="object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-20 h-14 bg-gray-200 dark:bg-gray-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <span className="text-gray-400 dark:text-gray-300 text-lg font-bold">{group.Name.charAt(0)}</span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-bold text-charcoal dark:text-gray-100 line-clamp-1">
+                          <LocalizedText text={group.Name} engText={group.EngName} />
+                        </h3>
+                        <div className="flex items-center gap-3 mt-1">
+                          {coordinator && !coordinator.HideProfile && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              Συντ: <Link href={`/members/${coordinator.Slug}`} className="hover:text-coral dark:hover:text-coral-light transition-colors">{coordinator.Name}</Link>
+                            </span>
+                          )}
+                          {members.length > 0 && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400">Μέλη: {members.length}</span>
+                          )}
+                        </div>
+                      </div>
+                      {coordinator?.Email && (
+                        <button
+                          onClick={() => setJoinModalGroup(group)}
+                          className="flex-shrink-0 bg-coral hover:bg-coral/90 dark:bg-coral-light dark:hover:bg-coral-light/90 text-white rounded-full px-4 py-1.5 text-xs font-medium transition-colors whitespace-nowrap"
+                        >
+                          Αίτημα
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </>
         )}
 
         {/* Propose New Group CTA */}

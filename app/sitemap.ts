@@ -8,7 +8,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
     { url: `${BASE_URL}/about`, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE_URL}/activities`, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/news`, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/members`, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE_URL}/open-calls`, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE_URL}/participation`, changeFrequency: 'monthly', priority: 0.6 },
@@ -64,7 +64,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const activity of activities) {
       const slug = activity.Slug || activity.documentId || activity.id
       dynamicPages.push({
-        url: `${BASE_URL}/activities/${encodeURIComponent(String(slug))}`,
+        url: `${BASE_URL}/news/${encodeURIComponent(String(slug))}`,
         lastModified: new Date(activity.updatedAt),
         changeFrequency: 'monthly',
         priority: 0.6,

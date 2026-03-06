@@ -20,10 +20,10 @@ test.describe('Navigation', () => {
 
     // Activities link
     await page.goto('/')
-    const activitiesLink = page.locator('nav a[href="/activities"]').first()
+    const activitiesLink = page.locator('nav a[href="/news"]').first()
     await expect(activitiesLink).toBeVisible()
     await activitiesLink.click()
-    await expect(page).toHaveURL(/\/activities/)
+    await expect(page).toHaveURL(/\/news/)
 
     // Members link
     await page.goto('/')

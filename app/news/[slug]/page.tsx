@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const response = await getActivityById(decodeURIComponent(slug))
     const activity = response.data
-    if (!activity) return { title: 'Δραστηριότητα δεν βρέθηκε' }
+    if (!activity) return { title: 'Δεν βρέθηκε' }
 
     const description = extractTextFromBlocks(activity.Description)?.slice(0, 160) || ''
     const imageUrl = activity.Visuals?.[0]?.url || null
@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: activity.Title,
       description,
-      alternates: { canonical: `/activities/${slug}` },
+      alternates: { canonical: `/news/${slug}` },
       openGraph: {
         title: activity.Title,
         description,
@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       },
     }
   } catch {
-    return { title: 'Δραστηριότητα | Culture for Change' }
+    return { title: 'Νέα | Culture for Change' }
   }
 }
 

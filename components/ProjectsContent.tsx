@@ -11,6 +11,7 @@ import LoadingIndicator from '@/components/LoadingIndicator'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import { getProjects } from '@/lib/strapi'
 import type { StrapiResponse, Project } from '@/lib/types'
+import ViewToggle from '@/components/shared/ViewToggle'
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   active: { label: 'Ενεργό', className: 'bg-white text-green-700 dark:bg-gray-900 dark:text-green-400' },
@@ -22,6 +23,7 @@ export default function ProjectsContent() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
 
   useEffect(() => {
@@ -111,115 +113,169 @@ export default function ProjectsContent() {
             )}
 
             {!loading && !error && projects.length > 0 && (
-              <div className="grid md:grid-cols-3 gap-10">
-                {projects.map((project) => {
-                  const imageUrl = getImageUrl(project.cover_image)
-                  const statusInfo = project.project_status ? STATUS_LABELS[project.project_status] : null
+              <>
+                <div className="flex justify-end mb-6">
+                  <ViewToggle view={viewMode} onViewChange={setViewMode} />
+                </div>
 
-                  const partners = project.project_partners
-                    ? project.project_partners.split(',').map((p: string) => p.trim()).filter(Boolean)
-                    : []
+                {viewMode === 'grid' ? (
+                  <div className="grid md:grid-cols-3 gap-10">
+                    {projects.map((project) => {
+                      const imageUrl = getImageUrl(project.cover_image)
+                      const statusInfo = project.project_status ? STATUS_LABELS[project.project_status] : null
 
-                  return (
-                    <Link
-                      key={project.id}
-                      href={`/projects/${project.slug}`}
-                      className="bg-orange-50 dark:bg-gray-700 rounded-2xl overflow-hidden border border-black dark:border-white hover:shadow-lg transition-shadow transform hover:scale-105"
-                    >
-                      <div className="relative -mb-2">
-                        {imageUrl ? (
-                          <div className="aspect-video rounded-2xl overflow-hidden mx-2 mt-2">
-                            <Image
-                              src={imageUrl}
-                              alt={project.title}
-                              width={400}
-                              height={225}
-                              className="w-full h-full object-cover transition-transform duration-300 hover:duration-500 hover:scale-110"
-                            />
-                          </div>
-                        ) : (
-                          <div className="aspect-video bg-gray-200 dark:bg-gray-600 rounded-2xl mx-2 mt-2 flex items-center justify-center">
-                            <svg className="w-12 h-12 text-gray-400 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
-                            </svg>
-                          </div>
-                        )}
+                      const partners = project.project_partners
+                        ? project.project_partners.split(',').map((p: string) => p.trim()).filter(Boolean)
+                        : []
 
-                        {/* Status badge */}
-                        {statusInfo && (
-                          <div className="absolute top-2 left-4 z-10">
-                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium shadow-md border border-black dark:border-white ${statusInfo.className}`}>
-                              {statusInfo.label}
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                      return (
+                        <Link
+                          key={project.id}
+                          href={`/projects/${project.slug}`}
+                          className="bg-orange-50 dark:bg-gray-700 rounded-2xl overflow-hidden border border-black dark:border-white hover:shadow-lg transition-shadow transform hover:scale-105"
+                        >
+                          <div className="relative -mb-2">
+                            {imageUrl ? (
+                              <div className="aspect-video rounded-2xl overflow-hidden mx-2 mt-2">
+                                <Image
+                                  src={imageUrl}
+                                  alt={project.title}
+                                  width={400}
+                                  height={225}
+                                  className="w-full h-full object-cover transition-transform duration-300 hover:duration-500 hover:scale-110"
+                                />
+                              </div>
+                            ) : (
+                              <div className="aspect-video bg-gray-200 dark:bg-gray-600 rounded-2xl mx-2 mt-2 flex items-center justify-center">
+                                <svg className="w-12 h-12 text-gray-400 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                                </svg>
+                              </div>
+                            )}
 
-                      <div className="p-7 pt-9">
-                        <div className="relative group/title">
-                          <h3
-                            className="text-lg font-bold line-clamp-2 text-charcoal dark:text-gray-100"
-                            onMouseEnter={(e) => {
-                              const el = e.currentTarget
-                              const tooltip = el.nextElementSibling as HTMLElement
-                              if (tooltip) {
-                                tooltip.style.display = el.scrollHeight > el.clientHeight ? '' : 'none'
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              const tooltip = e.currentTarget.nextElementSibling as HTMLElement
-                              if (tooltip) tooltip.style.display = 'none'
-                            }}
-                          >
-                            {project.title}
-                          </h3>
-                          <div className="absolute bottom-full left-0 mb-2 z-20 pointer-events-none" style={{ display: 'none' }}>
-                            <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-sm rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white max-w-xs font-normal">
-                              {project.title}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Info bar */}
-                        {(project.CforC_project_role || partners.length > 0) && (
-                          <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
-                            {/* Labels row */}
-                            <div className="flex justify-between gap-4 mb-1.5">
-                              {project.CforC_project_role ? (
-                                <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-600 dark:text-gray-300">Ρόλος CforC</p>
-                              ) : <div />}
-                              {partners.length > 0 && (
-                                <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-600 dark:text-gray-300">Εταίροι</p>
-                              )}
-                            </div>
-                            {/* Values row */}
-                            <div className="flex items-center justify-between gap-4">
-                              {project.CforC_project_role ? (
-                                <span className="flex-shrink-0 inline-block px-2.5 py-0.5 rounded-full text-xs font-medium shadow-md border border-black dark:border-white bg-white text-charcoal dark:bg-gray-900 dark:text-gray-300">
-                                  {project.CforC_project_role}
+                            {/* Status badge */}
+                            {statusInfo && (
+                              <div className="absolute top-2 left-4 z-10">
+                                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium shadow-md border border-black dark:border-white ${statusInfo.className}`}>
+                                  {statusInfo.label}
                                 </span>
-                              ) : <div />}
-                              {partners.length > 0 && (
-                                <div className="relative group/partners min-w-0 ml-auto">
-                                  <span className="block px-2.5 py-0.5 rounded-full text-xs font-medium shadow-md border border-black dark:border-white bg-white text-charcoal dark:bg-gray-900 dark:text-gray-300 truncate cursor-default">
-                                    {partners.join(' · ')}
-                                  </span>
-                                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover/partners:block z-20">
-                                    <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-xs rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white max-w-xs whitespace-nowrap">
-                                      {partners.join(', ')}
-                                      <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black dark:border-t-white"></div>
-                                    </div>
-                                  </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="p-7 pt-9">
+                            <div className="relative group/title">
+                              <h3
+                                className="text-lg font-bold line-clamp-2 text-charcoal dark:text-gray-100"
+                                onMouseEnter={(e) => {
+                                  const el = e.currentTarget
+                                  const tooltip = el.nextElementSibling as HTMLElement
+                                  if (tooltip) {
+                                    tooltip.style.display = el.scrollHeight > el.clientHeight ? '' : 'none'
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  const tooltip = e.currentTarget.nextElementSibling as HTMLElement
+                                  if (tooltip) tooltip.style.display = 'none'
+                                }}
+                              >
+                                {project.title}
+                              </h3>
+                              <div className="absolute bottom-full left-0 mb-2 z-20 pointer-events-none" style={{ display: 'none' }}>
+                                <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-sm rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white max-w-xs font-normal">
+                                  {project.title}
                                 </div>
+                              </div>
+                            </div>
+
+                            {/* Info bar */}
+                            {(project.CforC_project_role || partners.length > 0) && (
+                              <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
+                                {/* Labels row */}
+                                <div className="flex justify-between gap-4 mb-1.5">
+                                  {project.CforC_project_role ? (
+                                    <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-600 dark:text-gray-300">Ρόλος CforC</p>
+                                  ) : <div />}
+                                  {partners.length > 0 && (
+                                    <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-600 dark:text-gray-300">Εταίροι</p>
+                                  )}
+                                </div>
+                                {/* Values row */}
+                                <div className="flex items-center justify-between gap-4">
+                                  {project.CforC_project_role ? (
+                                    <span className="flex-shrink-0 inline-block px-2.5 py-0.5 rounded-full text-xs font-medium shadow-md border border-black dark:border-white bg-white text-charcoal dark:bg-gray-900 dark:text-gray-300">
+                                      {project.CforC_project_role}
+                                    </span>
+                                  ) : <div />}
+                                  {partners.length > 0 && (
+                                    <div className="relative group/partners min-w-0 ml-auto">
+                                      <span className="block px-2.5 py-0.5 rounded-full text-xs font-medium shadow-md border border-black dark:border-white bg-white text-charcoal dark:bg-gray-900 dark:text-gray-300 truncate cursor-default">
+                                        {partners.join(' · ')}
+                                      </span>
+                                      <div className="absolute bottom-full right-0 mb-2 hidden group-hover/partners:block z-20">
+                                        <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-xs rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white max-w-xs whitespace-nowrap">
+                                          {partners.join(', ')}
+                                          <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black dark:border-t-white"></div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {projects.map((project) => {
+                      const imageUrl = getImageUrl(project.cover_image)
+                      const statusInfo = project.project_status ? STATUS_LABELS[project.project_status] : null
+                      const partners = project.project_partners
+                        ? project.project_partners.split(',').map((p: string) => p.trim()).filter(Boolean)
+                        : []
+
+                      return (
+                        <Link
+                          key={project.id}
+                          href={`/projects/${project.slug}`}
+                          className="bg-orange-50 dark:bg-gray-700 rounded-2xl overflow-hidden border border-black dark:border-white hover:shadow-lg transition-all duration-300 flex items-center gap-5 p-4 group border-l-4 border-l-transparent hover:border-l-coral dark:hover:border-l-coral-light"
+                        >
+                          {imageUrl ? (
+                            <div className="w-24 h-16 relative rounded-xl overflow-hidden flex-shrink-0">
+                              <Image src={imageUrl} alt={project.title} fill className="object-cover" />
+                            </div>
+                          ) : (
+                            <div className="w-24 h-16 bg-gray-200 dark:bg-gray-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                              <svg className="w-8 h-8 text-gray-400 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                              </svg>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-base font-bold text-charcoal dark:text-gray-100 line-clamp-1 group-hover:text-coral dark:group-hover:text-coral-light transition-colors">{project.title}</h3>
+                            <div className="flex items-center gap-3 mt-1">
+                              {statusInfo && (
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium border border-black dark:border-white ${statusInfo.className}`}>
+                                  {statusInfo.label}
+                                </span>
+                              )}
+                              {project.CforC_project_role && (
+                                <span className="text-xs text-gray-500 dark:text-gray-400">{project.CforC_project_role}</span>
+                              )}
+                              {partners.length > 0 && (
+                                <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block truncate">{partners.join(', ')}</span>
                               )}
                             </div>
                           </div>
-                        )}
-                      </div>
-                    </Link>
-                  )
-                })}
-              </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </section>

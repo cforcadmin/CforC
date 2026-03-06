@@ -16,6 +16,7 @@ import FieldsFilter from '@/components/members/FieldsFilter'
 import CityFilter from '@/components/members/CityFilter'
 import ProvinceFilter from '@/components/members/ProvinceFilter'
 import SortFilter from '@/components/members/SortFilter'
+import ViewToggle from '@/components/shared/ViewToggle'
 import { doesFieldMatchFilter } from '@/lib/memberTaxonomy'
 
 interface Member {
@@ -76,6 +77,7 @@ function MembersPageContent() {
   const [isLoading, setIsLoading] = useState(true)
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
   const [filterLogic, setFilterLogic] = useState<'or' | 'and'>('and')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   // Read URL params for pre-filtering from member profile tags
   useEffect(() => {
@@ -279,7 +281,7 @@ function MembersPageContent() {
                 placeholder="Αναζήτηση ονόματος..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 min-w-[160px] max-w-[240px] px-4 py-3 border border-charcoal dark:border-gray-400 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 placeholder-charcoal dark:placeholder-gray-200"
+                className="flex-1 min-w-[140px] max-w-[200px] px-4 py-3 border border-charcoal dark:border-gray-400 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 placeholder-charcoal dark:placeholder-gray-200"
               />
               <FieldsFilter
                 selectedFields={selectedFields}
@@ -341,40 +343,77 @@ function MembersPageContent() {
                   Καθαρισμός όλων των φίλτρων ({totalActiveFilters})
                 </button>
               )}
+              <ViewToggle view={viewMode} onViewChange={setViewMode} />
             </div>
           </div>
 
-          {/* Members Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredMembers.map((member) => (
-              <Link
-                key={member.id}
-                href={`/members/${member.Slug}`}
-                className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden hover:shadow-xl dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light"
-              >
-                {member.Image && member.Image.length > 0 && member.Image[0].url ? (
-                  <div className="aspect-[10/12] relative bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                    <Image
-                      src={member.Image[0].url}
-                      alt={member.ProfileImageAltText || member.Name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
+          {/* Members Grid/List */}
+          {viewMode === 'grid' ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {filteredMembers.map((member) => (
+                <Link
+                  key={member.id}
+                  href={`/members/${member.Slug}`}
+                  className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden hover:shadow-xl dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light"
+                >
+                  {member.Image && member.Image.length > 0 && member.Image[0].url ? (
+                    <div className="aspect-[10/12] relative bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                      <Image
+                        src={member.Image[0].url}
+                        alt={member.ProfileImageAltText || member.Name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                  ) : (
+                    <div className="aspect-[10/12] bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                      <span className="text-gray-400 dark:text-gray-500 text-4xl">{member.Name.charAt(0)}</span>
+                    </div>
+                  )}
+                  <div className="p-4">
+                    <h3 className="text-base font-light group-hover:font-bold text-charcoal dark:text-gray-100 mb-2 transition-all">{member.Name}</h3>
+                    <div className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-2xl tracking-wide max-w-full">
+                      <p className="line-clamp-2">{member.FieldsOfWork}</p>
+                    </div>
                   </div>
-                ) : (
-                  <div className="aspect-[10/12] bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                    <span className="text-gray-400 dark:text-gray-500 text-4xl">{member.Name.charAt(0)}</span>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {filteredMembers.map((member) => (
+                <Link
+                  key={member.id}
+                  href={`/members/${member.Slug}`}
+                  className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden hover:shadow-xl dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex items-center gap-5 p-4"
+                >
+                  {member.Image && member.Image.length > 0 && member.Image[0].url ? (
+                    <div className="w-16 h-16 relative bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
+                      <Image
+                        src={member.Image[0].url}
+                        alt={member.ProfileImageAltText || member.Name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-gray-400 dark:text-gray-500 text-xl">{member.Name.charAt(0)}</span>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-light group-hover:font-bold text-charcoal dark:text-gray-100 mb-1 transition-all">{member.Name}</h3>
+                    <div className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-2xl tracking-wide max-w-full">
+                      <p className="line-clamp-1">{member.FieldsOfWork}</p>
+                    </div>
                   </div>
-                )}
-                <div className="p-4">
-                  <h3 className="text-base font-light group-hover:font-bold text-charcoal dark:text-gray-100 mb-2 transition-all">{member.Name}</h3>
-                  <div className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-2xl tracking-wide max-w-full">
-                    <p className="line-clamp-2">{member.FieldsOfWork}</p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                  {member.City && member.City !== '-' && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap hidden sm:block">{member.City}</span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          )}
 
           {filteredMembers.length === 0 && (
             <div className="text-center py-12">

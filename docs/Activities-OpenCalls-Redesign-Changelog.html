@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activities &amp; Open Calls Redesign + Grid/List Toggle - Changelog</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #2D2D2D; background: #F5F0EB; padding: 2rem; }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 2rem; margin-bottom: 0.5rem; color: #2D2D2D; }
+    h2 { font-size: 1.5rem; margin-top: 2rem; margin-bottom: 1rem; color: #FF8B6A; border-bottom: 2px solid #FF8B6A; padding-bottom: 0.5rem; }
+    h3 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #2D2D2D; }
+    p { margin-bottom: 0.75rem; }
+    .meta { color: #666; font-size: 0.9rem; margin-bottom: 2rem; }
+    .summary { background: white; border-radius: 1rem; padding: 1.5rem; margin-bottom: 2rem; border-left: 4px solid #FF8B6A; }
+    .section { background: white; border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th, td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #f8f4f0; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    td { font-size: 0.9rem; }
+    code { background: #f0ebe6; padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.85rem; font-family: 'SF Mono', Monaco, monospace; }
+    ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+    li { margin-bottom: 0.35rem; font-size: 0.95rem; }
+    .tag { display: inline-block; background: #FF8B6A20; color: #2D2D2D; border: 1px solid #2D2D2D; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 1rem; margin-right: 0.25rem; }
+    .file-list { list-style: none; margin-left: 0; }
+    .file-list li { padding: 0.4rem 0; border-bottom: 1px solid #f0ebe6; font-family: 'SF Mono', Monaco, monospace; font-size: 0.85rem; }
+    .file-list .label { display: inline-block; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 0.75rem; padding: 0.1rem 0.4rem; border-radius: 0.25rem; margin-left: 0.5rem; }
+    .label-new { background: #d4edda; color: #155724; }
+    .label-mod { background: #fff3cd; color: #856404; }
+    .label-del { background: #f8d7da; color: #721c24; }
+    .label-strapi { background: #d1ecf1; color: #0c5460; }
+    .alert { background: #d4edda; border: 1px solid #28a745; border-radius: 0.75rem; padding: 1rem 1.25rem; margin: 1rem 0; }
+    .alert-title { font-weight: 600; margin-bottom: 0.25rem; }
+    .alert-warn { background: #fff3cd; border: 1px solid #ffc107; }
+    hr { border: none; border-top: 1px solid #e0dbd5; margin: 2rem 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Activities &amp; Open Calls Redesign + Grid/List Toggle</h1>
+    <p class="meta">Date: 2026-03-06 | Scope: Filter bar redesign, view toggles, category system, Strapi schema updates</p>
+
+    <div class="summary">
+      <p><strong>Summary:</strong> Redesigned the Activities and Open Calls pages to match the Members page filter/search pattern. Added a reusable grid/list view toggle to all listing pages. Created shared filter components for consistent UI. Added a Funding Guidelines modal. Removed the Priority field from Open Calls and replaced it with a required Category field in Strapi. Assigned categories to all 63 activities and 73 open calls via keyword-matching scripts.</p>
+    </div>
+
+    <h2>Strapi Schema Changes</h2>
+
+    <div class="section">
+      <h3>Open Calls Collection</h3>
+      <p><strong>Removed:</strong> <code>Priority</code> (boolean, default: false) &mdash; no longer needed</p>
+      <p><strong>Added:</strong> <code>Category</code> (string, required) &mdash; categorization for filtering</p>
+      <p><strong>Files:</strong></p>
+      <ul>
+        <li><code>src/api/open-call/content-types/open-call/schema.json</code></li>
+        <li><code>types/generated/contentTypes.d.ts</code></li>
+      </ul>
+      <p><strong>Git commit:</strong> <code>3a07f7f</code> &mdash; pushed to <code>origin/main</code></p>
+      <p><strong>Backup branch:</strong> <code>Stable-backup-official_OpenCallCategory_V8_6-3-26</code></p>
+
+      <div class="alert-warn alert">
+        <p class="alert-title">Post-deploy reminder</p>
+        <p>Verify Settings &gt; Users &amp; Permissions &gt; Roles &gt; Public has <code>find</code> / <code>findOne</code> enabled for Open Calls.</p>
+      </div>
+    </div>
+
+    <h2>New Shared Components</h2>
+
+    <div class="section">
+      <h3><code>components/shared/ViewToggle.tsx</code></h3>
+      <p>Grid/list toggle with radio group accessibility pattern. SVG icons, charcoal pill buttons matching Members page AND/OR toggle.</p>
+      <p>Props: <code>view</code>, <code>onViewChange</code></p>
+    </div>
+
+    <div class="section">
+      <h3><code>components/shared/CategoryFilter.tsx</code></h3>
+      <p>Single-select dropdown with clear button, inverted colors when active. Click-outside and Escape key dismissal.</p>
+    </div>
+
+    <div class="section">
+      <h3><code>components/shared/YearFilter.tsx</code></h3>
+      <p>Year dropdown with "All" null option. Same styling as CategoryFilter.</p>
+    </div>
+
+    <div class="section">
+      <h3><code>components/shared/SortDropdown.tsx</code></h3>
+      <p>Generic sort dropdown with configurable options. Shows selected label in button.</p>
+    </div>
+
+    <div class="section">
+      <h3><code>components/FundingGuidelinesModal.tsx</code></h3>
+      <p>Modal with 6 funding resource cards in 2-column grid:</p>
+      <ol>
+        <li>On The Move - Funding Resources</li>
+        <li>CulturEU Funding Guide</li>
+        <li>EU Funding &amp; Tenders Portal</li>
+        <li>European Funding Guide</li>
+        <li>EU Calls - Complete Guide</li>
+        <li>EU Funding Explained (Video)</li>
+      </ol>
+      <p>Accessible: <code>role="dialog"</code>, <code>aria-modal</code>, Escape key, body scroll lock.</p>
+    </div>
+
+    <h2>Page Changes</h2>
+
+    <div class="section">
+      <h3>Activities Page <span class="tag">FULL REWRITE</span></h3>
+      <p><code>app/activities/page.tsx</code></p>
+      <p><strong>Filter Bar:</strong> Search, Tab pills (Current/Previous), CategoryFilter, YearFilter (Previous only), SortDropdown, ViewToggle, FundingGuidelinesModal button</p>
+      <p><strong>Grid View:</strong> 3-column grid, rounded-3xl cards, hover border-l-4 coral, date badge, category tag</p>
+      <p><strong>List View:</strong> Horizontal cards with thumbnail, date, title, category</p>
+      <p>Animated counter with <code>aria-live="polite"</code></p>
+    </div>
+
+    <div class="section">
+      <h3>Open Calls Page <span class="tag">FULL REWRITE</span></h3>
+      <p><code>components/OpenCallsContent.tsx</code></p>
+      <p><strong>Filter Bar:</strong> Search, Tab pills, CategoryFilter, YearFilter (Previous only), SortDropdown, ViewToggle</p>
+      <p><strong>Grid View:</strong> md:2 lg:3 grid, deadline badge + category bubble (side by side), description preview, external link arrow</p>
+      <p><strong>List View:</strong> Horizontal layout with date + category stacked, title, description, arrow</p>
+      <p><strong>Removed:</strong> Priority star icon and "Προτεραιοτητα" text from both views</p>
+    </div>
+
+    <div class="section">
+      <h3>Open Calls Section <span class="tag">MODIFIED</span></h3>
+      <p><code>components/OpenCallsSection.tsx</code></p>
+      <p>Replaced Priority badge with Category badge (coral/10 background, charcoal border)</p>
+    </div>
+
+    <div class="section">
+      <h3>Members Page</h3>
+      <p><code>app/members/page.tsx</code></p>
+      <ul>
+        <li>Added <code>viewMode</code> state and ViewToggle to filter bar</li>
+        <li>Shrunk search field from <code>max-w-[240px]</code> to <code>max-w-[200px]</code></li>
+        <li><strong>List view:</strong> Horizontal cards with circular 64px avatar, name, fields of work, city</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h3>Projects Page</h3>
+      <p><code>components/ProjectsContent.tsx</code></p>
+      <ul>
+        <li>Added ViewToggle above grid</li>
+        <li><strong>List view:</strong> Horizontal cards with thumbnail, title, status badge, role, partners</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h3>Newsletters</h3>
+      <p><code>components/NewslettersContent.tsx</code></p>
+      <ul>
+        <li>Added ViewToggle above grid</li>
+        <li><strong>List view:</strong> Horizontal cards with thumbnail, title, date, external link icon</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h3>Working Groups</h3>
+      <p><code>components/WorkingGroupsContent.tsx</code></p>
+      <ul>
+        <li>Added ViewToggle above grid</li>
+        <li><strong>List view:</strong> Horizontal cards with image, name, coordinator, member count, join button</li>
+      </ul>
+    </div>
+
+    <h2>Category System</h2>
+
+    <div class="section">
+      <h3>Activity Categories <span class="tag">ASSIGNED</span></h3>
+      <p>63 activities categorized via <code>scripts/assign-activity-categories.js</code></p>
+      <table>
+        <thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Εκδηλωσεις &amp; Συναντησεις</td><td>15</td><td>Events &amp; Meetings</td></tr>
+          <tr><td>Δικτυωση &amp; Συνεργασιες</td><td>15</td><td>Networking &amp; Collaborations</td></tr>
+          <tr><td>Εκπαιδευση &amp; Εργαστηρια</td><td>12</td><td>Education &amp; Workshops</td></tr>
+          <tr><td>Ενημερωση &amp; Δημοσιευσεις</td><td>12</td><td>Information &amp; Publications</td></tr>
+          <tr><td>Συνηγορια &amp; Δρασεις</td><td>9</td><td>Advocacy &amp; Actions</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h3>Open Call Categories <span class="tag">ASSIGNED</span></h3>
+      <p>73 open calls categorized via <code>scripts/assign-opencall-categories.js --execute</code></p>
+      <table>
+        <thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Καλλιτεχνικες Προσκλησεις</td><td>25</td><td>Artistic Calls</td></tr>
+          <tr><td>Χρηματοδοτησεις &amp; Επιχορηγησεις</td><td>24</td><td>Funding &amp; Grants</td></tr>
+          <tr><td>Εκπαιδευση &amp; Καταρτιση</td><td>12</td><td>Education &amp; Training</td></tr>
+          <tr><td>Δικτυωση &amp; Συνεδρια</td><td>7</td><td>Networking &amp; Conferences</td></tr>
+          <tr><td>Ψηφιακος Μετασχηματισμος</td><td>5</td><td>Digital Transformation</td></tr>
+        </tbody>
+      </table>
+
+      <div class="alert">
+        <p class="alert-title">Completed</p>
+        <p>All 73 open calls have been assigned categories in Strapi. The Category field was deployed via schema push to <code>origin/main</code>, and categories were assigned using keyword matching on titles.</p>
+      </div>
+    </div>
+
+    <h2>Type Changes</h2>
+    <div class="section">
+      <h3><code>lib/types.ts</code></h3>
+      <ul>
+        <li>Removed <code>Priority?: boolean</code> from <code>OpenCall</code> interface</li>
+        <li>Changed <code>Category?: string</code> to <code>Category: string</code> (required)</li>
+      </ul>
+    </div>
+
+    <h2>Files Changed</h2>
+
+    <div class="section">
+      <h3>Website (Next.js)</h3>
+      <ul class="file-list">
+        <li>components/shared/ViewToggle.tsx <span class="label label-new">NEW</span></li>
+        <li>components/shared/CategoryFilter.tsx <span class="label label-new">NEW</span></li>
+        <li>components/shared/YearFilter.tsx <span class="label label-new">NEW</span></li>
+        <li>components/shared/SortDropdown.tsx <span class="label label-new">NEW</span></li>
+        <li>components/FundingGuidelinesModal.tsx <span class="label label-new">NEW</span></li>
+        <li>scripts/assign-activity-categories.js <span class="label label-new">NEW</span></li>
+        <li>scripts/assign-opencall-categories.js <span class="label label-new">NEW</span></li>
+        <li>app/news/page.tsx <span class="label label-mod">REWRITTEN + RENAMED</span></li>
+        <li>components/OpenCallsContent.tsx <span class="label label-mod">REWRITTEN</span></li>
+        <li>components/OpenCallsSection.tsx <span class="label label-mod">MODIFIED</span></li>
+        <li>app/members/page.tsx <span class="label label-mod">MODIFIED</span></li>
+        <li>components/ProjectsContent.tsx <span class="label label-mod">MODIFIED</span></li>
+        <li>components/NewslettersContent.tsx <span class="label label-mod">MODIFIED</span></li>
+        <li>components/WorkingGroupsContent.tsx <span class="label label-mod">MODIFIED</span></li>
+        <li>lib/types.ts <span class="label label-mod">MODIFIED</span></li>
+        <li>scripts/fetch-content-titles.js <span class="label label-del">DELETED</span></li>
+      </ul>
+
+      <h3>Strapi DB (<code>StrapiDBforCforC</code>)</h3>
+      <ul class="file-list">
+        <li>src/api/open-call/content-types/open-call/schema.json <span class="label label-strapi">SCHEMA</span></li>
+        <li>types/generated/contentTypes.d.ts <span class="label label-strapi">TYPES</span></li>
+      </ul>
+    </div>
+
+    <h2>Accessibility</h2>
+
+    <div class="section">
+      <ul>
+        <li>All filter components use <code>aria-label</code> in Greek</li>
+        <li>Tab pills: <code>role="tablist"</code> / <code>role="tab"</code> / <code>aria-selected</code></li>
+        <li>Sort dropdown: <code>role="listbox"</code> / <code>role="option"</code> / <code>aria-selected</code></li>
+        <li>ViewToggle: <code>role="radiogroup"</code> / <code>role="radio"</code> / <code>aria-checked</code></li>
+        <li>Animated counter: <code>aria-live="polite"</code></li>
+        <li>Dates use semantic <code>&lt;time&gt;</code> elements with <code>dateTime</code></li>
+        <li>Focus rings: <code>focus:ring-2 focus:ring-coral</code></li>
+      </ul>
+    </div>
+
+    <h2>Activities &rarr; News Rename + Background Color</h2>
+
+    <div class="section">
+      <h3>URL Route Rename</h3>
+      <p><code>app/activities/</code> directory renamed to <code>app/news/</code></p>
+      <p>All routes: <code>/activities</code> &rarr; <code>/news</code>, <code>/activities/[slug]</code> &rarr; <code>/news/[slug]</code></p>
+
+      <h3>Background Color</h3>
+      <ul>
+        <li>News page + Open Calls page: changed to <code>bg-[#F5F0EB]</code> (matching Members page)</li>
+        <li>Both pages now use <code>&lt;Footer variant="members" /&gt;</code> for matching footer bg</li>
+      </ul>
+
+      <h3>Text/Label Updates</h3>
+      <ul>
+        <li>Hero: ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ &rarr; ΝΕΑ</li>
+        <li>Description, search labels, empty states updated to use "νέα"</li>
+        <li>Back links: "Επιστροφή στις δραστηριότητες" &rarr; "Επιστροφή στα νέα"</li>
+        <li>Homepage section: "ΠΡΟΣΦΑΤΕΣ ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ" &rarr; "ΠΡΟΣΦΑΤΑ ΝΕΑ"</li>
+        <li>Metadata: title "Δραστηριότητες" &rarr; "Νέα"</li>
+      </ul>
+
+      <h3>Files Updated</h3>
+      <ul class="file-list">
+        <li>app/news/ (renamed from app/activities/) <span class="label label-mod">RENAMED</span></li>
+        <li>app/news/layout.tsx <span class="label label-mod">METADATA</span></li>
+        <li>app/news/[slug]/page.tsx <span class="label label-mod">URLS</span></li>
+        <li>app/news/[slug]/ActivityDetailClient.tsx <span class="label label-mod">LINKS + TEXT</span></li>
+        <li>app/open-calls/page.tsx <span class="label label-mod">BG COLOR</span></li>
+        <li>components/Navigation.tsx <span class="label label-mod">NAV LINKS</span></li>
+        <li>components/Footer.tsx <span class="label label-mod">SITEMAP LINK</span></li>
+        <li>components/ActivitiesSection.tsx <span class="label label-mod">HEADINGS + LINKS</span></li>
+        <li>components/OpenCallsContent.tsx <span class="label label-mod">BG COLOR</span></li>
+        <li>app/sitemap.ts <span class="label label-mod">URLS</span></li>
+        <li>__tests__/e2e/activities.spec.ts <span class="label label-mod">URLS</span></li>
+        <li>__tests__/e2e/navigation.spec.ts <span class="label label-mod">URLS</span></li>
+        <li>__tests__/e2e/seo-metadata.spec.ts <span class="label label-mod">URLS</span></li>
+      </ul>
+
+      <div class="alert">
+        <p class="alert-title">Not Changed (intentional)</p>
+        <p>Strapi API endpoints (<code>/activities</code>) and internal functions (<code>getActivities()</code>) remain unchanged &mdash; the Strapi collection name is still "Activities".</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

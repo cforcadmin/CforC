@@ -1,0 +1,482 @@
+'use client'
+
+import { useEffect, useState, useMemo, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import Navigation from '@/components/Navigation'
+import Footer from '@/components/Footer'
+import CookieConsent from '@/components/CookieConsent'
+import CombinedCtaSection from '@/components/CombinedCtaSection'
+import ScrollToTop from '@/components/ScrollToTop'
+import LoadingIndicator from '@/components/LoadingIndicator'
+import Link from 'next/link'
+import Image from 'next/image'
+import { getActivities } from '@/lib/strapi'
+import type { StrapiResponse, Activity } from '@/lib/types'
+import LocalizedText from '@/components/LocalizedText'
+import { AccessibilityButton } from '@/components/AccessibilityMenu'
+import ViewToggle from '@/components/shared/ViewToggle'
+import CategoryFilter from '@/components/shared/CategoryFilter'
+import YearFilter from '@/components/shared/YearFilter'
+import SortDropdown from '@/components/shared/SortDropdown'
+import FundingGuidelinesModal from '@/components/FundingGuidelinesModal'
+
+function extractTextFromBlocks(blocks: any): string {
+  if (!blocks) return ''
+  if (typeof blocks === 'string') return blocks
+  if (Array.isArray(blocks)) {
+    return blocks
+      .map((block: any) => {
+        if (block.type === 'paragraph' && block.children) {
+          return block.children.map((child: any) => child.type === 'link' && child.children ? child.children.map((c: any) => c.text || '').join('') : child.text || '').join('')
+        }
+        return ''
+      })
+      .filter(Boolean)
+      .join(' ')
+  }
+  return ''
+}
+
+const SORT_OPTIONS = [
+  { value: 'date-asc', label: 'Πιο πρόσφατες πρώτα' },
+  { value: 'date-desc', label: 'Παλαιότερες πρώτα' },
+]
+
+function ActivitiesPageContent() {
+  const searchParams = useSearchParams()
+  const [allActivities, setAllActivities] = useState<Activity[]>([])
+  const [filteredActivities, setFilteredActivities] = useState<Activity[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
+
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeTab, setActiveTab] = useState<'current' | 'previous'>('current')
+  const [selectedCategory, setSelectedCategory] = useState('')
+  const [selectedYear, setSelectedYear] = useState<number | null>(null)
+  const [sortMode, setSortMode] = useState('date-asc')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+
+  // Animated counter
+  const [displayCount, setDisplayCount] = useState(0)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY
+      const fadeStart = 50
+      const fadeEnd = 150
+      if (scrollPosition <= fadeStart) setAccessibilityButtonScale(1)
+      else if (scrollPosition >= fadeEnd) setAccessibilityButtonScale(0)
+      else setAccessibilityButtonScale(1 - (scrollPosition - fadeStart) / (fadeEnd - fadeStart))
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  useEffect(() => {
+    const fromParam = searchParams.get('from')
+    if (fromParam === 'previous') setActiveTab('previous')
+    else if (fromParam === 'current') setActiveTab('current')
+  }, [searchParams])
+
+  useEffect(() => {
+    async function fetchActivities() {
+      try {
+        setLoading(true)
+        const response: StrapiResponse<Activity[]> = await getActivities()
+        setAllActivities(response.data)
+      } catch (err) {
+        setError('Failed to load activities')
+        console.error('Error fetching activities:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchActivities()
+  }, [])
+
+  // Auto-switch to "previous" tab if no current entries exist (and URL didn't specify a tab)
+  useEffect(() => {
+    if (allActivities.length > 0 && !searchParams.get('from')) {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const hasCurrentEntries = allActivities.some(a => new Date(a.Date) >= today)
+      if (!hasCurrentEntries) {
+        setActiveTab('previous')
+      }
+    }
+  }, [allActivities, searchParams])
+
+  // Derive available categories and years from data
+  const availableCategories = useMemo(() => {
+    const cats = new Set<string>()
+    allActivities.forEach(a => { if (a.Category) cats.add(a.Category) })
+    return Array.from(cats).sort((a, b) => a.localeCompare(b, 'el'))
+  }, [allActivities])
+
+  const availableYears = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const years = new Set<number>()
+    allActivities
+      .filter(a => activeTab === 'previous' ? new Date(a.Date) < today : new Date(a.Date) >= today)
+      .forEach(a => { if (a.Date) years.add(new Date(a.Date).getFullYear()) })
+    return Array.from(years).sort((a, b) => b - a)
+  }, [allActivities, activeTab])
+
+  // Apply filters
+  useEffect(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    let result = [...allActivities]
+
+    // Tab filter
+    if (activeTab === 'current') {
+      result = result.filter(a => new Date(a.Date) >= today)
+    } else {
+      result = result.filter(a => new Date(a.Date) < today)
+    }
+
+    // Category filter
+    if (selectedCategory) {
+      result = result.filter(a => a.Category === selectedCategory)
+    }
+
+    // Year filter
+    if (selectedYear) {
+      result = result.filter(a => new Date(a.Date).getFullYear() === selectedYear)
+    }
+
+    // Search filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(a =>
+        a.Title.toLowerCase().includes(q) ||
+        extractTextFromBlocks(a.Description).toLowerCase().includes(q)
+      )
+    }
+
+    // Sort
+    if (sortMode === 'date-asc') {
+      result.sort((a, b) => activeTab === 'current'
+        ? new Date(a.Date).getTime() - new Date(b.Date).getTime()
+        : new Date(b.Date).getTime() - new Date(a.Date).getTime()
+      )
+    } else {
+      result.sort((a, b) => activeTab === 'current'
+        ? new Date(b.Date).getTime() - new Date(a.Date).getTime()
+        : new Date(a.Date).getTime() - new Date(b.Date).getTime()
+      )
+    }
+
+    setFilteredActivities(result)
+  }, [allActivities, searchQuery, activeTab, selectedCategory, selectedYear, sortMode])
+
+  // Animated counter
+  useEffect(() => {
+    const end = filteredActivities.length
+    if (end === 0) { setDisplayCount(0); return }
+    let start = 0
+    const increment = end / (1000 / 16)
+    const timer = setInterval(() => {
+      start += increment
+      if (start >= end) { setDisplayCount(end); clearInterval(timer) }
+      else setDisplayCount(Math.floor(start))
+    }, 16)
+    return () => clearInterval(timer)
+  }, [filteredActivities])
+
+  // Reset year when switching tabs
+  useEffect(() => { setSelectedYear(null) }, [activeTab])
+
+  const totalActiveFilters = (selectedCategory ? 1 : 0) + (selectedYear ? 1 : 0) + (searchQuery ? 1 : 0)
+
+  const clearAllFilters = () => {
+    setSearchQuery('')
+    setSelectedCategory('')
+    setSelectedYear(null)
+  }
+
+  return (
+    <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
+      <Navigation />
+      <main id="main-content">
+        {/* Hero Section */}
+        <section className="relative -bottom-20">
+          <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
+                <div>ΝΕΑ</div>
+              </h1>
+            </div>
+            <div
+              className="absolute right-6 lg:right-12 top-1/2 -translate-y-1/2 transition-all duration-200"
+              style={{
+                transform: `translateY(-50%) scale(${accessibilityButtonScale})`,
+                opacity: accessibilityButtonScale,
+                pointerEvents: accessibilityButtonScale < 0.1 ? 'none' : 'auto'
+              }}
+            >
+              <AccessibilityButton />
+            </div>
+          </div>
+        </section>
+
+        {/* Main Content */}
+        <section className="py-24 bg-[#F5F0EB] dark:bg-gray-900">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {loading && <LoadingIndicator />}
+
+            {/* Info Box with count */}
+            <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 mb-6 relative shadow-sm">
+              <div className="absolute top-8 right-8">
+                <div className="bg-white dark:bg-gray-700 px-6 py-3 rounded-full border-2 border-charcoal dark:border-gray-400">
+                  <p className="text-sm font-bold text-gray-700 dark:text-gray-200" aria-live="polite">
+                    Αποτελέσματα: <span className="text-coral dark:text-coral-light">{displayCount}</span>
+                  </p>
+                </div>
+              </div>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed max-w-4xl">
+                Παρακολούθησε τα νέα του Δικτύου Culture for Change: εκδηλώσεις, εργαστήρια, δικτυώσεις, δράσεις συνηγορίας και ενημερωτικά δελτία.
+              </p>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 mb-12 shadow-sm">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Search */}
+                <input
+                  type="text"
+                  placeholder="Αναζήτηση..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 min-w-[140px] max-w-[200px] px-4 py-3 border border-charcoal dark:border-gray-400 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 placeholder-charcoal dark:placeholder-gray-400"
+                  aria-label="Αναζήτηση νέων"
+                />
+
+                {/* Tabs as pills */}
+                <div className="flex rounded-full border border-charcoal dark:border-gray-400 overflow-hidden" role="tablist" aria-label="Φίλτρο χρόνου">
+                  <button
+                    onClick={() => setActiveTab('current')}
+                    className={`px-4 py-3 text-sm font-medium transition-colors ${
+                      activeTab === 'current'
+                        ? 'bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900'
+                        : 'text-charcoal dark:text-gray-200 hover:bg-charcoal/10 dark:hover:bg-gray-600'
+                    }`}
+                    role="tab"
+                    aria-selected={activeTab === 'current'}
+                  >
+                    Τρέχουσες
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('previous')}
+                    className={`px-4 py-3 text-sm font-medium transition-colors border-l border-charcoal dark:border-gray-400 ${
+                      activeTab === 'previous'
+                        ? 'bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900'
+                        : 'text-charcoal dark:text-gray-200 hover:bg-charcoal/10 dark:hover:bg-gray-600'
+                    }`}
+                    role="tab"
+                    aria-selected={activeTab === 'previous'}
+                  >
+                    Προηγούμενες
+                  </button>
+                </div>
+
+                {/* Category */}
+                {availableCategories.length > 0 && (
+                  <CategoryFilter
+                    categories={availableCategories}
+                    selectedCategory={selectedCategory}
+                    onCategoryChange={setSelectedCategory}
+                  />
+                )}
+
+                {/* Year - only in Previous tab */}
+                {activeTab === 'previous' && availableYears.length > 0 && (
+                  <YearFilter
+                    years={availableYears}
+                    selectedYear={selectedYear}
+                    onYearChange={setSelectedYear}
+                  />
+                )}
+
+                {/* Sort */}
+                <SortDropdown
+                  options={SORT_OPTIONS}
+                  selected={sortMode}
+                  onSortChange={setSortMode}
+                />
+
+                {/* View Toggle */}
+                <ViewToggle view={viewMode} onViewChange={setViewMode} />
+
+                {/* Funding Guidelines */}
+                <FundingGuidelinesModal />
+
+                {/* Clear filters */}
+                {totalActiveFilters > 0 && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="px-3 py-3 text-xs font-medium text-coral dark:text-coral-light hover:underline whitespace-nowrap"
+                  >
+                    Καθαρισμός φίλτρων ({totalActiveFilters})
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Error */}
+            {error && !loading && (
+              <div className="bg-orange-50 dark:bg-gray-700 border border-orange-200 dark:border-gray-600 rounded-lg p-6 text-center">
+                <p className="text-orange-600 dark:text-orange-400 font-medium">{error}</p>
+              </div>
+            )}
+
+            {/* No Results */}
+            {!loading && !error && filteredActivities.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-600 dark:text-gray-400">Δεν βρέθηκαν νέα με τα επιλεγμένα κριτήρια.</p>
+              </div>
+            )}
+
+            {/* Grid View */}
+            {!loading && !error && filteredActivities.length > 0 && viewMode === 'grid' && (
+              <div className="grid md:grid-cols-3 gap-8">
+                {filteredActivities.map((activity) => (
+                  <Link
+                    key={activity.id}
+                    href={`/news/${activity.Slug || activity.documentId || activity.id}?from=${activeTab}`}
+                    className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden hover:shadow-xl dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light"
+                  >
+                    {/* Image */}
+                    <div className="relative">
+                      {activity.Visuals && activity.Visuals.length > 0 ? (
+                        <div className="aspect-video overflow-hidden">
+                          <Image
+                            src={activity.Visuals[0].url.startsWith('http') ? activity.Visuals[0].url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${activity.Visuals[0].url}`}
+                            alt={activity.ImageAltText || activity.Title}
+                            width={activity.Visuals[0].width}
+                            height={activity.Visuals[0].height}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-video bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                          <span className="text-gray-400 dark:text-gray-500 text-4xl">{activity.Title.charAt(0)}</span>
+                        </div>
+                      )}
+                      {/* Date badge */}
+                      <div className="absolute top-3 left-3">
+                        <time
+                          dateTime={activity.Date}
+                          className="inline-block bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-charcoal dark:text-gray-200 shadow-sm"
+                        >
+                          {new Date(activity.Date).toLocaleDateString('el-GR')}
+                        </time>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-5">
+                      <h3 className="text-base font-light group-hover:font-bold text-charcoal dark:text-gray-100 mb-3 line-clamp-3 transition-all">
+                        <LocalizedText text={activity.Title} engText={activity.EngTitle} />
+                      </h3>
+                      {activity.Category && (
+                        <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-2xl tracking-wide">
+                          {activity.Category}
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {/* List View */}
+            {!loading && !error && filteredActivities.length > 0 && viewMode === 'list' && (
+              <div className="space-y-3">
+                {filteredActivities.map((activity) => (
+                  <Link
+                    key={activity.id}
+                    href={`/news/${activity.Slug || activity.documentId || activity.id}?from=${activeTab}`}
+                    className="flex items-center gap-4 md:gap-6 bg-white dark:bg-gray-800 rounded-2xl p-4 hover:shadow-lg dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light"
+                  >
+                    {/* Thumbnail */}
+                    {activity.Visuals && activity.Visuals.length > 0 ? (
+                      <div className="w-24 h-16 md:w-32 md:h-20 rounded-xl overflow-hidden flex-shrink-0">
+                        <Image
+                          src={activity.Visuals[0].url.startsWith('http') ? activity.Visuals[0].url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${activity.Visuals[0].url}`}
+                          alt={activity.ImageAltText || activity.Title}
+                          width={activity.Visuals[0].width}
+                          height={activity.Visuals[0].height}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-24 h-16 md:w-32 md:h-20 rounded-xl bg-gray-200 dark:bg-gray-700 flex-shrink-0 flex items-center justify-center">
+                        <span className="text-gray-400 dark:text-gray-500 text-xl">{activity.Title.charAt(0)}</span>
+                      </div>
+                    )}
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm md:text-base font-light group-hover:font-bold text-charcoal dark:text-gray-100 line-clamp-2 transition-all">
+                        <LocalizedText text={activity.Title} engText={activity.EngTitle} />
+                      </h3>
+                      <div className="flex items-center gap-3 mt-1.5">
+                        <time dateTime={activity.Date} className="text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(activity.Date).toLocaleDateString('el-GR')}
+                        </time>
+                        {activity.Category && (
+                          <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-2 py-0.5 rounded-xl">
+                            {activity.Category}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        <CombinedCtaSection />
+      </main>
+      <Footer variant="members" />
+      <CookieConsent />
+      <ScrollToTop />
+    </div>
+  )
+}
+
+export default function ActivitiesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
+        <Navigation />
+        <main id="main-content">
+          <section className="relative -bottom-20">
+            <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
+                  <div>ΝΕΑ</div>
+                </h1>
+              </div>
+            </div>
+          </section>
+          <section className="py-24 bg-[#F5F0EB] dark:bg-gray-900">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <LoadingIndicator />
+            </div>
+          </section>
+        </main>
+        <Footer variant="members" />
+      </div>
+    }>
+      <ActivitiesPageContent />
+    </Suspense>
+  )
+}

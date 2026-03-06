@@ -1,18 +1,20 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getOpenCalls } from '@/lib/strapi'
 import type { StrapiResponse, OpenCall } from '@/lib/types'
 import LocalizedText from '@/components/LocalizedText'
 import LoadingIndicator from '@/components/LoadingIndicator'
+import ViewToggle from '@/components/shared/ViewToggle'
+import CategoryFilter from '@/components/shared/CategoryFilter'
+import YearFilter from '@/components/shared/YearFilter'
+import SortDropdown from '@/components/shared/SortDropdown'
 
-// Helper function to extract text from Strapi rich text blocks
 function extractTextFromBlocks(blocks: any): string {
   if (!blocks) return ''
   if (typeof blocks === 'string') return blocks
-
   if (Array.isArray(blocks)) {
     return blocks
       .map((block: any) => {
@@ -24,32 +26,30 @@ function extractTextFromBlocks(blocks: any): string {
       .filter(Boolean)
       .join(' ')
   }
-
   return ''
 }
+
+const SORT_OPTIONS = [
+  { value: 'deadline-asc', label: 'Πιο κοντινή προθεσμία' },
+  { value: 'deadline-desc', label: 'Πιο μακρινή προθεσμία' },
+]
 
 export default function OpenCallsContent() {
   const [allOpenCalls, setAllOpenCalls] = useState<OpenCall[]>([])
   const [filteredCalls, setFilteredCalls] = useState<OpenCall[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isGreek, setIsGreek] = useState(true)
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'current' | 'previous'>('current')
+  const [selectedCategory, setSelectedCategory] = useState('')
+  const [selectedYear, setSelectedYear] = useState<number | null>(null)
+  const [sortMode, setSortMode] = useState('deadline-asc')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
-  // Detect language changes (e.g., Google Translate)
-  useEffect(() => {
-    const checkLanguage = () => {
-      const lang = document.documentElement.lang
-      setIsGreek(lang === 'el' || lang === 'el-GR' || lang === '')
-    }
-
-    checkLanguage()
-    const interval = setInterval(checkLanguage, 1000)
-    return () => clearInterval(interval)
-  }, [])
+  // Animated counter
+  const [displayCount, setDisplayCount] = useState(0)
 
   useEffect(() => {
     async function fetchOpenCalls() {
@@ -57,7 +57,6 @@ export default function OpenCallsContent() {
         setLoading(true)
         const response: StrapiResponse<OpenCall[]> = await getOpenCalls()
         setAllOpenCalls(response.data)
-        setFilteredCalls(response.data)
       } catch (err) {
         setError('Failed to load open calls')
         console.error('Error fetching open calls:', err)
@@ -65,11 +64,27 @@ export default function OpenCallsContent() {
         setLoading(false)
       }
     }
-
     fetchOpenCalls()
   }, [])
 
-  // Apply filters and sorting
+  // Derive categories and years
+  const availableCategories = useMemo(() => {
+    const cats = new Set<string>()
+    allOpenCalls.forEach(c => { if (c.Category) cats.add(c.Category) })
+    return Array.from(cats).sort((a, b) => a.localeCompare(b, 'el'))
+  }, [allOpenCalls])
+
+  const availableYears = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const years = new Set<number>()
+    allOpenCalls
+      .filter(c => activeTab === 'previous' ? new Date(c.Deadline) < today : new Date(c.Deadline) >= today)
+      .forEach(c => { if (c.Deadline) years.add(new Date(c.Deadline).getFullYear()) })
+    return Array.from(years).sort((a, b) => b - a)
+  }, [allOpenCalls, activeTab])
+
+  // Apply filters
   useEffect(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -77,90 +92,181 @@ export default function OpenCallsContent() {
     let result = [...allOpenCalls]
 
     if (activeTab === 'current') {
-      result = result.filter(call => new Date(call.Deadline) >= today)
-      result.sort((a, b) => new Date(a.Deadline).getTime() - new Date(b.Deadline).getTime())
+      result = result.filter(c => new Date(c.Deadline) >= today)
     } else {
-      result = result.filter(call => new Date(call.Deadline) < today)
-      result.sort((a, b) => new Date(b.Deadline).getTime() - new Date(a.Deadline).getTime())
+      result = result.filter(c => new Date(c.Deadline) < today)
+    }
+
+    if (selectedCategory) {
+      result = result.filter(c => c.Category === selectedCategory)
+    }
+
+    if (selectedYear) {
+      result = result.filter(c => new Date(c.Deadline).getFullYear() === selectedYear)
     }
 
     if (searchQuery) {
-      const descriptionTextMap = new Map(
-        result.map(call => [call.id, extractTextFromBlocks(call.Description)])
+      const q = searchQuery.toLowerCase()
+      result = result.filter(c =>
+        c.Title.toLowerCase().includes(q) ||
+        extractTextFromBlocks(c.Description).toLowerCase().includes(q)
       )
+    }
 
-      result = result.filter(call =>
-        call.Title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        descriptionTextMap.get(call.id)?.toLowerCase().includes(searchQuery.toLowerCase())
+    if (sortMode === 'deadline-asc') {
+      result.sort((a, b) => activeTab === 'current'
+        ? new Date(a.Deadline).getTime() - new Date(b.Deadline).getTime()
+        : new Date(b.Deadline).getTime() - new Date(a.Deadline).getTime()
+      )
+    } else {
+      result.sort((a, b) => activeTab === 'current'
+        ? new Date(b.Deadline).getTime() - new Date(a.Deadline).getTime()
+        : new Date(a.Deadline).getTime() - new Date(b.Deadline).getTime()
       )
     }
 
     setFilteredCalls(result)
-  }, [allOpenCalls, searchQuery, activeTab])
+  }, [allOpenCalls, searchQuery, activeTab, selectedCategory, selectedYear, sortMode])
+
+  // Animated counter
+  useEffect(() => {
+    const end = filteredCalls.length
+    if (end === 0) { setDisplayCount(0); return }
+    let start = 0
+    const increment = end / (1000 / 16)
+    const timer = setInterval(() => {
+      start += increment
+      if (start >= end) { setDisplayCount(end); clearInterval(timer) }
+      else setDisplayCount(Math.floor(start))
+    }, 16)
+    return () => clearInterval(timer)
+  }, [filteredCalls])
+
+  // Reset year when switching tabs
+  useEffect(() => { setSelectedYear(null) }, [activeTab])
+
+  const totalActiveFilters = (selectedCategory ? 1 : 0) + (selectedYear ? 1 : 0) + (searchQuery ? 1 : 0)
+
+  const clearAllFilters = () => {
+    setSearchQuery('')
+    setSelectedCategory('')
+    setSelectedYear(null)
+  }
+
+  function getImageUrl(call: OpenCall): string | null {
+    if (!call.Image) return null
+    if (Array.isArray(call.Image) && call.Image.length > 0) {
+      const url = call.Image[0].url
+      return url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
+    }
+    if (typeof call.Image === 'object' && !Array.isArray(call.Image) && 'url' in call.Image) {
+      const url = call.Image.url
+      return url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
+    }
+    return null
+  }
 
   return (
-    <section className="py-24 bg-orange-50 dark:bg-gray-800">
+    <section className="py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Loading Indicator */}
         {loading && <LoadingIndicator />}
 
-        {/* Description */}
-        <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-3xl text-base leading-relaxed">
-          Εδώ θα βρεις τις τρέχουσες ευκαιρίες χρηματοδότησης, συνεργασίας και συμμετοχής σε πολιτιστικά προγράμματα. Φιλτράρισε ανά κατηγορία ή αναζήτησε αυτό που σε ενδιαφέρει. Οι προσκλήσεις ανανεώνονται τακτικά — μείνε συντονισμένος/η!
-        </p>
-
-        {/* Tabs and Search Section */}
-        <div className="mb-12">
-          {/* Tabs */}
-          <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700">
-            <button
-              onClick={() => setActiveTab('current')}
-              className={`px-6 py-3 font-medium transition-all ${
-                activeTab === 'current'
-                  ? 'text-coral dark:text-coral-light border-b-2 border-coral dark:border-coral-light'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-coral dark:hover:text-coral-light'
-              }`}
-            >
-              Τρέχουσες
-            </button>
-            <button
-              onClick={() => setActiveTab('previous')}
-              className={`px-6 py-3 font-medium transition-all ${
-                activeTab === 'previous'
-                  ? 'text-coral dark:text-coral-light border-b-2 border-coral dark:border-coral-light'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-coral dark:hover:text-coral-light'
-              }`}
-            >
-              Προηγούμενες
-            </button>
-          </div>
-
-          {/* Search - Only show for Greek language */}
-          {isGreek && (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md dark:shadow-gray-700/50">
-              <div className="max-w-xl">
-                <label htmlFor="open-calls-search" className="block text-sm font-medium text-charcoal dark:text-gray-200 mb-2">
-                  Αναζήτηση
-                </label>
-                <input
-                  id="open-calls-search"
-                  type="text"
-                  placeholder="Αναζήτηση κατά λέξη..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-coral focus:border-transparent dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400"
-                />
-              </div>
-
-              {/* Results count */}
-              <div className="mt-4 text-sm text-gray-600 dark:text-gray-300">
-                Βρέθηκαν {filteredCalls.length} προσκλήσεις
-              </div>
+        {/* Info Box with count */}
+        <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 mb-6 relative shadow-sm">
+          <div className="absolute top-8 right-8">
+            <div className="bg-white dark:bg-gray-700 px-6 py-3 rounded-full border-2 border-charcoal dark:border-gray-400">
+              <p className="text-sm font-bold text-gray-700 dark:text-gray-200" aria-live="polite">
+                Αποτελέσματα: <span className="text-coral dark:text-coral-light">{displayCount}</span>
+              </p>
             </div>
-          )}
+          </div>
+          <p className="text-gray-700 dark:text-gray-300 leading-relaxed max-w-4xl">
+            Εδώ θα βρεις τις τρέχουσες ευκαιρίες χρηματοδότησης, συνεργασίας και συμμετοχής σε πολιτιστικά προγράμματα. Φιλτράρισε ανά κατηγορία ή αναζήτησε αυτό που σε ενδιαφέρει.
+          </p>
         </div>
 
-        {/* Error State */}
+        {/* Filter Bar */}
+        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 mb-12 shadow-sm">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Search */}
+            <input
+              type="text"
+              placeholder="Αναζήτηση..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 min-w-[140px] max-w-[200px] px-4 py-3 border border-charcoal dark:border-gray-400 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 placeholder-charcoal dark:placeholder-gray-400"
+              aria-label="Αναζήτηση προσκλήσεων"
+            />
+
+            {/* Tabs as pills */}
+            <div className="flex rounded-full border border-charcoal dark:border-gray-400 overflow-hidden" role="tablist" aria-label="Φίλτρο κατάστασης">
+              <button
+                onClick={() => setActiveTab('current')}
+                className={`px-4 py-3 text-sm font-medium transition-colors ${
+                  activeTab === 'current'
+                    ? 'bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900'
+                    : 'text-charcoal dark:text-gray-200 hover:bg-charcoal/10 dark:hover:bg-gray-600'
+                }`}
+                role="tab"
+                aria-selected={activeTab === 'current'}
+              >
+                Τρέχουσες
+              </button>
+              <button
+                onClick={() => setActiveTab('previous')}
+                className={`px-4 py-3 text-sm font-medium transition-colors border-l border-charcoal dark:border-gray-400 ${
+                  activeTab === 'previous'
+                    ? 'bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900'
+                    : 'text-charcoal dark:text-gray-200 hover:bg-charcoal/10 dark:hover:bg-gray-600'
+                }`}
+                role="tab"
+                aria-selected={activeTab === 'previous'}
+              >
+                Προηγούμενες
+              </button>
+            </div>
+
+            {/* Category */}
+            {availableCategories.length > 0 && (
+              <CategoryFilter
+                categories={availableCategories}
+                selectedCategory={selectedCategory}
+                onCategoryChange={setSelectedCategory}
+              />
+            )}
+
+            {/* Year - only in Previous tab */}
+            {activeTab === 'previous' && availableYears.length > 0 && (
+              <YearFilter
+                years={availableYears}
+                selectedYear={selectedYear}
+                onYearChange={setSelectedYear}
+              />
+            )}
+
+            {/* Sort */}
+            <SortDropdown
+              options={SORT_OPTIONS}
+              selected={sortMode}
+              onSortChange={setSortMode}
+            />
+
+            {/* View Toggle */}
+            <ViewToggle view={viewMode} onViewChange={setViewMode} />
+
+            {/* Clear filters */}
+            {totalActiveFilters > 0 && (
+              <button
+                onClick={clearAllFilters}
+                className="px-3 py-3 text-xs font-medium text-coral dark:text-coral-light hover:underline whitespace-nowrap"
+              >
+                Καθαρισμός φίλτρων ({totalActiveFilters})
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Error */}
         {error && !loading && (
           <div className="bg-orange-50 dark:bg-gray-700 border border-orange-200 dark:border-gray-600 rounded-lg p-6 text-center">
             <p className="text-orange-600 dark:text-orange-400 font-medium">{error}</p>
@@ -169,102 +275,135 @@ export default function OpenCallsContent() {
 
         {/* No Results */}
         {!loading && !error && filteredCalls.length === 0 && (
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-6 text-center">
-            <p className="text-gray-600 dark:text-gray-400 font-medium">
-              Δεν βρέθηκαν προσκλήσεις με αυτά τα κριτήρια
-            </p>
+          <div className="text-center py-12">
+            <p className="text-gray-600 dark:text-gray-400">Δεν βρέθηκαν προσκλήσεις με τα επιλεγμένα κριτήρια.</p>
           </div>
         )}
 
-        {/* Open Calls List */}
-        {!loading && !error && filteredCalls.length > 0 && (
-          <div className="space-y-0">
-            {filteredCalls.map((call, index) => {
+        {/* Grid View */}
+        {!loading && !error && filteredCalls.length > 0 && viewMode === 'grid' && (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCalls.map((call) => {
               const descriptionText = extractTextFromBlocks(call.Description)
               const engDescriptionText = call.EngDescription ? extractTextFromBlocks(call.EngDescription) : null
-
-              let imageUrl = null
-              if (call.Image) {
-                if (Array.isArray(call.Image) && call.Image.length > 0) {
-                  const url = call.Image[0].url
-                  imageUrl = url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
-                } else if (typeof call.Image === 'object' && !Array.isArray(call.Image) && 'url' in call.Image) {
-                  const url = call.Image.url
-                  imageUrl = url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
-                }
-              }
+              const imageUrl = getImageUrl(call)
 
               return (
-                <div key={call.id}>
-                  {index > 0 && <hr className="border-gray-300 dark:border-gray-600" aria-hidden="true" />}
-                  <Link
-                    href={call.Link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group block py-12 hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl transition-all duration-300 relative rounded-2xl"
-                  >
-                    {/* Arrow Icon - Far Top Right Corner */}
-                    <div className="absolute top-6 right-2">
+                <a
+                  key={call.id}
+                  href={call.Link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden hover:shadow-xl dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col"
+                  aria-label={`${call.Title} (ανοίγει σε νέα καρτέλα)`}
+                >
+                  {/* Image if exists */}
+                  {imageUrl && (
+                    <div className="aspect-video overflow-hidden">
+                      <Image
+                        src={imageUrl}
+                        alt={call.ImageAltText || call.Title}
+                        width={400}
+                        height={225}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                  )}
+
+                  <div className="p-5 flex flex-col flex-1">
+                    {/* Date + Category badges */}
+                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                      <time
+                        dateTime={call.Deadline}
+                        className="inline-block bg-charcoal dark:bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-medium"
+                      >
+                        {new Date(call.Deadline).toLocaleDateString('el-GR')}
+                      </time>
+                      {call.Category && (
+                        <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-full">
+                          {call.Category}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-lg font-bold mb-2 text-charcoal dark:text-gray-100 group-hover:text-coral dark:group-hover:text-coral-light transition-colors line-clamp-2">
+                      <LocalizedText text={call.Title} engText={call.EngTitle} />
+                    </h3>
+
+                    {/* Description preview */}
+                    <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mb-3 flex-1">
+                      <LocalizedText text={descriptionText} engText={engDescriptionText} />
+                    </p>
+
+                    {/* External link arrow */}
+                    <div className="flex items-center justify-end mt-auto pt-2">
                       <svg
-                        className="w-8 h-8 text-charcoal dark:text-gray-300 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"
+                        className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-coral dark:group-hover:text-coral-light group-hover:translate-x-1 group-hover:-translate-y-1 transition-all"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
                         aria-hidden="true"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M7 17L17 7M17 7H7M17 7V17"
-                        />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
                     </div>
+                  </div>
+                </a>
+              )
+            })}
+          </div>
+        )}
 
-                    <div className="flex items-start gap-6 pr-16">
-                      {/* Date and Priority Badges Section */}
-                      <div className="flex flex-col gap-3 min-w-[140px] ml-8">
-                        <span className="inline-block bg-charcoal dark:bg-gray-600 text-white px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
-                          {new Date(call.Deadline).toLocaleDateString('el-GR')}
-                        </span>
+        {/* List View */}
+        {!loading && !error && filteredCalls.length > 0 && viewMode === 'list' && (
+          <div className="space-y-3">
+            {filteredCalls.map((call) => {
+              const descriptionText = extractTextFromBlocks(call.Description)
+              const engDescriptionText = call.EngDescription ? extractTextFromBlocks(call.EngDescription) : null
 
-                        {call.Priority && (
-                          <span className="inline-block bg-white dark:bg-gray-700 border-2 border-charcoal dark:border-gray-400 text-charcoal dark:text-gray-200 px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
-                            PRIORITY
-                          </span>
-                        )}
-                      </div>
+              return (
+                <a
+                  key={call.id}
+                  href={call.Link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-4 md:gap-6 bg-white dark:bg-gray-800 rounded-2xl p-4 hover:shadow-lg dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light"
+                  aria-label={`${call.Title} (ανοίγει σε νέα καρτέλα)`}
+                >
+                  {/* Date + Category badges */}
+                  <div className="flex flex-col items-center gap-1 min-w-[80px] flex-shrink-0">
+                    <time dateTime={call.Deadline} className="inline-block bg-charcoal dark:bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap">
+                      {new Date(call.Deadline).toLocaleDateString('el-GR')}
+                    </time>
+                    {call.Category && (
+                      <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-2 py-0.5 rounded-full whitespace-nowrap max-w-[120px] truncate">
+                        {call.Category}
+                      </span>
+                    )}
+                  </div>
 
-                      {/* Title and Description Section */}
-                      <div className="flex-1 flex gap-6">
-                        <div className="flex-1">
-                          <h3 className="text-xl md:text-2xl font-bold mb-4 text-charcoal dark:text-gray-100 group-hover:text-coral dark:group-hover:text-coral-light transition-colors duration-300">
-                            <LocalizedText text={call.Title} engText={call.EngTitle} />
-                          </h3>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm md:text-base font-bold text-charcoal dark:text-gray-100 group-hover:text-coral dark:group-hover:text-coral-light transition-colors line-clamp-1">
+                      <LocalizedText text={call.Title} engText={call.EngTitle} />
+                    </h3>
+                    <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">
+                      <LocalizedText text={descriptionText} engText={engDescriptionText} />
+                    </p>
+                  </div>
 
-                          <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mt-2">
-                            <LocalizedText text={descriptionText} engText={engDescriptionText} />
-                          </p>
-                        </div>
-
-                        {/* Circular image on right */}
-                        {imageUrl && (
-                          <div className="flex-shrink-0">
-                            <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-coral dark:border-coral-light shadow-md">
-                              <Image
-                                src={imageUrl}
-                                alt={call.ImageAltText || call.Title}
-                                width={112}
-                                height={112}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                </div>
+                  {/* Arrow */}
+                  <svg
+                    className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-coral dark:group-hover:text-coral-light group-hover:translate-x-1 group-hover:-translate-y-1 transition-all flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
               )
             })}
           </div>

@@ -126,8 +126,8 @@ function ActivityDetailPageContent() {
               <p className="text-orange-600 dark:text-orange-400 font-medium">
                 {error || 'Activity not found'}
               </p>
-              <Link href={`/activities?from=${fromTab}`} className="inline-block mt-4 text-charcoal dark:text-coral-light hover:underline font-bold">
-                ← Επιστροφή στις δραστηριότητες
+              <Link href={`/news?from=${fromTab}`} className="inline-block mt-4 text-charcoal dark:text-coral-light hover:underline font-bold">
+                ← Επιστροφή στα νέα
               </Link>
             </div>
           </div>
@@ -172,11 +172,11 @@ function ActivityDetailPageContent() {
       <section className="py-24 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Back link */}
-          <Link href={`/activities?from=${fromTab}`} className="inline-flex items-center text-charcoal dark:text-coral-light hover:underline font-bold mb-8">
+          <Link href={`/news?from=${fromTab}`} className="inline-flex items-center text-charcoal dark:text-coral-light hover:underline font-bold mb-8">
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Επιστροφή στις δραστηριότητες
+            Επιστροφή στα νέα
           </Link>
 
           {/* Date */}
@@ -289,14 +289,14 @@ function ActivityDetailPageContent() {
         <section className="py-24 bg-gray-50 dark:bg-gray-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl md:text-4xl font-bold mb-12 dark:text-gray-100">
-              Πρόσφατες Δραστηριότητες
+              Πρόσφατα Νέα
             </h2>
 
             <div className="grid md:grid-cols-3 gap-10">
               {relatedActivities.map((relatedActivity) => (
                 <Link
                   key={relatedActivity.id}
-                  href={`/activities/${relatedActivity.Slug || relatedActivity.documentId || relatedActivity.id}?from=${fromTab}`}
+                  href={`/news/${relatedActivity.Slug || relatedActivity.documentId || relatedActivity.id}?from=${fromTab}`}
                   className="bg-orange-50 dark:bg-gray-700 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow transform hover:scale-105"
                 >
                   {/* Image with overlapping date */}

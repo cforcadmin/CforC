@@ -47,7 +47,7 @@ export default function OpenCallsPage() {
   }, [])
 
   return (
-    <div className="min-h-screen dark:bg-gray-900">
+    <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
       <Navigation />
       <main id="main-content">
         {/* Hero Section */}
@@ -94,7 +94,7 @@ export default function OpenCallsPage() {
 
         <NewsletterSection />
       </main>
-      <Footer />
+      <Footer variant="members" />
       <CookieConsent />
       <ScrollToTop />
     </div>
