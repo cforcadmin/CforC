@@ -108,9 +108,9 @@ export default function Footer({ variant = 'default' }: FooterProps) {
               <li><Link href="/members" className="hover:text-coral dark:hover:text-coral-light transition-colors">Εύρεση μελών</Link></li>
               <li><Link href="/transparency" className="hover:text-coral dark:hover:text-coral-light transition-colors">Διαφάνεια</Link></li>
               {user ? (
-                <li><Link href="/profile" className="hover:text-coral dark:hover:text-coral-light transition-colors">Προφίλ</Link></li>
+                <li><Link href="/profile" className="hover:text-coral dark:hover:text-coral-light transition-colors">Ο χώρος μου</Link></li>
               ) : (
-                <li><Link href="/login" className="hover:text-coral dark:hover:text-coral-light transition-colors">Σύνδεση</Link></li>
+                <li><Link href="/login" className="hover:text-coral dark:hover:text-coral-light transition-colors">Προφίλ</Link></li>
               )}
             </ul>
             </div>
