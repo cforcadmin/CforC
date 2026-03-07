@@ -352,7 +352,7 @@ function MemberContactCard({
                     Εγγραφή
                   </Link>
                   <Link
-                    href="/login"
+                    href="/login?returnTo=%2Fcontact"
                     className="bg-white dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-white transition-colors"
                   >
                     Σύνδεση

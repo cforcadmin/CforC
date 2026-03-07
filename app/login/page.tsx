@@ -1,16 +1,26 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useAuth } from '@/components/AuthProvider'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageContent />
+    </Suspense>
+  )
+}
+
+function LoginPageContent() {
   const { login, requestMagicLink } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnTo = searchParams.get('returnTo')
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
 
   // Handle scroll for accessibility button fade
@@ -61,9 +71,9 @@ export default function LoginPage() {
 
       if (result.success) {
         setLoginMessage({ type: 'success', text: result.message || 'Επιτυχής σύνδεση' })
-        // Redirect to profile after successful login
+        // Redirect after successful login
         setTimeout(() => {
-          router.push('/profile')
+          router.push(returnTo || '/profile')
         }, 1000)
       } else {
         setLoginMessage({ type: 'error', text: result.message || 'Σφάλμα σύνδεσης' })

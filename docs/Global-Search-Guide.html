@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CforC - Καθολική Αναζήτηση - Οδηγός</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F5F0EB;
+      color: #2D2D2D;
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 {
+      font-size: 2.4em;
+      margin-bottom: 8px;
+      color: #2D2D2D;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 1.05em;
+      margin-bottom: 48px;
+    }
+    h2 {
+      font-size: 1.5em;
+      margin-top: 48px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #FF8B6A;
+      color: #2D2D2D;
+    }
+    h3 {
+      font-size: 1.1em;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      color: #FF8B6A;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      border-left: 4px solid transparent;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      border-left-color: #FF8B6A;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .card h3 { margin-top: 0; }
+    .spec-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 0.95em;
+    }
+    .spec-label {
+      font-weight: 700;
+      min-width: 160px;
+      flex-shrink: 0;
+    }
+    .spec-value { color: #444; }
+    .badge {
+      display: inline-block;
+      background: rgba(255,139,106,0.12);
+      color: #2D2D2D;
+      border: 1px solid #2D2D2D;
+      font-size: 0.75em;
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .badge-locked {
+      display: inline-block;
+      background: rgba(150,150,150,0.12);
+      color: #999;
+      border: 1px solid #999;
+      font-size: 0.75em;
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .note {
+      background: #f9f5f1;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-top: 8px;
+      font-size: 0.9em;
+      color: #666;
+    }
+    .note::before {
+      content: "ΣΗΜΕΙΩΣΗ ";
+      font-weight: 700;
+      color: #FF8B6A;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 0.9em;
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    th {
+      background: #2D2D2D;
+      color: #FF8B6A;
+      text-align: left;
+      padding: 14px 16px;
+      font-weight: 600;
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #faf7f4; }
+    code {
+      background: #f0ebe5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      font-family: 'SF Mono', Consolas, monospace;
+    }
+    kbd {
+      background: #2D2D2D;
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      font-family: 'SF Mono', Consolas, monospace;
+    }
+    ul { margin-left: 16px; margin-top: 8px; font-size: 0.95em; color: #444; }
+    ul li { margin-bottom: 4px; }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .three-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.8em; }
+      .spec-row { flex-direction: column; gap: 2px; }
+      .spec-label { min-width: auto; }
+      .two-col, .three-col { grid-template-columns: 1fr; }
+    }
+    .footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+      color: #999;
+      font-size: 0.85em;
+    }
+    .chip-demo {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      margin-right: 6px;
+      margin-bottom: 4px;
+    }
+    .chip-active { background: #2D2D2D; color: #fff; }
+    .chip-inactive { background: #fff; color: #2D2D2D; border: 1px solid #ccc; }
+    .chip-locked { background: #f0f0f0; color: #999; border: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Καθολική Αναζήτηση<br>Οδηγός</h1>
+    <p class="subtitle">Οδηγός λειτουργίας και τεχνικής υλοποίησης της καθολικής αναζήτησης του CforC website.</p>
+
+    <!-- ΕΠΙΣΚΟΠΗΣΗ -->
+    <h2>Επισκόπηση</h2>
+    <div class="card">
+      <h3>Πρόσβαση</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 12px;">
+        Η καθολική αναζήτηση είναι ένα modal παράθυρο που επιτρέπει αναζήτηση σε ολόκληρο τον ιστότοπο. Ανοίγει με:
+      </p>
+      <ul>
+        <li><strong>Εικονίδιο αναζήτησης</strong> στο navigation bar (αριστερά του κουμπιού dark/light mode)</li>
+        <li><strong>Συντόμευση πληκτρολογίου</strong> <kbd>Cmd+K</kbd> (Mac) ή <kbd>Ctrl+K</kbd> (Windows/Linux)</li>
+        <li><strong>Κουμπί ΑΝΑΖΗΤΗΣΗ</strong> στο mobile menu</li>
+      </ul>
+    </div>
+
+    <!-- ΚΑΤΗΓΟΡΙΕΣ -->
+    <h2>Κατηγορίες Αναζήτησης</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Κατηγορία</th>
+          <th>Ετικέτα</th>
+          <th>Πηγή Δεδομένων</th>
+          <th>Πρόσβαση</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Μέλη</td>
+          <td>Μέλη</td>
+          <td>Strapi &mdash; Members</td>
+          <td>Όλοι</td>
+        </tr>
+        <tr>
+          <td>Νέα</td>
+          <td>Νέα</td>
+          <td>Strapi &mdash; Activities</td>
+          <td>Όλοι</td>
+        </tr>
+        <tr>
+          <td>Ανοιχτές Προσκλήσεις</td>
+          <td>Ανοιχτές Προσκλήσεις</td>
+          <td>Strapi &mdash; Open Calls</td>
+          <td>Μόνο μέλη <span class="badge-locked">&#128274;</span></td>
+        </tr>
+        <tr>
+          <td>Σελίδες</td>
+          <td>Σελίδες</td>
+          <td>Στατικό (hardcoded)</td>
+          <td>Όλοι</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Πεδία που αναζητούνται ανά κατηγορία</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Κατηγορία</th>
+          <th>Πεδία Strapi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Μέλη</strong></td>
+          <td><code>Name</code>, <code>FieldsOfWork</code>, <code>City</code></td>
+        </tr>
+        <tr>
+          <td><strong>Νέα</strong></td>
+          <td><code>Title</code>, <code>EngTitle</code>, <code>Category</code></td>
+        </tr>
+        <tr>
+          <td><strong>Ανοιχτές Προσκλήσεις</strong></td>
+          <td><code>Title</code>, <code>EngTitle</code>, <code>Category</code></td>
+        </tr>
+        <tr>
+          <td><strong>Σελίδες</strong></td>
+          <td>Τίτλος σελίδας + λέξεις-κλειδιά (keywords)</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="note">Τα πεδία <code>Description</code> και <code>EngDescription</code> είναι τύπου rich text (Strapi blocks) και δεν υποστηρίζουν αναζήτηση μέσω Strapi API filters.</div>
+
+    <!-- ΦΙΛΤΡΑ -->
+    <h2>Φίλτρα (Chips)</h2>
+
+    <div class="card">
+      <h3>Εμφάνιση Chip</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 12px;">Τα φίλτρα εμφανίζονται ως toggle chips κάτω από το πεδίο αναζήτησης:</p>
+      <table style="margin-top: 8px;">
+        <thead>
+          <tr>
+            <th>Κατάσταση</th>
+            <th>Light Theme</th>
+            <th>Dark Theme</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Ενεργό</strong></td>
+            <td><span class="chip-demo chip-active">Μέλη</span> Μαύρο φόντο, λευκό κείμενο</td>
+            <td>Λευκό φόντο, μαύρο κείμενο</td>
+          </tr>
+          <tr>
+            <td><strong>Ανενεργό</strong></td>
+            <td><span class="chip-demo chip-inactive">Νέα</span> Λευκό φόντο, μαύρο κείμενο</td>
+            <td>Σκούρο φόντο, λευκό κείμενο</td>
+          </tr>
+          <tr>
+            <td><strong>Κλειδωμένο</strong></td>
+            <td><span class="chip-demo chip-locked">&#128274; Ανοιχτές Προσκλήσεις</span> Γκρι κείμενο, εικονίδιο κλειδαριάς</td>
+            <td>Γκρι κείμενο, εικονίδιο κλειδαριάς</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h3>Κουμπιά Ελέγχου</h3>
+        <ul>
+          <li><strong>Επιλογή όλων</strong> &mdash; Ενεργοποιεί όλες τις διαθέσιμες κατηγορίες</li>
+          <li><strong>Αποεπιλογή</strong> &mdash; Απενεργοποιεί όλες εκτός από «Σελίδες» (ελάχιστη 1)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Υπόμνημα (Legend)</h3>
+        <p style="font-size: 0.95em; color: #444; margin-top: 4px;">
+          Κάτω από τα chips εμφανίζεται οπτικό υπόμνημα που δείχνει ποιο χρώμα σημαίνει ενεργό/ανενεργό, προσαρμοσμένο στο τρέχον theme.
+        </p>
+      </div>
+    </div>
+
+    <!-- ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ -->
+    <h2>Ανοιχτές Προσκλήσεις &mdash; Πρόσβαση Μελών</h2>
+
+    <div class="card">
+      <h3>Μη συνδεδεμένος χρήστης</h3>
+      <ul>
+        <li>Το chip εμφανίζεται με εικονίδιο κλειδαριάς και γκρι χρώματα</li>
+        <li><strong>Hover:</strong> Εμφανίζεται tooltip «Διαθέσιμο μόνο για εγγεγραμμένα μέλη» + το κείμενο αλλάζει σε <strong>«Κλικ για σύνδεση»</strong></li>
+        <li><strong>Κλικ:</strong> Ανακατεύθυνση στη σελίδα σύνδεσης (<code>/login?returnTo=ΤΡΕΧΟΥΣΑ_ΣΕΛΙΔΑ?search=1</code>)</li>
+        <li><strong>Μετά τη σύνδεση:</strong> Ο χρήστης επιστρέφει στη σελίδα που ήταν με το modal αναζήτησης ανοιχτό</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Συνδεδεμένος χρήστης</h3>
+      <ul>
+        <li>Το chip λειτουργεί κανονικά (toggle on/off)</li>
+        <li>Τα αποτελέσματα περιλαμβάνουν Ανοιχτές Προσκλήσεις</li>
+      </ul>
+    </div>
+
+    <!-- ΑΠΟΤΕΛΕΣΜΑΤΑ -->
+    <h2>Αποτελέσματα</h2>
+
+    <div class="card">
+      <h3>Εμφάνιση</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 8px;">Ομαδοποιημένα κατά κατηγορία με header (πχ. «ΜΕΛΗ (3)»). Κάθε αποτέλεσμα εμφανίζει:</p>
+      <ul>
+        <li><strong>Μέλη:</strong> Avatar, όνομα, πεδίο εργασίας, πόλη</li>
+        <li><strong>Νέα:</strong> Εικονίδιο, τίτλος, κατηγορία, ημερομηνία</li>
+        <li><strong>Ανοιχτές Προσκλήσεις:</strong> Εικονίδιο, τίτλος, κατηγορία, deadline</li>
+        <li><strong>Σελίδες:</strong> Εικονίδιο, τίτλος σελίδας</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Πλοήγηση</h3>
+      <ul>
+        <li><kbd>&uarr;</kbd> <kbd>&darr;</kbd> Πλοήγηση μεταξύ αποτελεσμάτων</li>
+        <li><kbd>Enter</kbd> Άνοιγμα επιλεγμένου αποτελέσματος</li>
+        <li><strong>Κλικ:</strong> Άνοιγμα αποτελέσματος</li>
+        <li><kbd>ESC</kbd> Κλείσιμο modal</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Κενά αποτελέσματα</h3>
+      <ul>
+        <li>Μήνυμα: «Δεν βρέθηκαν αποτελέσματα για "ΟΡΟΣ"»</li>
+        <li>Υπότιτλος: «Δοκίμασε διαφορετικούς όρους αναζήτησης»</li>
+      </ul>
+    </div>
+
+    <!-- ΤΕΧΝΙΚΗ ΥΛΟΠΟΙΗΣΗ -->
+    <h2>Τεχνική Υλοποίηση</h2>
+
+    <h3>Αρχεία</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Αρχείο</th>
+          <th>Ρόλος</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>components/GlobalSearch.tsx</code></td>
+          <td>Modal component (UI, chips, αποτελέσματα, keyboard navigation)</td>
+        </tr>
+        <tr>
+          <td><code>app/api/search/route.ts</code></td>
+          <td>API endpoint &mdash; αναζήτηση σε Strapi + στατικές σελίδες</td>
+        </tr>
+        <tr>
+          <td><code>components/Navigation.tsx</code></td>
+          <td>Ενσωμάτωση search icon, <kbd>Cmd+K</kbd> shortcut, auto-open από URL param</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="card" style="margin-top: 16px;">
+      <h3>API Route: <code>/api/search</code></h3>
+      <div class="spec-row"><span class="spec-label">Μέθοδος:</span><span class="spec-value">GET</span></div>
+      <table style="margin-top: 12px;">
+        <thead>
+          <tr>
+            <th>Παράμετρος</th>
+            <th>Τύπος</th>
+            <th>Περιγραφή</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>q</code></td>
+            <td>string</td>
+            <td>Όρος αναζήτησης (ελάχιστο 2 χαρακτήρες)</td>
+          </tr>
+          <tr>
+            <td><code>types</code></td>
+            <td>string</td>
+            <td>Κατηγορίες (comma-separated): <code>members,activities,open-calls,pages</code></td>
+          </tr>
+          <tr>
+            <td><code>includeOpenCalls</code></td>
+            <td>string</td>
+            <td><code>true</code> / <code>false</code> &mdash; ελέγχεται από auth status</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h3>Debounce</h3>
+        <p style="font-size: 0.95em; color: #444; margin-top: 4px;">
+          Η αναζήτηση εκτελείται με debounce <strong>300ms</strong> &mdash; περιμένει 300ms μετά τον τελευταίο χαρακτήρα πριν στείλει αίτημα.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Απάντηση API</h3>
+        <code style="display: block; white-space: pre; font-size: 0.85em; margin-top: 4px; background: #f0ebe5; padding: 10px; border-radius: 8px;">{ "members": [...],
+  "activities": [...],
+  "openCalls": [...],
+  "pages": [...] }</code>
+      </div>
+    </div>
+
+    <!-- ΣΤΑΤΙΚΕΣ ΣΕΛΙΔΕΣ -->
+    <h2>Στατικές Σελίδες στην Αναζήτηση</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Σελίδα</th>
+          <th>URL</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Σχετικά με εμάς</td><td><code>/about</code></td></tr>
+        <tr><td>Ομάδα Συντονισμού</td><td><code>/coordination-team</code></td></tr>
+        <tr><td>Διαφάνεια</td><td><code>/transparency</code></td></tr>
+        <tr><td>Συμμετοχή</td><td><code>/participation</code></td></tr>
+        <tr><td>Επικοινωνία</td><td><code>/contact</code></td></tr>
+        <tr><td>Πολιτική Απορρήτου</td><td><code>/privacy</code></td></tr>
+        <tr><td>Όροι Χρήσης</td><td><code>/terms</code></td></tr>
+        <tr><td>Cookies</td><td><code>/cookies</code></td></tr>
+        <tr><td>Προσβασιμότητα</td><td><code>/accessibility</code></td></tr>
+      </tbody>
+    </table>
+
+    <!-- ΕΝΗΜΕΡΩΣΗ -->
+    <h2>Ενημέρωση Περιεχομένου</h2>
+
+    <div class="card">
+      <h3>Αλλαγή στατικών σελίδων αναζήτησης</h3>
+      <div class="spec-row"><span class="spec-label">Αρχείο:</span><span class="spec-value"><code>app/api/search/route.ts</code> &mdash; Πίνακας <code>STATIC_PAGES</code></span></div>
+    </div>
+
+    <div class="card">
+      <h3>Αλλαγή εμφάνισης αποτελεσμάτων</h3>
+      <div class="spec-row"><span class="spec-label">Αρχείο:</span><span class="spec-value"><code>components/GlobalSearch.tsx</code></span></div>
+    </div>
+
+    <div class="card">
+      <h3>Αλλαγή πεδίων αναζήτησης</h3>
+      <div class="spec-row"><span class="spec-label">Αρχείο:</span><span class="spec-value"><code>app/api/search/route.ts</code> &mdash; Strapi query filters στα <code>strapiGet()</code> calls</span></div>
+    </div>
+
+    <div class="footer">
+      <p>CforC Website &mdash; Καθολική Αναζήτηση &mdash; Τελευταία ενημέρωση: Μάρτιος 2026</p>
+    </div>
+  </div>
+</body>
+</html>

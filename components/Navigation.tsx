@@ -13,6 +13,7 @@ import { useAccessibility } from './AccessibilityProvider'
 import { AccessibilityButton } from './AccessibilityMenu'
 import { getFeaturedProjects } from '@/lib/strapi'
 import type { Project, StrapiResponse } from '@/lib/types'
+import GlobalSearch from './GlobalSearch'
 
 interface NavigationProps {
   variant?: 'default' | 'members'
@@ -27,6 +28,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
   const [aboutDropdownOpen, setAboutDropdownOpen] = useState(false)
   const [mobileAboutExpanded, setMobileAboutExpanded] = useState(false)
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([])
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
   const { user, isAuthenticated, logout } = useAuth()
   const { setIsMenuOpen } = useAccessibility()
@@ -50,6 +52,30 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
 
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Cmd+K / Ctrl+K to open search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setIsSearchOpen(true)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  // Auto-open search modal if ?search=1 in URL (e.g. after login redirect)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('search') === '1') {
+      setIsSearchOpen(true)
+      // Clean up the URL param without triggering a navigation
+      const url = new URL(window.location.href)
+      url.searchParams.delete('search')
+      window.history.replaceState({}, '', url.pathname + (url.search || ''))
+    }
   }, [])
 
   // Fetch featured projects for dropdown when on /projects routes
@@ -212,6 +238,25 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
           <div className={`hidden md:flex items-center ${isAuthenticated ? 'space-x-4' : 'space-x-8'}`}>
             {/* Text Size Toggle */}
             <TextSizeToggle variant={variant} />
+            {/* Search */}
+            <div className="relative group/search">
+              <button
+                type="button"
+                onClick={() => setIsSearchOpen(true)}
+                className="p-2 rounded-full hover:bg-white/20 transition-colors"
+                aria-label="Αναζήτηση (Cmd+K)"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 opacity-0 pointer-events-none group-hover/search:opacity-100 transition-opacity duration-200 z-50 whitespace-nowrap">
+                <div className="bg-charcoal dark:bg-white text-white dark:text-charcoal text-xs font-medium rounded-lg px-3 py-1.5 shadow-lg">
+                  Mac: <kbd className="font-mono">&#8984;K</kbd> | PC: <kbd className="font-mono">Ctrl+K</kbd>
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-charcoal dark:border-b-white" />
+                </div>
+              </div>
+            </div>
             {/* Dark Mode Toggle */}
             <button
               type="button"
@@ -454,6 +499,17 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 </>
               )}
             </button>
+            {/* Search - Mobile */}
+            <button
+              type="button"
+              onClick={() => { setIsOpen(false); setIsSearchOpen(true) }}
+              className="flex items-center space-x-2 text-sm font-medium py-2 w-full"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span>ΑΝΑΖΗΤΗΣΗ</span>
+            </button>
             {/* Navigation links wrapped in nav element */}
             <nav aria-label="Κύρια πλοήγηση κινητού" className="space-y-3">
               {/* About expandable section - Mobile */}
@@ -558,6 +614,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
         onCancel={() => setIsLogoutModalOpen(false)}
         variant="info"
       />
+      <GlobalSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </header>
   )
 }
