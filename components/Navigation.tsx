@@ -160,9 +160,10 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
     { label: 'Το δίκτυο', href: '/about' },
     { label: 'Ομάδα Συντονισμού', href: '/coordination-team' },
     { label: 'Διαφάνεια', href: '/transparency' },
+    { label: 'Επικοινωνία', href: '/contact' },
   ]
 
-  const isAboutActive = pathname === '/about' || pathname === '/coordination-team' || pathname === '/transparency'
+  const isAboutActive = pathname === '/about' || pathname === '/coordination-team' || pathname === '/transparency' || pathname === '/contact'
 
   const handleLogout = async () => {
     await logout()

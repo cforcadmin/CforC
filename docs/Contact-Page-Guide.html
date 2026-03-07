@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CforC - Σελίδα Επικοινωνίας - Οδηγός</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F5F0EB;
+      color: #2D2D2D;
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 {
+      font-size: 2.4em;
+      margin-bottom: 8px;
+      color: #2D2D2D;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 1.05em;
+      margin-bottom: 48px;
+    }
+    h2 {
+      font-size: 1.5em;
+      margin-top: 48px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #FF8B6A;
+      color: #2D2D2D;
+    }
+    h3 {
+      font-size: 1.1em;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      color: #FF8B6A;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      border-left: 4px solid transparent;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      border-left-color: #FF8B6A;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .card h3 { margin-top: 0; }
+    .spec-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 0.95em;
+    }
+    .spec-label {
+      font-weight: 700;
+      min-width: 130px;
+      flex-shrink: 0;
+    }
+    .spec-value { color: #444; }
+    .badge {
+      display: inline-block;
+      background: rgba(255,139,106,0.12);
+      color: #2D2D2D;
+      border: 1px solid #2D2D2D;
+      font-size: 0.75em;
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .note {
+      background: #f9f5f1;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-top: 8px;
+      font-size: 0.9em;
+      color: #666;
+    }
+    .note::before {
+      content: "ΣΗΜΕΙΩΣΗ ";
+      font-weight: 700;
+      color: #FF8B6A;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 0.9em;
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    th {
+      background: #2D2D2D;
+      color: #FF8B6A;
+      text-align: left;
+      padding: 14px 16px;
+      font-weight: 600;
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #faf7f4; }
+    code {
+      background: #f0ebe5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      font-family: 'SF Mono', Consolas, monospace;
+    }
+    ul { margin-left: 16px; margin-top: 8px; font-size: 0.95em; color: #444; }
+    ul li { margin-bottom: 4px; }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.8em; }
+      .spec-row { flex-direction: column; gap: 2px; }
+      .spec-label { min-width: auto; }
+      .two-col { grid-template-columns: 1fr; }
+    }
+    .footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+      color: #999;
+      font-size: 0.85em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Σελίδα Επικοινωνίας<br>Οδηγός</h1>
+    <p class="subtitle">Οδηγός λειτουργίας και διαχείρισης της σελίδας επικοινωνίας του CforC website.</p>
+
+    <!-- ΕΠΙΣΚΟΠΗΣΗ -->
+    <h2>Επισκόπηση</h2>
+    <div class="card">
+      <h3>Τοποθεσία &amp; Πρόσβαση</h3>
+      <div class="spec-row"><span class="spec-label">URL:</span><span class="spec-value"><code>/contact</code></span></div>
+      <div class="spec-row"><span class="spec-label">Navbar:</span><span class="spec-value">Dropdown «Σχετικά με εμάς» → Επικοινωνία</span></div>
+      <div class="spec-row"><span class="spec-label">Δομή:</span><span class="spec-value">Δύο flip cards &mdash; Γενική Επικοινωνία + Επικοινωνία Μέλους</span></div>
+    </div>
+
+    <!-- ΓΕΝΙΚΗ ΕΠΙΚΟΙΝΩΝΙΑ -->
+    <h2>Κάρτα: Γενική Επικοινωνία</h2>
+
+    <div class="two-col">
+      <div class="card">
+        <h3>Μπροστινή όψη</h3>
+        <ul>
+          <li>Εικονίδιο email</li>
+          <li>Τίτλος: «Γενική Επικοινωνία»</li>
+          <li>Περιγραφή για εξωτερικούς συνεργάτες</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Πίσω όψη (hover/tap)</h3>
+        <ul>
+          <li>Διεύθυνση (σύνδεσμος Google Maps)</li>
+          <li>Email: hello@cultureforchange.net</li>
+          <li>Τηλέφωνο: +30 697 622 5704</li>
+          <li>Social Media εικονίδια</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ΕΠΙΚΟΙΝΩΝΙΑ ΜΕΛΟΥΣ -->
+    <h2>Κάρτα: Επικοινωνία Μέλους</h2>
+
+    <div class="card">
+      <h3>Μπροστινή όψη</h3>
+      <ul>
+        <li>Εικονίδιο ομάδας</li>
+        <li>Τίτλος: «Επικοινωνία Μέλους»</li>
+        <li>Περιγραφή: «Άμεση επικοινωνία με την Ομάδα Συντονισμού του δικτύου.»</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Πίσω όψη &mdash; Μη συνδεδεμένος χρήστης</h3>
+      <p style="font-size: 0.95em; color: #444; margin-top: 8px;">
+        Εμφανίζεται modal «Περιεχόμενο Μελών» με κουμπιά <strong>Εγγραφή</strong> και <strong>Σύνδεση</strong>.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>Πίσω όψη &mdash; Συνδεδεμένος χρήστης</h3>
+      <p style="font-size: 0.95em; color: #444; margin-top: 8px; margin-bottom: 12px;">
+        Η κάρτα γίνεται ψηλότερη και εμφανίζει την τρέχουσα Ομάδα Συντονισμού (δυναμικά από Strapi). Κάθε μέλος εμφανίζει:
+      </p>
+      <ul>
+        <li>Φωτογραφία προφίλ (avatar)</li>
+        <li>Όνομα (κλικ → σελίδα μέλους)</li>
+        <li>Ετικέτα ρόλου (pill)</li>
+        <li>Σύντομη περιγραφή αρμοδιοτήτων</li>
+        <li>Email αρμοδιότητας (mailto link)</li>
+      </ul>
+    </div>
+
+    <!-- ΡΟΛΟΙ ΚΑΙ EMAILS -->
+    <h2>Ρόλοι &amp; Emails Ομάδας Συντονισμού</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Θέση</th>
+          <th>Email</th>
+          <th>Αρμοδιότητες</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Πρόεδρος</strong></td>
+          <td>coordinator@cultureforchange.net</td>
+          <td>Γενική εποπτεία λειτουργίας του δικτύου και συντονισμός δράσεων</td>
+        </tr>
+        <tr>
+          <td><strong>Υπεύθυνη Κοινότητας</strong></td>
+          <td>community@cultureforchange.net</td>
+          <td>Εγγραφές μελών, διαχείριση κοινότητας και θέματα συνδρομών</td>
+        </tr>
+        <tr>
+          <td><strong>Υπεύθυνη Επικοινωνίας</strong></td>
+          <td>communication@cultureforchange.net</td>
+          <td>Εξωτερική επικοινωνία, δημόσια εικόνα και προβολή του δικτύου</td>
+        </tr>
+        <tr>
+          <td><strong>Υπεύθυνος Οικονομικών &amp; IT</strong></td>
+          <td>finance@cultureforchange.net</td>
+          <td>Οικονομική διαχείριση, τεχνική υποστήριξη, ανάπτυξη και λειτουργία website</td>
+        </tr>
+        <tr>
+          <td><strong>Αντιπρόεδρος</strong></td>
+          <td>outreach@cultureforchange.net</td>
+          <td>Υποστήριξη και αναπλήρωση της Προέδρου, εξωτερικές σχέσεις</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ΑΝΤΙΣΤΟΙΧΙΣΗ STRAPI -->
+    <h2>Αντιστοίχιση Ρόλων &mdash; Δομή Strapi</h2>
+
+    <div class="card">
+      <h3>Collection Type: Coordination Teams</h3>
+      <div class="spec-row"><span class="spec-label">Coordinator:</span><span class="spec-value">→ Πρόεδρος</span></div>
+      <div class="spec-row"><span class="spec-label">Members[0]:</span><span class="spec-value">→ Υπεύθυνη Κοινότητας</span></div>
+      <div class="spec-row"><span class="spec-label">Members[1]:</span><span class="spec-value">→ Υπεύθυνη Επικοινωνίας</span></div>
+      <div class="spec-row"><span class="spec-label">Members[2]:</span><span class="spec-value">→ Υπεύθυνος Οικονομικών &amp; IT</span></div>
+      <div class="spec-row"><span class="spec-label">Members[3]:</span><span class="spec-value">→ Αντιπρόεδρος</span></div>
+      <div class="note">Η σειρά των μελών στο Strapi καθορίζει τον ρόλο τους. Αν αλλάξει η σειρά, αλλάζουν και οι ρόλοι στη σελίδα.</div>
+    </div>
+
+    <!-- ΣΥΜΠΕΡΙΦΟΡΑ FLIP -->
+    <h2>Συμπεριφορά Flip Cards</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Συσκευή</th>
+          <th>Ενέργεια</th>
+          <th>Αποτέλεσμα</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Desktop</td>
+          <td>Hover (300ms καθυστέρηση)</td>
+          <td>Η κάρτα γυρίζει. Απομάκρυνση → επιστροφή</td>
+        </tr>
+        <tr>
+          <td>Mobile</td>
+          <td>Tap</td>
+          <td>Η κάρτα γυρίζει. Tap ξανά → επιστροφή</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="card" style="margin-top: 16px;">
+      <h3>Σύνδεσμοι μέσα στις κάρτες</h3>
+      <p style="font-size: 0.95em; color: #444; margin-top: 4px;">
+        Τα email, τηλέφωνο, social media και ονόματα μελών λειτουργούν ως κανονικοί σύνδεσμοι χωρίς να γυρίζουν την κάρτα.
+      </p>
+    </div>
+
+    <!-- ΕΝΗΜΕΡΩΣΗ ΠΕΡΙΕΧΟΜΕΝΟΥ -->
+    <h2>Ενημέρωση Περιεχομένου</h2>
+
+    <div class="card">
+      <h3>Αλλαγή στοιχείων γενικής επικοινωνίας</h3>
+      <div class="spec-row"><span class="spec-label">Αρχείο:</span><span class="spec-value"><code>components/ContactContent.tsx</code> &mdash; Ενότητα <code>GeneralContactCard</code></span></div>
+    </div>
+
+    <div class="card">
+      <h3>Αλλαγή ρόλων / emails Ομάδας Συντονισμού</h3>
+      <div class="spec-row"><span class="spec-label">Αρχείο:</span><span class="spec-value"><code>components/ContactContent.tsx</code> &mdash; Σταθερές <code>ROLE_MAP</code> και <code>PRESIDENT_ROLE</code></span></div>
+    </div>
+
+    <div class="card">
+      <h3>Αλλαγή μελών Ομάδας Συντονισμού</h3>
+      <div class="spec-row"><span class="spec-label">Πλατφόρμα:</span><span class="spec-value">Strapi → Coordination Teams → Τρέχουσα ομάδα (<code>IsCurrent: true</code>)</span></div>
+      <div class="note">Τα ονόματα, φωτογραφίες και σύνδεσμοι προφίλ ανανεώνονται αυτόματα από το Strapi.</div>
+    </div>
+
+    <div class="footer">
+      <p>CforC Website &mdash; Σελίδα Επικοινωνίας &mdash; Τελευταία ενημέρωση: Μάρτιος 2026</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CforC Website - Προδιαγραφές Εικόνων</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F5F0EB;
+      color: #2D2D2D;
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 {
+      font-size: 2.4em;
+      margin-bottom: 8px;
+      color: #2D2D2D;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 1.05em;
+      margin-bottom: 48px;
+    }
+    h2 {
+      font-size: 1.5em;
+      margin-top: 48px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #FF8B6A;
+      color: #2D2D2D;
+    }
+    h3 {
+      font-size: 1.1em;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      color: #FF8B6A;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      border-left: 4px solid transparent;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      border-left-color: #FF8B6A;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .card h3 { margin-top: 0; }
+    .spec-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 0.95em;
+    }
+    .spec-label {
+      font-weight: 700;
+      min-width: 130px;
+      flex-shrink: 0;
+    }
+    .spec-value { color: #444; }
+    .badge {
+      display: inline-block;
+      background: rgba(255,139,106,0.12);
+      color: #2D2D2D;
+      border: 1px solid #2D2D2D;
+      font-size: 0.75em;
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .note {
+      background: #f9f5f1;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-top: 8px;
+      font-size: 0.9em;
+      color: #666;
+    }
+    .note::before {
+      content: "ΣΗΜΕΙΩΣΗ ";
+      font-weight: 700;
+      color: #FF8B6A;
+    }
+
+    /* Summary Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 0.9em;
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    th {
+      background: #2D2D2D;
+      color: #FF8B6A;
+      text-align: left;
+      padding: 14px 16px;
+      font-weight: 600;
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #faf7f4; }
+    code {
+      background: #f0ebe5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      font-family: 'SF Mono', Consolas, monospace;
+    }
+
+    /* Tools section */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .tool-link {
+      display: block;
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      text-decoration: none;
+      color: #2D2D2D;
+      font-weight: 600;
+      font-size: 0.9em;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      transition: box-shadow 0.2s, transform 0.2s;
+      border-left: 4px solid transparent;
+    }
+    .tool-link:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+      border-left-color: #FF8B6A;
+    }
+    .tool-link span {
+      display: block;
+      font-weight: 400;
+      font-size: 0.85em;
+      color: #888;
+      margin-top: 4px;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+      color: #999;
+      font-size: 0.85em;
+    }
+
+    /* Aspect ratio previews */
+    .ratio-preview {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .ratio-box {
+      border: 2px solid #2D2D2D;
+      border-radius: 4px;
+      background: rgba(255,139,106,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7em;
+      font-weight: 700;
+      color: #FF8B6A;
+    }
+    .ratio-16-9 { width: 64px; height: 36px; }
+    .ratio-5-6 { width: 40px; height: 48px; }
+    .ratio-3-4 { width: 36px; height: 48px; }
+    .ratio-4-3 { width: 48px; height: 36px; }
+    .ratio-3-1 { width: 72px; height: 24px; }
+    .ratio-1-1 { width: 36px; height: 36px; }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 1.8em; }
+      .spec-row { flex-direction: column; gap: 2px; }
+      .spec-label { min-width: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CforC Website<br>Προδιαγραφές Εικόνων</h1>
+    <p class="subtitle">Αναλυτικός οδηγός για όλες τις απαιτήσεις εικόνων στο website του CforC και στο Strapi CMS.</p>
+
+    <!-- ΝΕΑ / ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ -->
+    <h2>Νέα / Δραστηριότητες</h2>
+
+    <div class="card">
+      <h3>Thumbnail (Κάρτα Προεπισκόπησης) <span class="badge">Strapi: Visuals</span></h3>
+      <div class="ratio-preview"><div class="ratio-box ratio-16-9">16:9</div></div>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">16:9 (π.χ. 1920x1080 ή 1280x720)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 150-250KB</span></div>
+      <div class="spec-row"><span class="spec-label">Χρήση:</span><span class="spec-value">Κάρτες νέων στην αρχική σελίδα, στη σελίδα νέων (grid & list view) και στα σχετικά νέα κάτω από κάθε άρθρο.</span></div>
+      <div class="note">Η σημαντική πληροφορία να βρίσκεται στο κέντρο της εικόνας. Η πρώτη εικόνα χρησιμοποιείται ως thumbnail.</div>
+    </div>
+
+    <div class="card">
+      <h3>Εικόνες Άρθρου (Article Detail)</h3>
+      <div class="ratio-preview"><div class="ratio-box ratio-16-9">16:9</div></div>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">16:9 (π.χ. 1920x1080)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 150-250KB/εικόνα</span></div>
+      <div class="spec-row"><span class="spec-label">Χρήση:</span><span class="spec-value">Κύρια εικόνα και carousel στη σελίδα λεπτομερειών του νέου.</span></div>
+      <div class="note">Υποστηρίζονται πολλαπλές εικόνες. Thumbnails στο carousel εμφανίζονται σε 96x96px.</div>
+    </div>
+
+    <div class="card">
+      <h3>Inline Εικόνες (Μέσα στο κείμενο)</h3>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">Ελεύθερο</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 150-250KB/εικόνα</span></div>
+      <div class="note">Οι εικόνες μεγαλώνουν αυτόματα και αναλογικά μέχρι να καλύψουν τον προκαθορισμένο χώρο τους.</div>
+    </div>
+
+    <!-- ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ -->
+    <h2>Ανοιχτές Προσκλήσεις (Open Calls)</h2>
+
+    <div class="card">
+      <h3>Thumbnail (Κάρτα Προεπισκόπησης) <span class="badge">Strapi: Image</span></h3>
+      <div class="ratio-preview"><div class="ratio-box ratio-16-9">16:9</div></div>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">16:9 (π.χ. 1920x1080 ή 1280x720)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 150-250KB</span></div>
+      <div class="spec-row"><span class="spec-label">Χρήση:</span><span class="spec-value">Κάρτες ανοιχτών προσκλήσεων στην αρχική σελίδα και στη σελίδα ανοιχτών προσκλήσεων (grid & list view).</span></div>
+      <div class="note">Αποφύγετε λογότυπα ή banners ως cover image &mdash; χρησιμοποιήστε αντιπροσωπευτική φωτογραφία.</div>
+    </div>
+
+    <!-- ΜΕΛΗ -->
+    <h2>Μέλη (Members)</h2>
+
+    <div class="card">
+      <h3>Φωτογραφία Προφίλ (Profile Image) <span class="badge">Strapi: Image</span></h3>
+      <div class="ratio-preview"><div class="ratio-box ratio-5-6">5:6</div></div>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">5:6 (π.χ. 1080x1296 ή 900x1080)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 150-250KB</span></div>
+      <div class="spec-row"><span class="spec-label">Χρήση:</span><span class="spec-value">Κάρτες μελών στη σελίδα μελών (grid view), στη σελίδα επεξεργασίας προφίλ και στο profile preview modal.</span></div>
+      <div class="note">Κατά προτίμηση το πρόσωπο να βρίσκεται στο κέντρο της εικόνας. Portrait φωτογραφία.</div>
+    </div>
+
+    <div class="card">
+      <h3>Φωτογραφία Προφίλ (Detail Page)</h3>
+      <div class="ratio-preview"><div class="ratio-box ratio-3-4">3:4</div></div>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">3:4 (π.χ. 900x1200 ή 810x1080)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 150-250KB</span></div>
+      <div class="spec-row"><span class="spec-label">Χρήση:</span><span class="spec-value">Κύρια φωτογραφία στη σελίδα λεπτομερειών μέλους.</span></div>
+      <div class="note">Η ίδια εικόνα χρησιμοποιείται και στα δύο (card & detail) &mdash; η εικόνα κόβεται αυτόματα. Φροντίστε το πρόσωπο να είναι κεντραρισμένο.</div>
+    </div>
+
+    <div class="card">
+      <h3>Avatar (List View & Ομάδες Εργασίας)</h3>
+      <div class="ratio-preview"><div class="ratio-box ratio-1-1">1:1</div></div>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">1:1 (π.χ. 200x200)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 50KB</span></div>
+      <div class="spec-row"><span class="spec-label">Χρήση:</span><span class="spec-value">Μικρό avatar στο list view μελών (64x64px), στις ομάδες εργασίας (48x48px ή 32x32px) και στα projects.</span></div>
+      <div class="note">Αυτόματα κόβεται σε κύκλο. Η ίδια εικόνα προφίλ χρησιμοποιείται &mdash; δεν χρειάζεται ξεχωριστό upload.</div>
+    </div>
+
+    <!-- PROJECTS -->
+    <h2>Projects (Έργα CforC)</h2>
+
+    <div class="card">
+      <h3>Cover Image (Εξώφυλλο) <span class="badge">Strapi: cover_image</span></h3>
+      <div class="ratio-preview"><div class="ratio-box ratio-16-9">16:9</div></div>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">16:9 (π.χ. 1920x1080 ή 1280x720)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 150-250KB</span></div>
+      <div class="spec-row"><span class="spec-label">Χρήση:</span><span class="spec-value">Κύρια εικόνα/carousel στη σελίδα λεπτομερειών project.</span></div>
+    </div>
+
+    <div class="card">
+      <h3>Πρόσθετες Εικόνες (Project Images) <span class="badge">Strapi: project_images</span></h3>
+      <div class="ratio-preview"><div class="ratio-box ratio-16-9">16:9</div></div>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">16:9 (π.χ. 1920x1080)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 150-250KB/εικόνα</span></div>
+    </div>
+
+    <div class="card">
+      <h3>Supporters Banner <span class="badge">Strapi: supporters_banner_light / _dark</span></h3>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">Ελεύθερο (συνήθως πολύ φαρδύ, π.χ. 1200x200)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 150KB</span></div>
+      <div class="note">Υπάρχουν ξεχωριστά για light και dark mode.</div>
+    </div>
+
+    <!-- ΚΑΤΑΧΩΡΗΣΕΙΣ ΕΡΓΩΝ -->
+    <h2>Καταχωρήσεις Έργων (Project Entries)</h2>
+
+    <div class="card">
+      <h3>Cover Image (Εξώφυλλο) <span class="badge">Strapi: cover_image</span></h3>
+      <div class="ratio-preview"><div class="ratio-box ratio-16-9">16:9</div></div>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">16:9 (π.χ. 1920x1080 ή 1280x720)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 150-250KB</span></div>
+    </div>
+
+    <div class="card">
+      <h3>Πρόσθετες Εικόνες (Entry Images) <span class="badge">Strapi: images</span></h3>
+      <div class="ratio-preview"><div class="ratio-box ratio-16-9">16:9</div></div>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">16:9 (π.χ. 1920x1080)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 150-250KB/εικόνα</span></div>
+    </div>
+
+    <!-- ΠΡΟΣΩΠΙΚΑ ΕΡΓΑ ΜΕΛΩΝ -->
+    <h2>Προσωπικά Έργα Μελών (Member Projects)</h2>
+
+    <div class="card">
+      <h3>Project Thumbnail <span class="badge">Strapi: Project1Pictures / Project2Pictures</span></h3>
+      <div class="ratio-preview"><div class="ratio-box ratio-4-3">4:3</div></div>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">4:3 (π.χ. 1440x1080 ή 800x600)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 150-250KB</span></div>
+      <div class="spec-row"><span class="spec-label">Χρήση:</span><span class="spec-value">Κάρτα project στη σελίδα μέλους και στο profile preview. Η πρώτη εικόνα χρησιμοποιείται ως thumbnail.</span></div>
+      <div class="note">Landscape φωτογραφία.</div>
+    </div>
+
+    <div class="card">
+      <h3>Εικόνες Λεπτομερειών Project (Project Detail Images)</h3>
+      <div class="ratio-preview"><div class="ratio-box ratio-16-9">16:9</div></div>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">16:9 (π.χ. 1920x1080)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 150-250KB/εικόνα</span></div>
+      <div class="note">Υποστηρίζονται πολλαπλές εικόνες ανά project. Thumbnails 80x80px.</div>
+    </div>
+
+    <!-- ΟΜΑΔΕΣ ΕΡΓΑΣΙΑΣ -->
+    <h2>Ομάδες Εργασίας (Working Groups)</h2>
+
+    <div class="card">
+      <h3>Εικόνα Ομάδας (Group Image) <span class="badge">Strapi: Image</span></h3>
+      <div class="ratio-preview"><div class="ratio-box ratio-16-9">16:9</div></div>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">16:9 (π.χ. 1920x1080 ή 1280x720)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 150-250KB</span></div>
+      <div class="spec-row"><span class="spec-label">Χρήση:</span><span class="spec-value">Εικόνα στο πάνω μέρος της κάρτας ομάδας εργασίας (grid view). Στο list view εμφανίζεται σε 80x56px.</span></div>
+    </div>
+
+    <!-- NEWSLETTERS -->
+    <h2>Newsletters</h2>
+
+    <div class="card">
+      <h3>Cover Image <span class="badge">Strapi: Image</span></h3>
+      <div class="ratio-preview"><div class="ratio-box ratio-16-9">16:9</div></div>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">16:9 (π.χ. 1920x1080 ή 1280x720)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 150-250KB</span></div>
+      <div class="spec-row"><span class="spec-label">Χρήση:</span><span class="spec-value">Εικόνα στην κάρτα newsletter (grid view). Στο list view εμφανίζεται σε 80x56px.</span></div>
+    </div>
+
+    <!-- ΟΜΑΔΑ ΣΥΝΤΟΝΙΣΜΟΥ -->
+    <h2>Ομάδα Συντονισμού (Coordination Team)</h2>
+
+    <div class="card">
+      <h3>Team Banner</h3>
+      <div class="ratio-preview"><div class="ratio-box ratio-3-1">3:1</div></div>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">3:1 (π.χ. 1500x500 ή 1200x400)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 150-250KB</span></div>
+      <div class="spec-row"><span class="spec-label">Χρήση:</span><span class="spec-value">Banner εικόνα στο πάνω μέρος κάθε ομάδας συντονισμού.</span></div>
+      <div class="note">Wide landscape format. Η εικόνα κόβεται με <code>object-cover</code>.</div>
+    </div>
+
+    <!-- ΣΤΑΤΙΚΕΣ ΣΕΛΙΔΕΣ -->
+    <h2>Στατικές Σελίδες (Homepage & About)</h2>
+
+    <div class="card">
+      <h3>Hero Image (About Page)</h3>
+      <div class="ratio-preview"><div class="ratio-box ratio-16-9">16:9</div></div>
+      <div class="spec-row"><span class="spec-label">Αναλογίες:</span><span class="spec-value">16:9 (π.χ. 1920x1080)</span></div>
+      <div class="spec-row"><span class="spec-label">Μέγεθος:</span><span class="spec-value">μέγιστο 250-400KB (μεγαλύτερο λόγω full-screen)</span></div>
+      <div class="spec-row"><span class="spec-label">Χρήση:</span><span class="spec-value">Full-height parallax background στη σελίδα «Σχετικά με εμάς». Καταλαμβάνει 80% του viewport.</span></div>
+      <div class="note">Χρησιμοποιήστε εικόνα υψηλής ποιότητας. Η σημαντική πληροφορία να βρίσκεται στο κέντρο.</div>
+    </div>
+
+    <!-- ΣΥΝΟΠΤΙΚΟΣ ΠΙΝΑΚΑΣ -->
+    <h2>Συνοπτικός Πίνακας</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Τύπος Εικόνας</th>
+          <th>Αναλογίες</th>
+          <th>Παράδειγμα Διαστάσεων</th>
+          <th>Μέγ. Μέγεθος</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Νέα - Thumbnail</td><td>16:9</td><td>1280x720</td><td>250KB</td></tr>
+        <tr><td>Νέα - Detail</td><td>16:9</td><td>1920x1080</td><td>250KB</td></tr>
+        <tr><td>Νέα - Inline</td><td>Ελεύθερο</td><td>&mdash;</td><td>250KB</td></tr>
+        <tr><td>Open Calls - Thumbnail</td><td>16:9</td><td>1280x720</td><td>250KB</td></tr>
+        <tr><td>Μέλη - Προφίλ</td><td>5:6</td><td>1080x1296</td><td>250KB</td></tr>
+        <tr><td>Μέλη - Detail</td><td>3:4</td><td>900x1200</td><td>250KB</td></tr>
+        <tr><td>CforC Projects - Cover</td><td>16:9</td><td>1920x1080</td><td>250KB</td></tr>
+        <tr><td>CforC Projects - Gallery</td><td>16:9</td><td>1920x1080</td><td>250KB</td></tr>
+        <tr><td>CforC Projects - Supporters</td><td>Ελεύθερο</td><td>1200x200</td><td>150KB</td></tr>
+        <tr><td>Καταχωρήσεις Έργων - Cover</td><td>16:9</td><td>1280x720</td><td>250KB</td></tr>
+        <tr><td>Έργα Μελών - Thumbnail</td><td>4:3</td><td>1440x1080</td><td>250KB</td></tr>
+        <tr><td>Έργα Μελών - Detail</td><td>16:9</td><td>1920x1080</td><td>250KB</td></tr>
+        <tr><td>Ομάδες Εργασίας</td><td>16:9</td><td>1280x720</td><td>250KB</td></tr>
+        <tr><td>Newsletters</td><td>16:9</td><td>1280x720</td><td>250KB</td></tr>
+        <tr><td>Ομάδα Συντονισμού Banner</td><td>3:1</td><td>1500x500</td><td>250KB</td></tr>
+        <tr><td>About Hero</td><td>16:9</td><td>1920x1080</td><td>400KB</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ΓΕΝΙΚΕΣ ΟΔΗΓΙΕΣ -->
+    <h2>Γενικές Οδηγίες</h2>
+
+    <div class="card">
+      <h3>Format</h3>
+      <div class="spec-row"><span class="spec-label">Προτιμώμενα:</span><span class="spec-value">WebP, JPEG, PNG</span></div>
+      <div class="note"><strong>WebP</strong> προτιμάται για καλύτερη συμπίεση και ταχύτερο loading.</div>
+    </div>
+
+    <div class="card">
+      <h3>Βελτιστοποίηση</h3>
+      <ul style="margin-left: 16px; margin-top: 8px; font-size: 0.95em; color: #444;">
+        <li>Πάντα βελτιστοποιήστε τις εικόνες πριν τις ανεβάσετε στο Strapi</li>
+        <li>Η εικόνα κόβεται αυτόματα με <code>object-cover</code> &mdash; φροντίστε η σημαντική πληροφορία να είναι κεντραρισμένη</li>
+        <li>Για portrait εικόνες (μέλη), το πρόσωπο πρέπει να βρίσκεται στο κέντρο</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Alt Text (Εναλλακτικό Κείμενο)</h3>
+      <ul style="margin-left: 16px; margin-top: 8px; font-size: 0.95em; color: #444;">
+        <li><strong>Υποχρεωτικό</strong> για κάθε εικόνα (πεδίο <code>ImageAltText</code> ή <code>ProfileImageAltText</code> στο Strapi)</li>
+        <li>Περιγράψτε συνοπτικά τι απεικονίζει η εικόνα</li>
+        <li>Χρησιμοποιείται για προσβασιμότητα (screen readers) και SEO</li>
+      </ul>
+    </div>
+
+    <!-- ΕΡΓΑΛΕΙΑ -->
+    <h2>Βοηθητικά Εργαλεία</h2>
+    <div class="tools-grid">
+      <a href="https://tinypng.com/" target="_blank" class="tool-link">
+        TinyPNG
+        <span>Βελτιστοποίηση εικόνων</span>
+      </a>
+      <a href="https://imagecompressor.com/" target="_blank" class="tool-link">
+        Image Compressor
+        <span>Βελτιστοποίηση εικόνων</span>
+      </a>
+      <a href="https://tinywow.com/" target="_blank" class="tool-link">
+        TinyWow
+        <span>Επεξεργασία & βελτιστοποίηση</span>
+      </a>
+      <a href="https://squoosh.app/" target="_blank" class="tool-link">
+        Squoosh
+        <span>Μετατροπή σε WebP</span>
+      </a>
+    </div>
+
+    <div class="footer">
+      <p>CforC Website &mdash; Προδιαγραφές Εικόνων &mdash; Τελευταία ενημέρωση: Μάρτιος 2026</p>
+    </div>
+  </div>
+</body>
+</html>

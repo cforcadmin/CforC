@@ -26,6 +26,14 @@ function visibleMembers(members?: WorkingGroupMemberRef[]): WorkingGroupMemberRe
   return members.filter(m => !m.HideProfile)
 }
 
+// Role labels for current coordination team members (by index in Members array)
+const MEMBER_ROLE_LABELS: Record<number, string> = {
+  0: 'Υπεύθυνη Κοινότητας',
+  1: 'Υπεύθυνη Επικοινωνίας',
+  2: 'Υπεύθυνος Οικονομικών & IT',
+  3: 'Αντιπρόεδρος',
+}
+
 export default function CoordinationTeamContent() {
   const [teams, setTeams] = useState<CoordinationTeam[]>([])
   const [loading, setLoading] = useState(true)
@@ -140,7 +148,7 @@ function CurrentTeamCard({ team }: { team: CoordinationTeam }) {
         {coordinator && !coordinator.HideProfile && (
           <div className="mb-6">
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-              Συντονίστρια/Συντονιστής
+              Πρόεδρος
             </span>
             <div className="flex items-center gap-3 mt-2">
               {coordinatorImageUrl ? (
@@ -173,8 +181,8 @@ function CurrentTeamCard({ team }: { team: CoordinationTeam }) {
               Μέλη ({members.length})
             </span>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-3">
-              {members.map((member) => (
-                <MemberAvatar key={member.id} member={member} />
+              {members.map((member, index) => (
+                <MemberAvatar key={member.id} member={member} roleLabel={MEMBER_ROLE_LABELS[index]} />
               ))}
             </div>
           </div>
@@ -286,7 +294,7 @@ function PastTeamCard({ team }: { team: CoordinationTeam }) {
 
 // ── Member Avatar (for current team grid) ──
 
-function MemberAvatar({ member }: { member: WorkingGroupMemberRef }) {
+function MemberAvatar({ member, roleLabel }: { member: WorkingGroupMemberRef; roleLabel?: string }) {
   const imageUrl = getImageUrl(member.Image)
 
   return (
@@ -310,6 +318,11 @@ function MemberAvatar({ member }: { member: WorkingGroupMemberRef }) {
       <span className="text-xs text-center text-charcoal dark:text-gray-300 group-hover:text-coral dark:group-hover:text-coral-light transition-colors font-medium leading-tight">
         {member.Name}
       </span>
+      {roleLabel && (
+        <span className="text-[10px] text-gray-500 dark:text-gray-400 text-center leading-tight">
+          {roleLabel}
+        </span>
+      )}
     </Link>
   )
 }

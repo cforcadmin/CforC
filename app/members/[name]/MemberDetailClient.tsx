@@ -530,8 +530,8 @@ export default function MemberDetailClient() {
               <span className="inline-block self-start bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-xs font-medium mb-4">
                 ΟΛΑ TA NEA ΣTO EMAIL ΣΟΥ!
               </span>
-              <h3 className="text-xl font-bold mb-6 dark:text-gray-100 leading-tight">
-                Γράψου στο newsletter μας για δράσεις, ευκαιρίες και νέα.
+              <h3 className="text-base font-bold mb-6 dark:text-gray-100 leading-relaxed">
+                Γράψου στο newsletter μας για ενημέρωση σχετική με δράσεις μας, νέα μας και ελληνικές και παγκόσμιες πολιτιστικές ευκαιρίες.
               </h3>
               <form onSubmit={handleNewsletterSubmit} className="space-y-3">
                 {/* Honeypot */}
