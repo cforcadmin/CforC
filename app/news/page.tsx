@@ -88,7 +88,8 @@ function ActivitiesPageContent() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // On mount: restore from URL params (priority) or sessionStorage
+  // Restore from URL params (priority) or sessionStorage
+  const urlParamKey = searchParams.toString()
   useEffect(() => {
     const fromParam = searchParams.get('from')
     const tagParam = searchParams.get('tag')
@@ -106,7 +107,7 @@ function ActivitiesPageContent() {
         url.searchParams.delete('category')
         window.history.replaceState({}, '', url.pathname + (url.search || ''))
       }
-    } else {
+    } else if (!initialized) {
       const saved = loadNewsSearch()
       if (saved) {
         setSearchQuery(saved.searchQuery || '')
@@ -119,7 +120,7 @@ function ActivitiesPageContent() {
       }
     }
     setInitialized(true)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [urlParamKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Persist search state to sessionStorage
   useEffect(() => {
