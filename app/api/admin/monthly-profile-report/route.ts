@@ -94,9 +94,12 @@ export async function GET(request: NextRequest) {
 
     const subscriberListItems = newSubscribers.map(sub => {
       const email = (sub.Email || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      const first = (sub.FirstName || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      const last = (sub.LastName || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      const fullName = [first, last].filter(Boolean).join(' ')
       const d = new Date(sub.ConfirmedAt)
       const date = `${d.getDate()}/${d.getMonth() + 1}`
-      return `<li style="margin-bottom: 8px; color: #2d3748;">${email} (${date})</li>`
+      return `<li style="margin-bottom: 8px; color: #2d3748;">${email}${fullName ? ` — ${fullName}` : ''} (${date})</li>`
     }).join('\n')
 
     const profileSection = logs.length > 0 ? `
@@ -183,12 +186,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (newSubscribers.length > 0) {
-      const subsCsvHeader = 'Email,Ημερομηνία Εγγραφής'
+      const subsCsvHeader = 'Email,Όνομα,Επώνυμο,Ημερομηνία Εγγραφής'
       const subsCsvRows = newSubscribers.map((sub: any) => {
         const email = (sub.Email || '').replace(/"/g, '""')
+        const first = (sub.FirstName || '').replace(/"/g, '""')
+        const last = (sub.LastName || '').replace(/"/g, '""')
         const d = new Date(sub.ConfirmedAt)
         const date = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`
-        return `"${email}","${date}"`
+        return `"${email}","${first}","${last}","${date}"`
       })
       const subsCsvContent = [subsCsvHeader, ...subsCsvRows].join('\n')
       attachments.push({

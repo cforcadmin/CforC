@@ -42,6 +42,8 @@ interface MagicLinkPayload {
 
 interface NewsletterPayload {
   email: string
+  firstName?: string
+  lastName?: string
   type: 'newsletter'
 }
 
@@ -77,10 +79,12 @@ export function generateMagicLinkToken(memberId: string, email: string): string 
   return jwt.sign(payload, getJwtSecret(), options)
 }
 
-export function generateNewsletterToken(email: string): string {
+export function generateNewsletterToken(email: string, firstName?: string, lastName?: string): string {
   const payload: NewsletterPayload = {
     email,
-    type: 'newsletter'
+    type: 'newsletter',
+    ...(firstName && { firstName }),
+    ...(lastName && { lastName }),
   }
 
   const options: SignOptions = {

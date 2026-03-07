@@ -28,6 +28,8 @@ export async function GET(request: Request) {
     }
 
     const email = payload.email
+    const firstName = (payload as any).firstName || ''
+    const lastName = (payload as any).lastName || ''
 
     const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
     const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
@@ -64,6 +66,8 @@ export async function GET(request: Request) {
       body: JSON.stringify({
         data: {
           Email: email,
+          FirstName: firstName || undefined,
+          LastName: lastName || undefined,
           ConfirmedAt: new Date().toISOString(),
         },
       }),
@@ -89,6 +93,8 @@ export async function GET(request: Request) {
           },
           body: JSON.stringify({
             email,
+            firstname: firstName || undefined,
+            lastname: lastName || undefined,
             groups: [SENDER_GROUP_ID],
             trigger_automation: false,
           }),
@@ -130,6 +136,11 @@ export async function GET(request: Request) {
                 <p style="margin: 0; color: #2d3748;">
                   <strong>Email:</strong> ${escapeHtml(email)}
                 </p>
+                ${firstName || lastName ? `
+                <p style="margin: 10px 0 0 0; color: #2d3748;">
+                  <strong>Όνομα:</strong> ${escapeHtml([firstName, lastName].filter(Boolean).join(' '))}
+                </p>
+                ` : ''}
                 <p style="margin: 10px 0 0 0; color: #718096; font-size: 14px;">
                   <strong>Ημερομηνία επιβεβαίωσης:</strong> ${new Date().toLocaleString('el-GR')}
                 </p>

@@ -9,6 +9,8 @@ interface NewsletterSectionProps {
 
 export default function NewsletterSection({ variant = 'default' }: NewsletterSectionProps) {
   const [email, setEmail] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [showPopup, setShowPopup] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -27,12 +29,19 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ email, website }),
+          body: JSON.stringify({
+            email,
+            firstName: firstName.trim() || undefined,
+            lastName: lastName.trim() || undefined,
+            website,
+          }),
         })
 
         if (response.ok) {
           setShowPopup(true)
           setEmail('')
+          setFirstName('')
+          setLastName('')
           // Hide popup after 4 seconds
           setTimeout(() => {
             setShowPopup(false)
@@ -149,6 +158,25 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
                     </Link>
                   </label>
                 </div>
+                {/* Optional name fields — appear when terms are accepted */}
+                {agreedToTerms && (
+                  <div className="flex gap-3 animate-[fadeIn_0.3s_ease-out]">
+                    <input
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="Όνομα (προαιρετικό)"
+                      className="flex-1 px-5 py-3 rounded-full border-2 border-gray-300 dark:border-gray-600 focus:border-coral focus:outline-none text-gray-700 dark:text-gray-200 dark:bg-gray-700 text-sm"
+                    />
+                    <input
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Επώνυμο (προαιρετικό)"
+                      className="flex-1 px-5 py-3 rounded-full border-2 border-gray-300 dark:border-gray-600 focus:border-coral focus:outline-none text-gray-700 dark:text-gray-200 dark:bg-gray-700 text-sm"
+                    />
+                  </div>
+                )}
               </form>
             </div>
           </div>

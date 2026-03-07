@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const { email, website } = await request.json()
+    const { email, firstName, lastName, website } = await request.json()
 
     // Honeypot check - if filled, it's a bot
     if (website) {
@@ -68,8 +68,12 @@ export async function POST(request: Request) {
 
     const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://cultureforchange.net'
 
-    // Generate confirmation token
-    const token = generateNewsletterToken(email)
+    // Sanitize optional name fields
+    const cleanFirst = typeof firstName === 'string' ? firstName.trim().slice(0, 100) : undefined
+    const cleanLast = typeof lastName === 'string' ? lastName.trim().slice(0, 100) : undefined
+
+    // Generate confirmation token (includes names if provided)
+    const token = generateNewsletterToken(email, cleanFirst, cleanLast)
     const confirmUrl = `${SITE_URL}/api/subscribe/confirm?token=${encodeURIComponent(token)}`
 
     // Use verified domain

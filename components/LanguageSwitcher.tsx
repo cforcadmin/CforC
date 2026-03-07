@@ -35,7 +35,10 @@ const languages: Language[] = [
 export default function LanguageSwitcher() {
   const [isOpen, setIsOpen] = useState(false)
   const [currentLang, setCurrentLang] = useState<string>('el')
+  const [mounted, setMounted] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => { setMounted(true) }, [])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -113,8 +116,10 @@ export default function LanguageSwitcher() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Hidden Google Translate Element */}
-      <div id="google_translate_element" style={{ display: 'none' }} aria-hidden="true" suppressHydrationWarning></div>
+      {/* Hidden Google Translate Element — client-only to avoid hydration mismatch from injected widget children */}
+      {mounted && (
+        <div id="google_translate_element" style={{ display: 'none' }} aria-hidden="true"></div>
+      )}
 
       {/* Globe Icon Button with Overlays */}
       <button
