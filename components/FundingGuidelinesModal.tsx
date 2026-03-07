@@ -43,10 +43,16 @@ const FUNDING_RESOURCES = [
   }
 ]
 
-export default function FundingGuidelinesModal() {
+interface FundingGuidelinesModalProps {
+  compact?: boolean
+  onHoverChange?: (hovered: boolean) => void
+}
+
+export default function FundingGuidelinesModal({ compact = false, onHoverChange }: FundingGuidelinesModalProps) {
   const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [showMemberModal, setShowMemberModal] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
 
   useEffect(() => {
     if (isOpen || showMemberModal) {
@@ -80,13 +86,17 @@ export default function FundingGuidelinesModal() {
     <>
       <button
         onClick={handleClick}
-        className="flex items-center gap-2 px-4 py-3 rounded-full border border-charcoal dark:border-gray-400 text-sm font-medium text-charcoal dark:text-gray-200 hover:bg-charcoal/10 dark:hover:bg-gray-600 transition-colors whitespace-nowrap"
+        onMouseEnter={() => { setIsHovered(true); onHoverChange?.(true) }}
+        onMouseLeave={() => { setIsHovered(false); onHoverChange?.(false) }}
+        className={`flex items-center gap-2 rounded-full border border-charcoal dark:border-gray-400 text-sm font-medium text-charcoal dark:text-gray-200 hover:bg-charcoal/10 dark:hover:bg-gray-600 transition-all whitespace-nowrap ${
+          compact && !isHovered ? 'px-3 py-3' : 'px-4 py-3'
+        }`}
         aria-label="Οδηγίες χρηματοδότησης"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span>Οδηγίες Χρηματοδότησης</span>
+        {(!compact || isHovered) && <span>Οδηγίες Χρηματοδότησης</span>}
       </button>
 
       {/* Members-Only Modal (logged out) */}

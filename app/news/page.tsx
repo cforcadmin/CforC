@@ -56,9 +56,11 @@ function ActivitiesPageContent() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'current' | 'previous'>('current')
   const [selectedCategory, setSelectedCategory] = useState('')
+  const [selectedTag, setSelectedTag] = useState('')
   const [selectedYear, setSelectedYear] = useState<number | null>(null)
   const [sortMode, setSortMode] = useState('date-asc')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [fundingHovered, setFundingHovered] = useState(false)
 
   // Animated counter
   const [displayCount, setDisplayCount] = useState(0)
@@ -80,6 +82,16 @@ function ActivitiesPageContent() {
     const fromParam = searchParams.get('from')
     if (fromParam === 'previous') setActiveTab('previous')
     else if (fromParam === 'current') setActiveTab('current')
+    const tagParam = searchParams.get('tag')
+    const categoryParam = searchParams.get('category')
+    if (tagParam) setSelectedTag(tagParam)
+    if (categoryParam) setSelectedCategory(categoryParam)
+    if (tagParam || categoryParam) {
+      const url = new URL(window.location.href)
+      url.searchParams.delete('tag')
+      url.searchParams.delete('category')
+      window.history.replaceState({}, '', url.pathname + (url.search || ''))
+    }
   }, [searchParams])
 
   useEffect(() => {
@@ -117,6 +129,14 @@ function ActivitiesPageContent() {
     return Array.from(cats).sort((a, b) => a.localeCompare(b, 'el'))
   }, [allActivities])
 
+  const availableTags = useMemo(() => {
+    const tagSet = new Set<string>()
+    allActivities.forEach(a => {
+      if (a.Tags) a.Tags.split(',').map(t => t.trim()).filter(Boolean).forEach(t => tagSet.add(t))
+    })
+    return Array.from(tagSet).sort((a, b) => a.localeCompare(b, 'el'))
+  }, [allActivities])
+
   const availableYears = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -146,6 +166,14 @@ function ActivitiesPageContent() {
       result = result.filter(a => a.Category === selectedCategory)
     }
 
+    // Tag filter
+    if (selectedTag) {
+      result = result.filter(a => {
+        if (!a.Tags) return false
+        return a.Tags.split(',').map(t => t.trim()).includes(selectedTag)
+      })
+    }
+
     // Year filter
     if (selectedYear) {
       result = result.filter(a => new Date(a.Date).getFullYear() === selectedYear)
@@ -156,7 +184,8 @@ function ActivitiesPageContent() {
       const q = searchQuery.toLowerCase()
       result = result.filter(a =>
         a.Title.toLowerCase().includes(q) ||
-        extractTextFromBlocks(a.Description).toLowerCase().includes(q)
+        extractTextFromBlocks(a.Description).toLowerCase().includes(q) ||
+        (a.Tags && a.Tags.toLowerCase().includes(q))
       )
     }
 
@@ -174,7 +203,7 @@ function ActivitiesPageContent() {
     }
 
     setFilteredActivities(result)
-  }, [allActivities, searchQuery, activeTab, selectedCategory, selectedYear, sortMode])
+  }, [allActivities, searchQuery, activeTab, selectedCategory, selectedTag, selectedYear, sortMode])
 
   // Animated counter
   useEffect(() => {
@@ -193,11 +222,12 @@ function ActivitiesPageContent() {
   // Reset year when switching tabs
   useEffect(() => { setSelectedYear(null) }, [activeTab])
 
-  const totalActiveFilters = (selectedCategory ? 1 : 0) + (selectedYear ? 1 : 0) + (searchQuery ? 1 : 0)
+  const totalActiveFilters = (selectedCategory ? 1 : 0) + (selectedTag ? 1 : 0) + (selectedYear ? 1 : 0) + (searchQuery ? 1 : 0)
 
   const clearAllFilters = () => {
     setSearchQuery('')
     setSelectedCategory('')
+    setSelectedTag('')
     setSelectedYear(null)
   }
 
@@ -254,7 +284,9 @@ function ActivitiesPageContent() {
                   placeholder="Αναζήτηση..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 min-w-[140px] max-w-[200px] px-4 py-3 border border-charcoal dark:border-gray-400 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 placeholder-charcoal dark:placeholder-gray-400"
+                  className={`flex-1 min-w-[100px] px-4 py-3 border border-charcoal dark:border-gray-400 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 placeholder-charcoal dark:placeholder-gray-400 transition-all duration-200 ${
+                    fundingHovered && activeTab === 'previous' ? 'max-w-[120px]' : 'max-w-[200px]'
+                  }`}
                   aria-label="Αναζήτηση νέων"
                 />
 
@@ -295,6 +327,16 @@ function ActivitiesPageContent() {
                   />
                 )}
 
+                {/* Tag filter */}
+                {availableTags.length > 0 && (
+                  <CategoryFilter
+                    categories={availableTags}
+                    selectedCategory={selectedTag}
+                    onCategoryChange={setSelectedTag}
+                    label="Ετικέτα"
+                  />
+                )}
+
                 {/* Year - only in Previous tab */}
                 {activeTab === 'previous' && availableYears.length > 0 && (
                   <YearFilter
@@ -315,7 +357,7 @@ function ActivitiesPageContent() {
                 <ViewToggle view={viewMode} onViewChange={setViewMode} />
 
                 {/* Funding Guidelines */}
-                <FundingGuidelinesModal />
+                <FundingGuidelinesModal compact={activeTab === 'previous'} onHoverChange={setFundingHovered} />
 
                 {/* Clear filters */}
                 {totalActiveFilters > 0 && (
@@ -378,15 +420,37 @@ function ActivitiesPageContent() {
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5">
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                         <time dateTime={activity.Date} className="inline-block bg-charcoal dark:bg-gray-600 text-white px-3 py-0.5 rounded-full text-xs font-medium">
                           {new Date(activity.Date).toLocaleDateString('el-GR')}
                         </time>
                         {activity.Category && (
-                          <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-2 py-0.5 rounded-full">
+                          <button
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedCategory(activity.Category!) }}
+                            className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-2 py-0.5 rounded-full hover:bg-charcoal hover:text-white dark:hover:bg-white dark:hover:text-charcoal transition-colors"
+                          >
                             {activity.Category}
-                          </span>
+                          </button>
                         )}
+                        {activity.Tags && (() => {
+                          const tags = activity.Tags!.split(',').map(t => t.trim()).filter(Boolean)
+                          const visible = tags.slice(0, 3)
+                          const extra = tags.length - 3
+                          return (
+                            <>
+                              {visible.map(tag => (
+                                <button
+                                  key={tag}
+                                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedTag(tag) }}
+                                  className="inline-block bg-gray-100 dark:bg-gray-700 text-charcoal dark:text-gray-200 border border-charcoal dark:border-gray-400 text-[10px] px-2 py-0.5 rounded-full hover:bg-charcoal hover:text-white dark:hover:bg-white dark:hover:text-charcoal transition-colors"
+                                >
+                                  {tag}
+                                </button>
+                              ))}
+                              {extra > 0 && <span className="text-[10px] text-gray-400 dark:text-gray-500">+{extra}</span>}
+                            </>
+                          )
+                        })()}
                       </div>
                       <h3 className="text-sm md:text-base font-bold text-charcoal dark:text-gray-100 group-hover:text-coral dark:group-hover:text-coral-light line-clamp-2 transition-colors">
                         <LocalizedText text={activity.Title} engText={activity.EngTitle} />

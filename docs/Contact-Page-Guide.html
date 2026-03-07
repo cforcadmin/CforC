@@ -153,6 +153,7 @@
       <h3>Τοποθεσία &amp; Πρόσβαση</h3>
       <div class="spec-row"><span class="spec-label">URL:</span><span class="spec-value"><code>/contact</code></span></div>
       <div class="spec-row"><span class="spec-label">Navbar:</span><span class="spec-value">Dropdown «Σχετικά με εμάς» → Επικοινωνία</span></div>
+      <div class="spec-row"><span class="spec-label">Footer:</span><span class="spec-value">Στήλη ΕΠΙΚΟΙΝΩΝΙΑ → «Επικοινώνησε μαζί μας»</span></div>
       <div class="spec-row"><span class="spec-label">Δομή:</span><span class="spec-value">Δύο flip cards &mdash; Γενική Επικοινωνία + Επικοινωνία Μέλους</span></div>
     </div>
 
@@ -172,11 +173,68 @@
         <h3>Πίσω όψη (hover/tap)</h3>
         <ul>
           <li>Διεύθυνση (σύνδεσμος Google Maps)</li>
-          <li>Email: hello@cultureforchange.net</li>
-          <li>Τηλέφωνο: +30 697 622 5704</li>
+          <li>Email: κλικ → αντιγραφή στο clipboard</li>
+          <li>Τηλέφωνο: κλικ → αντιγραφή στο clipboard</li>
           <li>Social Media εικονίδια</li>
+          <li>Κουμπί «Στείλε μας μήνυμα» → φόρμα επικοινωνίας</li>
         </ul>
       </div>
+    </div>
+
+    <!-- ΦΟΡΜΑ ΕΠΙΚΟΙΝΩΝΙΑΣ -->
+    <h2>Φόρμα Επικοινωνίας</h2>
+
+    <div class="card">
+      <h3>Πεδία φόρμας</h3>
+      <p style="font-size: 0.95em; color: #444; margin-top: 4px; margin-bottom: 12px;">
+        Εμφανίζεται inline στην πίσω όψη της κάρτας Γενικής Επικοινωνίας, μετά το κλικ στο «Στείλε μας μήνυμα». Η κάρτα επεκτείνεται αυτόματα.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Πεδίο</th>
+            <th>Υποχρεωτικό</th>
+            <th>Περιγραφή</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Email</td><td>Ναι</td><td>Email αποστολέα</td></tr>
+          <tr><td>Όνομα</td><td>Όχι</td><td>Προαιρετικό όνομα</td></tr>
+          <tr><td>Μήνυμα</td><td>Ναι</td><td>Κείμενο μηνύματος (max 5000 χαρ.)</td></tr>
+          <tr><td>Συνημμένο</td><td>Όχι</td><td>Αρχείο max 5MB</td></tr>
+          <tr><td>Όροι χρήσης</td><td>Ναι</td><td>Checkbox αποδοχής Όρων &amp; Πολιτικής Απορρήτου</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Αποστολή email</h3>
+      <div class="spec-row"><span class="spec-label">API Endpoint:</span><span class="spec-value"><code>POST /api/contact</code></span></div>
+      <div class="spec-row"><span class="spec-label">Παραλήπτης:</span><span class="spec-value">hello@cultureforchange.net</span></div>
+      <div class="spec-row"><span class="spec-label">CC:</span><span class="spec-value">Email αποστολέα + it@cultureforchange.net (testing)</span></div>
+      <div class="spec-row"><span class="spec-label">Reply-to:</span><span class="spec-value">Email αποστολέα</span></div>
+      <div class="spec-row"><span class="spec-label">Ασφάλεια:</span><span class="spec-value">CSRF protection, email validation, max 5MB attachment</span></div>
+    </div>
+
+    <div class="card">
+      <h3>Μήνυμα επιτυχίας &amp; GDPR</h3>
+      <p style="font-size: 0.95em; color: #444; margin-top: 4px;">
+        Μετά την επιτυχή αποστολή εμφανίζεται μήνυμα επιτυχίας μαζί με πληροφορίες GDPR:
+      </p>
+      <ul>
+        <li>Διαγραφή δεδομένων 30 ημέρες μετά την ολοκλήρωση επικοινωνίας</li>
+        <li>Δικαίωμα αίτησης διαγραφής ανά πάσα στιγμή στο hello@cultureforchange.net</li>
+        <li>Χρήση δεδομένων αποκλειστικά για απάντηση μηνύματος</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Διατήρηση κατάστασης φόρμας</h3>
+      <ul>
+        <li>Αν ο χρήστης απομακρυνθεί (mouse out), η κάρτα γυρίζει πίσω αλλά τα δεδομένα φόρμας <strong>διατηρούνται</strong></li>
+        <li>Αν η φόρμα ήταν ανοιχτή, ξανα-ανοίγει αυτόματα στο επόμενο hover</li>
+        <li>Μόνο το κουμπί X ή «Κλείσιμο» μηδενίζει τη φόρμα</li>
+      </ul>
     </div>
 
     <!-- ΕΠΙΚΟΙΝΩΝΙΑ ΜΕΛΟΥΣ -->
@@ -288,7 +346,7 @@
         <tr>
           <td>Desktop</td>
           <td>Hover (300ms καθυστέρηση)</td>
-          <td>Η κάρτα γυρίζει. Απομάκρυνση → επιστροφή</td>
+          <td>Η κάρτα γυρίζει. Απομάκρυνση → επιστροφή (δεδομένα φόρμας διατηρούνται)</td>
         </tr>
         <tr>
           <td>Mobile</td>
@@ -299,10 +357,27 @@
     </table>
 
     <div class="card" style="margin-top: 16px;">
-      <h3>Σύνδεσμοι μέσα στις κάρτες</h3>
-      <p style="font-size: 0.95em; color: #444; margin-top: 4px;">
-        Τα email, τηλέφωνο, social media και ονόματα μελών λειτουργούν ως κανονικοί σύνδεσμοι χωρίς να γυρίζουν την κάρτα.
-      </p>
+      <h3>Κλικ μέσα στις κάρτες</h3>
+      <ul>
+        <li>Email &amp; Τηλέφωνο: κλικ → αντιγραφή στο clipboard (μήνυμα «Αντιγράφηκε!»)</li>
+        <li>Διεύθυνση: ανοίγει Google Maps σε νέα καρτέλα</li>
+        <li>Social media: ανοίγει σε νέα καρτέλα</li>
+        <li>Ονόματα μελών: ανοίγει σελίδα μέλους</li>
+        <li>Κανένα κλικ δεν γυρίζει την κάρτα</li>
+      </ul>
+    </div>
+
+    <!-- FOOTER -->
+    <h2>Footer &mdash; Στήλη ΕΠΙΚΟΙΝΩΝΙΑ</h2>
+
+    <div class="card">
+      <h3>Στοιχεία</h3>
+      <ul>
+        <li>Διεύθυνση (σύνδεσμος Google Maps)</li>
+        <li>Email: κλικ → αντιγραφή στο clipboard («Αντιγράφηκε!» αντικαθιστά προσωρινά το email)</li>
+        <li>Τηλέφωνο: κλικ → αντιγραφή στο clipboard («Αντιγράφηκε!» αντικαθιστά προσωρινά τον αριθμό)</li>
+        <li>«Επικοινώνησε μαζί μας» → σύνδεσμος στη σελίδα <code>/contact</code></li>
+      </ul>
     </div>
 
     <!-- ΕΝΗΜΕΡΩΣΗ ΠΕΡΙΕΧΟΜΕΝΟΥ -->
@@ -314,6 +389,12 @@
     </div>
 
     <div class="card">
+      <h3>Αλλαγή φόρμας επικοινωνίας / API</h3>
+      <div class="spec-row"><span class="spec-label">Frontend:</span><span class="spec-value"><code>components/ContactContent.tsx</code> &mdash; Ενότητα φόρμας</span></div>
+      <div class="spec-row"><span class="spec-label">API:</span><span class="spec-value"><code>app/api/contact/route.ts</code> &mdash; Resend, CSRF</span></div>
+    </div>
+
+    <div class="card">
       <h3>Αλλαγή ρόλων / emails Ομάδας Συντονισμού</h3>
       <div class="spec-row"><span class="spec-label">Αρχείο:</span><span class="spec-value"><code>components/ContactContent.tsx</code> &mdash; Σταθερές <code>ROLE_MAP</code> και <code>PRESIDENT_ROLE</code></span></div>
     </div>
@@ -322,6 +403,11 @@
       <h3>Αλλαγή μελών Ομάδας Συντονισμού</h3>
       <div class="spec-row"><span class="spec-label">Πλατφόρμα:</span><span class="spec-value">Strapi → Coordination Teams → Τρέχουσα ομάδα (<code>IsCurrent: true</code>)</span></div>
       <div class="note">Τα ονόματα, φωτογραφίες και σύνδεσμοι προφίλ ανανεώνονται αυτόματα από το Strapi.</div>
+    </div>
+
+    <div class="card">
+      <h3>Αλλαγή footer στοιχείων επικοινωνίας</h3>
+      <div class="spec-row"><span class="spec-label">Αρχείο:</span><span class="spec-value"><code>components/Footer.tsx</code></span></div>
     </div>
 
     <div class="footer">

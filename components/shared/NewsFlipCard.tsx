@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import LocalizedText from '@/components/LocalizedText'
 import BlurredImage from '@/components/shared/BlurredImage'
 import type { Activity } from '@/lib/types'
@@ -26,6 +27,14 @@ function extractTextFromBlocks(blocks: any): string {
 export default function NewsFlipCard({ activity, fromTab }: { activity: Activity; fromTab?: string }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const flipTimeout = useRef<NodeJS.Timeout | null>(null)
+  const router = useRouter()
+
+  const tags = activity.Tags ? activity.Tags.split(',').map(t => t.trim()).filter(Boolean) : []
+  const visibleTags = tags.slice(0, 3)
+  const extraTagCount = tags.length - 3
+
+  // Determine which tab this activity belongs to (current or previous)
+  const activityTab = fromTab || (new Date(activity.Date) >= new Date(new Date().toDateString()) ? 'current' : 'previous')
 
   const descriptionText = extractTextFromBlocks(activity.Description)
   const engDescriptionText = activity.EngDescription ? extractTextFromBlocks(activity.EngDescription) : null
@@ -121,15 +130,35 @@ export default function NewsFlipCard({ activity, fromTab }: { activity: Activity
                   {new Date(activity.Date).toLocaleDateString('el-GR')}
                 </time>
                 {activity.Category && (
-                  <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-full">
+                  <button
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/news?from=${activityTab}&category=${encodeURIComponent(activity.Category!)}`) }}
+                    className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-full hover:bg-charcoal hover:text-white dark:hover:bg-white dark:hover:text-charcoal transition-colors"
+                  >
                     {activity.Category}
-                  </span>
+                  </button>
                 )}
               </div>
 
               <h3 className="text-base font-bold mb-3 text-coral dark:text-coral-light line-clamp-2">
                 <LocalizedText text={activity.Title} engText={activity.EngTitle} />
               </h3>
+
+              {visibleTags.length > 0 && (
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                  {visibleTags.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/news?from=${activityTab}&tag=${encodeURIComponent(tag)}`) }}
+                      className="inline-block bg-gray-100 dark:bg-gray-700 text-charcoal dark:text-gray-200 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-full hover:bg-charcoal hover:text-white dark:hover:bg-white dark:hover:text-charcoal transition-colors"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                  {extraTagCount > 0 && (
+                    <span className="text-xs text-gray-400 dark:text-gray-500">+{extraTagCount}</span>
+                  )}
+                </div>
+              )}
 
               <div className="relative flex-1 overflow-hidden">
                 <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">

@@ -32,6 +32,7 @@ export interface Activity extends StrapiData<Activity> {
   Slug?: string;  // URL-friendly slug generated from title
   ImageAltText: string;  // Required alt text for accessibility
   EngTitle?: string;  // Optional English title (manual translation)
+  Tags?: string;  // Comma-separated tags
   EngDescription?: any;  // Optional English description - Strapi blocks type (rich text)
   createdAt: string;
   updatedAt: string;

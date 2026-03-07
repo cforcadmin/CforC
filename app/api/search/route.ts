@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
 
   if (requestedTypes.includes('activities')) {
     fetches.push(
-      strapiGet(`/activities?filters[$or][0][Title][$containsi]=${qEncoded}&filters[$or][1][EngTitle][$containsi]=${qEncoded}&filters[$or][2][Category][$containsi]=${qEncoded}&populate=Visuals&pagination[limit]=10&sort=Date:desc`).then(data => {
+      strapiGet(`/activities?filters[$or][0][Title][$containsi]=${qEncoded}&filters[$or][1][EngTitle][$containsi]=${qEncoded}&filters[$or][2][Category][$containsi]=${qEncoded}&filters[$or][3][Tags][$containsi]=${qEncoded}&populate=Visuals&pagination[limit]=10&sort=Date:desc`).then(data => {
         if (data?.data) {
           results.activities = data.data.slice(0, 8).map((a: any) => ({
             id: a.id,

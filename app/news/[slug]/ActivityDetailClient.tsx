@@ -180,15 +180,38 @@ function ActivityDetailPageContent() {
             Επιστροφή στα νέα
           </Link>
 
-          {/* Date */}
+          {/* Date, Category & Tags */}
           <div className="mb-8">
-            <span className="inline-block bg-orange-50 dark:bg-gray-700 dark:text-gray-200 px-4 py-2 rounded-full text-sm font-medium">
-              {new Date(activity.Date).toLocaleDateString('el-GR', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-block bg-orange-50 dark:bg-gray-700 dark:text-gray-200 border border-charcoal dark:border-gray-400 px-4 py-2 rounded-full text-sm font-medium">
+                {new Date(activity.Date).toLocaleDateString('el-GR', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </span>
+              {activity.Category && (
+                <Link
+                  href={`/news?from=${fromTab}&category=${encodeURIComponent(activity.Category)}`}
+                  className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-sm px-3 py-1 rounded-full hover:bg-charcoal hover:text-white dark:hover:bg-white dark:hover:text-charcoal transition-colors"
+                >
+                  {activity.Category}
+                </Link>
+              )}
+            </div>
+            {activity.Tags && (
+              <div className="flex items-center gap-2 mt-4 flex-wrap">
+                {activity.Tags.split(',').map(t => t.trim()).filter(Boolean).map((tag) => (
+                  <Link
+                    key={tag}
+                    href={`/news?from=${fromTab}&tag=${encodeURIComponent(tag)}`}
+                    className="inline-block bg-gray-100 dark:bg-gray-700 text-charcoal dark:text-gray-200 border border-charcoal dark:border-gray-400 text-sm px-3 py-1 rounded-full hover:bg-charcoal hover:text-white dark:hover:bg-white dark:hover:text-charcoal transition-colors"
+                  >
+                    {tag}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Photo Carousel */}

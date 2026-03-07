@@ -190,6 +190,7 @@ Strapi Cloud free tier sleeps after 10-15 minutes of inactivity.
 - Include context in commits (e.g., "Fix dark mode backgrounds for activity detail page")
 - Use voice announcement after each task completion: `say -v "Samantha" "[completion message]"`
 - Always ask before pushing to remote
+- **After a push is confirmed and completed**, ask the user whether to run the test suite (`npm test` and/or `npm run test:e2e`) to check for regressions
 
 ### Project-Specific Rules
 

@@ -12,6 +12,7 @@ import ViewToggle from '@/components/shared/ViewToggle'
 import CategoryFilter from '@/components/shared/CategoryFilter'
 import YearFilter from '@/components/shared/YearFilter'
 import SortDropdown from '@/components/shared/SortDropdown'
+import FundingGuidelinesModal from '@/components/FundingGuidelinesModal'
 
 function extractTextFromBlocks(blocks: any): string {
   if (!blocks) return ''
@@ -406,6 +407,9 @@ export default function OpenCallsContent() {
 
             {/* View Toggle */}
             <ViewToggle view={viewMode} onViewChange={setViewMode} />
+
+            {/* Funding Guidelines */}
+            <FundingGuidelinesModal />
 
             {/* Clear filters */}
             {totalActiveFilters > 0 && (
