@@ -7,6 +7,7 @@ import { getOpenCalls } from '@/lib/strapi'
 import type { StrapiResponse, OpenCall } from '@/lib/types'
 import LocalizedText from '@/components/LocalizedText'
 import LoadingIndicator from '@/components/LoadingIndicator'
+import BlurredImage from '@/components/shared/BlurredImage'
 import ViewToggle from '@/components/shared/ViewToggle'
 import CategoryFilter from '@/components/shared/CategoryFilter'
 import YearFilter from '@/components/shared/YearFilter'
@@ -86,15 +87,10 @@ function FlipCard({ call, getImageUrl }: { call: OpenCall; getImageUrl: (call: O
             aria-label={`${call.Title} (ανοίγει σε νέα καρτέλα)`}
           >
             {imageUrl && (
-              <div className="aspect-video overflow-hidden">
-                <Image
-                  src={imageUrl}
-                  alt={call.ImageAltText || call.Title}
-                  width={400}
-                  height={225}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <BlurredImage
+                src={imageUrl}
+                alt={call.ImageAltText || call.Title}
+              />
             )}
 
             <div className="p-5 flex flex-col flex-1">

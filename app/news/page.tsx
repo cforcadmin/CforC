@@ -14,6 +14,7 @@ import { getActivities } from '@/lib/strapi'
 import type { StrapiResponse, Activity } from '@/lib/types'
 import LocalizedText from '@/components/LocalizedText'
 import NewsFlipCard from '@/components/shared/NewsFlipCard'
+import BlurredImage from '@/components/shared/BlurredImage'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import ViewToggle from '@/components/shared/ViewToggle'
 import CategoryFilter from '@/components/shared/CategoryFilter'
@@ -363,12 +364,10 @@ function ActivitiesPageContent() {
                     {/* Thumbnail */}
                     {activity.Visuals && activity.Visuals.length > 0 ? (
                       <div className="w-24 h-16 md:w-32 md:h-20 rounded-xl overflow-hidden flex-shrink-0">
-                        <Image
+                        <BlurredImage
                           src={activity.Visuals[0].url.startsWith('http') ? activity.Visuals[0].url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${activity.Visuals[0].url}`}
                           alt={activity.ImageAltText || activity.Title}
-                          width={activity.Visuals[0].width}
-                          height={activity.Visuals[0].height}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          className="h-full w-full"
                         />
                       </div>
                     ) : (

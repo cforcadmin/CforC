@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import BlurredImage from './shared/BlurredImage'
 import LoadingIndicator from './LoadingIndicator'
 import LocalizedText from './LocalizedText'
 import { getOpenCalls } from '@/lib/strapi'
@@ -95,16 +96,13 @@ function FlipCard({ call, expired, onClick }: { call: OpenCall; expired?: boolea
             aria-label={`${call.Title}${onClick ? '' : ' (ανοίγει σε νέα καρτέλα)'}`}
           >
             {imageUrl ? (
-              <div className="aspect-video overflow-hidden relative">
-                <Image
+              <div className={`relative ${expired ? 'grayscale' : ''}`}>
+                <BlurredImage
                   src={imageUrl}
                   alt={call.ImageAltText || call.Title}
-                  width={400}
-                  height={225}
-                  className={`w-full h-full object-cover ${expired ? 'grayscale' : ''}`}
                 />
                 {expired && (
-                  <div className="absolute top-3 right-3">
+                  <div className="absolute top-3 right-3 z-20">
                     <span className="inline-block bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-3 py-1 rounded-full text-xs font-bold shadow-md">
                       ΕΛΗΞΕ
                     </span>

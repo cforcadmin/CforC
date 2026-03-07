@@ -2,8 +2,8 @@
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import LocalizedText from '@/components/LocalizedText'
+import BlurredImage from '@/components/shared/BlurredImage'
 import type { Activity } from '@/lib/types'
 
 function extractTextFromBlocks(blocks: any): string {
@@ -63,15 +63,10 @@ export default function NewsFlipCard({ activity, fromTab }: { activity: Activity
             className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-gray-700/50 transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full"
           >
             {imageUrl ? (
-              <div className="aspect-video overflow-hidden">
-                <Image
-                  src={imageUrl}
-                  alt={activity.ImageAltText || activity.Title}
-                  width={activity.Visuals![0].width}
-                  height={activity.Visuals![0].height}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <BlurredImage
+                src={imageUrl}
+                alt={activity.ImageAltText || activity.Title}
+              />
             ) : (
               <div className="aspect-video bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                 <span className="text-gray-400 dark:text-gray-500 text-4xl">{activity.Title.charAt(0)}</span>
