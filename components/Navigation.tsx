@@ -406,8 +406,18 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 </div>
               )}
               {!isAuthenticated && (
+                <Link href="/map" className={`text-sm transition-all ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
+                  ΧΑΡΤΗΣ
+                </Link>
+              )}
+              {!isAuthenticated && (
                 <Link href="/participation" className={`text-sm transition-all ${pathname === '/participation' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
                   ΣΥΜΜΕΤΟΧΗ
+                </Link>
+              )}
+              {isAuthenticated && (
+                <Link href="/map" className={`text-sm transition-all ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
+                  ΧΑΡΤΗΣ
                 </Link>
               )}
               <Link href="/members" className={`bg-white dark:bg-gray-700 text-charcoal dark:text-gray-200 ${isAuthenticated ? 'px-4' : 'px-6'} py-2 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors`}>
@@ -576,7 +586,13 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 </div>
               )}
               {!isAuthenticated && (
-                <Link href="/participation" className={`block text-sm py-2 transition-all ${pathname === '/participation' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΥΜΜΕΤΟΧΗ</Link>
+                <Link href="/map" className={`block text-sm py-2 transition-all ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`} onClick={() => setIsOpen(false)}>ΧΑΡΤΗΣ</Link>
+              )}
+              {!isAuthenticated && (
+                <Link href="/participation" className={`block text-sm py-2 transition-all ${pathname === '/participation' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`} onClick={() => setIsOpen(false)}>ΣΥΜΜΕΤΟΧΗ</Link>
+              )}
+              {isAuthenticated && (
+                <Link href="/map" className={`block text-sm py-2 transition-all ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`} onClick={() => setIsOpen(false)}>ΧΑΡΤΗΣ</Link>
               )}
               <Link href="/members" className="block w-full bg-white dark:bg-gray-700 text-charcoal dark:text-gray-200 px-6 py-2 rounded-full text-sm font-medium text-center">
                 {isAuthenticated ? 'ΜΕΛΗ' : 'ΕΥΡΕΣΗ ΜΕΛΩΝ'}

@@ -40,7 +40,22 @@ export default function ProfilePage() {
   const router = useRouter()
   const { user, isAuthenticated, isLoading, refreshSession } = useAuth()
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
-  const [activeSection, setActiveSection] = useState<SectionKey>('profile')
+  const [activeSection, setActiveSectionState] = useState<SectionKey>('profile')
+
+  // Restore active section from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem('cforc-profile-section')
+      if (saved && DASHBOARD_SECTIONS.some(s => s.key === saved)) {
+        setActiveSectionState(saved as SectionKey)
+      }
+    } catch {}
+  }, [])
+
+  const setActiveSection = (key: SectionKey) => {
+    setActiveSectionState(key)
+    try { sessionStorage.setItem('cforc-profile-section', key) } catch {}
+  }
 
   const currentSection = DASHBOARD_SECTIONS.find(s => s.key === activeSection) ?? DASHBOARD_SECTIONS[0]
 

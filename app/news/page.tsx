@@ -44,6 +44,15 @@ const SORT_OPTIONS = [
   { value: 'date-desc', label: 'Παλαιότερες πρώτα' },
 ]
 
+const NEWS_STORAGE_KEY = 'cforc-news-search'
+
+function saveNewsSearch(state: Record<string, any>) {
+  try { sessionStorage.setItem(NEWS_STORAGE_KEY, JSON.stringify(state)) } catch {}
+}
+function loadNewsSearch() {
+  try { const r = sessionStorage.getItem(NEWS_STORAGE_KEY); return r ? JSON.parse(r) : null } catch { return null }
+}
+
 function ActivitiesPageContent() {
   const searchParams = useSearchParams()
   const [allActivities, setAllActivities] = useState<Activity[]>([])
@@ -61,6 +70,7 @@ function ActivitiesPageContent() {
   const [sortMode, setSortMode] = useState('date-asc')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [fundingHovered, setFundingHovered] = useState(false)
+  const [initialized, setInitialized] = useState(false)
 
   // Animated counter
   const [displayCount, setDisplayCount] = useState(0)
@@ -78,21 +88,44 @@ function ActivitiesPageContent() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // On mount: restore from URL params (priority) or sessionStorage
   useEffect(() => {
     const fromParam = searchParams.get('from')
-    if (fromParam === 'previous') setActiveTab('previous')
-    else if (fromParam === 'current') setActiveTab('current')
     const tagParam = searchParams.get('tag')
     const categoryParam = searchParams.get('category')
-    if (tagParam) setSelectedTag(tagParam)
-    if (categoryParam) setSelectedCategory(categoryParam)
-    if (tagParam || categoryParam) {
-      const url = new URL(window.location.href)
-      url.searchParams.delete('tag')
-      url.searchParams.delete('category')
-      window.history.replaceState({}, '', url.pathname + (url.search || ''))
+    const hasUrlParams = fromParam || tagParam || categoryParam
+
+    if (hasUrlParams) {
+      if (fromParam === 'previous') setActiveTab('previous')
+      else if (fromParam === 'current') setActiveTab('current')
+      if (tagParam) setSelectedTag(tagParam)
+      if (categoryParam) setSelectedCategory(categoryParam)
+      if (tagParam || categoryParam) {
+        const url = new URL(window.location.href)
+        url.searchParams.delete('tag')
+        url.searchParams.delete('category')
+        window.history.replaceState({}, '', url.pathname + (url.search || ''))
+      }
+    } else {
+      const saved = loadNewsSearch()
+      if (saved) {
+        setSearchQuery(saved.searchQuery || '')
+        setActiveTab(saved.activeTab || 'current')
+        setSelectedCategory(saved.selectedCategory || '')
+        setSelectedTag(saved.selectedTag || '')
+        setSelectedYear(saved.selectedYear ?? null)
+        setSortMode(saved.sortMode || 'date-asc')
+        setViewMode(saved.viewMode || 'grid')
+      }
     }
-  }, [searchParams])
+    setInitialized(true)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Persist search state to sessionStorage
+  useEffect(() => {
+    if (!initialized) return
+    saveNewsSearch({ searchQuery, activeTab, selectedCategory, selectedTag, selectedYear, sortMode, viewMode })
+  }, [initialized, searchQuery, activeTab, selectedCategory, selectedTag, selectedYear, sortMode, viewMode])
 
   useEffect(() => {
     async function fetchActivities() {
@@ -110,9 +143,9 @@ function ActivitiesPageContent() {
     fetchActivities()
   }, [])
 
-  // Auto-switch to "previous" tab if no current entries exist (and URL didn't specify a tab)
+  // Auto-switch to "previous" tab if no current entries exist (and no URL param or saved state set a tab)
   useEffect(() => {
-    if (allActivities.length > 0 && !searchParams.get('from')) {
+    if (allActivities.length > 0 && !searchParams.get('from') && !loadNewsSearch()?.activeTab) {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       const hasCurrentEntries = allActivities.some(a => new Date(a.Date) >= today)
@@ -219,8 +252,13 @@ function ActivitiesPageContent() {
     return () => clearInterval(timer)
   }, [filteredActivities])
 
-  // Reset year when switching tabs
-  useEffect(() => { setSelectedYear(null) }, [activeTab])
+  // Wrap setActiveTab to reset year on user-initiated tab switches
+  const handleTabChange = (tab: 'current' | 'previous') => {
+    if (tab !== activeTab) {
+      setSelectedYear(null)
+    }
+    setActiveTab(tab)
+  }
 
   const totalActiveFilters = (selectedCategory ? 1 : 0) + (selectedTag ? 1 : 0) + (selectedYear ? 1 : 0) + (searchQuery ? 1 : 0)
 
@@ -229,6 +267,7 @@ function ActivitiesPageContent() {
     setSelectedCategory('')
     setSelectedTag('')
     setSelectedYear(null)
+    try { sessionStorage.removeItem(NEWS_STORAGE_KEY) } catch {}
   }
 
   return (
@@ -293,7 +332,7 @@ function ActivitiesPageContent() {
                 {/* Tabs as pills */}
                 <div className="flex rounded-full border border-charcoal dark:border-gray-400 overflow-hidden" role="tablist" aria-label="Φίλτρο χρόνου">
                   <button
-                    onClick={() => setActiveTab('current')}
+                    onClick={() => handleTabChange('current')}
                     className={`px-4 py-3 text-sm font-medium transition-colors ${
                       activeTab === 'current'
                         ? 'bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900'
@@ -305,7 +344,7 @@ function ActivitiesPageContent() {
                     Τρέχοντα
                   </button>
                   <button
-                    onClick={() => setActiveTab('previous')}
+                    onClick={() => handleTabChange('previous')}
                     className={`px-4 py-3 text-sm font-medium transition-colors border-l border-charcoal dark:border-gray-400 ${
                       activeTab === 'previous'
                         ? 'bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900'

@@ -64,6 +64,31 @@ export default function MembersPage() {
   )
 }
 
+const STORAGE_KEY = 'cforc-members-search'
+
+function saveMembersSearch(state: {
+  searchQuery: string
+  selectedFields: string[]
+  selectedCities: string[]
+  selectedProvinces: string[]
+  sortMode: string
+  filterLogic: string
+  viewMode: string
+}) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  } catch {}
+}
+
+function loadMembersSearch() {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
 function MembersPageContent() {
   const [allMembers, setAllMembers] = useState<Member[]>([])
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([])
@@ -79,16 +104,49 @@ function MembersPageContent() {
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
   const [filterLogic, setFilterLogic] = useState<'or' | 'and'>('and')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [initialized, setInitialized] = useState(false)
 
-  // Read URL params for pre-filtering from member profile tags
+  // On mount: restore from URL params (priority) or sessionStorage
   useEffect(() => {
     const fieldParam = searchParams.get('field')
     const cityParam = searchParams.get('city')
     const provinceParam = searchParams.get('province')
-    if (fieldParam) setSelectedFields([fieldParam])
-    if (cityParam) setSelectedCities([cityParam])
-    if (provinceParam) setSelectedProvinces([provinceParam])
-  }, [searchParams])
+    const hasUrlParams = fieldParam || cityParam || provinceParam
+
+    if (hasUrlParams) {
+      // URL params take priority (e.g. from tag clicks)
+      if (fieldParam) setSelectedFields([fieldParam])
+      if (cityParam) setSelectedCities([cityParam])
+      if (provinceParam) setSelectedProvinces([provinceParam])
+    } else {
+      // Restore from sessionStorage
+      const saved = loadMembersSearch()
+      if (saved) {
+        setSearchQuery(saved.searchQuery || '')
+        setSelectedFields(saved.selectedFields || [])
+        setSelectedCities(saved.selectedCities || [])
+        setSelectedProvinces(saved.selectedProvinces || [])
+        setSortMode(saved.sortMode || 'random')
+        setFilterLogic(saved.filterLogic || 'and')
+        setViewMode(saved.viewMode || 'grid')
+      }
+    }
+    setInitialized(true)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Persist search state to sessionStorage whenever it changes
+  useEffect(() => {
+    if (!initialized) return
+    saveMembersSearch({
+      searchQuery,
+      selectedFields,
+      selectedCities,
+      selectedProvinces,
+      sortMode,
+      filterLogic,
+      viewMode,
+    })
+  }, [initialized, searchQuery, selectedFields, selectedCities, selectedProvinces, sortMode, filterLogic, viewMode])
 
   // Handle scroll for accessibility button fade
   useEffect(() => {
@@ -227,6 +285,7 @@ function MembersPageContent() {
     setSelectedCities([])
     setSelectedProvinces([])
     setSearchQuery('')
+    try { sessionStorage.removeItem(STORAGE_KEY) } catch {}
   }
 
   return (

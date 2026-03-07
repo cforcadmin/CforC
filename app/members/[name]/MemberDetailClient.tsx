@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
@@ -11,6 +11,42 @@ import Image from 'next/image'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import { getMemberBySlugOrId } from '@/lib/strapi'
 import { renderBlocks } from '@/lib/renderBlocks'
+
+function LocationPillWithGlobe({ label, filterHref, mapHref }: { label: string; filterHref: string; mapHref: string }) {
+  const [hovered, setHovered] = useState(false)
+  const [globeHovered, setGlobeHovered] = useState(false)
+  return (
+    <span
+      className="inline-flex items-center gap-1"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => { setHovered(false); setGlobeHovered(false) }}
+    >
+      <Link
+        href={filterHref}
+        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full text-sm dark:text-gray-200 hover:bg-coral hover:text-white hover:border-coral dark:hover:bg-coral-light dark:hover:text-gray-900 dark:hover:border-coral-light cursor-pointer transition-colors"
+      >
+        {label}
+      </Link>
+      {hovered && (
+        <Link
+          href={mapHref}
+          className="relative flex items-center justify-center w-[38px] h-[38px] rounded-full border border-charcoal dark:border-gray-400 text-charcoal dark:text-gray-200 hover:bg-charcoal hover:text-white dark:hover:bg-white dark:hover:text-charcoal transition-colors"
+          onMouseEnter={() => setGlobeHovered(true)}
+          onMouseLeave={() => setGlobeHovered(false)}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {globeHovered && (
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-lg shadow whitespace-nowrap z-10">
+              Δες στον χάρτη
+            </span>
+          )}
+        </Link>
+      )}
+    </span>
+  )
+}
 
 interface Member {
   id: number
@@ -153,6 +189,10 @@ function getHeroName(name: string): string {
 
 export default function MemberDetailClient() {
   const params = useParams()
+  const searchParams = useSearchParams()
+  const cameFromMap = searchParams.get('from') === 'map'
+  const mapCity = searchParams.get('city')
+  const backToMapHref = mapCity ? `/map?city=${encodeURIComponent(mapCity)}` : '/map'
   const [member, setMember] = useState<Member | null>(null)
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
   const [emailCopied, setEmailCopied] = useState(false)
@@ -268,13 +308,13 @@ export default function MemberDetailClient() {
       {/* Back Button */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-4">
         <Link
-          href="/members"
+          href={cameFromMap ? backToMapHref : '/members'}
           className="inline-flex items-center gap-2 text-sm font-medium hover:text-coral dark:hover:text-coral-light transition-colors bg-white/90 dark:bg-gray-800/90 dark:text-gray-200 px-4 py-2 rounded-full"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Πίσω στην αναζήτηση
+          {cameFromMap ? 'Πίσω στον χάρτη' : 'Πίσω στην αναζήτηση'}
         </Link>
       </div>
 
@@ -392,13 +432,12 @@ export default function MemberDetailClient() {
                             </svg>
                             <div className="flex flex-wrap gap-2">
                               {cities.map((city, index) => (
-                                <Link
+                                <LocationPillWithGlobe
                                   key={`city-${index}`}
-                                  href={`/members?city=${encodeURIComponent(city)}`}
-                                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full text-sm dark:text-gray-200 hover:bg-coral hover:text-white hover:border-coral dark:hover:bg-coral-light dark:hover:text-gray-900 dark:hover:border-coral-light cursor-pointer transition-colors"
-                                >
-                                  {city}
-                                </Link>
+                                  label={city}
+                                  filterHref={`/members?city=${encodeURIComponent(city)}`}
+                                  mapHref={`/map?city=${encodeURIComponent(city)}`}
+                                />
                               ))}
                             </div>
                           </div>
@@ -410,13 +449,12 @@ export default function MemberDetailClient() {
                             </svg>
                             <div className="flex flex-wrap gap-2">
                               {provinces.map((province, index) => (
-                                <Link
+                                <LocationPillWithGlobe
                                   key={`province-${index}`}
-                                  href={`/members?province=${encodeURIComponent(province)}`}
-                                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full text-sm dark:text-gray-200 hover:bg-coral hover:text-white hover:border-coral dark:hover:bg-coral-light dark:hover:text-gray-900 dark:hover:border-coral-light cursor-pointer transition-colors"
-                                >
-                                  {province}
-                                </Link>
+                                  label={province}
+                                  filterHref={`/members?province=${encodeURIComponent(province)}`}
+                                  mapHref={`/map?province=${encodeURIComponent(province)}`}
+                                />
                               ))}
                             </div>
                           </div>

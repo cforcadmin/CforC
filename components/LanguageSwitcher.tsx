@@ -114,7 +114,7 @@ export default function LanguageSwitcher() {
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Hidden Google Translate Element */}
-      <div id="google_translate_element" style={{ display: 'none' }} aria-hidden="true"></div>
+      <div id="google_translate_element" style={{ display: 'none' }} aria-hidden="true" suppressHydrationWarning></div>
 
       {/* Globe Icon Button with Overlays */}
       <button

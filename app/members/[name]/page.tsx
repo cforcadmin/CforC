@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import Script from 'next/script'
 import { getMemberBySlugOrId } from '@/lib/strapi'
@@ -78,7 +79,9 @@ export default async function MemberDetailPage({ params }: Props) {
   return (
     <>
       <MemberJsonLd name={name} />
-      <MemberDetailClient />
+      <Suspense>
+        <MemberDetailClient />
+      </Suspense>
     </>
   )
 }

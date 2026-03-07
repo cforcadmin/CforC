@@ -188,6 +188,15 @@ function FlipCard({ call, getImageUrl }: { call: OpenCall; getImageUrl: (call: O
   )
 }
 
+const OC_STORAGE_KEY = 'cforc-opencalls-search'
+
+function saveOCSearch(state: Record<string, any>) {
+  try { sessionStorage.setItem(OC_STORAGE_KEY, JSON.stringify(state)) } catch {}
+}
+function loadOCSearch() {
+  try { const r = sessionStorage.getItem(OC_STORAGE_KEY); return r ? JSON.parse(r) : null } catch { return null }
+}
+
 export default function OpenCallsContent() {
   const [allOpenCalls, setAllOpenCalls] = useState<OpenCall[]>([])
   const [filteredCalls, setFilteredCalls] = useState<OpenCall[]>([])
@@ -201,9 +210,30 @@ export default function OpenCallsContent() {
   const [selectedYear, setSelectedYear] = useState<number | null>(null)
   const [sortMode, setSortMode] = useState('deadline-asc')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [initialized, setInitialized] = useState(false)
 
   // Animated counter
   const [displayCount, setDisplayCount] = useState(0)
+
+  // On mount: restore from sessionStorage
+  useEffect(() => {
+    const saved = loadOCSearch()
+    if (saved) {
+      setSearchQuery(saved.searchQuery || '')
+      setActiveTab(saved.activeTab || 'current')
+      setSelectedCategory(saved.selectedCategory || '')
+      setSelectedYear(saved.selectedYear ?? null)
+      setSortMode(saved.sortMode || 'deadline-asc')
+      setViewMode(saved.viewMode || 'grid')
+    }
+    setInitialized(true)
+  }, [])
+
+  // Persist search state to sessionStorage
+  useEffect(() => {
+    if (!initialized) return
+    saveOCSearch({ searchQuery, activeTab, selectedCategory, selectedYear, sortMode, viewMode })
+  }, [initialized, searchQuery, activeTab, selectedCategory, selectedYear, sortMode, viewMode])
 
   useEffect(() => {
     async function fetchOpenCalls() {
@@ -296,8 +326,13 @@ export default function OpenCallsContent() {
     return () => clearInterval(timer)
   }, [filteredCalls])
 
-  // Reset year when switching tabs
-  useEffect(() => { setSelectedYear(null) }, [activeTab])
+  // Wrap setActiveTab to reset year on user-initiated tab switches
+  const handleTabChange = (tab: 'current' | 'previous') => {
+    if (tab !== activeTab) {
+      setSelectedYear(null)
+    }
+    setActiveTab(tab)
+  }
 
   const totalActiveFilters = (selectedCategory ? 1 : 0) + (selectedYear ? 1 : 0) + (searchQuery ? 1 : 0)
 
@@ -305,6 +340,7 @@ export default function OpenCallsContent() {
     setSearchQuery('')
     setSelectedCategory('')
     setSelectedYear(null)
+    try { sessionStorage.removeItem(OC_STORAGE_KEY) } catch {}
   }
 
   function getImageUrl(call: OpenCall): string | null {
@@ -355,7 +391,7 @@ export default function OpenCallsContent() {
             {/* Tabs as pills */}
             <div className="flex rounded-full border border-charcoal dark:border-gray-400 overflow-hidden" role="tablist" aria-label="Φίλτρο κατάστασης">
               <button
-                onClick={() => setActiveTab('current')}
+                onClick={() => handleTabChange('current')}
                 className={`px-4 py-3 text-sm font-medium transition-colors ${
                   activeTab === 'current'
                     ? 'bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900'
@@ -367,7 +403,7 @@ export default function OpenCallsContent() {
                 Τρέχουσες
               </button>
               <button
-                onClick={() => setActiveTab('previous')}
+                onClick={() => handleTabChange('previous')}
                 className={`px-4 py-3 text-sm font-medium transition-colors border-l border-charcoal dark:border-gray-400 ${
                   activeTab === 'previous'
                     ? 'bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900'

@@ -111,6 +111,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
             <ul role="list" className="space-y-1.5 text-xs dark:text-gray-300">
               <li><Link href="/about" className="hover:text-coral dark:hover:text-coral-light transition-colors">Σχετικά με εμάς</Link></li>
               <li><Link href="/news" className="hover:text-coral dark:hover:text-coral-light transition-colors">Νέα</Link></li>
+              <li><Link href="/map" className="hover:text-coral dark:hover:text-coral-light transition-colors">Χάρτης</Link></li>
               <li>
                 {user ? (
                   <Link href="/open-calls" className="hover:text-coral dark:hover:text-coral-light transition-colors">Ανοιχτές προσκλήσεις</Link>
