@@ -212,6 +212,7 @@ Strapi Cloud free tier sleeps after 10-15 minutes of inactivity.
 
 **UI/UX Preferences:**
 - When text is truncated or overflows, always show `…` (ellipsis) — never cut text abruptly. Use CSS `line-clamp` for fixed-line truncation, or a fade-out gradient overlay for overflow containers
+- **Accessibility contrast:** For every visual change involving text, labels, hints, or UI elements, ask the user whether to use maximum contrast (e.g. `text-charcoal dark:text-white`) or softer/muted contrast — do not assume
 
 **Component Patterns:**
 - Keep Server Components as default (App Router best practice)

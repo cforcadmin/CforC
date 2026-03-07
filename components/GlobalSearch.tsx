@@ -97,14 +97,48 @@ export default function GlobalSearch({ isOpen, onClose }: { isOpen: boolean; onC
     return items
   }, [results, activeTypes, isAuthenticated])
 
-  // Focus input when modal opens
+  // Focus input when modal opens — restore previous search from sessionStorage
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 50)
-      setQuery('')
-      setResults(null)
+      const savedQuery = sessionStorage.getItem('globalSearchQuery')
+      const savedResults = sessionStorage.getItem('globalSearchResults')
+      const savedTypes = sessionStorage.getItem('globalSearchTypes')
+      if (savedQuery) {
+        setQuery(savedQuery)
+        if (savedResults) {
+          try { setResults(JSON.parse(savedResults)) } catch { setResults(null) }
+        }
+        if (savedTypes) {
+          try { setActiveTypes(JSON.parse(savedTypes)) } catch { /* keep default */ }
+        }
+      } else {
+        setQuery('')
+        setResults(null)
+      }
       setSelectedIndex(-1)
       setHoveredLocked(false)
+    }
+  }, [isOpen])
+
+  // Save search state to sessionStorage when it changes
+  useEffect(() => {
+    if (query && query.length >= 2) {
+      sessionStorage.setItem('globalSearchQuery', query)
+      if (results) sessionStorage.setItem('globalSearchResults', JSON.stringify(results))
+      sessionStorage.setItem('globalSearchTypes', JSON.stringify(activeTypes))
+    }
+  }, [query, results, activeTypes])
+
+  // Clear persisted search after 5 minutes of inactivity
+  useEffect(() => {
+    if (!isOpen && sessionStorage.getItem('globalSearchQuery')) {
+      const timeout = setTimeout(() => {
+        sessionStorage.removeItem('globalSearchQuery')
+        sessionStorage.removeItem('globalSearchResults')
+        sessionStorage.removeItem('globalSearchTypes')
+      }, 5 * 60 * 1000)
+      return () => clearTimeout(timeout)
     }
   }, [isOpen])
 
@@ -264,11 +298,11 @@ export default function GlobalSearch({ isOpen, onClose }: { isOpen: boolean; onC
           />
           {query && (
             <button
-              onClick={() => { setQuery(''); setResults(null) }}
+              onClick={() => { setQuery(''); setResults(null); sessionStorage.removeItem('globalSearchQuery'); sessionStorage.removeItem('globalSearchResults'); sessionStorage.removeItem('globalSearchTypes') }}
               className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
               aria-label="Καθαρισμός"
             >
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="w-4 h-4 text-charcoal dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -563,25 +597,32 @@ export default function GlobalSearch({ isOpen, onClose }: { isOpen: boolean; onC
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between text-xs text-charcoal dark:text-white font-medium">
-          <div className="hidden sm:flex items-center gap-3">
+        <div className="px-6 py-3 border-t border-gray-200 dark:border-gray-700 text-xs text-charcoal dark:text-white font-medium">
+          <div className="flex items-center justify-between">
+            <div className="hidden sm:flex items-center gap-3">
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 bg-charcoal/10 dark:bg-white/15 text-charcoal dark:text-white rounded text-[10px] font-mono font-bold border border-charcoal/20 dark:border-white/30">↑↓</kbd>
+                πλοήγηση
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 bg-charcoal/10 dark:bg-white/15 text-charcoal dark:text-white rounded text-[10px] font-mono font-bold border border-charcoal/20 dark:border-white/30">Enter</kbd>
+                άνοιγμα
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 bg-charcoal/10 dark:bg-white/15 text-charcoal dark:text-white rounded text-[10px] font-mono font-bold border border-charcoal/20 dark:border-white/30">⌘K</kbd>
+                αναζήτηση
+              </span>
+            </div>
             <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-charcoal/10 dark:bg-white/15 text-charcoal dark:text-white rounded text-[10px] font-mono font-bold border border-charcoal/20 dark:border-white/30">↑↓</kbd>
-              πλοήγηση
-            </span>
-            <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-charcoal/10 dark:bg-white/15 text-charcoal dark:text-white rounded text-[10px] font-mono font-bold border border-charcoal/20 dark:border-white/30">Enter</kbd>
-              άνοιγμα
-            </span>
-            <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-charcoal/10 dark:bg-white/15 text-charcoal dark:text-white rounded text-[10px] font-mono font-bold border border-charcoal/20 dark:border-white/30">⌘K</kbd>
-              αναζήτηση
+              <kbd className="px-1.5 py-0.5 bg-charcoal/10 dark:bg-white/15 text-charcoal dark:text-white rounded text-[10px] font-mono font-bold border border-charcoal/20 dark:border-white/30">ESC</kbd>
+              κλείσιμο
             </span>
           </div>
-          <span className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 bg-charcoal/10 dark:bg-white/15 text-charcoal dark:text-white rounded text-[10px] font-mono font-bold border border-charcoal/20 dark:border-white/30">ESC</kbd>
-            κλείσιμο
-          </span>
+          {hasResults && (
+            <p className="mt-1.5 text-[11px] text-charcoal/60 dark:text-white/50 hidden sm:block">
+              Μετά το άνοιγμα αποτελέσματος, πάτα ξανά το εικονίδιο αναζήτησης ή <kbd className="font-mono text-[10px]">⌘K</kbd> / <kbd className="font-mono text-[10px]">Ctrl+K</kbd> για να επιστρέψεις στην αναζήτηση
+            </p>
+          )}
         </div>
       </div>
     </div>
