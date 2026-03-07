@@ -32,7 +32,7 @@
 | Τηλέφωνο | +30 697 622 5704 | Αντιγραφή στο clipboard + μήνυμα «Αντιγράφηκε!» |
 | Social Media | LinkedIn, Facebook, Instagram, YouTube, Vimeo | Ανοίγει σε νέα καρτέλα |
 
-### Φόρμα Επικοινωνίας (κουμπί «Στείλε μας μήνυμα»)
+### Φόρμα Επικοινωνίας — Γενική (κουμπί «Στείλε μας μήνυμα»)
 
 Κάτω από τα social media εμφανίζεται κουμπί **«Στείλε μας μήνυμα»**. Πατώντας το, η κάρτα επεκτείνεται και εμφανίζεται inline φόρμα:
 
@@ -46,8 +46,8 @@
 
 **Αποστολή email:**
 - Αποστολή μέσω Resend API (`POST /api/contact`)
-- Παραλήπτης: `hello@cultureforchange.net`
-- CC: email αποστολέα + `it@cultureforchange.net` (για testing)
+- Παραλήπτης (TO): email Διαχειρίστριας (δυναμικά από Strapi, fallback: `hello@cultureforchange.net`)
+- CC: email αποστολέα (αυτόματα)
 - Reply-to: email αποστολέα
 - CSRF protection ενεργό
 
@@ -97,7 +97,62 @@
 - Όνομα (κλικ → σελίδα μέλους)
 - Ετικέτα ρόλου (pill)
 - Σύντομη περιγραφή αρμοδιοτήτων
-- Email αρμοδιότητας (mailto link)
+- Email αρμοδιότητας (κλικ → αντιγραφή στο clipboard + «Αντιγράφηκε!»)
+
+### Φόρμα Επικοινωνίας — Μέλους (κουμπί «Στείλε μας μήνυμα»)
+
+Κάτω από τη Διαχειρίστρια εμφανίζεται κουμπί **«Στείλε μας μήνυμα»**. Η φόρμα μέλους διαφέρει από τη γενική:
+
+**Ενότητα ΑΠΟ (FROM):**
+- Email: προ-συμπληρωμένο από το προφίλ μέλους, επεξεργάσιμο
+- Όνομα: προ-συμπληρωμένο από το προφίλ μέλους, επεξεργάσιμο
+
+**Ενότητα ΠΡΟΣ (TO):**
+- Προ-συμπληρωμένο με email Διαχειρίστριας (δυναμικά από Strapi)
+- Εμφανίζεται ως pill με κουμπί X για αφαίρεση
+- Κουμπί «+ Πρόσθεσε παραλήπτη» → dropdown λίστα με emails ομάδας:
+  - Διαχειρίστρια, Πρόεδρος, Υπεύθυνη Κοινότητας, Υπεύθυνη Επικοινωνίας, Υπεύθυνος Οικονομικών & IT, Αντιπρόεδρος, IT (it@cultureforchange.net)
+- Emails που ήδη υπάρχουν σε ΠΡΟΣ ή ΚΟΙΝ. δεν εμφανίζονται στο dropdown
+- Dropdown κλείνει με Escape ή επιλογή
+
+**Ενότητα ΚΟΙΝ. (CC):**
+- Χωρίς προ-συμπληρωμένα emails
+- Ίδιο dropdown pattern με ΠΡΟΣ
+- Ο αποστολέας λαμβάνει πάντα αντίγραφο αυτόματα (CC)
+
+**Υπόλοιπα πεδία:** Μήνυμα, Συνημμένο, Όροι χρήσης (ίδια με γενική φόρμα)
+
+**Αποστολή:** Απαιτείται τουλάχιστον ένας παραλήπτης στο ΠΡΟΣ. Το κουμπί «Αποστολή» απενεργοποιείται αν δεν υπάρχει παραλήπτης.
+
+**Μετά την αποστολή — Μήνυμα επιτυχίας (GDPR μέλους):**
+- «Το μήνυμά σου στάλθηκε!»
+- «Αντίγραφο στάλθηκε και στο email σου.»
+- Πληροφορίες GDPR μέλους:
+  - Τα προσωπικά δεδομένα διατηρούνται σύμφωνα με τους Όρους Χρήσης και την Πολιτική Απορρήτου
+  - Χρήση περιεχομένου μηνύματος αποκλειστικά για απάντησή του
+  - Δυνατότητα αίτησης διαγραφής του παρόντος μηνύματος ανά πάσα στιγμή στο hello@cultureforchange.net
+
+---
+
+## API Endpoint — `POST /api/contact`
+
+Το API δέχεται δυναμικούς παραλήπτες:
+
+| Πεδίο FormData | Περιγραφή |
+|----------------|-----------|
+| `email` | Email αποστολέα (υποχρεωτικό) |
+| `name` | Όνομα αποστολέα (προαιρετικό) |
+| `message` | Κείμενο μηνύματος (υποχρεωτικό, max 5000 χαρ.) |
+| `attachment` | Αρχείο (προαιρετικό, max 5MB) |
+| `termsAccepted` | `"true"` (υποχρεωτικό) |
+| `to` | Comma-separated emails παραληπτών (υποχρεωτικό, μόνο `@cultureforchange.net`) |
+| `cc` | Comma-separated emails κοινοποίησης (προαιρετικό, μόνο `@cultureforchange.net`) |
+
+**Κανόνες ασφαλείας:**
+- Μόνο emails `@cultureforchange.net` γίνονται δεκτά ως TO/CC
+- Ο αποστολέας προστίθεται πάντα αυτόματα στο CC
+- CSRF protection μέσω origin header validation
+- Email format validation, attachment size limit
 
 ---
 
@@ -144,14 +199,17 @@
 Αρχείο: `components/ContactContent.tsx` — Ενότητα `GeneralContactCard`
 
 ### Αλλαγή φόρμας επικοινωνίας / API
-- Frontend: `components/ContactContent.tsx` — Ενότητα φόρμας μέσα στο `GeneralContactCard`
-- API: `app/api/contact/route.ts` — Αποστολή email μέσω Resend, CSRF protection
+- Frontend: `components/ContactContent.tsx` — Ενότητες φόρμας μέσα στα `GeneralContactCard` και `MemberContactCard`
+- API: `app/api/contact/route.ts` — Αποστολή email μέσω Resend, CSRF protection, δυναμικοί παραλήπτες
 
 ### Αλλαγή ρόλων/emails Ομάδας Συντονισμού
-Αρχείο: `components/ContactContent.tsx` — Σταθερές `ROLE_MAP` και `PRESIDENT_ROLE`
+Αρχείο: `components/ContactContent.tsx` — Σταθερές `ROLE_MAP`, `PRESIDENT_ROLE`, `ADMIN_ROLE`
 
 ### Αλλαγή μελών Ομάδας Συντονισμού
 Γίνεται μέσω Strapi → Collection Type: **Coordination Teams** → Επεξεργασία τρέχουσας ομάδας (IsCurrent: true)
+
+### Αλλαγή dropdown emails φόρμας μέλους
+Η λίστα `availableEmails` στο `MemberContactCard` δημιουργείται δυναμικά από τα team contacts + admin + IT. Για αλλαγή στατικών entries (π.χ. `it@cultureforchange.net`), επεξεργαστείτε το `components/ContactContent.tsx`.
 
 ### Αλλαγή footer στοιχείων επικοινωνίας
 Αρχείο: `components/Footer.tsx`

@@ -181,8 +181,8 @@
       </div>
     </div>
 
-    <!-- ΦΟΡΜΑ ΕΠΙΚΟΙΝΩΝΙΑΣ -->
-    <h2>Φόρμα Επικοινωνίας</h2>
+    <!-- ΦΟΡΜΑ ΓΕΝΙΚΗΣ ΕΠΙΚΟΙΝΩΝΙΑΣ -->
+    <h2>Φόρμα Επικοινωνίας &mdash; Γενική</h2>
 
     <div class="card">
       <h3>Πεδία φόρμας</h3>
@@ -208,19 +208,16 @@
     </div>
 
     <div class="card">
-      <h3>Αποστολή email</h3>
+      <h3>Αποστολή email &mdash; Γενική φόρμα</h3>
       <div class="spec-row"><span class="spec-label">API Endpoint:</span><span class="spec-value"><code>POST /api/contact</code></span></div>
-      <div class="spec-row"><span class="spec-label">Παραλήπτης:</span><span class="spec-value">hello@cultureforchange.net</span></div>
-      <div class="spec-row"><span class="spec-label">CC:</span><span class="spec-value">Email αποστολέα + it@cultureforchange.net (testing)</span></div>
+      <div class="spec-row"><span class="spec-label">Παραλήπτης (TO):</span><span class="spec-value">Email Διαχειρίστριας (δυναμικά από Strapi, fallback: hello@cultureforchange.net)</span></div>
+      <div class="spec-row"><span class="spec-label">CC:</span><span class="spec-value">Email αποστολέα (αυτόματα)</span></div>
       <div class="spec-row"><span class="spec-label">Reply-to:</span><span class="spec-value">Email αποστολέα</span></div>
       <div class="spec-row"><span class="spec-label">Ασφάλεια:</span><span class="spec-value">CSRF protection, email validation, max 5MB attachment</span></div>
     </div>
 
     <div class="card">
-      <h3>Μήνυμα επιτυχίας &amp; GDPR</h3>
-      <p style="font-size: 0.95em; color: #444; margin-top: 4px;">
-        Μετά την επιτυχή αποστολή εμφανίζεται μήνυμα επιτυχίας μαζί με πληροφορίες GDPR:
-      </p>
+      <h3>Μήνυμα επιτυχίας &amp; GDPR &mdash; Γενική</h3>
       <ul>
         <li>Διαγραφή δεδομένων 30 ημέρες μετά την ολοκλήρωση επικοινωνίας</li>
         <li>Δικαίωμα αίτησης διαγραφής ανά πάσα στιγμή στο hello@cultureforchange.net</li>
@@ -267,8 +264,98 @@
         <li>Όνομα (κλικ → σελίδα μέλους)</li>
         <li>Ετικέτα ρόλου (pill)</li>
         <li>Σύντομη περιγραφή αρμοδιοτήτων</li>
-        <li>Email αρμοδιότητας (mailto link)</li>
+        <li>Email αρμοδιότητας (κλικ → αντιγραφή στο clipboard + «Αντιγράφηκε!»)</li>
       </ul>
+    </div>
+
+    <!-- ΦΟΡΜΑ ΜΕΛΟΥΣ -->
+    <h2>Φόρμα Επικοινωνίας &mdash; Μέλους</h2>
+
+    <div class="card">
+      <h3>Ενότητα ΑΠΟ (FROM)</h3>
+      <ul>
+        <li>Email: προ-συμπληρωμένο από το προφίλ μέλους, επεξεργάσιμο</li>
+        <li>Όνομα: προ-συμπληρωμένο από το προφίλ μέλους, επεξεργάσιμο</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Ενότητα ΠΡΟΣ (TO)</h3>
+      <ul>
+        <li>Προ-συμπληρωμένο με email Διαχειρίστριας (δυναμικά από Strapi)</li>
+        <li>Εμφανίζεται ως pill με κουμπί X για αφαίρεση</li>
+        <li>Κουμπί «+ Πρόσθεσε παραλήπτη» → dropdown λίστα</li>
+        <li>Απαιτείται τουλάχιστον ένας παραλήπτης για αποστολή</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Ενότητα ΚΟΙΝ. (CC)</h3>
+      <ul>
+        <li>Χωρίς προ-συμπληρωμένα emails</li>
+        <li>Κουμπί «+ Πρόσθεσε κοινοποίηση» → dropdown λίστα</li>
+        <li>Ο αποστολέας λαμβάνει πάντα αντίγραφο αυτόματα</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Dropdown λίστα emails</h3>
+      <p style="font-size: 0.95em; color: #444; margin-top: 4px; margin-bottom: 12px;">
+        Κοινή λίστα για ΠΡΟΣ και ΚΟΙΝ. — emails που ήδη υπάρχουν σε κάποιο πεδίο δεν εμφανίζονται:
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Ρόλος</th>
+            <th>Email</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Διαχειρίστρια</td><td>hello@cultureforchange.net</td></tr>
+          <tr><td>Πρόεδρος</td><td>coordinator@cultureforchange.net</td></tr>
+          <tr><td>Υπεύθυνη Κοινότητας</td><td>community@cultureforchange.net</td></tr>
+          <tr><td>Υπεύθυνη Επικοινωνίας</td><td>communication@cultureforchange.net</td></tr>
+          <tr><td>Υπεύθυνος Οικονομικών &amp; IT</td><td>finance@cultureforchange.net</td></tr>
+          <tr><td>Αντιπρόεδρος</td><td>outreach@cultureforchange.net</td></tr>
+          <tr><td>IT</td><td>it@cultureforchange.net</td></tr>
+        </tbody>
+      </table>
+      <div class="note">Τα dropdown κλείνουν με Escape ή με επιλογή email.</div>
+    </div>
+
+    <div class="card">
+      <h3>Μήνυμα επιτυχίας &amp; GDPR &mdash; Μέλους</h3>
+      <ul>
+        <li>Τα προσωπικά δεδομένα διατηρούνται σύμφωνα με τους Όρους Χρήσης και την Πολιτική Απορρήτου</li>
+        <li>Χρήση περιεχομένου μηνύματος αποκλειστικά για απάντησή του</li>
+        <li>Δυνατότητα αίτησης διαγραφής του παρόντος μηνύματος ανά πάσα στιγμή στο hello@cultureforchange.net</li>
+      </ul>
+    </div>
+
+    <!-- API ENDPOINT -->
+    <h2>API Endpoint &mdash; <code>POST /api/contact</code></h2>
+
+    <div class="card">
+      <h3>Πεδία FormData</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Πεδίο</th>
+            <th>Υποχρεωτικό</th>
+            <th>Περιγραφή</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>email</code></td><td>Ναι</td><td>Email αποστολέα</td></tr>
+          <tr><td><code>name</code></td><td>Όχι</td><td>Όνομα αποστολέα</td></tr>
+          <tr><td><code>message</code></td><td>Ναι</td><td>Κείμενο μηνύματος (max 5000 χαρ.)</td></tr>
+          <tr><td><code>attachment</code></td><td>Όχι</td><td>Αρχείο (max 5MB)</td></tr>
+          <tr><td><code>termsAccepted</code></td><td>Ναι</td><td><code>"true"</code></td></tr>
+          <tr><td><code>to</code></td><td>Ναι</td><td>Comma-separated emails παραληπτών (μόνο @cultureforchange.net)</td></tr>
+          <tr><td><code>cc</code></td><td>Όχι</td><td>Comma-separated emails κοινοποίησης (μόνο @cultureforchange.net)</td></tr>
+        </tbody>
+      </table>
+      <div class="note">Μόνο emails @cultureforchange.net γίνονται δεκτά ως TO/CC. Ο αποστολέας προστίθεται πάντα αυτόματα στο CC.</div>
     </div>
 
     <!-- ΡΟΛΟΙ ΚΑΙ EMAILS -->
@@ -363,6 +450,7 @@
         <li>Διεύθυνση: ανοίγει Google Maps σε νέα καρτέλα</li>
         <li>Social media: ανοίγει σε νέα καρτέλα</li>
         <li>Ονόματα μελών: ανοίγει σελίδα μέλους</li>
+        <li>Emails ρόλων (κάρτα μέλους): κλικ → αντιγραφή στο clipboard</li>
         <li>Κανένα κλικ δεν γυρίζει την κάρτα</li>
       </ul>
     </div>
@@ -390,13 +478,19 @@
 
     <div class="card">
       <h3>Αλλαγή φόρμας επικοινωνίας / API</h3>
-      <div class="spec-row"><span class="spec-label">Frontend:</span><span class="spec-value"><code>components/ContactContent.tsx</code> &mdash; Ενότητα φόρμας</span></div>
-      <div class="spec-row"><span class="spec-label">API:</span><span class="spec-value"><code>app/api/contact/route.ts</code> &mdash; Resend, CSRF</span></div>
+      <div class="spec-row"><span class="spec-label">Frontend:</span><span class="spec-value"><code>components/ContactContent.tsx</code> &mdash; <code>GeneralContactCard</code> + <code>MemberContactCard</code></span></div>
+      <div class="spec-row"><span class="spec-label">API:</span><span class="spec-value"><code>app/api/contact/route.ts</code> &mdash; Resend, CSRF, δυναμικοί παραλήπτες</span></div>
     </div>
 
     <div class="card">
       <h3>Αλλαγή ρόλων / emails Ομάδας Συντονισμού</h3>
-      <div class="spec-row"><span class="spec-label">Αρχείο:</span><span class="spec-value"><code>components/ContactContent.tsx</code> &mdash; Σταθερές <code>ROLE_MAP</code> και <code>PRESIDENT_ROLE</code></span></div>
+      <div class="spec-row"><span class="spec-label">Αρχείο:</span><span class="spec-value"><code>components/ContactContent.tsx</code> &mdash; Σταθερές <code>ROLE_MAP</code>, <code>PRESIDENT_ROLE</code>, <code>ADMIN_ROLE</code></span></div>
+    </div>
+
+    <div class="card">
+      <h3>Αλλαγή dropdown emails φόρμας μέλους</h3>
+      <div class="spec-row"><span class="spec-label">Αρχείο:</span><span class="spec-value"><code>components/ContactContent.tsx</code> &mdash; Λίστα <code>availableEmails</code> στο <code>MemberContactCard</code></span></div>
+      <div class="note">Δημιουργείται δυναμικά από team contacts + admin + IT. Για αλλαγή στατικών entries (π.χ. it@cultureforchange.net), επεξεργαστείτε τον κώδικα.</div>
     </div>
 
     <div class="card">
