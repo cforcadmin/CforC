@@ -21,6 +21,59 @@ const PRESIDENT_ROLE = {
   description: 'Γενική εποπτεία λειτουργίας του δικτύου και συντονισμός δράσεων.',
 }
 
+const ADMIN_ROLE = {
+  title: 'Διαχειρίστρια',
+  email: 'hello@cultureforchange.net',
+  description: 'Διοικητική υποστήριξη και διαχείριση γραφείου.',
+}
+
+// ── Shared contact row component ──
+
+function ContactRow({ member, role }: { member: WorkingGroupMemberRef; role: { title: string; email: string; description: string } }) {
+  const imageUrl = getImageUrl(member.Image)
+  return (
+    <div className="flex gap-3">
+      <Link href={`/members/${member.Slug}`} className="flex-shrink-0">
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={member.ProfileImageAltText || member.Name}
+            width={44}
+            height={44}
+            className="w-11 h-11 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600 hover:border-coral dark:hover:border-coral-light transition-colors"
+          />
+        ) : (
+          <div className="w-11 h-11 rounded-full bg-coral/20 dark:bg-coral/30 flex items-center justify-center text-coral dark:text-coral-light font-bold border-2 border-gray-200 dark:border-gray-600">
+            {member.Name.charAt(0)}
+          </div>
+        )}
+      </Link>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Link
+            href={`/members/${member.Slug}`}
+            className="text-sm font-bold text-charcoal dark:text-gray-100 hover:text-coral dark:hover:text-coral-light transition-colors"
+          >
+            {member.Name}
+          </Link>
+          <span className="text-[10px] bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-200 border border-charcoal/30 dark:border-gray-500 px-2 py-0.5 rounded-full">
+            {role.title}
+          </span>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed line-clamp-2">
+          {role.description}
+        </p>
+        <a
+          href={`mailto:${role.email}`}
+          className="text-xs text-coral dark:text-coral-light hover:underline mt-1 inline-block"
+        >
+          {role.email}
+        </a>
+      </div>
+    </div>
+  )
+}
+
 function getImageUrl(image: WorkingGroupMemberRef['Image']): string | null {
   if (!image) return null
   if (Array.isArray(image) && image.length > 0) {
@@ -251,7 +304,7 @@ function MemberContactCard({
         className="relative w-full transition-transform duration-500 [transform-style:preserve-3d]"
         style={{
           transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-          minHeight: isFlipped && !showMembersOnly ? '580px' : '420px',
+          minHeight: isFlipped && !showMembersOnly ? '650px' : '420px',
           transition: 'transform 0.5s, min-height 0.4s ease',
         }}
       >
@@ -309,7 +362,7 @@ function MemberContactCard({
             </div>
           ) : (
             /* Logged in: team contacts */
-            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border-l-4 border-coral dark:border-coral-light flex flex-col p-6 overflow-hidden" style={{ minHeight: '580px' }}>
+            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border-l-4 border-coral dark:border-coral-light flex flex-col p-6 overflow-hidden" style={{ minHeight: '650px' }}>
               <h3 className="text-lg font-bold text-coral dark:text-coral-light mb-4">Ομάδα Συντονισμού</h3>
 
               {loading ? (
@@ -320,53 +373,17 @@ function MemberContactCard({
                 <p className="text-gray-500 dark:text-gray-400 text-sm">Δεν βρέθηκαν στοιχεία ομάδας.</p>
               ) : (
                 <div className="space-y-4 flex-1" onClick={(e) => e.stopPropagation()}>
-                  {teamContacts.map(({ member, role }) => {
-                    const imageUrl = getImageUrl(member.Image)
-                    return (
-                      <div key={member.id} className="flex gap-3">
-                        {/* Avatar */}
-                        <Link href={`/members/${member.Slug}`} className="flex-shrink-0">
-                          {imageUrl ? (
-                            <Image
-                              src={imageUrl}
-                              alt={member.ProfileImageAltText || member.Name}
-                              width={44}
-                              height={44}
-                              className="w-11 h-11 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600 hover:border-coral dark:hover:border-coral-light transition-colors"
-                            />
-                          ) : (
-                            <div className="w-11 h-11 rounded-full bg-coral/20 dark:bg-coral/30 flex items-center justify-center text-coral dark:text-coral-light font-bold border-2 border-gray-200 dark:border-gray-600">
-                              {member.Name.charAt(0)}
-                            </div>
-                          )}
-                        </Link>
+                  {teamContacts.map(({ member, role }) => (
+                    <ContactRow key={member.id} member={member} role={role} />
+                  ))}
 
-                        {/* Info */}
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Link
-                              href={`/members/${member.Slug}`}
-                              className="text-sm font-bold text-charcoal dark:text-gray-100 hover:text-coral dark:hover:text-coral-light transition-colors"
-                            >
-                              {member.Name}
-                            </Link>
-                            <span className="text-[10px] bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-200 border border-charcoal/30 dark:border-gray-500 px-2 py-0.5 rounded-full">
-                              {role.title}
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed line-clamp-2">
-                            {role.description}
-                          </p>
-                          <a
-                            href={`mailto:${role.email}`}
-                            className="text-xs text-coral dark:text-coral-light hover:underline mt-1 inline-block"
-                          >
-                            {role.email}
-                          </a>
-                        </div>
-                      </div>
-                    )
-                  })}
+                  {/* Admin separator + entry */}
+                  {currentTeam?.Admin && !currentTeam.Admin.HideProfile && (
+                    <>
+                      <div className="border-t border-gray-200 dark:border-gray-600 my-1" />
+                      <ContactRow member={currentTeam.Admin} role={ADMIN_ROLE} />
+                    </>
+                  )}
                 </div>
               )}
             </div>
