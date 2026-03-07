@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CforC - Διαδραστικός Χάρτης Μελών - Changelog</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F5F0EB;
+      color: #2D2D2D;
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    .container { max-width: 960px; margin: 0 auto; }
+    h1 {
+      font-size: 2.4em;
+      margin-bottom: 8px;
+      color: #2D2D2D;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 1.05em;
+      margin-bottom: 48px;
+    }
+    h2 {
+      font-size: 1.5em;
+      margin-top: 48px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #FF8B6A;
+      color: #2D2D2D;
+    }
+    h3 {
+      font-size: 1.15em;
+      margin-top: 28px;
+      margin-bottom: 12px;
+      color: #FF8B6A;
+    }
+    h4 {
+      font-size: 1em;
+      margin-top: 20px;
+      margin-bottom: 8px;
+      color: #2D2D2D;
+      font-weight: 600;
+    }
+    p { margin-bottom: 12px; }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      border-left: 4px solid transparent;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      border-left-color: #FF8B6A;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .card h3 { margin-top: 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+      font-size: 0.95em;
+    }
+    th {
+      text-align: left;
+      background: #FF8B6A;
+      color: #fff;
+      padding: 10px 14px;
+      font-weight: 600;
+    }
+    th:first-child { border-radius: 8px 0 0 0; }
+    th:last-child { border-radius: 0 8px 0 0; }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: #fafafa; }
+    code {
+      background: rgba(255,139,106,0.12);
+      color: #c0392b;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.88em;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(255,139,106,0.12);
+      color: #2D2D2D;
+      border: 1px solid #2D2D2D;
+      font-size: 0.75em;
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .badge-new {
+      background: #e8f5e9;
+      border-color: #4caf50;
+      color: #2e7d32;
+    }
+    .badge-updated {
+      background: #fff3e0;
+      border-color: #ff9800;
+      color: #e65100;
+    }
+    .badge-fix {
+      background: #e3f2fd;
+      border-color: #2196f3;
+      color: #1565c0;
+    }
+    .section-nav {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 32px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .section-nav h3 { margin-top: 0; color: #2D2D2D; }
+    .section-nav ol {
+      padding-left: 20px;
+      margin: 0;
+    }
+    .section-nav li {
+      margin-bottom: 6px;
+    }
+    .section-nav a {
+      color: #FF8B6A;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .section-nav a:hover {
+      text-decoration: underline;
+    }
+    .flow-diagram {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin: 12px 0;
+    }
+    .flow-step {
+      background: #fff;
+      border: 2px solid #FF8B6A;
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-size: 0.9em;
+      font-weight: 500;
+    }
+    .flow-step.highlight {
+      background: #FF8B6A;
+      color: #fff;
+    }
+    .flow-arrow {
+      color: #FF8B6A;
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+    .note {
+      background: #fffde7;
+      border-left: 4px solid #ffc107;
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      margin: 12px 0;
+      font-size: 0.95em;
+    }
+    .spec-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 0.95em;
+    }
+    .spec-label {
+      font-weight: 700;
+      min-width: 160px;
+      flex-shrink: 0;
+    }
+    .spec-value { color: #444; }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 700px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #e0d6cc;
+      margin: 40px 0;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Διαδραστικός Χάρτης Μελών</h1>
+  <p class="subtitle">Changelog — Όλες οι αλλαγές σχετικά με τον χάρτη, τη σελίδα μελών, και τη σελίδα "Σχετικά με εμάς"</p>
+
+  <!-- Table of Contents -->
+  <div class="section-nav">
+    <h3>Περιεχόμενα</h3>
+    <ol>
+      <li><a href="#map-page">Νέα Σελίδα Χάρτη (<code>/map</code>)</a></li>
+      <li><a href="#members-page">Ενημερώσεις Σελίδας Μελών</a></li>
+      <li><a href="#about-page">Ενημερώσεις Σελίδας "Σχετικά με εμάς"</a></li>
+      <li><a href="#nav-footer">Navigation &amp; Footer</a></li>
+      <li><a href="#technical">Τεχνικές Σημειώσεις</a></li>
+    </ol>
+  </div>
+
+  <!-- ============================================ -->
+  <h2 id="map-page">1. Νέα Σελίδα Χάρτη (<code>/map</code>) <span class="badge badge-new">NEW</span></h2>
+  <!-- ============================================ -->
+
+  <div class="card">
+    <h3>Επισκόπηση</h3>
+    <p>Πλήρης διαδραστική σελίδα χάρτη Ελλάδας με SVG choropleth, zoom, avatar clusters, ένθετο χάρτη Ευρώπης, dark mode. Βασίζεται σε <code>react-simple-maps</code> + GeoJSON δεδομένα Eurostat NUTS2.</p>
+  </div>
+
+  <div class="card">
+    <h3>Τεχνολογίες</h3>
+    <table>
+      <tr><th>Πακέτο</th><th>Χρήση</th></tr>
+      <tr><td><code>react-simple-maps</code></td><td>ComposableMap, ZoomableGroup, Geographies, Geography, Marker</td></tr>
+      <tr><td><code>d3-geo</code></td><td>Projection utilities</td></tr>
+      <tr><td>GeoJSON (Eurostat NUTS2)</td><td>Γεωμετρία 13 περιφερειών Ελλάδας</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Αρχεία</h3>
+    <table>
+      <tr><th>Αρχείο</th><th>Περιγραφή</th></tr>
+      <tr><td><code>app/map/page.tsx</code></td><td>Server component (metadata, SEO)</td></tr>
+      <tr><td><code>app/map/MapPageClient.tsx</code></td><td>Client component — κύρια σελίδα χάρτη</td></tr>
+      <tr><td><code>components/map/GreeceMap.tsx</code></td><td>SVG choropleth + ZoomableGroup με animated zoom</td></tr>
+      <tr><td><code>components/map/ProvinceTooltip.tsx</code></td><td>Tooltip ακολουθεί ποντίκι πάνω από περιφέρειες</td></tr>
+      <tr><td><code>components/map/CityMarkers.tsx</code></td><td>Avatar clusters πόλεων (εμφανίζονται σε zoom)</td></tr>
+      <tr><td><code>components/map/CityMemberPanel.tsx</code></td><td>Πλαϊνό panel / bottom sheet με λίστα μελών</td></tr>
+      <tr><td><code>components/map/EuropeInset.tsx</code></td><td>Ένθετος χάρτης Ευρώπης (μέλη στο εξωτερικό)</td></tr>
+      <tr><td><code>components/map/MembersWithoutCity.tsx</code></td><td>Αναδιπλούμενη λίστα μελών χωρίς πόλη</td></tr>
+      <tr><td><code>components/map/MapLegend.tsx</code></td><td>Υπόμνημα χρωματικής κλίμακας</td></tr>
+      <tr><td><code>lib/mapData.ts</code></td><td>NUTS mapping, συντεταγμένες, κεντροειδή, χρώματα</td></tr>
+      <tr><td><code>lib/mapUtils.ts</code></td><td>Aggregation μελών, χρωματική κλίμακα</td></tr>
+      <tr><td><code>public/geo/greece-provinces-nuts2.json</code></td><td>GeoJSON 13 περιφερειών</td></tr>
+      <tr><td><code>public/geo/europe-simple.json</code></td><td>GeoJSON 36 ευρωπαϊκών χωρών</td></tr>
+      <tr><td><code>scripts/prepare-geojson.js</code></td><td>Script λήψης GeoJSON από Eurostat</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Λειτουργίες Χάρτη Ελλάδας</h3>
+    <table>
+      <tr><th>Λειτουργία</th><th>Περιγραφή</th></tr>
+      <tr><td><strong>Choropleth</strong></td><td>13 περιφέρειες χρωματισμένες κατά πυκνότητα μελών (5-βάθμια coral κλίμακα)</td></tr>
+      <tr><td><strong>Hover περιφέρειας</strong></td><td>Tooltip με όνομα, σύνολο μελών, κατανομή ανά πόλη</td></tr>
+      <tr><td><strong>Click περιφέρειας</strong></td><td>Animated zoom (cubic easing, 500ms) στην περιφέρεια</td></tr>
+      <tr><td><strong>City markers</strong></td><td>Avatar clusters με φωτογραφίες μελών (εμφανίζονται σε zoom > 2)</td></tr>
+      <tr><td><strong>Click πόλης</strong></td><td>Πλαϊνό panel (desktop) ή bottom sheet (mobile) με λίστα μελών</td></tr>
+      <tr><td><strong>Κουμπί "Πίσω"</strong></td><td>Επιστροφή στην αρχική εμφάνιση + hint πλήκτρου Esc</td></tr>
+      <tr><td><strong>Escape</strong></td><td>Zoom out στην αρχική εμφάνιση</td></tr>
+      <tr><td><strong>Dark mode</strong></td><td>Πλήρης υποστήριξη σκοτεινού θέματος</td></tr>
+      <tr><td><strong>URL params</strong></td><td><code>?city=X</code> ή <code>?province=X</code> για deep linking</td></tr>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h3>Υπόμνημα (MapLegend)</h3>
+      <p>5-βάθμια χρωματική κλίμακα: 0, 1-2, 3-5, 6-15, 16+</p>
+      <p><strong>Hover-to-expand:</strong> Η κάρτα γίνεται 2x μεγαλύτερη (CSS <code>transform: scale(2)</code>) προς δεξιά/κάτω.</p>
+      <p>Κείμενο "ΜΕΛΗ ΑΝΑ ΠΕΡΙΦΕΡΕΙΑ" και αριθμοί κλίμακας σε μαύρο χρώμα.</p>
+    </div>
+    <div class="card">
+      <h3>CityMemberPanel</h3>
+      <table>
+        <tr><th>Πλατφόρμα</th><th>Εμφάνιση</th></tr>
+        <tr><td>Desktop (lg+)</td><td>Πλαϊνό panel, 400px πλάτος</td></tr>
+        <tr><td>Tablet (md)</td><td>Bottom sheet, 60vh ύψος</td></tr>
+        <tr><td>Mobile</td><td>Full-screen modal</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Ένθετος Χάρτης Ευρώπης (EuropeInset)</h3>
+    <table>
+      <tr><th>Λειτουργία</th><th>Περιγραφή</th></tr>
+      <tr><td><strong>36 χώρες</strong></td><td>Εμφανίζει όλες τις ευρωπαϊκές χώρες</td></tr>
+      <tr><td><strong>Drag/Pan</strong></td><td>ZoomableGroup για μετακίνηση στον χάρτη</td></tr>
+      <tr><td><strong>+/− Zoom</strong></td><td>Κουμπιά zoom με μαύρο outline (πάνω δεξιά, μόνο σε expanded)</td></tr>
+      <tr><td><strong>Hover-to-expand</strong></td><td>Διπλασιασμός μεγέθους (208→416px πλάτος) με CSS transition</td></tr>
+      <tr><td><strong>Header hover</strong></td><td>Dropdown λίστα μελών με avatar, όνομα, πόλη</td></tr>
+      <tr><td><strong>Κείμενο</strong></td><td>"ΜΕΛΗ ΣΤΟ ΕΞΩΤΕΡΙΚΟ" σε μαύρο, ονόματα πόλεων σε μαύρο</td></tr>
+      <tr><td><strong>Escape</strong></td><td>Κλείσιμο member list ή collapse (capture phase)</td></tr>
+      <tr><td><strong>Client-only</strong></td><td>Αποφυγή hydration mismatch</td></tr>
+      <tr><td><strong>Desktop only</strong></td><td>Κρυφό σε mobile — εμφανίζονται ως text buttons</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Μέλη Χωρίς Πόλη (MembersWithoutCity)</h3>
+    <p>Αναδιπλούμενη ενότητα κάτω από τον χάρτη. Εμφανίζει avatar + όνομα σε grid. Κείμενο ονομάτων σε <code>text-sm</code> (αυξημένο μέγεθος).</p>
+  </div>
+
+  <hr>
+
+  <!-- ============================================ -->
+  <h2 id="members-page">2. Ενημερώσεις Σελίδας Μελών <span class="badge badge-updated">UPDATED</span></h2>
+  <!-- ============================================ -->
+
+  <div class="card">
+    <h3>Globe Icons — Κάρτες Μελών (MemberFlipCard)</h3>
+    <table>
+      <tr><th>Στοιχείο</th><th>Περιγραφή</th></tr>
+      <tr><td><strong>Εμφάνιση</strong></td><td>Globe εικονίδιο (20px κύκλος, μαύρο border) εμφανίζεται στο hover δίπλα στο pill πόλης/περιφέρειας</td></tr>
+      <tr><td><strong>Link</strong></td><td>Πόλη → <code>/map?city=X</code>, Περιφέρεια → <code>/map?province=X</code></td></tr>
+      <tr><td><strong>Tooltip</strong></td><td>"Δες στον χάρτη" εμφανίζεται αμέσως στο hover του globe</td></tr>
+      <tr><td><strong>Αρχείο</strong></td><td><code>components/shared/MemberFlipCard.tsx</code></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Globe Icons — Σελίδα Μέλους (MemberDetailClient)</h3>
+    <table>
+      <tr><th>Στοιχείο</th><th>Περιγραφή</th></tr>
+      <tr><td><strong>Εμφάνιση</strong></td><td>Globe εικονίδιο (38px, μαύρο border) στο hover δίπλα στα pills τοποθεσίας</td></tr>
+      <tr><td><strong>Link</strong></td><td><code>/map?city=X</code> ή <code>/map?province=X</code></td></tr>
+      <tr><td><strong>Tooltip</strong></td><td>"Δες στον χάρτη"</td></tr>
+      <tr><td><strong>Αρχείο</strong></td><td><code>app/members/[name]/MemberDetailClient.tsx</code></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Persistent Search State (sessionStorage)</h3>
+    <p>Η αναζήτηση/φίλτρα αποθηκεύονται στο <code>sessionStorage</code> και επαναφέρονται κατά την επιστροφή.</p>
+    <table>
+      <tr><th>Σελίδα</th><th>Κλειδί</th><th>Αποθηκεύει</th><th>Αρχείο</th></tr>
+      <tr>
+        <td><strong>Μέλη</strong> (<code>/members</code>)</td>
+        <td><code>cforc-members-search</code></td>
+        <td>searchQuery, selectedFields, selectedCities, selectedProvinces, sortMode, filterLogic, viewMode</td>
+        <td><code>app/members/page.tsx</code></td>
+      </tr>
+      <tr>
+        <td><strong>Νέα</strong> (<code>/news</code>)</td>
+        <td><code>cforc-news-search</code></td>
+        <td>searchQuery, activeTab, selectedYear</td>
+        <td><code>app/news/page.tsx</code></td>
+      </tr>
+      <tr>
+        <td><strong>Ανοιχτές Προσκλήσεις</strong> (<code>/open-calls</code>)</td>
+        <td><code>cforc-opencalls-search</code></td>
+        <td>searchQuery, activeTab, selectedYear</td>
+        <td><code>components/OpenCallsContent.tsx</code></td>
+      </tr>
+      <tr>
+        <td><strong>Προφίλ</strong> (<code>/profile</code>)</td>
+        <td><code>cforc-profile-section</code></td>
+        <td>Ενεργή ενότητα dashboard</td>
+        <td><code>app/profile/page.tsx</code></td>
+      </tr>
+    </table>
+    <div class="note">
+      <strong>Προτεραιότητα:</strong> URL params > sessionStorage > defaults. Το κουμπί "Καθαρισμός" διαγράφει και το sessionStorage.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ============================================ -->
+  <h2 id="about-page">3. Ενημερώσεις "Σχετικά με εμάς" (<code>/about</code>) <span class="badge badge-updated">UPDATED</span></h2>
+  <!-- ============================================ -->
+
+  <div class="card">
+    <h3>Αλλαγή Σειράς Ενοτήτων</h3>
+    <h4>Πριν:</h4>
+    <div class="flow-diagram">
+      <span class="flow-step">Hero</span><span class="flow-arrow">→</span>
+      <span class="flow-step">Χάρτης (JPEG)</span><span class="flow-arrow">→</span>
+      <span class="flow-step">Βίντεο</span><span class="flow-arrow">→</span>
+      <span class="flow-step">ΛΙΓΑ ΛΟΓΙΑ</span><span class="flow-arrow">→</span>
+      <span class="flow-step">...</span>
+    </div>
+    <h4>Μετά:</h4>
+    <div class="flow-diagram">
+      <span class="flow-step">Hero</span><span class="flow-arrow">→</span>
+      <span class="flow-step highlight">ΛΙΓΑ ΛΟΓΙΑ + Counters</span><span class="flow-arrow">→</span>
+      <span class="flow-step highlight">Προεπισκόπηση Χάρτη</span><span class="flow-arrow">→</span>
+      <span class="flow-step highlight">Βίντεο (thumbnail)</span><span class="flow-arrow">→</span>
+      <span class="flow-step">...</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Νέο: AboutMapPreview <span class="badge badge-new">NEW</span></h3>
+    <table>
+      <tr><th>Στοιχείο</th><th>Περιγραφή</th></tr>
+      <tr><td><strong>Αντικαθιστά</strong></td><td><code>AboutMapSection</code> (στατικός JPEG χάρτης με SVG circles + city lists)</td></tr>
+      <tr><td><strong>Εμφάνιση</strong></td><td>Εικόνα χάρτη Ελλάδας με κεντρικό CTA overlay</td></tr>
+      <tr><td><strong>CTA</strong></td><td>"ΕΞΕΡΕΥΝΗΣΕ ΤΟΝ ΧΑΡΤΗ" με pin εικονίδιο</td></tr>
+      <tr><td><strong>Υπότιτλος</strong></td><td>"Δες πού βρίσκονται τα μέλη μας σε όλη την Ελλάδα και το εξωτερικό"</td></tr>
+      <tr><td><strong>Link</strong></td><td>Ολόκληρη η κάρτα → <code>/map</code></td></tr>
+      <tr><td><strong>Hover</strong></td><td>Overlay σκουραίνει, CTA card κάνει scale up (1.05x)</td></tr>
+      <tr><td><strong>Animation</strong></td><td>Fade-in + slide-up κατά το scroll (IntersectionObserver)</td></tr>
+      <tr><td><strong>Αρχείο</strong></td><td><code>components/AboutMapPreview.tsx</code></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Ενημέρωση Βίντεο (AboutVideoSection) <span class="badge badge-fix">FIX</span></h3>
+    <table>
+      <tr><th>Πριν</th><th>Μετά</th></tr>
+      <tr><td><code>bg-black/40</code> overlay — κρύβει εντελώς το thumbnail</td><td><code>bg-black/15</code> overlay — φαίνεται το thumbnail</td></tr>
+      <tr><td><code>bg-black/30</code> play button</td><td><code>bg-white/30 backdrop-blur-sm</code> (frosted glass)</td></tr>
+      <tr><td>Χωρίς preload</td><td><code>preload="metadata"</code> + <code>src="#t=0.5"</code> φορτώνει frame στο 0.5s</td></tr>
+      <tr><td>Στατικό hover</td><td><code>hover:bg-black/25</code> transition στο overlay</td></tr>
+    </table>
+    <div class="spec-row">
+      <span class="spec-label">Αρχείο:</span>
+      <span class="spec-value"><code>components/AboutVideoSection.tsx</code></span>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ============================================ -->
+  <h2 id="nav-footer">4. Navigation &amp; Footer <span class="badge badge-updated">UPDATED</span></h2>
+  <!-- ============================================ -->
+
+  <div class="two-col">
+    <div class="card">
+      <h3>Navigation</h3>
+      <p><strong>Νέο link:</strong> "ΧΑΡΤΗΣ" (<code>/map</code>)</p>
+      <h4>Σειρά (μη συνδεδεμένος):</h4>
+      <p>ΑΡΧΙΚΗ → ΤΟ ΔΙΚΤΥΟ → ΜΕΛΗ → ΝΕΑ → <strong>ΧΑΡΤΗΣ</strong> → ΣΥΜΜΕΤΟΧΗ → ΕΠΙΚΟΙΝΩΝΙΑ</p>
+      <h4>Σειρά (συνδεδεμένος):</h4>
+      <p>ΑΡΧΙΚΗ → ΤΟ ΔΙΚΤΥΟ → ΜΕΛΗ → ΝΕΑ → ΕΡΓΑ → <strong>ΧΑΡΤΗΣ</strong> → ΕΠΙΚΟΙΝΩΝΙΑ</p>
+      <h4>Spacing:</h4>
+      <p><code>space-x-4</code> πάντα (compact, ταιριάζει logged-in/logged-out)</p>
+      <div class="spec-row">
+        <span class="spec-label">Αρχείο:</span>
+        <span class="spec-value"><code>components/Navigation.tsx</code></span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Footer</h3>
+      <p>"Χάρτης" link προστέθηκε στο sitemap, αμέσως μετά το "Νέα".</p>
+      <div class="spec-row">
+        <span class="spec-label">Αρχείο:</span>
+        <span class="spec-value"><code>components/Footer.tsx</code></span>
+      </div>
+      <h4>Sitemap.ts:</h4>
+      <p>Ενημερώθηκε να περιλαμβάνει <code>/map</code>.</p>
+      <div class="spec-row">
+        <span class="spec-label">Αρχείο:</span>
+        <span class="spec-value"><code>app/sitemap.ts</code></span>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ============================================ -->
+  <h2 id="technical">5. Τεχνικές Σημειώσεις <span class="badge badge-fix">FIXES</span></h2>
+  <!-- ============================================ -->
+
+  <div class="card">
+    <h3>Hydration Fixes</h3>
+    <table>
+      <tr><th>Πρόβλημα</th><th>Λύση</th></tr>
+      <tr>
+        <td><code>react-simple-maps</code> markers παράγουν floating-point <code>transform</code> attributes διαφορετικά σε server/client</td>
+        <td>Client-only rendering (<code>mounted</code> state via <code>useEffect</code>) στο EuropeInset</td>
+      </tr>
+      <tr>
+        <td>Google Translate widget εισάγει <code>role</code>/<code>tabindex</code> πριν το hydration</td>
+        <td><code>suppressHydrationWarning</code> στο LanguageSwitcher container</td>
+      </tr>
+      <tr>
+        <td>Nested <code>&lt;button&gt;</code> σε <code>&lt;button&gt;</code> (CategoryFilter, YearFilter)</td>
+        <td>Αντικατάσταση εσωτερικού <code>&lt;button&gt;</code> με <code>&lt;span role="button"&gt;</code></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Peer Dependency Fix</h3>
+    <div class="spec-row">
+      <span class="spec-label">Πρόβλημα:</span>
+      <span class="spec-value"><code>react-simple-maps@3.0.0</code> απαιτεί <code>react@^16.8.0 || 17.x || 18.x</code> αλλά το project χρησιμοποιεί React 19</span>
+    </div>
+    <div class="spec-row">
+      <span class="spec-label">Λύση:</span>
+      <span class="spec-value"><code>.npmrc</code> με <code>legacy-peer-deps=true</code></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Year Persistence Bug Fix</h3>
+    <div class="spec-row">
+      <span class="spec-label">Πρόβλημα:</span>
+      <span class="spec-value">Το φίλτρο έτους δεν αποθηκευόταν σωστά (σε Νέα &amp; Ανοιχτές Προσκλήσεις)</span>
+    </div>
+    <div class="spec-row">
+      <span class="spec-label">Αιτία:</span>
+      <span class="spec-value">React effects τρέχουν κατά σειρά δήλωσης — restore effect + reset effect δημιουργούσαν race condition</span>
+    </div>
+    <div class="spec-row">
+      <span class="spec-label">Λύση:</span>
+      <span class="spec-value">Αντικατάσταση effect-based reset με <code>handleTabChange</code> callback wrapper</span>
+    </div>
+    <div class="note">
+      <strong>Pattern:</strong> Μην χρησιμοποιείτε effects για state resets που εξαρτώνται από άλλα state updates στο ίδιο render cycle. Χρησιμοποιήστε callback wrappers αντί αυτού.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

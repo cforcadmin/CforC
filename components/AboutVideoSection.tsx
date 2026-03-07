@@ -23,21 +23,22 @@ export default function AboutVideoSection() {
               ref={videoRef}
               className="w-full h-full object-cover"
               controls={isPlaying}
-              src="/about-us-video.mp4"
+              preload="metadata"
+              src="/about-us-video.mp4#t=0.5"
             >
               Your browser does not support the video tag.
             </video>
 
-            {/* Dark overlay with play button - disappears when playing */}
+            {/* Light overlay with play button - shows video thumbnail underneath */}
             {!isPlaying && (
               <button
-                className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer group"
+                className="absolute inset-0 bg-black/15 hover:bg-black/25 flex items-center justify-center cursor-pointer group transition-colors duration-300"
                 onClick={handlePlay}
                 aria-label="Αναπαραγωγή βίντεο"
               >
-                <div className="w-20 h-20 bg-black/30 rounded-full flex items-center justify-center group-hover:bg-black/40 transition-colors">
+                <div className="w-20 h-20 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:bg-white/40 transition-colors">
                   <svg
-                    className="w-10 h-10 text-white ml-1"
+                    className="w-10 h-10 text-white ml-1 drop-shadow-lg"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                     aria-hidden="true"

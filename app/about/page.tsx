@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Navigation from '@/components/Navigation'
 import AboutHeroSection from '@/components/AboutHeroSection'
-import AboutMapSection from '@/components/AboutMapSection'
+import AboutMapPreview from '@/components/AboutMapPreview'
 import AboutVideoSection from '@/components/AboutVideoSection'
 import AboutTextSection from '@/components/AboutTextSection'
 import AboutHowSection from '@/components/AboutHowSection'
@@ -26,9 +26,9 @@ export default function AboutPage() {
       <Navigation />
       <main id="main-content">
         <AboutHeroSection />
-        <AboutMapSection />
-        <AboutVideoSection />
         <AboutTextSection />
+        <AboutMapPreview />
+        <AboutVideoSection />
         <AboutHowSection />
         <AboutOfferSection />
         <AboutCoreSection />

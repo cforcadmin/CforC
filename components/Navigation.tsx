@@ -275,7 +275,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
               )}
             </button>
             {/* Navigation links wrapped in nav element */}
-            <nav aria-label="Κύρια πλοήγηση" className={`flex items-center ${isAuthenticated ? 'space-x-4' : 'space-x-8'}`}>
+            <nav aria-label="Κύρια πλοήγηση" className="flex items-center space-x-4">
               {/* About Dropdown */}
               <div
                 ref={aboutDropdownRef}

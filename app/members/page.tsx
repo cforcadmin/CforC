@@ -106,7 +106,11 @@ function MembersPageContent() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [initialized, setInitialized] = useState(false)
 
-  // On mount: restore from URL params (priority) or sessionStorage
+  // Stable string from URL params so the effect re-runs when they change
+  const urlParamKey = searchParams.toString()
+
+  // Restore from URL params (priority) or sessionStorage.
+  // Depends on urlParamKey so clicking city/province links while already on /members re-applies filters.
   useEffect(() => {
     const fieldParam = searchParams.get('field')
     const cityParam = searchParams.get('city')
@@ -114,12 +118,12 @@ function MembersPageContent() {
     const hasUrlParams = fieldParam || cityParam || provinceParam
 
     if (hasUrlParams) {
-      // URL params take priority (e.g. from tag clicks)
-      if (fieldParam) setSelectedFields([fieldParam])
-      if (cityParam) setSelectedCities([cityParam])
-      if (provinceParam) setSelectedProvinces([provinceParam])
-    } else {
-      // Restore from sessionStorage
+      // URL params take priority (e.g. from tag clicks, globe icons)
+      setSelectedFields(fieldParam ? [fieldParam] : [])
+      setSelectedCities(cityParam ? [cityParam] : [])
+      setSelectedProvinces(provinceParam ? [provinceParam] : [])
+    } else if (!initialized) {
+      // Only restore from sessionStorage on first mount
       const saved = loadMembersSearch()
       if (saved) {
         setSearchQuery(saved.searchQuery || '')
@@ -132,7 +136,7 @@ function MembersPageContent() {
       }
     }
     setInitialized(true)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [urlParamKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Persist search state to sessionStorage whenever it changes
   useEffect(() => {

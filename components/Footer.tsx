@@ -4,14 +4,16 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useAuth } from './AuthProvider'
+import ConfirmationModal from './ConfirmationModal'
 
 interface FooterProps {
   variant?: 'default' | 'members'
 }
 
 export default function Footer({ variant = 'default' }: FooterProps) {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const [showMemberModal, setShowMemberModal] = useState(false)
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
   const [emailCopied, setEmailCopied] = useState(false)
   const [phoneCopied, setPhoneCopied] = useState(false)
   const bgColor = variant === 'members' ? 'bg-[#F5F0EB] dark:bg-gray-800' : 'bg-gray-100 dark:bg-gray-800'
@@ -109,6 +111,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
             <div>
               <h3 className="font-bold mb-3 text-charcoal dark:text-coral-light text-xs">SITEMAP</h3>
             <ul role="list" className="space-y-1.5 text-xs dark:text-gray-300">
+              <li><Link href="/" className="hover:text-coral dark:hover:text-coral-light transition-colors">Κεντρική</Link></li>
               <li><Link href="/about" className="hover:text-coral dark:hover:text-coral-light transition-colors">Σχετικά με εμάς</Link></li>
               <li><Link href="/news" className="hover:text-coral dark:hover:text-coral-light transition-colors">Νέα</Link></li>
               <li><Link href="/map" className="hover:text-coral dark:hover:text-coral-light transition-colors">Χάρτης</Link></li>
@@ -119,14 +122,19 @@ export default function Footer({ variant = 'default' }: FooterProps) {
                   <button type="button" onClick={handleOpenCallsClick} className="hover:text-coral dark:hover:text-coral-light transition-colors">Ανοιχτές προσκλήσεις</button>
                 )}
               </li>
-              <li><Link href="/participation" className="hover:text-coral dark:hover:text-coral-light transition-colors">Συμμετοχή</Link></li>
-              <li><Link href="/members" className="hover:text-coral dark:hover:text-coral-light transition-colors">Εύρεση μελών</Link></li>
-              <li><Link href="/transparency" className="hover:text-coral dark:hover:text-coral-light transition-colors">Διαφάνεια</Link></li>
-              {user ? (
-                <li><Link href="/profile" className="hover:text-coral dark:hover:text-coral-light transition-colors">Ο χώρος μου</Link></li>
-              ) : (
-                <li><Link href="/login" className="hover:text-coral dark:hover:text-coral-light transition-colors">Προφίλ</Link></li>
+              {!user && (
+                <li><Link href="/participation" className="hover:text-coral dark:hover:text-coral-light transition-colors">Συμμετοχή</Link></li>
               )}
+              <li><Link href="/members" className="hover:text-coral dark:hover:text-coral-light transition-colors">Εύρεση μελών</Link></li>
+              {user ? (
+                <>
+                  <li><Link href="/profile" className="hover:text-coral dark:hover:text-coral-light transition-colors">Ο χώρος μου</Link></li>
+                  <li><button type="button" onClick={() => setIsLogoutModalOpen(true)} className="hover:text-coral dark:hover:text-coral-light transition-colors">Αποσύνδεση</button></li>
+                </>
+              ) : (
+                <li><Link href="/login" className="hover:text-coral dark:hover:text-coral-light transition-colors">Σύνδεση</Link></li>
+              )}
+              <li><Link href="/transparency" className="hover:text-coral dark:hover:text-coral-light transition-colors">Διαφάνεια</Link></li>
             </ul>
             </div>
 
@@ -223,6 +231,19 @@ export default function Footer({ variant = 'default' }: FooterProps) {
         </div>
       </div>
     </footer>
+      <ConfirmationModal
+        isOpen={isLogoutModalOpen}
+        title="Αποσύνδεση"
+        message="Είστε σίγουροι ότι θέλετε να αποσυνδεθείτε;"
+        confirmText="Αποσύνδεση"
+        cancelText="Ακύρωση"
+        onConfirm={async () => {
+          await logout()
+          setIsLogoutModalOpen(false)
+        }}
+        onCancel={() => setIsLogoutModalOpen(false)}
+        variant="info"
+      />
     </>
   )
 }
