@@ -1,9 +1,16 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { renderBlocks } from '@/lib/renderBlocks'
+import { isEnglishMode } from '@/lib/translation'
+
+/** Section labels in both languages */
+const LABELS = {
+  gr: { bio: 'Βιογραφικό', contact: 'Επικοινωνία', fields: 'Πεδία Πρακτικής', location: 'Τοποθεσία', projects: 'Έργα', projectsBy: 'Έργα από' },
+  en: { bio: 'Biography', contact: 'Contact', fields: 'Fields of Work', location: 'Location', projects: 'Projects', projectsBy: 'Projects by' },
+}
 
 interface ProfilePreviewModalProps {
   isOpen: boolean
@@ -111,6 +118,7 @@ function getHeroName(name: string): string {
   return withoutPunctuation.toLocaleUpperCase('el-GR')
 }
 
+
 export default function ProfilePreviewModal({ isOpen, onClose, user }: ProfilePreviewModalProps) {
   // Close on Escape key
   useEffect(() => {
@@ -136,6 +144,18 @@ export default function ProfilePreviewModal({ isOpen, onClose, user }: ProfilePr
   }, [isOpen])
 
   const modalRef = useFocusTrap<HTMLDivElement>(isOpen)
+  const [previewLang, setPreviewLang] = useState<'gr' | 'en'>('gr')
+
+  // If site is already in English when modal opens, start in EN mode
+  useEffect(() => {
+    if (isOpen) {
+      setPreviewLang(isEnglishMode() ? 'en' : 'gr')
+    }
+  }, [isOpen])
+
+  const handleClose = useCallback(() => {
+    onClose()
+  }, [onClose])
 
   if (!isOpen || !user) return null
 
@@ -145,12 +165,19 @@ export default function ProfilePreviewModal({ isOpen, onClose, user }: ProfilePr
   const cities = user.City?.split(',').map((c: string) => c.trim()).filter((c: string) => c && c !== '-') || []
   const provinces = user.Province?.split(',').map((p: string) => p.trim()).filter((p: string) => p && p !== '-') || []
 
+  // Determine display name/bio based on preview language and available eng content
+  const displayHeroName = previewLang === 'en' && user.EngName
+    ? getHeroName(user.EngName)
+    : getHeroName(user.Name || '')
+  const displayName = previewLang === 'en' && user.EngName ? user.EngName : user.Name
+  const L = LABELS[previewLang]
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="preview-modal-title">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={handleClose}
         aria-hidden="true"
       />
 
@@ -161,24 +188,49 @@ export default function ProfilePreviewModal({ isOpen, onClose, user }: ProfilePr
       >
         {/* Sticky Header */}
         <div className="sticky top-0 z-10 bg-[#F5F0EB] dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 rounded-t-3xl px-6 py-4 flex items-center justify-between">
-          <h2 id="preview-modal-title" className="text-lg font-bold text-charcoal dark:text-gray-100">
-            Προεπισκόπηση Προφίλ
+          <h2 id="preview-modal-title" className="text-lg font-bold text-charcoal dark:text-gray-100 notranslate">
+            {previewLang === 'en' ? 'Profile Preview' : 'Προεπισκόπηση Προφίλ'}
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-            aria-label="Κλείσιμο"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="inline-flex rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
+              <button
+                type="button"
+                onClick={() => setPreviewLang('gr')}
+                className={`px-3 py-1 font-medium transition-colors notranslate ${previewLang === 'gr' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+              >
+                GR
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewLang('en')}
+                className={`px-3 py-1 font-medium transition-colors notranslate ${previewLang === 'en' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+              >
+                EN
+              </button>
+            </div>
+            <button
+              onClick={handleClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+              aria-label="Κλείσιμο"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
+
+        {/* EN preview hint — only shown when at least one EN field exists */}
+        {previewLang === 'en' && (user.EngName || user.EngBio) && (
+          <div className="mx-6 sm:mx-8 mt-4 px-4 py-2.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg text-xs text-blue-700 dark:text-blue-300 notranslate">
+            Μόνο οι τίτλοι ενοτήτων{user.EngName ? ' + το όνομα' : ''}{user.EngBio ? ' + το βιογραφικό' : ''} εμφανίζονται στα Αγγλικά. Το υπόλοιπο περιεχόμενο (πεδία πρακτικής, πόλεις) παραμένει στα Ελληνικά.
+          </div>
+        )}
 
         {/* Hero Section */}
         <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 px-6 py-8 sm:px-8">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-none dark:text-coral">
-            {getHeroName(user.Name || '')}
+          <h1 className={`text-4xl sm:text-5xl md:text-6xl font-bold leading-none dark:text-coral ${previewLang === 'en' && user.EngName ? 'notranslate' : ''}`}>
+            {displayHeroName}
           </h1>
         </div>
 
@@ -209,15 +261,19 @@ export default function ProfilePreviewModal({ isOpen, onClose, user }: ProfilePr
                 {/* Bio */}
                 {user.Bio && (
                   <div className="mb-8">
-                    <h3 className="text-coral dark:text-coral-light text-sm font-bold mb-4 uppercase">Βιογραφικό</h3>
-                    <div className="text-gray-700 dark:text-gray-300 leading-relaxed">{renderBlocks(user.Bio)}</div>
+                    <h3 className="text-coral dark:text-coral-light text-sm font-bold mb-4 uppercase notranslate">{L.bio}</h3>
+                    {previewLang === 'en' && user.EngBio ? (
+                      <div className="text-gray-700 dark:text-gray-300 leading-relaxed notranslate">{renderBlocks(user.EngBio)}</div>
+                    ) : (
+                      <div className="text-gray-700 dark:text-gray-300 leading-relaxed">{renderBlocks(user.Bio)}</div>
+                    )}
                   </div>
                 )}
 
                 {/* Contact */}
                 {(user.Email || (user.Phone && user.Phone.trim() !== '-') || websites.length > 0) && (
                   <div className="mb-8">
-                    <h3 className="text-coral dark:text-coral-light text-sm font-bold mb-4 uppercase">Επικοινωνία</h3>
+                    <h3 className="text-coral dark:text-coral-light text-sm font-bold mb-4 uppercase notranslate">{L.contact}</h3>
                     <div className="space-y-2">
                       {user.Email && (
                         <p className="flex items-center gap-2 dark:text-gray-300">
@@ -247,7 +303,7 @@ export default function ProfilePreviewModal({ isOpen, onClose, user }: ProfilePr
                 {/* Fields of Work */}
                 {fieldsOfWork.length > 0 && (
                   <div className="mb-8">
-                    <h3 className="text-coral dark:text-coral-light text-sm font-bold mb-4 uppercase">Πεδία Πρακτικής</h3>
+                    <h3 className="text-coral dark:text-coral-light text-sm font-bold mb-4 uppercase notranslate">{L.fields}</h3>
                     <div className="flex flex-wrap gap-2">
                       {fieldsOfWork.map((field: string, index: number) => (
                         <span
@@ -264,7 +320,7 @@ export default function ProfilePreviewModal({ isOpen, onClose, user }: ProfilePr
                 {/* Location */}
                 {(cities.length > 0 || provinces.length > 0) && (
                   <div>
-                    <h3 className="text-coral dark:text-coral-light text-sm font-bold mb-4 uppercase">Τοποθεσία</h3>
+                    <h3 className="text-coral dark:text-coral-light text-sm font-bold mb-4 uppercase notranslate">{L.location}</h3>
                     <div className="space-y-3">
                       {cities.length > 0 && (
                         <div className="flex items-center gap-3">
@@ -313,9 +369,9 @@ export default function ProfilePreviewModal({ isOpen, onClose, user }: ProfilePr
         {hasProjects && (
           <div className="px-6 sm:px-8 pb-6 sm:pb-8">
             <div className="mb-6">
-              <p className="text-coral dark:text-coral-light text-sm mb-2 uppercase">Έργα</p>
-              <h2 className="text-3xl sm:text-4xl font-bold dark:text-gray-100">
-                Έργα από {user.Name}
+              <p className="text-coral dark:text-coral-light text-sm mb-2 uppercase notranslate">{L.projects}</p>
+              <h2 className="text-3xl sm:text-4xl font-bold dark:text-gray-100 notranslate">
+                {L.projectsBy} <span>{displayName}</span>
               </h2>
             </div>
 

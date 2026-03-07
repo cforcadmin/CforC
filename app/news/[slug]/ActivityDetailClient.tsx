@@ -12,6 +12,7 @@ import Image from 'next/image'
 import { getActivityById, getActivities } from '@/lib/strapi'
 import type { StrapiResponse, Activity } from '@/lib/types'
 import LocalizedText from '@/components/LocalizedText'
+import LocalizedBlocks from '@/components/LocalizedBlocks'
 import NewsFlipCard from '@/components/shared/NewsFlipCard'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import { renderBlocks, extractTextFromBlocks } from '@/lib/renderBlocks'
@@ -301,9 +302,7 @@ function ActivityDetailPageContent() {
 
           {/* Description */}
           <div className="prose prose-lg max-w-none">
-            <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
-              {renderBlocks(activity.Description)}
-            </div>
+            <LocalizedBlocks blocks={activity.Description} engBlocks={activity.EngDescription} className="text-gray-700 dark:text-gray-300 leading-relaxed" />
           </div>
         </div>
       </section>

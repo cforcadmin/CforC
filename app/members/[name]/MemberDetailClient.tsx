@@ -11,6 +11,8 @@ import Image from 'next/image'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import { getMemberBySlugOrId } from '@/lib/strapi'
 import { renderBlocks } from '@/lib/renderBlocks'
+import LocalizedText from '@/components/LocalizedText'
+import LocalizedBlocks from '@/components/LocalizedBlocks'
 
 function LocationPillWithGlobe({ label, filterHref, mapHref }: { label: string; filterHref: string; mapHref: string }) {
   const [hovered, setHovered] = useState(false)
@@ -52,8 +54,10 @@ interface Member {
   id: number
   documentId: string
   Name: string
+  EngName?: string
   Slug: string
   Bio: any
+  EngBio?: any
   FieldsOfWork: string
   City: string
   Province: string
@@ -285,9 +289,12 @@ export default function MemberDetailClient() {
         <section className="relative -bottom-20">
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-              {/* Hero: name in Greek ALL CAPS, without punctuation */}
+              {/* Hero: name in ALL CAPS, without punctuation — uses EngName when in English mode */}
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
-                {getHeroName(member.Name)}
+                <LocalizedText
+                  text={getHeroName(member.Name)}
+                  engText={member.EngName ? getHeroName(member.EngName) : undefined}
+                />
               </h1>
             </div>
 
@@ -345,7 +352,7 @@ export default function MemberDetailClient() {
               <div>
                 <div className="mb-8">
                   <h3 className="text-coral dark:text-coral-light text-sm font-bold mb-4 uppercase">Βιογραφικό</h3>
-                  <div className="text-gray-700 dark:text-gray-300 leading-relaxed">{renderBlocks(member.Bio)}</div>
+                  <LocalizedBlocks blocks={member.Bio} engBlocks={member.EngBio} className="text-gray-700 dark:text-gray-300 leading-relaxed" />
                 </div>
 
                 <div className="mb-8">
@@ -476,7 +483,7 @@ export default function MemberDetailClient() {
             <div className="mb-8">
               <p className="text-coral dark:text-coral-light text-sm mb-2 uppercase">Έργα</p>
               <h2 className="text-4xl md:text-5xl font-bold dark:text-gray-100">
-                Έργα από {member.Name}
+                Έργα από <LocalizedText text={member.Name} engText={member.EngName} />
               </h2>
             </div>
 
@@ -531,7 +538,7 @@ export default function MemberDetailClient() {
             <div className="mb-8">
               <p className="text-coral dark:text-coral-light text-sm mb-2 uppercase">Έργα</p>
               <h2 className="text-4xl md:text-5xl font-bold dark:text-gray-100">
-                Έργα από {member.Name}
+                Έργα από <LocalizedText text={member.Name} engText={member.EngName} />
               </h2>
             </div>
             <div className="text-center py-12">

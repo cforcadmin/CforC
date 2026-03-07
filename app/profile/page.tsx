@@ -99,7 +99,9 @@ export default function ProfilePage() {
     Project2Tags: '',
     Project2Description: '',
     Project2Links: '',
-    Project2PicturesAltText: ''
+    Project2PicturesAltText: '',
+    EngName: '',
+    EngBio: ''
   })
 
   const [originalData, setOriginalData] = useState<Record<string, any>>(formData)
@@ -117,6 +119,8 @@ export default function ProfilePage() {
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const [showGuidelinesModal, setShowGuidelinesModal] = useState(false)
+  const [nameLang, setNameLang] = useState<'gr' | 'en'>('gr')
+  const [bioLang, setBioLang] = useState<'gr' | 'en'>('gr')
   const hasShownGuidelinesRef = useRef(false)
   const errorsRef = useRef<HTMLDivElement>(null)
   const saveMessageRef = useRef<HTMLDivElement>(null)
@@ -165,7 +169,9 @@ export default function ProfilePage() {
         Project2Tags: user.Project2Tags || '',
         Project2Description: user.Project2Description || '',
         Project2Links: user.Project2Links || '',
-        Project2PicturesAltText: user.Project2PicturesAltText || ''
+        Project2PicturesAltText: user.Project2PicturesAltText || '',
+        EngName: user.EngName || '',
+        EngBio: user.EngBio || ''
       }
       setFormData(data)
       setOriginalData(data)
@@ -365,7 +371,7 @@ export default function ProfilePage() {
       if (imageFile || project1Images.length > 0 || project2Images.length > 0 || project1IdsChanged || project2IdsChanged) {
         // Use FormData if there are any images
         const formDataWithImages = new FormData()
-        const blocksFields = ['Bio', 'Project1Description', 'Project2Description']
+        const blocksFields = ['Bio', 'EngBio', 'Project1Description', 'Project2Description']
         Object.entries(dataToUpdate).forEach(([key, value]) => {
           // Serialize blocks arrays as JSON strings for FormData transport
           if (blocksFields.includes(key) && Array.isArray(value)) {
@@ -785,14 +791,51 @@ export default function ProfilePage() {
                 Βασικές Πληροφορίες
               </h2>
 
-              <EditableField
-                label="Όνομα"
-                value={formData.Name}
-                placeholder="Το όνομά σας"
-                onChange={(value) => handleFieldChange('Name', value)}
-                required
-                tooltip="Μη χρησιμοποιείς κεφαλαία (ALL CAPS). Χρησιμοποίησε σημεία στίξης όπου χρειάζεται."
-              />
+              {/* Name with GR/EN toggle */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-charcoal dark:text-gray-200">Όνομα</span>
+                  <div className="inline-flex rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setNameLang('gr')}
+                      className={`px-3 py-1 font-medium transition-colors ${nameLang === 'gr' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      GR
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNameLang('en')}
+                      className={`px-3 py-1 font-medium transition-colors ${nameLang === 'en' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      EN
+                    </button>
+                  </div>
+                </div>
+                {nameLang === 'gr' ? (
+                  <EditableField
+                    label=""
+                    value={formData.Name}
+                    placeholder="Το όνομά σας (ελληνικά)"
+                    onChange={(value) => handleFieldChange('Name', value)}
+                    required
+                    tooltip="Μη χρησιμοποιείς κεφαλαία (ALL CAPS). Χρησιμοποίησε σημεία στίξης όπου χρειάζεται."
+                  />
+                ) : (
+                  <>
+                    <EditableField
+                      label=""
+                      value={formData.EngName}
+                      placeholder="Your name in English (optional)"
+                      onChange={(value) => handleFieldChange('EngName', value)}
+                      tooltip="Προαιρετικό. Αν το συμπληρώσεις, θα εμφανίζεται ως αγγλική μετάφραση του ονόματός σου αντί της αυτόματης μετάφρασης Google."
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Προαιρετικό — Αν δεν το συμπληρώσεις, η αυτόματη μετάφραση (Google Translate) θα μεταφράσει το ελληνικό όνομα.
+                    </p>
+                  </>
+                )}
+              </div>
 
               <EditableField
                 label="Email"
@@ -806,16 +849,55 @@ export default function ProfilePage() {
                 tooltip="Το email δεν μπορεί να αλλάξει. Για αλλαγή, επικοινώνησε με τον διαχειριστή IT."
               />
 
-              <RichTextEditor
-                label="Βιογραφικό"
-                content={formData.Bio}
-                placeholder="Γράψε μια σύντομη περιγραφή για εσένα..."
-                onChange={(blocks) => handleFieldChange('Bio', blocks)}
-                maxWords={160}
-                maxCharacters={1200}
-                required
-                tooltip="Όριο: 160 λέξεις ή 1200 χαρακτήρες. Υποστηρίζεται μορφοποίηση: έντονα, πλάγια, λίστες, σύνδεσμοι κ.ά."
-              />
+              {/* Bio with GR/EN toggle */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-charcoal dark:text-gray-200">Βιογραφικό</span>
+                  <div className="inline-flex rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setBioLang('gr')}
+                      className={`px-3 py-1 font-medium transition-colors ${bioLang === 'gr' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      GR
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBioLang('en')}
+                      className={`px-3 py-1 font-medium transition-colors ${bioLang === 'en' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      EN
+                    </button>
+                  </div>
+                </div>
+                {bioLang === 'gr' ? (
+                  <RichTextEditor
+                    label=""
+                    content={formData.Bio}
+                    placeholder="Γράψε μια σύντομη περιγραφή για εσένα..."
+                    onChange={(blocks) => handleFieldChange('Bio', blocks)}
+                    maxWords={160}
+                    maxCharacters={1200}
+                    required
+                    tooltip="Όριο: 160 λέξεις ή 1200 χαρακτήρες. Υποστηρίζεται μορφοποίηση: έντονα, πλάγια, λίστες, σύνδεσμοι κ.ά."
+                  />
+                ) : (
+                  <>
+                    <RichTextEditor
+                      label=""
+                      content={formData.EngBio}
+                      placeholder="Write a short bio in English (optional)..."
+                      onChange={(blocks) => handleFieldChange('EngBio', blocks)}
+                      maxWords={160}
+                      maxCharacters={1200}
+                      tooltip="Optional. Same limits as Greek bio: 160 words / 1200 characters."
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Προαιρετικό — Αν δεν το συμπληρώσεις, η αυτόματη μετάφραση (Google Translate) θα μεταφράσει το ελληνικό βιογραφικό. Αν το συμπληρώσεις, θα χρησιμοποιηθεί ως η αγγλική μετάφραση αντί της αυτόματης.
+                    </p>
+                  </>
+                )}
+              </div>
 
               <FieldsOfWorkSelector
                 value={formData.FieldsOfWork}

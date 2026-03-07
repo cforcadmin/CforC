@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CforC - Translation Guide for Content Editors</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F5F0EB;
+      color: #2D2D2D;
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 {
+      font-size: 2.4em;
+      margin-bottom: 8px;
+      color: #2D2D2D;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 1.05em;
+      margin-bottom: 48px;
+    }
+    h2 {
+      font-size: 1.5em;
+      margin-top: 48px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #FF8B6A;
+      color: #2D2D2D;
+    }
+    h3 {
+      font-size: 1.1em;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      color: #FF8B6A;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      border-left: 4px solid transparent;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      border-left-color: #FF8B6A;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .card h3 { margin-top: 0; }
+    .spec-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 0.95em;
+    }
+    .spec-label {
+      font-weight: 700;
+      min-width: 130px;
+      flex-shrink: 0;
+    }
+    .spec-value { color: #444; }
+    .badge {
+      display: inline-block;
+      background: rgba(255,139,106,0.12);
+      color: #2D2D2D;
+      border: 1px solid #2D2D2D;
+      font-size: 0.75em;
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .note {
+      background: #f9f5f1;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-top: 8px;
+      font-size: 0.9em;
+      color: #666;
+    }
+    .note::before {
+      content: "NOTE ";
+      font-weight: 700;
+      color: #FF8B6A;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 0.9em;
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    th {
+      background: #2D2D2D;
+      color: #FF8B6A;
+      text-align: left;
+      padding: 14px 16px;
+      font-weight: 600;
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #faf7f4; }
+    code {
+      background: #f0ebe5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      font-family: 'SF Mono', Consolas, monospace;
+    }
+    pre {
+      background: #2D2D2D;
+      color: #f0ebe5;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 10px 0;
+      overflow-x: auto;
+      font-size: 0.88em;
+      line-height: 1.5;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+      font-size: inherit;
+    }
+    ul { margin-left: 16px; margin-top: 8px; font-size: 0.95em; color: #444; }
+    ul li { margin-bottom: 4px; }
+    ol { margin-left: 16px; margin-top: 8px; font-size: 0.95em; color: #444; }
+    ol li { margin-bottom: 4px; }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .quick-ref {
+      background: #2D2D2D;
+      color: #f0ebe5;
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-top: 16px;
+      font-family: 'SF Mono', Consolas, monospace;
+      font-size: 0.85em;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+    .quick-ref .qr-heading {
+      color: #FF8B6A;
+      font-weight: 700;
+      font-size: 1.1em;
+    }
+    .quick-ref .qr-label {
+      color: #FF8B6A;
+      font-weight: 600;
+    }
+    .do-dont {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.8em; }
+      .spec-row { flex-direction: column; gap: 2px; }
+      .spec-label { min-width: auto; }
+      .two-col { grid-template-columns: 1fr; }
+      .do-dont { grid-template-columns: 1fr; }
+    }
+    .footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+      color: #999;
+      font-size: 0.85em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Translation Guide<br>for Content Editors</h1>
+    <p class="subtitle">How to control automatic translations on the Culture for Change website using two simple tools.</p>
+
+    <!-- OVERVIEW -->
+    <h2>Overview</h2>
+    <div class="card">
+      <h3>Why This Guide Exists</h3>
+      <p style="font-size: 0.95em; color: #444; margin-top: 4px;">
+        The Culture for Change website uses <strong>Google Translate</strong> to automatically translate content from Greek to other languages. However, automatic translation doesn't always produce accurate results, especially for:
+      </p>
+      <ul>
+        <li>Organization names and acronyms</li>
+        <li>Technical terms</li>
+        <li>Proper nouns</li>
+        <li>Specialized vocabulary</li>
+      </ul>
+      <p style="font-size: 0.95em; color: #444; margin-top: 12px;">
+        This guide explains two tools you can use to control how your content is translated.
+      </p>
+    </div>
+
+    <!-- THE TWO TRANSLATION TOOLS -->
+    <h2>The Two Translation Tools</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Tool</th>
+          <th>Purpose</th>
+          <th>Best For</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>{word}</code> syntax</td>
+          <td>Prevents specific words from being translated</td>
+          <td>Acronyms, brand names, technical terms</td>
+        </tr>
+        <tr>
+          <td>EngTitle / EngDescription</td>
+          <td>Provides a complete manual English translation</td>
+          <td>Entire titles or descriptions that need accurate translation</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- TOOL 1 -->
+    <h2>Tool 1: The {word} Syntax</h2>
+
+    <div class="card">
+      <h3>What It Does</h3>
+      <p style="font-size: 0.95em; color: #444;">
+        When you wrap a word or phrase in curly braces <code>{like this}</code>, that text will:
+      </p>
+      <ol>
+        <li><strong>NOT be translated</strong> by Google Translate</li>
+        <li>Appear exactly as you typed it in all languages</li>
+        <li>The curly braces themselves will be removed from the display</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>How to Use It</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 8px;">Simply wrap any word or phrase you want to protect in curly braces:</p>
+      <pre><code>Regular text {protected text} more regular text</code></pre>
+    </div>
+
+    <div class="card">
+      <h3>Example 1: Protecting an English Acronym</h3>
+      <div class="spec-row"><span class="spec-label">What you type:</span><span class="spec-value"></span></div>
+      <pre><code>&#932;&#959; &#960;&#961;&#972;&#947;&#961;&#945;&#956;&#956;&#945; {S.I.M.A.} &#958;&#949;&#954;&#953;&#957;&#940; &#964;&#959;&#957; &#934;&#949;&#946;&#961;&#959;&#965;&#940;&#961;&#953;&#959;</code></pre>
+      <div class="spec-row"><span class="spec-label">Shows (Greek):</span><span class="spec-value"></span></div>
+      <pre><code>&#932;&#959; &#960;&#961;&#972;&#947;&#961;&#945;&#956;&#956;&#945; S.I.M.A. &#958;&#949;&#954;&#953;&#957;&#940; &#964;&#959;&#957; &#934;&#949;&#946;&#961;&#959;&#965;&#940;&#961;&#953;&#959;</code></pre>
+      <div class="spec-row"><span class="spec-label">Shows (English):</span><span class="spec-value"></span></div>
+      <pre><code>The program S.I.M.A. starts in February</code></pre>
+      <div class="note"><code>S.I.M.A.</code> stays exactly the same, while the rest is translated.</div>
+    </div>
+
+    <div class="card">
+      <h3>Example 2: Protecting a Brand Name</h3>
+      <div class="spec-row"><span class="spec-label">What you type:</span><span class="spec-value"></span></div>
+      <pre><code>&#931;&#965;&#957;&#949;&#961;&#947;&#945;&#963;&#943;&#945; &#956;&#949; &#964;&#959; {Culture for Change} &#954;&#945;&#953; &#964;&#959; {Creative Europe}</code></pre>
+      <div class="spec-row"><span class="spec-label">Shows (English):</span><span class="spec-value"></span></div>
+      <pre><code>Cooperation with Culture for Change and Creative Europe</code></pre>
+      <p style="font-size: 0.9em; color: #666; margin-top: 6px;">The organization names remain unchanged.</p>
+    </div>
+
+    <div class="card">
+      <h3>Example 3: Protecting Multiple Words</h3>
+      <div class="spec-row"><span class="spec-label">What you type:</span><span class="spec-value"></span></div>
+      <pre><code>&#932;&#959; {New European Bauhaus} &#949;&#943;&#957;&#945;&#953; &#956;&#953;&#945; &#960;&#961;&#969;&#964;&#959;&#946;&#959;&#965;&#955;&#943;&#945; &#964;&#951;&#962; &#917;&#917;</code></pre>
+      <div class="spec-row"><span class="spec-label">Shows (English):</span><span class="spec-value"></span></div>
+      <pre><code>The New European Bauhaus is an EU initiative</code></pre>
+    </div>
+
+    <div class="card">
+      <h3>Example 4: Greek and English Versions Together</h3>
+      <div class="spec-row"><span class="spec-label">What you type:</span><span class="spec-value"></span></div>
+      <pre><code>&#931;&#973;&#963;&#964;&#951;&#956;&#945; &#919;&#955;&#949;&#954;&#964;&#961;&#959;&#957;&#953;&#954;&#942;&#962; &#924;&#940;&#952;&#951;&#963;&#951;&#962; &#913;&#957;&#959;&#953;&#967;&#964;&#942;&#962; &#960;&#961;&#972;&#963;&#946;&#945;&#963;&#951;&#962; &ndash; {&#931;.&#919;.&#924;.&#913;.}/{S.I.M.A.}</code></pre>
+      <div class="spec-row"><span class="spec-label">Shows (Greek):</span><span class="spec-value"></span></div>
+      <pre><code>&#931;&#973;&#963;&#964;&#951;&#956;&#945; &#919;&#955;&#949;&#954;&#964;&#961;&#959;&#957;&#953;&#954;&#942;&#962; &#924;&#940;&#952;&#951;&#963;&#951;&#962; &#913;&#957;&#959;&#953;&#967;&#964;&#942;&#962; &#960;&#961;&#972;&#963;&#946;&#945;&#963;&#951;&#962; &ndash; &#931;.&#919;.&#924;.&#913;./S.I.M.A.</code></pre>
+      <div class="spec-row"><span class="spec-label">Shows (English):</span><span class="spec-value"></span></div>
+      <pre><code>Open Access Electronic Learning System &ndash; &#931;.&#919;.&#924;.&#913;./S.I.M.A.</code></pre>
+      <p style="font-size: 0.9em; color: #666; margin-top: 6px;">Both acronyms are protected from translation.</p>
+    </div>
+
+    <!-- TOOL 2 -->
+    <h2>Tool 2: English Override Fields</h2>
+
+    <div class="card">
+      <h3>What They Are</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 8px;">
+        In Strapi, Activities, Open Calls, and Members have optional English fields:
+      </p>
+      <p style="font-size: 0.95em; color: #444; margin-top: 12px;"><strong>Activities &amp; Open Calls:</strong></p>
+      <ul>
+        <li><strong>EngTitle</strong> &mdash; English version of the title</li>
+        <li><strong>EngDescription</strong> &mdash; English version of the description</li>
+      </ul>
+      <p style="font-size: 0.95em; color: #444; margin-top: 12px;"><strong>Members:</strong></p>
+      <ul>
+        <li><strong>EngName</strong> &mdash; English version of the member's name</li>
+        <li><strong>EngBio</strong> &mdash; English version of the member's bio</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>What They Do</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 8px;">
+        When a visitor views the website in English (via Google Translate):
+      </p>
+      <ul>
+        <li>If <strong>EngTitle</strong> is filled in &rarr; Shows your English title instead of Google's translation</li>
+        <li>If <strong>EngDescription</strong> is filled in &rarr; Shows your English description instead of Google's translation</li>
+        <li>If <strong>EngName</strong> is filled in &rarr; Shows the English name instead of Google's translation</li>
+        <li>If <strong>EngBio</strong> is filled in &rarr; Shows the English bio instead of Google's translation</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>How to Use &mdash; Activities / Open Calls (Strapi admin)</h3>
+      <ol>
+        <li>Go to <strong>Content Manager</strong> in Strapi</li>
+        <li>Select an <strong>Activity</strong> or <strong>Open Call</strong></li>
+        <li>Find the <strong>EngTitle</strong> field (below Title)</li>
+        <li>Find the <strong>EngDescription</strong> field (below Description)</li>
+        <li>Enter your manual English translation</li>
+        <li><strong>Save</strong> and <strong>Publish</strong></li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>How to Use &mdash; Members (profile page)</h3>
+      <ol>
+        <li>Log in to your profile at <code>/profile</code></li>
+        <li>Next to <strong>Onoma</strong> (Name), click the <strong>EN</strong> toggle to enter your English name</li>
+        <li>Next to <strong>Viografiko</strong> (Bio), click the <strong>EN</strong> toggle to enter your English bio</li>
+        <li>Save your profile</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Important Notes</h3>
+      <ul>
+        <li>These fields are <strong>optional</strong> &mdash; leave them empty if Google's translation is acceptable</li>
+        <li>EngDescription / EngBio use the <strong>rich text editor</strong> &mdash; you can add formatting, links, etc.</li>
+        <li>You can combine this with the <code>{word}</code> syntax in the English fields too</li>
+        <li>Members do NOT need to fill both &mdash; only fill English fields if you want to control the translation</li>
+      </ul>
+    </div>
+
+    <!-- WHEN TO USE WHICH -->
+    <h2>When to Use Which Tool</h2>
+
+    <div class="two-col">
+      <div class="card">
+        <h3>Use <code>{word}</code> syntax when:</h3>
+        <ul>
+          <li>You have a few specific words that shouldn't be translated</li>
+          <li>The rest of the text can be translated automatically</li>
+          <li>You're protecting acronyms, names, or technical terms</li>
+          <li>Quick and easy solution</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Use EngTitle / EngDescription when:</h3>
+        <ul>
+          <li>The entire title or description needs careful translation</li>
+          <li>Google Translate produces poor results for the whole text</li>
+          <li>The content is important and you want full control</li>
+          <li>You have time to write a proper English version</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <h3>Use BOTH together when:</h3>
+      <ul>
+        <li>You provide an English override but it also contains terms that shouldn't be translated to other languages</li>
+        <li>Example: Your EngTitle contains <code>{UNESCO}</code> to protect it when someone translates from English to German</li>
+      </ul>
+    </div>
+
+    <!-- STEP BY STEP EXAMPLES -->
+    <h2>Step-by-Step Examples</h2>
+
+    <div class="card">
+      <h3>Scenario 1: New Activity with Protected Acronym</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 12px;"><strong>Task:</strong> Create an activity about the S.I.M.A. program</p>
+      <ol>
+        <li>Go to Content Manager &rarr; Activities &rarr; Create new entry</li>
+        <li style="margin-top: 8px;"><strong>Title field:</strong>
+          <pre><code>&#925;&#941;&#959; &#928;&#961;&#972;&#947;&#961;&#945;&#956;&#956;&#945; {S.I.M.A.} &#947;&#953;&#945; &#964;&#951;&#957; &#922;&#959;&#953;&#957;&#969;&#957;&#943;&#945; &#964;&#969;&#957; &#928;&#959;&#955;&#953;&#964;&#974;&#957;</code></pre>
+        </li>
+        <li><strong>EngTitle field:</strong> (optional but recommended)
+          <pre><code>New {S.I.M.A.} Program for Civil Society</code></pre>
+        </li>
+        <li><strong>Description field:</strong>
+          <pre><code>&#932;&#959; &#960;&#961;&#972;&#947;&#961;&#945;&#956;&#956;&#945; {S.I.M.A.} (System for Intelligent Management and Automation)
+&#963;&#964;&#959;&#967;&#949;&#973;&#949;&#953; &#963;&#964;&#951;&#957; &#949;&#957;&#943;&#963;&#967;&#965;&#963;&#951; &#964;&#951;&#962; &#954;&#959;&#953;&#957;&#969;&#957;&#943;&#945;&#962; &#964;&#969;&#957; &#960;&#959;&#955;&#953;&#964;&#974;&#957; &#956;&#941;&#963;&#969; &#964;&#951;&#962; &#964;&#949;&#967;&#957;&#959;&#955;&#959;&#947;&#943;&#945;&#962;.
+
+&#927;&#953; &#963;&#965;&#956;&#956;&#949;&#964;&#941;&#967;&#959;&#957;&#964;&#949;&#962; &#952;&#945; &#956;&#940;&#952;&#959;&#965;&#957; &#947;&#953;&#945;:
+- &#936;&#951;&#966;&#953;&#945;&#954;&#940; &#949;&#961;&#947;&#945;&#955;&#949;&#943;&#945;
+- &#916;&#953;&#945;&#967;&#949;&#943;&#961;&#953;&#963;&#951; &#941;&#961;&#947;&#969;&#957;
+- &#931;&#965;&#957;&#949;&#961;&#947;&#945;&#964;&#953;&#954;&#941;&#962; &#960;&#955;&#945;&#964;&#966;&#972;&#961;&#956;&#949;&#962;</code></pre>
+        </li>
+        <li><strong>EngDescription field:</strong> (optional)
+          <pre><code>The {S.I.M.A.} program (System for Intelligent Management and Automation)
+aims to strengthen civil society through technology.
+
+Participants will learn about:
+- Digital tools
+- Project management
+- Collaborative platforms</code></pre>
+        </li>
+        <li>Save and Publish</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Scenario 2: Open Call with Organization Names</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 12px;"><strong>Task:</strong> Create an open call from Creative Europe</p>
+      <ol>
+        <li>Go to Content Manager &rarr; Open Calls &rarr; Create new entry</li>
+        <li style="margin-top: 8px;"><strong>Title field:</strong>
+          <pre><code>&#928;&#961;&#972;&#963;&#954;&#955;&#951;&#963;&#951; {Creative Europe} &#947;&#953;&#945; &#928;&#959;&#955;&#953;&#964;&#953;&#963;&#964;&#953;&#954;&#940; &#904;&#961;&#947;&#945; 2026</code></pre>
+        </li>
+        <li><strong>EngTitle field:</strong>
+          <pre><code>{Creative Europe} Call for Cultural Projects 2026</code></pre>
+        </li>
+        <li>Fill in other required fields (Deadline, Description, Link, Image, etc.)</li>
+        <li>Save and Publish</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Scenario 3: Activity with Complex Greek Acronym</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 12px;"><strong>Task:</strong> Activity about &#931;.&#919;.&#924;.&#913;. (Greek acronym with English equivalent S.I.M.A.)</p>
+      <ol>
+        <li><strong>Title field:</strong>
+          <pre><code>&#917;&#954;&#960;&#945;&#953;&#948;&#949;&#965;&#964;&#953;&#954;&#972; &#928;&#961;&#972;&#947;&#961;&#945;&#956;&#956;&#945; {&#931;.&#919;.&#924;.&#913;.} ({S.I.M.A.})</code></pre>
+        </li>
+        <li><strong>EngTitle field:</strong>
+          <pre><code>Educational Program {&#931;.&#919;.&#924;.&#913;.} ({S.I.M.A.})</code></pre>
+        </li>
+      </ol>
+      <p style="font-size: 0.9em; color: #666; margin-top: 6px;">Both the Greek and English acronyms are protected in both versions.</p>
+    </div>
+
+    <!-- BEST PRACTICES -->
+    <h2>Best Practices</h2>
+
+    <div class="card">
+      <h3 style="color: #4CAF50;">DO</h3>
+      <ol>
+        <li><strong>Always protect organization names</strong>
+          <pre><code>&#931;&#965;&#957;&#949;&#961;&#947;&#945;&#963;&#943;&#945; &#956;&#949; {UNESCO}, {UNICEF} &#954;&#945;&#953; {Culture for Change}</code></pre>
+        </li>
+        <li><strong>Protect program/project names</strong>
+          <pre><code>&#932;&#959; &#941;&#961;&#947;&#959; {New European Bauhaus} &#967;&#961;&#951;&#956;&#945;&#964;&#959;&#948;&#959;&#964;&#949;&#943;&#964;&#945;&#953; &#945;&#960;&#972; &#964;&#951;&#957; &#917;&#917;</code></pre>
+        </li>
+        <li><strong>Protect technical terms that have specific meanings</strong>
+          <pre><code>&#919; &#960;&#955;&#945;&#964;&#966;&#972;&#961;&#956;&#945; &#967;&#961;&#951;&#963;&#953;&#956;&#959;&#960;&#959;&#953;&#949;&#943; {open source} &#955;&#959;&#947;&#953;&#963;&#956;&#953;&#954;&#972;</code></pre>
+        </li>
+        <li><strong>Protect email addresses and URLs</strong>
+          <pre><code>&#917;&#960;&#953;&#954;&#959;&#953;&#957;&#969;&#957;&#942;&#963;&#964;&#949; &#963;&#964;&#959; {info@cultureforchange.gr}</code></pre>
+        </li>
+        <li><strong>Provide EngTitle for important announcements</strong> &mdash; funding calls, major events, press releases</li>
+        <li><strong>Test your translations</strong> &mdash; after publishing, visit the page, use Google Translate to switch to English, and verify the protected words appear correctly</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3 style="color: #e53935;">DON'T</h3>
+      <ol>
+        <li><strong>Don't overuse <code>{word}</code> syntax</strong> &mdash; only protect what needs protection, let Google translate common words</li>
+        <li><strong>Don't forget to close braces</strong>
+          <pre><code>Wrong: {Culture for Change
+Right: {Culture for Change}</code></pre>
+        </li>
+        <li><strong>Don't nest braces</strong>
+          <pre><code>Wrong: {The {UNESCO} program}
+Right: The {UNESCO} program</code></pre>
+        </li>
+        <li><strong>Don't use braces for formatting</strong> &mdash; braces are only for translation control; use the rich text editor for bold, italics, etc.</li>
+      </ol>
+    </div>
+
+    <!-- COMMON SCENARIOS -->
+    <h2>Common Scenarios</h2>
+
+    <div class="card">
+      <h3>Scenario A: EU Program Names</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Greek Text</th>
+            <th>With Protection</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>&#928;&#961;&#972;&#947;&#961;&#945;&#956;&#956;&#945; Erasmus+</td><td>&#928;&#961;&#972;&#947;&#961;&#945;&#956;&#956;&#945; {Erasmus+}</td></tr>
+          <tr><td>Creative Europe 2026</td><td>{Creative Europe} 2026</td></tr>
+          <tr><td>Horizon Europe</td><td>{Horizon Europe}</td></tr>
+          <tr><td>New European Bauhaus</td><td>{New European Bauhaus}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Scenario B: Organization Names</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Greek Text</th>
+            <th>With Protection</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>&#931;&#965;&#957;&#949;&#961;&#947;&#945;&#963;&#943;&#945; &#956;&#949; UNESCO</td><td>&#931;&#965;&#957;&#949;&#961;&#947;&#945;&#963;&#943;&#945; &#956;&#949; {UNESCO}</td></tr>
+          <tr><td>Culture for Change</td><td>{Culture for Change}</td></tr>
+          <tr><td>&#917;&#965;&#961;&#969;&#960;&#945;&#970;&#954;&#942; &#917;&#960;&#953;&#964;&#961;&#959;&#960;&#942;</td><td>&#917;&#965;&#961;&#969;&#960;&#945;&#970;&#954;&#942; &#917;&#960;&#953;&#964;&#961;&#959;&#960;&#942; (let it translate)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Scenario C: Mixed Acronyms (Greek + English)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Greek Text</th>
+            <th>With Protection</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>&#931;.&#919;.&#924;.&#913;./S.I.M.A.</td><td>{&#931;.&#919;.&#924;.&#913;.}/{S.I.M.A.}</td></tr>
+          <tr><td>&#924;&#922;&#927; (NGO)</td><td>{&#924;&#922;&#927;} ({NGO})</td></tr>
+          <tr><td>&#917;&#917;/EU</td><td>{&#917;&#917;}/{EU}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Scenario D: Technical Terms</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Greek Text</th>
+            <th>With Protection</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>open source &#955;&#959;&#947;&#953;&#963;&#956;&#953;&#954;&#972;</td><td>{open source} &#955;&#959;&#947;&#953;&#963;&#956;&#953;&#954;&#972;</td></tr>
+          <tr><td>machine learning &#964;&#949;&#967;&#957;&#959;&#955;&#959;&#947;&#943;&#949;&#962;</td><td>{machine learning} &#964;&#949;&#967;&#957;&#959;&#955;&#959;&#947;&#943;&#949;&#962;</td></tr>
+          <tr><td>startup &#949;&#960;&#953;&#967;&#949;&#953;&#961;&#942;&#963;&#949;&#953;&#962;</td><td>{startup} &#949;&#960;&#953;&#967;&#949;&#953;&#961;&#942;&#963;&#949;&#953;&#962;</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TROUBLESHOOTING -->
+    <h2>Troubleshooting</h2>
+
+    <div class="card">
+      <h3>The curly braces appear on the website</h3>
+      <div class="spec-row"><span class="spec-label">Cause:</span><span class="spec-value">The content might not be going through the LocalizedText component.</span></div>
+      <div class="spec-row"><span class="spec-label">Solution:</span><span class="spec-value">Clear your browser cache. If the problem persists, contact the developer.</span></div>
+    </div>
+
+    <div class="card">
+      <h3>The English field isn't showing when translated</h3>
+      <div class="spec-row"><span class="spec-label">Cause:</span><span class="spec-value">The EngTitle/EngDescription field might be empty, or the content might not be published.</span></div>
+      <p style="font-size: 0.95em; color: #444; margin-top: 8px;"><strong>Solution:</strong></p>
+      <ol>
+        <li>Check that the English field has content</li>
+        <li>Make sure you clicked "Publish" (not just "Save")</li>
+        <li>Clear your browser cache and refresh</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Google Translate still translates protected words</h3>
+      <div class="spec-row"><span class="spec-label">Cause:</span><span class="spec-value">Forgot to add curly braces, or typo in the braces.</span></div>
+      <p style="font-size: 0.95em; color: #444; margin-top: 8px;"><strong>Solution:</strong></p>
+      <ol>
+        <li>Edit the content in Strapi</li>
+        <li>Make sure the word is wrapped: <code>{word}</code> not <code>{word</code> or <code>word}</code></li>
+        <li>Save and Publish</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Part of the text is missing</h3>
+      <div class="spec-row"><span class="spec-label">Cause:</span><span class="spec-value">Unclosed or mismatched braces.</span></div>
+      <p style="font-size: 0.95em; color: #444; margin-top: 8px;"><strong>Solution:</strong></p>
+      <ol>
+        <li>Check that every <code>{</code> has a matching <code>}</code></li>
+        <li>Don't nest braces inside other braces</li>
+      </ol>
+    </div>
+
+    <!-- QUICK REFERENCE -->
+    <h2>Quick Reference Card</h2>
+
+    <div class="quick-ref">
+<span class="qr-heading">TRANSLATION QUICK REFERENCE</span>
+
+<span class="qr-label">PROTECT A WORD FROM TRANSLATION:</span>
+Type:    &#931;&#965;&#957;&#949;&#961;&#947;&#945;&#963;&#943;&#945; &#956;&#949; {UNESCO}
+Shows:   &#931;&#965;&#957;&#949;&#961;&#947;&#945;&#963;&#943;&#945; &#956;&#949; UNESCO
+English: Cooperation with UNESCO
+
+<span class="qr-label">PROVIDE ENGLISH OVERRIDE:</span>
+Title:     &#925;&#941;&#945; &#928;&#961;&#972;&#963;&#954;&#955;&#951;&#963;&#951; 2026
+EngTitle:  New Call 2026
+(When viewing in English, shows "New Call 2026")
+
+<span class="qr-label">COMBINE BOTH:</span>
+Title:     &#928;&#961;&#972;&#963;&#954;&#955;&#951;&#963;&#951; {Creative Europe}
+EngTitle:  {Creative Europe} Call
+(Protected in both Greek and English views)
+
+<span class="qr-label">REMEMBER:</span>
+  {word} = protected from translation
+  EngTitle = your English title
+  EngDescription = your English description
+  EngName = your English name (members)
+  EngBio = your English bio (members)
+  Always PUBLISH after changes</div>
+
+    <!-- NEED HELP -->
+    <h2>Need Help?</h2>
+    <div class="card">
+      <p style="font-size: 0.95em; color: #444;">If you encounter issues or have questions about the translation system, contact the development team.</p>
+    </div>
+
+    <div class="footer">
+      <p>CforC Website &mdash; Translation Guide for Content Editors &mdash; Last updated: March 2026</p>
+    </div>
+  </div>
+</body>
+</html>

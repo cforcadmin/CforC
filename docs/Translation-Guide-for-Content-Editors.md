@@ -124,19 +124,27 @@ Both acronyms are protected from translation.
 
 ### What They Are
 
-In Strapi, Activities and Open Calls have optional English fields:
+In Strapi, Activities, Open Calls, and Members have optional English fields:
 
+**Activities & Open Calls:**
 - **EngTitle** - English version of the title
 - **EngDescription** - English version of the description
+
+**Members:**
+- **EngName** - English version of the member's name
+- **EngBio** - English version of the member's bio
 
 ### What They Do
 
 When a visitor views the website in English (via Google Translate):
 - If EngTitle is filled in → Shows your English title instead of Google's translation
 - If EngDescription is filled in → Shows your English description instead of Google's translation
+- If EngName is filled in → Shows the English name instead of Google's translation
+- If EngBio is filled in → Shows the English bio instead of Google's translation
 
 ### How to Use Them
 
+**For Activities / Open Calls (Strapi admin):**
 1. Go to **Content Manager** in Strapi
 2. Select an **Activity** or **Open Call**
 3. Find the **EngTitle** field (below Title)
@@ -144,11 +152,18 @@ When a visitor views the website in English (via Google Translate):
 5. Enter your manual English translation
 6. **Save** and **Publish**
 
+**For Members (profile page):**
+1. Log in to your profile at `/profile`
+2. Next to **Όνομα** (Name), click the **EN** toggle to enter your English name
+3. Next to **Βιογραφικό** (Bio), click the **EN** toggle to enter your English bio
+4. Save your profile
+
 ### Important Notes
 
 - These fields are **optional** - leave them empty if Google's translation is acceptable
-- EngDescription uses the **rich text editor** (same as Description) - you can add formatting, links, etc.
+- EngDescription / EngBio use the **rich text editor** - you can add formatting, links, etc.
 - You can combine this with the `{word}` syntax in the English fields too
+- Members do NOT need to fill both — only fill English fields if you want to control the translation
 
 ---
 
@@ -428,6 +443,8 @@ Both the Greek and English acronyms are protected in both versions.
 │  ✓ {word} = protected from translation                      │
 │  ✓ EngTitle = your English title                            │
 │  ✓ EngDescription = your English description                │
+│  ✓ EngName = your English name (members)                    │
+│  ✓ EngBio = your English bio (members)                      │
 │  ✓ Always PUBLISH after changes                             │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
@@ -441,4 +458,4 @@ If you encounter issues or have questions about the translation system, contact 
 
 ---
 
-*Last updated: January 2026*
+*Last updated: March 2026*

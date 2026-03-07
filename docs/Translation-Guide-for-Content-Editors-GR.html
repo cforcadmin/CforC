@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CforC - Οδηγός Μετάφρασης για Συντάκτες Περιεχομένου</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F5F0EB;
+      color: #2D2D2D;
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 {
+      font-size: 2.4em;
+      margin-bottom: 8px;
+      color: #2D2D2D;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 1.05em;
+      margin-bottom: 48px;
+    }
+    h2 {
+      font-size: 1.5em;
+      margin-top: 48px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #FF8B6A;
+      color: #2D2D2D;
+    }
+    h3 {
+      font-size: 1.1em;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      color: #FF8B6A;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      border-left: 4px solid transparent;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      border-left-color: #FF8B6A;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .card h3 { margin-top: 0; }
+    .spec-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 0.95em;
+    }
+    .spec-label {
+      font-weight: 700;
+      min-width: 130px;
+      flex-shrink: 0;
+    }
+    .spec-value { color: #444; }
+    .badge {
+      display: inline-block;
+      background: rgba(255,139,106,0.12);
+      color: #2D2D2D;
+      border: 1px solid #2D2D2D;
+      font-size: 0.75em;
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .note {
+      background: #f9f5f1;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-top: 8px;
+      font-size: 0.9em;
+      color: #666;
+    }
+    .note::before {
+      content: "ΣΗΜΕΙΩΣΗ ";
+      font-weight: 700;
+      color: #FF8B6A;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 0.9em;
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    th {
+      background: #2D2D2D;
+      color: #FF8B6A;
+      text-align: left;
+      padding: 14px 16px;
+      font-weight: 600;
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #faf7f4; }
+    code {
+      background: #f0ebe5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      font-family: 'SF Mono', Consolas, monospace;
+    }
+    pre {
+      background: #2D2D2D;
+      color: #f0ebe5;
+      padding: 16px 20px;
+      border-radius: 10px;
+      overflow-x: auto;
+      margin: 10px 0;
+      font-size: 0.9em;
+      line-height: 1.5;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+      font-size: 1em;
+    }
+    ul { margin-left: 16px; margin-top: 8px; font-size: 0.95em; color: #444; }
+    ul li { margin-bottom: 4px; }
+    ol { margin-left: 16px; margin-top: 8px; font-size: 0.95em; color: #444; }
+    ol li { margin-bottom: 4px; }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .do-dont {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .do-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      border-left: 4px solid #4CAF50;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .dont-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      border-left: 4px solid #e53935;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .do-card h3 { color: #4CAF50; margin-top: 0; }
+    .dont-card h3 { color: #e53935; margin-top: 0; }
+    .toc {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .toc ol { margin-left: 20px; }
+    .toc a {
+      color: #2D2D2D;
+      text-decoration: none;
+      border-bottom: 1px solid #FF8B6A;
+    }
+    .toc a:hover { color: #FF8B6A; }
+    .quick-ref {
+      background: #2D2D2D;
+      color: #f0ebe5;
+      border-radius: 16px;
+      padding: 28px;
+      margin-top: 16px;
+      font-size: 0.92em;
+      line-height: 1.7;
+    }
+    .quick-ref strong { color: #FF8B6A; }
+    .quick-ref .qr-section {
+      border-bottom: 1px solid #555;
+      padding-bottom: 16px;
+      margin-bottom: 16px;
+    }
+    .quick-ref .qr-section:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+      margin-bottom: 0;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.8em; }
+      .spec-row { flex-direction: column; gap: 2px; }
+      .spec-label { min-width: auto; }
+      .two-col { grid-template-columns: 1fr; }
+      .do-dont { grid-template-columns: 1fr; }
+    }
+    .footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+      color: #999;
+      font-size: 0.85em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Οδηγός Μετάφρασης<br>για Συντάκτες Περιεχομένου</h1>
+    <p class="subtitle">Πώς να ελέγχετε τη μετάφραση του περιεχομένου σας στην ιστοσελίδα Culture for Change.</p>
+
+    <!-- ΕΠΙΣΚΟΠΗΣΗ -->
+    <h2 id="episkoipisi">Επισκόπηση</h2>
+    <div class="card">
+      <h3>Google Translate &amp; Περιορισμοί</h3>
+      <p style="font-size: 0.95em; color: #444;">
+        Η ιστοσελίδα Culture for Change χρησιμοποιεί το <strong>Google Translate</strong> για αυτόματη μετάφραση περιεχομένου από Ελληνικά σε άλλες γλώσσες. Ωστόσο, η αυτόματη μετάφραση δεν παράγει πάντα ακριβή αποτελέσματα, ειδικά για:
+      </p>
+      <ul>
+        <li>Ονόματα οργανισμών και ακρωνύμια</li>
+        <li>Τεχνικούς όρους</li>
+        <li>Κύρια ονόματα</li>
+        <li>Εξειδικευμένο λεξιλόγιο</li>
+      </ul>
+      <p style="font-size: 0.95em; color: #444; margin-top: 12px;">
+        Αυτός ο οδηγός εξηγεί <strong>δύο εργαλεία</strong> που μπορείτε να χρησιμοποιήσετε για να ελέγξετε πώς μεταφράζεται το περιεχόμενό σας.
+      </p>
+    </div>
+
+    <!-- ΠΙΝΑΚΑΣ ΠΕΡΙΕΧΟΜΕΝΩΝ -->
+    <div class="toc">
+      <h3 style="margin-top: 0; color: #FF8B6A;">Πίνακας Περιεχομένων</h3>
+      <ol>
+        <li><a href="#ta-dyo-ergaleia">Τα Δύο Εργαλεία Μετάφρασης</a></li>
+        <li><a href="#ergaleio-1">Εργαλείο 1: Η Σύνταξη {λέξη}</a></li>
+        <li><a href="#ergaleio-2">Εργαλείο 2: Πεδία Αγγλικής Παράκαμψης</a></li>
+        <li><a href="#pote-poio">Πότε να Χρησιμοποιήσετε Ποιο Εργαλείο</a></li>
+        <li><a href="#paradeigmata">Παραδείγματα Βήμα προς Βήμα</a></li>
+        <li><a href="#veltistes-praktikes">Βέλτιστες Πρακτικές</a></li>
+        <li><a href="#sinithia-senaria">Συνήθη Σενάρια</a></li>
+        <li><a href="#antimetopisi">Αντιμετώπιση Προβλημάτων</a></li>
+      </ol>
+    </div>
+
+    <!-- ΤΑ ΔΥΟ ΕΡΓΑΛΕΙΑ -->
+    <h2 id="ta-dyo-ergaleia">Τα Δύο Εργαλεία Μετάφρασης</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Εργαλείο</th>
+          <th>Σκοπός</th>
+          <th>Ιδανικό Για</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Σύνταξη <code>{λέξη}</code></td>
+          <td>Αποτρέπει τη μετάφραση συγκεκριμένων λέξεων</td>
+          <td>Ακρωνύμια, εμπορικά σήματα, τεχνικούς όρους</td>
+        </tr>
+        <tr>
+          <td>EngTitle / EngDescription</td>
+          <td>Παρέχει πλήρη χειροκίνητη αγγλική μετάφραση</td>
+          <td>Ολόκληρους τίτλους ή περιγραφές που χρειάζονται ακριβή μετάφραση</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ΕΡΓΑΛΕΙΟ 1 -->
+    <h2 id="ergaleio-1">Εργαλείο 1: Η Σύνταξη <code>{λέξη}</code></h2>
+
+    <div class="card">
+      <h3>Τι Κάνει</h3>
+      <p style="font-size: 0.95em; color: #444;">
+        Όταν περικλείετε μια λέξη ή φράση σε άγκιστρα <code>{έτσι}</code>, αυτό το κείμενο θα:
+      </p>
+      <ol>
+        <li><strong>ΔΕΝ μεταφράζεται</strong> από το Google Translate</li>
+        <li>Εμφανίζεται ακριβώς όπως το πληκτρολογήσατε σε όλες τις γλώσσες</li>
+        <li>Τα ίδια τα άγκιστρα αφαιρούνται από την εμφάνιση</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Πώς να το Χρησιμοποιήσετε</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 8px;">
+        Απλά περικλείστε οποιαδήποτε λέξη ή φράση θέλετε να προστατέψετε σε άγκιστρα:
+      </p>
+      <pre><code>Κανονικό κείμενο {προστατευμένο κείμενο} περισσότερο κανονικό κείμενο</code></pre>
+    </div>
+
+    <div class="card">
+      <h3>Παράδειγμα 1: Προστασία Αγγλικού Ακρωνυμίου</h3>
+      <div class="spec-row"><span class="spec-label">Στο Strapi:</span><span class="spec-value"><code>Το πρόγραμμα {S.I.M.A.} ξεκινά τον Φεβρουάριο</code></span></div>
+      <div class="spec-row"><span class="spec-label">Εμφάνιση (EL):</span><span class="spec-value">Το πρόγραμμα S.I.M.A. ξεκινά τον Φεβρουάριο</span></div>
+      <div class="spec-row"><span class="spec-label">Εμφάνιση (EN):</span><span class="spec-value">The program S.I.M.A. starts in February</span></div>
+      <div class="note">Το <code>S.I.M.A.</code> παραμένει ακριβώς το ίδιο, ενώ τα υπόλοιπα μεταφράζονται.</div>
+    </div>
+
+    <div class="card">
+      <h3>Παράδειγμα 2: Προστασία Εμπορικού Σήματος</h3>
+      <div class="spec-row"><span class="spec-label">Στο Strapi:</span><span class="spec-value"><code>Συνεργασία με το {Culture for Change} και το {Creative Europe}</code></span></div>
+      <div class="spec-row"><span class="spec-label">Εμφάνιση (EN):</span><span class="spec-value">Cooperation with Culture for Change and Creative Europe</span></div>
+      <div class="note">Τα ονόματα των οργανισμών παραμένουν αμετάβλητα.</div>
+    </div>
+
+    <div class="card">
+      <h3>Παράδειγμα 3: Προστασία Πολλαπλών Λέξεων</h3>
+      <div class="spec-row"><span class="spec-label">Στο Strapi:</span><span class="spec-value"><code>Το {New European Bauhaus} είναι μια πρωτοβουλία της ΕΕ</code></span></div>
+      <div class="spec-row"><span class="spec-label">Εμφάνιση (EN):</span><span class="spec-value">The New European Bauhaus is an EU initiative</span></div>
+    </div>
+
+    <div class="card">
+      <h3>Παράδειγμα 4: Ελληνική και Αγγλική Έκδοση Μαζί</h3>
+      <div class="spec-row"><span class="spec-label">Στο Strapi:</span><span class="spec-value"><code>Σύστημα Ηλεκτρονικής Μάθησης Ανοιχτής πρόσβασης &ndash; {Σ.Η.Μ.Α.}/{S.I.M.A.}</code></span></div>
+      <div class="spec-row"><span class="spec-label">Εμφάνιση (EL):</span><span class="spec-value">Σύστημα Ηλεκτρονικής Μάθησης Ανοιχτής πρόσβασης &ndash; Σ.Η.Μ.Α./S.I.M.A.</span></div>
+      <div class="spec-row"><span class="spec-label">Εμφάνιση (EN):</span><span class="spec-value">Open Access Electronic Learning System &ndash; Σ.Η.Μ.Α./S.I.M.A.</span></div>
+      <div class="note">Και τα δύο ακρωνύμια προστατεύονται από τη μετάφραση.</div>
+    </div>
+
+    <!-- ΕΡΓΑΛΕΙΟ 2 -->
+    <h2 id="ergaleio-2">Εργαλείο 2: Πεδία Αγγλικής Παράκαμψης</h2>
+
+    <div class="card">
+      <h3>Τι Είναι</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 12px;">
+        Στο Strapi, οι Δραστηριότητες, οι Ανοιχτές Προσκλήσεις, και τα Μέλη έχουν προαιρετικά πεδία στα Αγγλικά:
+      </p>
+      <p style="font-size: 0.95em; color: #444;"><strong>Δραστηριότητες &amp; Ανοιχτές Προσκλήσεις:</strong></p>
+      <ul>
+        <li><strong>EngTitle</strong> &mdash; Αγγλική έκδοση του τίτλου</li>
+        <li><strong>EngDescription</strong> &mdash; Αγγλική έκδοση της περιγραφής</li>
+      </ul>
+      <p style="font-size: 0.95em; color: #444; margin-top: 12px;"><strong>Μέλη:</strong></p>
+      <ul>
+        <li><strong>EngName</strong> &mdash; Αγγλική έκδοση του ονόματος μέλους</li>
+        <li><strong>EngBio</strong> &mdash; Αγγλική έκδοση του βιογραφικού μέλους</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Τι Κάνουν</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 8px;">
+        Όταν ένας επισκέπτης βλέπει την ιστοσελίδα στα Αγγλικά (μέσω Google Translate):
+      </p>
+      <ul>
+        <li>Αν το <strong>EngTitle</strong> είναι συμπληρωμένο &rarr; Εμφανίζει τον δικό σας αγγλικό τίτλο αντί της μετάφρασης του Google</li>
+        <li>Αν το <strong>EngDescription</strong> είναι συμπληρωμένο &rarr; Εμφανίζει τη δική σας αγγλική περιγραφή αντί της μετάφρασης του Google</li>
+        <li>Αν το <strong>EngName</strong> είναι συμπληρωμένο &rarr; Εμφανίζει το αγγλικό όνομα αντί της μετάφρασης του Google</li>
+        <li>Αν το <strong>EngBio</strong> είναι συμπληρωμένο &rarr; Εμφανίζει το αγγλικό βιογραφικό αντί της μετάφρασης του Google</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Πώς να τα Χρησιμοποιήσετε &mdash; Δραστηριότητες / Ανοιχτές Προσκλήσεις</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 8px;">Στο Strapi admin:</p>
+      <ol>
+        <li>Πηγαίνετε στο <strong>Content Manager</strong> στο Strapi</li>
+        <li>Επιλέξτε μια <strong>Δραστηριότητα</strong> ή <strong>Ανοιχτή Πρόσκληση</strong></li>
+        <li>Βρείτε το πεδίο <strong>EngTitle</strong> (κάτω από τον Τίτλο)</li>
+        <li>Βρείτε το πεδίο <strong>EngDescription</strong> (κάτω από την Περιγραφή)</li>
+        <li>Εισάγετε τη χειροκίνητη αγγλική μετάφρασή σας</li>
+        <li><strong>Αποθηκεύστε</strong> και <strong>Δημοσιεύστε</strong></li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Πώς να τα Χρησιμοποιήσετε &mdash; Μέλη</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 8px;">Στη σελίδα προφίλ:</p>
+      <ol>
+        <li>Συνδεθείτε στο προφίλ σας στο <code>/profile</code></li>
+        <li>Δίπλα στο <strong>Όνομα</strong>, πατήστε <strong>EN</strong> για να γράψετε το αγγλικό σας όνομα</li>
+        <li>Δίπλα στο <strong>Βιογραφικό</strong>, πατήστε <strong>EN</strong> για να γράψετε αγγλικό βιογραφικό</li>
+        <li>Αποθηκεύστε το προφίλ</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Σημαντικές Σημειώσεις</h3>
+      <ul>
+        <li>Αυτά τα πεδία είναι <strong>προαιρετικά</strong> &mdash; αφήστε τα κενά αν η μετάφραση του Google είναι αποδεκτή</li>
+        <li>Τα EngDescription / EngBio χρησιμοποιούν τον <strong>επεξεργαστή εμπλουτισμένου κειμένου</strong> &mdash; μπορείτε να προσθέσετε μορφοποίηση, συνδέσμους, κλπ.</li>
+        <li>Μπορείτε να συνδυάσετε αυτό με τη σύνταξη <code>{λέξη}</code> και στα αγγλικά πεδία</li>
+        <li>Τα μέλη ΔΕΝ χρειάζεται να συμπληρώσουν και τα δύο &mdash; μόνο αν θέλουν να ελέγξουν τη μετάφραση</li>
+      </ul>
+    </div>
+
+    <!-- ΠΟΤΕ ΠΟΙΟ -->
+    <h2 id="pote-poio">Πότε να Χρησιμοποιήσετε Ποιο Εργαλείο</h2>
+
+    <div class="two-col">
+      <div class="card">
+        <h3>Σύνταξη <code>{λέξη}</code> &mdash; Χρησιμοποιήστε όταν:</h3>
+        <ul>
+          <li>Έχετε μερικές συγκεκριμένες λέξεις που δεν πρέπει να μεταφραστούν</li>
+          <li>Το υπόλοιπο κείμενο μπορεί να μεταφραστεί αυτόματα</li>
+          <li>Προστατεύετε ακρωνύμια, ονόματα ή τεχνικούς όρους</li>
+          <li>Γρήγορη και εύκολη λύση</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>EngTitle / EngDescription &mdash; Χρησιμοποιήστε όταν:</h3>
+        <ul>
+          <li>Ολόκληρος ο τίτλος ή η περιγραφή χρειάζεται προσεκτική μετάφραση</li>
+          <li>Το Google Translate παράγει κακά αποτελέσματα για ολόκληρο το κείμενο</li>
+          <li>Το περιεχόμενο είναι σημαντικό και θέλετε πλήρη έλεγχο</li>
+          <li>Έχετε χρόνο να γράψετε μια σωστή αγγλική έκδοση</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <h3>Χρησιμοποιήστε ΚΑΙ ΤΑ ΔΥΟ μαζί όταν:</h3>
+      <ul>
+        <li>Παρέχετε αγγλική παράκαμψη αλλά περιέχει επίσης όρους που δεν πρέπει να μεταφραστούν σε άλλες γλώσσες</li>
+        <li>Παράδειγμα: Το EngTitle σας περιέχει <code>{UNESCO}</code> για να το προστατέψετε όταν κάποιος μεταφράζει από Αγγλικά σε Γερμανικά</li>
+      </ul>
+    </div>
+
+    <!-- ΠΑΡΑΔΕΙΓΜΑΤΑ ΒΗΜΑ ΠΡΟΣ ΒΗΜΑ -->
+    <h2 id="paradeigmata">Παραδείγματα Βήμα προς Βήμα</h2>
+
+    <div class="card">
+      <h3>Σενάριο 1: Νέα Δραστηριότητα με Προστατευμένο Ακρωνύμιο</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 12px;">
+        <strong>Εργασία:</strong> Δημιουργία δραστηριότητας για το πρόγραμμα S.I.M.A.
+      </p>
+      <ol>
+        <li>Πηγαίνετε στο Content Manager &rarr; Activities &rarr; Δημιουργία νέας εγγραφής</li>
+        <li style="margin-top: 8px;"><strong>Πεδίο Title:</strong>
+          <pre><code>Νέο Πρόγραμμα {S.I.M.A.} για την Κοινωνία των Πολιτών</code></pre>
+        </li>
+        <li><strong>Πεδίο EngTitle:</strong> (προαιρετικό αλλά συνιστάται)
+          <pre><code>New {S.I.M.A.} Program for Civil Society</code></pre>
+        </li>
+        <li><strong>Πεδίο Description:</strong>
+          <pre><code>Το πρόγραμμα {S.I.M.A.} (System for Intelligent Management and Automation)
+στοχεύει στην ενίσχυση της κοινωνίας των πολιτών μέσω της τεχνολογίας.
+
+Οι συμμετέχοντες θα μάθουν για:
+- Ψηφιακά εργαλεία
+- Διαχείριση έργων
+- Συνεργατικές πλατφόρμες</code></pre>
+        </li>
+        <li><strong>Πεδίο EngDescription:</strong> (προαιρετικό)
+          <pre><code>The {S.I.M.A.} program (System for Intelligent Management and Automation)
+aims to strengthen civil society through technology.
+
+Participants will learn about:
+- Digital tools
+- Project management
+- Collaborative platforms</code></pre>
+        </li>
+        <li>Αποθηκεύστε και Δημοσιεύστε</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Σενάριο 2: Ανοιχτή Πρόσκληση με Ονόματα Οργανισμών</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 12px;">
+        <strong>Εργασία:</strong> Δημιουργία ανοιχτής πρόσκλησης από το Creative Europe
+      </p>
+      <ol>
+        <li>Πηγαίνετε στο Content Manager &rarr; Open Calls &rarr; Δημιουργία νέας εγγραφής</li>
+        <li style="margin-top: 8px;"><strong>Πεδίο Title:</strong>
+          <pre><code>Πρόσκληση {Creative Europe} για Πολιτιστικά Έργα 2026</code></pre>
+        </li>
+        <li><strong>Πεδίο EngTitle:</strong>
+          <pre><code>{Creative Europe} Call for Cultural Projects 2026</code></pre>
+        </li>
+        <li>Συμπληρώστε τα άλλα απαιτούμενα πεδία (Προθεσμία, Περιγραφή, Σύνδεσμος, Εικόνα, κλπ.)</li>
+        <li>Αποθηκεύστε και Δημοσιεύστε</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Σενάριο 3: Δραστηριότητα με Σύνθετο Ελληνικό Ακρωνύμιο</h3>
+      <p style="font-size: 0.95em; color: #444; margin-bottom: 12px;">
+        <strong>Εργασία:</strong> Δραστηριότητα για το Σ.Η.Μ.Α. (ελληνικό ακρωνύμιο με αγγλικό ισοδύναμο S.I.M.A.)
+      </p>
+      <div class="spec-row"><span class="spec-label">Πεδίο Title:</span><span class="spec-value"><code>Εκπαιδευτικό Πρόγραμμα {Σ.Η.Μ.Α.} ({S.I.M.A.})</code></span></div>
+      <div class="spec-row"><span class="spec-label">Πεδίο EngTitle:</span><span class="spec-value"><code>Educational Program {Σ.Η.Μ.Α.} ({S.I.M.A.})</code></span></div>
+      <div class="note">Και το ελληνικό και το αγγλικό ακρωνύμιο προστατεύονται και στις δύο εκδόσεις.</div>
+    </div>
+
+    <!-- ΒΕΛΤΙΣΤΕΣ ΠΡΑΚΤΙΚΕΣ -->
+    <h2 id="veltistes-praktikes">Βέλτιστες Πρακτικές</h2>
+
+    <div class="do-dont">
+      <div class="do-card">
+        <h3>ΚΑΝΕΤΕ</h3>
+        <ol>
+          <li style="margin-bottom: 8px;"><strong>Πάντα προστατεύετε ονόματα οργανισμών</strong>
+            <pre><code>Συνεργασία με {UNESCO}, {UNICEF} και {Culture for Change}</code></pre>
+          </li>
+          <li style="margin-bottom: 8px;"><strong>Προστατεύετε ονόματα προγραμμάτων/έργων</strong>
+            <pre><code>Το έργο {New European Bauhaus} χρηματοδοτείται από την ΕΕ</code></pre>
+          </li>
+          <li style="margin-bottom: 8px;"><strong>Προστατεύετε τεχνικούς όρους</strong>
+            <pre><code>Η πλατφόρμα χρησιμοποιεί {open source} λογισμικό</code></pre>
+          </li>
+          <li style="margin-bottom: 8px;"><strong>Προστατεύετε email και URLs</strong>
+            <pre><code>Επικοινωνήστε στο {info@cultureforchange.gr}</code></pre>
+          </li>
+          <li style="margin-bottom: 8px;"><strong>Παρέχετε EngTitle</strong> για σημαντικές ανακοινώσεις: προσκλήσεις χρηματοδότησης, μεγάλες εκδηλώσεις, δελτία τύπου</li>
+          <li><strong>Δοκιμάστε τις μεταφράσεις σας</strong> &mdash; μετά τη δημοσίευση, επισκεφθείτε τη σελίδα και χρησιμοποιήστε το Google Translate για να αλλάξετε σε Αγγλικά</li>
+        </ol>
+      </div>
+      <div class="dont-card">
+        <h3>ΜΗΝ ΚΑΝΕΤΕ</h3>
+        <ol>
+          <li style="margin-bottom: 8px;"><strong>Μην υπερχρησιμοποιείτε τη σύνταξη <code>{λέξη}</code></strong> &mdash; προστατεύετε μόνο ό,τι χρειάζεται προστασία, αφήστε το Google να μεταφράσει κοινές λέξεις</li>
+          <li style="margin-bottom: 8px;"><strong>Μην ξεχνάτε να κλείσετε τα άγκιστρα</strong>
+            <pre><code>Λάθος: {Culture for Change
+Σωστό: {Culture for Change}</code></pre>
+          </li>
+          <li style="margin-bottom: 8px;"><strong>Μην φωλιάζετε άγκιστρα</strong>
+            <pre><code>Λάθος: {Το {UNESCO} πρόγραμμα}
+Σωστό: Το {UNESCO} πρόγραμμα</code></pre>
+          </li>
+          <li><strong>Μην χρησιμοποιείτε άγκιστρα για μορφοποίηση</strong> &mdash; τα άγκιστρα είναι μόνο για έλεγχο μετάφρασης. Χρησιμοποιήστε τον επεξεργαστή εμπλουτισμένου κειμένου για έντονα, πλάγια, κλπ.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- ΣΥΝΗΘΗ ΣΕΝΑΡΙΑ -->
+    <h2 id="sinithia-senaria">Συνήθη Σενάρια</h2>
+
+    <div class="card">
+      <h3>Σενάριο Α: Ονόματα Προγραμμάτων ΕΕ</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Ελληνικό Κείμενο</th>
+            <th>Με Προστασία</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Πρόγραμμα Erasmus+</td><td>Πρόγραμμα <code>{Erasmus+}</code></td></tr>
+          <tr><td>Creative Europe 2026</td><td><code>{Creative Europe}</code> 2026</td></tr>
+          <tr><td>Horizon Europe</td><td><code>{Horizon Europe}</code></td></tr>
+          <tr><td>New European Bauhaus</td><td><code>{New European Bauhaus}</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Σενάριο Β: Ονόματα Οργανισμών</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Ελληνικό Κείμενο</th>
+            <th>Με Προστασία</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Συνεργασία με UNESCO</td><td>Συνεργασία με <code>{UNESCO}</code></td></tr>
+          <tr><td>Culture for Change</td><td><code>{Culture for Change}</code></td></tr>
+          <tr><td>Ευρωπαϊκή Επιτροπή</td><td>Ευρωπαϊκή Επιτροπή (αφήστε το να μεταφραστεί)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Σενάριο Γ: Μεικτά Ακρωνύμια (Ελληνικά + Αγγλικά)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Ελληνικό Κείμενο</th>
+            <th>Με Προστασία</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Σ.Η.Μ.Α./S.I.M.A.</td><td><code>{Σ.Η.Μ.Α.}</code>/<code>{S.I.M.A.}</code></td></tr>
+          <tr><td>ΜΚΟ (NGO)</td><td><code>{ΜΚΟ}</code> (<code>{NGO}</code>)</td></tr>
+          <tr><td>ΕΕ/EU</td><td><code>{ΕΕ}</code>/<code>{EU}</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Σενάριο Δ: Τεχνικοί Όροι</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Ελληνικό Κείμενο</th>
+            <th>Με Προστασία</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>open source λογισμικό</td><td><code>{open source}</code> λογισμικό</td></tr>
+          <tr><td>machine learning τεχνολογίες</td><td><code>{machine learning}</code> τεχνολογίες</td></tr>
+          <tr><td>startup επιχειρήσεις</td><td><code>{startup}</code> επιχειρήσεις</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ΑΝΤΙΜΕΤΩΠΙΣΗ ΠΡΟΒΛΗΜΑΤΩΝ -->
+    <h2 id="antimetopisi">Αντιμετώπιση Προβλημάτων</h2>
+
+    <div class="card">
+      <h3>Τα άγκιστρα εμφανίζονται στην ιστοσελίδα</h3>
+      <div class="spec-row"><span class="spec-label">Αιτία:</span><span class="spec-value">Το περιεχόμενο ίσως δεν περνάει από το component LocalizedText.</span></div>
+      <div class="spec-row"><span class="spec-label">Λύση:</span><span class="spec-value">Καθαρίστε την cache του browser σας. Αν το πρόβλημα παραμένει, επικοινωνήστε με τον developer.</span></div>
+    </div>
+
+    <div class="card">
+      <h3>Το αγγλικό πεδίο δεν εμφανίζεται όταν μεταφράζεται</h3>
+      <div class="spec-row"><span class="spec-label">Αιτία:</span><span class="spec-value">Το πεδίο EngTitle/EngDescription μπορεί να είναι κενό, ή το περιεχόμενο μπορεί να μην είναι δημοσιευμένο.</span></div>
+      <p style="font-size: 0.95em; color: #444; margin-top: 8px;"><strong>Λύση:</strong></p>
+      <ol>
+        <li>Ελέγξτε ότι το αγγλικό πεδίο έχει περιεχόμενο</li>
+        <li>Βεβαιωθείτε ότι κάνατε κλικ στο &laquo;Publish&raquo; (όχι μόνο &laquo;Save&raquo;)</li>
+        <li>Καθαρίστε την cache του browser και ανανεώστε</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Το Google Translate εξακολουθεί να μεταφράζει προστατευμένες λέξεις</h3>
+      <div class="spec-row"><span class="spec-label">Αιτία:</span><span class="spec-value">Ξεχάσατε να προσθέσετε άγκιστρα ή υπάρχει τυπογραφικό λάθος.</span></div>
+      <p style="font-size: 0.95em; color: #444; margin-top: 8px;"><strong>Λύση:</strong></p>
+      <ol>
+        <li>Επεξεργαστείτε το περιεχόμενο στο Strapi</li>
+        <li>Βεβαιωθείτε ότι η λέξη είναι περικλεισμένη: <code>{λέξη}</code> &mdash; όχι <code>{λέξη</code> ή <code>λέξη}</code></li>
+        <li>Αποθηκεύστε και Δημοσιεύστε</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Μέρος του κειμένου λείπει</h3>
+      <div class="spec-row"><span class="spec-label">Αιτία:</span><span class="spec-value">Μη κλεισμένα ή αναντίστοιχα άγκιστρα.</span></div>
+      <p style="font-size: 0.95em; color: #444; margin-top: 8px;"><strong>Λύση:</strong></p>
+      <ol>
+        <li>Ελέγξτε ότι κάθε <code>{</code> έχει ένα αντίστοιχο <code>}</code></li>
+        <li>Μην φωλιάζετε άγκιστρα μέσα σε άλλα άγκιστρα</li>
+      </ol>
+    </div>
+
+    <!-- ΚΑΡΤΑ ΓΡΗΓΟΡΗΣ ΑΝΑΦΟΡΑΣ -->
+    <h2>Κάρτα Γρήγορης Αναφοράς</h2>
+
+    <div class="quick-ref">
+      <div class="qr-section">
+        <strong>ΠΡΟΣΤΑΣΙΑ ΛΕΞΗΣ ΑΠΟ ΜΕΤΑΦΡΑΣΗ</strong><br>
+        Πληκτρολογήστε: <code>Συνεργασία με {UNESCO}</code><br>
+        Εμφανίζεται: Συνεργασία με UNESCO<br>
+        Αγγλικά: Cooperation with UNESCO
+      </div>
+      <div class="qr-section">
+        <strong>ΠΑΡΟΧΗ ΑΓΓΛΙΚΗΣ ΠΑΡΑΚΑΜΨΗΣ</strong><br>
+        Title: Νέα Πρόσκληση 2026<br>
+        EngTitle: New Call 2026<br>
+        (Στα Αγγλικά εμφανίζεται &laquo;New Call 2026&raquo;)
+      </div>
+      <div class="qr-section">
+        <strong>ΣΥΝΔΥΑΣΜΟΣ ΚΑΙ ΤΩΝ ΔΥΟ</strong><br>
+        Title: <code>Πρόσκληση {Creative Europe}</code><br>
+        EngTitle: <code>{Creative Europe} Call</code><br>
+        (Προστατεύεται και στα Ελληνικά και στα Αγγλικά)
+      </div>
+      <div class="qr-section">
+        <strong>ΘΥΜΗΘΕΙΤΕ</strong><br>
+        &#10003; <code>{λέξη}</code> = προστατεύεται από μετάφραση<br>
+        &#10003; EngTitle = ο αγγλικός τίτλος σας<br>
+        &#10003; EngDescription = η αγγλική περιγραφή σας<br>
+        &#10003; EngName = το αγγλικό όνομα μέλους<br>
+        &#10003; EngBio = το αγγλικό βιογραφικό μέλους<br>
+        &#10003; Πάντα ΔΗΜΟΣΙΕΥΣΤΕ μετά τις αλλαγές
+      </div>
+    </div>
+
+    <!-- ΒΟΗΘΕΙΑ -->
+    <h2>Χρειάζεστε Βοήθεια;</h2>
+    <div class="card">
+      <p style="font-size: 0.95em; color: #444;">
+        Αν αντιμετωπίζετε προβλήματα ή έχετε ερωτήσεις σχετικά με το σύστημα μετάφρασης, επικοινωνήστε με την ομάδα ανάπτυξης.
+      </p>
+    </div>
+
+    <div class="footer">
+      <p>CforC Website &mdash; Οδηγός Μετάφρασης &mdash; Τελευταία ενημέρωση: Μάρτιος 2026</p>
+    </div>
+  </div>
+</body>
+</html>

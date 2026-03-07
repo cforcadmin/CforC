@@ -8,7 +8,9 @@ const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 // Human-readable field name mapping (Greek) for change log emails
 const FIELD_DISPLAY_NAMES: Record<string, string> = {
   Name: 'Όνομα',
+  EngName: 'Όνομα (EN)',
   Bio: 'Βιογραφικό',
+  EngBio: 'Βιογραφικό (EN)',
   City: 'Πόλη',
   Province: 'Περιφέρεια',
   Email: 'Email',
@@ -89,7 +91,7 @@ export async function POST(request: NextRequest) {
 
       // Extract text fields
       const fields = [
-        'Name', 'Bio', 'FieldsOfWork', 'City', 'Province', 'Email', 'Phone', 'Websites',
+        'Name', 'EngName', 'Bio', 'EngBio', 'FieldsOfWork', 'City', 'Province', 'Email', 'Phone', 'Websites',
         'ProfileImageAltText',
         'Project1Title', 'Project1Tags', 'Project1Links', 'Project1Description', 'Project1PicturesAltText',
         'Project2Title', 'Project2Tags', 'Project2Links', 'Project2Description', 'Project2PicturesAltText'
@@ -212,6 +214,9 @@ export async function POST(request: NextRequest) {
       }))
     }
 
+    // Optional blocks fields that can be cleared (set to null)
+    const OPTIONAL_BLOCKS_FIELDS = new Set(['EngBio'])
+
     // Helper: process a Blocks field — parse JSON if string, convert plain text, or pass through
     const processBlocksField = (fieldName: string) => {
       if (updateData[fieldName] === undefined) return
@@ -241,13 +246,22 @@ export async function POST(request: NextRequest) {
           })
         )
         if (!hasText) {
-          delete updateData[fieldName]
+          // For optional fields, send null to clear. For required fields, omit.
+          if (OPTIONAL_BLOCKS_FIELDS.has(fieldName)) {
+            updateData[fieldName] = null
+          } else {
+            delete updateData[fieldName]
+          }
         } else {
           updateData[fieldName] = value
         }
       } else if (typeof value === 'string') {
         if (!value.trim()) {
-          delete updateData[fieldName]
+          if (OPTIONAL_BLOCKS_FIELDS.has(fieldName)) {
+            updateData[fieldName] = null
+          } else {
+            delete updateData[fieldName]
+          }
         } else {
           // Legacy plain text — convert to blocks
           updateData[fieldName] = convertTextToBlocks(value)
@@ -256,6 +270,7 @@ export async function POST(request: NextRequest) {
     }
 
     processBlocksField('Bio')
+    processBlocksField('EngBio')
     processBlocksField('Project1Description')
     processBlocksField('Project2Description')
 

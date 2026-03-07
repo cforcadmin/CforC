@@ -118,7 +118,7 @@ export default function LanguageSwitcher() {
     <div className="relative" ref={dropdownRef}>
       {/* Hidden Google Translate Element — client-only to avoid hydration mismatch from injected widget children */}
       {mounted && (
-        <div id="google_translate_element" style={{ display: 'none' }} aria-hidden="true"></div>
+        <div id="google_translate_element" style={{ position: 'absolute', top: '-9999px', left: '-9999px', height: 0, overflow: 'hidden' }} aria-hidden="true"></div>
       )}
 
       {/* Globe Icon Button with Overlays */}
