@@ -124,7 +124,7 @@ export default function ProjectFlipCard({ project }: { project: Project }) {
         <div className="[backface-visibility:hidden] w-full h-full">
           <Link
             href={href}
-            className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-gray-700/50 transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full"
+            className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl dark:shadow-gray-700/30 dark:hover:shadow-gray-700/50 transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light dark:border dark:border-gray-700 flex flex-col h-full"
           >
             {imageUrl ? (
               <BlurredImage src={imageUrl} alt={project.title} />
@@ -178,7 +178,7 @@ export default function ProjectFlipCard({ project }: { project: Project }) {
         <div className="absolute top-0 left-0 w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)]">
           <Link
             href={href}
-            className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-700/50 border-l-4 border-coral dark:border-coral-light flex flex-col h-full"
+            className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-700/50 border-l-4 border-coral dark:border-coral-light dark:border dark:border-gray-700 flex flex-col h-full"
           >
             <div className="p-6 flex flex-col h-full overflow-hidden">
               {/* Status + date */}
