@@ -794,7 +794,7 @@ export default function ProfilePage() {
               {/* Name with GR/EN toggle */}
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-charcoal dark:text-gray-200">Όνομα</span>
+                  <span className="text-sm font-medium text-charcoal dark:text-gray-200">Όνομα <span className="text-coral">*</span></span>
                   <div className="inline-flex rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
                     <button
                       type="button"
@@ -818,7 +818,6 @@ export default function ProfilePage() {
                     value={formData.Name}
                     placeholder="Το όνομά σας (ελληνικά)"
                     onChange={(value) => handleFieldChange('Name', value)}
-                    required
                     tooltip="Μη χρησιμοποιείς κεφαλαία (ALL CAPS). Χρησιμοποίησε σημεία στίξης όπου χρειάζεται."
                   />
                 ) : (
@@ -852,7 +851,7 @@ export default function ProfilePage() {
               {/* Bio with GR/EN toggle */}
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-charcoal dark:text-gray-200">Βιογραφικό</span>
+                  <span className="text-sm font-medium text-charcoal dark:text-gray-200">Βιογραφικό <span className="text-coral">*</span></span>
                   <div className="inline-flex rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
                     <button
                       type="button"
@@ -878,7 +877,6 @@ export default function ProfilePage() {
                     onChange={(blocks) => handleFieldChange('Bio', blocks)}
                     maxWords={160}
                     maxCharacters={1200}
-                    required
                     tooltip="Όριο: 160 λέξεις ή 1200 χαρακτήρες. Υποστηρίζεται μορφοποίηση: έντονα, πλάγια, λίστες, σύνδεσμοι κ.ά."
                   />
                 ) : (
