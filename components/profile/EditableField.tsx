@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 interface EditableFieldProps {
   label: string
@@ -35,9 +35,6 @@ export default function EditableField({
   showCounters = false,
   tooltip
 }: EditableFieldProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [tempValue, setTempValue] = useState(value)
-
   // Count words in text
   const countWords = (text: string): number => {
     if (!text || text.trim() === '') return 0
@@ -50,146 +47,33 @@ export default function EditableField({
     return text.split(',').filter(item => item.trim().length > 0).length
   }
 
-  const wordCount = countWords(tempValue)
-  const charCount = tempValue.length
-  const itemCount = countItems(tempValue)
+  const wordCount = countWords(value)
+  const charCount = value.length
+  const itemCount = countItems(value)
 
   const isOverWordLimit = maxWords && wordCount > maxWords
   const isOverCharLimit = maxCharacters && charCount > maxCharacters
   const isOverItemLimit = maxItems && itemCount > maxItems
 
-  // Sync tempValue with value prop changes
-  useEffect(() => {
-    setTempValue(value)
-  }, [value])
+  // Track focus for showing counters and helper text
+  const [isFocused, setIsFocused] = useState(false)
 
-  const handleSave = () => {
-    onChange(tempValue)
-    setIsEditing(false)
-  }
+  if (disabled) {
+    return (
+      <div className="space-y-2">
+        {/* Label */}
+        {label && (
+          <label className="block text-sm font-medium text-charcoal dark:text-gray-200">
+            {label}
+            {required && <span className="text-red-500 ml-1">*</span>}
+          </label>
+        )}
 
-  const handleCancel = () => {
-    setTempValue(value)
-    setIsEditing(false)
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && type !== 'textarea') {
-      e.preventDefault()
-      handleSave()
-    } else if (e.key === 'Escape') {
-      handleCancel()
-    }
-  }
-
-  return (
-    <div className="space-y-2">
-      {/* Label */}
-      <label className="block text-sm font-medium text-charcoal dark:text-gray-200">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
-
-      {/* Helper Text - Only show when editing */}
-      {isEditing && helperText && (
-        <p className="text-xs text-gray-400 dark:text-gray-500 italic">
-          {helperText}
-        </p>
-      )}
-
-      {isEditing && !disabled ? (
-        <div className="space-y-2">
-          {/* Input Field */}
-          {type === 'textarea' ? (
-            <textarea
-              value={tempValue}
-              onChange={(e) => setTempValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              maxLength={maxLength}
-              rows={4}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl text-charcoal dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light focus:border-transparent resize-none"
-              autoFocus
-            />
-          ) : (
-            <input
-              type={type}
-              value={tempValue}
-              onChange={(e) => setTempValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              maxLength={maxLength}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-charcoal dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light focus:border-transparent"
-              autoFocus
-            />
-          )}
-
-          {/* Counters */}
-          <div className="flex justify-between text-xs">
-            {/* Item counter for comma-separated fields */}
-            {maxItems && (
-              <div className={`${isOverItemLimit ? 'text-red-500 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
-                {itemCount} / {maxItems} στοιχεία
-                {isOverItemLimit && ' (υπέρβαση!)'}
-              </div>
-            )}
-
-            <div className="flex gap-4 ml-auto">
-              {/* Word counter */}
-              {maxWords && (
-                <div className={`${isOverWordLimit ? 'text-red-500 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
-                  {wordCount} / {maxWords} λέξεις
-                  {isOverWordLimit && ' (υπέρβαση!)'}
-                </div>
-              )}
-
-              {/* Character counter */}
-              {(maxCharacters || maxLength) && (
-                <div className={`${isOverCharLimit ? 'text-red-500 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
-                  {charCount} / {maxCharacters || maxLength} χαρακτήρες
-                  {isOverCharLimit && ' (υπέρβαση!)'}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleSave}
-              className="flex-1 bg-coral hover:bg-coral/90 dark:bg-coral-light dark:hover:bg-coral-light/90 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
-            >
-              Αποθήκευση
-            </button>
-            <button
-              onClick={handleCancel}
-              className="flex-1 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              Ακύρωση
-            </button>
-          </div>
-        </div>
-      ) : (
         <div
-          onClick={() => !disabled && setIsEditing(true)}
-          onKeyDown={(e) => {
-            if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
-              e.preventDefault()
-              setIsEditing(true)
-            }
-          }}
-          role="button"
-          tabIndex={disabled ? -1 : 0}
-          aria-label={`${label} επεξεργασία${value ? `: ${value}` : ''}`}
-          aria-disabled={disabled}
-          className={`group relative flex items-start gap-2 px-4 py-3 rounded-2xl transition-colors ${
-            disabled
-              ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed'
-              : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light'
-          }`}
+          className="group relative flex items-start gap-2 px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+          aria-disabled="true"
         >
-          {/* Display Value */}
-          <div className={`flex-1${disabled ? ' opacity-60' : ''}`}>
+          <div className="flex-1 opacity-60">
             {value ? (
               <p className="text-charcoal dark:text-gray-200 whitespace-pre-wrap break-words">
                 {value}
@@ -201,41 +85,21 @@ export default function EditableField({
             )}
           </div>
 
-          {/* Edit Icon - only show if not disabled */}
-          {!disabled && (
-            <svg
-              className="w-5 h-5 text-gray-400 group-hover:text-coral dark:group-hover:text-coral-light transition-colors flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              />
-            </svg>
-          )}
-
-          {/* Lock Icon - show when disabled */}
-          {disabled && (
-            <svg
-              className={`w-5 h-5 text-gray-400 flex-shrink-0${disabled ? ' opacity-60' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-              />
-            </svg>
-          )}
+          {/* Lock Icon */}
+          <svg
+            className="w-5 h-5 text-gray-400 flex-shrink-0 opacity-60"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+            />
+          </svg>
 
           {/* Hover tooltip */}
           {tooltip && (
@@ -246,6 +110,93 @@ export default function EditableField({
               </div>
             </div>
           )}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      {/* Label */}
+      {label && (
+        <label className="block text-sm font-medium text-charcoal dark:text-gray-200">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+      )}
+
+      {/* Helper Text */}
+      {helperText && (isFocused || isOverWordLimit || isOverCharLimit || isOverItemLimit) && (
+        <p className="text-xs text-gray-400 dark:text-gray-500 italic">
+          {helperText}
+        </p>
+      )}
+
+      {/* Input Field */}
+      <div className="group relative">
+        {type === 'textarea' ? (
+          <textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            placeholder={placeholder}
+            maxLength={maxLength}
+            rows={4}
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl text-charcoal dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light focus:border-transparent resize-none bg-white"
+          />
+        ) : (
+          <input
+            type={type}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            placeholder={placeholder}
+            maxLength={maxLength}
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-charcoal dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light focus:border-transparent bg-white"
+          />
+        )}
+
+        {/* Hover tooltip */}
+        {tooltip && (
+          <div className="absolute bottom-full left-4 mb-2 hidden group-hover:block z-10">
+            <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-xs rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white max-w-xs">
+              {tooltip}
+              <div className="absolute top-full left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black dark:border-t-white"></div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Counters - show when focused or over limit */}
+      {(isFocused || isOverWordLimit || isOverCharLimit || isOverItemLimit) && (
+        <div className="flex justify-between text-xs">
+          {/* Item counter for comma-separated fields */}
+          {maxItems && (
+            <div className={`${isOverItemLimit ? 'text-red-500 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+              {itemCount} / {maxItems} στοιχεία
+              {isOverItemLimit && ' (υπέρβαση!)'}
+            </div>
+          )}
+
+          <div className="flex gap-4 ml-auto">
+            {/* Word counter */}
+            {maxWords && (
+              <div className={`${isOverWordLimit ? 'text-red-500 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                {wordCount} / {maxWords} λέξεις
+                {isOverWordLimit && ' (υπέρβαση!)'}
+              </div>
+            )}
+
+            {/* Character counter */}
+            {(maxCharacters || maxLength) && (
+              <div className={`${isOverCharLimit ? 'text-red-500 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                {charCount} / {maxCharacters || maxLength} χαρακτήρες
+                {isOverCharLimit && ' (υπέρβαση!)'}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

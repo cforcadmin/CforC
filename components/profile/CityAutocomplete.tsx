@@ -16,13 +16,13 @@ export default function CityAutocomplete({
   onProvinceChange,
   required = false,
 }: CityAutocompleteProps) {
-  const [isEditing, setIsEditing] = useState(false)
   const [inputValue, setInputValue] = useState(value)
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestionsRef = useRef<HTMLDivElement>(null)
 
+  // Sync inputValue when value prop changes externally (e.g., discard)
   useEffect(() => {
     setInputValue(value)
   }, [value])
@@ -60,8 +60,12 @@ export default function CityAutocomplete({
     setSuggestions([])
     setHighlightedIndex(-1)
 
-    // Derive provinces from the full value
+    // Clean and commit value
     const allCities = newValue.split(',').map(c => c.trim()).filter(c => c)
+    const cleanedValue = allCities.join(', ')
+    onChange(cleanedValue)
+
+    // Derive provinces
     const provinces = new Set<string>()
     for (const c of allCities) {
       getProvincesForCity(c).forEach(p => provinces.add(p))
@@ -69,6 +73,25 @@ export default function CityAutocomplete({
     onProvinceChange(Array.from(provinces).join(', '))
 
     inputRef.current?.focus()
+  }
+
+  // Commit value on blur (clean up and derive provinces)
+  const handleBlur = () => {
+    // Small delay to allow click on suggestion to fire first
+    setTimeout(() => {
+      setSuggestions([])
+      const cities = inputValue.split(',').map(c => c.trim()).filter(c => c)
+      const cleanedValue = cities.join(', ')
+      if (cleanedValue !== value) {
+        onChange(cleanedValue)
+        // Derive provinces
+        const provinces = new Set<string>()
+        for (const city of cities) {
+          getProvincesForCity(city).forEach(p => provinces.add(p))
+        }
+        onProvinceChange(Array.from(provinces).join(', '))
+      }
+    }, 200)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -86,44 +109,15 @@ export default function CityAutocomplete({
         selectCity(suggestions[highlightedIndex])
       } else if (suggestions.length === 1) {
         selectCity(suggestions[0])
-      } else {
-        handleSave()
       }
-    } else if (e.key === 'Escape') {
-      handleCancel()
     } else if (e.key === ',' && suggestions.length > 0) {
-      // If typing comma and there's a top suggestion, auto-select it
       const currentToken = getCurrentToken(inputValue)
       if (currentToken.length > 0 && suggestions.length > 0) {
         e.preventDefault()
         selectCity(suggestions[0])
-        // Add comma for next entry
         setInputValue(prev => prev + ', ')
       }
     }
-  }
-
-  const handleSave = () => {
-    // Clean up: only keep valid cities
-    const cities = inputValue.split(',').map(c => c.trim()).filter(c => c)
-    const cleanedValue = cities.join(', ')
-    onChange(cleanedValue)
-
-    // Derive provinces
-    const provinces = new Set<string>()
-    for (const city of cities) {
-      getProvincesForCity(city).forEach(p => provinces.add(p))
-    }
-    onProvinceChange(Array.from(provinces).join(', '))
-
-    setIsEditing(false)
-    setSuggestions([])
-  }
-
-  const handleCancel = () => {
-    setInputValue(value)
-    setIsEditing(false)
-    setSuggestions([])
   }
 
   // Close suggestions when clicking outside
@@ -149,117 +143,52 @@ export default function CityAutocomplete({
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
 
-      {isEditing ? (
-        <div className="space-y-2">
-          {/* Helper text */}
-          <p className="text-xs text-gray-400 dark:text-gray-500 italic">
-            Πληκτρολόγησε και επέλεξε πόλη. Χώρισε με κόμμα (,) για πολλαπλές πόλεις.
-          </p>
+      {/* Helper text */}
+      <p className="text-xs text-gray-400 dark:text-gray-500 italic">
+        Πληκτρολόγησε και επέλεξε πόλη. Χώρισε με κόμμα (,) για πολλαπλές πόλεις. Η περιφέρεια συμπληρώνεται αυτόματα.
+      </p>
 
-          <div className="relative">
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => handleInputChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="π.χ. Αθήνα, Θεσσαλονίκη"
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-charcoal dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light focus:border-transparent"
-              autoFocus
-            />
+      <div className="relative">
+        <input
+          ref={inputRef}
+          type="text"
+          value={inputValue}
+          onChange={(e) => handleInputChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          placeholder="π.χ. Αθήνα, Θεσσαλονίκη"
+          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-charcoal dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light focus:border-transparent bg-white"
+        />
 
-            {/* Suggestions dropdown */}
-            {suggestions.length > 0 && (
-              <div
-                ref={suggestionsRef}
-                className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl shadow-lg overflow-hidden"
-              >
-                {suggestions.map((city, index) => {
-                  const provinces = getProvincesForCity(city)
-                  return (
-                    <button
-                      key={city}
-                      type="button"
-                      onClick={() => selectCity(city)}
-                      className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex justify-between items-center ${
-                        index === highlightedIndex
-                          ? 'bg-coral/10 dark:bg-coral/20 text-coral dark:text-coral-light'
-                          : 'text-charcoal dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600'
-                      }`}
-                    >
-                      <span className="font-medium">{city}</span>
-                      <span className="text-xs text-gray-400 dark:text-gray-500">
-                        {provinces.join(', ')}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleSave}
-              className="flex-1 bg-coral hover:bg-coral/90 dark:bg-coral-light dark:hover:bg-coral-light/90 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
-            >
-              Αποθήκευση
-            </button>
-            <button
-              onClick={handleCancel}
-              className="flex-1 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              Ακύρωση
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div
-          onClick={() => setIsEditing(true)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              setIsEditing(true)
-            }
-          }}
-          role="button"
-          tabIndex={0}
-          aria-label={`Πόλη επεξεργασία${value ? `: ${value}` : ''}`}
-          className="group relative flex items-start gap-2 px-4 py-3 rounded-2xl transition-colors cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light"
-        >
-          <div className="flex-1">
-            {value ? (
-              <p className="text-charcoal dark:text-gray-200">{value}</p>
-            ) : (
-              <p className="text-gray-400 dark:text-gray-500 italic">
-                π.χ. Αθήνα, Θεσσαλονίκη
-              </p>
-            )}
-          </div>
-          <svg
-            className="w-5 h-5 text-gray-400 group-hover:text-coral dark:group-hover:text-coral-light transition-colors flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
+        {/* Suggestions dropdown */}
+        {suggestions.length > 0 && (
+          <div
+            ref={suggestionsRef}
+            className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl shadow-lg overflow-hidden"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-            />
-          </svg>
-          {/* Hover tooltip */}
-          <div className="absolute bottom-full left-4 mb-2 hidden group-hover:block z-10">
-            <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-xs rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white whitespace-nowrap">
-              Χρησιμοποίησε κόμμα (,) για πολλαπλές πόλεις. Η περιφέρεια συμπληρώνεται αυτόματα.
-              <div className="absolute top-full left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black dark:border-t-white"></div>
-            </div>
+            {suggestions.map((city, index) => {
+              const provinces = getProvincesForCity(city)
+              return (
+                <button
+                  key={city}
+                  type="button"
+                  onClick={() => selectCity(city)}
+                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex justify-between items-center ${
+                    index === highlightedIndex
+                      ? 'bg-coral/10 dark:bg-coral/20 text-coral dark:text-coral-light'
+                      : 'text-charcoal dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <span className="font-medium">{city}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                    {provinces.join(', ')}
+                  </span>
+                </button>
+              )
+            })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
