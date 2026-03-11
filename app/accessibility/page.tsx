@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
-import NewsletterSection from '@/components/NewsletterSection'
+import CombinedCtaSection from '@/components/CombinedCtaSection'
 import ScrollToTop from '@/components/ScrollToTop'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 
@@ -309,7 +309,7 @@ export default function AccessibilityPage() {
           </div>
         </section>
 
-        <NewsletterSection />
+        <CombinedCtaSection />
       </main>
       <Footer />
       <CookieConsent />

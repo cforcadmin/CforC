@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
-import NewsletterSection from '@/components/NewsletterSection'
+import CombinedCtaSection from '@/components/CombinedCtaSection'
 import ScrollToTop from '@/components/ScrollToTop'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 
@@ -61,10 +61,14 @@ export default function CookiesPage() {
         </section>
 
       {/* Content Section */}
-      <section className="py-24 bg-white">
+      <section className="pt-32 pb-24 bg-white dark:bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="prose prose-lg max-w-none text-gray-700">
-            <h2 className="text-3xl font-bold mb-8 text-charcoal">ΠΟΛΙΤΙΚΗ COOKIES</h2>
+          <div className="prose prose-lg max-w-none text-gray-700 dark:text-gray-300">
+            <h2 className="text-3xl font-bold mb-4 text-charcoal dark:text-gray-100">ΠΟΛΙΤΙΚΗ COOKIES</h2>
+
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-12">
+              Τελευταία ενημέρωση: Ιανουάριος 2026
+            </p>
 
             <h3 className="text-2xl font-bold mb-4 mt-12 text-charcoal">Αυτός ο ιστότοπος χρησιμοποιεί cookies</h3>
 
@@ -240,7 +244,7 @@ export default function CookiesPage() {
         </div>
       </section>
 
-      <NewsletterSection />
+      <CombinedCtaSection />
       </main>
       <Footer />
       <CookieConsent />

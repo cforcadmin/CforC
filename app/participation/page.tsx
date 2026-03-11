@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
-import NewsletterSection from '@/components/NewsletterSection'
+import CombinedCtaSection from '@/components/CombinedCtaSection'
 import ScrollToTop from '@/components/ScrollToTop'
 import MembershipRegistrationModal from '@/components/MembershipRegistrationModal'
 import ThankYouModal from '@/components/ThankYouModal'
@@ -320,7 +320,7 @@ function ParticipationContent() {
         </div>
       </section>
 
-      <NewsletterSection />
+      <CombinedCtaSection />
       </main>
       <Footer />
       <CookieConsent />
