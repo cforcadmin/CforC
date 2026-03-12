@@ -139,14 +139,29 @@ export default function WorkingGroupsContent() {
                           )}
                         </div>
                       </div>
-                      {coordinator?.Email && (
-                        <button
-                          onClick={() => setJoinModalGroup(group)}
-                          className="flex-shrink-0 bg-coral hover:bg-coral/90 dark:bg-coral-light dark:hover:bg-coral-light/90 text-white rounded-full px-4 py-1.5 text-xs font-medium transition-colors whitespace-nowrap"
-                        >
-                          Αίτημα
-                        </button>
-                      )}
+                      <div className="flex gap-2 flex-shrink-0">
+                        {group.MaterialUrl && (
+                          <a
+                            href={group.MaterialUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors hover:bg-coral/20 dark:hover:bg-coral/30 flex items-center gap-1.5"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                            </svg>
+                            Υλικό
+                          </a>
+                        )}
+                        {coordinator?.Email && (
+                          <button
+                            onClick={() => setJoinModalGroup(group)}
+                            className="bg-charcoal dark:bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors hover:bg-charcoal/90 dark:hover:bg-gray-500"
+                          >
+                            Αίτημα
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )
                 })}
@@ -244,19 +259,34 @@ function WorkingGroupCard({
 
       {/* Card Body */}
       <div className="p-5 flex flex-col flex-1">
-        {/* Title + Join button */}
+        {/* Title + Action buttons */}
         <div className="flex items-start justify-between gap-3 mb-2">
           <h3 className="text-lg font-bold text-charcoal dark:text-gray-100 leading-snug">
             <LocalizedText text={group.Name} engText={group.EngName} />
           </h3>
-          {coordinator?.Email && (
-            <button
-              onClick={onJoinClick}
-              className="flex-shrink-0 bg-coral hover:bg-coral/90 dark:bg-coral-light dark:hover:bg-coral-light/90 text-white rounded-full px-4 py-1.5 text-xs font-medium transition-colors whitespace-nowrap"
-            >
-              Αίτημα Συμμετοχής
-            </button>
-          )}
+          <div className="flex gap-2 flex-shrink-0">
+            {group.MaterialUrl && (
+              <a
+                href={group.MaterialUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors hover:bg-coral/20 dark:hover:bg-coral/30 flex items-center gap-1.5"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+                Υλικό
+              </a>
+            )}
+            {coordinator?.Email && (
+              <button
+                onClick={onJoinClick}
+                className="bg-charcoal dark:bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors hover:bg-charcoal/90 dark:hover:bg-gray-500"
+              >
+                Αίτημα Συμμετοχής
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Description */}

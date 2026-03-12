@@ -240,6 +240,7 @@ export interface WorkingGroup extends StrapiData<WorkingGroup> {
   ImageAltText?: string
   Coordinator?: WorkingGroupMemberRef
   Members?: WorkingGroupMemberRef[]
+  MaterialUrl?: string
   SortOrder?: number
   Slug: string
   createdAt: string
