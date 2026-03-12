@@ -42,18 +42,43 @@ export default function ProfilePage() {
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
   const [activeSection, setActiveSectionState] = useState<SectionKey>('profile')
 
-  // Restore active section from sessionStorage on mount
+  // Read hash from URL to determine initial section
   useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem('cforc-profile-section')
-      if (saved && DASHBOARD_SECTIONS.some(s => s.key === saved)) {
-        setActiveSectionState(saved as SectionKey)
+    const hash = window.location.hash.replace('#', '')
+    if (hash && DASHBOARD_SECTIONS.some(s => s.key === hash)) {
+      setActiveSectionState(hash as SectionKey)
+      try { sessionStorage.setItem('cforc-profile-section', hash) } catch {}
+    } else {
+      // Fall back to sessionStorage
+      try {
+        const saved = sessionStorage.getItem('cforc-profile-section')
+        if (saved && DASHBOARD_SECTIONS.some(s => s.key === saved)) {
+          setActiveSectionState(saved as SectionKey)
+          window.history.replaceState(null, '', `#${saved}`)
+        }
+      } catch {}
+    }
+  }, [])
+
+  // Listen for back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const hash = window.location.hash.replace('#', '')
+      if (hash && DASHBOARD_SECTIONS.some(s => s.key === hash)) {
+        setActiveSectionState(hash as SectionKey)
+        try { sessionStorage.setItem('cforc-profile-section', hash) } catch {}
+      } else {
+        setActiveSectionState('profile')
+        try { sessionStorage.setItem('cforc-profile-section', 'profile') } catch {}
       }
-    } catch {}
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
   const setActiveSection = (key: SectionKey) => {
     setActiveSectionState(key)
+    window.history.pushState(null, '', `#${key}`)
     try { sessionStorage.setItem('cforc-profile-section', key) } catch {}
   }
 
