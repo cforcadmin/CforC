@@ -368,7 +368,7 @@ function WorkingGroupCard({
         {(group.Admin || group.Comms || group.IT) && (
           <div className="pt-3 border-t border-gray-200 dark:border-gray-600 mt-3">
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-              Λειτουργίες
+              Διοικητική Υποστήριξη
             </span>
             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
               {group.Admin && !group.Admin.HideProfile && (

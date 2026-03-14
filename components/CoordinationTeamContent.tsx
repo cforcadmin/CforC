@@ -165,7 +165,7 @@ function CurrentTeamCard({ team }: { team: CoordinationTeam }) {
         {(team.Admin || team.Comms || team.IT) && (
           <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-              Λειτουργίες
+              Διοικητική Υποστήριξη
             </span>
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-4 mt-3">
               {team.Admin && !team.Admin.HideProfile && (
