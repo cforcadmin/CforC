@@ -30,7 +30,7 @@ function visibleMembers(members?: WorkingGroupMemberRef[]): WorkingGroupMemberRe
 const MEMBER_ROLE_LABELS: Record<number, string> = {
   0: 'Υπεύθυνη Κοινότητας',
   1: 'Υπεύθυνη Επικοινωνίας',
-  2: 'Υπεύθυνος Οικονομικών & IT',
+  2: 'Υπεύθυνος Οικονομικών',
   3: 'Αντιπρόεδρος',
 }
 
@@ -144,46 +144,39 @@ function CurrentTeamCard({ team }: { team: CoordinationTeam }) {
           )}
         </div>
 
-        {/* Coordinator */}
-        {coordinator && !coordinator.HideProfile && (
-          <div className="mb-6">
+        {/* Team — President + Members in one row */}
+        {(coordinator || members.length > 0) && (
+          <div>
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-              Πρόεδρος
+              Ομάδα Συντονισμού
             </span>
-            <div className="flex items-center gap-3 mt-2">
-              {coordinatorImageUrl ? (
-                <Image
-                  src={coordinatorImageUrl}
-                  alt={coordinator.ProfileImageAltText || coordinator.Name}
-                  width={48}
-                  height={48}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-coral dark:border-coral-light"
-                />
-              ) : (
-                <div className="w-12 h-12 rounded-full bg-coral/20 dark:bg-coral/30 flex items-center justify-center text-coral dark:text-coral-light text-lg font-bold">
-                  {coordinator.Name.charAt(0)}
-                </div>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-4 mt-3">
+              {coordinator && !coordinator.HideProfile && (
+                <MemberAvatar key={coordinator.id} member={coordinator} roleLabel="Πρόεδρος" />
               )}
-              <Link
-                href={`/members/${coordinator.Slug}`}
-                className="text-base font-medium text-charcoal dark:text-gray-200 hover:text-coral dark:hover:text-coral-light transition-colors"
-              >
-                {coordinator.Name}
-              </Link>
+              {members.map((member, index) => (
+                <MemberAvatar key={member.id} member={member} roleLabel={MEMBER_ROLE_LABELS[index]} />
+              ))}
             </div>
           </div>
         )}
 
-        {/* Members Grid */}
-        {members.length > 0 && (
-          <div>
+        {/* Operations */}
+        {(team.Admin || team.Comms || team.IT) && (
+          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-              Μέλη ({members.length})
+              Λειτουργίες
             </span>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-3">
-              {members.map((member, index) => (
-                <MemberAvatar key={member.id} member={member} roleLabel={MEMBER_ROLE_LABELS[index]} />
-              ))}
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-4 mt-3">
+              {team.Admin && !team.Admin.HideProfile && (
+                <MemberAvatar member={team.Admin} roleLabel="Admin" />
+              )}
+              {team.Comms && !team.Comms.HideProfile && (
+                <MemberAvatar member={team.Comms} roleLabel="Comms" />
+              )}
+              {team.IT && !team.IT.HideProfile && (
+                <MemberAvatar member={team.IT} roleLabel="IT" />
+              )}
             </div>
           </div>
         )}
@@ -300,8 +293,13 @@ function MemberAvatar({ member, roleLabel }: { member: WorkingGroupMemberRef; ro
   return (
     <Link
       href={`/members/${member.Slug}`}
-      className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+      className="flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
     >
+      {roleLabel && (
+        <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 text-center leading-tight uppercase tracking-wide">
+          {roleLabel}
+        </span>
+      )}
       {imageUrl ? (
         <Image
           src={imageUrl}
@@ -318,11 +316,6 @@ function MemberAvatar({ member, roleLabel }: { member: WorkingGroupMemberRef; ro
       <span className="text-xs text-center text-charcoal dark:text-gray-300 group-hover:text-coral dark:group-hover:text-coral-light transition-colors font-medium leading-tight">
         {member.Name}
       </span>
-      {roleLabel && (
-        <span className="text-[10px] text-gray-500 dark:text-gray-400 text-center leading-tight">
-          {roleLabel}
-        </span>
-      )}
     </Link>
   )
 }

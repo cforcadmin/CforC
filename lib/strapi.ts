@@ -168,14 +168,14 @@ export async function getMembers() {
  * Get all working groups with coordinator and members populated
  */
 export async function getWorkingGroups() {
-  return fetchStrapi('/working-groups?populate[Image]=true&populate[Coordinator][populate]=Image&populate[Members][populate]=Image&pagination[limit]=1000&sort=SortOrder:asc')
+  return fetchStrapi('/working-groups?populate[Image]=true&populate[Coordinator][populate]=Image&populate[Members][populate]=Image&populate[Admin][populate]=Image&populate[Comms][populate]=Image&populate[IT][populate]=Image&pagination[limit]=1000&sort=SortOrder:asc')
 }
 
 /**
  * Get all coordination teams with coordinator and members populated
  */
 export async function getCoordinationTeams() {
-  return fetchStrapi('/coordination-teams?populate[Image]=true&populate[Coordinator][populate]=Image&populate[Members][populate]=Image&populate[Admin][populate]=Image&pagination[limit]=1000&sort=SortOrder:asc')
+  return fetchStrapi('/coordination-teams?populate[Image]=true&populate[Coordinator][populate]=Image&populate[Members][populate]=Image&populate[Admin][populate]=Image&populate[Comms][populate]=Image&populate[IT][populate]=Image&pagination[limit]=1000&sort=SortOrder:asc')
 }
 
 /**

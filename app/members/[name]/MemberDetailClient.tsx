@@ -9,7 +9,8 @@ import ScrollToTop from '@/components/ScrollToTop'
 import Link from 'next/link'
 import Image from 'next/image'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
-import { getMemberBySlugOrId } from '@/lib/strapi'
+import { getMemberBySlugOrId, getCoordinationTeams } from '@/lib/strapi'
+import type { CoordinationTeam } from '@/lib/types'
 import { renderBlocks } from '@/lib/renderBlocks'
 import LocalizedText from '@/components/LocalizedText'
 import LocalizedBlocks from '@/components/LocalizedBlocks'
@@ -198,6 +199,7 @@ export default function MemberDetailClient() {
   const mapCity = searchParams.get('city')
   const backToMapHref = mapCity ? `/map?city=${encodeURIComponent(mapCity)}` : '/map'
   const [member, setMember] = useState<Member | null>(null)
+  const [memberRoles, setMemberRoles] = useState<string[]>([])
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
   const [emailCopied, setEmailCopied] = useState(false)
   const [newsletterEmail, setNewsletterEmail] = useState('')
@@ -231,11 +233,34 @@ export default function MemberDetailClient() {
   useEffect(() => {
     const fetchMember = async () => {
       try {
-        const result = await getMemberBySlugOrId(memberSlug)
+        const [result, ctData] = await Promise.all([
+          getMemberBySlugOrId(memberSlug),
+          getCoordinationTeams(),
+        ])
         if (result.data) {
           const m = result.data
-          if (m.HideProfile) return // Hidden profile — treat as not found
+          if (m.HideProfile) return
           setMember(m)
+
+          // Check if this member has coordination team role(s)
+          const roles: string[] = []
+          const currentTeams = (ctData.data || []).filter((t: CoordinationTeam) => t.IsCurrent)
+          for (const team of currentTeams) {
+            if (team.Coordinator?.id === m.id) roles.push('Πρόεδρος')
+            const memberRoleLabels: Record<number, string> = {
+              0: 'Υπεύθυνη Κοινότητας',
+              1: 'Υπεύθυνη Επικοινωνίας',
+              2: 'Υπεύθυνος Οικονομικών',
+              3: 'Αντιπρόεδρος',
+            }
+            const members = team.Members || []
+            const idx = members.findIndex((mem: any) => mem?.id === m.id)
+            if (idx >= 0 && memberRoleLabels[idx]) roles.push(memberRoleLabels[idx])
+            if (team.Admin?.id === m.id) roles.push('Admin')
+            if (team.Comms?.id === m.id) roles.push('Comms')
+            if (team.IT?.id === m.id) roles.push('IT')
+          }
+          setMemberRoles(roles)
         }
       } catch (error) {
         console.error('Error fetching member:', error)
@@ -342,7 +367,7 @@ export default function MemberDetailClient() {
                     />
                   </div>
                 ) : (
-                  <div className="aspect-[3/4] bg-gray-200 dark:bg-gray-700 rounded-2xl flex items-center justify-center">
+                  <div className="aspect-[3/4] relative bg-gray-200 dark:bg-gray-700 rounded-2xl flex items-center justify-center">
                     <span className="text-gray-400 dark:text-gray-500 text-6xl">{member.Name.charAt(0)}</span>
                   </div>
                 )}
@@ -350,6 +375,16 @@ export default function MemberDetailClient() {
 
               {/* Info */}
               <div>
+                {memberRoles.length > 0 && (
+                  <div className="mb-6">
+                    <span className="inline-flex items-center gap-2 bg-charcoal text-white dark:bg-white dark:text-charcoal text-sm font-medium px-4 py-2 rounded-full">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                      Ομάδα Συντονισμού — {memberRoles.join(' · ')}
+                    </span>
+                  </div>
+                )}
                 <div className="mb-8">
                   <h3 className="text-coral dark:text-coral-light text-sm font-bold mb-4 uppercase">Βιογραφικό</h3>
                   <LocalizedBlocks blocks={member.Bio} engBlocks={member.EngBio} className="text-gray-700 dark:text-gray-300 leading-relaxed" />

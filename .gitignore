@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# database backups (contain sensitive member data)
+/_Database_Backup
+
 # dependencies
 /node_modules
 /.pnp

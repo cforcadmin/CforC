@@ -20,6 +20,7 @@ interface MemberFlipCardProps {
     }>
     ProfileImageAltText?: string
   }
+  role?: string
 }
 
 function extractBioText(bio: any): string {
@@ -82,7 +83,7 @@ function LocationPill({ label, filterHref, mapHref }: { label: string; filterHre
   )
 }
 
-export default function MemberFlipCard({ member }: MemberFlipCardProps) {
+export default function MemberFlipCard({ member, role }: MemberFlipCardProps) {
   const router = useRouter()
   const [isFlipped, setIsFlipped] = useState(false)
   const flipTimeout = useRef<NodeJS.Timeout | null>(null)
@@ -133,10 +134,20 @@ export default function MemberFlipCard({ member }: MemberFlipCardProps) {
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
+                {role && (
+                  <span className="absolute top-2 right-2 bg-charcoal text-white dark:bg-white dark:text-charcoal text-[10px] font-medium px-2 py-1 rounded-full shadow-sm z-10">
+                    {role}
+                  </span>
+                )}
               </div>
             ) : (
-              <div className="aspect-[10/12] bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+              <div className="aspect-[10/12] relative bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                 <span className="text-gray-400 dark:text-gray-500 text-4xl">{member.Name.charAt(0)}</span>
+                {role && (
+                  <span className="absolute top-2 right-2 bg-charcoal text-white dark:bg-white dark:text-charcoal text-[10px] font-medium px-2 py-1 rounded-full shadow-sm z-10">
+                    {role}
+                  </span>
+                )}
               </div>
             )}
             <div className="p-4">

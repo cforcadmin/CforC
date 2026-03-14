@@ -363,6 +363,50 @@ function WorkingGroupCard({
             </div>
           </div>
         )}
+
+        {/* Operations */}
+        {(group.Admin || group.Comms || group.IT) && (
+          <div className="pt-3 border-t border-gray-200 dark:border-gray-600 mt-3">
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Λειτουργίες
+            </span>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+              {group.Admin && !group.Admin.HideProfile && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase">Admin</span>
+                  <Link
+                    href={`/members/${group.Admin.Slug}`}
+                    className="text-xs text-charcoal dark:text-gray-300 hover:text-coral dark:hover:text-coral-light transition-colors"
+                  >
+                    {group.Admin.Name}
+                  </Link>
+                </div>
+              )}
+              {group.Comms && !group.Comms.HideProfile && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase">Comms</span>
+                  <Link
+                    href={`/members/${group.Comms.Slug}`}
+                    className="text-xs text-charcoal dark:text-gray-300 hover:text-coral dark:hover:text-coral-light transition-colors"
+                  >
+                    {group.Comms.Name}
+                  </Link>
+                </div>
+              )}
+              {group.IT && !group.IT.HideProfile && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase">IT</span>
+                  <Link
+                    href={`/members/${group.IT.Slug}`}
+                    className="text-xs text-charcoal dark:text-gray-300 hover:text-coral dark:hover:text-coral-light transition-colors"
+                  >
+                    {group.IT.Name}
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

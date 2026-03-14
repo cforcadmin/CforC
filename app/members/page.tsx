@@ -11,7 +11,7 @@ import LoadingIndicator from '@/components/LoadingIndicator'
 import Link from 'next/link'
 import Image from 'next/image'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
-import { getMembers } from '@/lib/strapi'
+import { getMembers, getCoordinationTeams } from '@/lib/strapi'
 import FieldsFilter from '@/components/members/FieldsFilter'
 import CityFilter from '@/components/members/CityFilter'
 import ProvinceFilter from '@/components/members/ProvinceFilter'
@@ -101,6 +101,7 @@ function MembersPageContent() {
   const [totalCount, setTotalCount] = useState(0)
   const [displayCount, setDisplayCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const [memberRoles, setMemberRoles] = useState<Record<number, string[]>>({})
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
   const [filterLogic, setFilterLogic] = useState<'or' | 'and'>('and')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -177,10 +178,35 @@ function MembersPageContent() {
     const fetchMembers = async () => {
       try {
         setIsLoading(true)
-        const data = await getMembers()
+        const [data, ctData] = await Promise.all([getMembers(), getCoordinationTeams()])
         const visibleMembers = (data.data || []).filter((m: Member) => !m.HideProfile)
         setAllMembers(visibleMembers)
         setTotalCount(visibleMembers.length)
+
+        // Build role map from current coordination team(s)
+        const roles: Record<number, string[]> = {}
+        const addRole = (id: number, role: string) => {
+          if (!roles[id]) roles[id] = []
+          if (!roles[id].includes(role)) roles[id].push(role)
+        }
+        const currentTeams = (ctData.data || []).filter((t: any) => t.IsCurrent)
+        for (const team of currentTeams) {
+          if (team.Coordinator?.id) addRole(team.Coordinator.id, 'Πρόεδρος')
+          const members = team.Members || []
+          const memberRoleLabels: Record<number, string> = {
+            0: 'Υπεύθυνη Κοινότητας',
+            1: 'Υπεύθυνη Επικοινωνίας',
+            2: 'Υπεύθυνος Οικονομικών',
+            3: 'Αντιπρόεδρος',
+          }
+          members.forEach((m: any, i: number) => {
+            if (m?.id && memberRoleLabels[i]) addRole(m.id, memberRoleLabels[i])
+          })
+          if (team.Admin?.id) addRole(team.Admin.id, 'Admin')
+          if (team.Comms?.id) addRole(team.Comms.id, 'Comms')
+          if (team.IT?.id) addRole(team.IT.id, 'IT')
+        }
+        setMemberRoles(roles)
       } catch (error) {
         console.error('Error fetching members:', error)
       } finally {
@@ -415,7 +441,7 @@ function MembersPageContent() {
           {viewMode === 'grid' ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredMembers.map((member) => (
-                <MemberFlipCard key={member.id} member={member} />
+                <MemberFlipCard key={member.id} member={member} role={memberRoles[member.id]?.join(' · ')} />
               ))}
             </div>
           ) : (
@@ -441,7 +467,14 @@ function MembersPageContent() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-light group-hover:font-bold text-charcoal dark:text-gray-100 mb-1 transition-all">{member.Name}</h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-base font-light group-hover:font-bold text-charcoal dark:text-gray-100 transition-all">{member.Name}</h3>
+                      {memberRoles[member.id] && (
+                        <span className="bg-charcoal text-white dark:bg-white dark:text-charcoal text-[10px] font-medium px-2 py-0.5 rounded-full">
+                          {memberRoles[member.id].join(' · ')}
+                        </span>
+                      )}
+                    </div>
                     <div className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-2xl tracking-wide max-w-full">
                       <p className="line-clamp-1">{member.FieldsOfWork}</p>
                     </div>
