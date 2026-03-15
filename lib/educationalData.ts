@@ -307,6 +307,22 @@ export const educationalCategories: Category[] = [
           },
         ],
       },
+      {
+        key: 'mental-health',
+        name: 'Ψυχική Υγεία',
+        fullName: 'Πρώτες Βοήθειες Ψυχικής Υγείας',
+        description: 'Εργαλεία και οδηγοί πρώτων βοηθειών ψυχικής υγείας για πολιτιστικούς εργαζόμενους.',
+        engDescription: 'Mental health first aid tools and guides for cultural workers.',
+        resources: [
+          {
+            title: 'Πρώτες βοήθειες Ψυχικής υγείας',
+            engTitle: 'Mental Health First Aid',
+            description: 'Οδηγός πρώτων βοηθειών ψυχικής υγείας για μέλη του δικτύου Culture for Change.',
+            engDescription: 'Mental health first aid guide for Culture for Change network members.',
+            url: 'https://drive.google.com/file/d/1u1GR4II6qpL6x6CFon-_q7_PxsLixDqD/view?usp=share_link',
+          },
+        ],
+      },
     ],
   },
 
