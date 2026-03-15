@@ -146,9 +146,9 @@ export default function AboutPartnersSection() {
                   <Image
                     src="/about-us-CAN-logo.png"
                     alt="Community Arts Network"
-                    width={200}
-                    height={100}
-                    className="w-auto max-h-32 object-contain"
+                    width={100}
+                    height={50}
+                    className="w-auto max-h-16 object-contain"
                   />
                 </div>
               </div>
