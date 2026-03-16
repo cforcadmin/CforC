@@ -540,6 +540,50 @@ export async function POST(request: NextRequest) {
     // Update was successful - log profile changes (fire-and-forget)
     console.log('[UPDATE] Update successful, returning success response')
 
+    // Add member to Sender "Paid" group on first profile update (fire-and-forget)
+    if (!existingPopulated.AddedToPaidGroup) {
+      const SENDER_API_KEY = process.env.SENDER_API_KEY
+      const SENDER_PAID_GROUP_ID = process.env.SENDER_PAID_GROUP_ID
+      const memberEmail = existingPopulated.Email
+      if (SENDER_API_KEY && SENDER_PAID_GROUP_ID && memberEmail) {
+        (async () => {
+          try {
+            const senderRes = await fetch('https://api.sender.net/v2/subscribers', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${SENDER_API_KEY}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+              body: JSON.stringify({
+                email: memberEmail,
+                firstname: existingPopulated.Name?.split(' ')[0] || '',
+                groups: [SENDER_PAID_GROUP_ID],
+                trigger_automation: false,
+              }),
+            })
+            if (senderRes.ok) {
+              console.log('[UPDATE] Added to Sender Paid group:', memberEmail)
+              // Set flag in Strapi so we don't add again
+              await fetch(`${STRAPI_URL}/api/members/${updateId}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${STRAPI_API_TOKEN}`,
+                },
+                body: JSON.stringify({ data: { AddedToPaidGroup: true } }),
+              })
+              console.log('[UPDATE] Set AddedToPaidGroup flag for:', memberEmail)
+            } else {
+              console.error('[UPDATE] Sender Paid group add failed:', await senderRes.text())
+            }
+          } catch (err) {
+            console.error('[UPDATE] Sender Paid group error:', err)
+          }
+        })()
+      }
+    }
+
     if (changedFields.length > 0) {
       const displayNames = changedFields.map(f => FIELD_DISPLAY_NAMES[f] || f)
       const memberEmail = existingPopulated.Email || ''
