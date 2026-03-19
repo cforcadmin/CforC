@@ -40,8 +40,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
   const aboutDropdownItemsRef = useRef<(HTMLAnchorElement | null)[]>([])
   const aboutDropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // TODO: Remove testing condition — make permanently visible
-  const showProjects = pathname?.startsWith('/projects')
+  const showProjects = true
 
   useEffect(() => {
     const handleScroll = () => {
@@ -323,7 +322,6 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
               <Link href="/news" className={`text-sm transition-all ${pathname?.startsWith('/news') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
                 ΝΕΑ
               </Link>
-              {/* TODO: Remove testing condition — make permanently visible */}
               {showProjects && (
                 <div
                   ref={dropdownRef}
@@ -555,7 +553,6 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 )}
               </div>
               <Link href="/news" className={`block text-sm py-2 transition-all ${pathname?.startsWith('/news') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΝΕΑ</Link>
-              {/* TODO: Remove testing condition — make permanently visible */}
               {showProjects && (
                 <div>
                   <button

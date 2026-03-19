@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080">
+  <title>Ετήσια Δράση 2025 — Social Media</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', 'Arial Nova', Arial, system-ui, sans-serif;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      position: relative;
+      background: #2D2D2D;
+    }
+
+    .left-strip {
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      width: 120px;
+      background: #FF8B6A;
+      z-index: 2;
+    }
+    .strip-text {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%) rotate(-90deg);
+      font-size: 13px; font-weight: 800; color: #2D2D2D;
+      letter-spacing: 6px; text-transform: uppercase; white-space: nowrap;
+    }
+
+    .logo { position: absolute; top: 36px; left: 36px; z-index: 5; }
+    .logo svg { width: 48px; height: 48px; }
+
+    .super-label {
+      position: absolute; top: 50px; right: 100px;
+      font-size: 13px; font-weight: 700; color: #FF8B6A;
+      letter-spacing: 5px; text-transform: uppercase; z-index: 5;
+    }
+
+    .title-block { position: absolute; top: 50px; left: 200px; z-index: 5; }
+    .title-main {
+      font-size: 56px; font-weight: 900; color: #FFFFFF;
+      text-transform: uppercase; letter-spacing: 3px;
+    }
+    .title-accent {
+      display: inline-block; background: #FF8B6A; color: #2D2D2D;
+      padding: 4px 22px; border-radius: 8px; font-size: 56px;
+      font-weight: 900; text-transform: uppercase; letter-spacing: 3px; margin-top: 6px;
+    }
+
+    .divider-h {
+      position: absolute; top: 220px; left: 200px; right: 100px; height: 2px;
+      background: linear-gradient(90deg, #FF8B6A, rgba(255,139,106,0.1)); z-index: 5;
+    }
+
+    /* ─── 3 platform columns ─── */
+    .platforms {
+      position: absolute;
+      top: 250px;
+      left: 200px;
+      right: 100px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      z-index: 5;
+    }
+
+    .platform {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 20px;
+      padding: 32px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Platform-specific accent colors */
+    .platform.fb { border-top: 4px solid #1877F2; }
+    .platform.ig { border-top: 4px solid #E4405F; }
+    .platform.li { border-top: 4px solid #0A66C2; }
+
+    .platform-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .platform-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .platform-icon.fb-icon { background: #1877F2; }
+    .platform-icon.ig-icon { background: linear-gradient(45deg, #F58529, #DD2A7B, #8134AF); }
+    .platform-icon.li-icon { background: #0A66C2; }
+
+    .platform-icon svg { width: 28px; height: 28px; fill: #FFFFFF; }
+
+    .platform-name {
+      font-size: 24px;
+      font-weight: 900;
+      color: #FFFFFF;
+    }
+
+    /* ─── Metric rows ─── */
+    .metrics {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .metric {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+    }
+
+    .metric-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .metric-value {
+      font-size: 28px;
+      font-weight: 900;
+      color: #FFFFFF;
+    }
+
+    /* ─── Growth badge ─── */
+    .growth {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 8px;
+      margin-left: 8px;
+    }
+
+    .growth.up { background: rgba(76,175,80,0.15); color: #66BB6A; }
+    .growth.down { background: rgba(239,83,80,0.15); color: #EF5350; }
+
+    /* ─── Comparison section header ─── */
+    .compare-label {
+      font-size: 9px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.25);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 20px;
+      margin-bottom: 12px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .compare-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+    }
+
+    .compare-type {
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ─── FB Group banner ─── */
+    .fb-group {
+      position: absolute;
+      bottom: 50px;
+      left: 200px;
+      right: 100px;
+      background: rgba(24,119,242,0.08);
+      border: 1px solid rgba(24,119,242,0.2);
+      border-radius: 16px;
+      padding: 22px 36px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      z-index: 5;
+    }
+
+    .fb-group-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: #1877F2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .fb-group-icon svg { width: 24px; height: 24px; fill: #FFFFFF; }
+
+    .fb-group-text {
+      font-size: 20px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .fb-group-text strong {
+      color: #64B5F6;
+      font-weight: 900;
+    }
+
+    .corner { position: absolute; width: 60px; height: 60px; z-index: 3; }
+    .corner-tr { top: 30px; right: 30px; border-top: 3px solid rgba(255,139,106,0.15); border-right: 3px solid rgba(255,139,106,0.15); }
+    .corner-bl { bottom: 30px; left: 140px; border-bottom: 3px solid rgba(255,139,106,0.15); border-left: 3px solid rgba(255,139,106,0.15); }
+
+    .accent-line {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 6px;
+      background: linear-gradient(90deg, #FF6B47, #FF8B6A, #FFB299); z-index: 10;
+    }
+    .slide-number {
+      position: absolute; bottom: 24px; right: 50px;
+      font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.2);
+      letter-spacing: 1px; z-index: 20;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="left-strip">
+    <div class="strip-text">Ετήσια Δραστηριότητα · 2025</div>
+  </div>
+
+  <div class="logo">
+    <svg viewBox="0 0 62 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M28.1357 56.9941C29.2174 57.1347 30.3196 57.2174 31.4101 57.245L31.8545 41.4423C31.3662 41.4313 30.8838 41.3927 30.4102 41.332L28.1357 56.9941Z" fill="#2D2D2D"/><path d="M19.7527 33.0938L3.91309 38.2786C4.27268 39.2572 4.69659 40.2247 5.16728 41.1591L20.2994 34.3562C20.0918 33.9482 19.9106 33.5265 19.7527 33.0938Z" fill="#2D2D2D"/><path d="M2.41992 26.0625L19.0928 27.6971C19.1425 27.2395 19.2214 26.7902 19.3237 26.3492L2.94323 22.9863C2.70935 23.9979 2.53394 25.0316 2.41992 26.0598V26.0625Z" fill="#2D2D2D"/><path d="M19.0487 29.752L2.31445 30.6947C2.37877 31.72 2.50448 32.751 2.68574 33.7626L19.2153 31.1136C19.1335 30.6671 19.0779 30.215 19.0487 29.7547V29.752Z" fill="#2D2D2D"/><path d="M23.8526 38.627L13.2197 50.8435C14.0617 51.4968 14.9534 52.1115 15.8684 52.6738L25.0249 39.4346C24.6185 39.1838 24.2268 38.9164 23.8526 38.627Z" fill="#2D2D2D"/><path d="M26.936 40.4062L20.2061 54.8831C21.2117 55.2993 22.2525 55.6659 23.3021 55.9746L28.2896 40.8859C27.8247 40.7508 27.3745 40.5882 26.9331 40.4062H26.936Z" fill="#2D2D2D"/><path d="M21.3978 36.127L7.65723 45.1846C8.28286 46.0281 8.96404 46.8467 9.68323 47.6213L22.2924 37.2047C21.9737 36.8629 21.6755 36.5046 21.3978 36.1297V36.127Z" fill="#2D2D2D"/><path d="M39.3098 18.5111L48.3318 5.18642C47.4109 4.63238 46.4432 4.11968 45.4638 3.66211L38.0498 17.8385C38.4854 18.0397 38.9064 18.2657 39.3128 18.5111H39.3098Z" fill="#2D2D2D"/><path d="M40.8579 1.95391C39.8055 1.65622 38.7267 1.40814 37.645 1.2207L34.6162 16.7698C35.0957 16.8525 35.5634 16.9572 36.0253 17.0895L40.8609 1.95391H40.8579Z" fill="#2D2D2D"/><path d="M42.0662 20.7198L54.5642 10.1847C53.8392 9.41841 53.0586 8.68245 52.2488 7.99609L41.043 19.7496C41.4026 20.0555 41.7446 20.378 42.0662 20.7198Z" fill="#2D2D2D"/><path d="M28.8623 16.9716L24.6203 1.68164C23.5591 1.9435 22.5008 2.266 21.4746 2.63537L27.4854 17.3906C27.9327 17.228 28.3917 17.0874 28.8623 16.9716Z" fill="#2D2D2D"/><path d="M9.71128 12.71L21.1656 21.0068C21.4843 21.2384 21.9404 21.1943 22.2035 20.9048L22.2122 20.8938C22.4754 20.6044 22.4549 20.1744 22.1625 19.9098L11.7344 10.4855C11.097 9.90941 10.0767 9.95626 9.50079 10.5875L9.48032 10.6123C8.90439 11.2435 9.01256 12.2028 9.71128 12.71Z" fill="#2D2D2D"/><path d="M15.23 7.57548L23.8807 18.4772C24.1204 18.7804 24.5706 18.8521 24.9068 18.6426L24.9185 18.6343C25.2547 18.4248 25.36 18.0031 25.1553 17.6751L17.8173 5.94642C17.3671 5.22699 16.3701 5.01199 15.6334 5.47507L15.6071 5.49161C14.8704 5.95469 14.6979 6.90566 15.227 7.57272L15.23 7.57548Z" fill="#2D2D2D"/><path d="M5.87016 19.0856L19.2774 24.1382C19.6516 24.2787 20.0755 24.1189 20.2451 23.7743L20.2509 23.7605C20.4205 23.416 20.2773 23.008 19.9206 22.8289L7.18574 16.4146C6.40224 16.0204 5.42871 16.3264 5.0545 17.0844L5.03988 17.112C4.66567 17.87 5.04573 18.7714 5.87016 19.0829V19.0856Z" fill="#2D2D2D"/><path d="M40.5859 38.6304L51.2217 50.847C52.0637 50.1937 52.8793 49.4908 53.6424 48.7548L41.6559 37.707C41.3168 38.0323 40.9631 38.341 40.5859 38.6332V38.6304Z" fill="#2D2D2D"/><path d="M44.0825 23.5476L59.1415 16.6014C58.6621 15.6752 58.1212 14.7656 57.5365 13.8945L43.375 22.3568C43.6323 22.7399 43.872 23.1369 44.0854 23.5476H44.0825Z" fill="#2D2D2D"/><path d="M29.4766 0.875764L31.0056 16.615C31.1897 16.5985 31.3769 16.5847 31.564 16.5764C31.8651 16.5627 32.1604 16.5599 32.4586 16.5654L32.7392 0.759994C32.0726 0.748968 31.3973 0.759993 30.7161 0.79307C30.301 0.812365 29.8859 0.839931 29.4766 0.875764Z" fill="#2D2D2D"/><path d="M43.042 36.13L56.7825 45.1849C57.4082 44.3415 57.9899 43.4539 58.5132 42.5525L43.805 34.9668C43.5711 35.3692 43.3139 35.7551 43.0391 36.1273L43.042 36.13Z" fill="#2D2D2D"/><path d="M37.5059 40.4104L44.2212 54.8928C45.2239 54.4793 46.215 54.0079 47.1652 53.4925L38.7981 39.793C38.38 40.019 37.9502 40.2257 37.5059 40.4104Z" fill="#2D2D2D"/><path d="M34.0293 41.3325L36.3067 56.9946C37.3913 56.854 38.476 56.6556 39.5372 56.4047L35.453 41.0762C34.9882 41.1864 34.5146 41.2719 34.0293 41.3353V41.3325Z" fill="#2D2D2D"/><path d="M7.01861 10.5748C8.02613 10.5748 8.84289 9.80473 8.84289 8.85479C8.84289 7.90485 8.02613 7.13477 7.01861 7.13477C6.01109 7.13477 5.19434 7.90485 5.19434 8.85479C5.19434 9.80473 6.01109 10.5748 7.01861 10.5748Z" fill="#2D2D2D"/><path d="M13.6436 4.66465C14.6522 4.66465 15.4679 3.8956 15.4679 2.94463C15.4679 1.99366 14.6522 1.22461 13.6436 1.22461C12.635 1.22461 11.8193 1.99366 11.8193 2.94463C11.8193 3.8956 12.635 4.66465 13.6436 4.66465Z" fill="#2D2D2D"/><path d="M2.3853 17.7723C3.3798 17.6201 4.05514 16.7366 3.89371 15.799C3.73228 14.8613 2.79521 14.2245 1.80071 14.3768C0.806205 14.529 0.130866 15.4125 0.292296 16.3501C0.453727 17.2878 1.3908 17.9245 2.3853 17.7723Z" fill="#2D2D2D"/>
+    </svg>
+  </div>
+
+  <div class="super-label">Ετήσια Δραστηριότητα 2025</div>
+
+  <div class="title-block">
+    <div class="title-main">SOCIAL</div>
+    <div class="title-accent">MEDIA</div>
+  </div>
+
+  <div class="divider-h"></div>
+
+  <!-- 3 Platform cards -->
+  <div class="platforms">
+
+    <!-- Facebook -->
+    <div class="platform fb">
+      <div class="platform-header">
+        <div class="platform-icon fb-icon">
+          <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        </div>
+        <div class="platform-name">Facebook</div>
+      </div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">Posts</div>
+          <div class="metric-value">68</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Followers</div>
+          <div class="metric-value">770 <span class="growth up">+36%</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Reach</div>
+          <div class="metric-value">36.6K <span class="growth up">+224%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instagram -->
+    <div class="platform ig">
+      <div class="platform-header">
+        <div class="platform-icon ig-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        </div>
+        <div class="platform-name">Instagram</div>
+      </div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">Posts</div>
+          <div class="metric-value">68</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Followers</div>
+          <div class="metric-value">667 <span class="growth up">+47,5%</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Reach</div>
+          <div class="metric-value">19.2K <span class="growth up">+111%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LinkedIn -->
+    <div class="platform li">
+      <div class="platform-header">
+        <div class="platform-icon li-icon">
+          <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </div>
+        <div class="platform-name">LinkedIn</div>
+      </div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">Posts</div>
+          <div class="metric-value">68</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Followers</div>
+          <div class="metric-value">1.177 <span class="growth up">+46,7%</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Impressions</div>
+          <div class="metric-value">22.4K <span class="growth down">-35,7%</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FB Group banner -->
+  <div class="fb-group">
+    <div class="fb-group-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+    </div>
+    <div class="fb-group-text">FB Group κοινότητας: <strong>400 posts</strong></div>
+  </div>
+
+  <div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div>
+
+  <div class="slide-number">20</div>
+  <div class="accent-line"></div>
+
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080">
+  <title>Ετήσια Δράση 2025 — Άλλες Ενέργειες Βιωσιμότητας</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', 'Arial Nova', Arial, system-ui, sans-serif;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      position: relative;
+      background: #2D2D2D;
+    }
+
+    .watermark {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%) rotate(-8deg);
+      font-size: 200px; font-weight: 900; color: rgba(255,139,106,0.03);
+      text-transform: uppercase; letter-spacing: 20px; white-space: nowrap; z-index: 0;
+    }
+
+    .left-strip {
+      position: absolute; top: 0; left: 0; bottom: 0;
+      width: 120px; background: #FF8B6A; z-index: 2;
+    }
+    .strip-text {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%) rotate(-90deg);
+      font-size: 13px; font-weight: 800; color: #2D2D2D;
+      letter-spacing: 6px; text-transform: uppercase; white-space: nowrap;
+    }
+    .logo { position: absolute; top: 36px; left: 36px; z-index: 5; }
+    .logo svg { width: 48px; height: 48px; }
+
+    .super-label {
+      position: absolute; top: 50px; right: 100px;
+      font-size: 13px; font-weight: 700; color: #FF8B6A;
+      letter-spacing: 5px; text-transform: uppercase; z-index: 5;
+    }
+
+    .title-block { position: absolute; top: 50px; left: 200px; z-index: 5; }
+    .title-main {
+      font-size: 52px; font-weight: 900; color: #FFFFFF;
+      text-transform: uppercase; letter-spacing: 3px;
+    }
+    .title-accent {
+      display: inline-block; background: #FF8B6A; color: #2D2D2D;
+      padding: 4px 22px; border-radius: 8px; font-size: 52px;
+      font-weight: 900; text-transform: uppercase; letter-spacing: 3px; margin-top: 6px;
+    }
+
+    .divider-h {
+      position: absolute; top: 225px; left: 200px; right: 100px; height: 2px;
+      background: linear-gradient(90deg, #FF8B6A, rgba(255,139,106,0.1)); z-index: 5;
+    }
+
+    .section-label {
+      position: absolute; top: 250px; left: 200px; z-index: 5;
+      font-size: 14px; font-weight: 800; color: rgba(255,255,255,0.3);
+      letter-spacing: 4px; text-transform: uppercase;
+    }
+
+    /* ─── Pipeline / funnel stages ─── */
+    .pipeline {
+      position: absolute;
+      top: 310px;
+      left: 200px;
+      right: 100px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      z-index: 5;
+    }
+
+    .pipe-item {
+      display: flex;
+      align-items: stretch;
+      min-height: 120px;
+    }
+
+    /* Left: status column */
+    .pipe-status {
+      width: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .pipe-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 3px solid;
+      background: #2D2D2D;
+      z-index: 2;
+      margin-top: 16px;
+    }
+
+    .pipe-dot.rejected { border-color: #EF5350; }
+    .pipe-dot.pending { border-color: #FFA726; }
+
+    .pipe-line {
+      flex: 1;
+      width: 2px;
+      background: rgba(255,255,255,0.06);
+    }
+
+    /* Right: content */
+    .pipe-content {
+      flex: 1;
+      margin-left: 24px;
+      padding: 12px 0 24px;
+    }
+
+    .pipe-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 24px 28px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pipe-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+    }
+
+    .pipe-card.rejected::before { background: #EF5350; }
+    .pipe-card.pending::before { background: #FFA726; }
+
+    .pipe-main { flex: 1; }
+
+    .pipe-name {
+      font-size: 24px;
+      font-weight: 900;
+      color: #FFFFFF;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+    }
+
+    .pipe-program {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 4px;
+    }
+
+    .pipe-detail {
+      font-size: 13px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.3);
+      line-height: 1.4;
+      font-style: italic;
+    }
+
+    /* Status tag */
+    .pipe-tag {
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .tag-rejected { background: rgba(239,83,80,0.12); color: #EF5350; }
+    .tag-pending { background: rgba(255,167,38,0.12); color: #FFA726; }
+
+    /* Score badge */
+    .pipe-score {
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .score-value {
+      font-size: 36px;
+      font-weight: 900;
+      color: rgba(255,255,255,0.15);
+      line-height: 1;
+    }
+
+    .score-label {
+      font-size: 9px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.2);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .corner { position: absolute; width: 60px; height: 60px; z-index: 3; }
+    .corner-tr { top: 30px; right: 30px; border-top: 3px solid rgba(255,139,106,0.15); border-right: 3px solid rgba(255,139,106,0.15); }
+    .corner-bl { bottom: 30px; left: 140px; border-bottom: 3px solid rgba(255,139,106,0.15); border-left: 3px solid rgba(255,139,106,0.15); }
+
+    .accent-line {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 6px;
+      background: linear-gradient(90deg, #FF6B47, #FF8B6A, #FFB299); z-index: 10;
+    }
+    .slide-number {
+      position: absolute; bottom: 24px; right: 50px;
+      font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.2);
+      letter-spacing: 1px; z-index: 20;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="watermark">ΒΙΩΣΙΜΟΤΗΤΑ</div>
+
+  <div class="left-strip">
+    <div class="strip-text">Ετήσια Δραστηριότητα · 2025</div>
+  </div>
+
+  <div class="logo">
+    <svg viewBox="0 0 62 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M28.1357 56.9941C29.2174 57.1347 30.3196 57.2174 31.4101 57.245L31.8545 41.4423C31.3662 41.4313 30.8838 41.3927 30.4102 41.332L28.1357 56.9941Z" fill="#2D2D2D"/><path d="M19.7527 33.0938L3.91309 38.2786C4.27268 39.2572 4.69659 40.2247 5.16728 41.1591L20.2994 34.3562C20.0918 33.9482 19.9106 33.5265 19.7527 33.0938Z" fill="#2D2D2D"/><path d="M2.41992 26.0625L19.0928 27.6971C19.1425 27.2395 19.2214 26.7902 19.3237 26.3492L2.94323 22.9863C2.70935 23.9979 2.53394 25.0316 2.41992 26.0598V26.0625Z" fill="#2D2D2D"/><path d="M19.0487 29.752L2.31445 30.6947C2.37877 31.72 2.50448 32.751 2.68574 33.7626L19.2153 31.1136C19.1335 30.6671 19.0779 30.215 19.0487 29.7547V29.752Z" fill="#2D2D2D"/><path d="M23.8526 38.627L13.2197 50.8435C14.0617 51.4968 14.9534 52.1115 15.8684 52.6738L25.0249 39.4346C24.6185 39.1838 24.2268 38.9164 23.8526 38.627Z" fill="#2D2D2D"/><path d="M26.936 40.4062L20.2061 54.8831C21.2117 55.2993 22.2525 55.6659 23.3021 55.9746L28.2896 40.8859C27.8247 40.7508 27.3745 40.5882 26.9331 40.4062H26.936Z" fill="#2D2D2D"/><path d="M21.3978 36.127L7.65723 45.1846C8.28286 46.0281 8.96404 46.8467 9.68323 47.6213L22.2924 37.2047C21.9737 36.8629 21.6755 36.5046 21.3978 36.1297V36.127Z" fill="#2D2D2D"/><path d="M7.01861 10.5748C8.02613 10.5748 8.84289 9.80473 8.84289 8.85479C8.84289 7.90485 8.02613 7.13477 7.01861 7.13477C6.01109 7.13477 5.19434 7.90485 5.19434 8.85479C5.19434 9.80473 6.01109 10.5748 7.01861 10.5748Z" fill="#2D2D2D"/><path d="M13.6436 4.66465C14.6522 4.66465 15.4679 3.8956 15.4679 2.94463C15.4679 1.99366 14.6522 1.22461 13.6436 1.22461C12.635 1.22461 11.8193 1.99366 11.8193 2.94463C11.8193 3.8956 12.635 4.66465 13.6436 4.66465Z" fill="#2D2D2D"/><path d="M2.3853 17.7723C3.3798 17.6201 4.05514 16.7366 3.89371 15.799C3.73228 14.8613 2.79521 14.2245 1.80071 14.3768C0.806205 14.529 0.130866 15.4125 0.292296 16.3501C0.453727 17.2878 1.3908 17.9245 2.3853 17.7723Z" fill="#2D2D2D"/>
+    </svg>
+  </div>
+
+  <div class="super-label">Ετήσια Δραστηριότητα 2025</div>
+
+  <div class="title-block">
+    <div class="title-main">ΑΛΛΕΣ ΕΝΕΡΓΕΙΕΣ</div>
+    <div class="title-accent">ΒΙΩΣΙΜΟΤΗΤΑΣ</div>
+  </div>
+
+  <div class="divider-h"></div>
+
+  <div class="section-label">Εταίροι σε προγράμματα (δεν εγκρίθηκαν)</div>
+
+  <!-- Pipeline / application tracker -->
+  <div class="pipeline">
+
+    <!-- Item 1 -->
+    <div class="pipe-item">
+      <div class="pipe-status">
+        <div class="pipe-dot rejected"></div>
+        <div class="pipe-line"></div>
+      </div>
+      <div class="pipe-content">
+        <div class="pipe-card rejected">
+          <div class="pipe-main">
+            <div class="pipe-name">Regional Grants</div>
+            <div class="pipe-program">BAN — Balkans Arts Network</div>
+          </div>
+          <div class="pipe-tag tag-rejected">Δεν εγκρίθηκε</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Item 2 -->
+    <div class="pipe-item">
+      <div class="pipe-status">
+        <div class="pipe-dot rejected"></div>
+        <div class="pipe-line"></div>
+      </div>
+      <div class="pipe-content">
+        <div class="pipe-card rejected">
+          <div class="pipe-main">
+            <div class="pipe-name">Bridges</div>
+            <div class="pipe-program">CERV — με επικεφαλής το ENCC</div>
+          </div>
+          <div class="pipe-tag tag-rejected">Δεν εγκρίθηκε</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Item 3 -->
+    <div class="pipe-item">
+      <div class="pipe-status">
+        <div class="pipe-dot pending"></div>
+        <div class="pipe-line"></div>
+      </div>
+      <div class="pipe-content">
+        <div class="pipe-card pending">
+          <div class="pipe-main">
+            <div class="pipe-name">W.O.M.E.N.</div>
+            <div class="pipe-program">Creative Europe</div>
+            <div class="pipe-detail">Σε διαδικασία επανυποβολής</div>
+          </div>
+          <div class="pipe-score">
+            <div class="score-value">89</div>
+            <div class="score-label">Βαθμολογία</div>
+          </div>
+          <div class="pipe-tag tag-pending">Επανυποβολή</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Item 4 -->
+    <div class="pipe-item">
+      <div class="pipe-status">
+        <div class="pipe-dot rejected"></div>
+      </div>
+      <div class="pipe-content">
+        <div class="pipe-card rejected">
+          <div class="pipe-main">
+            <div class="pipe-name">C.L.E.A.R</div>
+            <div class="pipe-program">New European Bauhaus — Horizon</div>
+          </div>
+          <div class="pipe-tag tag-rejected">Δεν εγκρίθηκε</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div>
+
+  <div class="slide-number">23</div>
+  <div class="accent-line"></div>
+
+</body>
+</html>
