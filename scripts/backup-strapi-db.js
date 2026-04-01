@@ -30,7 +30,7 @@ const PROJECT_DIR = path.resolve(__dirname, '..');
 const STRAPI_REPO_DIR = path.join(PROJECT_DIR, 'StrapiDBforCforC');
 const BACKUP_ROOT = path.join(PROJECT_DIR, '_Database_Backup');
 const MAX_LOCAL_BACKUPS = 5;
-const NOTIFY_EMAIL = 'finance@cultureforchange.net';
+const NOTIFY_EMAIL = 'it@cultureforchange.net';
 const RCLONE_REMOTE = 'CforC_WebsiteDB_BACKUP:CforC-Backups'; // rclone remote name
 
 // Load .env.local
@@ -289,10 +289,14 @@ function pushToGitHub(backupDir, dateStr) {
  * Sync full backup (with media) to Google Drive via rclone
  */
 function syncToGoogleDrive(backupDir, dateStr) {
+  // Use absolute path for rclone — LaunchAgent PATH doesn't include /opt/homebrew/bin
+  const rcloneBin = fs.existsSync('/opt/homebrew/bin/rclone')
+    ? '/opt/homebrew/bin/rclone'
+    : 'rclone';
+
   try {
     // Check if rclone is installed and configured
-    execSync('which rclone', { stdio: 'pipe' });
-    execSync('rclone listremotes', { stdio: 'pipe' });
+    execSync(`${rcloneBin} listremotes`, { stdio: 'pipe' });
   } catch {
     console.log('WARN: rclone not installed or not configured — skipping Google Drive sync');
     return false;
@@ -300,14 +304,14 @@ function syncToGoogleDrive(backupDir, dateStr) {
 
   try {
     const remotePath = `${RCLONE_REMOTE}/${dateStr}`;
-    execSync(`rclone copy "${backupDir}" "${remotePath}" --progress`, {
+    execSync(`${rcloneBin} copy "${backupDir}" "${remotePath}" --progress`, {
       stdio: 'pipe',
       timeout: 1800000, // 30 min timeout for large uploads
     });
 
     // Clean old backups on Drive (keep last 5)
     try {
-      const lsOutput = execSync(`rclone lsd "${RCLONE_REMOTE}"`, { stdio: 'pipe' }).toString();
+      const lsOutput = execSync(`${rcloneBin} lsd "${RCLONE_REMOTE}"`, { stdio: 'pipe' }).toString();
       const driveDirs = lsOutput
         .split('\n')
         .map(line => line.trim().split(/\s+/).pop())
@@ -316,7 +320,7 @@ function syncToGoogleDrive(backupDir, dateStr) {
         .reverse();
 
       for (let i = MAX_LOCAL_BACKUPS; i < driveDirs.length; i++) {
-        execSync(`rclone purge "${RCLONE_REMOTE}/${driveDirs[i]}"`, { stdio: 'pipe', timeout: 30000 });
+        execSync(`${rcloneBin} purge "${RCLONE_REMOTE}/${driveDirs[i]}"`, { stdio: 'pipe', timeout: 30000 });
       }
     } catch (cleanupErr) {
       console.log(`Google Drive cleanup warning: ${cleanupErr.message}`);
