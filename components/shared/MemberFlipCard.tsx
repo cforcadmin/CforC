@@ -4,13 +4,16 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useTranslation } from '@/components/TranslationProvider'
 
 interface MemberFlipCardProps {
   member: {
     id: number
     Name: string
+    EngName?: string
     Slug: string
     Bio?: string
+    EngBio?: any
     FieldsOfWork?: string
     City?: string
     Province?: string
@@ -93,7 +96,11 @@ export default function MemberFlipCard({ member, role }: MemberFlipCardProps) {
     ? member.Image[0].url
     : null
 
-  const bioText = extractBioText(member.Bio)
+  const { isTranslated } = useTranslation()
+  const useEng = isTranslated && !!member.EngName
+  const displayName = useEng ? member.EngName! : member.Name
+  const engBioText = extractBioText(member.EngBio)
+  const bioText = isTranslated && engBioText ? engBioText : extractBioText(member.Bio)
 
   const cities = member.City?.split(',').map(c => c.trim()).filter(c => c && c !== '-') || []
   const provinces = member.Province?.split(',').map(p => p.trim()).filter(p => p && p !== '-') || []
@@ -151,7 +158,7 @@ export default function MemberFlipCard({ member, role }: MemberFlipCardProps) {
               </div>
             )}
             <div className="p-4">
-              <h3 className="text-base font-light group-hover:font-bold text-charcoal dark:text-gray-100 mb-2 transition-all">{member.Name}</h3>
+              <h3 className={`text-base font-light group-hover:font-bold text-charcoal dark:text-gray-100 mb-2 transition-all ${useEng ? 'notranslate' : ''}`}>{displayName}</h3>
               {member.FieldsOfWork && (
                 <div className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-2xl tracking-wide max-w-full">
                   <p className="line-clamp-2">{member.FieldsOfWork}</p>
@@ -168,7 +175,7 @@ export default function MemberFlipCard({ member, role }: MemberFlipCardProps) {
             className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-700/50 border-l-4 border-coral dark:border-coral-light flex flex-col h-full cursor-pointer"
           >
             <div className="p-5 flex flex-col h-full overflow-hidden">
-              <h3 className="text-lg font-bold text-coral dark:text-coral-light mb-2 line-clamp-2">{member.Name}</h3>
+              <h3 className={`text-lg font-bold text-coral dark:text-coral-light mb-2 line-clamp-2 ${useEng ? 'notranslate' : ''}`}>{displayName}</h3>
 
               {hasLocation && (
                 <div className="flex items-start gap-1.5 mb-3">
@@ -216,7 +223,7 @@ export default function MemberFlipCard({ member, role }: MemberFlipCardProps) {
 
               {bioText && (
                 <div className="relative flex-1 overflow-hidden">
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <p className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${isTranslated && engBioText ? 'notranslate' : ''}`}>
                     {bioText}
                   </p>
                   <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white dark:from-gray-800 to-transparent pointer-events-none" />

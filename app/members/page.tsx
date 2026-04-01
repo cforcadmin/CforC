@@ -28,6 +28,7 @@ interface Member {
   EngName?: string
   Slug: string
   Bio: string
+  EngBio?: any
   FieldsOfWork: string
   City: string
   Province: string
