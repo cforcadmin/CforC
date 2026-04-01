@@ -304,9 +304,10 @@ function syncToGoogleDrive(backupDir, dateStr) {
 
   try {
     const remotePath = `${RCLONE_REMOTE}/${dateStr}`;
-    execSync(`${rcloneBin} copy "${backupDir}" "${remotePath}" --progress`, {
+    execSync(`${rcloneBin} copy "${backupDir}" "${remotePath}" --stats-one-line --quiet`, {
       stdio: 'pipe',
       timeout: 1800000, // 30 min timeout for large uploads
+      maxBuffer: 10 * 1024 * 1024, // 10MB buffer
     });
 
     // Clean old backups on Drive (keep last 5)
