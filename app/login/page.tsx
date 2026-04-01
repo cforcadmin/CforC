@@ -186,7 +186,7 @@ function LoginPageContent() {
                     type="email"
                     id="login-email"
                     value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
+                    onChange={(e) => setLoginEmail(e.target.value.trim())}
                     placeholder="to-email-sou@example.com"
                     required
                     className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-full text-sm text-charcoal dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
@@ -288,7 +288,7 @@ function LoginPageContent() {
                     type="email"
                     id="magic-email"
                     value={magicEmail}
-                    onChange={(e) => setMagicEmail(e.target.value)}
+                    onChange={(e) => setMagicEmail(e.target.value.trim())}
                     placeholder="to-email-sou@example.com"
                     required
                     className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-full text-sm text-charcoal dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
@@ -408,7 +408,7 @@ function LoginPageContent() {
                   type="email"
                   id="reset-email"
                   value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
+                  onChange={(e) => setResetEmail(e.target.value.trim())}
                   placeholder="to-email-sas@example.com"
                   required
                   className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-full text-sm text-charcoal dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
