@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
+import { useTranslation } from './TranslationProvider'
 
 export default function AboutSection() {
+  const { isEnglish } = useTranslation()
+
   const [isImageVisible, setIsImageVisible] = useState(false)
   const [isContentVisible, setIsContentVisible] = useState(false)
   const [isStatsVisible, setIsStatsVisible] = useState(false)
@@ -132,10 +135,14 @@ export default function AboutSection() {
               ΕΛΛΑΔΑ
             </h3>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-              Μέσα από τις δράσεις του το δίκτυο Culture for Change αναπτύσσει την
+              {isEnglish ? (
+                <span className="notranslate">Through its initiatives, the Culture for Change network promotes social innovation in Greece by supporting cultural professionals and highlighting the positive impact that cultural activities and projects have on the well-being of all.</span>
+              ) : (
+                <>Μέσα από τις δράσεις του το δίκτυο Culture for Change αναπτύσσει την
               κοινωνική καινοτομία στην Ελλάδα υποστηρίζοντας τους επαγγελματίες
               του πολιτισμού, αναδεικνύοντας τον θετικό αντίκτυπο που επιφέρουν
-              πολιτιστικές δράσεις και έργα για την ευημερία όλων.
+              πολιτιστικές δράσεις και έργα για την ευημερία όλων.</>
+              )}
             </p>
           </div>
         </div>

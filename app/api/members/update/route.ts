@@ -31,6 +31,12 @@ const FIELD_DISPLAY_NAMES: Record<string, string> = {
   Project2Description: 'Περιγραφή Έργου 2',
   Project2Pictures: 'Φωτογραφίες Έργου 2',
   Project2PicturesAltText: 'Alt Text Φωτογραφιών Έργου 2',
+  EngProject1Title: 'Τίτλος Έργου 1 (EN)',
+  EngProject1Tags: 'Ετικέτες Έργου 1 (EN)',
+  EngProject1Description: 'Περιγραφή Έργου 1 (EN)',
+  EngProject2Title: 'Τίτλος Έργου 2 (EN)',
+  EngProject2Tags: 'Ετικέτες Έργου 2 (EN)',
+  EngProject2Description: 'Περιγραφή Έργου 2 (EN)',
 }
 
 // Fields to skip when detecting changes (internal/auto-set fields)
@@ -94,7 +100,9 @@ export async function POST(request: NextRequest) {
         'Name', 'EngName', 'Bio', 'EngBio', 'FieldsOfWork', 'City', 'Province', 'Email', 'Phone', 'Websites',
         'ProfileImageAltText',
         'Project1Title', 'Project1Tags', 'Project1Links', 'Project1Description', 'Project1PicturesAltText',
-        'Project2Title', 'Project2Tags', 'Project2Links', 'Project2Description', 'Project2PicturesAltText'
+        'EngProject1Title', 'EngProject1Tags', 'EngProject1Description',
+        'Project2Title', 'Project2Tags', 'Project2Links', 'Project2Description', 'Project2PicturesAltText',
+        'EngProject2Title', 'EngProject2Tags', 'EngProject2Description'
       ]
       fields.forEach(field => {
         const value = formData.get(field)
@@ -215,7 +223,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Optional blocks fields that can be cleared (set to null)
-    const OPTIONAL_BLOCKS_FIELDS = new Set(['EngBio'])
+    const OPTIONAL_BLOCKS_FIELDS = new Set(['EngBio', 'EngProject1Description', 'EngProject2Description'])
 
     // Helper: process a Blocks field — parse JSON if string, convert plain text, or pass through
     const processBlocksField = (fieldName: string) => {
@@ -272,7 +280,9 @@ export async function POST(request: NextRequest) {
     processBlocksField('Bio')
     processBlocksField('EngBio')
     processBlocksField('Project1Description')
+    processBlocksField('EngProject1Description')
     processBlocksField('Project2Description')
+    processBlocksField('EngProject2Description')
 
     // Handle image upload if present
     let imageId: number | null = null

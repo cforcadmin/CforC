@@ -19,6 +19,7 @@ import { TextSizeProvider } from '@/components/TextSizeProvider'
 import { AuthProvider } from '@/components/AuthProvider'
 import { AnnouncerProvider } from '@/components/Announcer'
 import { AccessibilityProvider } from '@/components/AccessibilityProvider'
+import TranslationProvider from '@/components/TranslationProvider'
 import AccessibilityMenu from '@/components/AccessibilityMenu'
 import ReadingAids from '@/components/ReadingAids'
 import Sa11yDevChecker from '@/components/Sa11yDevChecker'
@@ -91,6 +92,7 @@ export default function RootLayout({
         <ThemeProvider>
           <TextSizeProvider>
             <AccessibilityProvider>
+              <TranslationProvider>
               <AuthProvider>
                 <AnnouncerProvider>
                   {children}
@@ -100,6 +102,7 @@ export default function RootLayout({
                   <Sa11yDevChecker />
                 </AnnouncerProvider>
               </AuthProvider>
+              </TranslationProvider>
             </AccessibilityProvider>
           </TextSizeProvider>
         </ThemeProvider>
@@ -135,20 +138,27 @@ export default function RootLayout({
                 // Hide Google Translate widget elements from accessibility tree
                 // We use our own custom LanguageSwitcher for language selection
                 function hideGoogleTranslateA11y() {
-                  // Hide main containers
-                  var containers = document.querySelectorAll(
-                    '#google_translate_element, .goog-te-menu-frame, .goog-te-banner-frame, ' +
-                    '.skiptranslate, [class*="VIpgJd"], .goog-te-gadget, .goog-te-combo'
-                  );
+                  // Hide main containers — exclude <font> elements which hold translated page text
+                  var sel = '#google_translate_element, .goog-te-menu-frame, .goog-te-banner-frame, ' +
+                    '.skiptranslate, .goog-te-gadget, .goog-te-combo';
+                  var containers = document.querySelectorAll(sel);
                   containers.forEach(function(el) {
                     el.setAttribute('aria-hidden', 'true');
                     el.setAttribute('role', 'presentation');
                     el.setAttribute('tabindex', '-1');
                   });
+                  // Also hide VIpgJd elements but NOT <font> tags (those contain translated text)
+                  document.querySelectorAll('[class*="VIpgJd"]').forEach(function(el) {
+                    if (el.tagName !== 'FONT') {
+                      el.setAttribute('aria-hidden', 'true');
+                      el.setAttribute('role', 'presentation');
+                      el.setAttribute('tabindex', '-1');
+                    }
+                  });
 
                   // Fix href="#" links - add role and remove from tab order
                   var links = document.querySelectorAll(
-                    '[class*="VIpgJd"] a[href="#"], ' +
+                    '[class*="VIpgJd"]:not(font) a[href="#"], ' +
                     '.goog-te-menu-value a[href="#"], ' +
                     '.goog-te-gadget a[href="#"]'
                   );

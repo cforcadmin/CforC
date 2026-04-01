@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+
 :root {
   --coral: #FF8B6A;
   --charcoal: #2D2D2D;
@@ -31,19 +32,25 @@ body {
   color: #e5e5e5;
 }
 
-/* Hide Google Translate toolbar and elements from view AND accessibility tree */
+/* Hide Google Translate toolbar and elements from view AND accessibility tree.
+   :not(font) excludes the <font> elements GT uses to wrap translated page text. */
 .goog-te-banner-frame,
 .goog-te-balloon-frame,
 .goog-tooltip,
 .goog-tooltip:hover,
-.goog-text-highlight,
 .goog-te-gadget,
 .goog-te-combo,
 #google_translate_element,
-[class*="VIpgJd"] {
+[class*="VIpgJd"]:not(font) {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
+}
+
+/* Remove Google Translate hover highlight without hiding the translated text. */
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
 }
 
 /* Ensure Google Translate elements are removed from accessibility tree */
@@ -53,7 +60,7 @@ body {
 .goog-te-combo,
 .goog-te-menu-frame,
 #google_translate_element,
-[class*="VIpgJd"],
+[class*="VIpgJd"]:not(font),
 .skiptranslate {
   clip: rect(0, 0, 0, 0) !important;
   clip-path: inset(50%) !important;
@@ -65,7 +72,7 @@ body {
 }
 
 /* Ensure Google Translate links are not focusable */
-[class*="VIpgJd"] a,
+[class*="VIpgJd"]:not(font) a,
 .goog-te-gadget a,
 .goog-te-menu-value a {
   pointer-events: none !important;
@@ -81,6 +88,16 @@ body {
 .goog-te-banner-frame.skiptranslate,
 .skiptranslate {
   display: none !important;
+}
+
+/* Prevent Google Translate's injected <font> elements from causing visual flicker.
+   GT wraps translated text in <font style="vertical-align:inherit"> and periodically
+   re-processes them, which triggers CSS transitions and causes visible flashing. */
+font[style*="vertical-align"] {
+  vertical-align: inherit !important;
+  font-size: inherit !important;
+  color: inherit !important;
+  transition: none !important;
 }
 
 @layer utilities {

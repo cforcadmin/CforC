@@ -78,6 +78,9 @@ interface Member {
   }>
   Project1PicturesAltText?: string  // Accessibility alt text for project 1 images
   Project1Tags?: string
+  EngProject1Title?: string
+  EngProject1Tags?: string
+  EngProject1Description?: string
   Project2Title?: string
   Project2Description?: string
   Project2Pictures?: Array<{
@@ -86,6 +89,9 @@ interface Member {
   }>
   Project2PicturesAltText?: string  // Accessibility alt text for project 2 images
   Project2Tags?: string
+  EngProject2Title?: string
+  EngProject2Tags?: string
+  EngProject2Description?: string
   HideProfile?: boolean
 }
 
@@ -539,7 +545,9 @@ export default function MemberDetailClient() {
                     </div>
                   )}
                   <div className="p-6">
-                    <h3 className="text-xl font-bold dark:text-gray-100">{member.Project1Title}</h3>
+                    <h3 className="text-xl font-bold dark:text-gray-100">
+                      <LocalizedText text={member.Project1Title || ''} engText={member.EngProject1Title} />
+                    </h3>
                   </div>
                 </Link>
               )}
@@ -560,7 +568,9 @@ export default function MemberDetailClient() {
                     </div>
                   )}
                   <div className="p-6">
-                    <h3 className="text-xl font-bold dark:text-gray-100">{member.Project2Title}</h3>
+                    <h3 className="text-xl font-bold dark:text-gray-100">
+                      <LocalizedText text={member.Project2Title || ''} engText={member.EngProject2Title} />
+                    </h3>
                   </div>
                 </Link>
               )}

@@ -143,7 +143,7 @@ export default function EditableField({
             placeholder={placeholder}
             maxLength={maxLength}
             rows={4}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl text-charcoal dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light focus:border-transparent resize-none bg-white"
+            className="w-full notranslate px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl text-charcoal dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light focus:border-transparent resize-none bg-white"
           />
         ) : (
           <input
@@ -154,7 +154,7 @@ export default function EditableField({
             onBlur={() => setIsFocused(false)}
             placeholder={placeholder}
             maxLength={maxLength}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-charcoal dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light focus:border-transparent bg-white"
+            className="w-full notranslate px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-charcoal dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light focus:border-transparent bg-white"
           />
         )}
 

@@ -211,7 +211,8 @@ async function main() {
   log(`  Strapi: ${strapiSubscribers.length} subscribers`);
 
   // 2. Find emails in Strapi but NOT in Sender (unsubscribed)
-  const unsubscribed = strapiSubscribers.filter(s => !senderEmails.has(s.email));
+  const EXCLUDED_EMAILS = new Set(['finance@cultureforchange.net']);
+  const unsubscribed = strapiSubscribers.filter(s => !senderEmails.has(s.email) && !EXCLUDED_EMAILS.has(s.email));
 
   if (unsubscribed.length === 0) {
     log('No unsubscribes detected. Strapi and Sender are in sync.');
@@ -236,7 +237,7 @@ async function main() {
       log(`  FAILED to delete from Strapi: ${sub.email}`);
     }
 
-    if (RESEND_API_KEY) {
+    if (RESEND_API_KEY && !DELETE_ONLY) {
       const sent = await sendFarewellEmail(sub.email, sub.firstName);
       if (sent) emailed++;
     }
@@ -244,6 +245,9 @@ async function main() {
 
   log(`Sync complete: ${deleted} deleted from Strapi, ${emailed} farewell emails sent.`);
 }
+
+// CLI flag: --delete-only skips farewell emails (for re-runs after partial failure)
+const DELETE_ONLY = process.argv.includes('--delete-only');
 
 main().catch(err => {
   log(`FATAL: ${err.message}`);

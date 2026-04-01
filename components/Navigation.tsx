@@ -11,6 +11,7 @@ import ConfirmationModal from './ConfirmationModal'
 import TextSizeToggle from './TextSizeToggle'
 import { useAccessibility } from './AccessibilityProvider'
 import { AccessibilityButton } from './AccessibilityMenu'
+import { useTranslation } from './TranslationProvider'
 import { getFeaturedProjects } from '@/lib/strapi'
 import type { Project, StrapiResponse } from '@/lib/types'
 import GlobalSearch from './GlobalSearch'
@@ -41,6 +42,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
   const aboutDropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const showProjects = true
+  const { isTranslated } = useTranslation()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -285,7 +287,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
               >
                 <Link
                   href="/about"
-                  className={`text-sm transition-all inline-flex items-center gap-1 ${isAboutActive ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}
+                  className={`text-sm transition-colors inline-flex items-center gap-1 ${isAboutActive ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}
                   aria-haspopup="true"
                   aria-expanded={aboutDropdownOpen}
                 >
@@ -294,34 +296,32 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </Link>
-                {aboutDropdownOpen && (
-                  <div
-                    role="menu"
-                    aria-label="Σχετικά με εμάς"
-                    className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50"
-                  >
-                    {aboutSubPages.map((item, index) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        role="menuitem"
-                        ref={(el) => { aboutDropdownItemsRef.current[index] = el }}
-                        className={`block px-4 py-3 text-sm transition-colors focus:outline-none ${
-                          pathname === item.href
-                            ? 'text-coral dark:text-coral-light font-bold bg-gray-50 dark:bg-gray-700'
-                            : 'text-charcoal dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700'
-                        }`}
-                        onClick={() => setAboutDropdownOpen(false)}
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
+                <div
+                  role="menu"
+                  aria-label="Σχετικά με εμάς"
+                  className={`absolute top-full left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50 transition-[opacity,visibility] duration-150 ${aboutDropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+                >
+                  {aboutSubPages.map((item, i) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      ref={el => { aboutDropdownItemsRef.current[i] = el }}
+                      role="menuitem"
+                      className={`block px-4 py-3 text-sm transition-colors focus:outline-none ${
+                        pathname === item.href
+                          ? 'text-coral dark:text-coral-light font-bold bg-gray-50 dark:bg-gray-700'
+                          : 'text-charcoal dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
               </div>
-              <Link href="/news" className={`text-sm transition-all ${pathname?.startsWith('/news') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
+              <Link href="/news" className={`text-sm transition-colors ${pathname?.startsWith('/news') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
                 ΝΕΑ
               </Link>
+              {/* Projects Dropdown */}
               {showProjects && (
                 <div
                   ref={dropdownRef}
@@ -332,7 +332,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 >
                   <Link
                     href="/projects"
-                    className={`text-sm transition-all inline-flex items-center gap-1 ${pathname?.startsWith('/projects') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}
+                    className={`text-sm transition-colors inline-flex items-center gap-1 ${pathname?.startsWith('/projects') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}
                     aria-haspopup="true"
                     aria-expanded={projectsDropdownOpen}
                   >
@@ -341,22 +341,21 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </Link>
-                  {projectsDropdownOpen && featuredProjects.length > 0 && (
+                  {featuredProjects.length > 0 && (
                     <div
                       role="menu"
                       aria-label="Έργα"
-                      className="absolute top-full left-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50"
+                      className={`absolute top-full left-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50 transition-[opacity,visibility] duration-150 ${projectsDropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
                     >
-                      {featuredProjects.map((project, index) => {
+                      {featuredProjects.map((project, i) => {
                         const imgUrl = getImageUrl(project.cover_image)
                         return (
                           <Link
                             key={project.id}
                             href={`/projects/${project.slug}`}
+                            ref={el => { dropdownItemsRef.current[i] = el }}
                             role="menuitem"
-                            ref={(el) => { dropdownItemsRef.current[index] = el }}
                             className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:bg-gray-100 dark:focus:bg-gray-700 focus:outline-none"
-                            onClick={() => setProjectsDropdownOpen(false)}
                           >
                             {imgUrl ? (
                               <Image
@@ -373,28 +372,10 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                                 </svg>
                               </div>
                             )}
-                            <div className="min-w-0 relative group/navtitle">
-                              <p
-                                className="text-sm font-bold text-charcoal dark:text-gray-100 truncate"
-                                onMouseEnter={(e) => {
-                                  const el = e.currentTarget
-                                  const tooltip = el.nextElementSibling as HTMLElement
-                                  if (tooltip) {
-                                    tooltip.style.display = el.scrollWidth > el.clientWidth ? '' : 'none'
-                                  }
-                                }}
-                                onMouseLeave={(e) => {
-                                  const tooltip = e.currentTarget.nextElementSibling as HTMLElement
-                                  if (tooltip) tooltip.style.display = 'none'
-                                }}
-                              >
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-charcoal dark:text-gray-100 truncate">
                                 {project.title}
                               </p>
-                              <div className="absolute bottom-full left-0 mb-2 z-[60] pointer-events-none" style={{ display: 'none' }}>
-                                <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-sm rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white max-w-xs font-normal">
-                                  {project.title}
-                                </div>
-                              </div>
                             </div>
                           </Link>
                         )
@@ -404,18 +385,18 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 </div>
               )}
               {!isAuthenticated && (
-                <Link href="/map" className={`text-sm transition-all ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
-                  ΧΑΡΤΗΣ
+                <Link href="/map" className={`text-sm transition-colors ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
+                  <span className="notranslate">{isTranslated ? 'MAP' : 'ΧΑΡΤΗΣ'}</span>
                 </Link>
               )}
               {!isAuthenticated && (
-                <Link href="/participation" className={`text-sm transition-all ${pathname === '/participation' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
+                <Link href="/participation" className={`text-sm transition-colors ${pathname === '/participation' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
                   ΣΥΜΜΕΤΟΧΗ
                 </Link>
               )}
               {isAuthenticated && (
-                <Link href="/map" className={`text-sm transition-all ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
-                  ΧΑΡΤΗΣ
+                <Link href="/map" className={`text-sm transition-colors ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
+                  <span className="notranslate">{isTranslated ? 'MAP' : 'ΧΑΡΤΗΣ'}</span>
                 </Link>
               )}
               <Link href="/members" className={`bg-white dark:bg-gray-700 text-charcoal dark:text-gray-200 ${isAuthenticated ? 'px-4' : 'px-6'} py-2 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors`}>
@@ -423,19 +404,19 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
               </Link>
               {isAuthenticated ? (
                 <>
-                  <Link href="/profile" className={`text-sm transition-all ${pathname === '/profile' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
+                  <Link href="/profile" className={`text-sm transition-colors ${pathname === '/profile' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
                     Ο ΧΩΡΟΣ ΜΟΥ
                   </Link>
                   <button
                     type="button"
                     onClick={() => setIsLogoutModalOpen(true)}
-                    className="text-sm font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light transition-all"
+                    className="text-sm font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light transition-colors"
                   >
                     ΑΠΟΣΥΝΔΕΣΗ
                   </button>
                 </>
               ) : (
-                <Link href="/login" className={`text-sm transition-all ${pathname === '/login' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
+                <Link href="/login" className={`text-sm transition-colors ${pathname === '/login' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
                   ΣΥΝΔΕΣΗ
                 </Link>
               )}
@@ -525,7 +506,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 <button
                   type="button"
                   onClick={() => setMobileAboutExpanded(!mobileAboutExpanded)}
-                  className={`flex items-center justify-between w-full text-sm py-2 transition-all ${isAboutActive ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}
+                  className={`flex items-center justify-between w-full text-sm py-2 transition-colors ${isAboutActive ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}
                   aria-expanded={mobileAboutExpanded}
                 >
                   <Link href="/about" onClick={(e) => { e.stopPropagation(); setIsOpen(false) }}>ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ</Link>
@@ -552,13 +533,13 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                   </div>
                 )}
               </div>
-              <Link href="/news" className={`block text-sm py-2 transition-all ${pathname?.startsWith('/news') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΝΕΑ</Link>
+              <Link href="/news" className={`block text-sm py-2 transition-colors ${pathname?.startsWith('/news') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΝΕΑ</Link>
               {showProjects && (
                 <div>
                   <button
                     type="button"
                     onClick={() => setMobileProjectsExpanded(!mobileProjectsExpanded)}
-                    className={`flex items-center justify-between w-full text-sm py-2 transition-all ${pathname?.startsWith('/projects') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}
+                    className={`flex items-center justify-between w-full text-sm py-2 transition-colors ${pathname?.startsWith('/projects') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}
                     aria-expanded={mobileProjectsExpanded}
                   >
                     <Link href="/projects" onClick={(e) => { e.stopPropagation(); setIsOpen(false) }}>ΕΡΓΑ</Link>
@@ -583,30 +564,30 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 </div>
               )}
               {!isAuthenticated && (
-                <Link href="/map" className={`block text-sm py-2 transition-all ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`} onClick={() => setIsOpen(false)}>ΧΑΡΤΗΣ</Link>
+                <Link href="/map" className={`block text-sm py-2 transition-colors ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`} onClick={() => setIsOpen(false)}><span className="notranslate">{isTranslated ? 'MAP' : 'ΧΑΡΤΗΣ'}</span></Link>
               )}
               {!isAuthenticated && (
-                <Link href="/participation" className={`block text-sm py-2 transition-all ${pathname === '/participation' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`} onClick={() => setIsOpen(false)}>ΣΥΜΜΕΤΟΧΗ</Link>
+                <Link href="/participation" className={`block text-sm py-2 transition-colors ${pathname === '/participation' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`} onClick={() => setIsOpen(false)}>ΣΥΜΜΕΤΟΧΗ</Link>
               )}
               {isAuthenticated && (
-                <Link href="/map" className={`block text-sm py-2 transition-all ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`} onClick={() => setIsOpen(false)}>ΧΑΡΤΗΣ</Link>
+                <Link href="/map" className={`block text-sm py-2 transition-colors ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`} onClick={() => setIsOpen(false)}><span className="notranslate">{isTranslated ? 'MAP' : 'ΧΑΡΤΗΣ'}</span></Link>
               )}
               <Link href="/members" className="block w-full bg-white dark:bg-gray-700 text-charcoal dark:text-gray-200 px-6 py-2 rounded-full text-sm font-medium text-center">
                 {isAuthenticated ? 'ΜΕΛΗ' : 'ΕΥΡΕΣΗ ΜΕΛΩΝ'}
               </Link>
               {isAuthenticated ? (
                 <>
-                  <Link href="/profile" className={`block text-sm py-2 transition-all ${pathname === '/profile' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>Ο ΧΩΡΟΣ ΜΟΥ</Link>
+                  <Link href="/profile" className={`block text-sm py-2 transition-colors ${pathname === '/profile' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>Ο ΧΩΡΟΣ ΜΟΥ</Link>
                   <button
                     type="button"
                     onClick={() => setIsLogoutModalOpen(true)}
-                    className="block text-sm py-2 font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light transition-all text-left"
+                    className="block text-sm py-2 font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light transition-colors text-left"
                   >
                     ΑΠΟΣΥΝΔΕΣΗ
                   </button>
                 </>
               ) : (
-                <Link href="/login" className={`block text-sm py-2 transition-all ${pathname === '/login' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΥΝΔΕΣΗ</Link>
+                <Link href="/login" className={`block text-sm py-2 transition-colors ${pathname === '/login' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΥΝΔΕΣΗ</Link>
               )}
             </nav>
             <div className="pt-2">

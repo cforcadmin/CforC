@@ -126,7 +126,13 @@ export default function ProfilePage() {
     Project2Links: '',
     Project2PicturesAltText: '',
     EngName: '',
-    EngBio: ''
+    EngBio: '',
+    EngProject1Title: '',
+    EngProject1Tags: '',
+    EngProject1Description: '',
+    EngProject2Title: '',
+    EngProject2Tags: '',
+    EngProject2Description: ''
   })
 
   const [originalData, setOriginalData] = useState<Record<string, any>>(formData)
@@ -146,9 +152,40 @@ export default function ProfilePage() {
   const [showGuidelinesModal, setShowGuidelinesModal] = useState(false)
   const [nameLang, setNameLang] = useState<'gr' | 'en'>('gr')
   const [bioLang, setBioLang] = useState<'gr' | 'en'>('gr')
+  const [project1Lang, setProject1Lang] = useState<'gr' | 'en'>('gr')
+  const [project2Lang, setProject2Lang] = useState<'gr' | 'en'>('gr')
   const hasShownGuidelinesRef = useRef(false)
   const errorsRef = useRef<HTMLDivElement>(null)
   const saveMessageRef = useRef<HTMLDivElement>(null)
+
+  // Disable Google Translate on the profile page to prevent DOM mutation conflicts
+  // with React controlled inputs (cursor jumps to end on every keystroke)
+  useEffect(() => {
+    // Restore original page if Google Translate has already translated it
+    const frame = document.querySelector('.goog-te-banner-frame') as HTMLIFrameElement
+    if (frame) {
+      const closeBtn = frame.contentDocument?.querySelector('.goog-close-link') as HTMLElement
+      closeBtn?.click()
+    }
+    // Also try the cookie-based restore
+    document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+    document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.' + window.location.hostname
+    // Attempt to call Google Translate's restore function
+    const sel = document.querySelector('.goog-te-combo') as HTMLSelectElement
+    if (sel) {
+      sel.value = ''
+      sel.dispatchEvent(new Event('change'))
+    }
+    // Set the page-level translate attribute to prevent future translation
+    document.documentElement.setAttribute('translate', 'no')
+    document.documentElement.classList.add('notranslate')
+
+    return () => {
+      // Re-enable translation when leaving the profile page
+      document.documentElement.removeAttribute('translate')
+      document.documentElement.classList.remove('notranslate')
+    }
+  }, [])
 
   // Check authentication
   useEffect(() => {
@@ -196,7 +233,13 @@ export default function ProfilePage() {
         Project2Links: user.Project2Links || '',
         Project2PicturesAltText: user.Project2PicturesAltText || '',
         EngName: user.EngName || '',
-        EngBio: user.EngBio || ''
+        EngBio: user.EngBio || '',
+        EngProject1Title: user.EngProject1Title || '',
+        EngProject1Tags: user.EngProject1Tags || '',
+        EngProject1Description: user.EngProject1Description || '',
+        EngProject2Title: user.EngProject2Title || '',
+        EngProject2Tags: user.EngProject2Tags || '',
+        EngProject2Description: user.EngProject2Description || ''
       }
       setFormData(data)
       setOriginalData(data)
@@ -396,7 +439,7 @@ export default function ProfilePage() {
       if (imageFile || project1Images.length > 0 || project2Images.length > 0 || project1IdsChanged || project2IdsChanged) {
         // Use FormData if there are any images
         const formDataWithImages = new FormData()
-        const blocksFields = ['Bio', 'EngBio', 'Project1Description', 'Project2Description']
+        const blocksFields = ['Bio', 'EngBio', 'Project1Description', 'Project2Description', 'EngProject1Description', 'EngProject2Description']
         Object.entries(dataToUpdate).forEach(([key, value]) => {
           // Serialize blocks arrays as JSON strings for FormData transport
           if (blocksFields.includes(key) && Array.isArray(value)) {
@@ -1009,34 +1052,86 @@ export default function ProfilePage() {
 
               {/* Project 1 */}
               <div className="space-y-4 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
-                <h3 className="text-lg font-semibold text-charcoal dark:text-gray-100">
-                  Έργο 1
-                </h3>
+                <div className="flex items-center gap-3">
+                  <h3 className="text-lg font-semibold text-charcoal dark:text-gray-100">
+                    Έργο 1
+                  </h3>
+                  <div className="inline-flex rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setProject1Lang('gr')}
+                      className={`px-3 py-1 font-medium transition-colors ${project1Lang === 'gr' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      GR
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProject1Lang('en')}
+                      className={`px-3 py-1 font-medium transition-colors ${project1Lang === 'en' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      EN
+                    </button>
+                  </div>
+                </div>
 
-                <EditableField
-                  label="Τίτλος Έργου"
-                  value={formData.Project1Title}
-                  placeholder="Τίτλος του πρώτου έργου σας"
-                  onChange={(value) => handleFieldChange('Project1Title', value)}
-                />
+                {project1Lang === 'gr' ? (
+                  <>
+                    <EditableField
+                      label="Τίτλος Έργου"
+                      value={formData.Project1Title}
+                      placeholder="Τίτλος του πρώτου έργου σας"
+                      onChange={(value) => handleFieldChange('Project1Title', value)}
+                    />
 
-                <EditableField
-                  label="Tags/Κατηγορίες"
-                  value={formData.Project1Tags}
-                  placeholder="Design, Development, Art"
-                  onChange={(value) => handleFieldChange('Project1Tags', value)}
-                  helperText="Διαχώρισε με κόμμα (,) - μέγιστο 5 tags"
-                  maxItems={5}
-                  tooltip="Μέγιστο 5 tags ανά έργο, χωρισμένα με κόμμα."
-                />
+                    <EditableField
+                      label="Tags/Κατηγορίες"
+                      value={formData.Project1Tags}
+                      placeholder="Design, Development, Art"
+                      onChange={(value) => handleFieldChange('Project1Tags', value)}
+                      helperText="Διαχώρισε με κόμμα (,) - μέγιστο 5 tags"
+                      maxItems={5}
+                      tooltip="Μέγιστο 5 tags ανά έργο, χωρισμένα με κόμμα."
+                    />
 
-                <RichTextEditor
-                  label="Περιγραφή"
-                  content={formData.Project1Description}
-                  placeholder="Περίγραψε το έργο σου..."
-                  onChange={(blocks) => handleFieldChange('Project1Description', blocks)}
-                  tooltip="Υποστηρίζεται μορφοποίηση. Ενσωμάτωση εικόνας: [IMAGE: url | alt text]"
-                />
+                    <RichTextEditor
+                      label="Περιγραφή"
+                      content={formData.Project1Description}
+                      placeholder="Περίγραψε το έργο σου..."
+                      onChange={(blocks) => handleFieldChange('Project1Description', blocks)}
+                      tooltip="Υποστηρίζεται μορφοποίηση. Ενσωμάτωση εικόνας: [IMAGE: url | alt text]"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <EditableField
+                      label="Project Title (EN)"
+                      value={formData.EngProject1Title}
+                      placeholder="Project title in English (optional)"
+                      onChange={(value) => handleFieldChange('EngProject1Title', value)}
+                    />
+
+                    <EditableField
+                      label="Tags/Categories (EN)"
+                      value={formData.EngProject1Tags}
+                      placeholder="Design, Development, Art"
+                      onChange={(value) => handleFieldChange('EngProject1Tags', value)}
+                      helperText="Comma-separated (,) - max 5 tags"
+                      maxItems={5}
+                      tooltip="Max 5 tags per project, comma-separated."
+                    />
+
+                    <RichTextEditor
+                      label="Description (EN)"
+                      content={formData.EngProject1Description}
+                      placeholder="Describe your project in English (optional)..."
+                      onChange={(blocks) => handleFieldChange('EngProject1Description', blocks)}
+                      tooltip="Optional. Same formatting supported. Embedded image: [IMAGE: url | alt text]"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Προαιρετικό — Αν δεν το συμπληρώσεις, η αυτόματη μετάφραση (Google Translate) θα μεταφράσει την ελληνική περιγραφή.
+                    </p>
+                  </>
+                )}
 
                 <EditableField
                   label="Links Έργου"
@@ -1070,34 +1165,86 @@ export default function ProfilePage() {
 
               {/* Project 2 */}
               <div className="space-y-4 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
-                <h3 className="text-lg font-semibold text-charcoal dark:text-gray-100">
-                  Έργο 2
-                </h3>
+                <div className="flex items-center gap-3">
+                  <h3 className="text-lg font-semibold text-charcoal dark:text-gray-100">
+                    Έργο 2
+                  </h3>
+                  <div className="inline-flex rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setProject2Lang('gr')}
+                      className={`px-3 py-1 font-medium transition-colors ${project2Lang === 'gr' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      GR
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProject2Lang('en')}
+                      className={`px-3 py-1 font-medium transition-colors ${project2Lang === 'en' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      EN
+                    </button>
+                  </div>
+                </div>
 
-                <EditableField
-                  label="Τίτλος Έργου"
-                  value={formData.Project2Title}
-                  placeholder="Τίτλος του δεύτερου έργου σας"
-                  onChange={(value) => handleFieldChange('Project2Title', value)}
-                />
+                {project2Lang === 'gr' ? (
+                  <>
+                    <EditableField
+                      label="Τίτλος Έργου"
+                      value={formData.Project2Title}
+                      placeholder="Τίτλος του δεύτερου έργου σας"
+                      onChange={(value) => handleFieldChange('Project2Title', value)}
+                    />
 
-                <EditableField
-                  label="Tags/Κατηγορίες"
-                  value={formData.Project2Tags}
-                  placeholder="Design, Development, Art"
-                  onChange={(value) => handleFieldChange('Project2Tags', value)}
-                  helperText="Διαχώρισε με κόμμα (,) - μέγιστο 5 tags"
-                  maxItems={5}
-                  tooltip="Μέγιστο 5 tags ανά έργο, χωρισμένα με κόμμα."
-                />
+                    <EditableField
+                      label="Tags/Κατηγορίες"
+                      value={formData.Project2Tags}
+                      placeholder="Design, Development, Art"
+                      onChange={(value) => handleFieldChange('Project2Tags', value)}
+                      helperText="Διαχώρισε με κόμμα (,) - μέγιστο 5 tags"
+                      maxItems={5}
+                      tooltip="Μέγιστο 5 tags ανά έργο, χωρισμένα με κόμμα."
+                    />
 
-                <RichTextEditor
-                  label="Περιγραφή"
-                  content={formData.Project2Description}
-                  placeholder="Περίγραψε το έργο σου..."
-                  onChange={(blocks) => handleFieldChange('Project2Description', blocks)}
-                  tooltip="Υποστηρίζεται μορφοποίηση. Ενσωμάτωση εικόνας: [IMAGE: url | alt text]"
-                />
+                    <RichTextEditor
+                      label="Περιγραφή"
+                      content={formData.Project2Description}
+                      placeholder="Περίγραψε το έργο σου..."
+                      onChange={(blocks) => handleFieldChange('Project2Description', blocks)}
+                      tooltip="Υποστηρίζεται μορφοποίηση. Ενσωμάτωση εικόνας: [IMAGE: url | alt text]"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <EditableField
+                      label="Project Title (EN)"
+                      value={formData.EngProject2Title}
+                      placeholder="Project title in English (optional)"
+                      onChange={(value) => handleFieldChange('EngProject2Title', value)}
+                    />
+
+                    <EditableField
+                      label="Tags/Categories (EN)"
+                      value={formData.EngProject2Tags}
+                      placeholder="Design, Development, Art"
+                      onChange={(value) => handleFieldChange('EngProject2Tags', value)}
+                      helperText="Comma-separated (,) - max 5 tags"
+                      maxItems={5}
+                      tooltip="Max 5 tags per project, comma-separated."
+                    />
+
+                    <RichTextEditor
+                      label="Description (EN)"
+                      content={formData.EngProject2Description}
+                      placeholder="Describe your project in English (optional)..."
+                      onChange={(blocks) => handleFieldChange('EngProject2Description', blocks)}
+                      tooltip="Optional. Same formatting supported. Embedded image: [IMAGE: url | alt text]"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Προαιρετικό — Αν δεν το συμπληρώσεις, η αυτόματη μετάφραση (Google Translate) θα μεταφράσει την ελληνική περιγραφή.
+                    </p>
+                  </>
+                )}
 
                 <EditableField
                   label="Links Έργου"

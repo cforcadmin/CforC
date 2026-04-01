@@ -11,6 +11,8 @@ import Image from 'next/image'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import { getMemberBySlugOrId } from '@/lib/strapi'
 import { renderBlocks } from '@/lib/renderBlocks'
+import LocalizedText from '@/components/LocalizedText'
+import LocalizedBlocks from '@/components/LocalizedBlocks'
 
 interface Member {
   id: number
@@ -31,6 +33,9 @@ interface Member {
   Project1PicturesAltText?: string  // Accessibility alt text for project 1 images
   Project1Tags?: string
   Project1Links?: string
+  EngProject1Title?: string
+  EngProject1Tags?: string
+  EngProject1Description?: string
   Project2Title?: string
   Project2Description?: string
   Project2Pictures?: Array<{
@@ -40,6 +45,9 @@ interface Member {
   Project2PicturesAltText?: string  // Accessibility alt text for project 2 images
   Project2Tags?: string
   Project2Links?: string
+  EngProject2Title?: string
+  EngProject2Tags?: string
+  EngProject2Description?: string
 }
 
 function getWebsiteDisplay(url: string): { label: string; icon: React.ReactNode } {
@@ -147,6 +155,9 @@ export default function ProjectDetailClient() {
     picturesAltText?: string  // Accessibility alt text for project images
     tags: string[]
     links: string[]
+    engTitle?: string
+    engTags?: string[]
+    engDescription?: string
   } | null>(null)
   const [otherProject, setOtherProject] = useState<{
     title: string
@@ -197,6 +208,9 @@ export default function ProjectDetailClient() {
               picturesAltText: memberData.Project1PicturesAltText,
               tags: memberData.Project1Tags?.split(',').map((t: string) => t.trim()) || [],
               links: memberData.Project1Links?.split(',').map((l: string) => l.trim()).filter((l: string) => l) || [],
+              engTitle: memberData.EngProject1Title || undefined,
+              engTags: memberData.EngProject1Tags ? memberData.EngProject1Tags.split(',').map((t: string) => t.trim()) : undefined,
+              engDescription: memberData.EngProject1Description || undefined,
             })
             if (memberData.Project2Title) {
               setOtherProject({
@@ -213,6 +227,9 @@ export default function ProjectDetailClient() {
               picturesAltText: memberData.Project2PicturesAltText,
               tags: memberData.Project2Tags?.split(',').map((t: string) => t.trim()) || [],
               links: memberData.Project2Links?.split(',').map((l: string) => l.trim()).filter((l: string) => l) || [],
+              engTitle: memberData.EngProject2Title || undefined,
+              engTags: memberData.EngProject2Tags ? memberData.EngProject2Tags.split(',').map((t: string) => t.trim()) : undefined,
+              engDescription: memberData.EngProject2Description || undefined,
             })
             if (memberData.Project1Title) {
               setOtherProject({
@@ -248,7 +265,7 @@ export default function ProjectDetailClient() {
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
-                {projectData.title}
+                <LocalizedText text={projectData.title} engText={projectData.engTitle} />
               </h1>
             </div>
 
@@ -296,10 +313,10 @@ export default function ProjectDetailClient() {
           <div className="bg-white dark:bg-gray-800 rounded-3xl p-12">
             {/* Tags */}
             <div className="flex flex-wrap gap-2 mb-8">
-              {projectData.tags.map((tag, index) => (
+              {(projectData.engTags && projectData.engTags.length > 0 ? projectData.engTags : projectData.tags).map((tag, index) => (
                 <span
                   key={index}
-                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium dark:text-gray-200"
+                  className={`px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium dark:text-gray-200${projectData.engTags && projectData.engTags.length > 0 ? ' notranslate' : ''}`}
                 >
                   {tag}
                 </span>
@@ -407,9 +424,7 @@ export default function ProjectDetailClient() {
 
               {/* Description */}
               <div>
-                <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {renderBlocks(projectData.description)}
-                </div>
+                <LocalizedBlocks blocks={projectData.description} engBlocks={projectData.engDescription} className="text-gray-700 dark:text-gray-300 leading-relaxed" />
 
                 {/* Project Links */}
                 {projectData.links.length > 0 && (

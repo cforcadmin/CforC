@@ -253,6 +253,19 @@ export default function RichTextEditor({
 
   const [isFocused, setIsFocused] = useState(false)
 
+  // Sync flag: distinguish our own onUpdate from external prop changes
+  const isInternalUpdate = useRef(false)
+  const contentRef = useRef(content)
+
+  // Update the ref whenever we push changes FROM the editor (internal)
+  const handleEditorUpdate = useCallback(({ editor: ed }: any) => {
+    const json = ed.getJSON()
+    const blocks = tiptapToStrapiBlocks(json)
+    isInternalUpdate.current = true
+    contentRef.current = blocks
+    onChange(blocks)
+  }, [onChange])
+
   // Compute initial TipTap doc from content
   const getInitialContent = useCallback(() => {
     if (!content || (typeof content === 'string' && content.trim() === '')) {
@@ -293,34 +306,26 @@ export default function RichTextEditor({
     ],
     content: getInitialContent(),
     editable: true,
-    onUpdate: ({ editor: ed }) => {
-      const json = ed.getJSON()
-      const blocks = tiptapToStrapiBlocks(json)
-      onChange(blocks)
-    },
+    onUpdate: handleEditorUpdate,
     onFocus: () => setIsFocused(true),
     onBlur: () => setIsFocused(false),
   })
 
-  // Sync editor content when content prop changes externally (e.g., after discard/refresh)
-  const contentRef = useRef(content)
+  // Only setContent when the change came from OUTSIDE (parent reset, discard, language switch)
   useEffect(() => {
     if (!editor) return
-    // Only update if content actually changed externally (avoid loops from our own onUpdate)
-    if (JSON.stringify(contentRef.current) !== JSON.stringify(content)) {
-      contentRef.current = content
-      const newDoc = getInitialContent()
-      // Temporarily disable onUpdate to prevent loop
-      editor.off('update')
-      editor.commands.setContent(newDoc)
-      // Re-enable onUpdate
-      editor.on('update', ({ editor: ed }) => {
-        const json = ed.getJSON()
-        const blocks = tiptapToStrapiBlocks(json)
-        onChange(blocks)
-      })
+    if (isInternalUpdate.current) {
+      // This content change was caused by our own onUpdate — skip setContent to preserve cursor
+      isInternalUpdate.current = false
+      return
     }
-  }, [content, editor, getInitialContent, onChange])
+    // External change — update the editor
+    const newDoc = getInitialContent()
+    editor.off('update', handleEditorUpdate)
+    editor.commands.setContent(newDoc)
+    contentRef.current = content
+    editor.on('update', handleEditorUpdate)
+  }, [content, editor, getInitialContent, handleEditorUpdate])
 
   return (
     <div className="space-y-2">
@@ -338,7 +343,7 @@ export default function RichTextEditor({
           <Toolbar editor={editor} />
           <EditorContent
             editor={editor}
-            className="rich-text-editor px-4 py-3 min-h-[120px] max-h-[400px] overflow-y-auto text-charcoal dark:text-gray-200 bg-white dark:bg-gray-700"
+            className="rich-text-editor notranslate px-4 py-3 min-h-[120px] max-h-[400px] overflow-y-auto text-charcoal dark:text-gray-200 bg-white dark:bg-gray-700"
           />
         </div>
 

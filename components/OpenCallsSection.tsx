@@ -6,6 +6,7 @@ import Image from 'next/image'
 import BlurredImage from './shared/BlurredImage'
 import LoadingIndicator from './LoadingIndicator'
 import LocalizedText from './LocalizedText'
+import { useTranslation } from './TranslationProvider'
 import { getOpenCalls } from '@/lib/strapi'
 import type { StrapiResponse, OpenCall } from '@/lib/types'
 import { useAuth } from './AuthProvider'
@@ -214,6 +215,7 @@ export default function OpenCallsSection() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showMemberModal, setShowMemberModal] = useState(false)
+  const { isEnglish } = useTranslation()
 
   useEffect(() => {
     async function fetchOpenCalls() {
@@ -263,9 +265,9 @@ export default function OpenCallsSection() {
       <section id="open-calls" className="py-24 bg-orange-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-12">
-            <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</span>
+            <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">{isEnglish ? <span className="notranslate">OPEN CALLS</span> : 'ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ'}</span>
             <h2 className="text-4xl md:text-5xl font-bold dark:text-gray-100">
-              ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ ΤΟΥ<br />
+              {isEnglish ? <><span className="notranslate">OPEN CALLS OF</span><br /></> : <>ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ ΤΟΥ<br /></>}
               CULTURE FOR CHANGE
             </h2>
           </div>
@@ -314,7 +316,7 @@ export default function OpenCallsSection() {
               </div>
               <h3 className="text-2xl font-bold mb-4 dark:text-gray-100">Περιεχόμενο Μελών</h3>
               <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Οι ανοιχτές προσκλήσεις είναι διαθέσιμες μόνο για εγγεγραμμένα μέλη. Εγγραφείτε για πρόσβαση.
+                {isEnglish ? <span className="notranslate">Open calls are available only to registered members. Register for access.</span> : 'Οι ανοιχτές προσκλήσεις είναι διαθέσιμες μόνο για εγγεγραμμένα μέλη. Εγγραφείτε για πρόσβαση.'}
               </p>
               <div className="flex flex-col gap-3">
                 <Link
@@ -349,23 +351,27 @@ export default function OpenCallsSection() {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-12">
             <div>
-              <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ</span>
+              <span className="inline-block bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-sm font-medium mb-2 shadow-[0_0_15px_8px_rgba(45,45,45,0.4)] dark:shadow-[0_0_15px_8px_rgba(55,65,81,0.5)]">{isEnglish ? <span className="notranslate">OPEN CALLS</span> : 'ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ'}</span>
               <h2 className="text-4xl md:text-5xl font-bold dark:text-gray-100">
-                ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ ΤΟΥ<br />
+                {isEnglish ? <><span className="notranslate">OPEN CALLS OF</span><br /></> : <>ΑΝΟΙΧΤΕΣ ΠΡΟΣΚΛΗΣΕΙΣ ΤΟΥ<br /></>}
                 CULTURE FOR CHANGE
               </h2>
               <p className="text-gray-600 dark:text-gray-300 mt-4 max-w-2xl text-base leading-relaxed">
-                Ανακάλυψε ευκαιρίες χρηματοδότησης, συνεργασίας και συμμετοχής σε πολιτιστικά προγράμματα στην Ελλάδα και το εξωτερικό. Οι ανοιχτές προσκλήσεις ανανεώνονται τακτικά και είναι διαθέσιμες αποκλειστικά για τα μέλη του Δικτύου.
+                {isEnglish ? (
+                  <span className="notranslate">Discover opportunities for funding, collaboration and participation in cultural programs in Greece and abroad. Open calls are updated regularly and are available exclusively to members of the Network.</span>
+                ) : (
+                  <>Ανακάλυψε ευκαιρίες χρηματοδότησης, συνεργασίας και συμμετοχής σε πολιτιστικά προγράμματα στην Ελλάδα και το εξωτερικό. Οι ανοιχτές προσκλήσεις ανανεώνονται τακτικά και είναι διαθέσιμες αποκλειστικά για τα μέλη του Δικτύου.</>
+                )}
               </p>
               {user && totalActiveCalls > 0 && (
                 <p className="mt-3 text-sm font-medium text-coral dark:text-coral-light">
-                  {totalActiveCalls} ενεργές προσκλήσεις
+                  {isEnglish ? <span className="notranslate">{totalActiveCalls} active open calls</span> : <>{totalActiveCalls} ενεργές προσκλήσεις</>}
                 </p>
               )}
             </div>
             {user ? (
               <Link href="/open-calls" className="hidden md:block flex-shrink-0 bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors">
-                ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
+                {isEnglish ? <span className="notranslate">ALL OPEN CALLS</span> : <>ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ</>}
               </Link>
             ) : (
               <button
@@ -373,7 +379,7 @@ export default function OpenCallsSection() {
                 onClick={handleViewAllClick}
                 className="hidden md:block flex-shrink-0 bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors"
               >
-                ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
+                {isEnglish ? <span className="notranslate">ALL OPEN CALLS</span> : <>ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ</>}
               </button>
             )}
           </div>
@@ -382,10 +388,10 @@ export default function OpenCallsSection() {
           {!user && expiredCalls.length > 0 && (
             <div className="mb-8">
               <h3 className="text-2xl md:text-3xl font-bold dark:text-gray-100">
-                Πρόσφατες Προσκλήσεις
+                {isEnglish ? <span className="notranslate">Recent Open Calls</span> : 'Πρόσφατες Προσκλήσεις'}
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mt-2">
-                Δες ενδεικτικά κάποιες από τις παρελθούσες ανοιχτές προσκλήσεις. Το σύνολο των ανοιχτών προσκλήσεων είναι προσβάσιμο μόνο για μέλη.
+                {isEnglish ? <span className="notranslate">See some of the past open calls. The full list of open calls is accessible only to members.</span> : 'Δες ενδεικτικά κάποιες από τις παρελθούσες ανοιχτές προσκλήσεις. Το σύνολο των ανοιχτών προσκλήσεων είναι προσβάσιμο μόνο για μέλη.'}
               </p>
             </div>
           )}
@@ -405,7 +411,7 @@ export default function OpenCallsSection() {
           {/* Mobile CTA */}
           {user ? (
             <Link href="/open-calls" className="md:hidden w-full mt-8 bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium text-center block hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors">
-              ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
+              {isEnglish ? <span className="notranslate">ALL OPEN CALLS</span> : <>ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ</>}
             </Link>
           ) : (
             <button
@@ -413,7 +419,7 @@ export default function OpenCallsSection() {
               onClick={() => setShowMemberModal(true)}
               className="md:hidden w-full mt-8 bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-6 py-3 rounded-full font-medium text-center block hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors"
             >
-              ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ
+              {isEnglish ? <span className="notranslate">ALL OPEN CALLS</span> : <>ΟΛΕΣ ΟΙ ΠΡΟΣΚΛΗΣΕΙΣ</>}
             </button>
           )}
         </div>

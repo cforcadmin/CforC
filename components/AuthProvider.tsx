@@ -32,6 +32,9 @@ interface Member {
     alternativeText?: string
   }>
   Project1PicturesAltText?: string
+  EngProject1Title?: string
+  EngProject1Tags?: string
+  EngProject1Description?: any
   Project2Title?: string
   Project2Tags?: string
   Project2Links?: string
@@ -42,6 +45,9 @@ interface Member {
     alternativeText?: string
   }>
   Project2PicturesAltText?: string
+  EngProject2Title?: string
+  EngProject2Tags?: string
+  EngProject2Description?: any
 }
 
 interface AuthContextType {
