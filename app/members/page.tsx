@@ -19,11 +19,13 @@ import SortFilter from '@/components/members/SortFilter'
 import ViewToggle from '@/components/shared/ViewToggle'
 import MemberFlipCard from '@/components/shared/MemberFlipCard'
 import { doesFieldMatchFilter } from '@/lib/memberTaxonomy'
+import { matchesName } from '@/lib/transliterate'
 
 interface Member {
   id: number
   documentId: string
   Name: string
+  EngName?: string
   Slug: string
   Bio: string
   FieldsOfWork: string
@@ -222,7 +224,7 @@ function MembersPageContent() {
 
     if (searchQuery) {
       result = result.filter((member) =>
-        member.Name.toLowerCase().includes(searchQuery.toLowerCase())
+        matchesName(searchQuery, member.Name, member.EngName)
       )
     }
 
@@ -368,7 +370,7 @@ function MembersPageContent() {
             <div className="flex flex-wrap items-center gap-3">
               <input
                 type="text"
-                placeholder="Αναζήτηση ονόματος..."
+                placeholder="Αναζήτηση / Search name"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 min-w-[140px] max-w-[200px] px-4 py-3 border border-charcoal dark:border-gray-400 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral dark:bg-gray-700 dark:text-gray-200 placeholder-charcoal dark:placeholder-gray-200"
