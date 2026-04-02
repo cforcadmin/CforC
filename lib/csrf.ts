@@ -9,7 +9,9 @@ const ALLOWED_ORIGINS = [
 ]
 
 if (process.env.NODE_ENV !== 'production') {
-  ALLOWED_ORIGINS.push('http://localhost:3000')
+  ALLOWED_ORIGINS.push('http://localhost:3000', 'http://localhost:3001')
+  // Allow any local network IP for mobile testing in dev
+  ALLOWED_ORIGINS.push('http://192.168.1.72:3000', 'http://192.168.1.72:3001')
 }
 
 export function checkCsrf(request: Request): string | null {

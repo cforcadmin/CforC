@@ -355,15 +355,17 @@ function MembersPageContent() {
           {isLoading && <LoadingIndicator />}
 
           {/* Info Box */}
-          <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 mb-12 relative">
-            <div className="absolute top-8 right-8 text-right">
-              <div className="bg-white dark:bg-gray-700 px-6 py-3 rounded-full border-2 border-charcoal dark:border-gray-400">
-                <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Μέλη: <span className="text-coral dark:text-coral-light">{displayCount}</span></p>
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 mb-12">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                Ένα αποθετήριο εξαιρετικών δημιουργικών επαγγελματιών, έργων και ιδεών που προάγουν την κοινωνικοπολιτιστική καινοτομία μέσω πρωτοβουλιών με κινητήρια δύναμη τον άνθρωπο.
+              </p>
+              <div className="shrink-0">
+                <div className="bg-white dark:bg-gray-700 px-6 py-3 rounded-full border-2 border-charcoal dark:border-gray-400 inline-block">
+                  <p className="text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap">Μέλη: <span className="text-coral dark:text-coral-light">{displayCount}</span></p>
+                </div>
               </div>
             </div>
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed max-w-4xl">
-              Ένα αποθετήριο εξαιρετικών δημιουργικών επαγγελματιών, έργων και ιδεών που προάγουν την κοινωνικοπολιτιστική καινοτομία μέσω πρωτοβουλιών με κινητήρια δύναμη τον άνθρωπο.
-            </p>
           </div>
 
           {/* Filters */}

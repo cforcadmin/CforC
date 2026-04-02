@@ -302,17 +302,19 @@ function ActivitiesPageContent() {
             {loading && <LoadingIndicator />}
 
             {/* Info Box with count */}
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 mb-6 relative shadow-sm">
-              <div className="absolute top-8 right-8">
-                <div className="bg-white dark:bg-gray-700 px-6 py-3 rounded-full border-2 border-charcoal dark:border-gray-400">
-                  <p className="text-sm font-bold text-gray-700 dark:text-gray-200" aria-live="polite">
-                    Αποτελέσματα: <span className="text-coral dark:text-coral-light">{displayCount}</span>
-                  </p>
+            <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 mb-6 shadow-sm">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                  Παρακολούθησε τα νέα του Δικτύου Culture for Change: εκδηλώσεις, εργαστήρια, δικτυώσεις, δράσεις συνηγορίας και ενημερωτικά δελτία.
+                </p>
+                <div className="shrink-0">
+                  <div className="bg-white dark:bg-gray-700 px-6 py-3 rounded-full border-2 border-charcoal dark:border-gray-400 inline-block">
+                    <p className="text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap" aria-live="polite">
+                      Αποτελέσματα: <span className="text-coral dark:text-coral-light">{displayCount}</span>
+                    </p>
+                  </div>
                 </div>
               </div>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed max-w-4xl">
-                Παρακολούθησε τα νέα του Δικτύου Culture for Change: εκδηλώσεις, εργαστήρια, δικτυώσεις, δράσεις συνηγορίας και ενημερωτικά δελτία.
-              </p>
             </div>
 
             {/* Filter Bar */}
