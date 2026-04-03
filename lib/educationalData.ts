@@ -323,6 +323,56 @@ export const educationalCategories: Category[] = [
           },
         ],
       },
+      {
+        key: 'community-building',
+        name: 'Κοινότητα',
+        fullName: 'Χτίσιμο Κοινότητας & Ανάπτυξη Κοινού',
+        description: 'Εργαλεία και πόροι για τη δημιουργία κοινότητας και την ανάπτυξη κοινού στον πολιτιστικό τομέα.',
+        engDescription: 'Tools and resources for community building and audience development in the cultural sector.',
+        resources: [
+          {
+            title: 'ENCC Make it Happen — Booklet',
+            description: 'Στρατηγικές και προσεγγίσεις για τις προκλήσεις που αντιμετωπίζουν τα κοινωνικοπολιτιστικά κέντρα κατά τη δημιουργία κοινότητας. Περιλαμβάνει εμπειρίες 24 πολιτιστικών εργαζομένων από όλη την Ευρώπη.',
+            engDescription: 'Strategies and approaches to challenges faced by socio-cultural centres during community building. Contains personal experiences and insights from 24 cultural workers across Europe.',
+            url: 'https://cloud.encc.eu/s/JXYEzN5npLmLxZR',
+          },
+          {
+            title: 'ENCC Make it Happen — Reels',
+            description: 'Βίντεο με βασικά συμπεράσματα από το εκπαιδευτικό πρόγραμμα για τη δημιουργία κοινότητας και την ανάπτυξη κοινού.',
+            engDescription: 'Video content featuring key takeaways from the training programme on community building and audience development.',
+            url: 'https://videos.domainepublic.net/w/p/1xkp5KHkPMra7U9qezSgcU',
+          },
+          {
+            title: 'Ανάπτυξη κοινού — Συνέντευξη Jonathan Goodacre',
+            engTitle: 'Audience Development — Jonathan Goodacre Interview',
+            description: 'Ηχητική συνέντευξη με τον εκπαιδευτή Jonathan Goodacre για την ανάπτυξη κοινού στον πολιτιστικό τομέα.',
+            engDescription: 'Audio interview with trainer Jonathan Goodacre sharing perspectives on audience development in the cultural sector.',
+            url: 'https://encc.eu/articles/audience-development-in-the-cultural-sector-interview-with-jonathan-goodacre',
+          },
+          {
+            title: 'Χτίσιμο κοινότητας — Συνέντευξη Niels Righolt',
+            engTitle: 'Community Building — Niels Righolt Interview',
+            description: 'Ηχητική συνέντευξη με τον εκπαιδευτή Niels Righolt για τη δημιουργία κοινότητας στον πολιτιστικό τομέα.',
+            engDescription: 'Audio interview with trainer Niels Righolt discussing community building in the cultural sector.',
+            url: 'https://encc.eu/articles/community-building-in-the-cultural-sector-interview-with-niels-righolt',
+          },
+        ],
+      },
+      {
+        key: 'music-activism',
+        name: 'Μουσική & Ακτιβισμός',
+        fullName: 'Μουσική & Πράσινος Ακτιβισμός',
+        description: 'Εργαλεία και πόροι για τη χρήση της μουσικής ως μοχλού κοινωνικής αλλαγής και περιβαλλοντικού ακτιβισμού.',
+        engDescription: 'Tools and resources for using music as a lever for social change and green activism.',
+        resources: [
+          {
+            title: 'MEGA — Music Efforts for Green Activism Toolkit',
+            description: 'Εργαλειοθήκη από τους Sud Sonico, Ramdom και Musichelp με μελέτες περίπτωσης, ευκαιρίες χρηματοδότησης και πόρους για ευρωπαϊκές καλλιτεχνικές κοινότητες που χρησιμοποιούν τη μουσική για κοινωνική αλλαγή μέσω καινοτόμων, προσβάσιμων και διατομεακών πρακτικών.',
+            engDescription: 'Toolkit by Sud Sonico, Ramdom and Musichelp with case studies, funding opportunities, and resources supporting European artistic and cultural communities in using music as a lever to impact society through innovative, accessible, and cross-sector practices.',
+            url: 'https://drive.google.com/file/d/1I6oBi21lfx3_EGrvDcqZg4z4kP7o7ypf/view',
+          },
+        ],
+      },
     ],
   },
 
