@@ -289,7 +289,7 @@ export default function ProfileGuidelinesModal({
                 <ul className="mt-2 text-sm text-gray-600 dark:text-gray-300 space-y-1">
                   <li>• Περίγραψε <strong>τι απεικονίζει</strong> η φωτογραφία σου</li>
                   <li>• Μη γράψεις απλώς το όνομά σου</li>
-                  <li>• Μέγιστο: <strong>125 χαρακτήρες</strong></li>
+                  <li>• Μέγιστο: <strong>200 χαρακτήρες</strong></li>
                 </ul>
                 <div className="mt-3 bg-white dark:bg-gray-800 rounded-lg p-3">
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Παραδείγματα:</p>
@@ -316,7 +316,7 @@ export default function ProfileGuidelinesModal({
                 <ul className="mt-2 text-sm text-gray-600 dark:text-gray-300 space-y-1">
                   <li>• Περίγραψε <strong>τι δείχνουν</strong> οι εικόνες του έργου</li>
                   <li>• Μην επαναλάβεις απλώς τον τίτλο του έργου</li>
-                  <li>• Μέγιστο: <strong>125 χαρακτήρες</strong></li>
+                  <li>• Μέγιστο: <strong>200 χαρακτήρες</strong></li>
                   <li>• Η ίδια περιγραφή χρησιμοποιείται για όλες τις εικόνες του έργου</li>
                 </ul>
                 <div className="mt-3 bg-white dark:bg-gray-800 rounded-lg p-3">

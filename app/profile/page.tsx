@@ -843,10 +843,10 @@ export default function ProfilePage() {
                   value={formData.ProfileImageAltText}
                   placeholder="π.χ. Γυναίκα με καστανά μαλλιά χαμογελάει"
                   onChange={(value) => handleFieldChange('ProfileImageAltText', value)}
-                  helperText="Περιγραφή για άτομα με προβλήματα όρασης (μέγιστο 125 χαρακτήρες)"
-                  maxCharacters={125}
+                  helperText="Περιγραφή για άτομα με προβλήματα όρασης (μέγιστο 200 χαρακτήρες)"
+                  maxCharacters={200}
                   required
-                  tooltip="Περίγραψε τι απεικονίζει η φωτογραφία. Μη γράψεις απλώς το όνομά σου. Μέγιστο 125 χαρακτήρες."
+                  tooltip="Περίγραψε τι απεικονίζει η φωτογραφία. Μη γράψεις απλώς το όνομά σου. Μέγιστο 200 χαρακτήρες."
                 />
               </div>
             </div>
@@ -1156,10 +1156,10 @@ export default function ProfilePage() {
                   value={formData.Project1PicturesAltText}
                   placeholder="π.χ. Παιδιά ζωγραφίζουν τοιχογραφία σε δημόσιο χώρο"
                   onChange={(value) => handleFieldChange('Project1PicturesAltText', value)}
-                  helperText="Υποχρεωτικό όταν υπάρχουν εικόνες - Περιγραφή για προσβασιμότητα (μέγιστο 125 χαρακτήρες)"
-                  maxCharacters={125}
+                  helperText="Υποχρεωτικό όταν υπάρχουν εικόνες - Περιγραφή για προσβασιμότητα (μέγιστο 200 χαρακτήρες)"
+                  maxCharacters={200}
                   required={(project1KeptImageIds.length > 0) || (project1Images.length > 0)}
-                  tooltip="Περίγραψε τι δείχνουν οι εικόνες του έργου. Μην επαναλάβεις τον τίτλο. Μέγιστο 125 χαρακτήρες."
+                  tooltip="Περίγραψε τι δείχνουν οι εικόνες του έργου. Μην επαναλάβεις τον τίτλο. Μέγιστο 200 χαρακτήρες."
                 />
               </div>
 
@@ -1269,10 +1269,10 @@ export default function ProfilePage() {
                   value={formData.Project2PicturesAltText}
                   placeholder="π.χ. Θεατρική παράσταση με 10 ηθοποιούς σε σκηνή"
                   onChange={(value) => handleFieldChange('Project2PicturesAltText', value)}
-                  helperText="Υποχρεωτικό όταν υπάρχουν εικόνες - Περιγραφή για προσβασιμότητα (μέγιστο 125 χαρακτήρες)"
-                  maxCharacters={125}
+                  helperText="Υποχρεωτικό όταν υπάρχουν εικόνες - Περιγραφή για προσβασιμότητα (μέγιστο 200 χαρακτήρες)"
+                  maxCharacters={200}
                   required={(project2KeptImageIds.length > 0) || (project2Images.length > 0)}
-                  tooltip="Περίγραψε τι δείχνουν οι εικόνες του έργου. Μην επαναλάβεις τον τίτλο. Μέγιστο 125 χαρακτήρες."
+                  tooltip="Περίγραψε τι δείχνουν οι εικόνες του έργου. Μην επαναλάβεις τον τίτλο. Μέγιστο 200 χαρακτήρες."
                 />
               </div>
             </div>
