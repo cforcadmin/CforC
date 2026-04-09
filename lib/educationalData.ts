@@ -356,6 +356,13 @@ export const educationalCategories: Category[] = [
             engDescription: 'Audio interview with trainer Niels Righolt discussing community building in the cultural sector.',
             url: 'https://encc.eu/articles/community-building-in-the-cultural-sector-interview-with-niels-righolt',
           },
+          {
+            title: 'Dialog City — Εγχειρίδιο Μεθοδολογίας',
+            engTitle: 'Dialog City — Methodology Manual',
+            description: 'Εγχειρίδιο μεθοδολογίας για αστικό πολιτιστικό διάλογο και συμμετοχική ανάπτυξη κοινότητας. Περιλαμβάνει 5 φάσεις υλοποίησης, 13 πρακτικά εργαλεία και πρότυπα, καθώς και θεωρητικό πλαίσιο για την προσαρμογή της μεθοδολογίας σε τοπικό επίπεδο.',
+            engDescription: 'Methodology manual for urban cultural dialogue and participatory community development. Includes a 5-phase implementation process, 13 practical tools and templates, and a theoretical framework for adapting the methodology to local contexts.',
+            url: 'https://drive.google.com/file/d/1dCOYerln83tBT3Q0fvPTz_9pgALRzH1y/view?usp=share_link',
+          },
         ],
       },
       {
@@ -851,6 +858,12 @@ export const educationalCategories: Category[] = [
             description: 'Ευρωπαϊκή πλατφόρμα πόρων πολιτιστικού τομέα.',
             engDescription: 'European platform for cultural sector resources.',
             url: 'https://creativesunite.eu',
+          },
+          {
+            title: 'Reset! Network',
+            description: 'Ευρωπαϊκό δίκτυο ανεξάρτητων πολιτιστικών και οργανισμών ΜΜΕ.',
+            engDescription: 'European network of independent cultural and media organisations.',
+            url: 'https://reset-network.eu',
           },
         ],
       },
