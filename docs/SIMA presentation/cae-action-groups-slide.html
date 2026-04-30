@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CAE — Action Groups</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #FFFFFF; min-height: 100vh; }
+  body {
+    font-family: 'Inter', 'Arial Nova', Arial, system-ui, sans-serif;
+    padding: 0;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ─── 16:9 slide ─── */
+  .slide {
+    width: 1920px;
+    height: 1080px;
+    background: #FFFFFF;
+    position: relative;
+    display: grid;
+    grid-template-columns: 42% 58%;
+    align-items: center;
+    transform-origin: center center;
+    flex-shrink: 0;
+  }
+
+  /* Left: logo */
+  .logo-pane {
+    height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    padding: 100px;
+  }
+  .logo-pane img {
+    max-width: 100%;
+    max-height: 380px;
+    height: auto;
+    display: block;
+  }
+
+  /* Right: content */
+  .content-pane {
+    padding: 120px 160px 120px 60px;
+    color: #1a1a1a;
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* Vertical accent bar (left edge of content) */
+  .accent-bar {
+    position: absolute;
+    left: 0; top: 140px; bottom: 140px;
+    width: 6px;
+    background: linear-gradient(180deg, #EE2A8C 0%, #6B2D7B 100%);
+    border-radius: 3px;
+  }
+
+  /* Geometric accent shape (top-right corner) */
+  .geo-accent {
+    position: absolute;
+    top: 80px; right: 80px;
+    width: 180px; height: 180px;
+    pointer-events: none;
+  }
+  .geo-accent .shape-pink {
+    position: absolute; top: 0; left: 0;
+    width: 120px; height: 70px;
+    background: #EE2A8C;
+    transform: skewX(-25deg);
+  }
+  .geo-accent .shape-purple {
+    position: absolute; top: 70px; left: 30px;
+    width: 90px; height: 70px;
+    background: #6B2D7B;
+    transform: skewX(-25deg);
+  }
+
+  /* Main descriptive text */
+  .description {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.32;
+    letter-spacing: -0.4px;
+    color: #1a1a1a;
+    margin-bottom: 70px;
+    max-width: 920px;
+  }
+
+  /* "Action groups on:" label */
+  .groups-label {
+    font-size: 24px;
+    font-weight: 500;
+    color: #2D2D2D;
+    margin-bottom: 32px;
+  }
+
+  /* Pills row */
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px 32px;
+    max-width: 980px;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 38px;
+    font-size: 22px;
+    font-weight: 800;
+    color: #1a1a1a;
+    background: #F4F4F4;
+    border: none;
+    /* asymmetric capsule — rounded everywhere except subtler bottom-right */
+    border-radius: 999px 999px 14px 999px;
+    white-space: nowrap;
+    line-height: 1;
+    transition: all 0.18s ease;
+  }
+  .pill:hover {
+    background: #EE2A8C;
+    color: #FFFFFF;
+    transform: translateY(-2px);
+  }
+</style>
+</head>
+<body>
+
+<div class="slide" id="slide">
+
+  <!-- Left: logo -->
+  <div class="logo-pane">
+    <img src="public/about-us-cae-logo.png" alt="Culture Action Europe logo">
+  </div>
+
+  <!-- Right: content -->
+  <div class="content-pane">
+    <div class="accent-bar"></div>
+    <div class="geo-accent">
+      <div class="shape-pink"></div>
+      <div class="shape-purple"></div>
+    </div>
+
+    <p class="description">
+      Culture Action Europe Action Groups are spaces where CAE members form a working group around a specific
+      topic. Action Groups are organised around diverse research areas and topics of the CAE strategy looking
+      for commonalities among the members. They last maximum 3 years, with a defined annual goal, purpose,
+      focus, deliverables and budget (if applicable).
+    </p>
+
+    <div class="groups-label">Action groups on:</div>
+
+    <div class="pills">
+      <span class="pill">working conditions</span>
+      <span class="pill">sustainability</span>
+      <span class="pill">well-being</span>
+      <span class="pill">digital and ai</span>
+      <span class="pill">networks coordination</span>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  function fitSlide() {
+    const slide = document.getElementById('slide');
+    const scaleW = window.innerWidth / 1920;
+    const scaleH = window.innerHeight / 1080;
+    const scale = Math.min(scaleW, scaleH);
+    slide.style.transform = 'scale(' + scale + ')';
+  }
+  window.addEventListener('resize', fitSlide);
+  fitSlide();
+</script>
+
+</body>
+</html>

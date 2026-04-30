@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<title>Action Group on Digital &amp; AI</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #FFFFFF; min-height: 100vh; overflow: hidden; }
+  body {
+    font-family: 'Inter', 'Arial Nova', Arial, system-ui, sans-serif;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+  }
+
+  /* ─── 16:9 slide ─── */
+  .slide {
+    width: 1920px; height: 1080px;
+    background: #FFFFFF;
+    position: relative;
+    overflow: hidden;
+    transform-origin: center center;
+    flex-shrink: 0;
+  }
+
+  /* ─── Top half: hero header ─── */
+  .header {
+    position: relative;
+    height: 540px;
+    background: linear-gradient(120deg, #DCE9F5 0%, #EEF4FA 50%, #FFFFFF 100%);
+    overflow: hidden;
+  }
+
+  /* Network/nodes SVG decoration on the left */
+  .network-bg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 760px; height: 100%;
+    pointer-events: none;
+    opacity: 0.85;
+  }
+
+  /* Subtle aqua glow blob behind network */
+  .header::before {
+    content: '';
+    position: absolute;
+    top: 30%; left: 12%;
+    width: 460px; height: 320px;
+    background: radial-gradient(ellipse at center, rgba(64,170,148,0.32) 0%, rgba(64,170,148,0) 70%);
+    filter: blur(8px);
+    pointer-events: none;
+  }
+
+  /* Logos top-right */
+  .header-logos {
+    position: absolute;
+    top: 60px; right: 80px;
+    display: flex; flex-direction: column; gap: 28px;
+    align-items: flex-end;
+    z-index: 5;
+  }
+  .header-logos .logo-wrap { display: flex; align-items: center; gap: 14px; }
+
+  /* Michael Culture (placeholder build) */
+  .mc-logo { display: flex; align-items: center; gap: 14px; }
+  .mc-logo .nodes {
+    width: 64px; height: 64px;
+    position: relative;
+  }
+  .mc-text {
+    font-family: 'Inter', sans-serif;
+    line-height: 1;
+  }
+  .mc-text .row1 { font-size: 22px; font-weight: 700; color: #2D2D2D; }
+  .mc-text .row2 { font-size: 22px; font-weight: 700; color: #4A9CC4; margin-top: 2px; }
+  .mc-text .row3 { font-size: 11px; font-weight: 500; letter-spacing: 1.5px; color: #8A8A8A; margin-top: 6px; text-transform: uppercase; }
+
+  /* CAE logo */
+  .cae-logo img { height: 70px; width: auto; display: block; }
+
+  /* Title */
+  .header-title {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 88px; font-weight: 900;
+    line-height: 1.05;
+    color: #1B3A8C;
+    letter-spacing: -1.5px;
+    text-align: center;
+    z-index: 4;
+  }
+  .header-title .em { color: #1B3A8C; }
+
+  /* Divider line between header and body */
+  .divider {
+    height: 1px;
+    background: rgba(0,0,0,0.18);
+    margin: 0 80px;
+  }
+
+  /* ─── Bottom half: content ─── */
+  .body-pane {
+    position: relative;
+    height: 540px;
+    padding: 70px 100px 70px 100px;
+    background: #FFFFFF;
+    overflow: hidden;
+  }
+
+  .body-intro {
+    font-size: 28px;
+    font-weight: 500;
+    color: #1a1a1a;
+    margin-bottom: 36px;
+  }
+
+  .bullet-list {
+    list-style: none;
+    padding: 0; margin: 0;
+    max-width: 1500px;
+  }
+  .bullet-list li {
+    position: relative;
+    padding-left: 36px;
+    margin-bottom: 18px;
+    font-size: 22px;
+    line-height: 1.45;
+    color: #2D2D2D;
+    font-weight: 500;
+  }
+  .bullet-list li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 12px;
+    width: 10px; height: 10px;
+    background: #1B3A8C;
+  }
+  .bullet-list .highlight { color: #1B3A8C; font-weight: 700; }
+
+  /* Decorative: circuit-style accent bottom-right */
+  .circuit-deco {
+    position: absolute;
+    right: 60px; bottom: 60px;
+    width: 280px; height: 200px;
+    pointer-events: none;
+    opacity: 0.75;
+  }
+</style>
+</head>
+<body>
+
+<div class="slide" id="slide">
+
+  <!-- ─── Top: header ─── -->
+  <div class="header">
+
+    <!-- Network nodes (left decoration) -->
+    <svg class="network-bg" viewBox="0 0 760 540" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#3B7BBF" stop-opacity="0.95"/>
+          <stop offset="100%" stop-color="#3B7BBF" stop-opacity="0.4"/>
+        </radialGradient>
+      </defs>
+      <g stroke="#5A8FCF" stroke-width="0.9" opacity="0.55" fill="none">
+        <line x1="80"  y1="60"  x2="220" y2="120"/>
+        <line x1="220" y1="120" x2="380" y2="80"/>
+        <line x1="220" y1="120" x2="170" y2="240"/>
+        <line x1="170" y1="240" x2="60"  y2="290"/>
+        <line x1="170" y1="240" x2="320" y2="260"/>
+        <line x1="320" y1="260" x2="380" y2="80"/>
+        <line x1="320" y1="260" x2="450" y2="190"/>
+        <line x1="450" y1="190" x2="580" y2="230"/>
+        <line x1="580" y1="230" x2="640" y2="120"/>
+        <line x1="640" y1="120" x2="380" y2="80"/>
+        <line x1="170" y1="240" x2="240" y2="380"/>
+        <line x1="240" y1="380" x2="100" y2="430"/>
+        <line x1="240" y1="380" x2="380" y2="420"/>
+        <line x1="380" y1="420" x2="450" y2="190"/>
+        <line x1="380" y1="420" x2="540" y2="450"/>
+        <line x1="540" y1="450" x2="660" y2="380"/>
+        <line x1="660" y1="380" x2="580" y2="230"/>
+        <line x1="60"  y1="290" x2="100" y2="430"/>
+        <line x1="80"  y1="60"  x2="60"  y2="290"/>
+      </g>
+      <g fill="url(#nodeGlow)">
+        <circle cx="80"  cy="60"  r="5"/>
+        <circle cx="220" cy="120" r="6"/>
+        <circle cx="380" cy="80"  r="7"/>
+        <circle cx="170" cy="240" r="6"/>
+        <circle cx="60"  cy="290" r="5"/>
+        <circle cx="320" cy="260" r="6"/>
+        <circle cx="450" cy="190" r="6"/>
+        <circle cx="580" cy="230" r="7"/>
+        <circle cx="640" cy="120" r="5"/>
+        <circle cx="240" cy="380" r="6"/>
+        <circle cx="100" cy="430" r="5"/>
+        <circle cx="380" cy="420" r="6"/>
+        <circle cx="540" cy="450" r="6"/>
+        <circle cx="660" cy="380" r="5"/>
+      </g>
+    </svg>
+
+    <!-- Logos top-right -->
+    <div class="header-logos">
+      <div class="logo-wrap mc-logo">
+        <svg class="nodes" width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="14" cy="44" r="12" fill="#7BB6D9"/>
+          <circle cx="42" cy="14" r="5" fill="#2D2D2D"/>
+          <circle cx="56" cy="32" r="4" fill="#2D2D2D"/>
+          <circle cx="40" cy="40" r="3" fill="#2D2D2D"/>
+          <line x1="14" y1="44" x2="42" y2="14" stroke="#2D2D2D" stroke-width="1.6"/>
+          <line x1="42" y1="14" x2="56" y2="32" stroke="#2D2D2D" stroke-width="1.6"/>
+          <line x1="42" y1="14" x2="40" y2="40" stroke="#2D2D2D" stroke-width="1.6"/>
+          <line x1="56" y1="32" x2="40" y2="40" stroke="#2D2D2D" stroke-width="1.6"/>
+        </svg>
+        <div class="mc-text">
+          <div class="row1">Michael</div>
+          <div class="row2">Culture</div>
+          <div class="row3">Association</div>
+        </div>
+      </div>
+      <div class="logo-wrap cae-logo">
+        <img src="public/about-us-cae-logo.png" alt="Culture Action Europe">
+      </div>
+    </div>
+
+    <!-- Title -->
+    <div class="header-title">
+      Action Group<br>on Digital &amp; AI
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <div class="divider"></div>
+
+  <!-- ─── Bottom: body content ─── -->
+  <div class="body-pane">
+
+    <p class="body-intro">Στις συναντήσεις εργασίας συμμετέχουν συνήθως:</p>
+
+    <ul class="bullet-list">
+      <li><span class="highlight">15–40 άτομα</span></li>
+      <li>Προερχόμενα από αρκετές χώρες ΕΕ, όχι όλες</li>
+      <li>Εκπροσωπούν θεσμικούς/μη φορείς, οργανισμούς, ΟΤΑ, συλλογικότητες κ.λπ.</li>
+      <li>Είναι επαγγελματίες, ακαδημαϊκοί, τεχνοκράτες, ερευνητές</li>
+      <li>Είναι ανισοβαρής η εκπροσώπηση του πολιτιστικού &amp; δημιουργικού τομέα, π.χ. αρκετοί/διαφορετικού προφίλ σχετίζονται με τη μουσική, ενώ αντιθέτως τα <span class="highlight">GLAMs</span> (Galleries, Libraries, Archives, Museums) είναι σχεδόν εκτός εκπροσώπησης</li>
+      <li>Απουσιάζουν εκπρόσωποι καλλιτεχνικού κόσμου</li>
+    </ul>
+
+    <!-- Decorative circuit accent (NOT CforC) -->
+    <svg class="circuit-deco" viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg">
+      <g stroke="#1B3A8C" stroke-width="1.5" fill="none" opacity="0.45">
+        <!-- Circuit traces -->
+        <path d="M 20 100 L 80 100 L 80 40 L 160 40"/>
+        <path d="M 80 100 L 140 100 L 140 160 L 220 160"/>
+        <path d="M 160 40 L 220 40 L 220 100 L 260 100"/>
+        <path d="M 140 100 L 200 100"/>
+        <path d="M 200 100 L 200 60"/>
+      </g>
+      <g fill="#1B3A8C" opacity="0.85">
+        <circle cx="20"  cy="100" r="5"/>
+        <circle cx="80"  cy="100" r="4"/>
+        <circle cx="80"  cy="40"  r="4"/>
+        <circle cx="160" cy="40"  r="4"/>
+        <circle cx="220" cy="40"  r="4"/>
+        <circle cx="220" cy="100" r="4"/>
+        <circle cx="260" cy="100" r="6"/>
+        <circle cx="140" cy="100" r="4"/>
+        <circle cx="140" cy="160" r="4"/>
+        <circle cx="220" cy="160" r="6"/>
+        <circle cx="200" cy="60"  r="4"/>
+      </g>
+      <g fill="#7BB6D9" opacity="0.7">
+        <rect x="155" y="35"  width="10" height="10" rx="1"/>
+        <rect x="215" y="95"  width="10" height="10" rx="1"/>
+        <rect x="135" y="155" width="10" height="10" rx="1"/>
+      </g>
+      <!-- AI label -->
+      <text x="20" y="180" font-family="Inter, sans-serif" font-size="14" font-weight="800" fill="#1B3A8C" opacity="0.55" letter-spacing="3">AI · NETWORK</text>
+    </svg>
+
+  </div>
+
+</div>
+
+<script>
+  function fitSlide() {
+    const slide = document.getElementById('slide');
+    const scaleW = window.innerWidth / 1920;
+    const scaleH = window.innerHeight / 1080;
+    const scale = Math.min(scaleW, scaleH);
+    slide.style.transform = 'scale(' + scale + ')';
+  }
+  window.addEventListener('resize', fitSlide);
+  fitSlide();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080">
+  <title>Ετήσια Δράση 2025 — Λειτουργία Δικτύου (v3 — Bold Grid)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', 'Arial Nova', Arial, system-ui, sans-serif;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      position: relative;
+      background: #FAFAFA;
+    }
+
+    /* ─── Full-bleed coral header ─── */
+    .header {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 260px;
+      background: #FF8B6A;
+      z-index: 1;
+    }
+
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -60px;
+      left: 0; right: 0;
+      height: 60px;
+      background: #FF8B6A;
+      clip-path: polygon(0 0, 100% 0, 100% 0, 0 100%);
+    }
+
+    /* ─── Logo ─── */
+    .logo {
+      position: absolute;
+      top: 40px;
+      right: 80px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 5;
+    }
+    .logo svg { width: 32px; height: 32px; }
+    .logo-text {
+      font-size: 10px;
+      font-weight: 800;
+      color: #2D2D2D;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    /* ─── Title in header ─── */
+    .header-content {
+      position: absolute;
+      top: 50px;
+      left: 100px;
+      z-index: 5;
+    }
+
+    .header-super {
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(45,45,45,0.5);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .header-title {
+      font-size: 64px;
+      font-weight: 900;
+      color: #2D2D2D;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      line-height: 1.1;
+    }
+
+    .header-title span {
+      display: block;
+      font-size: 36px;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: 2px;
+      margin-top: 4px;
+    }
+
+    /* ─── Main grid ─── */
+    .grid {
+      position: absolute;
+      top: 340px;
+      left: 100px;
+      right: 100px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      z-index: 5;
+    }
+
+    /* ─── Card base ─── */
+    .card {
+      border-radius: 24px;
+      padding: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ─── Card 1: General Assembly — dark ─── */
+    .card-assembly {
+      background: #2D2D2D;
+      grid-row: span 2;
+    }
+
+    .card-assembly .card-badge {
+      display: inline-block;
+      background: #FF8B6A;
+      color: #2D2D2D;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 8px 22px;
+      border-radius: 24px;
+      letter-spacing: 1px;
+      margin-bottom: 28px;
+    }
+
+    .card-assembly .card-heading {
+      font-size: 32px;
+      font-weight: 800;
+      color: #FFFFFF;
+      line-height: 1.3;
+      margin-bottom: 40px;
+    }
+
+    .card-assembly .big-stats {
+      display: flex;
+      gap: 36px;
+      margin-bottom: 36px;
+    }
+
+    .big-stat {
+      flex: 1;
+      text-align: center;
+      background: rgba(255,139,106,0.1);
+      border-radius: 16px;
+      padding: 28px 16px;
+    }
+
+    .big-stat-value {
+      font-size: 56px;
+      font-weight: 900;
+      color: #FF8B6A;
+      line-height: 1;
+    }
+
+    .big-stat-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.6);
+      margin-top: 10px;
+      line-height: 1.3;
+    }
+
+    .card-assembly .attendance-row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .attendance-chip {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+
+    .chip-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(255,139,106,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .chip-number {
+      font-size: 28px;
+      font-weight: 900;
+      color: #FFFFFF;
+    }
+
+    .chip-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .satisfaction-row {
+      background: rgba(255,139,106,0.12);
+      border-radius: 14px;
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .satisfaction-text {
+      font-size: 16px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .satisfaction-value {
+      font-size: 42px;
+      font-weight: 900;
+      color: #FF8B6A;
+    }
+
+    .satisfaction-note {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ─── Card 2: Meetings count — coral ─── */
+    .card-meetings {
+      background: #FF8B6A;
+    }
+
+    .card-meetings .card-heading {
+      font-size: 22px;
+      font-weight: 800;
+      color: #2D2D2D;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 28px;
+    }
+
+    .meeting-mega {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .meeting-mega-number {
+      font-size: 100px;
+      font-weight: 900;
+      color: #FFFFFF;
+      line-height: 1;
+    }
+
+    .meeting-mega-label {
+      font-size: 22px;
+      font-weight: 600;
+      color: #2D2D2D;
+      line-height: 1.3;
+    }
+
+    /* ─── Card 3: Strategic — charcoal outline ─── */
+    .card-strategic {
+      background: #FFFFFF;
+      border: 3px solid #2D2D2D;
+    }
+
+    .card-strategic .card-heading {
+      font-size: 18px;
+      font-weight: 800;
+      color: #2D2D2D;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+    }
+
+    .strategic-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .strategic-number {
+      font-size: 80px;
+      font-weight: 900;
+      color: #FF8B6A;
+      line-height: 1;
+    }
+
+    .strategic-text {
+      font-size: 20px;
+      font-weight: 500;
+      color: #2D2D2D;
+      line-height: 1.4;
+    }
+
+    /* ─── Bottom accent ─── */
+    .accent-line {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, #FF6B47, #FF8B6A, #FFB299);
+      z-index: 10;
+    }
+
+    .slide-number {
+      position: absolute;
+      bottom: 24px;
+      right: 50px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #2D2D2D;
+      letter-spacing: 1px;
+      z-index: 20;
+    }
+
+    /* ─── Decorative sunburst watermark ─── */
+    .watermark {
+      position: absolute;
+      top: 50px;
+      right: 250px;
+      width: 180px;
+      height: 180px;
+      opacity: 0.08;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Coral header -->
+  <div class="header"></div>
+
+  <!-- Logo -->
+  <div class="logo">
+    <svg viewBox="0 0 62 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M28.1357 56.9941C29.2174 57.1347 30.3196 57.2174 31.4101 57.245L31.8545 41.4423C31.3662 41.4313 30.8838 41.3927 30.4102 41.332L28.1357 56.9941Z" fill="#2D2D2D"/><path d="M19.7527 33.0938L3.91309 38.2786C4.27268 39.2572 4.69659 40.2247 5.16728 41.1591L20.2994 34.3562C20.0918 33.9482 19.9106 33.5265 19.7527 33.0938Z" fill="#2D2D2D"/><path d="M2.41992 26.0625L19.0928 27.6971C19.1425 27.2395 19.2214 26.7902 19.3237 26.3492L2.94323 22.9863C2.70935 23.9979 2.53394 25.0316 2.41992 26.0598V26.0625Z" fill="#2D2D2D"/><path d="M19.0487 29.752L2.31445 30.6947C2.37877 31.72 2.50448 32.751 2.68574 33.7626L19.2153 31.1136C19.1335 30.6671 19.0779 30.215 19.0487 29.7547V29.752Z" fill="#2D2D2D"/><path d="M23.8526 38.627L13.2197 50.8435C14.0617 51.4968 14.9534 52.1115 15.8684 52.6738L25.0249 39.4346C24.6185 39.1838 24.2268 38.9164 23.8526 38.627Z" fill="#2D2D2D"/><path d="M26.936 40.4062L20.2061 54.8831C21.2117 55.2993 22.2525 55.6659 23.3021 55.9746L28.2896 40.8859C27.8247 40.7508 27.3745 40.5882 26.9331 40.4062H26.936Z" fill="#2D2D2D"/><path d="M21.3978 36.127L7.65723 45.1846C8.28286 46.0281 8.96404 46.8467 9.68323 47.6213L22.2924 37.2047C21.9737 36.8629 21.6755 36.5046 21.3978 36.1297V36.127Z" fill="#2D2D2D"/><path d="M39.3098 18.5111L48.3318 5.18642C47.4109 4.63238 46.4432 4.11968 45.4638 3.66211L38.0498 17.8385C38.4854 18.0397 38.9064 18.2657 39.3128 18.5111H39.3098Z" fill="#2D2D2D"/><path d="M40.8579 1.95391C39.8055 1.65622 38.7267 1.40814 37.645 1.2207L34.6162 16.7698C35.0957 16.8525 35.5634 16.9572 36.0253 17.0895L40.8609 1.95391H40.8579Z" fill="#2D2D2D"/><path d="M42.0662 20.7198L54.5642 10.1847C53.8392 9.41841 53.0586 8.68245 52.2488 7.99609L41.043 19.7496C41.4026 20.0555 41.7446 20.378 42.0662 20.7198Z" fill="#2D2D2D"/><path d="M28.8623 16.9716L24.6203 1.68164C23.5591 1.9435 22.5008 2.266 21.4746 2.63537L27.4854 17.3906C27.9327 17.228 28.3917 17.0874 28.8623 16.9716Z" fill="#2D2D2D"/>
+    </svg>
+    <div class="logo-text">Culture<br>for Change</div>
+  </div>
+
+  <!-- Header content -->
+  <div class="header-content">
+    <div class="header-super">Ετήσια Δραστηριότητα 2025</div>
+    <div class="header-title">
+      ΛΕΙΤΟΥΡΓΙΑ ΔΙΚΤΥΟΥ
+      <span>Καταστατικές Υποχρεώσεις</span>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="grid">
+
+    <!-- Card 1: General Assembly (tall, spans 2 rows) -->
+    <div class="card card-assembly">
+      <div class="card-badge">22 ΦΕΒΡΟΥΑΡΙΟΥ 2025</div>
+      <div class="card-heading">Γενική Συνέλευση & εκλογές<br>Συγκρότηση νέου ΔΣ</div>
+
+      <div class="big-stats">
+        <div class="big-stat">
+          <div class="big-stat-value">47</div>
+          <div class="big-stat-label">μέλη<br>συμμετείχαν</div>
+        </div>
+      </div>
+
+      <div class="attendance-row">
+        <div class="attendance-chip">
+          <div class="chip-icon">🏛</div>
+          <div>
+            <div class="chip-number">28</div>
+            <div class="chip-label">δια ζώσης</div>
+          </div>
+        </div>
+        <div class="attendance-chip">
+          <div class="chip-icon">💻</div>
+          <div>
+            <div class="chip-number">19</div>
+            <div class="chip-label">online</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="satisfaction-row">
+        <div>
+          <div class="satisfaction-text">Βαθμός θετικής ικανοποίησης</div>
+          <div class="satisfaction-note">25 από τις 26 απαντήσεις</div>
+        </div>
+        <div class="satisfaction-value">96,2%</div>
+      </div>
+    </div>
+
+    <!-- Card 2: Board meetings — coral -->
+    <div class="card card-meetings">
+      <div class="card-heading">Συνεδριάσεις ΔΣ</div>
+      <div class="meeting-mega">
+        <div class="meeting-mega-number">14</div>
+        <div class="meeting-mega-label">μηνιαίες<br>συναντήσεις</div>
+      </div>
+    </div>
+
+    <!-- Card 3: Strategic planning — white/outline -->
+    <div class="card card-strategic">
+      <div class="card-heading">Στρατηγικός Σχεδιασμός</div>
+      <div class="strategic-row">
+        <div class="strategic-number">3</div>
+        <div class="strategic-text">συναντήσεις στρατηγικού<br>& επιχειρησιακού σχεδιασμού</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Slide number -->
+  <div class="slide-number">06</div>
+
+  <!-- Bottom accent -->
+  <div class="accent-line"></div>
+
+</body>
+</html>

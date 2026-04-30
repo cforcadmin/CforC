@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CAE — Three Thematic Areas</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #1a1a1a; min-height: 100vh; }
+  body {
+    font-family: 'Inter', 'Arial Nova', Arial, system-ui, sans-serif;
+    padding: 40px 0;
+    display: flex; justify-content: center; align-items: flex-start;
+  }
+
+  /* ─── 16:9 slide ─── */
+  .slide {
+    width: 1920px;
+    height: 1080px;
+    background: #FFFFFF;
+    position: relative;
+    display: grid;
+    grid-template-columns: 42% 58%;
+    align-items: center;
+    transform-origin: top center;
+    flex-shrink: 0;
+    box-shadow: 0 12px 60px rgba(0,0,0,0.5);
+  }
+
+  /* Left: logo */
+  .logo-pane {
+    height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    padding: 100px;
+  }
+  .logo-pane img {
+    max-width: 100%;
+    max-height: 380px;
+    height: auto;
+    display: block;
+  }
+
+  /* Right: content */
+  .content-pane {
+    padding: 120px 160px 120px 60px;
+    color: #1a1a1a;
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* Vertical accent bar (left edge of content) */
+  .accent-bar {
+    position: absolute;
+    left: 0; top: 140px; bottom: 140px;
+    width: 6px;
+    background: linear-gradient(180deg, #EE2A8C 0%, #6B2D7B 100%);
+    border-radius: 3px;
+  }
+
+  /* Geometric accent shape (top-right corner) — echoes the folded shape in CAE logo */
+  .geo-accent {
+    position: absolute;
+    top: 80px; right: 80px;
+    width: 180px; height: 180px;
+    pointer-events: none;
+  }
+  .geo-accent .shape-pink {
+    position: absolute; top: 0; left: 0;
+    width: 120px; height: 70px;
+    background: #EE2A8C;
+    transform: skewX(-25deg);
+  }
+  .geo-accent .shape-purple {
+    position: absolute; top: 70px; left: 30px;
+    width: 90px; height: 70px;
+    background: #6B2D7B;
+    transform: skewX(-25deg);
+  }
+
+  /* Page indicator */
+  .page-indicator {
+    position: absolute;
+    bottom: 60px; right: 80px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: #6B2D7B;
+    text-transform: uppercase;
+  }
+  .page-indicator .num { color: #EE2A8C; font-size: 22px; vertical-align: middle; margin-right: 4px; }
+
+  .heading {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    margin-bottom: 22px;
+    color: #1a1a1a;
+    position: relative;
+    z-index: 2;
+  }
+  .heading-underline {
+    width: 70px; height: 4px;
+    background: #EE2A8C;
+    margin-bottom: 24px;
+    border-radius: 2px;
+  }
+
+  .intro {
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1.55;
+    color: #2D2D2D;
+    margin-bottom: 28px;
+    max-width: 880px;
+  }
+
+  .areas-list {
+    list-style: none;
+    margin-bottom: 50px;
+    padding-left: 36px;
+  }
+  .areas-list li {
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.7;
+    color: #2D2D2D;
+    position: relative;
+    padding-left: 28px;
+  }
+  .areas-list li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: #1a1a1a;
+    font-weight: 400;
+  }
+
+  .subheading {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+    margin-bottom: 18px;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .subheading::before {
+    content: '';
+    display: inline-block;
+    width: 14px; height: 14px;
+    background: #EE2A8C;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .body-text {
+    font-size: 19px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: #2D2D2D;
+    margin-bottom: 18px;
+    max-width: 880px;
+  }
+  .body-text:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<div class="slide" id="slide">
+
+  <!-- Left: logo -->
+  <div class="logo-pane">
+    <img src="public/about-us-cae-logo.png" alt="Culture Action Europe logo">
+  </div>
+
+  <!-- Right: content -->
+  <div class="content-pane">
+    <div class="accent-bar"></div>
+    <div class="geo-accent">
+      <div class="shape-pink"></div>
+      <div class="shape-purple"></div>
+    </div>
+
+    <h1 class="heading">THREE THEMATIC AREAS</h1>
+    <div class="heading-underline"></div>
+
+    <p class="intro">
+      To fulfil its mission of maintaining ongoing dialogue and advocating for transformative cultural policies,
+      CAE has identified three thematic areas for the strategic period 2025–2027, which will guide all of our
+      programs, activities, and advocacy efforts:
+    </p>
+
+    <ul class="areas-list">
+      <li>Democracy and Leadership</li>
+      <li>Sustainable Development</li>
+      <li>The Cultural Ecosystem</li>
+    </ul>
+
+    <h2 class="subheading">The Cultural Ecosystem</h2>
+
+    <p class="body-text">
+      The Cultural Ecosystem is a complex web of relations between practitioners, projects, organisations,
+      funders, supply chains, stakeholders and society at large. Working conditions within the ecosystem are
+      precarious and economic pressure on institutions poses existential threats — as do other external factors
+      such as the role of big-tech and the establishment of artificial intelligence.
+    </p>
+
+    <p class="body-text">
+      CAE will advocate for fair working conditions for cultural practitioners, as well as appropriate support
+      for projects and organisations that act as a transformative force for a sustainable future. By nurturing
+      a sense of care for artists' livelihoods and fostering well-being through foresight-driven policies, the
+      cultural sector can contribute to a resilient and socially vibrant future, beyond what is available to the
+      sector today.
+    </p>
+
+    <p class="body-text">
+      We will rethink the well-being of the cultural ecosystem through an ethical approach to care. Reimagining
+      the cultural ecosystem beyond the precarity of today requires collaborative knowledge production, sharing
+      of best practices and innovative ideas and supporting research and innovation emerging from cultural
+      practices.
+    </p>
+
+    <div class="page-indicator"><span class="num">03</span>/ 03 · Cultural Ecosystem</div>
+  </div>
+
+</div>
+
+<script>
+  // Auto-fit slide to viewport
+  function fitSlide() {
+    const slide = document.getElementById('slide');
+    const scaleW = window.innerWidth / 1920;
+    const scaleH = (window.innerHeight - 80) / 1080;
+    const scale = Math.min(scaleW, scaleH) * 0.96;
+    slide.style.transform = 'scale(' + scale + ')';
+    document.body.style.height = (1080 * scale + 80) + 'px';
+  }
+  window.addEventListener('resize', fitSlide);
+  fitSlide();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Translation-Guide-for-Content-Editors-GR.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="%CE%BF%CE%B4%CE%B7%CE%B3%CF%8C%CF%82-%CE%BC%CE%B5%CF%84%CE%AC%CF%86%CF%81%CE%B1%CF%83%CE%B7%CF%82-%CE%B3%CE%B9%CE%B1-%CF%83%CF%85%CE%BD%CF%84%CE%AC%CE%BA%CF%84%CE%B5%CF%82-%CF%80%CE%B5%CF%81%CE%B9%CE%B5%CF%87%CE%BF%CE%BC%CE%AD%CE%BD%CE%BF%CF%85">Οδηγός Μετάφρασης για Συντάκτες Περιεχομένου</h1>
+<h2 id="%CE%B5%CF%80%CE%B9%CF%83%CE%BA%CF%8C%CF%80%CE%B7%CF%83%CE%B7">Επισκόπηση</h2>
+<p>Η ιστοσελίδα Culture for Change χρησιμοποιεί το <strong>Google Translate</strong> για αυτόματη μετάφραση περιεχομένου από Ελληνικά σε άλλες γλώσσες. Ωστόσο, η αυτόματη μετάφραση δεν παράγει πάντα ακριβή αποτελέσματα, ειδικά για:</p>
+<ul>
+<li>Ονόματα οργανισμών και ακρωνύμια</li>
+<li>Τεχνικούς όρους</li>
+<li>Κύρια ονόματα</li>
+<li>Εξειδικευμένο λεξιλόγιο</li>
+</ul>
+<p>Αυτός ο οδηγός εξηγεί δύο εργαλεία που μπορείτε να χρησιμοποιήσετε για να ελέγξετε πώς μεταφράζεται το περιεχόμενό σας.</p>
+<hr>
+<h2 id="%CF%80%CE%AF%CE%BD%CE%B1%CE%BA%CE%B1%CF%82-%CF%80%CE%B5%CF%81%CE%B9%CE%B5%CF%87%CE%BF%CE%BC%CE%AD%CE%BD%CF%89%CE%BD">Πίνακας Περιεχομένων</h2>
+<ol>
+<li><a href="#%CF%84%CE%B1-%CE%B4%CF%8D%CE%BF-%CE%B5%CF%81%CE%B3%CE%B1%CE%BB%CE%B5%CE%AF%CE%B1-%CE%BC%CE%B5%CF%84%CE%AC%CF%86%CF%81%CE%B1%CF%83%CE%B7%CF%82">Τα Δύο Εργαλεία Μετάφρασης</a></li>
+<li><a href="#%CE%B5%CF%81%CE%B3%CE%B1%CE%BB%CE%B5%CE%AF%CE%BF-1-%CE%B7-%CF%83%CF%8D%CE%BD%CF%84%CE%B1%CE%BE%CE%B7-%CE%BB%CE%AD%CE%BE%CE%B7">Εργαλείο 1: Η Σύνταξη {λέξη}</a></li>
+<li><a href="#%CE%B5%CF%81%CE%B3%CE%B1%CE%BB%CE%B5%CE%AF%CE%BF-2-%CF%80%CE%B5%CE%B4%CE%AF%CE%B1-%CE%B1%CE%B3%CE%B3%CE%BB%CE%B9%CE%BA%CE%AE%CF%82-%CF%80%CE%B1%CF%81%CE%AC%CE%BA%CE%B1%CE%BC%CF%88%CE%B7%CF%82">Εργαλείο 2: Πεδία Αγγλικής Παράκαμψης</a></li>
+<li><a href="#%CF%80%CF%8C%CF%84%CE%B5-%CE%BD%CE%B1-%CF%87%CF%81%CE%B7%CF%83%CE%B9%CE%BC%CE%BF%CF%80%CE%BF%CE%B9%CE%AE%CF%83%CE%B5%CF%84%CE%B5-%CF%80%CE%BF%CE%B9%CE%BF-%CE%B5%CF%81%CE%B3%CE%B1%CE%BB%CE%B5%CE%AF%CE%BF">Πότε να Χρησιμοποιήσετε Ποιο Εργαλείο</a></li>
+<li><a href="#%CF%80%CE%B1%CF%81%CE%B1%CE%B4%CE%B5%CE%AF%CE%B3%CE%BC%CE%B1%CF%84%CE%B1-%CE%B2%CE%AE%CE%BC%CE%B1-%CF%80%CF%81%CE%BF%CF%82-%CE%B2%CE%AE%CE%BC%CE%B1">Παραδείγματα Βήμα προς Βήμα</a></li>
+<li><a href="#%CE%B2%CE%AD%CE%BB%CF%84%CE%B9%CF%83%CF%84%CE%B5%CF%82-%CF%80%CF%81%CE%B1%CE%BA%CF%84%CE%B9%CE%BA%CE%AD%CF%82">Βέλτιστες Πρακτικές</a></li>
+<li><a href="#%CF%83%CF%85%CE%BD%CE%AE%CE%B8%CE%B7-%CF%83%CE%B5%CE%BD%CE%AC%CF%81%CE%B9%CE%B1">Συνήθη Σενάρια</a></li>
+<li><a href="#%CE%B1%CE%BD%CF%84%CE%B9%CE%BC%CE%B5%CF%84%CF%8E%CF%80%CE%B9%CF%83%CE%B7-%CF%80%CF%81%CE%BF%CE%B2%CE%BB%CE%B7%CE%BC%CE%AC%CF%84%CF%89%CE%BD">Αντιμετώπιση Προβλημάτων</a></li>
+</ol>
+<hr>
+<h2 id="%CF%84%CE%B1-%CE%B4%CF%8D%CE%BF-%CE%B5%CF%81%CE%B3%CE%B1%CE%BB%CE%B5%CE%AF%CE%B1-%CE%BC%CE%B5%CF%84%CE%AC%CF%86%CF%81%CE%B1%CF%83%CE%B7%CF%82">Τα Δύο Εργαλεία Μετάφρασης</h2>
+<table>
+<thead>
+<tr>
+<th>Εργαλείο</th>
+<th>Σκοπός</th>
+<th>Ιδανικό Για</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Σύνταξη <code>{λέξη}</code></td>
+<td>Αποτρέπει τη μετάφραση συγκεκριμένων λέξεων</td>
+<td>Ακρωνύμια, εμπορικά σήματα, τεχνικούς όρους</td>
+</tr>
+<tr>
+<td>EngTitle / EngDescription</td>
+<td>Παρέχει πλήρη χειροκίνητη αγγλική μετάφραση</td>
+<td>Ολόκληρους τίτλους ή περιγραφές που χρειάζονται ακριβή μετάφραση</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="%CE%B5%CF%81%CE%B3%CE%B1%CE%BB%CE%B5%CE%AF%CE%BF-1-%CE%B7-%CF%83%CF%8D%CE%BD%CF%84%CE%B1%CE%BE%CE%B7-%CE%BB%CE%AD%CE%BE%CE%B7">Εργαλείο 1: Η Σύνταξη {λέξη}</h2>
+<h3 id="%CF%84%CE%B9-%CE%BA%CE%AC%CE%BD%CE%B5%CE%B9">Τι Κάνει</h3>
+<p>Όταν περικλείετε μια λέξη ή φράση σε άγκιστρα <code>{έτσι}</code>, αυτό το κείμενο θα:</p>
+<ol>
+<li><strong>ΔΕΝ μεταφράζεται</strong> από το Google Translate</li>
+<li>Εμφανίζεται ακριβώς όπως το πληκτρολογήσατε σε όλες τις γλώσσες</li>
+<li>Τα ίδια τα άγκιστρα αφαιρούνται από την εμφάνιση</li>
+</ol>
+<h3 id="%CF%80%CF%8E%CF%82-%CE%BD%CE%B1-%CF%84%CE%BF-%CF%87%CF%81%CE%B7%CF%83%CE%B9%CE%BC%CE%BF%CF%80%CE%BF%CE%B9%CE%AE%CF%83%CE%B5%CF%84%CE%B5">Πώς να το Χρησιμοποιήσετε</h3>
+<p>Απλά περικλείστε οποιαδήποτε λέξη ή φράση θέλετε να προστατέψετε σε άγκιστρα:</p>
+<pre class="hljs"><code><div>Κανονικό κείμενο {προστατευμένο κείμενο} περισσότερο κανονικό κείμενο
+</div></code></pre>
+<h3 id="%CF%80%CE%B1%CF%81%CE%B1%CE%B4%CE%B5%CE%AF%CE%B3%CE%BC%CE%B1%CF%84%CE%B1">Παραδείγματα</h3>
+<h4 id="%CF%80%CE%B1%CF%81%CE%AC%CE%B4%CE%B5%CE%B9%CE%B3%CE%BC%CE%B1-1-%CF%80%CF%81%CE%BF%CF%83%CF%84%CE%B1%CF%83%CE%AF%CE%B1-%CE%B1%CE%B3%CE%B3%CE%BB%CE%B9%CE%BA%CE%BF%CF%8D-%CE%B1%CE%BA%CF%81%CF%89%CE%BD%CF%85%CE%BC%CE%AF%CE%BF%CF%85">Παράδειγμα 1: Προστασία Αγγλικού Ακρωνυμίου</h4>
+<p><strong>Τι πληκτρολογείτε στο Strapi:</strong></p>
+<pre class="hljs"><code><div>Το πρόγραμμα {S.I.M.A.} ξεκινά τον Φεβρουάριο
+</div></code></pre>
+<p><strong>Τι εμφανίζεται στην ιστοσελίδα (Ελληνικά):</strong></p>
+<pre class="hljs"><code><div>Το πρόγραμμα S.I.M.A. ξεκινά τον Φεβρουάριο
+</div></code></pre>
+<p><strong>Τι εμφανίζεται όταν μεταφραστεί στα Αγγλικά:</strong></p>
+<pre class="hljs"><code><div>The program S.I.M.A. starts in February
+</div></code></pre>
+<p>Παρατηρήστε: Το <code>S.I.M.A.</code> παραμένει ακριβώς το ίδιο, ενώ τα υπόλοιπα μεταφράζονται.</p>
+<h4 id="%CF%80%CE%B1%CF%81%CE%AC%CE%B4%CE%B5%CE%B9%CE%B3%CE%BC%CE%B1-2-%CF%80%CF%81%CE%BF%CF%83%CF%84%CE%B1%CF%83%CE%AF%CE%B1-%CE%B5%CE%BC%CF%80%CE%BF%CF%81%CE%B9%CE%BA%CE%BF%CF%8D-%CF%83%CE%AE%CE%BC%CE%B1%CF%84%CE%BF%CF%82">Παράδειγμα 2: Προστασία Εμπορικού Σήματος</h4>
+<p><strong>Τι πληκτρολογείτε στο Strapi:</strong></p>
+<pre class="hljs"><code><div>Συνεργασία με το {Culture for Change} και το {Creative Europe}
+</div></code></pre>
+<p><strong>Τι εμφανίζεται όταν μεταφραστεί:</strong></p>
+<pre class="hljs"><code><div>Cooperation with Culture for Change and Creative Europe
+</div></code></pre>
+<p>Τα ονόματα των οργανισμών παραμένουν αμετάβλητα.</p>
+<h4 id="%CF%80%CE%B1%CF%81%CE%AC%CE%B4%CE%B5%CE%B9%CE%B3%CE%BC%CE%B1-3-%CF%80%CF%81%CE%BF%CF%83%CF%84%CE%B1%CF%83%CE%AF%CE%B1-%CF%80%CE%BF%CE%BB%CE%BB%CE%B1%CF%80%CE%BB%CF%8E%CE%BD-%CE%BB%CE%AD%CE%BE%CE%B5%CF%89%CE%BD">Παράδειγμα 3: Προστασία Πολλαπλών Λέξεων</h4>
+<p><strong>Τι πληκτρολογείτε στο Strapi:</strong></p>
+<pre class="hljs"><code><div>Το {New European Bauhaus} είναι μια πρωτοβουλία της ΕΕ
+</div></code></pre>
+<p><strong>Τι εμφανίζεται όταν μεταφραστεί:</strong></p>
+<pre class="hljs"><code><div>The New European Bauhaus is an EU initiative
+</div></code></pre>
+<h4 id="%CF%80%CE%B1%CF%81%CE%AC%CE%B4%CE%B5%CE%B9%CE%B3%CE%BC%CE%B1-4-%CE%B5%CE%BB%CE%BB%CE%B7%CE%BD%CE%B9%CE%BA%CE%AE-%CE%BA%CE%B1%CE%B9-%CE%B1%CE%B3%CE%B3%CE%BB%CE%B9%CE%BA%CE%AE-%CE%AD%CE%BA%CE%B4%CE%BF%CF%83%CE%B7-%CE%BC%CE%B1%CE%B6%CE%AF">Παράδειγμα 4: Ελληνική και Αγγλική Έκδοση Μαζί</h4>
+<p><strong>Τι πληκτρολογείτε στο Strapi:</strong></p>
+<pre class="hljs"><code><div>Σύστημα Ηλεκτρονικής Μάθησης Ανοιχτής πρόσβασης – {Σ.Η.Μ.Α.}/{S.I.M.A.}
+</div></code></pre>
+<p><strong>Τι εμφανίζεται (Ελληνικά):</strong></p>
+<pre class="hljs"><code><div>Σύστημα Ηλεκτρονικής Μάθησης Ανοιχτής πρόσβασης – Σ.Η.Μ.Α./S.I.M.A.
+</div></code></pre>
+<p><strong>Τι εμφανίζεται (Αγγλικά):</strong></p>
+<pre class="hljs"><code><div>Open Access Electronic Learning System – Σ.Η.Μ.Α./S.I.M.A.
+</div></code></pre>
+<p>Και τα δύο ακρωνύμια προστατεύονται από τη μετάφραση.</p>
+<hr>
+<h2 id="%CE%B5%CF%81%CE%B3%CE%B1%CE%BB%CE%B5%CE%AF%CE%BF-2-%CF%80%CE%B5%CE%B4%CE%AF%CE%B1-%CE%B1%CE%B3%CE%B3%CE%BB%CE%B9%CE%BA%CE%AE%CF%82-%CF%80%CE%B1%CF%81%CE%AC%CE%BA%CE%B1%CE%BC%CF%88%CE%B7%CF%82">Εργαλείο 2: Πεδία Αγγλικής Παράκαμψης</h2>
+<h3 id="%CF%84%CE%B9-%CE%B5%CE%AF%CE%BD%CE%B1%CE%B9">Τι Είναι</h3>
+<p>Στο Strapi, οι Δραστηριότητες και οι Ανοιχτές Προσκλήσεις έχουν προαιρετικά πεδία στα Αγγλικά:</p>
+<ul>
+<li><strong>EngTitle</strong> - Αγγλική έκδοση του τίτλου</li>
+<li><strong>EngDescription</strong> - Αγγλική έκδοση της περιγραφής</li>
+</ul>
+<h3 id="%CF%84%CE%B9-%CE%BA%CE%AC%CE%BD%CE%BF%CF%85%CE%BD">Τι Κάνουν</h3>
+<p>Όταν ένας επισκέπτης βλέπει την ιστοσελίδα στα Αγγλικά (μέσω Google Translate):</p>
+<ul>
+<li>Αν το EngTitle είναι συμπληρωμένο → Εμφανίζει τον δικό σας αγγλικό τίτλο αντί της μετάφρασης του Google</li>
+<li>Αν το EngDescription είναι συμπληρωμένο → Εμφανίζει τη δική σας αγγλική περιγραφή αντί της μετάφρασης του Google</li>
+</ul>
+<h3 id="%CF%80%CF%8E%CF%82-%CE%BD%CE%B1-%CF%84%CE%B1-%CF%87%CF%81%CE%B7%CF%83%CE%B9%CE%BC%CE%BF%CF%80%CE%BF%CE%B9%CE%AE%CF%83%CE%B5%CF%84%CE%B5">Πώς να τα Χρησιμοποιήσετε</h3>
+<ol>
+<li>Πηγαίνετε στο <strong>Content Manager</strong> στο Strapi</li>
+<li>Επιλέξτε μια <strong>Δραστηριότητα</strong> ή <strong>Ανοιχτή Πρόσκληση</strong></li>
+<li>Βρείτε το πεδίο <strong>EngTitle</strong> (κάτω από τον Τίτλο)</li>
+<li>Βρείτε το πεδίο <strong>EngDescription</strong> (κάτω από την Περιγραφή)</li>
+<li>Εισάγετε τη χειροκίνητη αγγλική μετάφρασή σας</li>
+<li><strong>Αποθηκεύστε</strong> και <strong>Δημοσιεύστε</strong></li>
+</ol>
+<h3 id="%CF%83%CE%B7%CE%BC%CE%B1%CE%BD%CF%84%CE%B9%CE%BA%CE%AD%CF%82-%CF%83%CE%B7%CE%BC%CE%B5%CE%B9%CF%8E%CF%83%CE%B5%CE%B9%CF%82">Σημαντικές Σημειώσεις</h3>
+<ul>
+<li>Αυτά τα πεδία είναι <strong>προαιρετικά</strong> - αφήστε τα κενά αν η μετάφραση του Google είναι αποδεκτή</li>
+<li>Το EngDescription χρησιμοποιεί τον <strong>επεξεργαστή εμπλουτισμένου κειμένου</strong> (ίδιος με την Περιγραφή) - μπορείτε να προσθέσετε μορφοποίηση, συνδέσμους, κλπ.</li>
+<li>Μπορείτε να συνδυάσετε αυτό με τη σύνταξη <code>{λέξη}</code> και στα αγγλικά πεδία</li>
+</ul>
+<hr>
+<h2 id="%CF%80%CF%8C%CF%84%CE%B5-%CE%BD%CE%B1-%CF%87%CF%81%CE%B7%CF%83%CE%B9%CE%BC%CE%BF%CF%80%CE%BF%CE%B9%CE%AE%CF%83%CE%B5%CF%84%CE%B5-%CF%80%CE%BF%CE%B9%CE%BF-%CE%B5%CF%81%CE%B3%CE%B1%CE%BB%CE%B5%CE%AF%CE%BF">Πότε να Χρησιμοποιήσετε Ποιο Εργαλείο</h2>
+<h3 id="%CF%87%CF%81%CE%B7%CF%83%CE%B9%CE%BC%CE%BF%CF%80%CE%BF%CE%B9%CE%AE%CF%83%CF%84%CE%B5-%CF%83%CF%8D%CE%BD%CF%84%CE%B1%CE%BE%CE%B7-%CE%BB%CE%AD%CE%BE%CE%B7-%CF%8C%CF%84%CE%B1%CE%BD">Χρησιμοποιήστε σύνταξη <code>{λέξη}</code> όταν:</h3>
+<ul>
+<li>Έχετε μερικές συγκεκριμένες λέξεις που δεν πρέπει να μεταφραστούν</li>
+<li>Το υπόλοιπο κείμενο μπορεί να μεταφραστεί αυτόματα</li>
+<li>Προστατεύετε ακρωνύμια, ονόματα ή τεχνικούς όρους</li>
+<li>Γρήγορη και εύκολη λύση</li>
+</ul>
+<h3 id="%CF%87%CF%81%CE%B7%CF%83%CE%B9%CE%BC%CE%BF%CF%80%CE%BF%CE%B9%CE%AE%CF%83%CF%84%CE%B5-engtitleengdescription-%CF%8C%CF%84%CE%B1%CE%BD">Χρησιμοποιήστε EngTitle/EngDescription όταν:</h3>
+<ul>
+<li>Ολόκληρος ο τίτλος ή η περιγραφή χρειάζεται προσεκτική μετάφραση</li>
+<li>Το Google Translate παράγει κακά αποτελέσματα για ολόκληρο το κείμενο</li>
+<li>Το περιεχόμενο είναι σημαντικό και θέλετε πλήρη έλεγχο</li>
+<li>Έχετε χρόνο να γράψετε μια σωστή αγγλική έκδοση</li>
+</ul>
+<h3 id="%CF%87%CF%81%CE%B7%CF%83%CE%B9%CE%BC%CE%BF%CF%80%CE%BF%CE%B9%CE%AE%CF%83%CF%84%CE%B5-%CE%BA%CE%B1%CE%B9-%CF%84%CE%B1-%CE%B4%CF%85%CE%BF-%CE%BC%CE%B1%CE%B6%CE%AF-%CF%8C%CF%84%CE%B1%CE%BD">Χρησιμοποιήστε ΚΑΙ ΤΑ ΔΥΟ μαζί όταν:</h3>
+<ul>
+<li>Παρέχετε αγγλική παράκαμψη αλλά περιέχει επίσης όρους που δεν πρέπει να μεταφραστούν σε άλλες γλώσσες</li>
+<li>Παράδειγμα: Το EngTitle σας περιέχει <code>{UNESCO}</code> για να το προστατέψετε όταν κάποιος μεταφράζει από Αγγλικά σε Γερμανικά</li>
+</ul>
+<hr>
+<h2 id="%CF%80%CE%B1%CF%81%CE%B1%CE%B4%CE%B5%CE%AF%CE%B3%CE%BC%CE%B1%CF%84%CE%B1-%CE%B2%CE%AE%CE%BC%CE%B1-%CF%80%CF%81%CE%BF%CF%82-%CE%B2%CE%AE%CE%BC%CE%B1">Παραδείγματα Βήμα προς Βήμα</h2>
+<h3 id="%CF%83%CE%B5%CE%BD%CE%AC%CF%81%CE%B9%CE%BF-1-%CE%BD%CE%AD%CE%B1-%CE%B4%CF%81%CE%B1%CF%83%CF%84%CE%B7%CF%81%CE%B9%CF%8C%CF%84%CE%B7%CF%84%CE%B1-%CE%BC%CE%B5-%CF%80%CF%81%CE%BF%CF%83%CF%84%CE%B1%CF%84%CE%B5%CF%85%CE%BC%CE%AD%CE%BD%CE%BF-%CE%B1%CE%BA%CF%81%CF%89%CE%BD%CF%8D%CE%BC%CE%B9%CE%BF">Σενάριο 1: Νέα Δραστηριότητα με Προστατευμένο Ακρωνύμιο</h3>
+<p><strong>Εργασία:</strong> Δημιουργία δραστηριότητας για το πρόγραμμα S.I.M.A.</p>
+<ol>
+<li>
+<p>Πηγαίνετε στο Content Manager → Activities → Δημιουργία νέας εγγραφής</p>
+</li>
+<li>
+<p><strong>Πεδίο Title:</strong></p>
+<pre class="hljs"><code><div>Νέο Πρόγραμμα {S.I.M.A.} για την Κοινωνία των Πολιτών
+</div></code></pre>
+</li>
+<li>
+<p><strong>Πεδίο EngTitle:</strong> (προαιρετικό αλλά συνιστάται)</p>
+<pre class="hljs"><code><div>New {S.I.M.A.} Program for Civil Society
+</div></code></pre>
+</li>
+<li>
+<p><strong>Πεδίο Description:</strong></p>
+<pre class="hljs"><code><div>Το πρόγραμμα {S.I.M.A.} (System for Intelligent Management and Automation)
+στοχεύει στην ενίσχυση της κοινωνίας των πολιτών μέσω της τεχνολογίας.
+
+Οι συμμετέχοντες θα μάθουν για:
+- Ψηφιακά εργαλεία
+- Διαχείριση έργων
+- Συνεργατικές πλατφόρμες
+</div></code></pre>
+</li>
+<li>
+<p><strong>Πεδίο EngDescription:</strong> (προαιρετικό)</p>
+<pre class="hljs"><code><div>The {S.I.M.A.} program (System for Intelligent Management and Automation)
+aims to strengthen civil society through technology.
+
+Participants will learn about:
+- Digital tools
+- Project management
+- Collaborative platforms
+</div></code></pre>
+</li>
+<li>
+<p>Αποθηκεύστε και Δημοσιεύστε</p>
+</li>
+</ol>
+<h3 id="%CF%83%CE%B5%CE%BD%CE%AC%CF%81%CE%B9%CE%BF-2-%CE%B1%CE%BD%CE%BF%CE%B9%CF%87%CF%84%CE%AE-%CF%80%CF%81%CF%8C%CF%83%CE%BA%CE%BB%CE%B7%CF%83%CE%B7-%CE%BC%CE%B5-%CE%BF%CE%BD%CF%8C%CE%BC%CE%B1%CF%84%CE%B1-%CE%BF%CF%81%CE%B3%CE%B1%CE%BD%CE%B9%CF%83%CE%BC%CF%8E%CE%BD">Σενάριο 2: Ανοιχτή Πρόσκληση με Ονόματα Οργανισμών</h3>
+<p><strong>Εργασία:</strong> Δημιουργία ανοιχτής πρόσκλησης από το Creative Europe</p>
+<ol>
+<li>
+<p>Πηγαίνετε στο Content Manager → Open Calls → Δημιουργία νέας εγγραφής</p>
+</li>
+<li>
+<p><strong>Πεδίο Title:</strong></p>
+<pre class="hljs"><code><div>Πρόσκληση {Creative Europe} για Πολιτιστικά Έργα 2026
+</div></code></pre>
+</li>
+<li>
+<p><strong>Πεδίο EngTitle:</strong></p>
+<pre class="hljs"><code><div>{Creative Europe} Call for Cultural Projects 2026
+</div></code></pre>
+</li>
+<li>
+<p>Συμπληρώστε τα άλλα απαιτούμενα πεδία (Προθεσμία, Περιγραφή, Σύνδεσμος, Εικόνα, κλπ.)</p>
+</li>
+<li>
+<p>Αποθηκεύστε και Δημοσιεύστε</p>
+</li>
+</ol>
+<h3 id="%CF%83%CE%B5%CE%BD%CE%AC%CF%81%CE%B9%CE%BF-3-%CE%B4%CF%81%CE%B1%CF%83%CF%84%CE%B7%CF%81%CE%B9%CF%8C%CF%84%CE%B7%CF%84%CE%B1-%CE%BC%CE%B5-%CF%83%CF%8D%CE%BD%CE%B8%CE%B5%CF%84%CE%BF-%CE%B5%CE%BB%CE%BB%CE%B7%CE%BD%CE%B9%CE%BA%CF%8C-%CE%B1%CE%BA%CF%81%CF%89%CE%BD%CF%8D%CE%BC%CE%B9%CE%BF">Σενάριο 3: Δραστηριότητα με Σύνθετο Ελληνικό Ακρωνύμιο</h3>
+<p><strong>Εργασία:</strong> Δραστηριότητα για το Σ.Η.Μ.Α. (ελληνικό ακρωνύμιο με αγγλικό ισοδύναμο S.I.M.A.)</p>
+<ol>
+<li>
+<p><strong>Πεδίο Title:</strong></p>
+<pre class="hljs"><code><div>Εκπαιδευτικό Πρόγραμμα {Σ.Η.Μ.Α.} ({S.I.M.A.})
+</div></code></pre>
+</li>
+<li>
+<p><strong>Πεδίο EngTitle:</strong></p>
+<pre class="hljs"><code><div>Educational Program {Σ.Η.Μ.Α.} ({S.I.M.A.})
+</div></code></pre>
+</li>
+</ol>
+<p>Και το ελληνικό και το αγγλικό ακρωνύμιο προστατεύονται και στις δύο εκδόσεις.</p>
+<hr>
+<h2 id="%CE%B2%CE%AD%CE%BB%CF%84%CE%B9%CF%83%CF%84%CE%B5%CF%82-%CF%80%CF%81%CE%B1%CE%BA%CF%84%CE%B9%CE%BA%CE%AD%CF%82">Βέλτιστες Πρακτικές</h2>
+<h3 id="%CE%BA%CE%B1%CE%BD%CE%B5%CF%84%CE%B5">ΚΑΝΕΤΕ:</h3>
+<ol>
+<li>
+<p><strong>Πάντα προστατεύετε ονόματα οργανισμών</strong></p>
+<pre class="hljs"><code><div>Συνεργασία με {UNESCO}, {UNICEF} και {Culture for Change}
+</div></code></pre>
+</li>
+<li>
+<p><strong>Προστατεύετε ονόματα προγραμμάτων/έργων</strong></p>
+<pre class="hljs"><code><div>Το έργο {New European Bauhaus} χρηματοδοτείται από την ΕΕ
+</div></code></pre>
+</li>
+<li>
+<p><strong>Προστατεύετε τεχνικούς όρους που έχουν συγκεκριμένες σημασίες</strong></p>
+<pre class="hljs"><code><div>Η πλατφόρμα χρησιμοποιεί {open source} λογισμικό
+</div></code></pre>
+</li>
+<li>
+<p><strong>Προστατεύετε διευθύνσεις email και URLs</strong></p>
+<pre class="hljs"><code><div>Επικοινωνήστε στο {info@cultureforchange.gr}
+</div></code></pre>
+</li>
+<li>
+<p><strong>Παρέχετε EngTitle για σημαντικές ανακοινώσεις</strong></p>
+<ul>
+<li>Προσκλήσεις χρηματοδότησης</li>
+<li>Μεγάλες εκδηλώσεις</li>
+<li>Δελτία τύπου</li>
+</ul>
+</li>
+<li>
+<p><strong>Δοκιμάστε τις μεταφράσεις σας</strong></p>
+<ul>
+<li>Μετά τη δημοσίευση, επισκεφθείτε τη σελίδα</li>
+<li>Χρησιμοποιήστε το Google Translate για να αλλάξετε σε Αγγλικά</li>
+<li>Επαληθεύστε ότι οι προστατευμένες λέξεις εμφανίζονται σωστά</li>
+</ul>
+</li>
+</ol>
+<h3 id="%CE%BC%CE%B7%CE%BD-%CE%BA%CE%B1%CE%BD%CE%B5%CF%84%CE%B5">ΜΗΝ ΚΑΝΕΤΕ:</h3>
+<ol>
+<li>
+<p><strong>Μην υπερχρησιμοποιείτε τη σύνταξη {λέξη}</strong></p>
+<ul>
+<li>Προστατεύετε μόνο ό,τι χρειάζεται προστασία</li>
+<li>Αφήστε το Google να μεταφράσει κοινές λέξεις</li>
+</ul>
+</li>
+<li>
+<p><strong>Μην ξεχνάτε να κλείσετε τα άγκιστρα</strong></p>
+<pre class="hljs"><code><div>Λάθος: {Culture for Change
+Σωστό: {Culture for Change}
+</div></code></pre>
+</li>
+<li>
+<p><strong>Μην φωλιάζετε άγκιστρα</strong></p>
+<pre class="hljs"><code><div>Λάθος: {Το {UNESCO} πρόγραμμα}
+Σωστό: Το {UNESCO} πρόγραμμα
+</div></code></pre>
+</li>
+<li>
+<p><strong>Μην χρησιμοποιείτε άγκιστρα για μορφοποίηση</strong></p>
+<ul>
+<li>Τα άγκιστρα είναι μόνο για έλεγχο μετάφρασης</li>
+<li>Χρησιμοποιήστε τον επεξεργαστή εμπλουτισμένου κειμένου για έντονα, πλάγια, κλπ.</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="%CF%83%CF%85%CE%BD%CE%AE%CE%B8%CE%B7-%CF%83%CE%B5%CE%BD%CE%AC%CF%81%CE%B9%CE%B1">Συνήθη Σενάρια</h2>
+<h3 id="%CF%83%CE%B5%CE%BD%CE%AC%CF%81%CE%B9%CE%BF-%CE%B1-%CE%BF%CE%BD%CF%8C%CE%BC%CE%B1%CF%84%CE%B1-%CF%80%CF%81%CE%BF%CE%B3%CF%81%CE%B1%CE%BC%CE%BC%CE%AC%CF%84%CF%89%CE%BD-%CE%B5%CE%B5">Σενάριο Α: Ονόματα Προγραμμάτων ΕΕ</h3>
+<table>
+<thead>
+<tr>
+<th>Ελληνικό Κείμενο</th>
+<th>Με Προστασία</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Πρόγραμμα Erasmus+</td>
+<td>Πρόγραμμα {Erasmus+}</td>
+</tr>
+<tr>
+<td>Creative Europe 2026</td>
+<td>{Creative Europe} 2026</td>
+</tr>
+<tr>
+<td>Horizon Europe</td>
+<td>{Horizon Europe}</td>
+</tr>
+<tr>
+<td>New European Bauhaus</td>
+<td>{New European Bauhaus}</td>
+</tr>
+</tbody>
+</table>
+<h3 id="%CF%83%CE%B5%CE%BD%CE%AC%CF%81%CE%B9%CE%BF-%CE%B2-%CE%BF%CE%BD%CF%8C%CE%BC%CE%B1%CF%84%CE%B1-%CE%BF%CF%81%CE%B3%CE%B1%CE%BD%CE%B9%CF%83%CE%BC%CF%8E%CE%BD">Σενάριο Β: Ονόματα Οργανισμών</h3>
+<table>
+<thead>
+<tr>
+<th>Ελληνικό Κείμενο</th>
+<th>Με Προστασία</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Συνεργασία με UNESCO</td>
+<td>Συνεργασία με {UNESCO}</td>
+</tr>
+<tr>
+<td>Culture for Change</td>
+<td>{Culture for Change}</td>
+</tr>
+<tr>
+<td>Ευρωπαϊκή Επιτροπή</td>
+<td>Ευρωπαϊκή Επιτροπή (αφήστε το να μεταφραστεί)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="%CF%83%CE%B5%CE%BD%CE%AC%CF%81%CE%B9%CE%BF-%CE%B3-%CE%BC%CE%B5%CE%B9%CE%BA%CF%84%CE%AC-%CE%B1%CE%BA%CF%81%CF%89%CE%BD%CF%8D%CE%BC%CE%B9%CE%B1-%CE%B5%CE%BB%CE%BB%CE%B7%CE%BD%CE%B9%CE%BA%CE%AC--%CE%B1%CE%B3%CE%B3%CE%BB%CE%B9%CE%BA%CE%AC">Σενάριο Γ: Μεικτά Ακρωνύμια (Ελληνικά + Αγγλικά)</h3>
+<table>
+<thead>
+<tr>
+<th>Ελληνικό Κείμενο</th>
+<th>Με Προστασία</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Σ.Η.Μ.Α./S.I.M.A.</td>
+<td>{Σ.Η.Μ.Α.}/{S.I.M.A.}</td>
+</tr>
+<tr>
+<td>ΜΚΟ (NGO)</td>
+<td>{ΜΚΟ} ({NGO})</td>
+</tr>
+<tr>
+<td>ΕΕ/EU</td>
+<td>{ΕΕ}/{EU}</td>
+</tr>
+</tbody>
+</table>
+<h3 id="%CF%83%CE%B5%CE%BD%CE%AC%CF%81%CE%B9%CE%BF-%CE%B4-%CF%84%CE%B5%CF%87%CE%BD%CE%B9%CE%BA%CE%BF%CE%AF-%CF%8C%CF%81%CE%BF%CE%B9">Σενάριο Δ: Τεχνικοί Όροι</h3>
+<table>
+<thead>
+<tr>
+<th>Ελληνικό Κείμενο</th>
+<th>Με Προστασία</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>open source λογισμικό</td>
+<td>{open source} λογισμικό</td>
+</tr>
+<tr>
+<td>machine learning τεχνολογίες</td>
+<td>{machine learning} τεχνολογίες</td>
+</tr>
+<tr>
+<td>startup επιχειρήσεις</td>
+<td>{startup} επιχειρήσεις</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="%CE%B1%CE%BD%CF%84%CE%B9%CE%BC%CE%B5%CF%84%CF%8E%CF%80%CE%B9%CF%83%CE%B7-%CF%80%CF%81%CE%BF%CE%B2%CE%BB%CE%B7%CE%BC%CE%AC%CF%84%CF%89%CE%BD">Αντιμετώπιση Προβλημάτων</h2>
+<h3 id="%CF%80%CF%81%CF%8C%CE%B2%CE%BB%CE%B7%CE%BC%CE%B1-%CF%84%CE%B1-%CE%AC%CE%B3%CE%BA%CE%B9%CF%83%CF%84%CF%81%CE%B1-%CE%B5%CE%BC%CF%86%CE%B1%CE%BD%CE%AF%CE%B6%CE%BF%CE%BD%CF%84%CE%B1%CE%B9-%CF%83%CF%84%CE%B7%CE%BD-%CE%B9%CF%83%CF%84%CE%BF%CF%83%CE%B5%CE%BB%CE%AF%CE%B4%CE%B1">Πρόβλημα: Τα άγκιστρα εμφανίζονται στην ιστοσελίδα</h3>
+<p><strong>Αιτία:</strong> Το περιεχόμενο ίσως δεν περνάει από το component LocalizedText.</p>
+<p><strong>Λύση:</strong></p>
+<ul>
+<li>Καθαρίστε την cache του browser σας</li>
+<li>Αν το πρόβλημα παραμένει, επικοινωνήστε με τον developer</li>
+</ul>
+<h3 id="%CF%80%CF%81%CF%8C%CE%B2%CE%BB%CE%B7%CE%BC%CE%B1-%CF%84%CE%BF-%CE%B1%CE%B3%CE%B3%CE%BB%CE%B9%CE%BA%CF%8C-%CF%80%CE%B5%CE%B4%CE%AF%CE%BF-%CE%B4%CE%B5%CE%BD-%CE%B5%CE%BC%CF%86%CE%B1%CE%BD%CE%AF%CE%B6%CE%B5%CF%84%CE%B1%CE%B9-%CF%8C%CF%84%CE%B1%CE%BD-%CE%BC%CE%B5%CF%84%CE%B1%CF%86%CF%81%CE%AC%CE%B6%CE%B5%CF%84%CE%B1%CE%B9">Πρόβλημα: Το αγγλικό πεδίο δεν εμφανίζεται όταν μεταφράζεται</h3>
+<p><strong>Αιτία:</strong></p>
+<ul>
+<li>Το πεδίο EngTitle/EngDescription μπορεί να είναι κενό</li>
+<li>Το περιεχόμενο μπορεί να μην είναι δημοσιευμένο</li>
+</ul>
+<p><strong>Λύση:</strong></p>
+<ol>
+<li>Ελέγξτε ότι το αγγλικό πεδίο έχει περιεχόμενο</li>
+<li>Βεβαιωθείτε ότι κάνατε κλικ στο &quot;Publish&quot; (όχι μόνο &quot;Save&quot;)</li>
+<li>Καθαρίστε την cache του browser και ανανεώστε</li>
+</ol>
+<h3 id="%CF%80%CF%81%CF%8C%CE%B2%CE%BB%CE%B7%CE%BC%CE%B1-%CF%84%CE%BF-google-translate-%CE%B5%CE%BE%CE%B1%CE%BA%CE%BF%CE%BB%CE%BF%CF%85%CE%B8%CE%B5%CE%AF-%CE%BD%CE%B1-%CE%BC%CE%B5%CF%84%CE%B1%CF%86%CF%81%CE%AC%CE%B6%CE%B5%CE%B9-%CF%80%CF%81%CE%BF%CF%83%CF%84%CE%B1%CF%84%CE%B5%CF%85%CE%BC%CE%AD%CE%BD%CE%B5%CF%82-%CE%BB%CE%AD%CE%BE%CE%B5%CE%B9%CF%82">Πρόβλημα: Το Google Translate εξακολουθεί να μεταφράζει προστατευμένες λέξεις</h3>
+<p><strong>Αιτία:</strong></p>
+<ul>
+<li>Ξεχάσατε να προσθέσετε άγκιστρα</li>
+<li>Τυπογραφικό λάθος στα άγκιστρα</li>
+</ul>
+<p><strong>Λύση:</strong></p>
+<ol>
+<li>Επεξεργαστείτε το περιεχόμενο στο Strapi</li>
+<li>Βεβαιωθείτε ότι η λέξη είναι περικλεισμένη: <code>{λέξη}</code> όχι <code>{λέξη</code> ή <code>λέξη}</code></li>
+<li>Αποθηκεύστε και Δημοσιεύστε</li>
+</ol>
+<h3 id="%CF%80%CF%81%CF%8C%CE%B2%CE%BB%CE%B7%CE%BC%CE%B1-%CE%BC%CE%AD%CF%81%CE%BF%CF%82-%CF%84%CE%BF%CF%85-%CE%BA%CE%B5%CE%B9%CE%BC%CE%AD%CE%BD%CE%BF%CF%85-%CE%BB%CE%B5%CE%AF%CF%80%CE%B5%CE%B9">Πρόβλημα: Μέρος του κειμένου λείπει</h3>
+<p><strong>Αιτία:</strong> Μη κλεισμένα ή αναντίστοιχα άγκιστρα</p>
+<p><strong>Λύση:</strong></p>
+<ol>
+<li>Ελέγξτε ότι κάθε <code>{</code> έχει ένα αντίστοιχο <code>}</code></li>
+<li>Μην φωλιάζετε άγκιστρα μέσα σε άλλα άγκιστρα</li>
+</ol>
+<hr>
+<h2 id="%CE%BA%CE%AC%CF%81%CF%84%CE%B1-%CE%B3%CF%81%CE%AE%CE%B3%CE%BF%CF%81%CE%B7%CF%82-%CE%B1%CE%BD%CE%B1%CF%86%CE%BF%CF%81%CE%AC%CF%82">Κάρτα Γρήγορης Αναφοράς</h2>
+<pre class="hljs"><code><div>┌─────────────────────────────────────────────────────────────┐
+│              ΓΡΗΓΟΡΗ ΑΝΑΦΟΡΑ ΜΕΤΑΦΡΑΣΗΣ                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ΠΡΟΣΤΑΣΙΑ ΛΕΞΗΣ ΑΠΟ ΜΕΤΑΦΡΑΣΗ:                             │
+│  ────────────────────────────────                           │
+│  Πληκτρολογήστε: Συνεργασία με {UNESCO}                     │
+│  Εμφανίζεται:    Συνεργασία με UNESCO                       │
+│  Αγγλικά:        Cooperation with UNESCO                    │
+│                                                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ΠΑΡΟΧΗ ΑΓΓΛΙΚΗΣ ΠΑΡΑΚΑΜΨΗΣ:                                │
+│  ───────────────────────────                                │
+│  Title:     Νέα Πρόσκληση 2026                              │
+│  EngTitle:  New Call 2026                                   │
+│  (Στα Αγγλικά εμφανίζεται &quot;New Call 2026&quot;)                  │
+│                                                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ΣΥΝΔΥΑΣΜΟΣ ΚΑΙ ΤΩΝ ΔΥΟ:                                    │
+│  ───────────────────────                                    │
+│  Title:     Πρόσκληση {Creative Europe}                     │
+│  EngTitle:  {Creative Europe} Call                          │
+│  (Προστατεύεται και στα Ελληνικά και στα Αγγλικά)          │
+│                                                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ΘΥΜΗΘΕΙΤΕ:                                                 │
+│  ──────────                                                 │
+│  ✓ {λέξη} = προστατεύεται από μετάφραση                     │
+│  ✓ EngTitle = ο αγγλικός τίτλος σας                         │
+│  ✓ EngDescription = η αγγλική περιγραφή σας                 │
+│  ✓ Πάντα ΔΗΜΟΣΙΕΥΣΤΕ μετά τις αλλαγές                       │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+</div></code></pre>
+<hr>
+<h2 id="%CF%87%CF%81%CE%B5%CE%B9%CE%AC%CE%B6%CE%B5%CF%83%CF%84%CE%B5-%CE%B2%CE%BF%CE%AE%CE%B8%CE%B5%CE%B9%CE%B1">Χρειάζεστε Βοήθεια;</h2>
+<p>Αν αντιμετωπίζετε προβλήματα ή έχετε ερωτήσεις σχετικά με το σύστημα μετάφρασης, επικοινωνήστε με την ομάδα ανάπτυξης.</p>
+<hr>
+<p><em>Τελευταία ενημέρωση: Ιανουάριος 2026</em></p>
+
+</body>
+</html>

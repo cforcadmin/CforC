@@ -11,6 +11,8 @@
 
 # testing
 /coverage
+/playwright-report
+/test-results
 
 # next.js
 /.next/
@@ -40,6 +42,8 @@ next-env.d.ts
 cms/
 StrapiDBforCforC/
 
-# member exports
+# member exports / sensitive PII
 members-export-*.csv
 strapi-backup-*/
+docs/External-activity.csv
+docs/Subscribers-export-*.csv

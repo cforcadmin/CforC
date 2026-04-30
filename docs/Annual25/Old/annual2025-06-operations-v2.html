@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080">
+  <title>Ετήσια Δράση 2025 — Λειτουργία Δικτύου (v2 — Timeline)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', 'Arial Nova', Arial, system-ui, sans-serif;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      position: relative;
+      background: #2D2D2D;
+    }
+
+    /* ─── Giant background numbers ─── */
+    .bg-number {
+      position: absolute;
+      font-weight: 900;
+      color: rgba(255,139,106,0.06);
+      z-index: 0;
+      line-height: 1;
+    }
+    .bg-47 { font-size: 600px; top: -80px; right: -40px; }
+    .bg-14 { font-size: 400px; bottom: -60px; left: -30px; }
+
+    /* ─── Top bar ─── */
+    .top-bar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 8px;
+      background: linear-gradient(90deg, #FF6B47, #FF8B6A, #FFB299);
+      z-index: 10;
+    }
+
+    /* ─── Logo ─── */
+    .logo {
+      position: absolute;
+      top: 40px;
+      left: 80px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 5;
+    }
+    .logo svg { width: 32px; height: 32px; }
+    .logo-text {
+      font-size: 10px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    /* ─── Title area ─── */
+    .title-area {
+      position: absolute;
+      top: 40px;
+      left: 0; right: 0;
+      text-align: center;
+      z-index: 5;
+    }
+    .title-super {
+      font-size: 14px;
+      font-weight: 700;
+      color: #FF8B6A;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .title-main {
+      font-size: 52px;
+      font-weight: 900;
+      color: #FFFFFF;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+
+    /* ─── Central timeline ─── */
+    .timeline {
+      position: absolute;
+      top: 200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 700px;
+      background: linear-gradient(180deg, #FF8B6A 0%, rgba(255,139,106,0.15) 100%);
+      border-radius: 3px;
+      z-index: 2;
+    }
+
+    /* ─── Timeline nodes ─── */
+    .node {
+      position: absolute;
+      z-index: 5;
+    }
+
+    .node-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #FF8B6A;
+      border: 4px solid #2D2D2D;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .node-dot-inner {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* ─── Node 1: General Assembly — LEFT side ─── */
+    .node-1 {
+      top: 200px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .card-left {
+      position: absolute;
+      right: 60px;
+      top: -20px;
+      width: 680px;
+      background: rgba(255,139,106,0.08);
+      border: 1px solid rgba(255,139,106,0.2);
+      border-radius: 20px;
+      padding: 40px 44px;
+    }
+
+    .card-date {
+      display: inline-block;
+      background: #FF8B6A;
+      color: #2D2D2D;
+      font-size: 14px;
+      font-weight: 800;
+      padding: 6px 18px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+      margin-bottom: 18px;
+    }
+
+    .card-title {
+      font-size: 30px;
+      font-weight: 800;
+      color: #FFFFFF;
+      margin-bottom: 24px;
+      line-height: 1.3;
+    }
+
+    .card-stats {
+      display: flex;
+      gap: 40px;
+    }
+
+    .card-stat {
+      text-align: center;
+    }
+
+    .card-stat-value {
+      font-size: 52px;
+      font-weight: 900;
+      color: #FF8B6A;
+      line-height: 1;
+    }
+
+    .card-stat-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.6);
+      margin-top: 8px;
+      line-height: 1.3;
+    }
+
+    .card-detail {
+      font-size: 18px;
+      color: rgba(255,255,255,0.7);
+      margin-top: 20px;
+      line-height: 1.5;
+    }
+
+    /* ─── Node 2: Monthly meetings — RIGHT side ─── */
+    .node-2 {
+      top: 560px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .card-right {
+      position: absolute;
+      left: 60px;
+      top: -20px;
+      width: 680px;
+      background: rgba(255,139,106,0.08);
+      border: 1px solid rgba(255,139,106,0.2);
+      border-radius: 20px;
+      padding: 40px 44px;
+    }
+
+    .card-right .card-date {
+      background: rgba(255,139,106,0.3);
+      color: #FFFFFF;
+    }
+
+    .meetings-grid {
+      display: flex;
+      gap: 50px;
+      margin-top: 10px;
+    }
+
+    .meeting-item {
+      text-align: center;
+    }
+
+    .meeting-number {
+      font-size: 64px;
+      font-weight: 900;
+      color: #FF8B6A;
+      line-height: 1;
+    }
+
+    .meeting-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.6);
+      margin-top: 8px;
+      max-width: 180px;
+      line-height: 1.4;
+    }
+
+    .meeting-divider {
+      width: 2px;
+      background: rgba(255,139,106,0.3);
+      align-self: stretch;
+      border-radius: 1px;
+    }
+
+    /* ─── Satisfaction ring ─── */
+    .satisfaction-ring {
+      position: absolute;
+      bottom: 80px;
+      left: 120px;
+      z-index: 5;
+    }
+
+    .ring-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .ring-value {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      margin-top: 8px;
+    }
+
+    .ring-percent {
+      font-size: 36px;
+      font-weight: 900;
+      color: #FFFFFF;
+      text-align: center;
+    }
+
+    .ring-sub {
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+    }
+
+    /* ─── Bottom accent line ─── */
+    .accent-line {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, #FF6B47, #FF8B6A, #FFB299);
+      z-index: 10;
+    }
+
+    .slide-number {
+      position: absolute;
+      bottom: 24px;
+      right: 50px;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 1px;
+      z-index: 20;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background giant numbers -->
+  <div class="bg-number bg-47">47</div>
+  <div class="bg-number bg-14">14</div>
+
+  <!-- Top bar -->
+  <div class="top-bar"></div>
+
+  <!-- Logo -->
+  <div class="logo">
+    <svg viewBox="0 0 62 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M28.1357 56.9941C29.2174 57.1347 30.3196 57.2174 31.4101 57.245L31.8545 41.4423C31.3662 41.4313 30.8838 41.3927 30.4102 41.332L28.1357 56.9941Z" fill="rgba(255,255,255,0.3)"/><path d="M19.7527 33.0938L3.91309 38.2786C4.27268 39.2572 4.69659 40.2247 5.16728 41.1591L20.2994 34.3562C20.0918 33.9482 19.9106 33.5265 19.7527 33.0938Z" fill="rgba(255,255,255,0.3)"/><path d="M2.41992 26.0625L19.0928 27.6971C19.1425 27.2395 19.2214 26.7902 19.3237 26.3492L2.94323 22.9863C2.70935 23.9979 2.53394 25.0316 2.41992 26.0598V26.0625Z" fill="rgba(255,255,255,0.3)"/><path d="M19.0487 29.752L2.31445 30.6947C2.37877 31.72 2.50448 32.751 2.68574 33.7626L19.2153 31.1136C19.1335 30.6671 19.0779 30.215 19.0487 29.7547V29.752Z" fill="rgba(255,255,255,0.3)"/><path d="M23.8526 38.627L13.2197 50.8435C14.0617 51.4968 14.9534 52.1115 15.8684 52.6738L25.0249 39.4346C24.6185 39.1838 24.2268 38.9164 23.8526 38.627Z" fill="rgba(255,255,255,0.3)"/><path d="M26.936 40.4062L20.2061 54.8831C21.2117 55.2993 22.2525 55.6659 23.3021 55.9746L28.2896 40.8859C27.8247 40.7508 27.3745 40.5882 26.9331 40.4062H26.936Z" fill="rgba(255,255,255,0.3)"/><path d="M21.3978 36.127L7.65723 45.1846C8.28286 46.0281 8.96404 46.8467 9.68323 47.6213L22.2924 37.2047C21.9737 36.8629 21.6755 36.5046 21.3978 36.1297V36.127Z" fill="rgba(255,255,255,0.3)"/>
+    </svg>
+    <div class="logo-text">Culture<br>for Change</div>
+  </div>
+
+  <!-- Title -->
+  <div class="title-area">
+    <div class="title-super">Ετήσια Δραστηριότητα 2025</div>
+    <div class="title-main">Λειτουργία Δικτύου</div>
+  </div>
+
+  <!-- Timeline spine -->
+  <div class="timeline"></div>
+
+  <!-- Node 1: General Assembly -->
+  <div class="node node-1">
+    <div class="node-dot"><div class="node-dot-inner"></div></div>
+    <div class="card-left">
+      <div class="card-date">22 ΦΕΒΡΟΥΑΡΙΟΥ 2025</div>
+      <div class="card-title">Γενική Συνέλευση & εκλογές<br>Συγκρότηση νέου ΔΣ</div>
+      <div class="card-stats">
+        <div class="card-stat">
+          <div class="card-stat-value">47</div>
+          <div class="card-stat-label">μέλη<br>συμμετείχαν</div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-value">28</div>
+          <div class="card-stat-label">δια ζώσης</div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-value">19</div>
+          <div class="card-stat-label">online</div>
+        </div>
+      </div>
+      <div class="card-detail">Βαθμός θετικής ικανοποίησης: <strong style="color:#FF8B6A; font-weight:800;">96,2%</strong> (25 από τις 26 απαντήσεις)</div>
+    </div>
+  </div>
+
+  <!-- Node 2: Monthly meetings -->
+  <div class="node node-2">
+    <div class="node-dot"><div class="node-dot-inner"></div></div>
+    <div class="card-right">
+      <div class="card-date">ΜΗΝΙΑΙΕΣ ΣΥΝΑΝΤΗΣΕΙΣ</div>
+      <div class="card-title">Ομάδα Συντονισμού</div>
+      <div class="meetings-grid">
+        <div class="meeting-item">
+          <div class="meeting-number">14</div>
+          <div class="meeting-label">συνεδριάσεις Διοικητικού Συμβουλίου</div>
+        </div>
+        <div class="meeting-divider"></div>
+        <div class="meeting-item">
+          <div class="meeting-number">3</div>
+          <div class="meeting-label">συναντήσεις στρατηγικού & επιχειρησιακού σχεδιασμού</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide number -->
+  <div class="slide-number">06</div>
+
+  <!-- Bottom accent line -->
+  <div class="accent-line"></div>
+
+</body>
+</html>
