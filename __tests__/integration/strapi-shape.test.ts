@@ -175,20 +175,21 @@ describeIfStrapi('Strapi response shapes', () => {
     })
   })
 
-  describe('Single types', () => {
-    itIfStrapi('GET /hero-section?populate=* returns single object data', async () => {
-      const json = await strapiGet('/hero-section?populate=*')
-      // Single types return data as object, not array
-      expect(json.data).toBeDefined()
-      expect(Array.isArray(json.data)).toBe(false)
-    })
-  })
-
   describe('Pagination meta', () => {
-    itIfStrapi('pagination[limit] is honored and meta is returned', async () => {
+    itIfStrapi('pagination[limit] returns meta with limit + total (v5 offset style)', async () => {
+      // App uses pagination[limit]=1000 throughout. With `limit` style,
+      // Strapi v5 returns { start, limit, total } — NOT { page, pageSize }.
       const json = await strapiGet('/members?pagination[limit]=2')
       expect(json.data.length).toBeLessThanOrEqual(2)
+      expect(json.meta?.pagination?.limit).toBeDefined()
+      expect(json.meta?.pagination?.total).toBeDefined()
+    })
+
+    itIfStrapi('pagination[pageSize] returns meta with page + pageSize (page style)', async () => {
+      const json = await strapiGet('/members?pagination[pageSize]=2')
+      expect(json.data.length).toBeLessThanOrEqual(2)
       expect(json.meta?.pagination?.pageSize).toBeDefined()
+      expect(json.meta?.pagination?.pageCount).toBeDefined()
     })
   })
 })

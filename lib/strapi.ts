@@ -137,13 +137,6 @@ export async function getProjectEntryBySlug(slug: string) {
 }
 
 /**
- * Get hero section data
- */
-export async function getHeroSection() {
-  return fetchStrapi('/hero-section?populate=*');
-}
-
-/**
  * Get all pages
  */
 export async function getPages() {

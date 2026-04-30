@@ -14,7 +14,6 @@ const ALLOWED_COLLECTIONS = new Set([
   'working-groups',
   'coordination-teams',
   'pages',
-  'hero-section',
 ])
 
 export async function GET(

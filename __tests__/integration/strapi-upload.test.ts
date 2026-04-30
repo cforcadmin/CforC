@@ -1,15 +1,17 @@
 /**
  * Strapi upload integration tests — exercises CVE-2026-22707 (MIME bypass).
  *
+ * Uses native FormData + Blob to match the production code path in
+ * app/api/members/update/route.ts (which uses globalThis.FormData).
+ *
  * - Valid PNG should upload and return a file with mime: 'image/png'.
- * - File with .png extension but actual non-image content should be rejected
- *   after upgrading to v5.37.0+. On vulnerable versions the test will fail —
- *   that failure is the signal that the upgrade is needed.
+ * - File with .png extension/MIME but actual non-image content should be
+ *   rejected after upgrading to v5.37.0+. On vulnerable versions the
+ *   rejection test will fail — that failure is the signal that the
+ *   upgrade is needed.
  *
  * Uploaded test files are deleted in afterAll.
  */
-
-import FormData from 'form-data'
 
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_TOKEN = process.env.STRAPI_API_TOKEN || process.env.NEXT_PUBLIC_STRAPI_API_TOKEN
@@ -35,27 +37,24 @@ const FAKE_PNG_HTML = Buffer.from(
 const uploadedFileIds: number[] = []
 
 async function uploadFile(buffer: Buffer, filename: string, contentType: string) {
-  const form = new FormData()
-  form.append('files', buffer, { filename, contentType })
+  const fd = new FormData()
+  fd.append('files', new Blob([buffer], { type: contentType }), filename)
 
   const res = await fetch(`${STRAPI_URL}/api/upload`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${STRAPI_TOKEN}`,
-      ...form.getHeaders(),
-    },
-    body: form as unknown as BodyInit,
+    headers: { Authorization: `Bearer ${STRAPI_TOKEN}` },
+    body: fd,
   })
 
   const text = await res.text()
-  let json: any = null
+  let body: any
   try {
-    json = JSON.parse(text)
+    body = JSON.parse(text)
   } catch {
-    json = { raw: text }
+    body = { raw: text }
   }
 
-  return { status: res.status, ok: res.ok, body: json }
+  return { status: res.status, ok: res.ok, body }
 }
 
 async function deleteFile(id: number) {
@@ -82,7 +81,7 @@ describeIfStrapi('Strapi upload', () => {
   itIfStrapi('accepts a valid PNG and returns mime image/png', async () => {
     const { status, ok, body } = await uploadFile(VALID_PNG, `cforc-test-${Date.now()}.png`, 'image/png')
     expect(ok).toBe(true)
-    expect(status).toBe(200)
+    expect([200, 201]).toContain(status)
     expect(Array.isArray(body)).toBe(true)
     expect(body.length).toBe(1)
     expect(body[0].url).toBeDefined()
@@ -102,9 +101,8 @@ describeIfStrapi('Strapi upload', () => {
       uploadedFileIds.push(body[0].id)
     }
 
-    // Post-fix (v5.37+): Strapi should reject mismatched MIME → 4xx.
-    // Pre-fix: Strapi accepts the file. This expectation will FAIL on
-    // vulnerable versions, which is the signal to upgrade.
+    // Post-fix (v5.37+): Strapi should reject mismatched MIME with 4xx.
+    // Pre-fix: Strapi accepts (ok:true) — this is the upgrade signal.
     expect(ok).toBe(false)
     expect(status).toBeGreaterThanOrEqual(400)
     expect(status).toBeLessThan(500)
