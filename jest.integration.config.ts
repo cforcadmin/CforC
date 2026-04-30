@@ -6,14 +6,14 @@ const config: Config = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
-  testMatch: ['**/__tests__/**/*.test.ts'],
-  testPathIgnorePatterns: ['/node_modules/', '/__tests__/integration/'],
-  setupFiles: ['<rootDir>/__tests__/setup.ts'],
+  testMatch: ['**/__tests__/integration/**/*.test.ts'],
+  setupFiles: ['<rootDir>/__tests__/integration/setup.ts'],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
       tsconfig: 'tsconfig.json',
     }],
   },
+  testTimeout: 30000,
 }
 
 export default config

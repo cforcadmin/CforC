@@ -11,6 +11,7 @@
     "test:unit": "jest --testPathPattern=__tests__/unit --forceExit",
     "test:api": "jest --testPathPattern=__tests__/api --forceExit",
     "test:watch": "jest --watch",
+    "test:integration": "jest --config jest.integration.config.ts --forceExit",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
     "test:all": "jest --forceExit && npx playwright test"
