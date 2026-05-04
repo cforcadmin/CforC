@@ -136,6 +136,7 @@ export default function ProfilePage() {
   })
 
   const [originalData, setOriginalData] = useState<Record<string, any>>(formData)
+  const [isInitialDataLoaded, setIsInitialDataLoaded] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [project1Images, setProject1Images] = useState<File[]>([])
   const [project2Images, setProject2Images] = useState<File[]>([])
@@ -243,6 +244,7 @@ export default function ProfilePage() {
       }
       setFormData(data)
       setOriginalData(data)
+      setIsInitialDataLoaded(true)
 
       // Store original image IDs and initialize kept IDs with the same values
       const project1Ids = (user.Project1Pictures || []).map(img => img.id).filter((id): id is number => id !== undefined)
@@ -414,6 +416,46 @@ export default function ProfilePage() {
     const hasProject2Images = (project2KeptImageIds.length > 0) || (project2Images.length > 0)
     if (hasProject2Images && (!formData.Project2PicturesAltText || formData.Project2PicturesAltText.trim() === '')) {
       errors.push('Το εναλλακτικό κείμενο φωτο έργου 2 είναι υποχρεωτικό όταν υπάρχουν εικόνες')
+    }
+
+    // Project must have a title in at least one language (GR or EN) when any
+    // other project field is filled. Empty projects are allowed (skip rule).
+    const isStringFilled = (v: any) => typeof v === 'string' && v.trim() !== ''
+    const isBlocksFilled = (v: any) => {
+      if (!v) return false
+      if (typeof v === 'string') return v.trim() !== ''
+      if (!Array.isArray(v)) return false
+      return blocksToPlainText(v).trim() !== ''
+    }
+
+    const project1HasContent =
+      isStringFilled(formData.Project1Title) ||
+      isStringFilled(formData.EngProject1Title) ||
+      isStringFilled(formData.Project1Tags) ||
+      isStringFilled(formData.EngProject1Tags) ||
+      isBlocksFilled(formData.Project1Description) ||
+      isBlocksFilled(formData.EngProject1Description) ||
+      isStringFilled(formData.Project1Links) ||
+      hasProject1Images
+    const project1HasTitle =
+      isStringFilled(formData.Project1Title) || isStringFilled(formData.EngProject1Title)
+    if (project1HasContent && !project1HasTitle) {
+      errors.push('Το Έργο 1 πρέπει να έχει τίτλο σε τουλάχιστον μία γλώσσα (Ελληνικά ή Αγγλικά)')
+    }
+
+    const project2HasContent =
+      isStringFilled(formData.Project2Title) ||
+      isStringFilled(formData.EngProject2Title) ||
+      isStringFilled(formData.Project2Tags) ||
+      isStringFilled(formData.EngProject2Tags) ||
+      isBlocksFilled(formData.Project2Description) ||
+      isBlocksFilled(formData.EngProject2Description) ||
+      isStringFilled(formData.Project2Links) ||
+      hasProject2Images
+    const project2HasTitle =
+      isStringFilled(formData.Project2Title) || isStringFilled(formData.EngProject2Title)
+    if (project2HasContent && !project2HasTitle) {
+      errors.push('Το Έργο 2 πρέπει να έχει τίτλο σε τουλάχιστον μία γλώσσα (Ελληνικά ή Αγγλικά)')
     }
 
     // If there are validation errors, show them
@@ -939,6 +981,7 @@ export default function ProfilePage() {
                 </div>
                 {bioLang === 'gr' ? (
                   <RichTextEditor
+                    key={`bio-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
                     label=""
                     content={formData.Bio}
                     placeholder="Γράψε μια σύντομη περιγραφή για εσένα..."
@@ -950,6 +993,7 @@ export default function ProfilePage() {
                 ) : (
                   <>
                     <RichTextEditor
+                      key={`engbio-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
                       label=""
                       content={formData.EngBio}
                       placeholder="Write a short bio in English (optional)..."
@@ -1094,6 +1138,7 @@ export default function ProfilePage() {
                     />
 
                     <RichTextEditor
+                      key={`p1desc-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
                       label="Περιγραφή"
                       content={formData.Project1Description}
                       placeholder="Περίγραψε το έργο σου..."
@@ -1121,6 +1166,7 @@ export default function ProfilePage() {
                     />
 
                     <RichTextEditor
+                      key={`engp1desc-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
                       label="Description (EN)"
                       content={formData.EngProject1Description}
                       placeholder="Describe your project in English (optional)..."
@@ -1207,6 +1253,7 @@ export default function ProfilePage() {
                     />
 
                     <RichTextEditor
+                      key={`p2desc-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
                       label="Περιγραφή"
                       content={formData.Project2Description}
                       placeholder="Περίγραψε το έργο σου..."
@@ -1234,6 +1281,7 @@ export default function ProfilePage() {
                     />
 
                     <RichTextEditor
+                      key={`engp2desc-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
                       label="Description (EN)"
                       content={formData.EngProject2Description}
                       placeholder="Describe your project in English (optional)..."

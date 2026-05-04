@@ -8,6 +8,7 @@ import CookieConsent from '@/components/CookieConsent'
 import ScrollToTop from '@/components/ScrollToTop'
 import CombinedCtaSection from '@/components/CombinedCtaSection'
 import LoadingIndicator from '@/components/LoadingIndicator'
+import LocalizedText from '@/components/LocalizedText'
 import Link from 'next/link'
 import Image from 'next/image'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
@@ -473,7 +474,9 @@ function MembersPageContent() {
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-base font-light group-hover:font-bold text-charcoal dark:text-gray-100 transition-all">{member.Name}</h3>
+                      <h3 className="text-base font-light group-hover:font-bold text-charcoal dark:text-gray-100 transition-all">
+                        <LocalizedText text={member.Name} engText={member.EngName} />
+                      </h3>
                       {memberRoles[member.id] && (
                         <span className="bg-charcoal text-white dark:bg-white dark:text-charcoal text-[10px] font-medium px-2 py-0.5 rounded-full">
                           {memberRoles[member.id].join(' · ')}

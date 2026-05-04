@@ -309,7 +309,11 @@ export default function MemberDetailClient() {
 
   const fieldsOfWork = member.FieldsOfWork?.split(',').map((f) => f.trim()).filter((f) => f && f !== '-') || []
   const websites = member.Websites?.split(',').map((w) => w.trim()).filter((w) => w && w !== '-') || []
-  const hasProjects = member.Project1Title || member.Project2Title
+  // Effective titles: fall back to English if Greek is empty so the project
+  // tile + URL still work when the user filled only the EN title.
+  const project1EffectiveTitle = member.Project1Title || member.EngProject1Title
+  const project2EffectiveTitle = member.Project2Title || member.EngProject2Title
+  const hasProjects = project1EffectiveTitle || project2EffectiveTitle
 
 
   return (
@@ -529,16 +533,16 @@ export default function MemberDetailClient() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
-              {member.Project1Title && (
+              {project1EffectiveTitle && (
                 <Link
-                  href={`/members/${member.Slug}/${encodeURIComponent(member.Project1Title)}`}
+                  href={`/members/${member.Slug}/${encodeURIComponent(project1EffectiveTitle)}`}
                   className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden hover:shadow-xl dark:hover:shadow-gray-700/50 transition-shadow"
                 >
                   {member.Project1Pictures && member.Project1Pictures[0] && (
                     <div className="aspect-[4/3] relative bg-gray-200 dark:bg-gray-700">
                       <Image
                         src={member.Project1Pictures[0].url}
-                        alt={member.Project1PicturesAltText || member.Project1Title}
+                        alt={member.Project1PicturesAltText || project1EffectiveTitle}
                         fill
                         className="object-cover"
                       />
@@ -552,16 +556,16 @@ export default function MemberDetailClient() {
                 </Link>
               )}
 
-              {member.Project2Title && (
+              {project2EffectiveTitle && (
                 <Link
-                  href={`/members/${member.Slug}/${encodeURIComponent(member.Project2Title)}`}
+                  href={`/members/${member.Slug}/${encodeURIComponent(project2EffectiveTitle)}`}
                   className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden hover:shadow-xl dark:hover:shadow-gray-700/50 transition-shadow"
                 >
                   {member.Project2Pictures && member.Project2Pictures[0] && (
                     <div className="aspect-[4/3] relative bg-gray-200 dark:bg-gray-700">
                       <Image
                         src={member.Project2Pictures[0].url}
-                        alt={member.Project2PicturesAltText || member.Project2Title}
+                        alt={member.Project2PicturesAltText || project2EffectiveTitle}
                         fill
                         className="object-cover"
                       />

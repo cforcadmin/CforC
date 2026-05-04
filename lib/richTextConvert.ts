@@ -36,8 +36,11 @@ function strapiChildToTiptap(child: any): any {
 }
 
 function strapiChildrenToTiptap(children: any[]): any[] {
+  // ProseMirror rejects empty text nodes, so we return [] instead of
+  // [{ type: 'text', text: '' }]. Callers must omit the `content` key when
+  // the result is empty (Tiptap accepts e.g. `{ type: 'paragraph' }`).
   if (!children || children.length === 0) {
-    return [{ type: 'text', text: '' }]
+    return []
   }
   const result: any[] = []
   for (const child of children) {
@@ -48,36 +51,34 @@ function strapiChildrenToTiptap(children: any[]): any[] {
       result.push(converted)
     }
   }
-  // Filter out empty text nodes unless it's the only one
-  if (result.length > 1) {
-    const filtered = result.filter(n => n.text !== '')
-    return filtered.length > 0 ? filtered : [{ type: 'text', text: '' }]
-  }
-  return result
+  // Filter out any text nodes whose text is the empty string — invalid in PM
+  return result.filter((n) => !(n.type === 'text' && (n.text === '' || n.text == null)))
+}
+
+function paragraphFromChildren(children: any[]): any {
+  const content = strapiChildrenToTiptap(children)
+  return content.length > 0 ? { type: 'paragraph', content } : { type: 'paragraph' }
+}
+
+function headingFromChildren(level: number, children: any[]): any {
+  const content = strapiChildrenToTiptap(children)
+  const node: any = { type: 'heading', attrs: { level: level || 2 } }
+  if (content.length > 0) node.content = content
+  return node
 }
 
 export function strapiBlocksToTiptap(blocks: any): any {
   if (!blocks || !Array.isArray(blocks) || blocks.length === 0) {
-    return {
-      type: 'doc',
-      content: [{ type: 'paragraph', content: [{ type: 'text', text: '' }] }]
-    }
+    return { type: 'doc', content: [{ type: 'paragraph' }] }
   }
 
   const content = blocks.map((block: any) => {
     if (block.type === 'paragraph') {
-      return {
-        type: 'paragraph',
-        content: strapiChildrenToTiptap(block.children)
-      }
+      return paragraphFromChildren(block.children)
     }
 
     if (block.type === 'heading') {
-      return {
-        type: 'heading',
-        attrs: { level: block.level || 2 },
-        content: strapiChildrenToTiptap(block.children)
-      }
+      return headingFromChildren(block.level, block.children)
     }
 
     if (block.type === 'list') {
@@ -86,28 +87,19 @@ export function strapiBlocksToTiptap(blocks: any): any {
         type: listType,
         content: (block.children || []).map((item: any) => ({
           type: 'listItem',
-          content: [{
-            type: 'paragraph',
-            content: strapiChildrenToTiptap(item.children)
-          }]
-        }))
+          content: [paragraphFromChildren(item.children)],
+        })),
       }
     }
 
     // Strapi doesn't support 'quote' in its Blocks editor — treat as paragraph fallback
     // so any legacy quote data doesn't break the TipTap editor
     if (block.type === 'quote') {
-      return {
-        type: 'paragraph',
-        content: strapiChildrenToTiptap(block.children)
-      }
+      return paragraphFromChildren(block.children)
     }
 
     // Fallback: treat as paragraph
-    return {
-      type: 'paragraph',
-      content: strapiChildrenToTiptap(block.children || [])
-    }
+    return paragraphFromChildren(block.children || [])
   })
 
   return { type: 'doc', content }

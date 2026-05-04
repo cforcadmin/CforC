@@ -161,7 +161,17 @@ export default function ProfilePreviewModal({ isOpen, onClose, user }: ProfilePr
 
   const fieldsOfWork = user.FieldsOfWork?.split(',').map((f: string) => f.trim()).filter((f: string) => f && f !== '-') || []
   const websites = user.Websites?.split(',').map((w: string) => w.trim()).filter((w: string) => w && w !== '-') || []
-  const hasProjects = user.Project1Title || user.Project2Title
+  // Effective titles: a project counts as "present" if it has a title in either
+  // language. Use the language-appropriate title when available, else fall back.
+  const project1EffectiveTitle =
+    previewLang === 'en'
+      ? user.EngProject1Title || user.Project1Title
+      : user.Project1Title || user.EngProject1Title
+  const project2EffectiveTitle =
+    previewLang === 'en'
+      ? user.EngProject2Title || user.Project2Title
+      : user.Project2Title || user.EngProject2Title
+  const hasProjects = project1EffectiveTitle || project2EffectiveTitle
   const cities = user.City?.split(',').map((c: string) => c.trim()).filter((c: string) => c && c !== '-') || []
   const provinces = user.Province?.split(',').map((p: string) => p.trim()).filter((p: string) => p && p !== '-') || []
 
@@ -376,38 +386,38 @@ export default function ProfilePreviewModal({ isOpen, onClose, user }: ProfilePr
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              {user.Project1Title && (
+              {project1EffectiveTitle && (
                 <div className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden">
                   {user.Project1Pictures && user.Project1Pictures[0] && (
                     <div className="aspect-[4/3] relative bg-gray-200 dark:bg-gray-700">
                       <Image
                         src={user.Project1Pictures[0].url}
-                        alt={user.Project1PicturesAltText || user.Project1Title}
+                        alt={user.Project1PicturesAltText || project1EffectiveTitle}
                         fill
                         className="object-cover"
                       />
                     </div>
                   )}
                   <div className="p-6">
-                    <h3 className="text-xl font-bold dark:text-gray-100">{user.Project1Title}</h3>
+                    <h3 className="text-xl font-bold dark:text-gray-100">{project1EffectiveTitle}</h3>
                   </div>
                 </div>
               )}
 
-              {user.Project2Title && (
+              {project2EffectiveTitle && (
                 <div className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden">
                   {user.Project2Pictures && user.Project2Pictures[0] && (
                     <div className="aspect-[4/3] relative bg-gray-200 dark:bg-gray-700">
                       <Image
                         src={user.Project2Pictures[0].url}
-                        alt={user.Project2PicturesAltText || user.Project2Title}
+                        alt={user.Project2PicturesAltText || project2EffectiveTitle}
                         fill
                         className="object-cover"
                       />
                     </div>
                   )}
                   <div className="p-6">
-                    <h3 className="text-xl font-bold dark:text-gray-100">{user.Project2Title}</h3>
+                    <h3 className="text-xl font-bold dark:text-gray-100">{project2EffectiveTitle}</h3>
                   </div>
                 </div>
               )}

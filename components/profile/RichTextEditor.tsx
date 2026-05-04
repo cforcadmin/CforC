@@ -256,6 +256,13 @@ export default function RichTextEditor({
   // Sync flag: distinguish our own onUpdate from external prop changes
   const isInternalUpdate = useRef(false)
   const contentRef = useRef(content)
+  const lastSetSerialized = useRef<string | null>(null)
+
+  // Stable ref to onChange so handleEditorUpdate doesn't change every render
+  const onChangeRef = useRef(onChange)
+  useEffect(() => {
+    onChangeRef.current = onChange
+  }, [onChange])
 
   // Update the ref whenever we push changes FROM the editor (internal)
   const handleEditorUpdate = useCallback(({ editor: ed }: any) => {
@@ -263,8 +270,8 @@ export default function RichTextEditor({
     const blocks = tiptapToStrapiBlocks(json)
     isInternalUpdate.current = true
     contentRef.current = blocks
-    onChange(blocks)
-  }, [onChange])
+    onChangeRef.current(blocks)
+  }, [])
 
   // Compute initial TipTap doc from content
   const getInitialContent = useCallback(() => {
@@ -292,6 +299,9 @@ export default function RichTextEditor({
         blockquote: false,
         codeBlock: false,
         code: false,
+        // Disable bundled link/underline so the explicit configs below own them
+        link: false,
+        underline: false,
       }),
       Underline,
       Link.configure({
@@ -311,21 +321,26 @@ export default function RichTextEditor({
     onBlur: () => setIsFocused(false),
   })
 
-  // Only setContent when the change came from OUTSIDE (parent reset, discard, language switch)
+  // Only setContent when the change came from OUTSIDE (parent reset, discard,
+  // language switch, or initial data load). Guards:
+  //  - skip if isInternalUpdate (our own typing fired the update)
+  //  - skip if the new content is identical to what we last set (avoid loops)
+  //  - pass `false` to setContent so it does NOT emit an update event (which
+  //    would re-enter handleEditorUpdate via the onUpdate config and overwrite
+  //    isInternalUpdate / parent state with the same value)
   useEffect(() => {
     if (!editor) return
     if (isInternalUpdate.current) {
-      // This content change was caused by our own onUpdate — skip setContent to preserve cursor
       isInternalUpdate.current = false
       return
     }
-    // External change — update the editor
+    const serialized = JSON.stringify(content ?? null)
+    if (serialized === lastSetSerialized.current) return
     const newDoc = getInitialContent()
-    editor.off('update', handleEditorUpdate)
-    editor.commands.setContent(newDoc)
+    editor.commands.setContent(newDoc, { emitUpdate: false })
     contentRef.current = content
-    editor.on('update', handleEditorUpdate)
-  }, [content, editor, getInitialContent, handleEditorUpdate])
+    lastSetSerialized.current = serialized
+  }, [content, editor, getInitialContent])
 
   return (
     <div className="space-y-2">

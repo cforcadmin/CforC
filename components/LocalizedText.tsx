@@ -58,14 +58,14 @@ export default function LocalizedText({
     return () => observer.disconnect()
   }, [])
 
-  // Determine which text to display
-  let displayText = text || ''
+  // Treat null/undefined/whitespace-only as empty so missing-Greek triggers
+  // fallback to English (and vice versa).
+  const grEmpty = !text || text.trim() === ''
+  const enEmpty = !engText || engText.trim() === ''
 
-  // If in English mode and English text is available, use it
-  // The English text should be wrapped in notranslate to prevent double-translation
-  // Also process {word} syntax in English text
-  if (mounted && isEnglish && engText) {
-    const processedEng = processEscape ? parseNoTranslate(engText) : engText
+  // English mode AND English available → render English (no GT translation)
+  if (mounted && isEnglish && !enEmpty) {
+    const processedEng = processEscape ? parseNoTranslate(engText!) : engText!
     return (
       <Component className={`notranslate ${className || ''}`}>
         {processedEng}
@@ -73,7 +73,22 @@ export default function LocalizedText({
     )
   }
 
-  // Process {word} escape syntax if enabled
+  // Greek mode (or not yet hydrated) AND Greek empty AND English exists →
+  // fall back to English so visitors do not see a blank field. Mark
+  // notranslate so Google Translate does not double-process it.
+  if (grEmpty && !enEmpty) {
+    const processedEng = processEscape ? parseNoTranslate(engText!) : engText!
+    return (
+      <Component className={`notranslate ${className || ''}`}>
+        {processedEng}
+      </Component>
+    )
+  }
+
+  // Default: render Greek (Google Translate will handle EN visitors when
+  // English is empty — already excluded by the EN-mode branch above).
+  const displayText = text || ''
+
   if (processEscape && displayText) {
     const processed = parseNoTranslate(displayText)
 
@@ -81,7 +96,6 @@ export default function LocalizedText({
       return <Component className={className}>{processed}</Component>
     }
 
-    // If no wrapper needed and it's just a span with no class
     if (Component === 'span' && !className) {
       return <>{processed}</>
     }
@@ -89,7 +103,6 @@ export default function LocalizedText({
     return <Component className={className}>{processed}</Component>
   }
 
-  // Plain text, no processing needed
   if (className) {
     return <Component className={className}>{displayText}</Component>
   }
@@ -122,9 +135,10 @@ export function useLocalizedText(
     return () => observer.disconnect()
   }, [])
 
-  if (isEnglish && engText) {
-    return engText
-  }
+  const grEmpty = !text || text.trim() === ''
+  const enEmpty = !engText || engText.trim() === ''
 
+  if (isEnglish && !enEmpty) return engText!
+  if (grEmpty && !enEmpty) return engText!
   return text || ''
 }

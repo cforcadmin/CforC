@@ -18,6 +18,7 @@ interface Member {
   id: number
   documentId: string
   Name: string
+  EngName?: string
   Slug: string
   Image?: Array<{
     url: string
@@ -199,10 +200,16 @@ export default function ProjectDetailClient() {
           const memberData = result.data
           setMember(memberData)
 
-          // Determine which project to show
-          if (memberData.Project1Title === projectName) {
+          // URL slug may have been built from EN title when GR was empty,
+          // so match against either title for each project.
+          const p1Match = memberData.Project1Title === projectName || memberData.EngProject1Title === projectName
+          const p2Match = memberData.Project2Title === projectName || memberData.EngProject2Title === projectName
+          const p1EffectiveTitle = memberData.Project1Title || memberData.EngProject1Title
+          const p2EffectiveTitle = memberData.Project2Title || memberData.EngProject2Title
+
+          if (p1Match) {
             setProjectData({
-              title: memberData.Project1Title,
+              title: p1EffectiveTitle,
               description: memberData.Project1Description || '',
               pictures: memberData.Project1Pictures || [],
               picturesAltText: memberData.Project1PicturesAltText,
@@ -212,16 +219,16 @@ export default function ProjectDetailClient() {
               engTags: memberData.EngProject1Tags ? memberData.EngProject1Tags.split(',').map((t: string) => t.trim()) : undefined,
               engDescription: memberData.EngProject1Description || undefined,
             })
-            if (memberData.Project2Title) {
+            if (p2EffectiveTitle) {
               setOtherProject({
-                title: memberData.Project2Title,
+                title: p2EffectiveTitle,
                 pictures: memberData.Project2Pictures || [],
                 picturesAltText: memberData.Project2PicturesAltText,
               })
             }
-          } else if (memberData.Project2Title === projectName) {
+          } else if (p2Match) {
             setProjectData({
-              title: memberData.Project2Title,
+              title: p2EffectiveTitle,
               description: memberData.Project2Description || '',
               pictures: memberData.Project2Pictures || [],
               picturesAltText: memberData.Project2PicturesAltText,
@@ -231,9 +238,9 @@ export default function ProjectDetailClient() {
               engTags: memberData.EngProject2Tags ? memberData.EngProject2Tags.split(',').map((t: string) => t.trim()) : undefined,
               engDescription: memberData.EngProject2Description || undefined,
             })
-            if (memberData.Project1Title) {
+            if (p1EffectiveTitle) {
               setOtherProject({
-                title: memberData.Project1Title,
+                title: p1EffectiveTitle,
                 pictures: memberData.Project1Pictures || [],
                 picturesAltText: memberData.Project1PicturesAltText,
               })
@@ -418,7 +425,7 @@ export default function ProjectDetailClient() {
                   href={`/members/${member.Slug}`}
                   className="block text-center mt-2 text-sm font-bold hover:text-coral dark:hover:text-coral-light dark:text-gray-200 transition-colors"
                 >
-                  {member.Name}
+                  <LocalizedText text={member.Name} engText={member.EngName} />
                 </Link>
               </div>
 
