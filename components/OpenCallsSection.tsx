@@ -221,23 +221,35 @@ export default function OpenCallsSection() {
     async function fetchOpenCalls() {
       try {
         setLoading(true)
-        const response: StrapiResponse<OpenCall[]> = await getOpenCalls()
 
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
+        if (user) {
+          // Authenticated members get the full member-only listing through
+          // the gated proxy, then split it into active + expired.
+          const response: StrapiResponse<OpenCall[]> = await getOpenCalls()
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
 
-        const active = response.data
-          .filter(call => new Date(call.Deadline) >= today)
-          .sort((a, b) => new Date(a.Deadline).getTime() - new Date(b.Deadline).getTime())
+          const active = response.data
+            .filter(call => new Date(call.Deadline) >= today)
+            .sort((a, b) => new Date(a.Deadline).getTime() - new Date(b.Deadline).getTime())
 
-        const expired = response.data
-          .filter(call => new Date(call.Deadline) < today)
-          .sort((a, b) => new Date(b.Deadline).getTime() - new Date(a.Deadline).getTime())
-          .slice(0, 3)
+          const expired = response.data
+            .filter(call => new Date(call.Deadline) < today)
+            .sort((a, b) => new Date(b.Deadline).getTime() - new Date(a.Deadline).getTime())
+            .slice(0, 3)
 
-        setTotalActiveCalls(active.length)
-        setActiveCalls(active.slice(0, 6))
-        setExpiredCalls(expired)
+          setTotalActiveCalls(active.length)
+          setActiveCalls(active.slice(0, 6))
+          setExpiredCalls(expired)
+        } else {
+          // Public visitors only get a teaser of recent expired calls — the
+          // active member-only listing is never shipped to the client.
+          const teaserResp = await fetch('/api/open-calls/teaser')
+          const teaserData: StrapiResponse<OpenCall[]> = await teaserResp.json()
+          setTotalActiveCalls(0)
+          setActiveCalls([])
+          setExpiredCalls(teaserData.data || [])
+        }
       } catch (err) {
         setError('Failed to load open calls')
         console.error('Error fetching open calls:', err)
@@ -247,7 +259,7 @@ export default function OpenCallsSection() {
     }
 
     fetchOpenCalls()
-  }, [])
+  }, [user])
 
   if (loading) {
     return (

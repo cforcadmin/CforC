@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
@@ -22,8 +23,18 @@ const memberNavItems = [
 ]
 
 export default function OpenCallsPage() {
-  const { user } = useAuth()
+  const { user, isAuthenticated, isLoading } = useAuth()
+  const router = useRouter()
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
+
+  // Defense in depth: the open-calls layout already redirects unauthenticated
+  // visitors server-side. This client-side check covers the edge case where a
+  // user logs out while on the page (cookie cleared but layout not re-run).
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/login?returnTo=/open-calls')
+    }
+  }, [isLoading, isAuthenticated, router])
 
   // Handle scroll for accessibility button fade
   useEffect(() => {
