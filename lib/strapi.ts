@@ -151,10 +151,38 @@ export async function getPageBySlug(slug: string) {
 }
 
 /**
- * Get all members
+ * Fetch all pages of a Strapi collection.
+ * Strapi caps `pagination[limit]` at 100 regardless of what we request, so a
+ * single call to a collection with >100 entries silently drops the overflow.
+ * This loops until `meta.pagination.total` is satisfied.
+ */
+async function fetchAllPaginated(basePath: string, pageSize = 100) {
+  const sep = basePath.includes('?') ? '&' : '?'
+  const collected: any[] = []
+  let start = 0
+  let total = Infinity
+  let lastMeta: any = null
+
+  while (start < total) {
+    const page = await fetchStrapi(
+      `${basePath}${sep}pagination[start]=${start}&pagination[limit]=${pageSize}&pagination[withCount]=true`
+    )
+    const rows = page?.data || []
+    collected.push(...rows)
+    lastMeta = page?.meta
+    total = page?.meta?.pagination?.total ?? collected.length
+    if (rows.length === 0) break
+    start += rows.length
+  }
+
+  return { data: collected, meta: lastMeta }
+}
+
+/**
+ * Get all members (paginated — Strapi caps single-page responses at 100)
  */
 export async function getMembers() {
-  return fetchStrapi('/members?populate=*&pagination[limit]=1000');
+  return fetchAllPaginated('/members?populate=*');
 }
 
 /**
