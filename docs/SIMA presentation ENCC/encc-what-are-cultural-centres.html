@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What do we mean by &ldquo;cultural centres&rdquo;? — ENCC</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --encc-green:        #2A5A36;
+      --encc-green-deep:   #15291C;
+      --encc-green-soft:   #4A7B52;
+      --encc-cream:        #F8F5EE;
+      --encc-cream-soft:   #FCFAF4;
+      --ink:               #0E1B3D;
+      --ink-soft:          #2A335A;
+      --muted:             #6B7280;
+      --rule:              #E5E1D6;
+      --coral:             #E07A55;
+      --coral-deep:        #C45F3A;
+      --white:             #FFFFFF;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Arial, sans-serif;
+      color: var(--ink);
+      background: var(--encc-cream-soft);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Top bar (compact) ─────────────────────────────────────── */
+    .top-bar {
+      position: relative; z-index: 2;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 48px 0;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark { width: 40px; height: 40px; color: var(--encc-green); }
+    .brand-text {
+      font-family: 'Fraunces', serif;
+      font-weight: 700; font-size: 11px;
+      letter-spacing: 2.5px; color: var(--encc-green);
+      text-transform: uppercase;
+    }
+    .top-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 7px 14px;
+      background: var(--white); border: 1px solid var(--rule);
+      border-radius: 999px;
+      color: var(--encc-green);
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 1.5px; text-transform: uppercase;
+    }
+    .top-tag::before {
+      content: ''; width: 6px; height: 6px;
+      border-radius: 50%; background: var(--coral);
+    }
+
+    /* ── Main split: full-width 50/50 ──────────────────────────── */
+    .split {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: stretch;
+      min-height: 0;
+    }
+
+    /* Left: text panel */
+    .text-panel {
+      padding: 36px 56px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      max-width: 100%;
+    }
+
+    .heading {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: clamp(30px, 2.6vw, 40px);
+      line-height: 1.15;
+      letter-spacing: -0.8px;
+      color: var(--ink);
+      padding-bottom: 14px;
+      margin-bottom: 22px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .heading .accent { color: var(--encc-green); font-style: italic; font-weight: 500; }
+
+    .prose {
+      max-width: 64ch;
+      column-count: 1;
+    }
+    .prose p {
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: var(--ink-soft);
+      margin-bottom: 12px;
+    }
+    .prose p:last-child { margin-bottom: 0; }
+
+    .prose .opener::first-letter {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 48px;
+      color: var(--encc-green);
+      float: left;
+      line-height: 0.9;
+      padding: 4px 10px 0 0;
+    }
+
+    .prose q {
+      color: var(--encc-green-deep);
+      font-style: italic;
+      quotes: '“' '”' '‘' '’';
+    }
+
+    .prose strong { color: var(--encc-green-deep); font-weight: 700; }
+
+    /* Stat callout for "6000" */
+    .stat-inline {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 6px;
+      padding: 1px 8px;
+      background: rgba(224, 122, 85, 0.12);
+      border-radius: 6px;
+      color: var(--coral-deep);
+      font-weight: 700;
+    }
+
+    /* Right: photo panel — fills remaining width */
+    .photo-panel {
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, #C8D4E0 0%, #889AB0 50%, #5F7790 100%);
+      min-height: 480px;
+    }
+    .photo-panel .photo {
+      position: absolute; inset: 0;
+      background-image: url('cultural-centres-hero.jpg');
+      background-size: cover;
+      background-position: center;
+    }
+    /* fallback illustration shows behind if image missing */
+    .photo-fallback {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.85);
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: 16px;
+      text-align: center;
+      padding: 24px;
+      letter-spacing: 0.3px;
+      z-index: 0;
+    }
+    .photo-fallback svg { width: 100%; height: 100%; position: absolute; inset: 0; opacity: 0.9; }
+    .photo-fallback .label {
+      position: relative; z-index: 1;
+      padding: 16px 20px;
+      background: rgba(0,0,0,0.45);
+      border-radius: 12px;
+      backdrop-filter: blur(6px);
+      max-width: 360px;
+    }
+
+    .photo-caption {
+      position: absolute;
+      bottom: 16px; right: 20px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(6px);
+      font-size: 11px;
+      font-style: italic;
+      color: var(--ink-soft);
+      letter-spacing: 0.3px;
+    }
+
+    /* Pagination dots (mimic original carousel indicators) */
+    .photo-dots {
+      position: absolute;
+      bottom: 16px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      display: flex; gap: 8px;
+    }
+    .photo-dots span {
+      width: 8px; height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.55);
+    }
+    .photo-dots span.active { background: var(--coral); width: 22px; }
+
+    /* ── Green footer bar (mimics original ENCC footer) ────────── */
+    .page-footer {
+      background: var(--encc-green);
+      color: var(--white);
+      padding: 22px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-brand {
+      display: flex; align-items: center; gap: 12px;
+      color: var(--white);
+    }
+    .footer-brand .mark { width: 44px; height: 44px; }
+    .footer-brand .label {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+    .footer-social {
+      display: flex; gap: 14px;
+    }
+    .footer-social a {
+      width: 32px; height: 32px;
+      border-radius: 999px;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: var(--encc-green);
+      background: var(--white);
+      font-size: 13px; font-weight: 700;
+      text-decoration: none;
+      transition: transform 0.2s ease;
+    }
+    .footer-social a:hover { transform: translateY(-2px); }
+    .footer-eu {
+      display: flex; align-items: center; gap: 12px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.08);
+      font-size: 11px;
+      letter-spacing: 0.3px;
+      color: var(--white);
+    }
+    .footer-eu .eu-flag {
+      width: 28px; height: 20px;
+      border-radius: 3px;
+      background: #003399;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: #FFCC00;
+      font-size: 8px;
+      letter-spacing: 1px;
+    }
+
+    /* ── Responsive ────────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .split { grid-template-columns: 1fr; }
+      .text-panel { padding: 28px 32px 32px; }
+      .photo-panel { min-height: 360px; }
+      .top-bar { padding: 18px 32px 0; }
+      .page-footer { padding: 20px 32px; }
+    }
+    @media (max-width: 560px) {
+      .top-bar { padding: 14px 20px 0; flex-wrap: wrap; gap: 10px; }
+      .text-panel { padding: 22px 20px 28px; }
+      .heading { font-size: 24px; }
+      .page-footer { padding: 18px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <header class="top-bar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M14 22 C 10 14, 22 6, 30 10 C 36 13, 32 22, 24 22 C 18 22, 18 28, 14 22 Z" fill="currentColor"/>
+        <path d="M36 14 C 44 8, 56 14, 54 24 C 52 32, 42 30, 40 24 C 38 20, 32 18, 36 14 Z" fill="currentColor"/>
+        <path d="M10 36 C 8 28, 22 26, 26 34 C 30 42, 22 50, 14 46 C 8 43, 12 40, 10 36 Z" fill="currentColor"/>
+        <path d="M34 38 C 44 32, 58 40, 54 50 C 50 60, 36 58, 34 50 C 32 44, 28 42, 34 38 Z" fill="currentColor"/>
+        <circle cx="46" cy="20" r="2.5" fill="currentColor"/>
+        <circle cx="20" cy="46" r="2.5" fill="currentColor"/>
+      </svg>
+      <span class="brand-text">European Network of Cultural Centres</span>
+    </div>
+    <span class="top-tag">About · Cultural Centres</span>
+  </header>
+
+  <!-- Main 50/50 split -->
+  <main class="split">
+
+    <!-- Left: text -->
+    <section class="text-panel">
+      <h1 class="heading">What do we mean by <span class="accent">&ldquo;cultural centres&rdquo;</span>?</h1>
+
+      <div class="prose">
+
+        <p class="opener">
+          Let&rsquo;s take a walk around the place where the network was born, in a medium-sized
+          city in northwestern Europe. It&rsquo;s a sprawling, late 20<sup>th</sup>-century
+          building with as many transparent surfaces as possible. It has auditoriums and meeting
+          rooms, a theatre, a professional recording studio, a gallery space and a huge café.
+          The former director used to describe it as an
+          <q>art space where no distinctions are made between professionals and amateurs</q>.
+          People come here to watch movies, join a support group of female DJs, attend a concert,
+          or picnic on the lawn. The centre is open <strong>24/7</strong> and anyone can spend
+          the night in the lobby, including people who do not have any other place to sleep.
+        </p>
+
+        <p>
+          Other ENCC members come from <strong>rural or &ldquo;non-urban&rdquo; areas</strong>:
+          small towns, invisible cities, peripheries without infrastructures. One member
+          organisation operates on a Mediterranean island so steep that we could not organise an
+          event there, and had to move it to a neighbouring, more accessible island. Another,
+          located inside a former windmill, is a meeting point for an ageing rural community. Its
+          director notes:
+          <q>My audience doesn&rsquo;t really do digital communication. I just write things on
+          pieces of paper and tape them to the walls.</q>
+        </p>
+
+        <p>
+          Some members are networks themselves, on the local, regional, or national levels. They
+          may link a string of similar organisations in the same city to function as a social
+          laboratory. They may represent historical cultural houses in the former Soviet Union,
+          searching for their present-day mission and connection to youth. They may be powerful
+          advocates contributing to national policy for artists and cultural workers&rsquo;
+          rights and well-being, in spite of being based in a tiny office, or not having a
+          dedicated workspace. If we put all the members of our members together, we come to a
+          total of <span class="stat-inline">~ 6 000 cultural centres</span>. Although we
+          don&rsquo;t reach all of them directly, we consider them to be our members and grant
+          them all advantages that our membership offers.
+        </p>
+
+      </div>
+    </section>
+
+    <!-- Right: photo -->
+    <aside class="photo-panel">
+      <div class="photo" role="img" aria-label="Group of ENCC members walking outside the European Parliament in Brussels"></div>
+
+      <!-- Fallback shown until cultural-centres-hero.jpg is dropped into this folder -->
+      <div class="photo-fallback" aria-hidden="true">
+        <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="bgGrad" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#5C7891"/>
+              <stop offset="60%" stop-color="#8FA3B5"/>
+              <stop offset="100%" stop-color="#C8B89A"/>
+            </linearGradient>
+          </defs>
+          <rect width="400" height="300" fill="url(#bgGrad)"/>
+          <!-- EU stars motif at top -->
+          <g fill="#FFCC00" opacity="0.85">
+            <circle cx="120" cy="38" r="6"/><circle cx="155" cy="28" r="6"/>
+            <circle cx="195" cy="22" r="6"/><circle cx="235" cy="28" r="6"/>
+            <circle cx="270" cy="38" r="6"/><circle cx="290" cy="62" r="6"/>
+          </g>
+          <!-- ground -->
+          <rect y="200" width="400" height="100" fill="#C8B89A" opacity="0.7"/>
+          <!-- five walking figures silhouettes -->
+          <g fill="#1F2D44">
+            <ellipse cx="100" cy="160" rx="22" ry="42"/>
+            <circle cx="100" cy="118" r="13"/>
+            <ellipse cx="160" cy="160" rx="22" ry="42" fill="#3A4F6E"/>
+            <circle cx="160" cy="118" r="13" fill="#3A4F6E"/>
+            <ellipse cx="220" cy="160" rx="22" ry="42"/>
+            <circle cx="220" cy="118" r="13"/>
+            <ellipse cx="280" cy="160" rx="22" ry="42" fill="#3A4F6E"/>
+            <circle cx="280" cy="118" r="13" fill="#3A4F6E"/>
+            <ellipse cx="340" cy="160" rx="22" ry="42"/>
+            <circle cx="340" cy="118" r="13"/>
+          </g>
+          <!-- coral scarf on middle figure (matches original) -->
+          <path d="M 210 130 Q 220 138 230 130 L 232 152 L 208 152 Z" fill="#E07A55"/>
+        </svg>
+        <span class="label">Drop <code style="background:rgba(255,255,255,0.15); padding:2px 6px; border-radius:4px;">cultural-centres-hero.jpg</code> into this folder to replace this fallback.</span>
+      </div>
+
+      <div class="photo-dots" aria-hidden="true">
+        <span></span><span></span><span></span><span class="active"></span>
+      </div>
+      <div class="photo-caption">Image by Heather O&rsquo;Donnell</div>
+    </aside>
+
+  </main>
+
+  <!-- Green ENCC footer (mimics original) -->
+  <footer class="page-footer">
+    <div class="footer-brand">
+      <svg class="mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M14 22 C 10 14, 22 6, 30 10 C 36 13, 32 22, 24 22 C 18 22, 18 28, 14 22 Z" fill="currentColor"/>
+        <path d="M36 14 C 44 8, 56 14, 54 24 C 52 32, 42 30, 40 24 C 38 20, 32 18, 36 14 Z" fill="currentColor"/>
+        <path d="M10 36 C 8 28, 22 26, 26 34 C 30 42, 22 50, 14 46 C 8 43, 12 40, 10 36 Z" fill="currentColor"/>
+        <path d="M34 38 C 44 32, 58 40, 54 50 C 50 60, 36 58, 34 50 C 32 44, 28 42, 34 38 Z" fill="currentColor"/>
+        <circle cx="46" cy="20" r="2.5" fill="currentColor"/>
+        <circle cx="20" cy="46" r="2.5" fill="currentColor"/>
+      </svg>
+      <span class="label">European Network<br>of Cultural Centres</span>
+    </div>
+
+    <div class="footer-social" aria-label="Social media">
+      <a href="#" aria-label="PeerTube" title="PeerTube">▶</a>
+      <a href="#" aria-label="Facebook" title="Facebook">f</a>
+      <a href="#" aria-label="Instagram" title="Instagram">◉</a>
+      <a href="#" aria-label="LinkedIn" title="LinkedIn">in</a>
+      <a href="#" aria-label="Mastodon" title="Mastodon">M</a>
+      <a href="#" aria-label="Flickr" title="Flickr">●</a>
+    </div>
+
+    <div class="footer-eu">
+      <span class="eu-flag" aria-hidden="true">★</span>
+      <span>Co-funded by<br>the European Union</span>
+    </div>
+  </footer>
+
+</body>
+</html>

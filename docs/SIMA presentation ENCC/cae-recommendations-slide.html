@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CAE — Recommendations for the upcoming AI Strategy</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #FFFFFF; min-height: 100vh; overflow: hidden; }
+  body {
+    font-family: 'Inter', 'Arial Nova', Arial, system-ui, sans-serif;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+  }
+
+  /* ─── 16:9 slide ─── */
+  .slide {
+    width: 1920px; height: 1080px;
+    background: #FFFFFF;
+    position: relative;
+    overflow: hidden;
+    transform-origin: center center;
+    flex-shrink: 0;
+    display: grid;
+    grid-template-columns: 76% 24%;
+  }
+
+  /* ─── Left: content ─── */
+  .content-pane {
+    padding: 80px 80px 80px 100px;
+    color: #1a1a1a;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* CAE-style decorative accent (top corner) */
+  .geo-accent {
+    position: absolute;
+    top: 30px; left: 30px;
+    width: 120px; height: 120px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.55;
+  }
+  .geo-accent .shape-pink {
+    position: absolute; top: 0; left: 0;
+    width: 70px; height: 42px;
+    background: #EE2A8C;
+    transform: skewX(-25deg);
+  }
+  .geo-accent .shape-purple {
+    position: absolute; top: 42px; left: 16px;
+    width: 56px; height: 42px;
+    background: #6B2D7B;
+    transform: skewX(-25deg);
+  }
+
+  .heading {
+    font-size: 32px;
+    font-weight: 800;
+    color: #1a1a1a;
+    line-height: 1.3;
+    margin-bottom: 32px;
+    letter-spacing: -0.3px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .body-text {
+    font-size: 22px;
+    line-height: 1.55;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+    font-weight: 400;
+  }
+
+  .built-list {
+    list-style: none;
+    padding: 0; margin: 8px 0 18px 0;
+  }
+  .built-list li {
+    font-size: 22px;
+    line-height: 1.55;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+    padding-left: 24px;
+    position: relative;
+  }
+  .built-list li::before {
+    content: '•';
+    position: absolute;
+    left: 6px; top: 0;
+    color: #1a1a1a;
+    font-size: 22px;
+  }
+  .link {
+    color: #2A6FB8;
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
+  }
+
+  /* TOC section */
+  .toc-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: #2A6FB8;
+    margin: 50px 0 24px 0;
+  }
+  .toc {
+    font-family: 'Inter', sans-serif;
+  }
+  .toc-row {
+    display: flex; align-items: baseline;
+    font-size: 22px;
+    line-height: 1.7;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+  }
+  .toc-row .name { font-style: italic; font-weight: 600; }
+  .toc-row .name.bold { font-style: normal; font-weight: 700; }
+  .toc-row .dots {
+    flex: 1;
+    border-bottom: 2px dotted #1a1a1a;
+    margin: 0 12px;
+    transform: translateY(-6px);
+  }
+  .toc-row .page {
+    font-weight: 600;
+    color: #1a1a1a;
+    min-width: 30px;
+    text-align: right;
+  }
+
+  .footer-links {
+    margin-top: 40px;
+  }
+  .footer-links div {
+    font-size: 21px;
+    line-height: 1.7;
+    color: #1a1a1a;
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
+  }
+
+  /* ─── Right: side graphic ─── */
+  .side-pane {
+    height: 100%;
+    position: relative;
+    background: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .side-graphic {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    /* enhance the low-quality screenshot */
+    filter: contrast(1.18) saturate(1.25) brightness(1.04);
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+</style>
+</head>
+<body>
+
+<div class="slide" id="slide">
+
+  <!-- Left: content -->
+  <div class="content-pane">
+
+    <div class="geo-accent">
+      <div class="shape-pink"></div>
+      <div class="shape-purple"></div>
+    </div>
+
+    <h1 class="heading">Recommendations for the upcoming AI Strategy for the cultural and creative sectors</h1>
+
+    <p class="body-text">
+      The Recommendations incorporate the values, priorities, and vision of the AI &amp; Digital Action Group
+      for the upcoming AI Strategy for the cultural and creative sectors.
+    </p>
+    <p class="body-text">These were built upon:</p>
+
+    <ul class="built-list">
+      <li>the advocacy focuses outlined in the <span class="link">Action Group Mission Statement</span>,</li>
+      <li>the results of <span class="link">action surveys</span> on digital and AI for the CCS,</li>
+      <li>the earlier <span class="link">considerations of the Action Group</span> for the Artificial Intelligence Act,</li>
+      <li>a series of <span class="link">dedicated Action Group meetings</span> on the upcoming AI Strategy.</li>
+    </ul>
+
+    <p class="body-text">
+      The final Recommendations were drafted through a consultation process involving various CCS professionals,
+      including cultural institutions, artists, and digital experts.
+    </p>
+
+    <!-- Table of contents -->
+    <div class="toc-title">Table of Contents</div>
+    <div class="toc">
+      <div class="toc-row"><span class="name">Introduction</span><span class="dots"></span><span class="page">2</span></div>
+      <div class="toc-row"><span class="name">1. A human-centred, trustworthy approach to AI driven by cultural rights</span><span class="dots"></span><span class="page">4</span></div>
+      <div class="toc-row"><span class="name">2. Values-driven European cultural sovereignty and data resilience</span><span class="dots"></span><span class="page">7</span></div>
+      <div class="toc-row"><span class="name">3. Accessible, resilient AI approaches</span><span class="dots"></span><span class="page">10</span></div>
+      <div class="toc-row"><span class="name">4. Forward-thinking, collaborative approaches to AI in the CCS</span><span class="dots"></span><span class="page">12</span></div>
+      <div class="toc-row"><span class="name bold">Conclusions</span><span class="dots"></span><span class="page">15</span></div>
+    </div>
+
+    <div class="footer-links">
+      <div>Problem Statement / What is the problem?</div>
+      <div>Proposed Solution / What is the added-value?</div>
+      <div>Recommendations</div>
+    </div>
+  </div>
+
+  <!-- Right: side graphic with filter -->
+  <div class="side-pane">
+    <img class="side-graphic" src="public/cae-recommendations-side-graphic.png" alt="Michael Culture, CAE, EU funding">
+  </div>
+
+</div>
+
+<script>
+  function fitSlide() {
+    const slide = document.getElementById('slide');
+    const scaleW = window.innerWidth / 1920;
+    const scaleH = window.innerHeight / 1080;
+    const scale = Math.min(scaleW, scaleH);
+    slide.style.transform = 'scale(' + scale + ')';
+  }
+  window.addEventListener('resize', fitSlide);
+  fitSlide();
+</script>
+
+</body>
+</html>

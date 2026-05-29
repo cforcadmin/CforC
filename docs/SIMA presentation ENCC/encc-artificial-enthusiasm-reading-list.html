@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guides and toolkits — The artificial enthusiasm reading list</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --encc-green:        #234029;
+      --encc-green-deep:   #15291C;
+      --encc-green-soft:   #4A6B52;
+      --encc-cream:        #F8F5EE;
+      --encc-cream-soft:   #FCFAF4;
+      --ink:               #0E1B3D;
+      --ink-soft:          #2A335A;
+      --muted:             #6B7280;
+      --rule:              #E5E1D6;
+      --coral:             #E07A55;
+      --coral-deep:        #C45F3A;
+      --white:             #FFFFFF;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Arial, sans-serif;
+      color: var(--ink);
+      background: var(--encc-cream-soft);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow-x: hidden;
+    }
+
+    /* ── Decorative ENCC-style organic shapes (background) ────────── */
+    .deco {
+      position: fixed;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.85;
+    }
+    .deco svg { display: block; width: 100%; height: 100%; }
+
+    .deco-tr {
+      top: -120px; right: -160px;
+      width: 540px; height: 540px;
+      opacity: 0.08;
+    }
+    .deco-bl {
+      bottom: -180px; left: -140px;
+      width: 480px; height: 480px;
+      opacity: 0.06;
+    }
+    .deco-mid {
+      top: 45%; left: 49%;
+      width: 320px; height: 320px;
+      transform: translate(-50%, -50%);
+      opacity: 0.04;
+    }
+
+    /* ── Top bar ──────────────────────────────────────────────────── */
+    .top-bar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 32px 64px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      width: 56px;
+      height: 56px;
+      color: var(--encc-green);
+    }
+
+    .brand-text {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 3px;
+      color: var(--encc-green);
+      text-transform: uppercase;
+    }
+
+    .top-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--white);
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      color: var(--encc-green);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .top-tag::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--coral);
+    }
+
+    /* ── Layout ──────────────────────────────────────────────────── */
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1840px;
+      margin: 0 auto;
+      padding: 28px 56px 48px;
+      display: grid;
+      grid-template-columns: minmax(0, 4fr) minmax(0, 5fr) minmax(0, 5fr);
+      gap: 40px;
+      align-items: start;
+    }
+
+    /* Right pane wrapping the 4 sections in 2 columns when there's room */
+    .list-pane {
+      display: contents;
+    }
+    .list-col {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .list-col .list-title { margin-bottom: 14px; }
+
+    /* ── Left: hero ───────────────────────────────────────────────── */
+    .hero h1 {
+      font-family: 'Fraunces', serif;
+      font-weight: 800;
+      font-size: clamp(44px, 4.6vw, 64px);
+      line-height: 1.02;
+      letter-spacing: -1.6px;
+      color: var(--ink);
+      margin-top: 8px;
+    }
+
+    .hero-divider {
+      margin: 22px 0 22px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--rule), transparent);
+    }
+
+    .hero-card {
+      border-radius: 24px;
+      overflow: hidden;
+      background: var(--white);
+      box-shadow:
+        0 1px 0 rgba(35, 64, 41, 0.06),
+        0 30px 60px -30px rgba(35, 64, 41, 0.25);
+    }
+
+    .hero-visual {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      background: radial-gradient(circle at 30% 30%, #2B5A37, var(--encc-green-deep) 70%);
+      overflow: hidden;
+    }
+
+    /* SVG "circuit board" composition inside the visual */
+    .hero-visual svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hero-visual::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 70% 90%, rgba(0,0,0,0.45), transparent 60%);
+    }
+
+    .hero-body {
+      padding: 22px 24px 24px;
+    }
+
+    .hero-body h2 {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 24px;
+      line-height: 1.15;
+      letter-spacing: -0.4px;
+      color: var(--ink);
+    }
+
+    .hero-body p {
+      margin-top: 14px;
+      font-size: 15.5px;
+      color: var(--muted);
+      max-width: 38ch;
+    }
+
+    .hero-meta {
+      margin-top: 24px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--encc-cream);
+      color: var(--encc-green);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    .chip.coral {
+      background: rgba(224, 122, 85, 0.12);
+      color: var(--coral-deep);
+    }
+
+    /* ── Right: reading list ──────────────────────────────────────── */
+    .list-pane {
+      padding-top: 24px;
+    }
+
+    .list-title {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 34px;
+      letter-spacing: -0.5px;
+      color: var(--ink);
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .list-title small {
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--encc-green-soft);
+    }
+
+    .section {
+      padding: 24px 28px;
+      margin-bottom: 18px;
+      background: var(--white);
+      border: 1px solid var(--rule);
+      border-radius: 20px;
+      position: relative;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .section::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 24px; bottom: 24px;
+      width: 4px;
+      background: var(--encc-green);
+      border-radius: 0 4px 4px 0;
+    }
+    .section:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px -28px rgba(35, 64, 41, 0.35);
+    }
+
+    .section h3 {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: -0.2px;
+      color: var(--encc-green-deep);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section h3 .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--coral);
+      flex-shrink: 0;
+    }
+
+    .ref {
+      display: flex;
+      gap: 14px;
+      padding: 10px 0;
+      border-top: 1px dashed var(--rule);
+      font-size: 15px;
+      color: var(--ink-soft);
+      line-height: 1.5;
+    }
+    .ref:first-of-type { border-top: 0; }
+
+    .ref-bullet {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      margin-top: 3px;
+      border-radius: 6px;
+      background: var(--encc-cream);
+      color: var(--encc-green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .ref a {
+      color: var(--coral-deep);
+      text-decoration: none;
+      font-weight: 600;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s ease;
+      white-space: nowrap;
+    }
+    .ref a:hover { border-bottom-color: var(--coral-deep); }
+
+    .ref-text q {
+      quotes: '“' '”' '‘' '’';
+      font-style: italic;
+    }
+
+    .ref-text .src {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* ── Footer ───────────────────────────────────────────────────── */
+    .page-footer {
+      position: relative;
+      z-index: 1;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px 64px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--rule);
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.3px;
+    }
+    .page-footer .signature {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      color: var(--encc-green);
+      letter-spacing: 0;
+    }
+
+    /* ── Responsive ───────────────────────────────────────────────── */
+    @media (max-width: 1400px) {
+      .page { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .list-col:nth-of-type(3) { grid-column: 1 / -1; }
+    }
+    @media (max-width: 1024px) {
+      .top-bar { padding: 24px 32px 0; }
+      .page {
+        grid-template-columns: 1fr;
+        gap: 36px;
+        padding: 24px 32px 64px;
+      }
+      .list-col:nth-of-type(3) { grid-column: auto; }
+      .page-footer { padding: 24px 32px 32px; flex-direction: column; gap: 12px; }
+      .hero h1 { font-size: 56px; }
+    }
+    @media (max-width: 560px) {
+      .top-bar { padding: 18px 20px 0; flex-wrap: wrap; gap: 12px; }
+      .page { padding: 16px 20px 48px; gap: 36px; }
+      .hero h1 { font-size: 44px; letter-spacing: -1px; }
+      .list-title { font-size: 26px; }
+      .section { padding: 20px 18px; }
+      .ref { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Decorative ENCC-style organic shapes (low opacity, background) -->
+  <div class="deco deco-tr" aria-hidden="true">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M40 120 C 20 80, 50 30, 100 30 C 160 30, 180 70, 170 120 C 160 170, 100 180, 70 160 C 50 145, 50 135, 40 120 Z" fill="#234029"/>
+      <circle cx="60" cy="60" r="8" fill="#234029"/>
+      <circle cx="150" cy="55" r="5" fill="#234029"/>
+      <circle cx="150" cy="140" r="10" fill="#234029"/>
+    </svg>
+  </div>
+  <div class="deco deco-bl" aria-hidden="true">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M30 80 C 40 30, 110 20, 150 50 C 190 80, 180 150, 130 170 C 80 190, 30 160, 30 120 Z" fill="#234029"/>
+      <circle cx="160" cy="120" r="7" fill="#234029"/>
+      <circle cx="70" cy="40" r="4" fill="#234029"/>
+    </svg>
+  </div>
+  <div class="deco deco-mid" aria-hidden="true">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="100" cy="100" r="80" fill="none" stroke="#234029" stroke-width="1"/>
+      <circle cx="100" cy="100" r="55" fill="none" stroke="#234029" stroke-width="1"/>
+      <circle cx="100" cy="100" r="30" fill="none" stroke="#234029" stroke-width="1"/>
+    </svg>
+  </div>
+
+  <!-- ── Top bar ── -->
+  <header class="top-bar">
+    <div class="brand">
+      <!-- ENCC-style mark: clustered organic shapes recalling the network logo -->
+      <svg class="brand-mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M14 22 C 10 14, 22 6, 30 10 C 36 13, 32 22, 24 22 C 18 22, 18 28, 14 22 Z" fill="currentColor"/>
+        <path d="M36 14 C 44 8, 56 14, 54 24 C 52 32, 42 30, 40 24 C 38 20, 32 18, 36 14 Z" fill="currentColor"/>
+        <path d="M10 36 C 8 28, 22 26, 26 34 C 30 42, 22 50, 14 46 C 8 43, 12 40, 10 36 Z" fill="currentColor"/>
+        <path d="M34 38 C 44 32, 58 40, 54 50 C 50 60, 36 58, 34 50 C 32 44, 28 42, 34 38 Z" fill="currentColor"/>
+        <circle cx="46" cy="20" r="2.5" fill="currentColor"/>
+        <circle cx="20" cy="46" r="2.5" fill="currentColor"/>
+      </svg>
+      <span class="brand-text">European Network of Cultural Centres</span>
+    </div>
+    <span class="top-tag">Guides &amp; Toolkits</span>
+  </header>
+
+  <main class="page">
+
+    <!-- ── Left: hero ── -->
+    <section class="hero">
+      <h1>Guides and<br>toolkits</h1>
+
+      <div class="hero-divider"></div>
+
+      <article class="hero-card">
+        <div class="hero-visual" aria-hidden="true">
+          <!-- Stylised circuit-board composition, ENCC-green palette -->
+          <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+              </pattern>
+              <linearGradient id="trace" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stop-color="#7BB088" stop-opacity="0.0"/>
+                <stop offset="50%" stop-color="#A8D4B2" stop-opacity="0.9"/>
+                <stop offset="100%" stop-color="#7BB088" stop-opacity="0.0"/>
+              </linearGradient>
+            </defs>
+            <rect width="400" height="300" fill="url(#grid)"/>
+
+            <!-- traces -->
+            <path d="M0 80 L120 80 L160 120 L260 120 L300 80 L400 80" fill="none" stroke="url(#trace)" stroke-width="2"/>
+            <path d="M0 180 L80 180 L100 200 L240 200 L260 220 L400 220" fill="none" stroke="url(#trace)" stroke-width="2"/>
+            <path d="M60 0 L60 60 L100 100 L100 260 L80 280 L80 300" fill="none" stroke="rgba(168,212,178,0.5)" stroke-width="1.5"/>
+            <path d="M320 0 L320 40 L360 60 L360 240 L340 260 L340 300" fill="none" stroke="rgba(168,212,178,0.5)" stroke-width="1.5"/>
+
+            <!-- "chip" -->
+            <rect x="150" y="115" width="100" height="60" rx="6" fill="#0E2418" stroke="#A8D4B2" stroke-width="1.5"/>
+            <text x="200" y="151" text-anchor="middle" font-family="Inter, sans-serif" font-size="11" font-weight="600" fill="#A8D4B2" letter-spacing="2">ENCC</text>
+            <!-- chip pins -->
+            <g fill="#A8D4B2">
+              <rect x="146" y="124" width="6" height="3"/>
+              <rect x="146" y="134" width="6" height="3"/>
+              <rect x="146" y="144" width="6" height="3"/>
+              <rect x="146" y="154" width="6" height="3"/>
+              <rect x="146" y="164" width="6" height="3"/>
+              <rect x="248" y="124" width="6" height="3"/>
+              <rect x="248" y="134" width="6" height="3"/>
+              <rect x="248" y="144" width="6" height="3"/>
+              <rect x="248" y="154" width="6" height="3"/>
+              <rect x="248" y="164" width="6" height="3"/>
+            </g>
+
+            <!-- solder dots -->
+            <g fill="#A8D4B2">
+              <circle cx="60" cy="80" r="3"/>
+              <circle cx="120" cy="80" r="3"/>
+              <circle cx="300" cy="80" r="3"/>
+              <circle cx="100" cy="180" r="3"/>
+              <circle cx="260" cy="200" r="3"/>
+              <circle cx="60" cy="260" r="3"/>
+              <circle cx="340" cy="240" r="3"/>
+            </g>
+
+            <!-- glow accent -->
+            <circle cx="320" cy="240" r="60" fill="#E07A55" opacity="0.18"/>
+          </svg>
+        </div>
+
+        <div class="hero-body">
+          <h2>The artificial enthusiasm reading list</h2>
+          <p>A curated, multi-perspective collection of news, opinions, and tools for a critical deep dive into the “AI” phenomenon.</p>
+          <div class="hero-meta">
+            <span class="chip">12 entries</span>
+            <span class="chip">4 themes</span>
+            <span class="chip coral">Updated 2024</span>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ── Middle column: 3 shorter sections ── -->
+    <section class="list-col">
+      <h2 class="list-title">Reading list <small>· Curated</small></h2>
+
+      <article class="section">
+        <h3><span class="dot"></span>History of so-called “AI”</h3>
+        <div class="ref">
+          <span class="ref-bullet">—</span>
+          <span class="ref-text">
+            “8 Google Employees Invented Modern AI. Here’s the Inside Story”
+            <span class="src">— Steven Levy, <em>Wired</em>, March 2024.</span>
+            <a href="#" target="_blank" rel="noopener">read here →</a>
+          </span>
+        </div>
+      </article>
+
+      <article class="section">
+        <h3><span class="dot"></span>Privacy</h3>
+        <div class="ref">
+          <span class="ref-bullet">—</span>
+          <span class="ref-text">
+            “Modern AI and the end of privacy”
+            <span class="src">— Lionel Dricot, February 2023.</span>
+            <a href="#" target="_blank" rel="noopener">read here →</a>
+          </span>
+        </div>
+      </article>
+
+      <article class="section">
+        <h3><span class="dot"></span>General issues</h3>
+
+        <div class="ref">
+          <span class="ref-bullet">—</span>
+          <span class="ref-text">
+            The internet as ruined space, and how to reclaim digital commons: “Can Democracy Survive Online?”
+            <span class="src">— Robert Gorwa, <em>Jacobin</em>, December 2024.</span>
+            <a href="#" target="_blank" rel="noopener">read here →</a>
+          </span>
+        </div>
+
+        <div class="ref">
+          <span class="ref-bullet">—</span>
+          <span class="ref-text">
+            “Drowning in AI Generated Garbage: the silent war we are fighting”
+            <span class="src">— Lionel Dricot, May 2022.</span>
+            <a href="#" target="_blank" rel="noopener">read here →</a>
+          </span>
+        </div>
+
+        <div class="ref">
+          <span class="ref-bullet">—</span>
+          <span class="ref-text">
+            “Zoom CEO wants AI clones to attend boring meetings”
+            <span class="src">— <em>Times of India Tech Desk</em>, June 2024.</span>
+            <a href="#" target="_blank" rel="noopener">read here →</a>
+          </span>
+        </div>
+      </article>
+    </section>
+
+    <!-- ── Right column: the long Data & surveillance section ── -->
+    <section class="list-col">
+      <article class="section">
+        <h3><span class="dot"></span>Data &amp; surveillance · migration · borders · militarisation of tech</h3>
+
+        <div class="ref">
+          <span class="ref-bullet">—</span>
+          <span class="ref-text">
+            A reader about “the involvement of the computer industry in organised violence at borders and in occupied territories”: “Complicit Chips”
+            <span class="src">— TITiPI, October 2024.</span>
+            <a href="#" target="_blank" rel="noopener">read here →</a>
+          </span>
+        </div>
+
+        <div class="ref">
+          <span class="ref-bullet">—</span>
+          <span class="ref-text">
+            A list of digital “alternatives to services provided by companies complicit in the genocide in Palestine”: “Infraresistance”
+            <span class="src">— TITiPI, March 2024.</span>
+            <a href="#" target="_blank" rel="noopener">read here →</a>
+          </span>
+        </div>
+
+        <div class="ref">
+          <span class="ref-bullet">—</span>
+          <span class="ref-text">
+            UK Home Office as case study, part 1: “UK to surveil convicted migrants with facial recognition”
+            <span class="src">— Sebastian Klovig Skelton, <em>Computer Weekly</em>, August 2022.</span>
+            <a href="#" target="_blank" rel="noopener">read here →</a>
+          </span>
+        </div>
+
+        <div class="ref">
+          <span class="ref-bullet">—</span>
+          <span class="ref-text">
+            UK Home Office as case study, part 2: “Ankle tags and 24/7 surveillance – this is how the UK treats new migrants”
+            <span class="src">— Janet Farrell, <em>The Guardian</em>, August 2022.</span>
+            <a href="#" target="_blank" rel="noopener">read here →</a>
+          </span>
+        </div>
+
+        <div class="ref">
+          <span class="ref-bullet">—</span>
+          <span class="ref-text">
+            UK Home Office as case study, part 3: “ICO finds the Home Office’s pilot of GPS electronic monitoring of migrants breached UK data protection law”
+            <span class="src">— Information Commissioner’s Office, March 2024.</span>
+            <a href="#" target="_blank" rel="noopener">read here →</a>
+          </span>
+        </div>
+      </article>
+    </section>
+
+  </main>
+
+  <footer class="page-footer">
+    <span>Reading list · The artificial enthusiasm · ENCC</span>
+    <span class="signature">Ομάδα Εργασίας · Ψηφιακός Μετασχηματισμός &amp; AI · 2024–2026</span>
+  </footer>
+
+</body>
+</html>

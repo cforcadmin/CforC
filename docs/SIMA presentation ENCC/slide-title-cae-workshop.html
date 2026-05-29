@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080">
+  <title>Ενδεδειγμένη χρήση της AI — CforC Workshop</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --coral: #FF8B6A;
+      --coral-light: #FFB299;
+      --coral-dark: #FF6B47;
+      --coral-deep: #E55A38;
+      --charcoal: #2D2D2D;
+      --white: #FFFFFF;
+      --eu-blue: #003399;
+    }
+
+    html, body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'Inter', 'Arial Nova', Arial, system-ui, sans-serif;
+      color: var(--charcoal);
+      position: relative;
+      background:
+        radial-gradient(ellipse 1100px 700px at 65% 50%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 60%),
+        radial-gradient(ellipse 900px 700px at 12% 18%, rgba(255,178,153,0.45) 0%, rgba(255,178,153,0) 65%),
+        radial-gradient(ellipse 800px 700px at 95% 95%, rgba(229,90,56,0.35) 0%, rgba(229,90,56,0) 65%),
+        linear-gradient(135deg, #FF8B6A 0%, #FF7556 55%, #FF8B6A 100%);
+    }
+
+    /* ─── Background dots pattern ─── */
+    .bg-dots {
+      position: absolute;
+      top: 0; right: 0;
+      width: 700px; height: 600px;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.18) 1.5px, transparent 1.5px);
+      background-size: 22px 22px;
+      mask-image: radial-gradient(ellipse at top right, #000 0%, transparent 70%);
+      -webkit-mask-image: radial-gradient(ellipse at top right, #000 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .arc-deco {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.35;
+    }
+
+    /* ─── Slide layout ─── */
+    .slide {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      padding: 70px 90px 60px 90px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── Top: CforC logo ─── */
+    .top-logo {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+    .top-logo svg.sun {
+      width: 110px; height: 110px;
+      filter: drop-shadow(0 4px 14px rgba(0,0,0,0.18));
+    }
+    .top-logo .wordmark {
+      font-family: 'Inter', sans-serif;
+      color: var(--white);
+      font-weight: 800;
+      font-size: 38px;
+      line-height: 0.95;
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── Center: Title ─── */
+    .center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      gap: 26px;
+      padding: 30px 40px;
+    }
+
+    .glow {
+      position: absolute;
+      width: 1400px;
+      height: 520px;
+      background: radial-gradient(ellipse at center, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0) 60%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      filter: blur(4px);
+    }
+
+    .title {
+      font-family: 'Inter', sans-serif;
+      font-weight: 800;
+      font-size: 56px;
+      line-height: 1.18;
+      color: var(--charcoal);
+      letter-spacing: -0.8px;
+      text-align: center;
+      max-width: 1600px;
+      position: relative;
+      z-index: 2;
+      text-shadow: 0 4px 20px rgba(45,45,45,0.15);
+    }
+    .title .quote-mark {
+      color: var(--white);
+      font-weight: 800;
+    }
+    .title .accent-cae {
+      color: var(--white);
+    }
+
+    .subtitle {
+      font-family: 'Inter', sans-serif;
+      font-size: 26px;
+      font-weight: 500;
+      color: var(--charcoal);
+      letter-spacing: 0.2px;
+      position: relative;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 26px;
+      background: rgba(255,255,255,0.30);
+      border-radius: 999px;
+      backdrop-filter: blur(4px);
+    }
+    .subtitle .dot {
+      width: 8px; height: 8px;
+      background: var(--white);
+      border-radius: 50%;
+    }
+    .subtitle .pipe {
+      color: rgba(45,45,45,0.4);
+      font-weight: 300;
+    }
+
+    /* ─── Bottom: footer with two columns ─── */
+    .bottom {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 60px;
+    }
+
+    /* Bottom-left: Project name */
+    .project {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-width: 900px;
+    }
+    .project-label {
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--charcoal);
+      letter-spacing: 0.5px;
+    }
+    .project-name {
+      font-size: 19px;
+      font-weight: 500;
+      color: var(--charcoal);
+      line-height: 1.45;
+      font-style: italic;
+    }
+    .project-name .accent {
+      font-style: normal;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    /* Bottom-right: Funders */
+    .funders {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 12px;
+    }
+    .funders-label {
+      font-style: italic;
+      font-size: 17px;
+      color: var(--eu-blue);
+      font-weight: 500;
+    }
+    .funders-row {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      background: rgba(255,255,255,0.55);
+      padding: 22px 32px;
+      border-radius: 14px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 6px 22px rgba(0,0,0,0.12);
+      min-width: 560px;
+      min-height: 140px;
+    }
+
+    /* ─── Corner ornaments ─── */
+    .corner-tl, .corner-br {
+      position: absolute;
+      width: 130px; height: 130px;
+      pointer-events: none;
+      opacity: 0.45;
+      z-index: 1;
+    }
+    .corner-tl { top: 30px; right: 70px; }
+    .corner-br { bottom: 30px; left: 70px; }
+  </style>
+</head>
+<body>
+
+  <!-- Background dots -->
+  <div class="bg-dots"></div>
+
+  <!-- Decorative arcs -->
+  <svg class="arc-deco" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+    <path d="M -100 900 Q 600 600 1400 850 T 2100 800" stroke="rgba(255,255,255,0.45)" stroke-width="2" fill="none"/>
+    <path d="M -100 950 Q 700 700 1500 920 T 2100 880" stroke="rgba(255,255,255,0.30)" stroke-width="1.5" fill="none"/>
+    <path d="M 1500 -100 Q 1700 300 1450 650" stroke="rgba(255,255,255,0.30)" stroke-width="2" fill="none"/>
+  </svg>
+
+  <!-- Bottom-left corner dot grid -->
+  <svg class="corner-br" viewBox="0 0 100 100">
+    <g fill="rgba(255,255,255,0.6)">
+      <circle cx="10" cy="10" r="2"/><circle cx="30" cy="10" r="2"/><circle cx="50" cy="10" r="2"/><circle cx="70" cy="10" r="2"/><circle cx="90" cy="10" r="2"/>
+      <circle cx="10" cy="30" r="2"/><circle cx="30" cy="30" r="2"/><circle cx="50" cy="30" r="2"/><circle cx="70" cy="30" r="2"/>
+      <circle cx="10" cy="50" r="2"/><circle cx="30" cy="50" r="2"/><circle cx="50" cy="50" r="2"/>
+      <circle cx="10" cy="70" r="2"/><circle cx="30" cy="70" r="2"/>
+      <circle cx="10" cy="90" r="2"/>
+    </g>
+  </svg>
+
+  <div class="slide">
+
+    <!-- Top: CforC logo -->
+    <div class="top-logo">
+      <svg class="sun" viewBox="0 0 62 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g fill="#FFFFFF">
+          <path d="M28.1357 56.9941C29.2174 57.1347 30.3196 57.2174 31.4101 57.245L31.8545 41.4423C31.3662 41.4313 30.8838 41.3927 30.4102 41.332L28.1357 56.9941Z"/>
+          <path d="M19.7527 33.0938L3.91309 38.2786C4.27268 39.2572 4.69659 40.2247 5.16728 41.1591L20.2994 34.3562C20.0918 33.9482 19.9106 33.5265 19.7527 33.0938Z"/>
+          <path d="M2.41992 26.0625L19.0928 27.6971C19.1425 27.2395 19.2214 26.7902 19.3237 26.3492L2.94323 22.9863C2.70935 23.9979 2.53394 25.0316 2.41992 26.0598V26.0625Z"/>
+          <path d="M19.0487 29.752L2.31445 30.6947C2.37877 31.72 2.50448 32.751 2.68574 33.7626L19.2153 31.1136C19.1335 30.6671 19.0779 30.215 19.0487 29.7547V29.752Z"/>
+          <path d="M23.8526 38.627L13.2197 50.8435C14.0617 51.4968 14.9534 52.1115 15.8684 52.6738L25.0249 39.4346C24.6185 39.1838 24.2268 38.9164 23.8526 38.627Z"/>
+          <path d="M26.936 40.4062L20.2061 54.8831C21.2117 55.2993 22.2525 55.6659 23.3021 55.9746L28.2896 40.8859C27.8247 40.7508 27.3745 40.5882 26.9331 40.4062H26.936Z"/>
+          <path d="M21.3978 36.127L7.65723 45.1846C8.28286 46.0281 8.96404 46.8467 9.68323 47.6213L22.2924 37.2047C21.9737 36.8629 21.6755 36.5046 21.3978 36.1297V36.127Z"/>
+          <path d="M39.3098 18.5111L48.3318 5.18642C47.4109 4.63238 46.4432 4.11968 45.4638 3.66211L38.0498 17.8385C38.4854 18.0397 38.9064 18.2657 39.3128 18.5111H39.3098Z"/>
+          <path d="M40.8579 1.95391C39.8055 1.65622 38.7267 1.40814 37.645 1.2207L34.6162 16.7698C35.0957 16.8525 35.5634 16.9572 36.0253 17.0895L40.8609 1.95391H40.8579Z"/>
+          <path d="M42.0662 20.7198L54.5642 10.1847C53.8392 9.41841 53.0586 8.68245 52.2488 7.99609L41.043 19.7496C41.4026 20.0555 41.7446 20.378 42.0662 20.7198Z"/>
+          <path d="M28.8623 16.9716L24.6203 1.68164C23.5591 1.9435 22.5008 2.266 21.4746 2.63537L27.4854 17.3906C27.9327 17.228 28.3917 17.0874 28.8623 16.9716Z"/>
+          <path d="M9.71128 12.71L21.1656 21.0068C21.4843 21.2384 21.9404 21.1943 22.2035 20.9048L22.2122 20.8938C22.4754 20.6044 22.4549 20.1744 22.1625 19.9098L11.7344 10.4855C11.097 9.90941 10.0767 9.95626 9.50079 10.5875L9.48032 10.6123C8.90439 11.2435 9.01256 12.2028 9.71128 12.71Z"/>
+          <path d="M15.23 7.57548L23.8807 18.4772C24.1204 18.7804 24.5706 18.8521 24.9068 18.6426L24.9185 18.6343C25.2547 18.4248 25.36 18.0031 25.1553 17.6751L17.8173 5.94642C17.3671 5.22699 16.3701 5.01199 15.6334 5.47507L15.6071 5.49161C14.8704 5.95469 14.6979 6.90566 15.227 7.57272L15.23 7.57548Z"/>
+          <path d="M5.87016 19.0856L19.2774 24.1382C19.6516 24.2787 20.0755 24.1189 20.2451 23.7743L20.2509 23.7605C20.4205 23.416 20.2773 23.008 19.9206 22.8289L7.18574 16.4146C6.40224 16.0204 5.42871 16.3264 5.0545 17.0844L5.03988 17.112C4.66567 17.87 5.04573 18.7714 5.87016 19.0829V19.0856Z"/>
+          <path d="M40.5859 38.6304L51.2217 50.847C52.0637 50.1937 52.8793 49.4908 53.6424 48.7548L41.6559 37.707C41.3168 38.0323 40.9631 38.341 40.5859 38.6332V38.6304Z"/>
+          <path d="M44.0825 23.5476L59.1415 16.6014C58.6621 15.6752 58.1212 14.7656 57.5365 13.8945L43.375 22.3568C43.6323 22.7399 43.872 23.1369 44.0854 23.5476H44.0825Z"/>
+          <path d="M29.4766 0.875764L31.0056 16.615C31.1897 16.5985 31.3769 16.5847 31.564 16.5764C31.8651 16.5627 32.1604 16.5599 32.4586 16.5654L32.7392 0.759994C32.0726 0.748968 31.3973 0.759993 30.7161 0.79307C30.301 0.812365 29.8859 0.839931 29.4766 0.875764Z"/>
+          <path d="M43.042 36.13L56.7825 45.1849C57.4082 44.3415 57.9899 43.4539 58.5132 42.5525L43.805 34.9668C43.5711 35.3692 43.3139 35.7551 43.0391 36.1273L43.042 36.13Z"/>
+          <path d="M37.5059 40.4104L44.2212 54.8928C45.2239 54.4793 46.215 54.0079 47.1652 53.4925L38.7981 39.793C38.38 40.019 37.9502 40.2257 37.5059 40.4104Z"/>
+          <path d="M34.0293 41.3325L36.3067 56.9946C37.3913 56.854 38.476 56.6556 39.5372 56.4047L35.453 41.0762C34.9882 41.1864 34.5146 41.2719 34.0293 41.3353V41.3325Z"/>
+          <path d="M7.01861 10.5748C8.02613 10.5748 8.84289 9.80473 8.84289 8.85479C8.84289 7.90485 8.02613 7.13477 7.01861 7.13477C6.01109 7.13477 5.19434 7.90485 5.19434 8.85479C5.19434 9.80473 6.01109 10.5748 7.01861 10.5748Z"/>
+          <path d="M13.6436 4.66465C14.6522 4.66465 15.4679 3.8956 15.4679 2.94463C15.4679 1.99366 14.6522 1.22461 13.6436 1.22461C12.635 1.22461 11.8193 1.99366 11.8193 2.94463C11.8193 3.8956 12.635 4.66465 13.6436 4.66465Z"/>
+          <path d="M2.3853 17.7723C3.3798 17.6201 4.05514 16.7366 3.89371 15.799C3.73228 14.8613 2.79521 14.2245 1.80071 14.3768C0.806205 14.529 0.130866 15.4125 0.292296 16.3501C0.453727 17.2878 1.3908 17.9245 2.3853 17.7723Z"/>
+        </g>
+      </svg>
+      <div class="wordmark">
+        CULTURE<br>FOR<br>CHANGE
+      </div>
+    </div>
+
+    <!-- Center: Title -->
+    <div class="center">
+      <div class="glow"></div>
+
+      <h1 class="title">
+        <span class="quote-mark">«</span>Ενδεδειγμένη χρήση της AI &amp; διεθνείς καλές πρακτικές.<br>
+        Το παράδειγμα του <span class="accent-cae">Culture Action Europe (CAE)</span><span class="quote-mark">»</span>
+      </h1>
+
+      <div class="subtitle">
+        <span class="dot"></span>
+        <span><strong>Online workshop</strong></span>
+        <span class="pipe">|</span>
+        <span>27 Απριλίου 2026, 17:00–18:00</span>
+      </div>
+    </div>
+
+    <!-- Bottom: footer -->
+    <div class="bottom">
+
+      <!-- Project name (bottom-left) -->
+      <div class="project">
+        <div class="project-label">Έργο</div>
+        <div class="project-name">
+          <span class="accent">«Σ.Η.μα — Συνδιαμόρφωση Ηθικών Πλαισίων</span><br>
+          <span class="accent">στην εποχή της Τεχνητής Νοημοσύνης από την Κοινωνία των Πολιτών»</span>
+        </div>
+      </div>
+
+      <!-- Funders (bottom-right) -->
+      <div class="funders">
+        <div class="funders-label">Με τη συγχρηματοδότηση:</div>
+        <div class="funders-row">
+          <!-- Add funder logos manually here -->
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

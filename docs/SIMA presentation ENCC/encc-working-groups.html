@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Working groups — ENCC</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --encc-green:        #234029;
+      --encc-green-deep:   #15291C;
+      --encc-green-soft:   #4A6B52;
+      --encc-cream:        #F8F5EE;
+      --encc-cream-soft:   #FCFAF4;
+      --ink:               #0E1B3D;
+      --ink-soft:          #2A335A;
+      --muted:             #6B7280;
+      --rule:              #E5E1D6;
+      --coral:             #E07A55;
+      --coral-deep:        #C45F3A;
+      --white:             #FFFFFF;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Arial, sans-serif;
+      color: var(--ink);
+      background: var(--encc-cream-soft);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow-x: hidden;
+    }
+
+    /* Decoration */
+    .deco { position: fixed; pointer-events: none; z-index: 0; }
+    .deco svg { display: block; width: 100%; height: 100%; }
+    .deco-tr { top: -120px; right: -160px; width: 540px; height: 540px; opacity: 0.08; }
+    .deco-bl { bottom: -180px; left: -140px; width: 480px; height: 480px; opacity: 0.06; }
+
+    /* Top bar */
+    .top-bar {
+      position: relative; z-index: 2;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 32px 64px 0;
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-mark { width: 56px; height: 56px; color: var(--encc-green); }
+    .brand-text {
+      font-family: 'Fraunces', serif;
+      font-weight: 700; font-size: 13px;
+      letter-spacing: 3px; color: var(--encc-green);
+      text-transform: uppercase;
+    }
+    .top-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 16px;
+      background: var(--white); border: 1px solid var(--rule);
+      border-radius: 999px;
+      color: var(--encc-green);
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 1.5px; text-transform: uppercase;
+    }
+    .top-tag::before {
+      content: ''; width: 6px; height: 6px;
+      border-radius: 50%; background: var(--coral);
+    }
+
+    .container {
+      position: relative; z-index: 1;
+      max-width: 1840px; margin: 0 auto;
+      padding: 28px 56px 64px;
+    }
+
+    /* Hero header */
+    .hero {
+      padding: 24px 0 28px;
+      margin-bottom: 36px;
+      border-bottom: 1px solid var(--rule);
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 48px;
+      align-items: end;
+    }
+    .hero h1 {
+      font-family: 'Fraunces', serif;
+      font-weight: 800;
+      font-size: clamp(68px, 7.6vw, 110px);
+      line-height: 1.0;
+      letter-spacing: -3px;
+      color: var(--ink);
+    }
+    .hero h1 .accent { color: var(--encc-green); font-style: italic; font-weight: 500; }
+
+    .hero-lede {
+      font-size: 22px;
+      line-height: 1.55;
+      color: var(--encc-green-deep);
+      max-width: 56ch;
+    }
+
+    /* Cards grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 36px;
+    }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--rule);
+      border-radius: 22px;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 30px 60px -30px rgba(35, 64, 41, 0.35);
+    }
+
+    .card-visual {
+      position: relative;
+      aspect-ratio: 16 / 10;
+      overflow: hidden;
+    }
+    .card-visual svg { width: 100%; height: 100%; display: block; }
+
+    .card-body {
+      padding: 30px 34px 32px;
+      flex: 1;
+      display: flex; flex-direction: column;
+      gap: 16px;
+    }
+
+    .card-title {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 32px;
+      line-height: 1.15;
+      letter-spacing: -0.7px;
+      color: var(--ink);
+    }
+
+    .card-desc {
+      font-size: 19px;
+      line-height: 1.55;
+      color: var(--muted);
+      flex: 1;
+    }
+
+    .card-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: var(--encc-cream);
+      color: var(--encc-green);
+      font-size: 14px;
+      font-weight: 600;
+      width: fit-content;
+    }
+    .card-meta::before { content: '▣'; color: var(--encc-green); }
+
+    .card-foot {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding-top: 18px;
+      border-top: 1px dashed var(--rule);
+      margin-top: 8px;
+    }
+    .card-link {
+      color: var(--coral-deep);
+      font-size: 16px;
+      font-weight: 700;
+      text-decoration: none;
+      letter-spacing: 0.3px;
+    }
+    .card-link::after {
+      content: '→';
+      margin-left: 6px;
+      transition: transform 0.2s ease;
+      display: inline-block;
+    }
+    .card-link:hover::after { transform: translateX(4px); }
+
+    .card-tag {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      color: var(--encc-green-soft);
+    }
+
+    /* Footer */
+    .page-footer {
+      position: relative; z-index: 1;
+      max-width: 1840px;
+      margin: 0 auto;
+      padding: 22px 56px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--rule);
+      font-size: 15px; color: var(--muted);
+    }
+    .page-footer .signature {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      color: var(--encc-green);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .top-bar { padding: 24px 32px 0; }
+      .container { padding: 24px 32px 40px; }
+      .hero { grid-template-columns: 1fr; gap: 20px; align-items: start; }
+      .hero h1 { font-size: 56px; }
+      .grid { grid-template-columns: 1fr 1fr; }
+      .page-footer { padding: 24px 32px 32px; flex-direction: column; gap: 12px; }
+    }
+    @media (max-width: 640px) {
+      .top-bar { padding: 18px 20px 0; flex-wrap: wrap; gap: 12px; }
+      .container { padding: 16px 20px 32px; }
+      .hero h1 { font-size: 44px; letter-spacing: -1.5px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Decorative ENCC-style organic shapes -->
+  <div class="deco deco-tr" aria-hidden="true">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M40 120 C 20 80, 50 30, 100 30 C 160 30, 180 70, 170 120 C 160 170, 100 180, 70 160 C 50 145, 50 135, 40 120 Z" fill="#234029"/>
+      <circle cx="60" cy="60" r="8" fill="#234029"/>
+      <circle cx="150" cy="55" r="5" fill="#234029"/>
+      <circle cx="150" cy="140" r="10" fill="#234029"/>
+    </svg>
+  </div>
+  <div class="deco deco-bl" aria-hidden="true">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M30 80 C 40 30, 110 20, 150 50 C 190 80, 180 150, 130 170 C 80 190, 30 160, 30 120 Z" fill="#234029"/>
+      <circle cx="160" cy="120" r="7" fill="#234029"/>
+      <circle cx="70" cy="40" r="4" fill="#234029"/>
+    </svg>
+  </div>
+
+  <!-- Top bar -->
+  <header class="top-bar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M14 22 C 10 14, 22 6, 30 10 C 36 13, 32 22, 24 22 C 18 22, 18 28, 14 22 Z" fill="currentColor"/>
+        <path d="M36 14 C 44 8, 56 14, 54 24 C 52 32, 42 30, 40 24 C 38 20, 32 18, 36 14 Z" fill="currentColor"/>
+        <path d="M10 36 C 8 28, 22 26, 26 34 C 30 42, 22 50, 14 46 C 8 43, 12 40, 10 36 Z" fill="currentColor"/>
+        <path d="M34 38 C 44 32, 58 40, 54 50 C 50 60, 36 58, 34 50 C 32 44, 28 42, 34 38 Z" fill="currentColor"/>
+        <circle cx="46" cy="20" r="2.5" fill="currentColor"/>
+        <circle cx="20" cy="46" r="2.5" fill="currentColor"/>
+      </svg>
+      <span class="brand-text">European Network of Cultural Centres</span>
+    </div>
+    <span class="top-tag">Working Groups</span>
+  </header>
+
+  <main class="container">
+
+    <!-- Hero -->
+    <section class="hero">
+      <h1>Working <span class="accent">groups</span></h1>
+      <p class="hero-lede">
+        Our thematic working groups are spaces for discussion and communities of practice
+        dedicated to experimenting together. They are open to our members as well as anyone who
+        has an interest or expertise to share in the topics at stake.
+      </p>
+    </section>
+
+    <!-- Cards -->
+    <section class="grid">
+
+      <!-- Card 1: Cultural centres and non-urban areas -->
+      <article class="card">
+        <div class="card-visual">
+          <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="sky1" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#D8E5DC"/>
+                <stop offset="100%" stop-color="#A8C3AE"/>
+              </linearGradient>
+              <linearGradient id="ground1" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#7A9A6E"/>
+                <stop offset="100%" stop-color="#5B7A52"/>
+              </linearGradient>
+              <radialGradient id="tree1" cx="50%" cy="40%" r="60%">
+                <stop offset="0%" stop-color="#4A6B52"/>
+                <stop offset="100%" stop-color="#2E4A36"/>
+              </radialGradient>
+            </defs>
+            <rect width="400" height="250" fill="url(#sky1)"/>
+            <rect y="170" width="400" height="80" fill="url(#ground1)"/>
+
+            <!-- olive trees (background) -->
+            <ellipse cx="60" cy="150" rx="55" ry="50" fill="url(#tree1)" opacity="0.75"/>
+            <ellipse cx="340" cy="155" rx="60" ry="55" fill="url(#tree1)" opacity="0.75"/>
+            <ellipse cx="120" cy="120" rx="40" ry="35" fill="url(#tree1)" opacity="0.65"/>
+            <ellipse cx="290" cy="130" rx="45" ry="40" fill="url(#tree1)" opacity="0.7"/>
+
+            <!-- main tree behind person -->
+            <rect x="195" y="120" width="10" height="60" fill="#3a2820"/>
+            <ellipse cx="200" cy="105" rx="80" ry="65" fill="url(#tree1)"/>
+            <ellipse cx="170" cy="115" rx="38" ry="28" fill="#3E5C46" opacity="0.7"/>
+            <ellipse cx="230" cy="100" rx="42" ry="30" fill="#5B7C5F" opacity="0.6"/>
+
+            <!-- person silhouette with headphones -->
+            <g transform="translate(160 130)">
+              <!-- body -->
+              <path d="M 30 30 L 60 30 L 65 95 L 25 95 Z" fill="#2A3F62"/>
+              <!-- head -->
+              <circle cx="45" cy="25" r="14" fill="#C89B7A"/>
+              <!-- hair -->
+              <path d="M 32 18 Q 45 8 58 18 L 58 25 Q 50 22 32 25 Z" fill="#1F1611"/>
+              <!-- headphones band -->
+              <path d="M 30 18 Q 45 8 60 18" stroke="#1A1A1A" stroke-width="3" fill="none"/>
+              <!-- ear cup -->
+              <circle cx="30" cy="26" r="6" fill="#1A1A1A"/>
+              <!-- scarf -->
+              <path d="M 28 38 Q 45 44 62 38 L 62 48 Q 45 52 28 48 Z" fill="#8B6F3A"/>
+              <!-- raised arm reaching up -->
+              <path d="M 56 35 Q 78 0 88 -30 L 92 -28 Q 84 8 60 38 Z" fill="#2A3F62"/>
+              <!-- hand at top reaching towards branch -->
+              <circle cx="92" cy="-30" r="6" fill="#C89B7A"/>
+            </g>
+
+            <!-- subtle leaves between -->
+            <circle cx="245" cy="80" r="3" fill="#3E5C46" opacity="0.5"/>
+            <circle cx="260" cy="92" r="2.5" fill="#3E5C46" opacity="0.6"/>
+            <circle cx="158" cy="78" r="2" fill="#3E5C46" opacity="0.5"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <span class="card-tag">Thematic working group</span>
+          <h3 class="card-title">Cultural centres and non-urban areas</h3>
+          <p class="card-desc">
+            For many years now, we have been working to define and highlight the role cultural
+            centres can play in political participation and social innovation in non-urban areas.
+          </p>
+          <div class="card-foot">
+            <a class="card-link" href="#" target="_blank" rel="noopener">Read more</a>
+            <span class="card-tag">Rural · Political</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 2: Digital Ethics -->
+      <article class="card">
+        <div class="card-visual">
+          <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <pattern id="rgbpxC" x="0" y="0" width="14" height="14" patternUnits="userSpaceOnUse">
+                <rect x="0" y="0" width="14" height="14" fill="#0A0A0A"/>
+                <rect x="2" y="2" width="2" height="10" fill="#E84B4B" opacity="0.75"/>
+                <rect x="6" y="2" width="2" height="10" fill="#4DBE5E" opacity="0.75"/>
+                <rect x="10" y="2" width="2" height="10" fill="#4A7BE0" opacity="0.75"/>
+              </pattern>
+              <pattern id="rgbpxDimC" x="0" y="0" width="14" height="14" patternUnits="userSpaceOnUse">
+                <rect x="0" y="0" width="14" height="14" fill="#0A0A0A"/>
+                <rect x="2" y="2" width="2" height="10" fill="#E84B4B" opacity="0.22"/>
+                <rect x="6" y="2" width="2" height="10" fill="#4DBE5E" opacity="0.22"/>
+                <rect x="10" y="2" width="2" height="10" fill="#4A7BE0" opacity="0.22"/>
+              </pattern>
+              <mask id="cursorMask">
+                <rect width="400" height="250" fill="black"/>
+                <!-- pixel-cursor (arrow) path centered -->
+                <path d="M 170 60 L 170 195 L 200 165 L 222 210 L 240 200 L 220 158 L 260 158 Z"
+                      fill="white"/>
+              </mask>
+            </defs>
+            <rect width="400" height="250" fill="url(#rgbpxDimC)"/>
+            <rect width="400" height="250" fill="url(#rgbpxC)" mask="url(#cursorMask)"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <span class="card-tag">Thematic working group</span>
+          <h3 class="card-title">Digital Ethics</h3>
+          <p class="card-desc">
+            How can cultural operators choose tools and platforms that are sustainable, inclusive
+            and respectful of our data?
+          </p>
+          <div class="card-foot">
+            <a class="card-link" href="#" target="_blank" rel="noopener">Read more</a>
+            <span class="card-meta">1 Sep 2020 – 31 Aug 2025</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 3: Inclusion and Accessibility -->
+      <article class="card">
+        <div class="card-visual">
+          <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="wall3" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0%" stop-color="#C9D9D8"/>
+                <stop offset="100%" stop-color="#9CB5B3"/>
+              </linearGradient>
+            </defs>
+            <rect width="400" height="250" fill="url(#wall3)"/>
+
+            <!-- abstract mural shapes evoking the original artwork -->
+            <!-- big coral shape -->
+            <path d="M 0 0 L 180 0 L 220 60 L 180 130 L 80 180 L 0 150 Z" fill="#E07A55"/>
+            <!-- teal/blue shape -->
+            <path d="M 180 0 L 400 0 L 400 110 L 310 90 L 240 50 Z" fill="#5BA5A1"/>
+            <!-- yellow circle (foot/sun motif) -->
+            <circle cx="200" cy="170" r="30" fill="#F0C24E"/>
+            <!-- dark hand silhouette -->
+            <path d="M 270 130 Q 280 110 305 115 Q 330 110 345 130 Q 360 145 355 180 Q 350 220 320 230 Q 285 235 270 215 Q 255 195 260 170 Q 263 145 270 130 Z" fill="#1A1A1A"/>
+            <!-- finger details -->
+            <path d="M 285 115 Q 290 100 295 100" stroke="#1A1A1A" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <path d="M 305 110 Q 308 95 314 95" stroke="#1A1A1A" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <path d="M 325 115 Q 332 100 340 102" stroke="#1A1A1A" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+            <!-- light coral foot shape -->
+            <ellipse cx="100" cy="200" rx="42" ry="22" fill="#FFB299" transform="rotate(-15 100 200)"/>
+            <circle cx="55" cy="195" r="6" fill="#FFB299"/>
+            <circle cx="60" cy="184" r="5" fill="#FFB299"/>
+            <circle cx="68" cy="176" r="4.5" fill="#FFB299"/>
+            <circle cx="78" cy="170" r="4" fill="#FFB299"/>
+
+            <!-- accent stripes -->
+            <rect x="320" y="180" width="50" height="14" rx="7" fill="#E07A55" opacity="0.85"/>
+            <rect x="340" y="200" width="40" height="12" rx="6" fill="#F0C24E" opacity="0.9"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <span class="card-tag">Thematic working group</span>
+          <h3 class="card-title">Inclusion and Accessibility in Socio-cultural Centres</h3>
+          <p class="card-desc">
+            We invite you to apply to participate in our working group dedicated to inclusion and
+            accessibility in socio-cultural centres.
+          </p>
+          <div class="card-foot">
+            <a class="card-link" href="#" target="_blank" rel="noopener">Apply / Read more</a>
+            <span class="card-tag">Inclusion · Access</span>
+          </div>
+        </div>
+      </article>
+
+    </section>
+
+  </main>
+
+  <footer class="page-footer">
+    <span>ENCC · Working Groups · Overview</span>
+    <span class="signature">Ομάδα Εργασίας · Ψηφιακός Μετασχηματισμός &amp; AI · 2024–2026</span>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Ethics — ENCC Working Group</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --encc-green:        #234029;
+      --encc-green-deep:   #15291C;
+      --encc-green-soft:   #4A6B52;
+      --encc-cream:        #F8F5EE;
+      --encc-cream-soft:   #FCFAF4;
+      --ink:               #0E1B3D;
+      --ink-soft:          #2A335A;
+      --muted:             #6B7280;
+      --rule:              #E5E1D6;
+      --coral:             #E07A55;
+      --coral-deep:        #C45F3A;
+      --pixel-r:           #E84B4B;
+      --pixel-g:           #4DBE5E;
+      --pixel-b:           #4A7BE0;
+      --white:             #FFFFFF;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Arial, sans-serif;
+      color: var(--ink);
+      background: var(--encc-cream-soft);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow-x: hidden;
+    }
+
+    /* ── Background decoration ───────────────────────────────────── */
+    .deco { position: fixed; pointer-events: none; z-index: 0; }
+    .deco svg { display: block; width: 100%; height: 100%; }
+
+    .deco-tr { top: -120px; right: -160px; width: 540px; height: 540px; opacity: 0.08; }
+    .deco-bl { bottom: -180px; left: -140px; width: 480px; height: 480px; opacity: 0.06; }
+
+    /* ── Top bar ─────────────────────────────────────────────────── */
+    .top-bar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 32px 64px 0;
+    }
+
+    .brand {
+      display: flex; align-items: center; gap: 14px;
+    }
+    .brand-mark { width: 56px; height: 56px; color: var(--encc-green); }
+    .brand-text {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 3px;
+      color: var(--encc-green);
+      text-transform: uppercase;
+    }
+
+    .top-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 16px;
+      background: var(--white);
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      color: var(--encc-green);
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 1.5px; text-transform: uppercase;
+    }
+    .top-tag::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--coral);
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 32px 64px 96px;
+    }
+
+    /* ── Hero ────────────────────────────────────────────────────── */
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: 72px;
+      align-items: center;
+      padding: 24px 0 56px;
+      border-bottom: 1px solid var(--rule);
+      margin-bottom: 56px;
+    }
+
+    .crumb {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--encc-green-soft);
+      margin-bottom: 24px;
+    }
+    .crumb .home {
+      width: 28px; height: 28px;
+      border-radius: 999px;
+      background: var(--encc-cream);
+      color: var(--encc-green);
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .crumb .arrow { color: var(--coral); }
+
+    .hero h1 {
+      font-family: 'Fraunces', serif;
+      font-weight: 800;
+      font-size: clamp(56px, 7vw, 104px);
+      line-height: 1.0;
+      letter-spacing: -3px;
+      color: var(--ink);
+      margin-bottom: 28px;
+    }
+    .hero h1 .accent { color: var(--encc-green); }
+
+    .hero-meta {
+      display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+    }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: var(--white);
+      border: 1px solid var(--rule);
+      font-size: 13px; font-weight: 500;
+      color: var(--ink-soft);
+    }
+    .pill .cal {
+      color: var(--encc-green);
+    }
+    .pill.wg {
+      background: var(--encc-green);
+      color: var(--white);
+      border-color: var(--encc-green);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── RGB-pixel decorative visual (replaces the screenshot image) */
+    .pixel-card {
+      position: relative;
+      aspect-ratio: 4 / 5;
+      border-radius: 24px;
+      overflow: hidden;
+      background: #0A0A0A;
+      box-shadow:
+        0 1px 0 rgba(35, 64, 41, 0.06),
+        0 30px 60px -30px rgba(35, 64, 41, 0.4);
+    }
+    .pixel-card svg { width: 100%; height: 100%; display: block; }
+    .pixel-card::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 30% 70%, transparent 40%, rgba(0,0,0,0.55) 100%);
+      pointer-events: none;
+    }
+    .pixel-cap {
+      position: absolute;
+      bottom: 16px; left: 16px; right: 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      color: rgba(255,255,255,0.7);
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      z-index: 2;
+    }
+    .pixel-cap span:last-child { color: var(--coral); }
+
+    /* ── Document section ────────────────────────────────────────── */
+    .doc {
+      background: var(--white);
+      border: 1px solid var(--rule);
+      border-radius: 28px;
+      padding: 56px 56px 48px;
+      box-shadow: 0 30px 80px -50px rgba(35, 64, 41, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+    .doc::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--encc-green), var(--coral), var(--encc-green-soft));
+    }
+
+    .doc-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 32px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--rule);
+      margin-bottom: 36px;
+    }
+
+    .doc-head h2 {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: clamp(36px, 4.2vw, 56px);
+      line-height: 1.05;
+      letter-spacing: -1.2px;
+      color: var(--ink);
+      max-width: 16ch;
+    }
+    .doc-head h2 .for { color: var(--coral-deep); font-style: italic; font-weight: 500; }
+
+    .doc-version {
+      flex-shrink: 0;
+      text-align: right;
+      font-size: 13px; color: var(--muted);
+      line-height: 1.5;
+    }
+    .doc-version strong {
+      color: var(--encc-green);
+      display: block;
+      font-size: 14px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .doc-abstract {
+      padding: 22px 26px;
+      background: var(--encc-cream);
+      border-left: 4px solid var(--encc-green);
+      border-radius: 0 14px 14px 0;
+      font-size: 14.5px;
+      font-style: italic;
+      color: var(--ink-soft);
+      line-height: 1.65;
+      margin-bottom: 40px;
+    }
+
+    .doc-grid {
+      display: grid;
+      grid-template-columns: 200px minmax(0, 1fr) minmax(0, 1fr);
+      gap: 36px 44px;
+    }
+
+    .doc-intro {
+      grid-column: 1;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.65;
+      padding-right: 4px;
+      border-right: 1px dashed var(--rule);
+    }
+    .doc-intro p + p { margin-top: 14px; }
+
+    .doc-section {
+      break-inside: avoid;
+    }
+    .doc-section h3 {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 26px;
+      color: var(--encc-green-deep);
+      letter-spacing: -0.3px;
+      margin-bottom: 14px;
+      display: flex; align-items: baseline; gap: 10px;
+    }
+    .doc-section h3::before {
+      content: '';
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--coral);
+      transform: translateY(-3px);
+    }
+
+    .doc-section p {
+      font-size: 14.5px;
+      color: var(--ink-soft);
+      line-height: 1.65;
+    }
+    .doc-section p + p { margin-top: 12px; }
+
+    .doc-section .quote {
+      font-style: italic;
+      color: var(--ink);
+    }
+
+    /* footnote markers */
+    sup.fn {
+      color: var(--coral-deep);
+      font-weight: 700;
+      font-size: 10px;
+      vertical-align: super;
+      cursor: help;
+      margin-left: 2px;
+    }
+
+    /* ── Footnotes / source list ─────────────────────────────────── */
+    .footnotes {
+      margin-top: 48px;
+      padding-top: 28px;
+      border-top: 1px dashed var(--rule);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+    }
+    .fn-item {
+      padding: 18px 20px;
+      background: var(--encc-cream-soft);
+      border: 1px solid var(--rule);
+      border-radius: 14px;
+      font-size: 13px;
+      color: var(--ink-soft);
+      line-height: 1.55;
+    }
+    .fn-item .fn-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px;
+      border-radius: 999px;
+      background: var(--encc-green);
+      color: var(--white);
+      font-size: 11px; font-weight: 700;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .fn-item a {
+      color: var(--coral-deep);
+      word-break: break-all;
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+    }
+    .fn-item a:hover { border-bottom-color: var(--coral-deep); }
+
+    /* ── Resource link callout ───────────────────────────────────── */
+    .resource {
+      margin-top: 48px;
+      padding: 28px 32px;
+      background: linear-gradient(135deg, var(--encc-green) 0%, var(--encc-green-deep) 100%);
+      color: var(--white);
+      border-radius: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      position: relative;
+      overflow: hidden;
+    }
+    .resource::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      background: rgba(224, 122, 85, 0.15);
+    }
+    .resource-body {
+      position: relative; z-index: 1;
+    }
+    .resource-label {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.75;
+      margin-bottom: 6px;
+    }
+    .resource-title {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+    .resource a {
+      color: var(--coral);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 13px;
+      word-break: break-all;
+      border-bottom: 1px solid rgba(224, 122, 85, 0.4);
+    }
+    .resource-cta {
+      flex-shrink: 0;
+      padding: 14px 24px;
+      background: var(--coral);
+      color: var(--white);
+      border-radius: 999px;
+      font-size: 14px; font-weight: 600;
+      letter-spacing: 0.5px;
+      text-decoration: none;
+      position: relative; z-index: 1;
+      transition: transform 0.2s ease;
+    }
+    .resource-cta:hover { transform: translateY(-2px); }
+
+    /* ── Footer ──────────────────────────────────────────────────── */
+    .page-footer {
+      position: relative; z-index: 1;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px 64px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--rule);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .page-footer .signature {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      color: var(--encc-green);
+    }
+
+    /* ── Responsive ──────────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .top-bar { padding: 24px 32px 0; }
+      .container { padding: 24px 32px 64px; }
+      .hero { grid-template-columns: 1fr; gap: 40px; }
+      .pixel-card { aspect-ratio: 16 / 10; max-width: 480px; }
+      .doc { padding: 36px 28px; }
+      .doc-head { flex-direction: column; align-items: flex-start; gap: 18px; }
+      .doc-version { text-align: left; }
+      .doc-grid { grid-template-columns: 1fr; }
+      .doc-intro { border-right: 0; border-left: 3px solid var(--encc-cream); padding-left: 18px; padding-right: 0; }
+      .page-footer { padding: 24px 32px 32px; flex-direction: column; gap: 12px; }
+    }
+    @media (max-width: 560px) {
+      .top-bar { padding: 18px 20px 0; flex-wrap: wrap; gap: 12px; }
+      .container { padding: 16px 20px 48px; }
+      .hero h1 { letter-spacing: -1.5px; }
+      .doc { padding: 28px 20px; border-radius: 20px; }
+      .resource { flex-direction: column; align-items: flex-start; padding: 22px 22px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Decorative ENCC-style organic shapes -->
+  <div class="deco deco-tr" aria-hidden="true">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M40 120 C 20 80, 50 30, 100 30 C 160 30, 180 70, 170 120 C 160 170, 100 180, 70 160 C 50 145, 50 135, 40 120 Z" fill="#234029"/>
+      <circle cx="60" cy="60" r="8" fill="#234029"/>
+      <circle cx="150" cy="55" r="5" fill="#234029"/>
+      <circle cx="150" cy="140" r="10" fill="#234029"/>
+    </svg>
+  </div>
+  <div class="deco deco-bl" aria-hidden="true">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M30 80 C 40 30, 110 20, 150 50 C 190 80, 180 150, 130 170 C 80 190, 30 160, 30 120 Z" fill="#234029"/>
+      <circle cx="160" cy="120" r="7" fill="#234029"/>
+      <circle cx="70" cy="40" r="4" fill="#234029"/>
+    </svg>
+  </div>
+
+  <!-- ── Top bar ── -->
+  <header class="top-bar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M14 22 C 10 14, 22 6, 30 10 C 36 13, 32 22, 24 22 C 18 22, 18 28, 14 22 Z" fill="currentColor"/>
+        <path d="M36 14 C 44 8, 56 14, 54 24 C 52 32, 42 30, 40 24 C 38 20, 32 18, 36 14 Z" fill="currentColor"/>
+        <path d="M10 36 C 8 28, 22 26, 26 34 C 30 42, 22 50, 14 46 C 8 43, 12 40, 10 36 Z" fill="currentColor"/>
+        <path d="M34 38 C 44 32, 58 40, 54 50 C 50 60, 36 58, 34 50 C 32 44, 28 42, 34 38 Z" fill="currentColor"/>
+        <circle cx="46" cy="20" r="2.5" fill="currentColor"/>
+        <circle cx="20" cy="46" r="2.5" fill="currentColor"/>
+      </svg>
+      <span class="brand-text">European Network of Cultural Centres</span>
+    </div>
+    <span class="top-tag">Working Group</span>
+  </header>
+
+  <main class="container">
+
+    <!-- ── Hero ── -->
+    <section class="hero">
+      <div class="hero-left">
+        <div class="crumb">
+          <span class="home">⌂</span>
+          <span class="arrow">›</span>
+          <span>Working groups</span>
+        </div>
+        <h1>Digital <span class="accent">Ethics</span></h1>
+        <div class="hero-meta">
+          <span class="pill"><span class="cal">▣</span> 1 Sep 2020 – 31 Aug 2025</span>
+          <span class="pill wg">ENCC · Working Group</span>
+          <span class="pill">Digital · Ethics · Culture</span>
+        </div>
+      </div>
+
+      <!-- RGB-pixel-mosaic visual evoking the screenshot's pixel-art image -->
+      <div class="pixel-card">
+        <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <rect width="400" height="500" fill="#0A0A0A"/>
+          <g id="pixels"></g>
+          <!-- generated pixel grid mimicking RGB subpixel display revealing a "4" silhouette -->
+          <!-- We hand-place clusters to avoid JS; uses repeated rects -->
+          <g>
+            <!-- background subpixel noise -->
+            <g opacity="0.55">
+              <rect x="6" y="10" width="3" height="14" fill="#E84B4B"/>
+              <rect x="10" y="10" width="3" height="14" fill="#4DBE5E"/>
+              <rect x="14" y="10" width="3" height="14" fill="#4A7BE0"/>
+
+              <rect x="22" y="10" width="3" height="14" fill="#E84B4B"/>
+              <rect x="26" y="10" width="3" height="14" fill="#4DBE5E"/>
+              <rect x="30" y="10" width="3" height="14" fill="#4A7BE0"/>
+
+              <rect x="38" y="10" width="3" height="14" fill="#E84B4B"/>
+              <rect x="42" y="10" width="3" height="14" fill="#4DBE5E"/>
+              <rect x="46" y="10" width="3" height="14" fill="#4A7BE0"/>
+            </g>
+          </g>
+          <!-- Tiled subpixel pattern via use -->
+          <defs>
+            <pattern id="rgbpx" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+              <rect x="0" y="0" width="20" height="20" fill="#0A0A0A"/>
+              <rect x="3" y="3" width="3" height="14" fill="#E84B4B" opacity="0.7"/>
+              <rect x="7" y="3" width="3" height="14" fill="#4DBE5E" opacity="0.7"/>
+              <rect x="11" y="3" width="3" height="14" fill="#4A7BE0" opacity="0.7"/>
+            </pattern>
+            <pattern id="rgbpxDim" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+              <rect x="0" y="0" width="20" height="20" fill="#0A0A0A"/>
+              <rect x="3" y="3" width="3" height="14" fill="#E84B4B" opacity="0.25"/>
+              <rect x="7" y="3" width="3" height="14" fill="#4DBE5E" opacity="0.25"/>
+              <rect x="11" y="3" width="3" height="14" fill="#4A7BE0" opacity="0.25"/>
+            </pattern>
+            <mask id="ethMask">
+              <rect width="400" height="500" fill="black"/>
+              <!-- Stylised lower-case "e" / pixelated glyph silhouette -->
+              <text x="200" y="340" text-anchor="middle"
+                    font-family="Fraunces, serif" font-weight="800"
+                    font-size="380" fill="white"
+                    letter-spacing="-12">e</text>
+            </mask>
+          </defs>
+
+          <!-- dim noise across the whole frame -->
+          <rect width="400" height="500" fill="url(#rgbpxDim)"/>
+          <!-- bright pixels only inside the glyph silhouette -->
+          <rect width="400" height="500" fill="url(#rgbpx)" mask="url(#ethMask)"/>
+
+          <!-- subtle vignette -->
+          <radialGradient id="vig" cx="50%" cy="60%" r="70%">
+            <stop offset="60%" stop-color="black" stop-opacity="0"/>
+            <stop offset="100%" stop-color="black" stop-opacity="0.55"/>
+          </radialGradient>
+          <rect width="400" height="500" fill="url(#vig)"/>
+        </svg>
+        <div class="pixel-cap">
+          <span>RGB · Subpixel</span>
+          <span>● ETHICS</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Document ── -->
+    <article class="doc">
+
+      <header class="doc-head">
+        <h2>On digital ethics <span class="for">for</span> cultural organisations</h2>
+        <div class="doc-version">
+          <strong>Version 1.0</strong>
+          May 2023
+        </div>
+      </header>
+
+      <div class="doc-abstract">
+        Including a list of open questions, a look at different digital fields, a short history
+        of cultural confiscation by corporate tech, an even shorter history of open source and
+        the web, reasons for cultural organisations to react, an inspirational resource base, a
+        description of the ENCC&rsquo;s transformation project, a list of Big Tech tools that can
+        be replaced, advice on developing a website and making it accessible, why this type of
+        project should not be obsessed with purity, how this document came to be and how to
+        respond to it.
+      </div>
+
+      <div class="doc-grid">
+
+        <aside class="doc-intro">
+          <p>The European Network of Cultural Centres (ENCC) was founded in 1994 to promote
+            dialogue and cooperation between social-oriented cultural centres throughout Europe.
+            It is both a network of direct members and a &ldquo;network of networks&rdquo;.</p>
+          <p>In 2022, its coordination office launched a project to transform its communication,
+            website and office tools. The process is designed as an open-ended experiment; this
+            document is part of it.</p>
+        </aside>
+
+        <section class="doc-section">
+          <h3>Digital?</h3>
+          <p>When you enter the offices of a cultural centre, you mostly find people sitting in
+            front of computers and interacting with them. It is indeed hard to imagine a cultural
+            organisation functioning without digital tools. Yet, thirty years after computers and
+            office software emerged in our lives, the overwhelmingly digital aspect of cultural
+            work is still rarely highlighted. It is seen as a technicality, a matter of trivial
+            convenience, rather than a cultural material, in spite of the fact that we all
+            recognize its massive impact on our lives.</p>
+        </section>
+
+        <section class="doc-section">
+          <h3>Ethics?</h3>
+          <p class="quote">&ldquo;Ethics is not morality. It does not tell us what to do. It helps
+            us position ourselves and invites us to be tolerant. It does not give answers, it
+            produces questions. Its mission is to problematise. Ethics is about proposing ways
+            for science and human experimentation to respect human dignity. It&rsquo;s about
+            imperfect compromises in which doubts and suffering subsist. Ethics is an exercise in
+            discerning conflicts of values.&rdquo; <sup class="fn" title="Roger Gil, bioethics practitioner — seminar Introduction à l'éthique des sciences, 02/02/22, University of Poitiers">¹</sup></p>
+          <p>Is &ldquo;digital ethics&rdquo; the best term to use in approaching the complex
+            question that is at stake here? Some practitioners prefer to speak about &ldquo;digital
+            dignity&rdquo; or &ldquo;software dignity&rdquo;. This difficulty in finding the right
+            words probably points to how vast the digital field has become. The present guidelines
+            will not, of course, be able to cover this immensity. To attempt to limit their scope,
+            we will try to approach them through the prism of culture, which should be understood
+            in its dimension of situated knowledge<sup class="fn" title="D. Haraway, Situated Knowledges, 1988">²</sup> &mdash; dimension often
+            overlooked when discussing digital issues.</p>
+        </section>
+
+      </div>
+
+      <div class="doc-grid" style="margin-top: 36px; grid-template-columns: 200px minmax(0, 1fr) minmax(0, 1fr);">
+
+        <aside class="doc-intro" style="font-style: italic;">
+          <p>Throughout this document, <em>&ldquo;promiscuity&rdquo;</em> is used to mean that our
+            relationship to digital technologies is both intimate and indiscriminate in terms of
+            choice of partners.</p>
+        </aside>
+
+        <section class="doc-section">
+          <h3>Culture?</h3>
+          <p>Culture is &ldquo;what is common to a group of individuals&rdquo; and &ldquo;what
+            bonds them together&rdquo;, in other words every single thing that is learned, passed
+            on, produced or invented. Today, the situated knowledges of digital are intimately
+            intertwined with learning, heritage, production and invention.</p>
+          <p>Culture, described by Guy Rocher<sup class="fn" title="Guy Rocher, Culture, civilisation et idéologie, 1969, p. 88 [our translation]">³</sup> as a &ldquo;densely linked, more
+            or less formalised set of ways of thinking, feeling and acting, which, being acquired
+            and shared by a plurality of people, help constitute these people, both objectively
+            and symbolically, as a particular and distinct community&rdquo;, is recognised as a
+            right by the Universal Declaration of Human Rights (1948) and the Freiburg declaration
+            on cultural rights (2007)<sup class="fn" title="Freiburg declaration: unifr.ch/iiedh/en/assets/public/files/declaration-en04.pdf">⁴</sup>. Because of the growing importance of digital in the exercise of
+            these rights, and the confusion surrounding the concept of culture, often reduced to a
+            &ldquo;sector&rdquo; producing goods and services, it is essential to both clear up
+            this misunderstanding and replace digital technologies at the heart of these issues.</p>
+        </section>
+
+        <section class="doc-section">
+          <h3>Cultural centres?</h3>
+          <p>What better places and environments than cultural centres to unfold the conflicts of
+            values, the doubts, the bonding elements and the endless questions that are embedded
+            in digital and that become glaring as soon as we open the hood that industry uses to
+            cover its organic cables and assemblages?</p>
+          <p>How can a cultural centre make tangible, for itself and for its users, the
+            overwhelmingly cultural aspects of digital tools and practices? What if they were to
+            invite a group of local hackers to lead a workshop where participants could learn to
+            take control of the multiple layers of software inside their telephones and to install
+            new apps that are more respectful of their private lives? What if cultural centres
+            became places for lifelong learning where we could educate ourselves about our
+            promiscuity with living and effervescent digital matter, which is also extremely young
+            on the scale of human history?</p>
+          <p style="color: var(--coral-deep); font-weight: 600;">To look more practically at the
+            links between digital, ethics and cultural organisations, let&rsquo;s start with the
+            list of questions in the next section. →</p>
+        </section>
+
+      </div>
+
+      <!-- Footnotes / sources -->
+      <div class="footnotes">
+        <div class="fn-item">
+          <span class="fn-num">1</span>
+          Roger Gil, bioethics practitioner. Notes by authors from the seminar
+          <em>&ldquo;Introduction à l&rsquo;éthique des sciences&rdquo;</em>, given on 02/02/22 at
+          the University of Poitiers.
+        </div>
+        <div class="fn-item">
+          <span class="fn-num">2</span>
+          D. Haraway, <em>Situated Knowledges: The Science Question in Feminism and the Privilege
+          of Partial Perspective</em>. Feminist Studies, Vol. 14, No. 3 (Autumn 1988), pp. 575–599.
+          An answer to <em>The Science Question in Feminism</em>, 1986, by Sandra Harding.
+        </div>
+        <div class="fn-item">
+          <span class="fn-num">3</span>
+          Guy Rocher, <em>Culture, civilisation et idéologie</em>, 1969, p. 88. [our translation]
+        </div>
+        <div class="fn-item">
+          <span class="fn-num">4</span>
+          Freiburg declaration on cultural rights:
+          <a href="https://www.unifr.ch/iiedh/en/assets/public/files/declaration-en04.pdf"
+             target="_blank" rel="noopener">unifr.ch/iiedh/en/assets/public/files/declaration-en04.pdf</a>
+        </div>
+      </div>
+
+      <!-- Resource link -->
+      <aside class="resource">
+        <div class="resource-body">
+          <div class="resource-label">Full document · ENCC Cloud</div>
+          <div class="resource-title">On digital ethics for cultural organisations</div>
+          <a href="https://cloud.encc.eu/s/dXYWA7LN95dtDgn?dir=/&amp;editing=false&amp;openfile=true"
+             target="_blank" rel="noopener">
+            cloud.encc.eu/s/dXYWA7LN95dtDgn?dir=/&amp;editing=false&amp;openfile=true
+          </a>
+        </div>
+        <a class="resource-cta"
+           href="https://cloud.encc.eu/s/dXYWA7LN95dtDgn?dir=/&amp;editing=false&amp;openfile=true"
+           target="_blank" rel="noopener">Open document →</a>
+      </aside>
+
+    </article>
+
+  </main>
+
+  <footer class="page-footer">
+    <span>ENCC · Working Group · Digital Ethics</span>
+    <span class="signature">Ομάδα Εργασίας · Ψηφιακός Μετασχηματισμός &amp; AI · 2024–2026</span>
+  </footer>
+
+</body>
+</html>

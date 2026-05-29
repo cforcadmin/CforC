@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About ENCC — European Network of Cultural Centres</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --encc-green:        #2A5A36;
+      --encc-green-deep:   #15291C;
+      --encc-green-soft:   #4A7B52;
+      --encc-cream:        #F8F5EE;
+      --encc-cream-soft:   #FCFAF4;
+      --ink:               #0E1B3D;
+      --ink-soft:          #2A335A;
+      --muted:             #6B7280;
+      --rule:              #E5E1D6;
+      --coral:             #E07A55;
+      --coral-deep:        #C45F3A;
+      --white:             #FFFFFF;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Arial, sans-serif;
+      color: var(--ink);
+      background: var(--encc-cream-soft);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Decoration */
+    .deco { position: fixed; pointer-events: none; z-index: 0; }
+    .deco svg { display: block; width: 100%; height: 100%; }
+    .deco-tr { top: -120px; right: -160px; width: 480px; height: 480px; opacity: 0.07; }
+    .deco-bl { bottom: 140px; left: -140px; width: 420px; height: 420px; opacity: 0.05; }
+
+    /* Top bar */
+    .top-bar {
+      position: relative; z-index: 2;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 48px 0;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark { width: 40px; height: 40px; color: var(--encc-green); }
+    .brand-text {
+      font-family: 'Fraunces', serif;
+      font-weight: 700; font-size: 11px;
+      letter-spacing: 2.5px; color: var(--encc-green);
+      text-transform: uppercase;
+    }
+    .top-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 7px 14px;
+      background: var(--white); border: 1px solid var(--rule);
+      border-radius: 999px;
+      color: var(--encc-green);
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 1.5px; text-transform: uppercase;
+    }
+    .top-tag::before {
+      content: ''; width: 6px; height: 6px;
+      border-radius: 50%; background: var(--coral);
+    }
+
+    .main {
+      position: relative; z-index: 1;
+      flex: 1;
+      padding: 28px 48px 44px;
+      display: flex; flex-direction: column;
+      gap: 32px;
+    }
+
+    /* Hero */
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 36px;
+      align-items: end;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .hero h1 {
+      font-family: 'Fraunces', serif;
+      font-weight: 800;
+      font-size: clamp(60px, 6.2vw, 92px);
+      line-height: 1.0;
+      letter-spacing: -2.4px;
+      color: var(--ink);
+    }
+    .hero h1 .accent { color: var(--encc-green); font-style: italic; font-weight: 500; }
+    .hero .sub {
+      font-size: 22px;
+      color: var(--muted);
+      max-width: 52ch;
+      line-height: 1.5;
+    }
+
+    /* Stat band: horizontal row of pullquote + stat cards above the prose */
+    .stat-band {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      align-items: stretch;
+    }
+    .stat-band > * { height: 100%; }
+
+    /* Prose using 2 CSS columns to use full width */
+    .prose {
+      column-count: 2;
+      column-gap: 48px;
+      column-rule: 1px dashed var(--rule);
+    }
+    .prose p {
+      font-size: 22px;
+      line-height: 1.55;
+      color: var(--ink-soft);
+      margin-bottom: 18px;
+      break-inside: avoid;
+    }
+    .prose p:last-child { margin-bottom: 0; }
+    .prose p.opener::first-letter {
+      font-family: 'Fraunces', serif;
+      font-weight: 800;
+      font-size: 92px;
+      color: var(--encc-green);
+      float: left;
+      line-height: 0.85;
+      padding: 10px 14px 0 0;
+    }
+    .prose a {
+      color: var(--coral-deep);
+      text-decoration: none;
+      font-weight: 600;
+      border-bottom: 1px dashed var(--coral);
+    }
+    .prose a:hover { border-bottom-style: solid; }
+    .prose strong { color: var(--encc-green-deep); font-weight: 700; }
+    .prose q {
+      quotes: '“' '”' '‘' '’';
+      color: var(--encc-green-deep);
+      font-style: italic;
+    }
+    .prose .final {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-style: italic;
+      font-size: 22px;
+      color: var(--ink);
+      padding: 16px 20px;
+      background: var(--encc-cream);
+      border-left: 4px solid var(--encc-green);
+      border-radius: 0 10px 10px 0;
+    }
+
+    .stat {
+      padding: 24px 26px;
+      background: var(--white);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      display: flex; flex-direction: column;
+      gap: 12px;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      width: 4px;
+      background: var(--encc-green);
+    }
+    .stat.coral::before { background: var(--coral); }
+    .stat .big {
+      font-family: 'Fraunces', serif;
+      font-weight: 800;
+      font-size: 72px;
+      color: var(--encc-green);
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+    .stat.coral .big { color: var(--coral-deep); }
+    .stat .label {
+      font-size: 14px;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: var(--encc-green-soft);
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+    .stat .what {
+      font-size: 18px;
+      color: var(--ink-soft);
+      line-height: 1.45;
+    }
+
+    .pullquote {
+      padding: 26px 30px;
+      background: linear-gradient(135deg, var(--encc-green) 0%, var(--encc-green-deep) 100%);
+      color: var(--white);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .pullquote::before {
+      content: '“';
+      position: absolute;
+      top: -30px; right: 14px;
+      font-family: 'Fraunces', serif;
+      font-size: 180px;
+      color: var(--coral);
+      opacity: 0.32;
+      line-height: 1;
+    }
+    .pullquote .text {
+      font-family: 'Fraunces', serif;
+      font-style: italic;
+      font-weight: 500;
+      font-size: 26px;
+      line-height: 1.3;
+      position: relative; z-index: 1;
+    }
+    .pullquote .src {
+      position: relative; z-index: 1;
+      margin-top: 14px;
+      font-size: 14px;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+
+    .focus-list {
+      padding: 24px 28px;
+      background: var(--white);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      display: flex; align-items: center; gap: 28px;
+      flex-wrap: wrap;
+    }
+    .focus-list .label {
+      font-size: 14px;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: var(--encc-green-soft);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .focus-list ul {
+      list-style: none;
+      display: flex; flex-wrap: wrap;
+      gap: 10px;
+      flex: 1;
+    }
+    .focus-list li {
+      padding: 9px 16px;
+      background: var(--encc-cream);
+      color: var(--encc-green-deep);
+      border-radius: 999px;
+      font-size: 17px;
+      font-weight: 600;
+    }
+    .focus-list li.coral {
+      background: rgba(224, 122, 85, 0.15);
+      color: var(--coral-deep);
+    }
+
+    /* Green ENCC footer */
+    .page-footer {
+      background: var(--encc-green);
+      color: var(--white);
+      padding: 22px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-brand {
+      display: flex; align-items: center; gap: 12px;
+      color: var(--white);
+    }
+    .footer-brand .mark { width: 44px; height: 44px; }
+    .footer-brand .label {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+    .footer-social {
+      display: flex; gap: 14px;
+    }
+    .footer-social a {
+      width: 32px; height: 32px;
+      border-radius: 999px;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: var(--encc-green);
+      background: var(--white);
+      font-size: 13px; font-weight: 700;
+      text-decoration: none;
+      transition: transform 0.2s ease;
+    }
+    .footer-social a:hover { transform: translateY(-2px); }
+    .footer-eu {
+      display: flex; align-items: center; gap: 12px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.08);
+      font-size: 11px;
+      letter-spacing: 0.3px;
+      color: var(--white);
+    }
+    .footer-eu .eu-flag {
+      width: 28px; height: 20px;
+      border-radius: 3px;
+      background: #003399;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: #FFCC00;
+      font-size: 8px;
+      letter-spacing: 1px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .top-bar { padding: 18px 32px 0; }
+      .main { padding: 20px 32px 32px; }
+      .hero { grid-template-columns: 1fr; gap: 12px; align-items: start; }
+      .stat-band { grid-template-columns: 1fr 1fr; }
+      .prose { column-count: 1; }
+      .focus-list { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .page-footer { padding: 20px 32px; }
+    }
+    @media (max-width: 560px) {
+      .stat-band { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .top-bar { padding: 14px 20px 0; flex-wrap: wrap; gap: 10px; }
+      .main { padding: 16px 20px 24px; }
+      .hero h1 { font-size: 32px; letter-spacing: -1px; }
+      .page-footer { padding: 18px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Decorative shapes -->
+  <div class="deco deco-tr" aria-hidden="true">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M40 120 C 20 80, 50 30, 100 30 C 160 30, 180 70, 170 120 C 160 170, 100 180, 70 160 C 50 145, 50 135, 40 120 Z" fill="#2A5A36"/>
+      <circle cx="60" cy="60" r="8" fill="#2A5A36"/>
+      <circle cx="150" cy="55" r="5" fill="#2A5A36"/>
+    </svg>
+  </div>
+  <div class="deco deco-bl" aria-hidden="true">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M30 80 C 40 30, 110 20, 150 50 C 190 80, 180 150, 130 170 C 80 190, 30 160, 30 120 Z" fill="#2A5A36"/>
+    </svg>
+  </div>
+
+  <!-- Top bar -->
+  <header class="top-bar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M14 22 C 10 14, 22 6, 30 10 C 36 13, 32 22, 24 22 C 18 22, 18 28, 14 22 Z" fill="currentColor"/>
+        <path d="M36 14 C 44 8, 56 14, 54 24 C 52 32, 42 30, 40 24 C 38 20, 32 18, 36 14 Z" fill="currentColor"/>
+        <path d="M10 36 C 8 28, 22 26, 26 34 C 30 42, 22 50, 14 46 C 8 43, 12 40, 10 36 Z" fill="currentColor"/>
+        <path d="M34 38 C 44 32, 58 40, 54 50 C 50 60, 36 58, 34 50 C 32 44, 28 42, 34 38 Z" fill="currentColor"/>
+        <circle cx="46" cy="20" r="2.5" fill="currentColor"/>
+        <circle cx="20" cy="46" r="2.5" fill="currentColor"/>
+      </svg>
+      <span class="brand-text">European Network of Cultural Centres</span>
+    </div>
+    <span class="top-tag">About · ENCC</span>
+  </header>
+
+  <main class="main">
+
+    <!-- Hero -->
+    <section class="hero">
+      <h1>How <span class="accent">ENCC</span> came to be</h1>
+      <p class="sub">
+        From a postcard-and-typewriter network born in northern Belgium in 1994 to a seven-person
+        team in Brussels coordinating cultural centres across Europe — a short history of the
+        European Network of Cultural Centres.
+      </p>
+    </section>
+
+    <!-- Stat band: pullquote + 3 stats in one horizontal row -->
+    <section class="stat-band">
+
+      <!-- Pull quote: the slogan -->
+      <div class="pullquote">
+        <div class="text">The network for those who never dreamed they could go European.</div>
+        <div class="src">Informal slogan · 1994</div>
+      </div>
+
+      <div class="stat">
+        <div class="big">1994</div>
+        <div>
+          <div class="label">Founded</div>
+          <div class="what">4 June, northern Belgium &mdash; with 30 + future members.</div>
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="big">7</div>
+        <div>
+          <div class="label">Team today</div>
+          <div class="what">Headquartered in a former school, Brussels.</div>
+        </div>
+      </div>
+
+      <div class="stat coral">
+        <div class="big">2014</div>
+        <div>
+          <div class="label">Creative Europe</div>
+          <div class="what">Co-funded by the networks strand since then.</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Full-width 2-column prose -->
+    <article class="prose">
+      <p class="opener">
+        The European Network of Cultural Centres (ENCC) is the brainchild of
+        <a href="#" target="_blank" rel="noopener">a group of cultural operators</a>
+        from <strong>Flanders, Finland and Poland</strong>, who on <strong>June 4<sup>th</sup>,
+        1994</strong>, gathered together with 30 other future members in a cultural centre in
+        northern Belgium to celebrate the organisation&rsquo;s
+        <a href="#" target="_blank" rel="noopener">official launch</a>. The informal slogan was
+        <q>The network for those who never dreamed they could go European</q>. Creative Europe
+        and its funding programmes did not yet exist. Communication happened mainly through
+        postcards and typewritten newsletters, though the ENCC office was an early adopter of
+        email &mdash; this focus on tech is still present in the network, though today it takes
+        a more critical approach.
+      </p>
+
+      <p>
+        Nowadays, the ENCC office consists of a group of
+        <a href="#" target="_blank" rel="noopener">seven people</a> headquartered on the top
+        floor of a former school in the centre of <strong>Brussels</strong>. Their daily
+        efforts go towards organising trainings on EU cooperation, consulting with members,
+        circulating calls and opportunities, writing project applications, and encouraging
+        discussion and experimentation around transversal issues such as inclusion, equality,
+        non-urban culture, digital ethics, working conditions in culture and the arts, and the
+        ecological transition.
+      </p>
+
+      <p class="final">
+        ENCC has been co-funded by the Creative Europe networks strand since <strong>2014</strong>.
+      </p>
+    </article>
+
+    <!-- Focus areas: full-width horizontal band -->
+    <section class="focus-list">
+      <div class="label">Transversal focus areas</div>
+      <ul>
+        <li>Inclusion</li>
+        <li>Equality</li>
+        <li>Non-urban culture</li>
+        <li class="coral">Digital ethics</li>
+        <li>Working conditions in culture &amp; the arts</li>
+        <li>Ecological transition</li>
+      </ul>
+    </section>
+
+  </main>
+
+  <!-- Green ENCC footer -->
+  <footer class="page-footer">
+    <div class="footer-brand">
+      <svg class="mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M14 22 C 10 14, 22 6, 30 10 C 36 13, 32 22, 24 22 C 18 22, 18 28, 14 22 Z" fill="currentColor"/>
+        <path d="M36 14 C 44 8, 56 14, 54 24 C 52 32, 42 30, 40 24 C 38 20, 32 18, 36 14 Z" fill="currentColor"/>
+        <path d="M10 36 C 8 28, 22 26, 26 34 C 30 42, 22 50, 14 46 C 8 43, 12 40, 10 36 Z" fill="currentColor"/>
+        <path d="M34 38 C 44 32, 58 40, 54 50 C 50 60, 36 58, 34 50 C 32 44, 28 42, 34 38 Z" fill="currentColor"/>
+        <circle cx="46" cy="20" r="2.5" fill="currentColor"/>
+        <circle cx="20" cy="46" r="2.5" fill="currentColor"/>
+      </svg>
+      <span class="label">European Network<br>of Cultural Centres</span>
+    </div>
+
+    <div class="footer-social" aria-label="Social media">
+      <a href="#" aria-label="PeerTube" title="PeerTube">▶</a>
+      <a href="#" aria-label="Facebook" title="Facebook">f</a>
+      <a href="#" aria-label="Instagram" title="Instagram">◉</a>
+      <a href="#" aria-label="LinkedIn" title="LinkedIn">in</a>
+      <a href="#" aria-label="Mastodon" title="Mastodon">M</a>
+      <a href="#" aria-label="Flickr" title="Flickr">●</a>
+    </div>
+
+    <div class="footer-eu">
+      <span class="eu-flag" aria-hidden="true">★</span>
+      <span>Co-funded by<br>the European Union</span>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Culture and AI — ENCC Event · 28 May 2025</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --encc-green:        #234029;
+      --encc-green-deep:   #15291C;
+      --encc-green-soft:   #4A6B52;
+      --encc-cream:        #F8F5EE;
+      --encc-cream-soft:   #FCFAF4;
+      --ink:               #0E1B3D;
+      --ink-soft:          #2A335A;
+      --muted:             #6B7280;
+      --rule:              #E5E1D6;
+      --coral:             #E07A55;
+      --coral-deep:        #C45F3A;
+      --white:             #FFFFFF;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Arial, sans-serif;
+      color: var(--ink);
+      background: var(--encc-cream-soft);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow-x: hidden;
+    }
+
+    /* Background decoration */
+    .deco { position: fixed; pointer-events: none; z-index: 0; }
+    .deco svg { display: block; width: 100%; height: 100%; }
+    .deco-tr { top: -120px; right: -160px; width: 540px; height: 540px; opacity: 0.08; }
+    .deco-bl { bottom: -180px; left: -140px; width: 480px; height: 480px; opacity: 0.06; }
+
+    /* Top bar */
+    .top-bar {
+      position: relative; z-index: 2;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 32px 64px 0;
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-mark { width: 56px; height: 56px; color: var(--encc-green); }
+    .brand-text {
+      font-family: 'Fraunces', serif;
+      font-weight: 700; font-size: 13px;
+      letter-spacing: 3px; color: var(--encc-green);
+      text-transform: uppercase;
+    }
+    .top-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 16px;
+      background: var(--white); border: 1px solid var(--rule);
+      border-radius: 999px;
+      color: var(--encc-green);
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 1.5px; text-transform: uppercase;
+    }
+    .top-tag::before {
+      content: ''; width: 6px; height: 6px;
+      border-radius: 50%; background: var(--coral);
+    }
+
+    .container {
+      position: relative; z-index: 1;
+      max-width: 1440px; margin: 0 auto;
+      padding: 24px 64px 40px;
+      display: grid;
+      grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+      gap: 56px;
+      align-items: start;
+    }
+
+    /* ── Left rail: Working Group context ─────────────────────────── */
+    .rail {
+      position: sticky;
+      top: 32px;
+    }
+
+    .rail-crumb {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--encc-green-soft);
+      margin-bottom: 16px;
+    }
+    .rail-crumb .home {
+      width: 26px; height: 26px;
+      border-radius: 999px;
+      background: var(--encc-cream);
+      color: var(--encc-green);
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .rail-crumb .arrow { color: var(--coral); }
+
+    .rail h2 {
+      font-family: 'Fraunces', serif;
+      font-weight: 800;
+      font-size: 44px;
+      line-height: 1.0;
+      letter-spacing: -1.6px;
+      color: var(--ink);
+      margin-bottom: 14px;
+    }
+    .rail-date {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 13px; color: var(--muted);
+      margin-bottom: 28px;
+    }
+    .rail-date::before {
+      content: '▣';
+      color: var(--encc-green);
+    }
+
+    /* RGB pixel art card (compact, square) */
+    .pixel-card {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      max-width: 280px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #0A0A0A;
+      box-shadow: 0 20px 40px -30px rgba(35, 64, 41, 0.35);
+    }
+    .pixel-card svg { width: 100%; height: 100%; display: block; }
+    .pixel-cap {
+      position: absolute;
+      bottom: 12px; left: 14px; right: 14px;
+      display: flex; justify-content: space-between; align-items: center;
+      color: rgba(255,255,255,0.7);
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      z-index: 2;
+    }
+    .pixel-cap span:last-child { color: var(--coral); }
+
+    /* ── Main: Event ──────────────────────────────────────────────── */
+    .event {
+      min-width: 0;
+    }
+
+    .event-crumb {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-size: 13px; font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 28px;
+    }
+    .event-crumb .home {
+      width: 28px; height: 28px;
+      border-radius: 999px;
+      background: var(--encc-cream);
+      color: var(--encc-green);
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .event-crumb .arrow { color: var(--coral); font-size: 16px; }
+    .event-crumb .label { color: var(--coral); }
+
+    .event h1 {
+      font-family: 'Fraunces', serif;
+      font-weight: 800;
+      font-size: clamp(40px, 4.4vw, 60px);
+      line-height: 1.05;
+      letter-spacing: -1.5px;
+      color: var(--ink);
+      margin-bottom: 22px;
+      max-width: 22ch;
+    }
+    .event h1 .ai {
+      color: var(--encc-green);
+    }
+
+    .event-meta {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      margin-bottom: 24px;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .meta-item {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-size: 17px; font-weight: 500;
+      color: var(--ink-soft);
+    }
+    .meta-item .ic {
+      width: 32px; height: 32px;
+      border-radius: 999px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--encc-cream);
+      color: var(--encc-green);
+      font-size: 15px;
+    }
+    .meta-item .live::before {
+      content: '';
+      display: inline-block;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--coral);
+      box-shadow: 0 0 0 4px rgba(224, 122, 85, 0.18);
+      margin-right: 8px;
+      animation: pulse 2s infinite ease-in-out;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(224, 122, 85, 0.18); }
+      50%      { box-shadow: 0 0 0 7px rgba(224, 122, 85, 0.05); }
+    }
+
+    .event-lede {
+      font-size: 21px;
+      line-height: 1.45;
+      color: var(--ink);
+      margin-bottom: 22px;
+      max-width: 64ch;
+      font-weight: 500;
+    }
+
+    .register-callout {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 24px; flex-wrap: wrap;
+      padding: 22px 28px;
+      background: var(--white);
+      border: 1px solid var(--rule);
+      border-left: 4px solid var(--coral);
+      border-radius: 0 16px 16px 0;
+      margin-bottom: 40px;
+    }
+    .register-callout .rc-text {
+      font-size: 16px;
+      color: var(--ink);
+      font-weight: 500;
+    }
+    .register-callout .rc-text a {
+      color: var(--coral-deep);
+      font-weight: 700;
+      text-decoration: none;
+      border-bottom: 2px solid var(--coral);
+      padding-bottom: 1px;
+    }
+    .register-btn {
+      flex-shrink: 0;
+      padding: 12px 22px;
+      background: var(--coral);
+      color: var(--white);
+      border-radius: 999px;
+      text-decoration: none;
+      font-size: 14px; font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: transform 0.2s ease;
+    }
+    .register-btn:hover { transform: translateY(-2px); }
+
+    .agenda-intro {
+      font-size: 18px;
+      color: var(--ink-soft);
+      line-height: 1.55;
+      margin-bottom: 18px;
+    }
+    .agenda-intro strong {
+      color: var(--encc-green-deep);
+      font-weight: 700;
+    }
+
+    .agenda {
+      list-style: none;
+      display: flex; flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .agenda li {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 22px;
+      align-items: start;
+      padding: 24px 28px;
+      background: var(--white);
+      border: 1px solid var(--rule);
+      border-radius: 18px;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .agenda li:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px -28px rgba(35, 64, 41, 0.3);
+    }
+    .agenda .num {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      background: var(--encc-green);
+      color: var(--white);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-family: 'Fraunces', serif;
+      font-weight: 700; font-size: 22px;
+    }
+    .agenda p {
+      font-size: 19px;
+      line-height: 1.55;
+      color: var(--ink-soft);
+    }
+    .agenda p a {
+      color: var(--coral-deep);
+      text-decoration: none;
+      border-bottom: 1px dashed var(--coral);
+    }
+
+    .nb {
+      padding: 18px 22px;
+      background: var(--encc-cream);
+      border-radius: 14px;
+      font-size: 16px;
+      color: var(--ink-soft);
+      font-style: italic;
+      display: flex; gap: 14px; align-items: center;
+    }
+    .nb-badge {
+      flex-shrink: 0;
+      width: 40px; height: 40px;
+      border-radius: 999px;
+      background: var(--encc-green);
+      color: var(--white);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-family: 'Fraunces', serif;
+      font-weight: 700; font-size: 14px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Footer */
+    .page-footer {
+      position: relative; z-index: 1;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px 64px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--rule);
+      font-size: 13px; color: var(--muted);
+    }
+    .page-footer .signature {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      color: var(--encc-green);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .top-bar { padding: 24px 32px 0; }
+      .container { grid-template-columns: 1fr; gap: 48px; padding: 24px 32px 64px; }
+      .rail { position: static; }
+      .rail h2 { font-size: 36px; }
+      .pixel-card { aspect-ratio: 16 / 10; max-width: 420px; }
+      .page-footer { padding: 24px 32px 32px; flex-direction: column; gap: 12px; }
+    }
+    @media (max-width: 560px) {
+      .top-bar { padding: 18px 20px 0; flex-wrap: wrap; gap: 12px; }
+      .container { padding: 16px 20px 48px; }
+      .event h1 { letter-spacing: -1px; }
+      .register-callout { flex-direction: column; align-items: flex-start; }
+      .agenda li { padding: 18px; grid-template-columns: 32px 1fr; gap: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Decorative ENCC-style organic shapes -->
+  <div class="deco deco-tr" aria-hidden="true">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M40 120 C 20 80, 50 30, 100 30 C 160 30, 180 70, 170 120 C 160 170, 100 180, 70 160 C 50 145, 50 135, 40 120 Z" fill="#234029"/>
+      <circle cx="60" cy="60" r="8" fill="#234029"/>
+      <circle cx="150" cy="55" r="5" fill="#234029"/>
+      <circle cx="150" cy="140" r="10" fill="#234029"/>
+    </svg>
+  </div>
+  <div class="deco deco-bl" aria-hidden="true">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M30 80 C 40 30, 110 20, 150 50 C 190 80, 180 150, 130 170 C 80 190, 30 160, 30 120 Z" fill="#234029"/>
+      <circle cx="160" cy="120" r="7" fill="#234029"/>
+      <circle cx="70" cy="40" r="4" fill="#234029"/>
+    </svg>
+  </div>
+
+  <!-- ── Top bar ── -->
+  <header class="top-bar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M14 22 C 10 14, 22 6, 30 10 C 36 13, 32 22, 24 22 C 18 22, 18 28, 14 22 Z" fill="currentColor"/>
+        <path d="M36 14 C 44 8, 56 14, 54 24 C 52 32, 42 30, 40 24 C 38 20, 32 18, 36 14 Z" fill="currentColor"/>
+        <path d="M10 36 C 8 28, 22 26, 26 34 C 30 42, 22 50, 14 46 C 8 43, 12 40, 10 36 Z" fill="currentColor"/>
+        <path d="M34 38 C 44 32, 58 40, 54 50 C 50 60, 36 58, 34 50 C 32 44, 28 42, 34 38 Z" fill="currentColor"/>
+        <circle cx="46" cy="20" r="2.5" fill="currentColor"/>
+        <circle cx="20" cy="46" r="2.5" fill="currentColor"/>
+      </svg>
+      <span class="brand-text">European Network of Cultural Centres</span>
+    </div>
+    <span class="top-tag">Event</span>
+  </header>
+
+  <main class="container">
+
+    <!-- ── Left rail: Working Group context ── -->
+    <aside class="rail">
+      <div class="rail-crumb">
+        <span class="home">⌂</span>
+        <span class="arrow">›</span>
+        <span>Working groups</span>
+      </div>
+      <h2>Digital Ethics</h2>
+      <div class="rail-date">1 Sep 2020 – 31 Aug 2025</div>
+
+      <div class="pixel-card">
+        <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <pattern id="rgbpx2" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+              <rect x="0" y="0" width="20" height="20" fill="#0A0A0A"/>
+              <rect x="3" y="3" width="3" height="14" fill="#E84B4B" opacity="0.75"/>
+              <rect x="7" y="3" width="3" height="14" fill="#4DBE5E" opacity="0.75"/>
+              <rect x="11" y="3" width="3" height="14" fill="#4A7BE0" opacity="0.75"/>
+            </pattern>
+            <pattern id="rgbpxDim2" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+              <rect x="0" y="0" width="20" height="20" fill="#0A0A0A"/>
+              <rect x="3" y="3" width="3" height="14" fill="#E84B4B" opacity="0.25"/>
+              <rect x="7" y="3" width="3" height="14" fill="#4DBE5E" opacity="0.25"/>
+              <rect x="11" y="3" width="3" height="14" fill="#4A7BE0" opacity="0.25"/>
+            </pattern>
+            <mask id="aiMask">
+              <rect width="400" height="500" fill="black"/>
+              <text x="200" y="340" text-anchor="middle"
+                    font-family="Fraunces, serif" font-weight="800"
+                    font-size="360" fill="white" letter-spacing="-12">AI</text>
+            </mask>
+          </defs>
+
+          <rect width="400" height="500" fill="url(#rgbpxDim2)"/>
+          <rect width="400" height="500" fill="url(#rgbpx2)" mask="url(#aiMask)"/>
+
+          <radialGradient id="vig2" cx="50%" cy="60%" r="70%">
+            <stop offset="60%" stop-color="black" stop-opacity="0"/>
+            <stop offset="100%" stop-color="black" stop-opacity="0.55"/>
+          </radialGradient>
+          <rect width="400" height="500" fill="url(#vig2)"/>
+        </svg>
+        <div class="pixel-cap">
+          <span>RGB · Subpixel</span>
+          <span>● AI</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Event ── -->
+    <section class="event">
+
+      <div class="event-crumb">
+        <span class="home">⌂</span>
+        <span class="arrow">›</span>
+        <span class="label">Events</span>
+      </div>
+
+      <h1>Culture and <span class="ai">AI</span>: shaping alternative narratives, finding a common voice</h1>
+
+      <div class="event-meta">
+        <span class="meta-item">
+          <span class="ic">⊙</span>
+          <span><span class="live"></span>Online</span>
+        </span>
+        <span class="meta-item">
+          <span class="ic">▣</span>
+          28 May 2025
+        </span>
+        <span class="meta-item">
+          <span class="ic">⏲</span>
+          10:30 – 12:00 CET
+        </span>
+      </div>
+
+      <p class="event-lede">
+        Share your experiences with AI and have your say on the European Commission&rsquo;s AI
+        strategy at the first 2025 meeting of our Digital Ethics working group.
+      </p>
+
+      <p class="agenda-intro">
+        Our work on Artificial Intelligence continues. On <strong>May 28<sup>th</sup>, from
+        10:30 until 12:00</strong>, join the upcoming gathering of our Digital Ethics working
+        group. On the agenda:
+      </p>
+
+      <ol class="agenda">
+        <li>
+          <span class="num">1</span>
+          <p>
+            We will share our experiences, doubts, frustrations, and feelings about so-called
+            Artificial Intelligence and its use in cultural work. These inputs will then feature,
+            in the form of short stories, in our upcoming dedicated publication.
+          </p>
+        </li>
+        <li>
+          <span class="num">2</span>
+          <p>
+            The European Commission is currently drafting a strategy that aims to push
+            developments in AI and its capillary adoption by industry as well as the public
+            sector. We will discuss this and a possible common statement to publish as part of
+            the related <a href="#" target="_blank" rel="noopener">call for vidence</a>
+            (i.e., public consultation).
+          </p>
+        </li>
+      </ol>
+
+      <div class="nb">
+        <span class="nb-badge">N.B.</span>
+        <span>
+          No specific knowledge on digital is needed to join our meetings, just a genuine
+          interest in the topic.
+        </span>
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer class="page-footer">
+    <span>ENCC · Digital Ethics Working Group · Event</span>
+    <span class="signature">Ομάδα Εργασίας · Ψηφιακός Μετασχηματισμός &amp; AI · 2024–2026</span>
+  </footer>
+
+</body>
+</html>

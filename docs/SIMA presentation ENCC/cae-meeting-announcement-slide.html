@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CAE — Action Group on Digital &amp; AI: 2nd Meeting</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #FFFFFF; min-height: 100vh; overflow: hidden; }
+  body {
+    font-family: 'Inter', 'Arial Nova', Arial, system-ui, sans-serif;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+  }
+
+  /* ─── 16:9 slide ─── */
+  .slide {
+    width: 1920px; height: 1080px;
+    background: #FFFFFF;
+    position: relative;
+    overflow: hidden;
+    transform-origin: center center;
+    flex-shrink: 0;
+  }
+
+  /* ─── Top: black hero band with CAE pattern ─── */
+  .hero {
+    position: relative;
+    height: 360px;
+    background: #000000;
+    overflow: hidden;
+  }
+  .hero-pattern {
+    position: absolute;
+    inset: 0;
+    background-color: #000000;
+    background-image: url("public/cae-pattern-banner.png");
+    background-size: auto 100%;
+    background-repeat: repeat-x;
+    background-position: left center;
+  }
+  .hero-cae {
+    position: absolute;
+    top: 50%; right: 80px;
+    transform: translateY(-50%);
+    color: #FFFFFF;
+    font-weight: 800;
+    font-size: 62px;
+    line-height: 1.0;
+    letter-spacing: -1px;
+    z-index: 3;
+  }
+  .hero-cae span { display: block; }
+
+  /* ─── Michael Culture logo (overlapping right side) ─── */
+  .mc-card {
+    position: absolute;
+    top: 290px; right: 80px;
+    background: #000000;
+    color: #FFFFFF;
+    padding: 28px 40px;
+    display: flex; align-items: center; gap: 22px;
+    border-radius: 4px;
+    z-index: 5;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+  }
+  .mc-card .nodes {
+    width: 90px; height: 90px;
+    flex-shrink: 0;
+  }
+  .mc-card .label {
+    font-family: 'Inter', sans-serif;
+    line-height: 1.0;
+  }
+  .mc-card .label .row1 { font-size: 38px; font-weight: 800; }
+  .mc-card .label .row2 { font-size: 38px; font-weight: 800; margin-top: 4px; }
+  .mc-card .label .row3 { font-size: 14px; font-weight: 500; letter-spacing: 1.5px; margin-top: 8px; opacity: 0.9; }
+
+  /* ─── Body content ─── */
+  .body-pane {
+    padding: 80px 100px 70px 100px;
+    color: #1a1a1a;
+    position: relative;
+  }
+
+  .title {
+    font-size: 52px;
+    font-weight: 800;
+    line-height: 1.18;
+    letter-spacing: -0.5px;
+    color: #1a1a1a;
+    margin-bottom: 36px;
+    max-width: 1100px;
+  }
+
+  .description {
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1.55;
+    color: #1a1a1a;
+    margin-bottom: 64px;
+    max-width: 1180px;
+  }
+
+  .meta {
+    font-size: 22px;
+    line-height: 1.65;
+    color: #1a1a1a;
+    margin-bottom: 56px;
+  }
+  .meta .label { font-weight: 700; }
+  .meta .muted { color: #6B6B6B; }
+
+  /* ─── Bracket tags (close to original) ─── */
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 32px;
+    font-size: 24px;
+    font-weight: 500;
+    color: #1a1a1a;
+    line-height: 1.2;
+  }
+  .tag {
+    display: inline-flex;
+    align-items: baseline;
+    white-space: nowrap;
+  }
+  .tag .br {
+    color: #EE2A8C;
+    font-weight: 400;
+    font-size: 28px;
+    margin: 0 8px;
+    line-height: 1;
+  }
+
+  /* ─── Subtle decorative accent (CAE colors, top-right of body) ─── */
+  .body-accent {
+    position: absolute;
+    top: 60px; right: 80px;
+    width: 80px; height: 80px;
+    border: 4px solid #EE2A8C;
+    border-radius: 50%;
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .body-accent::after {
+    content: '';
+    position: absolute;
+    top: 28px; left: 28px;
+    width: 24px; height: 24px;
+    background: #6B2D7B;
+    border-radius: 50%;
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="slide" id="slide">
+
+  <!-- Top: black hero with CAE pattern -->
+  <div class="hero">
+    <div class="hero-pattern"></div>
+    <div class="hero-cae">
+      <span>culture</span>
+      <span>action</span>
+      <span>europe</span>
+    </div>
+  </div>
+
+  <!-- Michael Culture logo (overlapping band) -->
+  <div class="mc-card">
+    <svg class="nodes" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+      <line x1="20" y1="60" x2="55" y2="20" stroke="#FFFFFF" stroke-width="2"/>
+      <line x1="55" y1="20" x2="78" y2="40" stroke="#FFFFFF" stroke-width="2"/>
+      <line x1="55" y1="20" x2="58" y2="55" stroke="#FFFFFF" stroke-width="2"/>
+      <line x1="78" y1="40" x2="58" y2="55" stroke="#FFFFFF" stroke-width="2"/>
+      <circle cx="20" cy="60" r="14" fill="#FFFFFF"/>
+      <circle cx="55" cy="20" r="7" fill="#FFFFFF"/>
+      <circle cx="78" cy="40" r="6" fill="#FFFFFF"/>
+      <circle cx="58" cy="55" r="5" fill="#FFFFFF"/>
+    </svg>
+    <div class="label">
+      <div class="row1">Michael</div>
+      <div class="row2">Culture</div>
+      <div class="row3">Association</div>
+    </div>
+  </div>
+
+  <!-- Body content -->
+  <div class="body-pane">
+
+    <div class="body-accent"></div>
+
+    <h1 class="title">Action Group on Digital and AI: AI Strategy for the CCS (2nd Meeting)</h1>
+
+    <p class="description">
+      The Digital and AI action group will reconvene to review our initial draft recommendations for the
+      upcoming AI Strategy for the CCS to refine its content and ensure no critical perspectives are missing
+      before submission. The strategy is in the initial drafting stages, and the European Commission is seeking
+      civil society input.
+    </p>
+
+    <div class="meta">
+      <div><span class="label">Where:</span> Online</div>
+      <div><span class="label">When:</span> 2 April 2026&nbsp;&nbsp;11:00 – 12:30</div>
+    </div>
+
+    <div class="tags">
+      <span class="tag"><span class="br">[</span>cultural policies<span class="br">]</span></span>
+      <span class="tag"><span class="br">[</span>digital transformation<span class="br">]</span></span>
+      <span class="tag"><span class="br">[</span>culture as a sector and vector<span class="br">]</span></span>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  function fitSlide() {
+    const slide = document.getElementById('slide');
+    const scaleW = window.innerWidth / 1920;
+    const scaleH = window.innerHeight / 1080;
+    const scale = Math.min(scaleW, scaleH);
+    slide.style.transform = 'scale(' + scale + ')';
+  }
+  window.addEventListener('resize', fitSlide);
+  fitSlide();
+</script>
+
+</body>
+</html>
