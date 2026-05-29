@@ -57,15 +57,18 @@ if (!STRAPI_URL || !TOKEN) {
   process.exit(1);
 }
 
-// Collections to back up
+// Collections to back up.
+// NOTE: do NOT include pagination[*] here — fetchAllPaginated handles paging.
+// Strapi silently caps pagination[limit] at 100 regardless of the requested value,
+// so any single fetch with limit=1000 will lose entries beyond the 100th.
 const COLLECTIONS = [
-  { endpoint: 'members?populate=*&pagination[limit]=1000', name: 'members', labelField: 'Name' },
-  { endpoint: 'activities?populate=*&pagination[limit]=1000', name: 'activities', labelField: 'Title' },
-  { endpoint: 'open-calls?populate=*&pagination[limit]=1000', name: 'open-calls', labelField: 'Title' },
-  { endpoint: 'projects?populate[cover_image]=true&populate[project_images]=true&populate[partners][populate]=logo&populate[external_links]=true&populate[project_entries][populate][cover_image]=true&populate[supporters_banner_light]=true&populate[supporters_banner_dark]=true&pagination[limit]=1000', name: 'projects', labelField: 'title' },
-  { endpoint: 'working-groups?populate=*&pagination[limit]=1000', name: 'working-groups', labelField: 'Title' },
-  { endpoint: 'coordination-teams?populate=*&pagination[limit]=1000', name: 'coordination-teams', labelField: 'name' },
-  { endpoint: 'newsletters?populate=*&pagination[limit]=1000', name: 'newsletters', labelField: 'Title' },
+  { endpoint: 'members?populate=*', name: 'members', labelField: 'Name' },
+  { endpoint: 'activities?populate=*', name: 'activities', labelField: 'Title' },
+  { endpoint: 'open-calls?populate=*', name: 'open-calls', labelField: 'Title' },
+  { endpoint: 'projects?populate[cover_image]=true&populate[project_images]=true&populate[partners][populate]=logo&populate[external_links]=true&populate[project_entries][populate][cover_image]=true&populate[supporters_banner_light]=true&populate[supporters_banner_dark]=true', name: 'projects', labelField: 'title' },
+  { endpoint: 'working-groups?populate=*', name: 'working-groups', labelField: 'Title' },
+  { endpoint: 'coordination-teams?populate=*', name: 'coordination-teams', labelField: 'name' },
+  { endpoint: 'newsletters?populate=*', name: 'newsletters', labelField: 'Title' },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────
@@ -96,12 +99,12 @@ function fetchJSON(url) {
   });
 }
 
-function downloadFile(url, destPath) {
+function downloadFileOnce(url, destPath) {
   return new Promise((resolve, reject) => {
     const mod = url.startsWith('https') ? https : http;
     const req = mod.get(url, { timeout: 120000 }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        downloadFile(res.headers.location, destPath).then(resolve).catch(reject);
+        downloadFileOnce(res.headers.location, destPath).then(resolve).catch(reject);
         return;
       }
       if (res.statusCode !== 200) {
@@ -116,6 +119,50 @@ function downloadFile(url, destPath) {
     req.on('error', reject);
     req.on('timeout', () => { req.destroy(); reject(new Error(`Timeout downloading ${url}`)); });
   });
+}
+
+async function downloadFile(url, destPath) {
+  // Transient Strapi Cloud errors (ECONNRESET, Timeout) are common — retry with backoff.
+  const delays = [1000, 3000, 8000];
+  let lastErr;
+  for (let attempt = 0; attempt <= delays.length; attempt++) {
+    try {
+      await downloadFileOnce(url, destPath);
+      return;
+    } catch (err) {
+      lastErr = err;
+      // Don't retry permanent failures (404, 403, etc.)
+      if (/HTTP (4\d\d)/.test(err.message)) throw err;
+      if (attempt < delays.length) {
+        await new Promise((r) => setTimeout(r, delays[attempt]));
+      }
+    }
+  }
+  throw lastErr;
+}
+
+/**
+ * Fetch every entry from a Strapi collection by paging through start/limit.
+ * Strapi caps pagination[limit] at 100 — must loop until meta.pagination.total is reached.
+ */
+async function fetchAllPaginated(endpoint, pageSize = 100) {
+  const base = `${STRAPI_URL}/api/${endpoint}`;
+  const sep = base.includes('?') ? '&' : '?';
+  const collected = [];
+  let start = 0;
+  let total = Infinity;
+  let lastMeta = null;
+  while (start < total) {
+    const url = `${base}${sep}pagination[start]=${start}&pagination[limit]=${pageSize}&pagination[withCount]=true`;
+    const page = await fetchJSON(url);
+    const rows = page?.data || [];
+    collected.push(...rows);
+    lastMeta = page?.meta || lastMeta;
+    total = page?.meta?.pagination?.total ?? collected.length;
+    if (rows.length === 0) break;
+    start += rows.length;
+  }
+  return { data: collected, meta: lastMeta };
 }
 
 /**
@@ -304,10 +351,12 @@ function syncToGoogleDrive(backupDir, dateStr) {
 
   try {
     const remotePath = `${RCLONE_REMOTE}/${dateStr}`;
-    execSync(`${rcloneBin} copy "${backupDir}" "${remotePath}" --stats-one-line --quiet`, {
+    // Each backup uploads a full ~2GB snapshot to a new date-stamped folder.
+    // 30 min wasn't enough on slow days — give it 3h and parallelise transfers.
+    execSync(`${rcloneBin} copy "${backupDir}" "${remotePath}" --transfers=8 --checkers=16 --stats-one-line --quiet`, {
       stdio: 'pipe',
-      timeout: 1800000, // 30 min timeout for large uploads
-      maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+      timeout: 10800000, // 3h timeout for large uploads
+      maxBuffer: 10 * 1024 * 1024,
     });
 
     // Clean old backups on Drive (keep last 5)
@@ -371,9 +420,10 @@ async function main() {
 
   for (const col of COLLECTIONS) {
     try {
-      const url = `${STRAPI_URL}/api/${col.endpoint}`;
       log(`Fetching ${col.name}...`);
-      const json = await fetchJSON(url);
+      const json = col.isSingle
+        ? await fetchJSON(`${STRAPI_URL}/api/${col.endpoint}`)
+        : await fetchAllPaginated(col.endpoint);
 
       const filePath = path.join(dataDir, `${col.name}.json`);
       fs.writeFileSync(filePath, JSON.stringify(json, null, 2));
