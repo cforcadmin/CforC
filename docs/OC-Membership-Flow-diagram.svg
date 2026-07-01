@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" font-family="'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+  <title>Διάγραμμα ροής εγγραφής νέου μέλους στο Operational Center</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2D2D2D"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="900" fill="#FFFFFF"/>
+
+  <!-- Box 1: ΑΙΤΗΣΗ -->
+  <rect x="200" y="30" width="500" height="85" rx="10" ry="10" fill="#FFF8F1" stroke="#2D2D2D" stroke-width="2"/>
+  <text x="220" y="60" font-size="20" font-weight="bold" fill="#FF8B6A">1.</text>
+  <text x="245" y="60" font-size="20" font-weight="bold" fill="#2D2D2D">ΑΙΤΗΣΗ</text>
+  <text x="220" y="86" font-size="14" fill="#444444">Υποψήφιο μέλος συμπληρώνει φόρμα στο site</text>
+  <text x="220" y="106" font-size="14" fill="#444444">(στοιχεία, βιογραφικό, φωτογραφία)</text>
+
+  <!-- Arrow 1 → 2 -->
+  <line x1="450" y1="115" x2="450" y2="150" stroke="#2D2D2D" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Box 2: ΨΗΦΟΦΟΡΙΑ ΔΟ -->
+  <rect x="200" y="150" width="500" height="85" rx="10" ry="10" fill="#FFF8F1" stroke="#2D2D2D" stroke-width="2"/>
+  <text x="220" y="180" font-size="20" font-weight="bold" fill="#FF8B6A">2.</text>
+  <text x="245" y="180" font-size="20" font-weight="bold" fill="#2D2D2D">ΨΗΦΟΦΟΡΙΑ ΔΟ (έως 14 ημέρες)</text>
+  <text x="220" y="206" font-size="14" fill="#444444">Τα 5 μέλη της ΔΟ ψηφίζουν στο OC</text>
+  <text x="220" y="226" font-size="14" fill="#444444">(μυστική ψηφοφορία μέχρι το κλείσιμο)</text>
+
+  <!-- Split T-junction -->
+  <line x1="450" y1="235" x2="450" y2="270" stroke="#2D2D2D" stroke-width="2"/>
+  <line x1="250" y1="270" x2="650" y2="270" stroke="#2D2D2D" stroke-width="2"/>
+  <line x1="250" y1="270" x2="250" y2="298" stroke="#2D2D2D" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="650" y1="270" x2="650" y2="298" stroke="#2D2D2D" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ❌ ΑΠΟΡΡΙΨΗ label (red X drawn as two strokes) -->
+  <line x1="178" y1="316" x2="194" y2="332" stroke="#DC2626" stroke-width="3" stroke-linecap="round"/>
+  <line x1="194" y1="316" x2="178" y2="332" stroke="#DC2626" stroke-width="3" stroke-linecap="round"/>
+  <text x="205" y="330" font-size="18" font-weight="bold" fill="#2D2D2D">ΑΠΟΡΡΙΨΗ</text>
+
+  <!-- ✅ ΕΓΚΡΙΣΗ label (green checkmark) -->
+  <path d="M 580 322 L 590 332 L 604 314" stroke="#16A34A" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="612" y="330" font-size="18" font-weight="bold" fill="#2D2D2D">ΕΓΚΡΙΣΗ</text>
+
+  <!-- Arrows from labels down into the branch boxes -->
+  <line x1="250" y1="342" x2="250" y2="378" stroke="#2D2D2D" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="650" y1="342" x2="650" y2="378" stroke="#2D2D2D" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Rejection box (left branch) -->
+  <rect x="80" y="380" width="340" height="245" rx="10" ry="10" fill="#FFF8F1" stroke="#2D2D2D" stroke-width="2"/>
+  <text x="100" y="412" font-size="17" font-weight="bold" fill="#2D2D2D">Email απόρριψης</text>
+  <text x="100" y="445" font-size="14" fill="#444444">Η Κοινότητα συντάσσει</text>
+  <text x="100" y="465" font-size="14" fill="#444444">(ή προσαρμόζει το προσχέδιο)</text>
+  <text x="100" y="485" font-size="14" fill="#444444">και το στέλνει στο/η υποψ. μέλος.</text>
+  <text x="100" y="525" font-size="14" fill="#444444">Η υπόλοιπη ΔΟ ενημερώνεται</text>
+  <text x="100" y="545" font-size="14" fill="#444444">μέσω OC (όχι email).</text>
+  <!-- Terminal marker -->
+  <rect x="100" y="585" width="14" height="14" fill="#FF8B6A"/>
+  <text x="125" y="598" font-size="15" font-weight="bold" fill="#FF8B6A">ΤΕΛΟΣ ΡΟΗΣ</text>
+
+  <!-- Box 3: ΠΛΗΡΩΜΗ -->
+  <rect x="460" y="380" width="380" height="85" rx="10" ry="10" fill="#FFF8F1" stroke="#2D2D2D" stroke-width="2"/>
+  <text x="480" y="410" font-size="20" font-weight="bold" fill="#FF8B6A">3.</text>
+  <text x="505" y="410" font-size="20" font-weight="bold" fill="#2D2D2D">ΠΛΗΡΩΜΗ</text>
+  <text x="480" y="436" font-size="14" fill="#444444">Στέλνεται email με οδηγίες πληρωμής</text>
+  <text x="480" y="456" font-size="14" fill="#444444">Υποψ. μέλος πληρώνει και επιβεβαιώνει</text>
+
+  <!-- Arrow 3 → 4 -->
+  <line x1="650" y1="465" x2="650" y2="495" stroke="#2D2D2D" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Box 4: ΕΠΙΒΕΒΑΙΩΣΗ ΤΑΜΙΑ -->
+  <rect x="460" y="495" width="380" height="85" rx="10" ry="10" fill="#FFF8F1" stroke="#2D2D2D" stroke-width="2"/>
+  <text x="480" y="525" font-size="20" font-weight="bold" fill="#FF8B6A">4.</text>
+  <text x="505" y="525" font-size="20" font-weight="bold" fill="#2D2D2D">ΕΠΙΒΕΒΑΙΩΣΗ ΤΑΜΙΑ</text>
+  <text x="480" y="551" font-size="14" fill="#444444">Ο/η Ταμίας ελέγχει την τράπεζα,</text>
+  <text x="480" y="571" font-size="14" fill="#444444">πατάει «Επιβεβαίωση» στο OC</text>
+
+  <!-- Arrow 4 → 5 -->
+  <line x1="650" y1="580" x2="650" y2="610" stroke="#2D2D2D" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Box 5: ΑΥΤΟΜΑΤΗ ΑΠΟΔΕΙΞΗ -->
+  <rect x="460" y="610" width="380" height="85" rx="10" ry="10" fill="#FFF8F1" stroke="#2D2D2D" stroke-width="2"/>
+  <text x="480" y="640" font-size="20" font-weight="bold" fill="#FF8B6A">5.</text>
+  <text x="505" y="640" font-size="20" font-weight="bold" fill="#2D2D2D">ΑΥΤΟΜΑΤΗ ΑΠΟΔΕΙΞΗ</text>
+  <text x="480" y="666" font-size="14" fill="#444444">PDF παράγεται και στέλνεται στο μέλος</text>
+  <text x="480" y="686" font-size="14" fill="#444444">Ανεβαίνει σε φάκελο Google Drive</text>
+
+  <!-- Arrow 5 → 6 -->
+  <line x1="650" y1="695" x2="650" y2="725" stroke="#2D2D2D" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Box 6: ΠΡΟΦΙΛ ΣΤΟ SITE -->
+  <rect x="460" y="725" width="380" height="155" rx="10" ry="10" fill="#FFF8F1" stroke="#2D2D2D" stroke-width="2"/>
+  <text x="480" y="755" font-size="20" font-weight="bold" fill="#FF8B6A">6.</text>
+  <text x="505" y="755" font-size="20" font-weight="bold" fill="#2D2D2D">ΠΡΟΦΙΛ ΣΤΟ SITE</text>
+  <text x="480" y="781" font-size="14" fill="#444444">Email στο μέλος: «συμπλήρωσε το προφίλ»</text>
+  <text x="480" y="801" font-size="14" fill="#444444">Μετά 7 ημέρες ορατό στα συνδεδεμένα μέλη</text>
+  <text x="480" y="821" font-size="14" fill="#444444">Δημόσιο μόνο με ρητή έγκριση</text>
+  <!-- Terminal marker -->
+  <rect x="480" y="848" width="14" height="14" fill="#FF8B6A"/>
+  <text x="505" y="861" font-size="15" font-weight="bold" fill="#FF8B6A">ΤΕΛΟΣ ΡΟΗΣ</text>
+</svg>
