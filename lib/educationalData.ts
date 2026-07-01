@@ -520,6 +520,15 @@ export const educationalCategories: Category[] = [
         externalUrl: 'https://drive.google.com/drive/folders/1gYnjrFw1c6MjP8ZgxmCwfq02RsSBTfKD?usp=share_link',
         resources: [],
       },
+      {
+        key: 'advocacy-ai-sima',
+        name: 'Εργαστήριο Συνηγορίας & ΤΝ - Σ.Η.μα',
+        fullName: 'Εργαστήριο Συνηγορίας & ΤΝ - Σ.Η.μα',
+        description: 'Εργαστήριο για συνηγορία και Τεχνητή Νοημοσύνη, στο πλαίσιο του έργου Σ.Η.μα.',
+        engDescription: 'Workshop on advocacy and Artificial Intelligence, from the Σ.Η.μα project.',
+        externalUrl: 'https://drive.google.com/file/d/11KFdIh9Q4SKjA73c8_49keko_Lw-mLBE/view?usp=drive_link',
+        resources: [],
+      },
     ],
   },
 
