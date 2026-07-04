@@ -96,12 +96,18 @@ function FlipCard({ call, getImageUrl }: { call: OpenCall; getImageUrl: (call: O
 
             <div className="p-5 flex flex-col flex-1">
               <div className="flex items-center gap-2 mb-3 flex-wrap">
-                <time
-                  dateTime={call.Deadline}
-                  className="inline-block bg-charcoal dark:bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-medium"
-                >
-                  {new Date(call.Deadline).toLocaleDateString('el-GR')}
-                </time>
+                {call.Deadline ? (
+                  <time
+                    dateTime={call.Deadline}
+                    className="inline-block bg-charcoal dark:bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-medium"
+                  >
+                    {new Date(call.Deadline).toLocaleDateString('el-GR')}
+                  </time>
+                ) : (
+                  <span className="inline-block bg-charcoal dark:bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                    <LocalizedText text="Ανοιχτή" engText="Ongoing" />
+                  </span>
+                )}
                 {call.Category && (
                   <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-full">
                     {call.Category}
@@ -145,12 +151,18 @@ function FlipCard({ call, getImageUrl }: { call: OpenCall; getImageUrl: (call: O
             <div className="p-6 flex flex-col">
               {/* Compact header */}
               <div className="flex items-center gap-2 mb-3 flex-wrap">
-                <time
-                  dateTime={call.Deadline}
-                  className="inline-block bg-charcoal dark:bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-medium"
-                >
-                  {new Date(call.Deadline).toLocaleDateString('el-GR')}
-                </time>
+                {call.Deadline ? (
+                  <time
+                    dateTime={call.Deadline}
+                    className="inline-block bg-charcoal dark:bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-medium"
+                  >
+                    {new Date(call.Deadline).toLocaleDateString('el-GR')}
+                  </time>
+                ) : (
+                  <span className="inline-block bg-charcoal dark:bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                    <LocalizedText text="Ανοιχτή" engText="Ongoing" />
+                  </span>
+                )}
                 {call.Category && (
                   <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-full">
                     {call.Category}
@@ -263,7 +275,7 @@ export default function OpenCallsContent() {
     today.setHours(0, 0, 0, 0)
     const years = new Set<number>()
     allOpenCalls
-      .filter(c => activeTab === 'previous' ? new Date(c.Deadline) < today : new Date(c.Deadline) >= today)
+      .filter(c => c.Deadline && (activeTab === 'previous' ? new Date(c.Deadline) < today : new Date(c.Deadline) >= today))
       .forEach(c => { if (c.Deadline) years.add(new Date(c.Deadline).getFullYear()) })
     return Array.from(years).sort((a, b) => b - a)
   }, [allOpenCalls, activeTab])
@@ -276,9 +288,10 @@ export default function OpenCallsContent() {
     let result = [...allOpenCalls]
 
     if (activeTab === 'current') {
-      result = result.filter(c => new Date(c.Deadline) >= today)
+      // No deadline = ongoing, always current
+      result = result.filter(c => !c.Deadline || new Date(c.Deadline) >= today)
     } else {
-      result = result.filter(c => new Date(c.Deadline) < today)
+      result = result.filter(c => c.Deadline && new Date(c.Deadline) < today)
     }
 
     if (selectedCategory) {
@@ -286,7 +299,8 @@ export default function OpenCallsContent() {
     }
 
     if (selectedYear) {
-      result = result.filter(c => new Date(c.Deadline).getFullYear() === selectedYear)
+      // Year filter naturally excludes no-deadline entries
+      result = result.filter(c => c.Deadline && new Date(c.Deadline).getFullYear() === selectedYear)
     }
 
     if (searchQuery) {
@@ -297,15 +311,18 @@ export default function OpenCallsContent() {
       )
     }
 
+    // In "current" tab, ongoing (no-deadline) calls sort to the top;
+    // among the rest we sort by deadline as before.
+    const timeOf = (d: string | undefined, fallback: number) => d ? new Date(d).getTime() : fallback
     if (sortMode === 'deadline-asc') {
       result.sort((a, b) => activeTab === 'current'
-        ? new Date(a.Deadline).getTime() - new Date(b.Deadline).getTime()
-        : new Date(b.Deadline).getTime() - new Date(a.Deadline).getTime()
+        ? timeOf(a.Deadline, -Infinity) - timeOf(b.Deadline, -Infinity)
+        : timeOf(b.Deadline, 0) - timeOf(a.Deadline, 0)
       )
     } else {
       result.sort((a, b) => activeTab === 'current'
-        ? new Date(b.Deadline).getTime() - new Date(a.Deadline).getTime()
-        : new Date(a.Deadline).getTime() - new Date(b.Deadline).getTime()
+        ? timeOf(b.Deadline, Infinity) - timeOf(a.Deadline, Infinity)
+        : timeOf(a.Deadline, 0) - timeOf(b.Deadline, 0)
       )
     }
 
@@ -502,9 +519,15 @@ export default function OpenCallsContent() {
                 >
                   {/* Date + Category badges */}
                   <div className="flex flex-col items-center gap-1 min-w-[80px] flex-shrink-0">
-                    <time dateTime={call.Deadline} className="inline-block bg-charcoal dark:bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap">
-                      {new Date(call.Deadline).toLocaleDateString('el-GR')}
-                    </time>
+                    {call.Deadline ? (
+                      <time dateTime={call.Deadline} className="inline-block bg-charcoal dark:bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap">
+                        {new Date(call.Deadline).toLocaleDateString('el-GR')}
+                      </time>
+                    ) : (
+                      <span className="inline-block bg-charcoal dark:bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap">
+                        <LocalizedText text="Ανοιχτή" engText="Ongoing" />
+                      </span>
+                    )}
                     {call.Category && (
                       <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-2 py-0.5 rounded-full whitespace-nowrap max-w-[120px] truncate">
                         {call.Category}

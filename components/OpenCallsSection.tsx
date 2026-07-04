@@ -125,12 +125,18 @@ function FlipCard({ call, expired, onClick }: { call: OpenCall; expired?: boolea
 
             <div className="p-5 flex flex-col flex-1">
               <div className="flex items-center gap-2 mb-3 flex-wrap">
-                <time
-                  dateTime={call.Deadline}
-                  className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${expired ? 'bg-gray-500 text-white' : 'bg-charcoal dark:bg-gray-600 text-white'}`}
-                >
-                  {new Date(call.Deadline).toLocaleDateString('el-GR')}
-                </time>
+                {call.Deadline ? (
+                  <time
+                    dateTime={call.Deadline}
+                    className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${expired ? 'bg-gray-500 text-white' : 'bg-charcoal dark:bg-gray-600 text-white'}`}
+                  >
+                    {new Date(call.Deadline).toLocaleDateString('el-GR')}
+                  </time>
+                ) : (
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${expired ? 'bg-gray-500 text-white' : 'bg-charcoal dark:bg-gray-600 text-white'}`}>
+                    <LocalizedText text="Ανοιχτή" engText="Ongoing" />
+                  </span>
+                )}
                 {call.Category && (
                   <span className="inline-block bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400 text-xs px-3 py-1 rounded-full">
                     {call.Category}
@@ -165,12 +171,18 @@ function FlipCard({ call, expired, onClick }: { call: OpenCall; expired?: boolea
           >
             <div className="p-6 flex flex-col">
               <div className="flex items-center gap-2 mb-3 flex-wrap">
-                <time
-                  dateTime={call.Deadline}
-                  className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${expired ? 'bg-gray-500 text-white' : 'bg-charcoal dark:bg-gray-600 text-white'}`}
-                >
-                  {new Date(call.Deadline).toLocaleDateString('el-GR')}
-                </time>
+                {call.Deadline ? (
+                  <time
+                    dateTime={call.Deadline}
+                    className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${expired ? 'bg-gray-500 text-white' : 'bg-charcoal dark:bg-gray-600 text-white'}`}
+                  >
+                    {new Date(call.Deadline).toLocaleDateString('el-GR')}
+                  </time>
+                ) : (
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${expired ? 'bg-gray-500 text-white' : 'bg-charcoal dark:bg-gray-600 text-white'}`}>
+                    <LocalizedText text="Ανοιχτή" engText="Ongoing" />
+                  </span>
+                )}
                 {call.Category && (
                   <span className={`inline-block text-xs px-3 py-1 rounded-full ${expired ? 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 border border-gray-400 dark:border-gray-500' : 'bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border border-charcoal dark:border-gray-400'}`}>
                     {call.Category}
@@ -229,13 +241,18 @@ export default function OpenCallsSection() {
           const today = new Date()
           today.setHours(0, 0, 0, 0)
 
+          // No-deadline calls are ongoing — always active, sorted first
           const active = response.data
-            .filter(call => new Date(call.Deadline) >= today)
-            .sort((a, b) => new Date(a.Deadline).getTime() - new Date(b.Deadline).getTime())
+            .filter(call => !call.Deadline || new Date(call.Deadline) >= today)
+            .sort((a, b) => {
+              if (!a.Deadline) return -1
+              if (!b.Deadline) return 1
+              return new Date(a.Deadline).getTime() - new Date(b.Deadline).getTime()
+            })
 
           const expired = response.data
-            .filter(call => new Date(call.Deadline) < today)
-            .sort((a, b) => new Date(b.Deadline).getTime() - new Date(a.Deadline).getTime())
+            .filter(call => call.Deadline && new Date(call.Deadline) < today)
+            .sort((a, b) => new Date(b.Deadline!).getTime() - new Date(a.Deadline!).getTime())
             .slice(0, 3)
 
           setTotalActiveCalls(active.length)

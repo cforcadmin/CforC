@@ -64,7 +64,7 @@ export interface StrapiMediaObject {
 // Open Call type - matches Strapi schema exactly (Strapi v5)
 export interface OpenCall extends StrapiData<OpenCall> {
   Title: string;
-  Deadline: string;
+  Deadline?: string;  // Optional — some categories (e.g. Θέσεις εργασίας) are ongoing without a fixed deadline
   Description: any;  // Strapi blocks type (rich text)
   Category: string;
   Link: string;
