@@ -2,6 +2,64 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Working principles
+
+These apply to every task in this repository. The specific rules further down
+(Git Push Rules, Testing, Deployment, Common Gotchas, etc.) are concrete
+applications of these principles — when a specific rule speaks to a domain, it
+wins there, but the principles below govern anything not explicitly covered.
+
+### Verify, don't assume
+- Check the CURRENT state before advising or acting. Read the actual file,
+  run the actual command, check the actual version — never rely on memory
+  of how something "usually" works.
+- Before quoting prices, availability, versions, or API/config syntax,
+  verify from a live source. Training knowledge goes stale silently.
+- When something fails, test the layers separately (e.g. curl the endpoint
+  before blaming the frontend) rather than guessing at a cause.
+- If a fix doesn't work twice, stop and gather evidence instead of trying
+  a third variation.
+
+### Before adding anything to disk
+- State the expected download size AND installed footprint before any
+  install, dependency, image, or build step. The user is frequently short
+  on disk space.
+- Prefer solutions that add nothing over solutions that add gigabytes.
+
+### Command hygiene
+- Give an estimated runtime for every command so the user knows whether to
+  wait or investigate.
+- One command at a time when the output matters; wait for the result.
+- Never leave placeholder values (PASSWORD_HERE, YOUR_X) in commands the
+  user will run verbatim — either ask for the real value first or make the
+  placeholder impossible to miss.
+
+### Honesty
+- Say when something is uncertain, unverified, or a guess.
+- Correct earlier statements explicitly when new evidence contradicts them.
+
+### Decision-space, not false binaries
+- When proposing options, first state the user's actual underlying goal in one line,
+  then enumerate the FULL option space — including hybrids and the cheapest/simplest
+  path that achieves the goal — not just the two obvious choices.
+- Before defaulting to "build new" vs "modify existing", check for an in-place or
+  reuse option that achieves the same clean result (e.g. rebuild/reset/wipe rather
+  than reprovision). Reusing existing resources is often the overlooked best path.
+- If you catch yourself presenting exactly two options, pause and ask whether a
+  third — cheaper, simpler, or hybrid — serves the goal better.
+
+### Cost transparency and defer-by-default
+- Before recommending any purchase, upgrade, or paid resource, proactively state
+  its price, annual total, and whether it's reversible or deferrable. Don't make
+  the user ask.
+- Always include the "use what already exists / buy nothing yet / defer" option,
+  and say explicitly when that option stops being sufficient (the trigger to buy).
+- Default to the cheapest path that serves the CURRENT need, not the eventual
+  planned-for one. Provisioning a resource "because the plan mentions it" is the
+  wrong instinct if today's need is already met.
+- Check existing project docs/plans for what was already scoped and costed before
+  answering cost questions from memory.
+
 ## Git Push Rules
 
 - **IMPORTANT: Always ask user for confirmation before pushing to GitHub** - Never push automatically
@@ -236,3 +294,5 @@ Strapi Cloud free tier sleeps after 10-15 minutes of inactivity.
 6. **Rate Limiting**: Auth endpoints use in-memory rate limiter (resets on server restart)
 7. **Strapi New Collection Types**: When adding a new collection type to `StrapiDBforCforC/`, you must ALSO register it in `types/generated/contentTypes.d.ts` — add the interface definition AND add the entry to the `ContentType` map at the bottom of the file. Without this, the controller/router/service files will fail with TS2345 ("not assignable to parameter of type 'ContentType'")
 8. **Strapi Cloud Manual Setup**: After pushing new collection types or schema changes to the Strapi repo, always provide the user with a checklist of manual steps needed in the Strapi Cloud dashboard. This includes: creating the collection type if it doesn't auto-deploy, setting API permissions (Settings → Users & Permissions → Roles → Public → enable find/findOne for the new collection), and configuring any relation fields. Code changes alone are not enough — the cloud DB needs manual configuration too.
+
+@/Users/yoryosstyl/soul/projects/cforc-website.md
