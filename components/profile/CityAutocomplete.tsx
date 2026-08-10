@@ -8,6 +8,8 @@ interface CityAutocompleteProps {
   onChange: (cities: string) => void
   onProvinceChange: (provinces: string) => void
   required?: boolean
+  label?: string
+  helper?: string
 }
 
 export default function CityAutocomplete({
@@ -15,16 +17,21 @@ export default function CityAutocomplete({
   onChange,
   onProvinceChange,
   required = false,
+  label = 'Πόλη',
+  helper = 'Πληκτρολόγησε και επέλεξε πόλη. Χώρισε με κόμμα (,) για πολλαπλές πόλεις. Η περιφέρεια συμπληρώνεται αυτόματα.',
 }: CityAutocompleteProps) {
   const [inputValue, setInputValue] = useState(value)
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestionsRef = useRef<HTMLDivElement>(null)
+  const isFocusedRef = useRef(false)
 
-  // Sync inputValue when value prop changes externally (e.g., discard)
+  // Sync inputValue when value prop changes externally (e.g., discard) —
+  // but NEVER while the user is typing, or the reset eats their keystrokes
+  // (this was silently truncating multi-city input after the comma).
   useEffect(() => {
-    setInputValue(value)
+    if (!isFocusedRef.current) setInputValue(value)
   }, [value])
 
   // Get the current token being typed (after last comma)
@@ -53,9 +60,11 @@ export default function CityAutocomplete({
     }
   }
 
-  const selectCity = (city: string) => {
+  const selectCity = (city: string, continueTyping = false) => {
     const confirmedPart = getConfirmedPart(inputValue)
-    const newValue = confirmedPart + city
+    // Single state update — appending ', ' separately raced with the
+    // value-prop sync and lost the separator
+    const newValue = confirmedPart + city + (continueTyping ? ', ' : '')
     setInputValue(newValue)
     setSuggestions([])
     setHighlightedIndex(-1)
@@ -77,6 +86,7 @@ export default function CityAutocomplete({
 
   // Commit value on blur (clean up and derive provinces)
   const handleBlur = () => {
+    isFocusedRef.current = false
     // Small delay to allow click on suggestion to fire first
     setTimeout(() => {
       setSuggestions([])
@@ -114,8 +124,7 @@ export default function CityAutocomplete({
       const currentToken = getCurrentToken(inputValue)
       if (currentToken.length > 0 && suggestions.length > 0) {
         e.preventDefault()
-        selectCity(suggestions[0])
-        setInputValue(prev => prev + ', ')
+        selectCity(suggestions[0], true)
       }
     }
   }
@@ -139,14 +148,14 @@ export default function CityAutocomplete({
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-charcoal dark:text-gray-200">
-        Πόλη
+        {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
 
       {/* Helper text */}
-      <p className="text-xs text-gray-400 dark:text-gray-500 italic">
-        Πληκτρολόγησε και επέλεξε πόλη. Χώρισε με κόμμα (,) για πολλαπλές πόλεις. Η περιφέρεια συμπληρώνεται αυτόματα.
-      </p>
+      {helper && (
+        <p className="text-xs text-gray-400 dark:text-gray-500 italic">{helper}</p>
+      )}
 
       <div className="relative">
         <input
@@ -155,6 +164,7 @@ export default function CityAutocomplete({
           value={inputValue}
           onChange={(e) => handleInputChange(e.target.value)}
           onKeyDown={handleKeyDown}
+          onFocus={() => { isFocusedRef.current = true }}
           onBlur={handleBlur}
           placeholder="π.χ. Αθήνα, Θεσσαλονίκη"
           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-charcoal dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral dark:focus:ring-coral-light focus:border-transparent bg-white"

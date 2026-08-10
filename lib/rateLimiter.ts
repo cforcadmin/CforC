@@ -106,6 +106,11 @@ export const workingGroupJoinLimiter = new RateLimiter(
   60 * 60 * 1000 // per hour
 )
 
+export const applyLimiter = new RateLimiter(
+  3, // 3 membership applications
+  60 * 60 * 1000 // per hour per IP
+)
+
 // Clean up expired entries every 10 minutes
 setInterval(() => {
   magicLinkLimiter.cleanup()

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
+import { sanitizeMember, sanitizeNestedMembers } from '@/lib/strapi'
 
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN || process.env.NEXT_PUBLIC_STRAPI_API_TOKEN
@@ -64,6 +65,18 @@ export async function GET(
     })
 
     const data = await response.json()
+
+    // Strip auth internals + OC registry/financial member fields before
+    // anything reaches a browser. This proxy is the only client-side data
+    // path, so this is the enforcement point — not the UI.
+    if (collection === 'members') {
+      if (Array.isArray(data?.data)) data.data.forEach(sanitizeMember)
+      else if (data?.data) sanitizeMember(data.data)
+    } else if (collection === 'working-groups' || collection === 'coordination-teams') {
+      if (Array.isArray(data?.data)) data.data.forEach(sanitizeNestedMembers)
+      else if (data?.data) sanitizeNestedMembers(data.data)
+    }
+
     return NextResponse.json(data, { status: response.status })
   } catch (error) {
     console.error('Strapi proxy error:', error)

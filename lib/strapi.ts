@@ -179,24 +179,59 @@ async function fetchAllPaginated(basePath: string, pageSize = 100) {
 }
 
 /**
+ * Fields on `member` that must NEVER reach public pages (they end up
+ * serialized into page props / HTML). Covers auth internals (pre-existing)
+ * and the OC registry/financial fields. Applied server-side to every
+ * public member query — the OC reads Strapi directly and is unaffected.
+ */
+const SENSITIVE_MEMBER_FIELDS = [
+  'password', 'magicLinkToken', 'magicLinkExpiry', 'lastLoginAt', 'AddedToPaidGroup',
+  'AM', 'RegistrationYear', 'BoardApprovalDate', 'Gender', 'BAN', 'StartFellow',
+  'SocialMediaPresented', 'Payments', 'ReceiptType', 'FatherName', 'TaxId',
+  'CompanyName', 'CompanyAddress', 'CompanyTaxId', 'AdminNotes', 'CommunityNotes',
+]
+
+export function sanitizeMember<T extends Record<string, any> | null | undefined>(m: T): T {
+  if (!m || typeof m !== 'object') return m
+  for (const f of SENSITIVE_MEMBER_FIELDS) delete (m as any)[f]
+  return m
+}
+
+/** Sanitizes member objects nested inside other entities (working groups, teams). */
+export function sanitizeNestedMembers(entity: Record<string, any> | null | undefined) {
+  if (!entity) return entity
+  for (const key of ['Coordinator', 'Admin', 'Comms', 'IT', 'Community', 'Financer', 'Outreach']) {
+    if (entity[key]) sanitizeMember(entity[key])
+  }
+  if (Array.isArray(entity.Members)) entity.Members.forEach(sanitizeMember)
+  return entity
+}
+
+/**
  * Get all members (paginated — Strapi caps single-page responses at 100)
  */
 export async function getMembers() {
-  return fetchAllPaginated('/members?populate=*');
+  const response = await fetchAllPaginated('/members?populate=*');
+  (response.data || []).forEach(sanitizeMember);
+  return response;
 }
 
 /**
  * Get all working groups with coordinator and members populated
  */
 export async function getWorkingGroups() {
-  return fetchStrapi('/working-groups?populate[Image]=true&populate[Coordinator][populate]=Image&populate[Members][populate]=Image&populate[Admin][populate]=Image&populate[Comms][populate]=Image&populate[IT][populate]=Image&pagination[limit]=1000&sort=SortOrder:asc')
+  const response = await fetchStrapi('/working-groups?populate[Image]=true&populate[Coordinator][populate]=Image&populate[Members][populate]=Image&populate[Admin][populate]=Image&populate[Comms][populate]=Image&populate[IT][populate]=Image&pagination[limit]=1000&sort=SortOrder:asc');
+  (response.data || []).forEach(sanitizeNestedMembers);
+  return response;
 }
 
 /**
  * Get all coordination teams with coordinator and members populated
  */
 export async function getCoordinationTeams() {
-  return fetchStrapi('/coordination-teams?populate[Image]=true&populate[Coordinator][populate]=Image&populate[Members][populate]=Image&populate[Admin][populate]=Image&populate[Comms][populate]=Image&populate[IT][populate]=Image&pagination[limit]=1000&sort=SortOrder:asc')
+  const response = await fetchStrapi('/coordination-teams?populate[Image]=true&populate[Coordinator][populate]=Image&populate[Members][populate]=Image&populate[Admin][populate]=Image&populate[Comms][populate]=Image&populate[IT][populate]=Image&pagination[limit]=1000&sort=SortOrder:asc');
+  (response.data || []).forEach(sanitizeNestedMembers);
+  return response;
 }
 
 /**
@@ -207,12 +242,14 @@ export async function getMemberBySlugOrId(slugOrId: string) {
   // First try by Slug (most common for member URLs)
   const response = await fetchStrapi(`/members?filters[Slug][$eq]=${encodeURIComponent(slugOrId)}&populate=*`);
   if (response.data && response.data.length > 0) {
-    return { data: response.data[0] };
+    return { data: sanitizeMember(response.data[0]) };
   }
 
   // Fall back to documentId
   try {
-    return await fetchStrapi(`/members/${slugOrId}?populate=*`);
+    const single = await fetchStrapi(`/members/${slugOrId}?populate=*`);
+    if (single?.data) sanitizeMember(single.data);
+    return single;
   } catch (error) {
     throw new Error('Member not found');
   }
