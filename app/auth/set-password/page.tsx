@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
+import { clearOcAccessCache } from '@/components/useOcAccess'
 
 function SetPasswordContent() {
   const searchParams = useSearchParams()
@@ -129,7 +130,19 @@ function SetPasswordContent() {
       const result = await setPassword(token, password)
 
       if (result.success) {
-        // Redirect to profile
+        // Board members with a remembered OC preference land there directly;
+        // everyone else (and any probe failure) goes to the member area.
+        clearOcAccessCache()
+        try {
+          const res = await fetch('/api/oc/me')
+          const access = res.ok ? await res.json() : { isBoard: false }
+          if (access.isBoard && access.landingPref === 'oc') {
+            router.push('/oc')
+            return
+          }
+        } catch {
+          // fall through to member area
+        }
         router.push('/profile')
       } else {
         setError(result.message || 'Κάτι πήγε στραβά')

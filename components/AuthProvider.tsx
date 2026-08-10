@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { clearOcAccessCache } from '@/components/useOcAccess'
 
 interface Member {
   id: number
@@ -204,6 +205,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Logout failed:', error)
       setUser(null)
+    } finally {
+      // Never let a board member's OC access state survive a user switch
+      clearOcAccessCache()
     }
   }
 

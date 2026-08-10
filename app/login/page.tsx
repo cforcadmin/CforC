@@ -7,6 +7,8 @@ import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
+import OcRouteChoiceModal from '@/components/oc/OcRouteChoiceModal'
+import { clearOcAccessCache } from '@/components/useOcAccess'
 
 export default function LoginPage() {
   return (
@@ -50,6 +52,34 @@ function LoginPageContent() {
   const [isLoginLoading, setIsLoginLoading] = useState(false)
   const [loginMessage, setLoginMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
+  // Board members choose where to land after login (popup / remembered pref)
+  const [showOcChoice, setShowOcChoice] = useState(false)
+
+  // After a successful login: board members either auto-route via their
+  // server-stored preference (httpOnly cookie, returned by /api/oc/me) or
+  // get the choice popup. Regular members (and any failure in the probe)
+  // always go to the member area — never the OC.
+  const routeAfterLogin = async () => {
+    if (returnTo) {
+      router.push(returnTo)
+      return
+    }
+    clearOcAccessCache()
+    try {
+      const res = await fetch('/api/oc/me')
+      const access = res.ok ? await res.json() : { isBoard: false }
+      if (access.isBoard) {
+        if (access.landingPref === 'oc') { router.push('/oc'); return }
+        if (access.landingPref === 'members') { router.push('/profile'); return }
+        setShowOcChoice(true)
+        return
+      }
+    } catch {
+      // fall through to member area
+    }
+    router.push('/profile')
+  }
+
   // Magic link state
   const [magicEmail, setMagicEmail] = useState('')
   const [isMagicLoading, setIsMagicLoading] = useState(false)
@@ -71,9 +101,9 @@ function LoginPageContent() {
 
       if (result.success) {
         setLoginMessage({ type: 'success', text: result.message || 'Επιτυχής σύνδεση' })
-        // Redirect after successful login
+        // Redirect after successful login (board members may get a choice popup)
         setTimeout(() => {
-          router.push(returnTo || '/profile')
+          routeAfterLogin()
         }, 1000)
       } else {
         setLoginMessage({ type: 'error', text: result.message || 'Σφάλμα σύνδεσης' })
@@ -473,6 +503,13 @@ function LoginPageContent() {
       )}
 
       <Footer />
+
+      {showOcChoice && (
+        <OcRouteChoiceModal
+          onChoose={(dest) => router.push(dest === 'oc' ? '/oc' : '/profile')}
+          onDismiss={() => router.push('/profile')}
+        />
+      )}
     </div>
   )
 }

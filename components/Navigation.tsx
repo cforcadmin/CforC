@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import LanguageSwitcher from './LanguageSwitcher'
 import { useTheme } from './ThemeProvider'
 import { useAuth } from './AuthProvider'
@@ -15,6 +15,8 @@ import { useTranslation } from './TranslationProvider'
 import { getFeaturedProjects } from '@/lib/strapi'
 import type { Project, StrapiResponse } from '@/lib/types'
 import GlobalSearch from './GlobalSearch'
+import { useOcAccess } from './useOcAccess'
+import OcSeatChoiceModal from './oc/OcSeatChoiceModal'
 
 interface NavigationProps {
   variant?: 'default' | 'members'
@@ -32,7 +34,21 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
   const { user, isAuthenticated, logout } = useAuth()
+  // UI-gating only (server enforces the real OC barrier); probe runs only for
+  // authenticated users so regular visitors trigger no extra request
+  const ocAccess = useOcAccess(isAuthenticated)
+  const [showOcSeatModal, setShowOcSeatModal] = useState(false)
+  const router = useRouter()
   const { setIsMenuOpen } = useAccessibility()
+
+  // TEMPORARY: multi-seat members pick a seat on EVERY OC entry from the menu
+  const handleOcNavClick = (e: React.MouseEvent) => {
+    if (ocAccess.seats.length > 1) {
+      e.preventDefault()
+      setIsOpen(false)
+      setShowOcSeatModal(true)
+    }
+  }
   const pathname = usePathname()
   const dropdownRef = useRef<HTMLDivElement>(null)
   const dropdownItemsRef = useRef<(HTMLAnchorElement | null)[]>([])
@@ -407,6 +423,19 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                   <Link href="/profile" className={`text-sm transition-colors ${pathname === '/profile' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
                     Ο ΧΩΡΟΣ ΜΟΥ
                   </Link>
+                  {ocAccess.isBoard && (
+                    <Link
+                      href="/oc"
+                      onClick={handleOcNavClick}
+                      className={`notranslate text-sm px-3 py-1 rounded-full border transition-colors ${
+                        pathname?.startsWith('/oc')
+                          ? 'bg-white text-charcoal border-white font-bold dark:bg-coral dark:text-white dark:border-coral'
+                          : 'border-white/60 text-white hover:bg-white/10 dark:border-gray-400 dark:text-gray-200 dark:hover:bg-white/10 font-medium'
+                      }`}
+                    >
+                      OC
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={() => setIsLogoutModalOpen(true)}
@@ -578,6 +607,15 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
               {isAuthenticated ? (
                 <>
                   <Link href="/profile" className={`block text-sm py-2 transition-colors ${pathname === '/profile' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>Ο ΧΩΡΟΣ ΜΟΥ</Link>
+                  {ocAccess.isBoard && (
+                    <Link
+                      href="/oc"
+                      onClick={(e) => { handleOcNavClick(e); setIsOpen(false) }}
+                      className={`notranslate block text-sm py-2 transition-colors ${pathname?.startsWith('/oc') ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}
+                    >
+                      OPERATIONAL CENTER
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={() => setIsLogoutModalOpen(true)}
@@ -596,6 +634,27 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
           </div>
         </div>
       </div>
+
+      {/* TEMPORARY: seat chooser for multi-seat board members entering the OC */}
+      {showOcSeatModal && (
+        <OcSeatChoiceModal
+          seats={ocAccess.seats}
+          onChoose={async (seat) => {
+            // Persist server-side, then navigate — /oc reads the cookie
+            try {
+              await fetch('/api/oc/prefs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ seat }),
+                keepalive: true,
+              })
+            } catch { /* non-fatal */ }
+            setShowOcSeatModal(false)
+            router.push('/oc')
+          }}
+          onDismiss={() => setShowOcSeatModal(false)}
+        />
+      )}
 
       {/* Logout Confirmation Modal */}
       <ConfirmationModal

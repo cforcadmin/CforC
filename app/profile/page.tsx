@@ -23,6 +23,9 @@ import ScrollToTop from '@/components/ScrollToTop'
 import ProfilePreviewModal from '@/components/profile/ProfilePreviewModal'
 import { blocksToPlainText } from '@/lib/richTextConvert'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
+import Link from 'next/link'
+import { useOcAccess } from '@/components/useOcAccess'
+import OcSeatChoiceModal from '@/components/oc/OcSeatChoiceModal'
 
 const DASHBOARD_SECTIONS = [
   { key: 'profile', label: 'Προφίλ', heroTitle: 'ΤΟ ΠΡΟΦΙΛ ΜΟΥ' },
@@ -39,6 +42,9 @@ type SectionKey = (typeof DASHBOARD_SECTIONS)[number]['key']
 export default function ProfilePage() {
   const router = useRouter()
   const { user, isAuthenticated, isLoading, refreshSession } = useAuth()
+  // OC access is UI-gating only — /oc re-verifies the seat server-side
+  const ocAccess = useOcAccess(isAuthenticated)
+  const [showOcSeatModal, setShowOcSeatModal] = useState(false)
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
   const [activeSection, setActiveSectionState] = useState<SectionKey>('profile')
 
@@ -674,6 +680,22 @@ export default function ProfilePage() {
                       )}
                     </div>
                   ))}
+                  {/* OC entry — rendered ONLY for verified board members */}
+                  {ocAccess.isBoard && (
+                    <Link
+                      href="/oc"
+                      onClick={(e) => {
+                        // TEMPORARY: multi-seat members pick a seat on every OC entry
+                        if (ocAccess.seats.length > 1) {
+                          e.preventDefault()
+                          setShowOcSeatModal(true)
+                        }
+                      }}
+                      className="notranslate px-4 py-2 rounded-full text-sm font-bold transition-colors whitespace-nowrap bg-white text-charcoal shadow-md hover:bg-gray-100 dark:bg-coral dark:text-white dark:hover:bg-coral/90 border-2 border-charcoal/20 dark:border-transparent"
+                    >
+                      OC →
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>
@@ -1444,6 +1466,27 @@ export default function ProfilePage() {
         onClose={() => setShowPreviewModal(false)}
         user={user}
       />
+
+      {/* TEMPORARY: seat chooser for multi-seat board members entering the OC */}
+      {showOcSeatModal && (
+        <OcSeatChoiceModal
+          seats={ocAccess.seats}
+          onChoose={async (seat) => {
+            // Persist server-side, then navigate — /oc reads the cookie
+            try {
+              await fetch('/api/oc/prefs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ seat }),
+                keepalive: true,
+              })
+            } catch { /* non-fatal */ }
+            setShowOcSeatModal(false)
+            router.push('/oc')
+          }}
+          onDismiss={() => setShowOcSeatModal(false)}
+        />
+      )}
     </div>
   )
 }
