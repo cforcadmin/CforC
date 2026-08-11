@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
                 <h2 style="color:#FF8B6A;">Ευχαριστούμε, ${escapeHtml(data.FirstName.trim())}!</h2>
                 <p>Λάβαμε την αίτηση εγγραφής σου στο Culture for Change.</p>
                 <p>Η Ομάδα Συντονισμού θα την εξετάσει και θα λάβεις απάντηση στο email σου
-                το συντομότερο δυνατόν, το αργότερο εντός <strong>14 ημερών</strong>.</p>
+                το συντομότερο δυνατόν.</p>
                 <p>Μέχρι τότε, μπορείς να γνωρίσεις καλύτερα το δίκτυο στο
                 <a href="https://cultureforchange.net" style="color:#FF8B6A;">cultureforchange.net</a>.</p>
                 <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">

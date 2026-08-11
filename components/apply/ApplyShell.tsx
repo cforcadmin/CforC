@@ -160,7 +160,7 @@ export default function ApplyShell() {
             <h1 className="text-3xl font-bold text-charcoal dark:text-coral mb-4">Η αίτησή σου υποβλήθηκε!</h1>
             <p className="text-gray-600 dark:text-gray-300 mb-3">
               Σου στείλαμε email επιβεβαίωσης. Η Ομάδα Συντονισμού θα εξετάσει την
-              αίτησή σου και θα λάβεις απάντηση το αργότερο εντός <strong>14 ημερών</strong>.
+              αίτησή σου και θα λάβεις απάντηση το συντομότερο δυνατόν.
             </p>
             <p className="text-gray-500 dark:text-gray-400 text-sm mb-8">
               Μέχρι τότε, ρίξε μια ματιά στις δράσεις και τα μέλη του δικτύου.
