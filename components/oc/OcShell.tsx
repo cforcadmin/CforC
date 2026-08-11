@@ -159,7 +159,7 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
                 </div>
 
                 {/* Category chips */}
-                <nav aria-label="Ενότητες OC" className="flex-1 flex flex-wrap gap-3 items-center justify-center pr-4 lg:pr-10">
+                <nav aria-label="Ενότητες OC" className="flex-1 flex flex-wrap gap-2 items-center justify-center pr-4 lg:pr-10">
                   {SECTIONS.map(section => {
                     const active = section.key === activeSection
                     return (
@@ -168,19 +168,19 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
                         type="button"
                         onClick={() => setActiveSection(section.key)}
                         aria-current={active ? 'page' : undefined}
-                        className={`min-w-28 inline-flex items-stretch rounded-lg overflow-hidden text-xs font-bold tracking-wide transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+                        className={`inline-flex items-stretch rounded-lg overflow-hidden text-[11px] font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
                           active ? 'shadow-md scale-105' : 'opacity-85 hover:opacity-100'
                         }`}
                       >
                         <span
-                          className="px-2 py-1.5 text-white flex items-center flex-shrink-0"
+                          className="px-1.5 py-1 text-white flex items-center flex-shrink-0"
                           style={{ backgroundColor: section.hue }}
                           aria-hidden="true"
                         >
                           {section.letter}
                         </span>
                         <span
-                          className={`flex-1 pl-1 pr-2 py-1.5 text-left ${active ? 'text-charcoal dark:text-white' : 'text-charcoal/80 dark:text-gray-200'}`}
+                          className={`flex-1 pl-1 pr-1.5 py-1 text-left ${active ? 'text-charcoal dark:text-white' : 'text-charcoal/80 dark:text-gray-200'}`}
                           style={{
                             backgroundColor: active ? `${section.hue}55` : `${section.hue}26`,
                           }}
