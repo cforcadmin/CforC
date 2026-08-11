@@ -4,7 +4,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Navigation from '@/components/Navigation'
 import { verifyToken } from '@/lib/auth'
-import { resolveOcAccess } from '@/lib/ocRoles'
+import { resolveOcAccess, SEAT_LABELS, type OcSeat } from '@/lib/ocRoles'
+import VotePanel from '@/components/oc/VotePanel'
 
 export const metadata: Metadata = {
   title: 'Αίτηση Εγγραφής — OC | Culture for Change',
@@ -52,6 +53,16 @@ export default async function ApplicationReviewPage({ params }: Props) {
 
   const state = STATE_LABELS[a.ApplicationState] || STATE_LABELS.submitted
   const photoUrl: string | null = a.Photo?.url || null
+
+  // Ψηφοφορία: ρόλοι που έχουν ψηφίσει (ποτέ τι ψήφισαν) + η δική μου ψήφος
+  const votes: Record<string, { seats?: string[]; vote?: string }> =
+    a.Votes && typeof a.Votes === 'object' && !Array.isArray(a.Votes) ? a.Votes : {}
+  const votedSeats = Array.from(
+    new Set(Object.values(votes).flatMap(v => v.seats || []))
+  ).map(s => SEAT_LABELS[s as OcSeat] || s)
+  const myVoteRaw = votes[decoded.memberId]?.vote
+  const myVote = myVoteRaw === 'approve' || myVoteRaw === 'reject' ? myVoteRaw : null
+  const canOverride = access.seats.some(s => s === 'it' || s === 'admin')
   const submitted = a.SubmittedAt
     ? new Intl.DateTimeFormat('el-GR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Athens' }).format(new Date(a.SubmittedAt))
     : '—'
@@ -93,7 +104,16 @@ export default async function ApplicationReviewPage({ params }: Props) {
                     </h1>
                     {a.NameLatin && <p className="text-sm text-gray-400 dark:text-gray-500 notranslate">{a.NameLatin}</p>}
                   </div>
-                  <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${state.cls}`}>{state.label}</span>
+                  {a.ApplicationState === 'submitted' ? (
+                    <VotePanel
+                      applicationId={a.documentId}
+                      votedSeats={votedSeats}
+                      myVote={myVote}
+                      canOverride={canOverride}
+                    />
+                  ) : (
+                    <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${state.cls}`}>{state.label}</span>
+                  )}
                 </div>
                 <p className="text-gray-700 dark:text-gray-300 mt-2">{a.Profession}</p>
                 <dl className="mt-4 space-y-1 text-sm">
@@ -103,7 +123,9 @@ export default async function ApplicationReviewPage({ params }: Props) {
                   <Row k="Υποβλήθηκε" v={submitted} />
                 </dl>
                 <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
-                  Οι αποφάσεις (Έγκριση/Απόρριψη) καταχωρούνται προς το παρόν στο φύλλο «Νέα Μέλη» του Μητρώου.
+                  Η ψηφοφορία είναι τυφλή: φαίνεται ποιοι ρόλοι έχουν ψηφίσει, όχι τι. Η απόφαση
+                  οριστικοποιείται όταν ψηφίσουν όλα τα μέλη του ΔΣ (ή άμεσα από IT/Γραμματεία)
+                  και ενημερώνει αυτόματα και το Μητρώο (Sheet).
                 </p>
               </div>
             </div>

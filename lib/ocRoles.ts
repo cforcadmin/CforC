@@ -99,3 +99,31 @@ export async function resolveOcAccess(memberDocumentId: string): Promise<OcAcces
 export function clearOcRolesCache() {
   cache = null
 }
+
+export interface OcBoardMember {
+  memberDocumentId: string
+  seats: OcSeat[]
+}
+
+/**
+ * All DISTINCT people currently holding seats on the Coordination Team,
+ * with their seats. Used by the voting mechanism: an application is decided
+ * when every roster member has cast a vote (unless IT/Admin override).
+ */
+export async function getBoardRoster(): Promise<OcBoardMember[]> {
+  const teams = await fetchCurrentTeams()
+  const byMember = new Map<string, Set<OcSeat>>()
+  for (const team of teams) {
+    for (const { field, seat } of SEAT_FIELDS) {
+      const rel = team?.[field]
+      if (rel?.documentId) {
+        if (!byMember.has(rel.documentId)) byMember.set(rel.documentId, new Set())
+        byMember.get(rel.documentId)!.add(seat)
+      }
+    }
+  }
+  return Array.from(byMember.entries()).map(([memberDocumentId, seats]) => ({
+    memberDocumentId,
+    seats: Array.from(seats),
+  }))
+}

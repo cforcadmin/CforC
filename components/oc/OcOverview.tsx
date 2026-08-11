@@ -289,6 +289,7 @@ interface OcOverviewProps {
 export default function OcOverview({ data, applications }: OcOverviewProps) {
   const pending = applications.filter(a => a.state === 'submitted')
   const y = data.currentYear
+  const [showApproved, setShowApproved] = useState(false)
 
   return (
     <div className="space-y-6">
@@ -301,10 +302,78 @@ export default function OcOverview({ data, applications }: OcOverviewProps) {
           accent={data.paidCurrent >= data.activeMembers * 0.7 ? '#2A9D8F' : '#E9A13B'}
         />
         <Tile value={pending.length} label="Εκκρεμείς αιτήσεις" accent={pending.length > 0 ? '#FF8B6A' : undefined} />
-        <Tile value={data.approvedUnpaidApps} label="Εγκρίθηκαν — αναμονή πληρωμής" />
+        <button
+          type="button"
+          onClick={() => setShowApproved(true)}
+          className="text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-coral rounded-2xl"
+          aria-haspopup="dialog"
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 flex flex-col h-full hover:shadow-md transition-shadow border border-transparent hover:border-coral/40">
+            <span className="text-3xl font-bold text-charcoal dark:text-gray-100 notranslate">{data.approvedUnpaidApps}</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-snug">Εγκρίθηκαν — αναμονή πληρωμής</span>
+            <span className="text-xs text-coral dark:text-coral-light mt-0.5">Προβολή λίστας →</span>
+          </div>
+        </button>
         <Tile value={data.newThisYear} label={`Νέα μέλη ${y}`} accent="#4A90D9" />
         <Tile value="—" label="Ταμείο" sub="ενημερώνεται από Οικονομικά" />
       </div>
+
+      {/* Popup: εγκεκριμένες αιτήσεις σε αναμονή πληρωμής */}
+      {showApproved && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Εγκεκριμένες αιτήσεις σε αναμονή πληρωμής"
+          onClick={() => setShowApproved(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 sm:p-8"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <h3 className="font-bold text-lg text-charcoal dark:text-gray-100">
+                Εγκρίθηκαν — αναμονή πληρωμής
+                <span className="ml-2 text-sm font-normal text-gray-400">({data.approvedApps.length})</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowApproved(false)}
+                className="text-gray-400 hover:text-charcoal dark:hover:text-gray-200 text-xl leading-none"
+                aria-label="Κλείσιμο"
+              >
+                ✕
+              </button>
+            </div>
+            {data.approvedApps.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500">
+                Καμία εγκεκριμένη αίτηση σε αναμονή πληρωμής. 🎉
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {data.approvedApps.map(app => (
+                  <li key={app.id} className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-gray-200 dark:border-gray-600">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-charcoal dark:text-gray-200 truncate">{app.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Αίτηση: {formatDate(app.submittedAt)}</p>
+                    </div>
+                    <Link
+                      href={`/oc/applications/${app.id}`}
+                      className="text-coral dark:text-coral-light text-sm whitespace-nowrap hover:underline flex-shrink-0"
+                    >
+                      Άνοιγμα αίτησης →
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
+              Η πληρωμή καταχωρείται από τον/την Financer στο Μητρώο (ΠΛΗΡΩΜΗ = Ναι) και το μέλος
+              δημιουργείται αυτόματα.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Εκκρεμείς αιτήσεις — πρώτο μεγάλο block */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
@@ -330,7 +399,9 @@ export default function OcOverview({ data, applications }: OcOverviewProps) {
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Υποβλήθηκε {formatDate(app.submittedAt)}
                 </p>
-                <p className="text-coral dark:text-coral-light text-sm mt-3">Έλεγχος αίτησης →</p>
+                <span className="inline-flex items-center gap-1.5 mt-3 bg-coral text-white text-xs font-bold px-3 py-1.5 rounded-full group-hover:bg-coral/90 transition-colors">
+                  Ψήφισε: Έγκριση / Απόρριψη →
+                </span>
               </Link>
             ))}
           </div>

@@ -56,6 +56,8 @@ export interface OcOverviewData {
   profilesVisible: number
   /** Applications in Strapi with state=approved (εγκεκριμένες, αναμονή πληρωμής) */
   approvedUnpaidApps: number
+  /** Οι εγκεκριμένες-ανεξόφλητες αιτήσεις για το popup του tile */
+  approvedApps: Array<{ id: string; name: string; submittedAt: string | null }>
   notifyList: Array<{ am: number; name: string }>
   deleteList: Array<{ am: number; name: string }>
   members: OcMemberRow[]
@@ -192,9 +194,15 @@ export async function fetchOcOverview(): Promise<OcOverviewData> {
 
   // Εγκεκριμένες αιτήσεις σε αναμονή πληρωμής (όσες έχουν φάκελο στο Strapi)
   const approvedRes = await strapiGet(
-    `/membership-applications?filters[ApplicationState][$eq]=approved&pagination[limit]=1`
+    `/membership-applications?filters[ApplicationState][$eq]=approved&pagination[limit]=100` +
+    `&sort=SubmittedAt:desc&fields[0]=FirstName&fields[1]=LastName&fields[2]=SubmittedAt`
   )
-  const approvedUnpaidApps = approvedRes?.meta?.pagination?.total ?? 0
+  const approvedApps = (approvedRes?.data || []).map((a: any) => ({
+    id: a.documentId,
+    name: `${a.FirstName || ''} ${a.LastName || ''}`.trim() || '—',
+    submittedAt: a.SubmittedAt || null,
+  }))
+  const approvedUnpaidApps = approvedRes?.meta?.pagination?.total ?? approvedApps.length
 
   // Ροή δραστηριότητας: ενημερώσεις προφίλ + πρόσφατες αιτήσεις
   const feed: OcFeedEvent[] = []
@@ -231,6 +239,7 @@ export async function fetchOcOverview(): Promise<OcOverviewData> {
     newThisYear: members.filter(m => m.regYear === year).length,
     profilesVisible: members.filter(m => m.profileVisible).length,
     approvedUnpaidApps,
+    approvedApps,
     notifyList,
     deleteList,
     members,
