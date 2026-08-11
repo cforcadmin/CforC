@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { sendOcEmail, departureEmailHtml } from '@/lib/ocEmails'
 
 /**
  * Reverse bridge: Μητρώο Google Sheet → site/Strapi.
@@ -196,7 +197,7 @@ export async function POST(request: NextRequest) {
       // λογαριασμός και το ιστορικό διατηρούνται. Οριστική διαγραφή δεδομένων
       // (GDPR) παραμένει χειροκίνητη πράξη στο Strapi admin.
       const found = await strapi(
-        `/members?filters[Email][$eqi]=${encodeURIComponent(email)}&fields[0]=Email&fields[1]=AM&fields[2]=AdminNotes`
+        `/members?filters[Email][$eqi]=${encodeURIComponent(email)}&fields[0]=Email&fields[1]=AM&fields[2]=AdminNotes&fields[3]=Name`
       )
       const member = found.json?.data?.[0]
       if (!member) {
@@ -212,6 +213,10 @@ export async function POST(request: NextRequest) {
       if (!r.ok) {
         return NextResponse.json({ ok: false, error: `member removal ${r.status}` }, { status: 502 })
       }
+      // Αποχαιρετιστήριο email (ευχές + ερωτηματολόγιο αποχώρησης)
+      const exitName = String(member.Name || '').trim().split(' ')[0] || 'μέλος'
+      const tpl = departureEmailHtml(exitName)
+      sendOcEmail(email, tpl.subject, tpl.html).catch(() => {})
       return NextResponse.json({ ok: true, member: member.documentId, removed: true })
     }
 

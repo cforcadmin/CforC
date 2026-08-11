@@ -514,15 +514,17 @@ export default function OcOverview({
 }: OcOverviewProps) {
   const router = useRouter()
   const [payConfirm, setPayConfirm] = useState<string | null>(null)
+  const [failWarn, setFailWarn] = useState<string | null>(null)
   const [payBusy, setPayBusy] = useState<string | null>(null)
   const [payNotes, setPayNotes] = useState<Record<string, string>>({})
 
-  async function financerAction(appId: string, action: 'paid' | 'remind') {
+  async function financerAction(appId: string, action: 'paid' | 'remind' | 'failed') {
     if (action === 'paid' && payConfirm !== appId) {
       setPayConfirm(appId)
       return
     }
     setPayConfirm(null)
+    setFailWarn(null)
     setPayBusy(appId + action)
     try {
       const res = await fetch('/api/oc/applications/payment', {
@@ -537,6 +539,9 @@ export default function OcOverview({
       }
       if (action === 'remind') {
         setPayNotes(n => ({ ...n, [appId]: 'Η υπενθύμιση εστάλη ✓' }))
+      } else if (action === 'failed') {
+        setPayNotes(n => ({ ...n, [appId]: 'Το email αποτυχίας εστάλη — η δήλωση μηδενίστηκε ✓' }))
+        router.refresh()
       } else {
         setPayNotes(n => ({
           ...n,
@@ -573,10 +578,24 @@ export default function OcOverview({
           className="text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-coral rounded-2xl"
           aria-haspopup="dialog"
         >
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 flex flex-col h-full hover:shadow-md transition-shadow border border-transparent hover:border-coral/40">
+          <div className={`relative rounded-2xl shadow-sm p-5 flex flex-col h-full hover:shadow-md transition-shadow border ${
+            data.paymentClaims > 0
+              ? 'bg-teal-50 dark:bg-teal-900/30 border-teal-300 dark:border-teal-700'
+              : 'bg-white dark:bg-gray-800 border-transparent hover:border-coral/40'
+          }`}>
+            {data.paymentClaims > 0 && (
+              <span
+                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-teal-600 text-white text-xs font-bold flex items-center justify-center shadow"
+                title={`${data.paymentClaims} δήλωση/εις πληρωμής προς επιβεβαίωση`}
+              >
+                i
+              </span>
+            )}
             <span className="text-3xl font-bold text-charcoal dark:text-gray-100 notranslate">{data.approvedUnpaidApps}</span>
             <span className="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-snug">Εγκρίθηκαν — αναμονή πληρωμής</span>
-            <span className="text-xs text-coral dark:text-coral-light mt-0.5">Προβολή λίστας →</span>
+            <span className="text-xs text-coral dark:text-coral-light mt-0.5">
+              {data.paymentClaims > 0 ? `${data.paymentClaims} δήλωσαν ότι πλήρωσαν →` : 'Προβολή λίστας →'}
+            </span>
           </div>
         </button>
         <Tile value={data.newThisYear} label={`Νέα μέλη ${y}`} accent="#4A90D9" />
@@ -617,11 +636,23 @@ export default function OcOverview({
             ) : (
               <ul className="space-y-2">
                 {data.approvedApps.map(app => (
-                  <li key={app.id} className="p-3 rounded-2xl border border-gray-200 dark:border-gray-600">
+                  <li
+                    key={app.id}
+                    className={`p-3 rounded-2xl border ${
+                      app.claimedAt
+                        ? 'border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-900/30'
+                        : 'border-gray-200 dark:border-gray-600'
+                    }`}
+                  >
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-charcoal dark:text-gray-200 truncate">{app.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Αίτηση: {formatDate(app.submittedAt)}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {app.decisionDate ? `Εγκρίθηκε: ${formatDate(app.decisionDate)}` : `Αίτηση: ${formatDate(app.submittedAt)}`}
+                          {app.claimedAt && (
+                            <span className="text-teal-700 dark:text-teal-300 font-medium"> · Δήλωσε πληρωμή {formatDate(app.claimedAt)}</span>
+                          )}
+                        </p>
                       </div>
                       <Link
                         href={`/oc/applications/${app.id}`}
@@ -645,14 +676,51 @@ export default function OcOverview({
                           {payBusy === app.id + 'paid' ? 'Καταχώρηση…'
                             : payConfirm === app.id ? 'Σίγουρα; Πάτησε ξανά' : 'Πληρώθηκε η εγγραφή'}
                         </button>
-                        <button
-                          type="button"
-                          disabled={payBusy !== null}
-                          onClick={() => financerAction(app.id, 'remind')}
-                          className="px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-800 hover:bg-orange-200 dark:bg-orange-900/50 dark:text-orange-200 dark:hover:bg-orange-900/80 transition-colors disabled:opacity-50"
-                        >
-                          {payBusy === app.id + 'remind' ? 'Αποστολή…' : 'Υπενθύμιση'}
-                        </button>
+                        {app.claimedAt ? (
+                          <button
+                            type="button"
+                            disabled={payBusy !== null}
+                            onClick={() => setFailWarn(app.id)}
+                            className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/50 dark:text-red-200 dark:hover:bg-red-900/80 transition-colors disabled:opacity-50"
+                          >
+                            {payBusy === app.id + 'failed' ? 'Αποστολή…' : 'Αποτυχία πληρωμής'}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={payBusy !== null}
+                            onClick={() => financerAction(app.id, 'remind')}
+                            className="px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-800 hover:bg-orange-200 dark:bg-orange-900/50 dark:text-orange-200 dark:hover:bg-orange-900/80 transition-colors disabled:opacity-50"
+                          >
+                            {payBusy === app.id + 'remind' ? 'Αποστολή…' : 'Υπενθύμιση'}
+                          </button>
+                        )}
+                        {failWarn === app.id && (
+                          <div className="w-full mt-2 p-3 rounded-xl bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 text-xs text-orange-900 dark:text-orange-100">
+                            <p className="mb-2">
+                              ⚠️ Πληρωμές που έγιναν Σαββατοκύριακο εκκαθαρίζονται τη Δευτέρα, και μια
+                              μεταφορά μεταξύ τραπεζών μπορεί να χρειαστεί έως δύο εργάσιμες. Σίγουρα
+                              θες να σταλεί email αποτυχίας πληρωμής;
+                            </p>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setFailWarn(null)}
+                                className="px-3 py-1 rounded-full font-bold bg-white dark:bg-gray-700 text-charcoal dark:text-gray-200 border border-gray-300 dark:border-gray-500"
+                              >
+                                Άκυρο
+                              </button>
+                              <button
+                                type="button"
+                                disabled={payBusy !== null}
+                                onClick={() => financerAction(app.id, 'failed')}
+                                className="px-3 py-1 rounded-full font-bold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                              >
+                                Αποστολή email
+                              </button>
+                            </div>
+                          </div>
+                        )}
                         {payNotes[app.id] && (
                           <span className="text-xs text-gray-500 dark:text-gray-400">{payNotes[app.id]}</span>
                         )}

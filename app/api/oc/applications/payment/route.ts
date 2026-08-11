@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
+import { verifyToken, generatePaymentClaimToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import { sendPaymentToSheet, sheetsConfigured } from '@/lib/googleSheets'
-import { sendOcEmail, welcomeEmailHtml, reminderEmailHtml } from '@/lib/ocEmails'
+import { sendOcEmail, welcomeEmailHtml, reminderEmailHtml, paymentFailedEmailHtml, paymentClaimUrl } from '@/lib/ocEmails'
 
 /**
  * Financer actions on approved-awaiting-payment applications (OC popup):
@@ -12,6 +12,9 @@ import { sendOcEmail, welcomeEmailHtml, reminderEmailHtml } from '@/lib/ocEmails
  *              then the applicant receives the welcome/first-login email.
  *              ⟨TODO λεπτομερειών⟩: επισύναψη PDF απόδειξης + Οδηγού.
  *  - "remind": sends a polite payment-reminder email.
+ *  - "failed": για δηλωμένη-αλλά-μη-εμφανισθείσα πληρωμή — ευγενικό email
+ *              «δεν έφτασε η κατάθεση, ξαναέλεγξε» και μηδενισμός της
+ *              δήλωσης (PaymentClaimedAt) ώστε το κουτί να επανέλθει.
  * Acting seat MUST be financer — no other role, by design.
  */
 
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Μη έγκυρο αίτημα' }, { status: 400 })
   }
   const applicationId = String(body?.applicationId || '').replace(/[^a-z0-9]/gi, '')
-  const action = body?.action === 'paid' ? 'paid' : body?.action === 'remind' ? 'remind' : null
+  const action = ['paid', 'remind', 'failed'].includes(body?.action) ? body.action as 'paid' | 'remind' | 'failed' : null
   if (!applicationId || !action) {
     return NextResponse.json({ error: 'Μη έγκυρο αίτημα' }, { status: 400 })
   }
@@ -76,13 +79,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Η αίτηση δεν έχει email' }, { status: 422 })
     }
 
+    const claim = paymentClaimUrl(generatePaymentClaimToken(app.documentId))
+
     if (action === 'remind') {
-      const tpl = reminderEmailHtml(firstName)
+      const tpl = reminderEmailHtml(firstName, claim)
       const sent = await sendOcEmail(email, tpl.subject, tpl.html)
       if (!sent) {
         return NextResponse.json({ error: 'Αποτυχία αποστολής email' }, { status: 502 })
       }
       return NextResponse.json({ ok: true, action: 'remind', to: email })
+    }
+
+    if (action === 'failed') {
+      const tpl = paymentFailedEmailHtml(firstName, claim)
+      const sent = await sendOcEmail(email, tpl.subject, tpl.html)
+      if (!sent) {
+        return NextResponse.json({ error: 'Αποτυχία αποστολής email' }, { status: 502 })
+      }
+      // Η δήλωση μηδενίζεται — το κουτί/entry επανέρχεται σε «αναμονή»
+      await fetch(`${STRAPI_URL}/api/membership-applications/${app.documentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
+        body: JSON.stringify({ data: { PaymentClaimedAt: null } }),
+      }).catch(() => {})
+      return NextResponse.json({ ok: true, action: 'failed', to: email })
     }
 
     // action === 'paid'

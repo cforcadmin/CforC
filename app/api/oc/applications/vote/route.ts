@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
+import { verifyToken, generatePaymentClaimToken } from '@/lib/auth'
 import { resolveOcAccess, getBoardRoster, SEAT_LABELS, type OcSeat } from '@/lib/ocRoles'
 import { sendDecisionToSheet, sheetsConfigured } from '@/lib/googleSheets'
-import { sendOcEmail, approvedEmailHtml } from '@/lib/ocEmails'
+import { sendOcEmail, approvedEmailHtml, paymentClaimUrl } from '@/lib/ocEmails'
 import { OC_LAST_SEAT_COOKIE } from '@/components/oc/ocPrefs'
 
 /**
@@ -157,7 +157,8 @@ export async function POST(request: NextRequest) {
   // Έγκριση → email στον αιτούντα με ευχαριστίες + οδηγίες πληρωμής
   // (δομή — τα στοιχεία τράπεζας/ποσό οριστικοποιούνται στο lib/ocEmails)
   if (finalState === 'approved' && app.Email) {
-    const tpl = approvedEmailHtml(String(app.FirstName || '').trim() || 'μέλος')
+    const claim = paymentClaimUrl(generatePaymentClaimToken(app.documentId))
+    const tpl = approvedEmailHtml(String(app.FirstName || '').trim() || 'μέλος', claim)
     sendOcEmail(String(app.Email).trim(), tpl.subject, tpl.html)
       .catch(() => {})
   }

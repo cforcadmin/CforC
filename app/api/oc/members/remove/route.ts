@@ -4,6 +4,7 @@ import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import { sendMemberRemovalToSheet, sheetsConfigured } from '@/lib/googleSheets'
 import { OC_LAST_SEAT_COOKIE } from '@/components/oc/ocPrefs'
+import { sendOcEmail, departureEmailHtml } from '@/lib/ocEmails'
 
 /**
  * Member deletion from the OC Μητρώο μελών table — IT/Γραμματεία acting
@@ -103,6 +104,13 @@ export async function POST(request: NextRequest) {
       }
     } else {
       sheetSynced = false
+    }
+
+    // Αποχαιρετιστήριο email (ευχές + ερωτηματολόγιο αποχώρησης)
+    if (member.Email) {
+      const exitName = String(member.Name || '').trim().split(' ')[0] || 'μέλος'
+      const tpl = departureEmailHtml(exitName)
+      sendOcEmail(String(member.Email).trim(), tpl.subject, tpl.html).catch(() => {})
     }
 
     return NextResponse.json({ ok: true, removed: member.Name, formerAM, sheetSynced })

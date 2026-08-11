@@ -35,12 +35,14 @@ const PATHS: Array<{ d: string; delay: string }> = [
 export default function CforcLoader({ label = 'Φόρτωση' }: { label?: string }) {
   return (
     <div className="cforc-loader" role="status" aria-live="polite" aria-label={label}>
-      <svg className="cforc-loader__mark" viewBox="0 0 28 28" aria-hidden="true">
-        {PATHS.map((p, i) => (
-          <path key={i} d={p.d} style={{ animationDelay: p.delay }} />
-        ))}
-      </svg>
-      <span className="cforc-loader__label">{label}</span>
+      <div className="cforc-loader__card">
+        <svg className="cforc-loader__mark" viewBox="0 0 28 28" aria-hidden="true">
+          {PATHS.map((p, i) => (
+            <path key={i} d={p.d} style={{ animationDelay: p.delay }} />
+          ))}
+        </svg>
+        <span className="cforc-loader__label">{label}</span>
+      </div>
     </div>
   )
 }

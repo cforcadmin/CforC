@@ -6,6 +6,7 @@ import crypto from 'crypto'
 const JWT_EXPIRES_IN = 2592000 // 30 days
 const MAGIC_LINK_EXPIRES_IN = 21600 // 6 hours
 const NEWSLETTER_TOKEN_EXPIRES_IN = 86400 // 24 hours
+const PAYMENT_CLAIM_EXPIRES_IN = 5184000 // 60 days — link inside approval/reminder emails
 
 function getJwtSecret(): Secret {
   const secret = process.env.JWT_SECRET
@@ -47,7 +48,12 @@ interface NewsletterPayload {
   type: 'newsletter'
 }
 
-type TokenPayload = SessionPayload | MagicLinkPayload | NewsletterPayload
+interface PaymentClaimPayload {
+  applicationId: string
+  type: 'payment-claim'
+}
+
+type TokenPayload = SessionPayload | MagicLinkPayload | NewsletterPayload | PaymentClaimPayload
 
 export function generateSessionToken(memberId: string, email: string): string {
   const payload: SessionPayload = {
@@ -92,6 +98,13 @@ export function generateNewsletterToken(email: string, firstName?: string, lastN
     expiresIn: NEWSLETTER_TOKEN_EXPIRES_IN
   }
 
+  return jwt.sign(payload, getJwtSecret(), options)
+}
+
+/** Signed single-purpose link: «δήλωσα ότι πλήρωσα» — carries only the application id */
+export function generatePaymentClaimToken(applicationId: string): string {
+  const payload: PaymentClaimPayload = { applicationId, type: 'payment-claim' }
+  const options: SignOptions = { algorithm: 'HS256', expiresIn: PAYMENT_CLAIM_EXPIRES_IN }
   return jwt.sign(payload, getJwtSecret(), options)
 }
 

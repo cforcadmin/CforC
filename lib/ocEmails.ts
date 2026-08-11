@@ -9,6 +9,19 @@
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const FROM = 'Culture for Change <noreply@cultureforchange.net>'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https')
+  ? process.env.NEXT_PUBLIC_SITE_URL
+  : 'https://www.cultureforchange.net'
+
+/** Εσωτερική διεύθυνση οικονομικών ειδοποιήσεων */
+export const FINANCE_EMAIL = 'finance@cultureforchange.net'
+
+/** ⟨ΓΙΑ ΟΡΙΣΤΙΚΟΠΟΙΗΣΗ⟩ — ερωτηματολόγιο αποχώρησης */
+export const EXIT_QUESTIONNAIRE_URL = '⟨QUESTIONNAIRE_URL⟩'
+
+export function paymentClaimUrl(token: string): string {
+  return `${SITE_URL}/payment-claim/${encodeURIComponent(token)}`
+}
 
 /** ⟨ΓΙΑ ΟΡΙΣΤΙΚΟΠΟΙΗΣΗ⟩ — στοιχεία πληρωμής συνδρομής */
 export const PAYMENT_DETAILS = {
@@ -53,11 +66,22 @@ const sectionTitle = (t: string) => `
     ━━━━━━━━━━━━━━━━━━━━<br>&nbsp;&nbsp;${t}<br>━━━━━━━━━━━━━━━━━━━━
   </p>`
 
+const claimButton = (claimUrl: string, label = 'Πλήρωσα — ενημερώστε το CforC') => `
+  <p style="margin:24px 0;">
+    <a href="${claimUrl}"
+       style="background:#FF8B6A;color:#fff;font-weight:bold;text-decoration:none;
+              padding:12px 28px;border-radius:999px;display:inline-block;">
+      ${label}
+    </a>
+  </p>
+  <p style="font-size:13px;color:#888;">Με το κλικ ενημερώνεται αυτόματα η ομάδα οικονομικών
+  ότι η κατάθεση έγινε, ώστε να την επιβεβαιώσει και να ολοκληρώσει την εγγραφή σου.</p>`
+
 /**
  * Approval email — στέλνεται αυτόματα όταν η αίτηση εγκρίνεται (ψηφοφορία
  * ή IT/Admin). Ευχαριστεί και δίνει οδηγίες πληρωμής.
  */
-export function approvedEmailHtml(firstName: string): { subject: string; html: string } {
+export function approvedEmailHtml(firstName: string, claimUrl: string): { subject: string; html: string } {
   const p = PAYMENT_DETAILS
   return {
     subject: 'Η αίτησή σου στο Culture for Change εγκρίθηκε! 🎉',
@@ -74,12 +98,10 @@ export function approvedEmailHtml(firstName: string): { subject: string; html: s
         <tr><td style="padding:3px 14px 3px 0;color:#888;">Δικαιούχος</td><td>${p.beneficiary}</td></tr>
         <tr><td style="padding:3px 14px 3px 0;color:#888;">Αιτιολογία</td><td>${p.reference}</td></tr>
       </table>
-      <p style="margin-top:22px;">
-        Μόλις ολοκληρώσεις την πληρωμή,
-        <a href="mailto:${p.paidNoticeAddress}?subject=Πληρωμή%20συνδρομής" style="color:#FF8B6A;font-weight:bold;">
-          πάτησε εδώ για να μας ενημερώσεις</a> —
-        θα ενεργοποιήσουμε το προφίλ σου και θα λάβεις τις οδηγίες πρώτης σύνδεσης.
-      </p>`),
+      <p style="margin-top:22px;">Μόλις ολοκληρώσεις την πληρωμή, πάτησε το κουμπί —
+      θα επιβεβαιώσουμε την κατάθεση, θα ενεργοποιήσουμε το προφίλ σου και θα λάβεις
+      τις οδηγίες πρώτης σύνδεσης.</p>
+      ${claimButton(claimUrl)}`),
   }
 }
 
@@ -87,7 +109,7 @@ export function approvedEmailHtml(firstName: string): { subject: string; html: s
  * Reminder email — «Υπενθύμιση» από τον/την Financer στο popup του OC.
  * Ευγενική υπενθύμιση καταβολής συνδρομής σε εγκεκριμένο/η αιτούντα/ούσα.
  */
-export function reminderEmailHtml(firstName: string): { subject: string; html: string } {
+export function reminderEmailHtml(firstName: string, claimUrl: string): { subject: string; html: string } {
   const p = PAYMENT_DETAILS
   return {
     subject: 'Υπενθύμιση: εκκρεμεί η συνδρομή σου στο Culture for Change',
@@ -104,11 +126,83 @@ export function reminderEmailHtml(firstName: string): { subject: string; html: s
         <tr><td style="padding:3px 14px 3px 0;color:#888;">Δικαιούχος</td><td>${p.beneficiary}</td></tr>
         <tr><td style="padding:3px 14px 3px 0;color:#888;">Αιτιολογία</td><td>${p.reference}</td></tr>
       </table>
-      <p style="margin-top:22px;">
-        Αν έχεις ήδη πληρώσει, αγνόησε αυτό το μήνυμα — ή
-        <a href="mailto:${p.paidNoticeAddress}?subject=Πληρωμή%20συνδρομής" style="color:#FF8B6A;">ενημέρωσέ μας εδώ</a>
-        για να το καταχωρήσουμε άμεσα. Για οποιαδήποτε απορία, απάντησε σε αυτό το email.
-      </p>`),
+      <p style="margin-top:22px;">Αν έχεις ήδη πληρώσει, πάτησε το κουμπί για να το
+      καταχωρήσουμε άμεσα — αλλιώς αγνόησε αυτό το μήνυμα. Για οποιαδήποτε απορία,
+      απάντησε σε αυτό το email.</p>
+      ${claimButton(claimUrl, 'Έχω ήδη πληρώσει')}`),
+  }
+}
+
+/**
+ * Payment-failure email — «Αποτυχία πληρωμής» από τον/την Financer όταν η
+ * δηλωμένη κατάθεση δεν εμφανίστηκε στον λογαριασμό.
+ */
+export function paymentFailedEmailHtml(firstName: string, claimUrl: string): { subject: string; html: string } {
+  const p = PAYMENT_DETAILS
+  return {
+    subject: 'Σχετικά με την πληρωμή της συνδρομής σου — Culture for Change',
+    html: wrap(`
+      <h2 style="color:#FF8B6A;">Γεια σου, ${firstName}!</h2>
+      <p>Σε ευχαριστούμε που μας ενημέρωσες για την καταβολή της συνδρομής σου.
+      Δυστυχώς, μέχρι στιγμής <strong>η κατάθεση δεν έχει εμφανιστεί στον τραπεζικό μας
+      λογαριασμό</strong>.</p>
+      <p>Σε παρακαλούμε να ελέγξεις ότι η μεταφορά ολοκληρώθηκε σωστά (σωστό IBAN,
+      αιτιολογία, ποσό). Σημείωση: μεταφορές μεταξύ διαφορετικών τραπεζών μπορεί να
+      χρειαστούν έως δύο εργάσιμες ημέρες.</p>
+      ${sectionTitle('ΣΤΟΙΧΕΙΑ ΠΛΗΡΩΜΗΣ')}
+      <table style="font-size:15px;border-collapse:collapse;">
+        <tr><td style="padding:3px 14px 3px 0;color:#888;">Ποσό</td><td><strong>${p.amount}</strong></td></tr>
+        <tr><td style="padding:3px 14px 3px 0;color:#888;">Τράπεζα</td><td>${p.bank}</td></tr>
+        <tr><td style="padding:3px 14px 3px 0;color:#888;">IBAN</td><td style="font-family:monospace;">${p.iban}</td></tr>
+        <tr><td style="padding:3px 14px 3px 0;color:#888;">Δικαιούχος</td><td>${p.beneficiary}</td></tr>
+        <tr><td style="padding:3px 14px 3px 0;color:#888;">Αιτιολογία</td><td>${p.reference}</td></tr>
+      </table>
+      <p style="margin-top:22px;">Μόλις επιβεβαιώσεις ή επαναλάβεις την κατάθεση, πάτησε
+      ξανά το κουμπί για να μας ενημερώσεις. Αν θέλεις να το δούμε μαζί, γράψε μας
+      απευθείας στο <a href="mailto:${FINANCE_EMAIL}" style="color:#FF8B6A;">${FINANCE_EMAIL}</a>.</p>
+      ${claimButton(claimUrl, 'Επιβεβαιώνω ξανά την πληρωμή')}`),
+  }
+}
+
+/**
+ * Departure email — στέλνεται όταν διαγράφεται μέλος (OC ή Sheet).
+ * ⟨TODO λεπτομερειών⟩: πραγματικό URL ερωτηματολογίου αποχώρησης.
+ */
+export function departureEmailHtml(firstName: string): { subject: string; html: string } {
+  return {
+    subject: 'Σε αποχαιρετούμε — Culture for Change',
+    html: wrap(`
+      <h2 style="color:#FF8B6A;">Αγαπητή/έ ${firstName},</h2>
+      <p>Λυπούμαστε που σε βλέπουμε να φεύγεις από το Culture For Change. Σε
+      ευχαριστούμε για όσα μοιράστηκες μαζί μας και σου ευχόμαστε ό,τι καλύτερο
+      στη συνέχεια! 💛</p>
+      <p>Αν κάποια στιγμή θελήσεις να επιστρέψεις, οι εγγραφές είναι πάντα ανοιχτές —
+      θα χρειαστεί απλώς νέα αίτηση και καταβολή της συνδρομής από την αρχή.</p>
+      <p>Θα μας βοηθούσε πολύ αν αφιέρωνες 2-3 λεπτά σε ένα σύντομο ερωτηματολόγιο
+      για τους λόγους της αποχώρησής σου και την εμπειρία σου στο δίκτυο — μας
+      βοηθά να γινόμαστε καλύτεροι:</p>
+      <p style="margin:24px 0;">
+        <a href="${EXIT_QUESTIONNAIRE_URL}"
+           style="background:#FF8B6A;color:#fff;font-weight:bold;text-decoration:none;
+                  padding:12px 28px;border-radius:999px;display:inline-block;">
+          Ερωτηματολόγιο αποχώρησης
+        </a>
+      </p>
+      <p>Καλή συνέχεια σε ό,τι κι αν κάνεις!</p>`),
+  }
+}
+
+/** Εσωτερική ειδοποίηση: αιτών/ούσα δήλωσε ότι πλήρωσε */
+export function paymentClaimNoticeHtml(name: string, email: string, applicationId: string): { subject: string; html: string } {
+  return {
+    subject: `Δήλωση πληρωμής: ${name}`,
+    html: wrap(`
+      <h2 style="color:#FF8B6A;">Δήλωση πληρωμής συνδρομής</h2>
+      <p><strong>${name}</strong> (${email}) δήλωσε ότι ολοκλήρωσε την καταβολή της
+      συνδρομής εγγραφής.</p>
+      <p>Έλεγξε τον τραπεζικό λογαριασμό και, μόλις επιβεβαιωθεί, καταχώρησε την
+      πληρωμή από το OC («Εγκρίθηκαν — αναμονή πληρωμής» → «Πληρώθηκε η εγγραφή»).</p>
+      <p style="font-size:13px;color:#888;">Application: ${applicationId}</p>`),
   }
 }
 
