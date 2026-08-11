@@ -190,6 +190,31 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    if (body.action === 'removal') {
+      // Διαγραφή μέλους στο Μητρώο (2-βημη ροή του Sheet). ΗΠΙΑ αφαίρεση στο
+      // Strapi: φεύγει το ΑΜ (εκτός ενεργών/OC) και το προφίλ κρύβεται — ο
+      // λογαριασμός και το ιστορικό διατηρούνται. Οριστική διαγραφή δεδομένων
+      // (GDPR) παραμένει χειροκίνητη πράξη στο Strapi admin.
+      const found = await strapi(
+        `/members?filters[Email][$eqi]=${encodeURIComponent(email)}&fields[0]=Email&fields[1]=AM&fields[2]=AdminNotes`
+      )
+      const member = found.json?.data?.[0]
+      if (!member) {
+        return NextResponse.json({ ok: true, member: 'not found (already removed)' })
+      }
+      const today = new Date().toLocaleDateString('el-GR')
+      const note = `Διαγραφή από μητρώο ${today}` + (member.AM ? ` (πρώην ΑΜ ${member.AM})` : '')
+      const r = await strapi(`/members/${member.id}`, 'PUT', {
+        AM: null,
+        HideProfile: true,
+        AdminNotes: member.AdminNotes ? `${member.AdminNotes} | ${note}` : note,
+      })
+      if (!r.ok) {
+        return NextResponse.json({ ok: false, error: `member removal ${r.status}` }, { status: 502 })
+      }
+      return NextResponse.json({ ok: true, member: member.documentId, removed: true })
+    }
+
     return NextResponse.json({ ok: false, error: 'unknown action' }, { status: 400 })
   } catch (error) {
     console.error('sheet-sync error:', error)
