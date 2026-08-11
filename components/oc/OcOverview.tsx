@@ -267,32 +267,53 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
           Μητρώο μελών <span className="text-sm font-normal text-gray-400 dark:text-gray-500">({members.length})</span>
         </h3>
         <div className="flex flex-wrap gap-2 items-center">
-          <input
-            type="search"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            placeholder="Αναζήτηση (όνομα, email, ΑΜ)…"
-            className="px-3 py-1.5 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral w-56"
-            aria-label="Αναζήτηση μέλους"
-          />
-          <select
-            value={sortKey}
-            onChange={e => setSortKey(e.target.value as SortKey)}
-            className="px-3 py-1.5 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100"
-            aria-label="Ταξινόμηση"
-          >
-            <option value="am">Ταξινόμηση: ΑΜ</option>
-            <option value="name">Ταξινόμηση: Όνομα</option>
-            <option value="status">Ταξινόμηση: Κατάσταση</option>
-          </select>
+          <div className="relative">
+            <svg className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path strokeLinecap="round" d="m20 20-3.5-3.5" />
+            </svg>
+            <input
+              type="search"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Αναζήτηση (όνομα, email, ΑΜ)…"
+              className="h-9 pl-9 pr-4 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-coral focus:ring-2 focus:ring-coral/30 w-60 transition-colors"
+              aria-label="Αναζήτηση μέλους"
+            />
+          </div>
+          <div className="relative">
+            <select
+              value={sortKey}
+              onChange={e => setSortKey(e.target.value as SortKey)}
+              className="h-9 pl-4 pr-9 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 appearance-none cursor-pointer focus:outline-none focus:border-coral focus:ring-2 focus:ring-coral/30 transition-colors"
+              aria-label="Ταξινόμηση"
+            >
+              <option value="am">Ταξινόμηση: ΑΜ</option>
+              <option value="name">Ταξινόμηση: Όνομα</option>
+              <option value="status">Ταξινόμηση: Κατάσταση</option>
+            </select>
+            <svg className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
+            </svg>
+          </div>
           <div className="relative">
             <button
               type="button"
               onClick={() => setShowCols(v => !v)}
               aria-expanded={showCols}
-              className="px-3 py-1.5 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 hover:border-coral dark:hover:border-coral-light"
+              className={`h-9 inline-flex items-center gap-2 px-4 text-sm font-medium rounded-full border bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 transition-colors ${
+                showCols
+                  ? 'border-coral ring-2 ring-coral/30'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-coral dark:hover:border-coral-light'
+              }`}
             >
-              Στήλες ⚙
+              <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" d="M4 7h10M18 7h2M4 12h4M12 12h8M4 17h13M21 17h-1" />
+                <circle cx="16" cy="7" r="2" />
+                <circle cx="10" cy="12" r="2" />
+                <circle cx="19" cy="17" r="2" />
+              </svg>
+              Στήλες
             </button>
             {showCols && (
               <>
