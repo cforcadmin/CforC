@@ -262,11 +262,12 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
-      <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-4">
-        Μητρώο μελών <span className="text-sm font-normal text-gray-400 dark:text-gray-500">({members.length})</span>
-      </h3>
-      <div className="flex flex-wrap gap-2 items-center mb-5">
-        <div className="relative flex-1 min-w-56">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <h3 className="font-bold text-lg text-charcoal dark:text-gray-100">
+          Μητρώο μελών <span className="text-sm font-normal text-gray-400 dark:text-gray-500">({members.length})</span>
+        </h3>
+        <div className="flex flex-wrap gap-2 items-center">
+          <div className="relative">
             <svg className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
               <circle cx="11" cy="11" r="7" />
               <path strokeLinecap="round" d="m20 20-3.5-3.5" />
@@ -276,7 +277,7 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder="Αναζήτηση (όνομα, email, ΑΜ)…"
-              className="h-10 w-full pl-9 pr-4 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-coral focus:ring-2 focus:ring-coral/30 transition-colors"
+              className="h-9 pl-9 pr-4 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-coral focus:ring-2 focus:ring-coral/30 w-60 transition-colors"
               aria-label="Αναζήτηση μέλους"
             />
           </div>
@@ -284,7 +285,7 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
             <select
               value={sortKey}
               onChange={e => setSortKey(e.target.value as SortKey)}
-              className="h-10 pl-4 pr-9 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 appearance-none cursor-pointer focus:outline-none focus:border-coral focus:ring-2 focus:ring-coral/30 transition-colors"
+              className="h-9 pl-4 pr-9 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 appearance-none cursor-pointer focus:outline-none focus:border-coral focus:ring-2 focus:ring-coral/30 transition-colors"
               aria-label="Ταξινόμηση"
             >
               <option value="am">Ταξινόμηση: ΑΜ</option>
@@ -300,7 +301,7 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
               type="button"
               onClick={() => setShowCols(v => !v)}
               aria-expanded={showCols}
-              className={`h-10 inline-flex items-center gap-2 px-4 text-sm font-medium rounded-full border bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 transition-colors ${
+              className={`h-9 inline-flex items-center gap-2 px-4 text-sm font-medium rounded-full border bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 transition-colors ${
                 showCols
                   ? 'border-coral ring-2 ring-coral/30'
                   : 'border-gray-300 dark:border-gray-600 hover:border-coral dark:hover:border-coral-light'
@@ -353,6 +354,7 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
               </>
             )}
           </div>
+        </div>
       </div>
       {deleteWarn && (
         <p className="text-xs text-orange-600 dark:text-orange-400 mb-3">{deleteWarn}</p>
