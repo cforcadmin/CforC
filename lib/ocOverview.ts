@@ -60,7 +60,8 @@ export interface OcOverviewData {
   deleteList: Array<{ am: number; name: string }>
   members: OcMemberRow[]
   feed: OcFeedEvent[]
-  newsletter: OcNewsletterStats | null
+  /** Νεότερο πρώτα: [0]/[1] = τρέχοντα, [2..4] = ιστορικό */
+  newsletters: OcNewsletterStats[]
 }
 
 async function strapiGet(path: string): Promise<any | null> {
@@ -91,31 +92,36 @@ function memberStatus(
   return owesPrev ? 'owes-2' : 'owes-1'
 }
 
-/** Τελευταίο απεσταλμένο newsletter από το Sender API (με ασφαλή αποτυχία). */
-async function fetchNewsletter(): Promise<OcNewsletterStats | null> {
+/** Τελευταία 5 απεσταλμένα newsletters από το Sender API (με ασφαλή αποτυχία).
+ *  Στέλνονται 2/μήνα: τα 2 πρώτα εμφανίζονται ως τρέχοντα, τα 3 επόμενα ως ιστορικό. */
+async function fetchNewsletters(): Promise<OcNewsletterStats[]> {
   const key = process.env.SENDER_API_KEY
-  if (!key) return null
+  if (!key) return []
   try {
-    const res = await fetch('https://api.sender.net/v2/campaigns?limit=1&status=sent', {
+    const res = await fetch('https://api.sender.net/v2/campaigns?limit=5&status=sent', {
       headers: { Authorization: `Bearer ${key}`, Accept: 'application/json' },
       // Το Sender δεν χρειάζεται realtime — μία ώρα cache αρκεί
       next: { revalidate: 3600 },
     })
-    if (!res.ok) return null
+    if (!res.ok) return []
     const json = await res.json()
-    const c = json?.data?.[0]
-    if (!c) return null
-    const sent = Number(c.sent_count ?? c.recipient_count ?? 0)
-    return {
-      subject: c.subject || c.title || '—',
-      sentAt: c.sent_time || null,
-      recipients: Number(c.recipient_count ?? 0),
-      opens: Number(c.opens ?? 0),
-      clicks: Number(c.clicks ?? 0),
-      openRate: sent > 0 ? Math.round((Number(c.opens ?? 0) / sent) * 100) : null,
-    }
+    const campaigns = (json?.data || []).map((c: any): OcNewsletterStats => {
+      const sent = Number(c.sent_count ?? c.recipient_count ?? 0)
+      return {
+        subject: c.subject || c.title || '—',
+        sentAt: c.sent_time || null,
+        recipients: Number(c.recipient_count ?? 0),
+        opens: Number(c.opens ?? 0),
+        clicks: Number(c.clicks ?? 0),
+        openRate: sent > 0 ? Math.round((Number(c.opens ?? 0) / sent) * 100) : null,
+      }
+    })
+    // Νεότερο πρώτα, ανεξάρτητα από τη σειρά του API
+    campaigns.sort((a: OcNewsletterStats, b: OcNewsletterStats) =>
+      (b.sentAt || '').localeCompare(a.sentAt || ''))
+    return campaigns
   } catch {
-    return null
+    return []
   }
 }
 
@@ -213,6 +219,6 @@ export async function fetchOcOverview(): Promise<OcOverviewData> {
     deleteList,
     members,
     feed: feed.slice(0, 10),
-    newsletter: await fetchNewsletter(),
+    newsletters: await fetchNewsletters(),
   }
 }

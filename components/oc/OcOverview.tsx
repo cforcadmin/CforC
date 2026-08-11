@@ -2,7 +2,7 @@
 
 import { Fragment, useMemo, useState } from 'react'
 import Link from 'next/link'
-import type { OcOverviewData, OcMemberRow, OcMemberStatus } from '@/lib/ocOverview'
+import type { OcOverviewData, OcMemberRow, OcMemberStatus, OcNewsletterStats } from '@/lib/ocOverview'
 import type { OcApplicationSummary } from '@/components/oc/OcShell'
 
 const STATUS_META: Record<OcMemberStatus, { label: string; cls: string }> = {
@@ -66,6 +66,40 @@ function NameChips({ list, tone }: { list: Array<{ am: number; name: string }>; 
           {open ? 'Λιγότερα' : `+${list.length - 6} ακόμη…`}
         </button>
       )}
+    </div>
+  )
+}
+
+function NewsletterCard({ nl, latest }: { nl: OcNewsletterStats; latest: boolean }) {
+  return (
+    <div className={`p-5 rounded-2xl border ${latest ? 'border-coral/60 dark:border-coral-light/50' : 'border-gray-200 dark:border-gray-600'}`}>
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <p className="text-sm font-medium text-charcoal dark:text-gray-100 truncate min-w-0" title={nl.subject}>
+          {nl.subject}
+        </p>
+        {latest && (
+          <span className="text-[10px] uppercase tracking-wide bg-coral/15 text-coral dark:text-coral-light rounded-full px-2 py-0.5 flex-shrink-0">
+            Τελευταίο
+          </span>
+        )}
+      </div>
+      <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Στάλθηκε {formatDate(nl.sentAt)}</p>
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <p className="text-xl font-bold text-charcoal dark:text-gray-100 notranslate">{nl.recipients}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Παραλήπτες</p>
+        </div>
+        <div>
+          <p className="text-xl font-bold notranslate" style={{ color: '#2A9D8F' }}>
+            {nl.openRate !== null ? `${nl.openRate}%` : '—'}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Open rate ({nl.opens})</p>
+        </div>
+        <div>
+          <p className="text-xl font-bold text-charcoal dark:text-gray-100 notranslate">{nl.clicks}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Clicks</p>
+        </div>
+      </div>
     </div>
   )
 }
@@ -280,7 +314,7 @@ export default function OcOverview({ data, applications }: OcOverviewProps) {
         )}
       </div>
 
-      {/* Οικονομικά + Newsletter δίπλα-δίπλα */}
+      {/* Οικονομικά + Προφίλ/Σύνδεσμοι δίπλα-δίπλα */}
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
           <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-4">Συνδρομές</h3>
@@ -314,64 +348,7 @@ export default function OcOverview({ data, applications }: OcOverviewProps) {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
-          <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-4">Newsletter</h3>
-          {data.newsletter ? (
-            <>
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1 truncate" title={data.newsletter.subject}>
-                Τελευταίο: <span className="font-medium text-charcoal dark:text-gray-100">{data.newsletter.subject}</span>
-              </p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Στάλθηκε {formatDate(data.newsletter.sentAt)}</p>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <p className="text-2xl font-bold text-charcoal dark:text-gray-100 notranslate">{data.newsletter.recipients}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Παραλήπτες</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold notranslate" style={{ color: '#2A9D8F' }}>
-                    {data.newsletter.openRate !== null ? `${data.newsletter.openRate}%` : '—'}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Open rate ({data.newsletter.opens})</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-charcoal dark:text-gray-100 notranslate">{data.newsletter.clicks}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Clicks</p>
-                </div>
-              </div>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
-                Σύνολο συνδρομητών & μεταβολές μήνα: εκκρεμεί διεύρυνση δικαιωμάτων στο Sender API token.
-              </p>
-            </>
-          ) : (
-            <p className="text-sm text-gray-400 dark:text-gray-500">Δεν ήταν δυνατή η ανάκτηση στοιχείων από το Sender.</p>
-          )}
-        </div>
-      </div>
-
-      {/* Δραστηριότητα + Προφίλ + Quick links */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
-          <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-4">Πρόσφατη δραστηριότητα</h3>
-          {data.feed.length === 0 ? (
-            <p className="text-sm text-gray-400 dark:text-gray-500">Καμία καταγεγραμμένη δραστηριότητα ακόμη.</p>
-          ) : (
-            <ul className="space-y-3">
-              {data.feed.map((e, i) => (
-                <li key={i} className="flex items-start gap-3 text-sm">
-                  <span
-                    className="mt-1 w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: e.kind === 'application' ? '#FF8B6A' : '#2A9D8F' }}
-                    aria-hidden="true"
-                  />
-                  <span className="text-gray-700 dark:text-gray-300 min-w-0 flex-1 truncate" title={e.text}>{e.text}</span>
-                  <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0 notranslate">{formatDate(e.when)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="space-y-6">
+        <div className="grid sm:grid-cols-2 gap-6">
           <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6">
             <h3 className="font-bold text-charcoal dark:text-gray-100 mb-2">Προφίλ ιστοσελίδας</h3>
             <p className="text-2xl font-bold text-charcoal dark:text-gray-100 notranslate">
@@ -398,6 +375,81 @@ export default function OcOverview({ data, applications }: OcOverviewProps) {
             </ul>
           </div>
         </div>
+      </div>
+
+      {/* Newsletter: 2 ανά μήνα — τα 2 τελευταία δίπλα-δίπλα + ιστορικό 3 προηγούμενων */}
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
+        <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-4">Newsletter</h3>
+        {data.newsletters.length === 0 ? (
+          <p className="text-sm text-gray-400 dark:text-gray-500">Δεν ήταν δυνατή η ανάκτηση στοιχείων από το Sender.</p>
+        ) : (
+          <>
+            <div className="grid md:grid-cols-2 gap-4 mb-5">
+              {data.newsletters.slice(0, 2).map((nl, i) => (
+                <NewsletterCard key={nl.subject + (nl.sentAt || '')} nl={nl} latest={i === 0} />
+              ))}
+            </div>
+            {data.newsletters.length > 2 && (
+              <div>
+                <p className="text-sm font-bold text-charcoal dark:text-gray-200 mb-2">Ιστορικό</p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
+                        <th className="py-1.5 pr-3 font-medium">Θέμα</th>
+                        <th className="py-1.5 pr-3 font-medium whitespace-nowrap">Στάλθηκε</th>
+                        <th className="py-1.5 pr-3 font-medium">Παραλήπτες</th>
+                        <th className="py-1.5 pr-3 font-medium whitespace-nowrap">Open rate</th>
+                        <th className="py-1.5 font-medium">Clicks</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.newsletters.slice(2, 5).map(nl => (
+                        <tr key={nl.subject + (nl.sentAt || '')} className="border-b border-gray-100 dark:border-gray-700">
+                          <td className="py-2 pr-3 text-charcoal dark:text-gray-200 max-w-[22rem]">
+                            <span className="block truncate" title={nl.subject}>{nl.subject}</span>
+                          </td>
+                          <td className="py-2 pr-3 text-gray-600 dark:text-gray-400 whitespace-nowrap notranslate">{formatDate(nl.sentAt)}</td>
+                          <td className="py-2 pr-3 text-gray-600 dark:text-gray-400 notranslate">{nl.recipients}</td>
+                          <td className="py-2 pr-3 notranslate" style={{ color: '#2A9D8F' }}>
+                            {nl.openRate !== null ? `${nl.openRate}%` : '—'}
+                            <span className="text-gray-400 dark:text-gray-500"> ({nl.opens})</span>
+                          </td>
+                          <td className="py-2 text-gray-600 dark:text-gray-400 notranslate">{nl.clicks}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
+              Σύνολο συνδρομητών & μεταβολές μήνα: εκκρεμεί διεύρυνση δικαιωμάτων στο Sender API token.
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* Πρόσφατη δραστηριότητα */}
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
+        <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-4">Πρόσφατη δραστηριότητα</h3>
+        {data.feed.length === 0 ? (
+          <p className="text-sm text-gray-400 dark:text-gray-500">Καμία καταγεγραμμένη δραστηριότητα ακόμη.</p>
+        ) : (
+          <ul className="space-y-3">
+            {data.feed.map((e, i) => (
+              <li key={i} className="flex items-start gap-3 text-sm">
+                <span
+                  className="mt-1 w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: e.kind === 'application' ? '#FF8B6A' : '#2A9D8F' }}
+                  aria-hidden="true"
+                />
+                <span className="text-gray-700 dark:text-gray-300 min-w-0 flex-1 truncate" title={e.text}>{e.text}</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0 notranslate">{formatDate(e.when)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* Πλήρης πίνακας μελών */}
