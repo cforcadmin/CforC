@@ -271,7 +271,7 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
         </h3>
         <div className="flex flex-wrap gap-2 items-center">
           <div className="relative">
-            <svg className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
               <circle cx="11" cy="11" r="7" />
               <path strokeLinecap="round" d="m20 20-3.5-3.5" />
             </svg>
@@ -281,8 +281,8 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder="Αναζήτηση (όνομα, email, ΑΜ)…"
-              style={{ paddingLeft: '2.25rem' }}
-              className="h-9 pr-4 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-coral focus:ring-2 focus:ring-coral/30 w-60 transition-colors"
+              style={{ paddingLeft: '2.5rem' }}
+              className="h-9 pr-4 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-coral focus:ring-2 focus:ring-coral/30 w-72 transition-colors"
               aria-label="Αναζήτηση μέλους"
             />
           </div>
