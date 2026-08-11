@@ -70,36 +70,59 @@ function NameChips({ list, tone }: { list: Array<{ am: number; name: string }>; 
   )
 }
 
-function NewsletterCard({ nl, latest }: { nl: OcNewsletterStats; latest: boolean }) {
+function NewsletterSeries({ title, sub, series }: { title: string; sub: string; series: OcNewsletterStats[] }) {
+  const current = series[0]
+  const history = series.slice(1, 4)
   return (
-    <div className={`p-5 rounded-2xl border ${latest ? 'border-coral/60 dark:border-coral-light/50' : 'border-gray-200 dark:border-gray-600'}`}>
-      <div className="flex items-start justify-between gap-2 mb-1">
-        <p className="text-sm font-medium text-charcoal dark:text-gray-100 truncate min-w-0" title={nl.subject}>
-          {nl.subject}
-        </p>
-        {latest && (
-          <span className="text-[10px] uppercase tracking-wide bg-coral/15 text-coral dark:text-coral-light rounded-full px-2 py-0.5 flex-shrink-0">
-            Τελευταίο
-          </span>
-        )}
+    <div className="p-5 rounded-2xl border border-gray-200 dark:border-gray-600 min-w-0">
+      <div className="flex items-baseline justify-between gap-2 mb-3">
+        <p className="font-bold text-charcoal dark:text-gray-100">{title}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{sub}</p>
       </div>
-      <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Στάλθηκε {formatDate(nl.sentAt)}</p>
-      <div className="grid grid-cols-3 gap-3">
-        <div>
-          <p className="text-xl font-bold text-charcoal dark:text-gray-100 notranslate">{nl.recipients}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Παραλήπτες</p>
-        </div>
-        <div>
-          <p className="text-xl font-bold notranslate" style={{ color: '#2A9D8F' }}>
-            {nl.openRate !== null ? `${nl.openRate}%` : '—'}
+      {!current ? (
+        <p className="text-sm text-gray-400 dark:text-gray-500">Καμία αποστολή ακόμη.</p>
+      ) : (
+        <>
+          <p className="text-sm font-medium text-charcoal dark:text-gray-100 truncate" title={current.subject}>
+            {current.subject}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Open rate ({nl.opens})</p>
-        </div>
-        <div>
-          <p className="text-xl font-bold text-charcoal dark:text-gray-100 notranslate">{nl.clicks}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Clicks</p>
-        </div>
-      </div>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Στάλθηκε {formatDate(current.sentAt)}</p>
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div>
+              <p className="text-xl font-bold text-charcoal dark:text-gray-100 notranslate">{current.recipients}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Παραλήπτες</p>
+            </div>
+            <div>
+              <p className="text-xl font-bold notranslate" style={{ color: '#2A9D8F' }}>
+                {current.openRate !== null ? `${current.openRate}%` : '—'}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Open rate ({current.opens})</p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-charcoal dark:text-gray-100 notranslate">{current.clicks}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Clicks</p>
+            </div>
+          </div>
+          {history.length > 0 && (
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-3">
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">Ιστορικό</p>
+              <ul className="space-y-1.5">
+                {history.map(nl => (
+                  <li key={nl.subject + (nl.sentAt || '')} className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-300">
+                    <span className="notranslate w-20 flex-shrink-0 text-gray-400 dark:text-gray-500">{formatDate(nl.sentAt)}</span>
+                    <span className="truncate min-w-0 flex-1" title={nl.subject}>{nl.subject}</span>
+                    <span className="notranslate flex-shrink-0">{nl.recipients} παρ.</span>
+                    <span className="notranslate flex-shrink-0 font-medium" style={{ color: '#2A9D8F' }}>
+                      {nl.openRate !== null ? `${nl.openRate}%` : '—'}
+                    </span>
+                    <span className="notranslate flex-shrink-0 text-gray-400 dark:text-gray-500">{nl.clicks} cl.</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
@@ -377,52 +400,27 @@ export default function OcOverview({ data, applications }: OcOverviewProps) {
         </div>
       </div>
 
-      {/* Newsletter: 2 ανά μήνα — τα 2 τελευταία δίπλα-δίπλα + ιστορικό 3 προηγούμενων */}
+      {/* Newsletter: 2 σειρές/μήνα — Μελών (Paid, ~10) και Κοινού (External, ~15),
+          καθεμία με το τρέχον τεύχος + ιστορικό 3 προηγούμενων. Οι δοκιμαστικές
+          αποστολές φιλτράρονται στο lib/ocOverview. */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
         <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-4">Newsletter</h3>
-        {data.newsletters.length === 0 ? (
+        {data.newsletters.members.length === 0 && data.newsletters.external.length === 0 ? (
           <p className="text-sm text-gray-400 dark:text-gray-500">Δεν ήταν δυνατή η ανάκτηση στοιχείων από το Sender.</p>
         ) : (
           <>
-            <div className="grid md:grid-cols-2 gap-4 mb-5">
-              {data.newsletters.slice(0, 2).map((nl, i) => (
-                <NewsletterCard key={nl.subject + (nl.sentAt || '')} nl={nl} latest={i === 0} />
-              ))}
+            <div className="grid lg:grid-cols-2 gap-4">
+              <NewsletterSeries
+                title="Newsletter Μελών"
+                sub="group Paid · ~10 του μήνα"
+                series={data.newsletters.members}
+              />
+              <NewsletterSeries
+                title="Newsletter Κοινού"
+                sub="group External non media · ~15 του μήνα"
+                series={data.newsletters.external}
+              />
             </div>
-            {data.newsletters.length > 2 && (
-              <div>
-                <p className="text-sm font-bold text-charcoal dark:text-gray-200 mb-2">Ιστορικό</p>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
-                        <th className="py-1.5 pr-3 font-medium">Θέμα</th>
-                        <th className="py-1.5 pr-3 font-medium whitespace-nowrap">Στάλθηκε</th>
-                        <th className="py-1.5 pr-3 font-medium">Παραλήπτες</th>
-                        <th className="py-1.5 pr-3 font-medium whitespace-nowrap">Open rate</th>
-                        <th className="py-1.5 font-medium">Clicks</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.newsletters.slice(2, 5).map(nl => (
-                        <tr key={nl.subject + (nl.sentAt || '')} className="border-b border-gray-100 dark:border-gray-700">
-                          <td className="py-2 pr-3 text-charcoal dark:text-gray-200 max-w-[22rem]">
-                            <span className="block truncate" title={nl.subject}>{nl.subject}</span>
-                          </td>
-                          <td className="py-2 pr-3 text-gray-600 dark:text-gray-400 whitespace-nowrap notranslate">{formatDate(nl.sentAt)}</td>
-                          <td className="py-2 pr-3 text-gray-600 dark:text-gray-400 notranslate">{nl.recipients}</td>
-                          <td className="py-2 pr-3 notranslate" style={{ color: '#2A9D8F' }}>
-                            {nl.openRate !== null ? `${nl.openRate}%` : '—'}
-                            <span className="text-gray-400 dark:text-gray-500"> ({nl.opens})</span>
-                          </td>
-                          <td className="py-2 text-gray-600 dark:text-gray-400 notranslate">{nl.clicks}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
               Σύνολο συνδρομητών & μεταβολές μήνα: εκκρεμεί διεύρυνση δικαιωμάτων στο Sender API token.
             </p>

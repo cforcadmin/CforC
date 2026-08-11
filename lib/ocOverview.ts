@@ -60,8 +60,8 @@ export interface OcOverviewData {
   deleteList: Array<{ am: number; name: string }>
   members: OcMemberRow[]
   feed: OcFeedEvent[]
-  /** Νεότερο πρώτα: [0]/[1] = τρέχοντα, [2..4] = ιστορικό */
-  newsletters: OcNewsletterStats[]
+  /** Δύο σειρές (Μελών/Paid ~10 του μήνα, Κοινού/External ~15): [0] = τρέχον, [1..3] = ιστορικό */
+  newsletters: { members: OcNewsletterStats[]; external: OcNewsletterStats[] }
 }
 
 async function strapiGet(path: string): Promise<any | null> {
@@ -92,36 +92,52 @@ function memberStatus(
   return owesPrev ? 'owes-2' : 'owes-1'
 }
 
-/** Τελευταία 5 απεσταλμένα newsletters από το Sender API (με ασφαλή αποτυχία).
- *  Στέλνονται 2/μήνα: τα 2 πρώτα εμφανίζονται ως τρέχοντα, τα 3 επόμενα ως ιστορικό. */
-async function fetchNewsletters(): Promise<OcNewsletterStats[]> {
+/**
+ * Newsletters από το Sender API, σε ΔΥΟ σειρές (2 αποστολές/μήνα):
+ *  - members: ~10 του μήνα → group Paid (SENDER_PAID_GROUP_ID / eEXKRW)
+ *  - external: ~14-15 του μήνα → group External non media (SENDER_GROUP_ID),
+ *    το οποίο σε κάποιες αποστολές εμφανίζεται ως send-to-all (κενά groups)
+ * Οι δοκιμαστικές αποστολές (test group / <10 παραλήπτες) εξαιρούνται.
+ * Κάθε σειρά: [0] = τρέχον, [1..3] = ιστορικό.
+ */
+async function fetchNewsletters(): Promise<{ members: OcNewsletterStats[]; external: OcNewsletterStats[] }> {
+  const empty = { members: [], external: [] }
   const key = process.env.SENDER_API_KEY
-  if (!key) return []
+  const paidGroup = process.env.SENDER_PAID_GROUP_ID
+  if (!key) return empty
   try {
-    const res = await fetch('https://api.sender.net/v2/campaigns?limit=5&status=sent', {
+    const res = await fetch('https://api.sender.net/v2/campaigns?limit=30&status=sent', {
       headers: { Authorization: `Bearer ${key}`, Accept: 'application/json' },
       // Το Sender δεν χρειάζεται realtime — μία ώρα cache αρκεί
       next: { revalidate: 3600 },
     })
-    if (!res.ok) return []
+    if (!res.ok) return empty
     const json = await res.json()
-    const campaigns = (json?.data || []).map((c: any): OcNewsletterStats => {
+    const members: OcNewsletterStats[] = []
+    const external: OcNewsletterStats[] = []
+    for (const c of json?.data || []) {
+      const recipients = Number(c.recipient_count ?? 0)
+      if (recipients < 10) continue // δοκιμαστική αποστολή
       const sent = Number(c.sent_count ?? c.recipient_count ?? 0)
-      return {
+      const stats: OcNewsletterStats = {
         subject: c.subject || c.title || '—',
         sentAt: c.sent_time || null,
-        recipients: Number(c.recipient_count ?? 0),
+        recipients,
         opens: Number(c.opens ?? 0),
         clicks: Number(c.clicks ?? 0),
         openRate: sent > 0 ? Math.round((Number(c.opens ?? 0) / sent) * 100) : null,
       }
-    })
-    // Νεότερο πρώτα, ανεξάρτητα από τη σειρά του API
-    campaigns.sort((a: OcNewsletterStats, b: OcNewsletterStats) =>
-      (b.sentAt || '').localeCompare(a.sentAt || ''))
-    return campaigns
+      const groups: string[] = Array.isArray(c.campaign_groups) ? c.campaign_groups : []
+      if (paidGroup && groups.includes(paidGroup)) members.push(stats)
+      else external.push(stats)
+    }
+    const newestFirst = (a: OcNewsletterStats, b: OcNewsletterStats) =>
+      (b.sentAt || '').localeCompare(a.sentAt || '')
+    members.sort(newestFirst)
+    external.sort(newestFirst)
+    return { members: members.slice(0, 4), external: external.slice(0, 4) }
   } catch {
-    return []
+    return empty
   }
 }
 
