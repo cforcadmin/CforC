@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getBoardRoster, SEAT_LABELS, type OcSeat } from '@/lib/ocRoles'
 import { sendDecisionToSheet, sheetsConfigured } from '@/lib/googleSheets'
+import { OC_LAST_SEAT_COOKIE } from '@/components/oc/ocPrefs'
 
 /**
  * OC voting on membership applications (simplified v1).
@@ -84,20 +85,32 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // Ο ρόλος με τον οποίο ΕΝΕΡΓΕΙ τώρα (επιλογή στο OC, httpOnly cookie) —
+  // όχι όλοι οι ρόλοι που κατέχει. Ένα μέλος με IT+Financer που ενεργεί ως
+  // Financer ψηφίζει σαν Financer· το override ισχύει ΜΟΝΟ όταν ενεργεί
+  // ρητά ως IT ή Γραμματεία.
+  const seatCookie = cookieStore.get(OC_LAST_SEAT_COOKIE)?.value as OcSeat | undefined
+  const activeSeat: OcSeat | null =
+    seatCookie && access.seats.includes(seatCookie) ? seatCookie
+      : access.seats.length === 1 ? access.seats[0] : null
+
   const votes: Record<string, VoteRecord> =
     app.Votes && typeof app.Votes === 'object' && !Array.isArray(app.Votes) ? { ...app.Votes } : {}
-  votes[decoded.memberId] = { seats: access.seats, vote, at: new Date().toISOString() }
+  votes[decoded.memberId] = {
+    seats: activeSeat ? [activeSeat] : access.seats,
+    vote,
+    at: new Date().toISOString(),
+  }
 
-  const isOverride = access.seats.some(s => OVERRIDE_SEATS.includes(s))
+  const isOverride = activeSeat !== null && OVERRIDE_SEATS.includes(activeSeat)
 
   let finalState: 'approved' | 'rejected' | null = null
   let decisionBy = ''
 
   if (isOverride) {
-    // IT/Admin: η ψήφος αντικαθιστά όλες τις ψήφους (συμφωνημένη απλοποίηση v1)
+    // IT/Admin (ενεργός ρόλος): η ψήφος αντικαθιστά όλες τις ψήφους (v1)
     finalState = vote === 'approve' ? 'approved' : 'rejected'
-    const label = access.seats.filter(s => OVERRIDE_SEATS.includes(s)).map(s => SEAT_LABELS[s]).join('/')
-    decisionBy = `OC — ${label} (καθολική απόφαση)`
+    decisionBy = `OC — ${SEAT_LABELS[activeSeat!]} (καθολική απόφαση)`
   } else {
     const roster = await getBoardRoster()
     const allVoted = roster.length > 0 && roster.every(r => votes[r.memberDocumentId])

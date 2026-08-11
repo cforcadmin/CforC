@@ -62,7 +62,13 @@ export default async function ApplicationReviewPage({ params }: Props) {
   ).map(s => SEAT_LABELS[s as OcSeat] || s)
   const myVoteRaw = votes[decoded.memberId]?.vote
   const myVote = myVoteRaw === 'approve' || myVoteRaw === 'reject' ? myVoteRaw : null
-  const canOverride = access.seats.some(s => s === 'it' || s === 'admin')
+  // Το override ισχύει μόνο για τον ΕΝΕΡΓΟ ρόλο (cookie), όχι για όλους
+  // τους ρόλους που κατέχει το μέλος — ίδια λογική με το vote API.
+  const seatCookie = cookieStore.get('oc-last-seat')?.value
+  const activeSeat = seatCookie && access.seats.includes(seatCookie as any)
+    ? seatCookie
+    : access.seats.length === 1 ? access.seats[0] : null
+  const canOverride = activeSeat === 'it' || activeSeat === 'admin'
   const submitted = a.SubmittedAt
     ? new Intl.DateTimeFormat('el-GR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Athens' }).format(new Date(a.SubmittedAt))
     : '—'
