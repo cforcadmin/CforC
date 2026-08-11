@@ -44,6 +44,15 @@ export default function ApplyShell() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  // Same threshold as Navigation: the sticky progress strip shrinks in sync
+  // with the header pill when scrolling
+  const [isScrolled, setIsScrolled] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 150)
+    onScroll()
+    window.addEventListener('scroll', onScroll)
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
   const honeypotRef = useRef<HTMLInputElement>(null)
 
   // Load draft client-side (sessionStorage unavailable during SSR)
@@ -194,6 +203,10 @@ export default function ApplyShell() {
             </p>
           </div>
 
+          {/* Sticky progress strip: parks under the fixed header while
+              scrolling and shrinks (scale-90) in sync with the header pill */}
+          <div className="sticky top-24 md:top-28 z-40 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 bg-[#F5F0EB] dark:bg-gray-900 pt-1 pb-2 mb-4">
+          <div className={`origin-top transition-transform duration-300 ${isScrolled ? 'scale-90' : ''}`}>
           {/* Station line */}
           <nav aria-label="Βήματα αίτησης" className="mb-2 overflow-x-auto">
             <ol className="flex items-center min-w-[560px]">
@@ -245,7 +258,9 @@ export default function ApplyShell() {
           >
             <div className="h-full bg-coral rounded-full transition-all duration-500" style={{ width: `${Math.max(progress, 2)}%` }} />
           </div>
-          <p className="text-right text-xs text-gray-400 dark:text-gray-500 mb-6">{progress}%</p>
+          <p className="text-right text-xs text-gray-400 dark:text-gray-500">{progress}%</p>
+          </div>
+          </div>
 
           {/* Split layout */}
           <div className="grid lg:grid-cols-[1fr_360px] gap-8 items-start">
