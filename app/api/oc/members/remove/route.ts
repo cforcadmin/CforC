@@ -106,14 +106,16 @@ export async function POST(request: NextRequest) {
       sheetSynced = false
     }
 
-    // Αποχαιρετιστήριο email (ευχές + ερωτηματολόγιο αποχώρησης)
+    // Αποχαιρετιστήριο email — ΠΡΕΠΕΙ να γίνει await: σε serverless το
+    // fire-and-forget παγώνει μόλις επιστρέψει το response και δεν φεύγει ποτέ
+    let departureEmailSent = false
     if (member.Email) {
       const exitName = String(member.Name || '').trim().split(' ')[0] || 'μέλος'
       const tpl = departureEmailHtml(exitName)
-      sendOcEmail(String(member.Email).trim(), tpl.subject, tpl.html).catch(() => {})
+      departureEmailSent = await sendOcEmail(String(member.Email).trim(), tpl.subject, tpl.html)
     }
 
-    return NextResponse.json({ ok: true, removed: member.Name, formerAM, sheetSynced })
+    return NextResponse.json({ ok: true, removed: member.Name, formerAM, sheetSynced, departureEmailSent })
   } catch (error) {
     console.error('oc member remove error:', error)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })

@@ -156,11 +156,11 @@ export async function POST(request: NextRequest) {
 
   // Έγκριση → email στον αιτούντα με ευχαριστίες + οδηγίες πληρωμής
   // (δομή — τα στοιχεία τράπεζας/ποσό οριστικοποιούνται στο lib/ocEmails)
+  // Await — σε serverless το fire-and-forget email συχνά δεν προλαβαίνει να φύγει
   if (finalState === 'approved' && app.Email) {
     const claim = paymentClaimUrl(generatePaymentClaimToken(app.documentId))
     const tpl = approvedEmailHtml(String(app.FirstName || '').trim() || 'μέλος', claim)
-    sendOcEmail(String(app.Email).trim(), tpl.subject, tpl.html)
-      .catch(() => {})
+    await sendOcEmail(String(app.Email).trim(), tpl.subject, tpl.html)
   }
 
   // Ρόλοι που έχουν ψηφίσει (ποτέ ΤΙ ψήφισαν)

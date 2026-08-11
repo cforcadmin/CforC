@@ -213,11 +213,11 @@ export async function POST(request: NextRequest) {
       if (!r.ok) {
         return NextResponse.json({ ok: false, error: `member removal ${r.status}` }, { status: 502 })
       }
-      // Αποχαιρετιστήριο email (ευχές + ερωτηματολόγιο αποχώρησης)
+      // Αποχαιρετιστήριο email — await (serverless: fire-and-forget δεν φεύγει)
       const exitName = String(member.Name || '').trim().split(' ')[0] || 'μέλος'
       const tpl = departureEmailHtml(exitName)
-      sendOcEmail(email, tpl.subject, tpl.html).catch(() => {})
-      return NextResponse.json({ ok: true, member: member.documentId, removed: true })
+      const departureEmailSent = await sendOcEmail(email, tpl.subject, tpl.html)
+      return NextResponse.json({ ok: true, member: member.documentId, removed: true, departureEmailSent })
     }
 
     return NextResponse.json({ ok: false, error: 'unknown action' }, { status: 400 })

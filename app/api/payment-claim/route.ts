@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       }
       const name = `${app.FirstName || ''} ${app.LastName || ''}`.trim() || '—'
       const notice = paymentClaimNoticeHtml(name, String(app.Email || ''), app.documentId)
-      sendOcEmail(FINANCE_EMAIL, notice.subject, notice.html).catch(() => {})
+      await sendOcEmail(FINANCE_EMAIL, notice.subject, notice.html)
     }
     return NextResponse.json({ ok: true })
   } catch (error) {
