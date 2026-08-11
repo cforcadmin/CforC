@@ -400,7 +400,7 @@ export default function OcOverview({ data, applications }: OcOverviewProps) {
                   Υποβλήθηκε {formatDate(app.submittedAt)}
                 </p>
                 <span className="inline-flex items-center gap-1.5 mt-3 bg-coral text-white text-xs font-bold px-3 py-1.5 rounded-full group-hover:bg-coral/90 transition-colors">
-                  Ψήφισε: Έγκριση / Απόρριψη →
+                  Έλεγχος αίτησης →
                 </span>
               </Link>
             ))}
