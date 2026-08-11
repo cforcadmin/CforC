@@ -86,6 +86,15 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
   )
   // Direct entry without a stored seat and several seats held — ask in place
   const [showSeatModal, setShowSeatModal] = useState(!initialSeat && seats.length > 1)
+  // Same threshold as Navigation: the OC hero minimizes in sync with the
+  // header pill, and its accessibility button yields to the header's own
+  const [isScrolled, setIsScrolled] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 150)
+    onScroll()
+    window.addEventListener('scroll', onScroll)
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   useEffect(() => {
     // Single-seat members: make sure the cookie reflects their one seat
@@ -114,7 +123,9 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
         {/* Minimized OC hero — sticky so the category chips never scroll away.
             pt clears the fixed site navbar, which overlays the padding area. */}
         <section className="sticky top-0 z-40">
-          <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 rounded-b-3xl relative pt-28 pb-6">
+          <div className={`bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 rounded-b-3xl relative transition-all duration-300 ${
+            isScrolled ? 'pt-24 pb-3' : 'pt-28 pb-6'
+          }`}>
             <div className="w-full px-6 lg:px-12">
               <div className="flex flex-wrap items-center gap-4">
                 {/* Title + member-area switch */}
@@ -159,7 +170,7 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
                 </div>
 
                 {/* Category chips */}
-                <nav aria-label="Ενότητες OC" className="flex-1 flex flex-wrap gap-2 items-center justify-center pr-4 lg:pr-10">
+                <nav aria-label="Ενότητες OC" className="flex-1 flex flex-wrap gap-2.5 items-center justify-center pr-4 lg:pr-10">
                   {SECTIONS.map(section => {
                     const active = section.key === activeSection
                     return (
@@ -168,19 +179,19 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
                         type="button"
                         onClick={() => setActiveSection(section.key)}
                         aria-current={active ? 'page' : undefined}
-                        className={`inline-flex items-stretch rounded-lg overflow-hidden text-[11px] font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+                        className={`inline-flex items-stretch rounded-lg overflow-hidden text-xs font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
                           active ? 'shadow-md scale-105' : 'opacity-85 hover:opacity-100'
                         }`}
                       >
                         <span
-                          className="px-1.5 py-1 text-white flex items-center flex-shrink-0"
+                          className="px-2 py-1.5 text-white flex items-center flex-shrink-0"
                           style={{ backgroundColor: section.hue }}
                           aria-hidden="true"
                         >
                           {section.letter}
                         </span>
                         <span
-                          className={`flex-1 pl-1 pr-1.5 py-1 text-left ${active ? 'text-charcoal dark:text-white' : 'text-charcoal/80 dark:text-gray-200'}`}
+                          className={`flex-1 pl-1.5 pr-2.5 py-1.5 text-left ${active ? 'text-charcoal dark:text-white' : 'text-charcoal/80 dark:text-gray-200'}`}
                           style={{
                             backgroundColor: active ? `${section.hue}55` : `${section.hue}26`,
                           }}
@@ -193,8 +204,11 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
                   })}
                 </nav>
 
-                {/* Accessibility Menu Trigger — in-flow so it aligns with the row */}
-                <div className="flex-shrink-0">
+                {/* Accessibility Menu Trigger — in-flow so it aligns with the row.
+                    Hidden while scrolled: the header pill shows its own. */}
+                <div className={`flex-shrink-0 transition-all duration-300 ${
+                  isScrolled ? 'opacity-0 scale-0 w-0 overflow-hidden' : 'opacity-100 scale-100'
+                }`}>
                   <AccessibilityButton />
                 </div>
               </div>
