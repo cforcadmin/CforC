@@ -234,7 +234,7 @@ function MembersTable({ members, currentYear }: { members: OcMemberRow[]; curren
                     <td className="py-2.5 pr-3 font-medium text-charcoal dark:text-gray-200">
                       {m.name}
                       {!m.profileVisible && (
-                        <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500 border border-gray-300 dark:border-gray-600 rounded px-1 py-px">κρυφό</span>
+                        <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500 border border-gray-300 dark:border-gray-600 rounded px-1 py-px whitespace-nowrap">Προφίλ μη ενημερωμένο</span>
                       )}
                     </td>
                     <td className="py-2.5 pr-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">{m.city || '—'}</td>
