@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess } from '@/lib/ocRoles'
+import { fetchOcOverview } from '@/lib/ocOverview'
 import OcShell from '@/components/oc/OcShell'
 import { OC_LANDING_COOKIE, OC_LAST_SEAT_COOKIE } from '@/components/oc/ocPrefs'
 
@@ -55,12 +56,17 @@ export default async function OcPage() {
     // OC still renders without application data
   }
 
+  // Επισκόπηση: μητρώο/οικονομικά (κρυφά πεδία), feed, newsletter. Τα δεδομένα
+  // αυτά σερβίρονται ΜΟΝΟ εδώ, πίσω από το board gate — ποτέ μέσω του public proxy.
+  const overview = await fetchOcOverview()
+
   return (
     <OcShell
       seats={access.seats}
       initialSeat={initialSeat}
       initialLandingPref={landingPref || 'ask'}
       applications={applications}
+      overview={overview}
     />
   )
 }

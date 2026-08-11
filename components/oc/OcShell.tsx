@@ -6,6 +6,8 @@ import Navigation from '@/components/Navigation'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import { OC_SEAT_LABELS, OC_SEAT_SHORT } from '@/components/oc/ocPrefs'
 import OcSeatChoiceModal from '@/components/oc/OcSeatChoiceModal'
+import OcOverview from '@/components/oc/OcOverview'
+import type { OcOverviewData } from '@/lib/ocOverview'
 
 // OC categories. Chip style: first letter in a filled block, remainder in a
 // tinted panel — Inside Spaceman pattern, CforC identity (one hue per section).
@@ -37,6 +39,8 @@ interface OcShellProps {
   initialLandingPref: string
   /** Membership applications (server-fetched) */
   applications?: OcApplicationSummary[]
+  /** Επισκόπηση data (server-fetched, board-gated) */
+  overview?: OcOverviewData | null
 }
 
 const APP_STATE_LABELS: Record<string, { label: string; cls: string }> = {
@@ -70,7 +74,7 @@ async function persistPrefs(prefs: { landing?: string; seat?: string }) {
   }
 }
 
-export default function OcShell({ seats, initialSeat, initialLandingPref, applications = [] }: OcShellProps) {
+export default function OcShell({ seats, initialSeat, initialLandingPref, applications = [], overview = null }: OcShellProps) {
   const pending = applications.filter(a => a.state === 'submitted')
   const [activeSection, setActiveSection] = useState<SectionKey>(
     initialSeat === 'financer' ? 'finances' : 'overview'
@@ -201,71 +205,16 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
         {/* Section content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           {activeSection === 'overview' && (
-            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
-              <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-2">
-                Καλωσήρθες στο OC
-              </h2>
-              <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Ο ρόλος σου στην τρέχουσα Συντονιστική Ομάδα:
-              </p>
-              <div className="flex flex-wrap gap-2 mb-8">
-                {seats.map(seat => (
-                  <span
-                    key={seat}
-                    className={`text-sm px-4 py-1.5 rounded-full border ${
-                      seat === activeSeat
-                        ? 'bg-coral text-white border-coral font-bold'
-                        : 'bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 border-coral dark:border-coral-light'
-                    }`}
-                  >
-                    {OC_SEAT_LABELS[seat] || seat}
-                  </span>
-                ))}
-              </div>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
-                Εδώ θα εμφανίζονται οι εκκρεμότητες που χρειάζονται τη δική σου ενέργεια.
-                Οι ενότητες ενεργοποιούνται σταδιακά.
-              </p>
-
-              {/* Real pending items */}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                <h3 className="font-bold text-charcoal dark:text-gray-100 mb-4">
-                  Εκκρεμείς αιτήσεις μελών
-                  {pending.length > 0 && (
-                    <span className="ml-2 bg-coral text-white text-xs px-2 py-0.5 rounded-full">{pending.length}</span>
-                  )}
-                </h3>
-                {pending.length === 0 ? (
-                  <p className="text-gray-400 dark:text-gray-500 text-sm">
-                    Καμία εκκρεμής αίτηση αυτή τη στιγμή. 🎉
-                  </p>
-                ) : (
-                  <ul className="space-y-2">
-                    {pending.map(app => (
-                      <li key={app.id}>
-                        <Link
-                          href={`/oc/applications/${app.id}`}
-                          className="flex items-center justify-between gap-3 p-4 rounded-2xl border border-gray-200 dark:border-gray-600 hover:border-coral dark:hover:border-coral-light transition-colors group"
-                        >
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-charcoal dark:text-gray-200 group-hover:text-coral dark:group-hover:text-coral-light transition-colors">
-                              {app.name || 'Χωρίς όνομα'}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              Αίτηση εγγραφής · {formatDate(app.submittedAt)}
-                            </p>
-                          </div>
-                          <span className="text-coral dark:text-coral-light text-sm flex-shrink-0">Έλεγχος →</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
-                  Εδώ θα προστεθούν σταδιακά και οι υπόλοιπες εκκρεμότητες (πληρωμές, έλεγχοι προφίλ).
+            overview ? (
+              <OcOverview data={overview} applications={applications} />
+            ) : (
+              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
+                <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-2">Επισκόπηση</h2>
+                <p className="text-gray-500 dark:text-gray-400">
+                  Δεν ήταν δυνατή η φόρτωση των δεδομένων επισκόπησης. Δοκίμασε ανανέωση.
                 </p>
               </div>
-            </div>
+            )
           )}
 
           {activeSection === 'members' && (

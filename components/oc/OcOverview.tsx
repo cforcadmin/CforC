@@ -1,0 +1,407 @@
+'use client'
+
+import { Fragment, useMemo, useState } from 'react'
+import Link from 'next/link'
+import type { OcOverviewData, OcMemberRow, OcMemberStatus } from '@/lib/ocOverview'
+import type { OcApplicationSummary } from '@/components/oc/OcShell'
+
+const STATUS_META: Record<OcMemberStatus, { label: string; cls: string }> = {
+  paid: { label: 'Τακτοποιημένο', cls: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' },
+  'new-unpaid': { label: 'Νέο — εκκρεμεί συνδρομή', cls: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200' },
+  'owes-1': { label: 'Εκκρεμεί συνδρομή', cls: 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200' },
+  'owes-2': { label: 'Προς διαγραφή (2 έτη)', cls: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200' },
+  unknown: { label: '—', cls: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' },
+}
+
+// Γρήγοροι σύνδεσμοι — συμπλήρωσε/άλλαξε URLs εδώ (κενό URL = δεν εμφανίζεται)
+const QUICK_LINKS: Array<{ label: string; href: string; external?: boolean }> = [
+  { label: 'Μητρώο (Google Sheet)', href: '', external: true },
+  { label: 'Strapi Admin', href: 'https://faithful-crystal-a2269c9fd9.strapiapp.com/admin', external: true },
+  { label: 'Sender (Newsletter)', href: 'https://app.sender.net', external: true },
+  { label: 'Φόρμα αίτησης μέλους', href: '/apply' },
+  { label: 'Δημόσια σελίδα μελών', href: '/members' },
+]
+
+function formatDate(iso: string | null): string {
+  if (!iso) return '—'
+  try {
+    return new Intl.DateTimeFormat('el-GR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(iso))
+  } catch {
+    return '—'
+  }
+}
+
+function Tile({ value, label, accent, sub }: { value: string | number; label: string; accent?: string; sub?: string }) {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 flex flex-col">
+      <span className="text-3xl font-bold notranslate" style={accent ? { color: accent } : undefined}>
+        <span className={accent ? '' : 'text-charcoal dark:text-gray-100'}>{value}</span>
+      </span>
+      <span className="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-snug">{label}</span>
+      {sub && <span className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{sub}</span>}
+    </div>
+  )
+}
+
+function NameChips({ list, tone }: { list: Array<{ am: number; name: string }>; tone: 'orange' | 'red' }) {
+  const [open, setOpen] = useState(false)
+  const shown = open ? list : list.slice(0, 6)
+  const toneCls = tone === 'red'
+    ? 'bg-red-50 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-200 dark:border-red-800'
+    : 'bg-orange-50 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-200 dark:border-orange-800'
+  if (list.length === 0) return <p className="text-sm text-gray-400 dark:text-gray-500">Κανένα μέλος 🎉</p>
+  return (
+    <div className="flex flex-wrap gap-1.5 items-center">
+      {shown.map(p => (
+        <span key={p.am} className={`text-xs px-2 py-1 rounded-full border ${toneCls}`}>
+          {p.name}
+        </span>
+      ))}
+      {list.length > 6 && (
+        <button
+          type="button"
+          onClick={() => setOpen(v => !v)}
+          className="text-xs text-coral dark:text-coral-light hover:underline"
+        >
+          {open ? 'Λιγότερα' : `+${list.length - 6} ακόμη…`}
+        </button>
+      )}
+    </div>
+  )
+}
+
+const YEARS_SHOWN = [2021, 2022, 2023, 2024, 2025, 2026]
+
+function PaymentCells({ m }: { m: OcMemberRow }) {
+  return (
+    <div className="flex gap-1.5 flex-wrap">
+      {YEARS_SHOWN.map(y => {
+        const v = m.payments[String(y)]
+        const before = m.regYear !== null && y < m.regYear
+        const cls = before || v === 0
+          ? 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
+          : v === 1
+            ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
+            : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+        const txt = before ? '·' : v === 1 ? '✓' : v === 0 ? '0' : '—'
+        return (
+          <span key={y} className={`text-[11px] px-1.5 py-0.5 rounded font-mono ${cls}`} title={`${y}: ${before ? 'προ εγγραφής' : v === 1 ? 'πληρωμένο' : v === 0 ? 'δεν όφειλε' : 'εκκρεμεί'}`}>
+            {String(y).slice(2)}{txt}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
+type SortKey = 'am' | 'name' | 'status'
+
+function MembersTable({ members, currentYear }: { members: OcMemberRow[]; currentYear: number }) {
+  const [query, setQuery] = useState('')
+  const [sortKey, setSortKey] = useState<SortKey>('am')
+  const [expanded, setExpanded] = useState<Set<number>>(new Set())
+
+  const STATUS_ORDER: Record<OcMemberStatus, number> = { 'owes-2': 0, 'owes-1': 1, 'new-unpaid': 2, paid: 3, unknown: 4 }
+  const rows = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const filtered = q
+      ? members.filter(m => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || String(m.am) === q)
+      : members
+    return [...filtered].sort((a, b) =>
+      sortKey === 'am' ? a.am - b.am
+        : sortKey === 'name' ? a.name.localeCompare(b.name, 'el')
+        : STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || a.am - b.am
+    )
+  }, [members, query, sortKey])
+
+  function toggle(am: number) {
+    setExpanded(prev => {
+      const next = new Set(prev)
+      if (next.has(am)) next.delete(am)
+      else next.add(am)
+      return next
+    })
+  }
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <h3 className="font-bold text-lg text-charcoal dark:text-gray-100">
+          Μητρώο μελών <span className="text-sm font-normal text-gray-400 dark:text-gray-500">({members.length})</span>
+        </h3>
+        <div className="flex flex-wrap gap-2 items-center">
+          <input
+            type="search"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Αναζήτηση (όνομα, email, ΑΜ)…"
+            className="px-3 py-1.5 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral w-56"
+            aria-label="Αναζήτηση μέλους"
+          />
+          <select
+            value={sortKey}
+            onChange={e => setSortKey(e.target.value as SortKey)}
+            className="px-3 py-1.5 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100"
+            aria-label="Ταξινόμηση"
+          >
+            <option value="am">Ταξινόμηση: ΑΜ</option>
+            <option value="name">Ταξινόμηση: Όνομα</option>
+            <option value="status">Ταξινόμηση: Κατάσταση</option>
+          </select>
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
+              <th className="py-2 pr-3 font-medium">ΑΜ</th>
+              <th className="py-2 pr-3 font-medium">Ονοματεπώνυμο</th>
+              <th className="py-2 pr-3 font-medium hidden md:table-cell">Πόλη</th>
+              <th className="py-2 pr-3 font-medium">{currentYear}</th>
+              <th className="py-2 pr-3 font-medium">Κατάσταση</th>
+              <th className="py-2 font-medium sr-only">Λεπτομέρειες</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(m => {
+              const st = STATUS_META[m.status]
+              const isOpen = expanded.has(m.am)
+              const cur = m.payments[String(currentYear)]
+              return (
+                <Fragment key={m.am}>
+                  <tr
+                    className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/40 cursor-pointer"
+                    onClick={() => toggle(m.am)}
+                  >
+                    <td className="py-2.5 pr-3 text-gray-500 dark:text-gray-400 notranslate">{m.am}</td>
+                    <td className="py-2.5 pr-3 font-medium text-charcoal dark:text-gray-200">
+                      {m.name}
+                      {!m.profileVisible && (
+                        <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500 border border-gray-300 dark:border-gray-600 rounded px-1 py-px">κρυφό</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 pr-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">{m.city || '—'}</td>
+                    <td className="py-2.5 pr-3 notranslate">
+                      {cur === 1 ? '✓' : cur === 0 ? '0' : <span className="text-red-500 dark:text-red-400">—</span>}
+                    </td>
+                    <td className="py-2.5 pr-3">
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ${st.cls}`}>{st.label}</span>
+                    </td>
+                    <td className="py-2.5 text-right">
+                      <span className="text-coral dark:text-coral-light text-xs select-none" aria-hidden="true">{isOpen ? '▲' : '▼'}</span>
+                      <span className="sr-only">{isOpen ? 'Απόκρυψη λεπτομερειών' : 'Εμφάνιση λεπτομερειών'}</span>
+                    </td>
+                  </tr>
+                  {isOpen && (
+                    <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-700/20">
+                      <td colSpan={6} className="py-3 px-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 text-xs text-gray-600 dark:text-gray-300">
+                          <PaymentCells m={m} />
+                          <div className="flex flex-wrap gap-x-5 gap-y-1">
+                            <span className="notranslate">{m.email || '—'}</span>
+                            {m.phone && <span className="notranslate">{m.phone}</span>}
+                            {m.regYear && <span>Εγγραφή: {m.regYear}</span>}
+                            {m.slug && m.profileVisible && (
+                              <Link href={`/members/${m.slug}`} className="text-coral dark:text-coral-light hover:underline" onClick={e => e.stopPropagation()}>
+                                Προφίλ →
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              )
+            })}
+          </tbody>
+        </table>
+        {rows.length === 0 && (
+          <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">Κανένα αποτέλεσμα.</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+interface OcOverviewProps {
+  data: OcOverviewData
+  applications: OcApplicationSummary[]
+}
+
+export default function OcOverview({ data, applications }: OcOverviewProps) {
+  const pending = applications.filter(a => a.state === 'submitted')
+  const y = data.currentYear
+
+  return (
+    <div className="space-y-6">
+      {/* KPI tiles */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <Tile value={data.activeMembers} label="Ενεργά μέλη" />
+        <Tile
+          value={`${data.paidCurrent}/${data.activeMembers}`}
+          label={`Πληρωμένο ${y}`}
+          accent={data.paidCurrent >= data.activeMembers * 0.7 ? '#2A9D8F' : '#E9A13B'}
+        />
+        <Tile value={pending.length} label="Εκκρεμείς αιτήσεις" accent={pending.length > 0 ? '#FF8B6A' : undefined} />
+        <Tile value={data.approvedUnpaidApps} label="Εγκρίθηκαν — αναμονή πληρωμής" />
+        <Tile value={data.newThisYear} label={`Νέα μέλη ${y}`} accent="#4A90D9" />
+        <Tile value="—" label="Ταμείο" sub="ενημερώνεται από Οικονομικά" />
+      </div>
+
+      {/* Εκκρεμείς αιτήσεις — πρώτο μεγάλο block */}
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
+        <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-4">
+          Εκκρεμείς αιτήσεις μελών
+          {pending.length > 0 && (
+            <span className="ml-2 bg-coral text-white text-xs px-2 py-0.5 rounded-full align-middle">{pending.length}</span>
+          )}
+        </h3>
+        {pending.length === 0 ? (
+          <p className="text-gray-400 dark:text-gray-500 text-sm">Καμία εκκρεμής αίτηση αυτή τη στιγμή. 🎉</p>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {pending.map(app => (
+              <Link
+                key={app.id}
+                href={`/oc/applications/${app.id}`}
+                className="p-5 rounded-2xl border border-gray-200 dark:border-gray-600 hover:border-coral dark:hover:border-coral-light transition-colors group"
+              >
+                <p className="font-bold text-charcoal dark:text-gray-100 group-hover:text-coral dark:group-hover:text-coral-light transition-colors truncate">
+                  {app.name || 'Χωρίς όνομα'}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Υποβλήθηκε {formatDate(app.submittedAt)}
+                </p>
+                <p className="text-coral dark:text-coral-light text-sm mt-3">Έλεγχος αίτησης →</p>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Οικονομικά + Newsletter δίπλα-δίπλα */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
+          <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-4">Συνδρομές</h3>
+          <div className="grid grid-cols-2 gap-4 mb-5">
+            <div>
+              <p className="text-2xl font-bold text-charcoal dark:text-gray-100 notranslate">
+                {data.paidPrev}<span className="text-base font-normal text-gray-400">/{data.activeMembers}</span>
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Πληρωμένο {y - 1}</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-charcoal dark:text-gray-100 notranslate">
+                {data.paidCurrent}<span className="text-base font-normal text-gray-400">/{data.activeMembers}</span>
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Πληρωμένο {y}</p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-bold text-charcoal dark:text-gray-200 mb-2">
+                Προς ειδοποίηση <span className="font-normal text-gray-400">({data.notifyList.length})</span>
+              </p>
+              <NameChips list={data.notifyList} tone="orange" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-charcoal dark:text-gray-200 mb-2">
+                Προς διαγραφή — 2 έτη ανεξόφλητα <span className="font-normal text-gray-400">({data.deleteList.length})</span>
+              </p>
+              <NameChips list={data.deleteList} tone="red" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
+          <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-4">Newsletter</h3>
+          {data.newsletter ? (
+            <>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1 truncate" title={data.newsletter.subject}>
+                Τελευταίο: <span className="font-medium text-charcoal dark:text-gray-100">{data.newsletter.subject}</span>
+              </p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Στάλθηκε {formatDate(data.newsletter.sentAt)}</p>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <p className="text-2xl font-bold text-charcoal dark:text-gray-100 notranslate">{data.newsletter.recipients}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Παραλήπτες</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold notranslate" style={{ color: '#2A9D8F' }}>
+                    {data.newsletter.openRate !== null ? `${data.newsletter.openRate}%` : '—'}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Open rate ({data.newsletter.opens})</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-charcoal dark:text-gray-100 notranslate">{data.newsletter.clicks}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Clicks</p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
+                Σύνολο συνδρομητών & μεταβολές μήνα: εκκρεμεί διεύρυνση δικαιωμάτων στο Sender API token.
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-gray-400 dark:text-gray-500">Δεν ήταν δυνατή η ανάκτηση στοιχείων από το Sender.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Δραστηριότητα + Προφίλ + Quick links */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
+          <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-4">Πρόσφατη δραστηριότητα</h3>
+          {data.feed.length === 0 ? (
+            <p className="text-sm text-gray-400 dark:text-gray-500">Καμία καταγεγραμμένη δραστηριότητα ακόμη.</p>
+          ) : (
+            <ul className="space-y-3">
+              {data.feed.map((e, i) => (
+                <li key={i} className="flex items-start gap-3 text-sm">
+                  <span
+                    className="mt-1 w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: e.kind === 'application' ? '#FF8B6A' : '#2A9D8F' }}
+                    aria-hidden="true"
+                  />
+                  <span className="text-gray-700 dark:text-gray-300 min-w-0 flex-1 truncate" title={e.text}>{e.text}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0 notranslate">{formatDate(e.when)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6">
+            <h3 className="font-bold text-charcoal dark:text-gray-100 mb-2">Προφίλ ιστοσελίδας</h3>
+            <p className="text-2xl font-bold text-charcoal dark:text-gray-100 notranslate">
+              {data.profilesVisible}<span className="text-base font-normal text-gray-400">/{data.activeMembers}</span>
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">ορατά προφίλ μελών</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6">
+            <h3 className="font-bold text-charcoal dark:text-gray-100 mb-3">Γρήγοροι σύνδεσμοι</h3>
+            <ul className="space-y-2">
+              {QUICK_LINKS.filter(l => l.href).map(l => (
+                <li key={l.label}>
+                  {l.external ? (
+                    <a href={l.href} target="_blank" rel="noopener noreferrer" className="text-sm text-coral dark:text-coral-light hover:underline">
+                      {l.label} ↗
+                    </a>
+                  ) : (
+                    <Link href={l.href} className="text-sm text-coral dark:text-coral-light hover:underline">
+                      {l.label} →
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Πλήρης πίνακας μελών */}
+      <MembersTable members={data.members} currentYear={y} />
+    </div>
+  )
+}
