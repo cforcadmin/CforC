@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess } from '@/lib/ocRoles'
-import { OC_LANDING_COOKIE, OC_LAST_SEAT_COOKIE } from '@/components/oc/ocPrefs'
+import {
+  OC_LANDING_COOKIE, OC_LAST_SEAT_COOKIE,
+  OC_TABLE_COLS_COOKIE, OC_TABLE_DENSITY_COOKIE, OC_TABLE_COLUMNS,
+} from '@/components/oc/ocPrefs'
 
 const COOKIE_OPTS = {
   httpOnly: true,
@@ -34,7 +37,21 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}))
-    const { landing, seat } = body as { landing?: string; seat?: string }
+    const { landing, seat, tableCols, tableDensity } = body as {
+      landing?: string; seat?: string; tableCols?: string; tableDensity?: string
+    }
+
+    if (tableCols !== undefined) {
+      const valid = new Set(OC_TABLE_COLUMNS.map(c => c.key))
+      const cols = String(tableCols).split(',').map(s => s.trim()).filter(k => valid.has(k))
+      cookieStore.set(OC_TABLE_COLS_COOKIE, cols.join(','), COOKIE_OPTS)
+    }
+    if (tableDensity !== undefined) {
+      if (tableDensity !== 'comfortable' && tableDensity !== 'compact') {
+        return NextResponse.json({ error: 'Invalid density' }, { status: 400 })
+      }
+      cookieStore.set(OC_TABLE_DENSITY_COOKIE, tableDensity, COOKIE_OPTS)
+    }
 
     if (landing !== undefined) {
       if (landing === 'ask') {

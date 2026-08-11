@@ -2,8 +2,10 @@
 
 import { Fragment, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { OcOverviewData, OcMemberRow, OcMemberStatus, OcNewsletterStats } from '@/lib/ocOverview'
 import type { OcApplicationSummary } from '@/components/oc/OcShell'
+import { OC_TABLE_COLUMNS, OC_TABLE_DEFAULT_COLS } from '@/components/oc/ocPrefs'
 
 const STATUS_META: Record<OcMemberStatus, { label: string; cls: string }> = {
   paid: { label: 'Τακτοποιημένο', cls: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' },
@@ -153,10 +155,55 @@ function PaymentCells({ m }: { m: OcMemberRow }) {
 
 type SortKey = 'am' | 'name' | 'status'
 
-function MembersTable({ members, currentYear }: { members: OcMemberRow[]; currentYear: number }) {
+interface TablePrefs {
+  cols: string[]
+  density: 'comfortable' | 'compact'
+}
+
+function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
+  members: OcMemberRow[]
+  currentYear: number
+  /** Ενεργός ρόλος IT/Γραμματεία → εμφανίζεται η Διαγραφή μέλους */
+  canDelete: boolean
+  initialPrefs: TablePrefs
+}) {
+  const router = useRouter()
   const [query, setQuery] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('am')
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
+  const [cols, setCols] = useState<string[]>(initialPrefs.cols)
+  const [density, setDensity] = useState<'comfortable' | 'compact'>(initialPrefs.density)
+  const [showCols, setShowCols] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [deleteWarn, setDeleteWarn] = useState<string | null>(null)
+
+  const show = (key: string) => cols.includes(key)
+  const py = density === 'compact' ? 'py-1' : 'py-2.5'
+  const txt = density === 'compact' ? 'text-xs' : 'text-sm'
+
+  function persist(next: Partial<{ tableCols: string; tableDensity: string }>) {
+    fetch('/api/oc/prefs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(next),
+      keepalive: true,
+    }).catch(() => {})
+  }
+
+  function toggleCol(key: string) {
+    setCols(prev => {
+      const next = prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+      persist({ tableCols: next.join(',') })
+      return next
+    })
+  }
+
+  function applyDensity(d: 'comfortable' | 'compact') {
+    setDensity(d)
+    persist({ tableDensity: d })
+  }
 
   const STATUS_ORDER: Record<OcMemberStatus, number> = { 'owes-2': 0, 'owes-1': 1, 'new-unpaid': 2, paid: 3, unknown: 4 }
   const rows = useMemo(() => {
@@ -179,6 +226,39 @@ function MembersTable({ members, currentYear }: { members: OcMemberRow[]; curren
       return next
     })
   }
+
+  async function removeMember(m: OcMemberRow) {
+    if (confirmDelete !== m.am) {
+      setConfirmDelete(m.am)
+      setDeleteError(null)
+      return
+    }
+    setConfirmDelete(null)
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      const res = await fetch('/api/oc/members/remove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberId: m.docId }),
+      })
+      const json = await res.json().catch(() => null)
+      if (!res.ok || !json?.ok) {
+        setDeleteError(json?.error || 'Κάτι πήγε στραβά — δοκίμασε ξανά')
+        return
+      }
+      if (json.sheetSynced === false) {
+        setDeleteWarn(`Το μέλος «${json.removed}» αφαιρέθηκε, αλλά το Μητρώο (Sheet) δεν ενημερώθηκε — κάνε τη διαγραφή και εκεί χειροκίνητα.`)
+      }
+      router.refresh()
+    } catch {
+      setDeleteError('Κάτι πήγε στραβά — δοκίμασε ξανά')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const colCount = 3 + OC_TABLE_COLUMNS.filter(c => show(c.key)).length
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
@@ -205,18 +285,73 @@ function MembersTable({ members, currentYear }: { members: OcMemberRow[]; curren
             <option value="name">Ταξινόμηση: Όνομα</option>
             <option value="status">Ταξινόμηση: Κατάσταση</option>
           </select>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowCols(v => !v)}
+              aria-expanded={showCols}
+              className="px-3 py-1.5 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 hover:border-coral dark:hover:border-coral-light"
+            >
+              Στήλες ⚙
+            </button>
+            {showCols && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setShowCols(false)} aria-hidden="true" />
+                <div className="absolute right-0 top-full mt-2 z-40 w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-600 p-4">
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Ορατές στήλες</p>
+                  <div className="space-y-1.5 mb-4">
+                    {OC_TABLE_COLUMNS.map(c => (
+                      <label key={c.key} className="flex items-center gap-2 text-sm text-charcoal dark:text-gray-200 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={show(c.key)}
+                          onChange={() => toggleCol(c.key)}
+                          className="accent-[#FF8B6A]"
+                        />
+                        {c.label}
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Πυκνότητα</p>
+                  <div className="flex gap-2">
+                    {([['comfortable', 'Άνετη'], ['compact', 'Συμπαγής']] as const).map(([d, label]) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => applyDensity(d)}
+                        className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
+                          density === d
+                            ? 'bg-coral text-white border-coral'
+                            : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-coral'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
+      {deleteWarn && (
+        <p className="text-xs text-orange-600 dark:text-orange-400 mb-3">{deleteWarn}</p>
+      )}
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className={`w-full ${txt}`}>
           <thead>
             <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
-              <th className="py-2 pr-3 font-medium">ΑΜ</th>
-              <th className="py-2 pr-3 font-medium">Ονοματεπώνυμο</th>
-              <th className="py-2 pr-3 font-medium hidden md:table-cell">Πόλη</th>
-              <th className="py-2 pr-3 font-medium">{currentYear}</th>
-              <th className="py-2 pr-3 font-medium">Κατάσταση</th>
-              <th className="py-2 font-medium sr-only">Λεπτομέρειες</th>
+              <th className={`${py} pr-3 font-medium`}>ΑΜ</th>
+              <th className={`${py} pr-3 font-medium`}>Ονοματεπώνυμο</th>
+              {show('city') && <th className={`${py} pr-3 font-medium hidden md:table-cell`}>Πόλη</th>}
+              {show('email') && <th className={`${py} pr-3 font-medium`}>Email</th>}
+              {show('phone') && <th className={`${py} pr-3 font-medium`}>Τηλέφωνο</th>}
+              {show('regYear') && <th className={`${py} pr-3 font-medium`}>Εγγραφή</th>}
+              {show('year') && <th className={`${py} pr-3 font-medium`}>{currentYear}</th>}
+              {show('status') && <th className={`${py} pr-3 font-medium`}>Κατάσταση</th>}
+              {show('payments') && <th className={`${py} pr-3 font-medium`}>Πληρωμές</th>}
+              <th className={`${py} font-medium sr-only`}>Λεπτομέρειες</th>
             </tr>
           </thead>
           <tbody>
@@ -230,31 +365,41 @@ function MembersTable({ members, currentYear }: { members: OcMemberRow[]; curren
                     className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/40 cursor-pointer"
                     onClick={() => toggle(m.am)}
                   >
-                    <td className="py-2.5 pr-3 text-gray-500 dark:text-gray-400 notranslate">{m.am}</td>
-                    <td className="py-2.5 pr-3 font-medium text-charcoal dark:text-gray-200">
+                    <td className={`${py} pr-3 text-gray-500 dark:text-gray-400 notranslate`}>{m.am}</td>
+                    <td className={`${py} pr-3 font-medium text-charcoal dark:text-gray-200`}>
                       {m.name}
                       {!m.profileVisible && (
                         <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500 border border-gray-300 dark:border-gray-600 rounded px-1 py-px whitespace-nowrap">Προφίλ μη ενημερωμένο</span>
                       )}
                     </td>
-                    <td className="py-2.5 pr-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">{m.city || '—'}</td>
-                    <td className="py-2.5 pr-3 notranslate">
-                      {cur === 1 ? '✓' : cur === 0 ? '0' : <span className="text-red-500 dark:text-red-400">—</span>}
-                    </td>
-                    <td className="py-2.5 pr-3">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ${st.cls}`}>{st.label}</span>
-                    </td>
-                    <td className="py-2.5 text-right">
+                    {show('city') && <td className={`${py} pr-3 text-gray-600 dark:text-gray-400 hidden md:table-cell`}>{m.city || '—'}</td>}
+                    {show('email') && <td className={`${py} pr-3 text-gray-600 dark:text-gray-400 notranslate`}>{m.email || '—'}</td>}
+                    {show('phone') && <td className={`${py} pr-3 text-gray-600 dark:text-gray-400 notranslate`}>{m.phone || '—'}</td>}
+                    {show('regYear') && <td className={`${py} pr-3 text-gray-600 dark:text-gray-400 notranslate`}>{m.regYear || '—'}</td>}
+                    {show('year') && (
+                      <td className={`${py} pr-3 notranslate`}>
+                        {cur === 1 ? '✓' : cur === 0 ? '0' : <span className="text-red-500 dark:text-red-400">—</span>}
+                      </td>
+                    )}
+                    {show('status') && (
+                      <td className={`${py} pr-3`}>
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ${st.cls}`}>{st.label}</span>
+                      </td>
+                    )}
+                    {show('payments') && (
+                      <td className={`${py} pr-3`}><PaymentCells m={m} /></td>
+                    )}
+                    <td className={`${py} text-right`}>
                       <span className="text-coral dark:text-coral-light text-xs select-none" aria-hidden="true">{isOpen ? '▲' : '▼'}</span>
                       <span className="sr-only">{isOpen ? 'Απόκρυψη λεπτομερειών' : 'Εμφάνιση λεπτομερειών'}</span>
                     </td>
                   </tr>
                   {isOpen && (
                     <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-700/20">
-                      <td colSpan={6} className="py-3 px-3">
+                      <td colSpan={colCount} className="py-3 px-3">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 text-xs text-gray-600 dark:text-gray-300">
                           <PaymentCells m={m} />
-                          <div className="flex flex-wrap gap-x-5 gap-y-1">
+                          <div className="flex flex-wrap gap-x-5 gap-y-1 items-center flex-1">
                             <span className="notranslate">{m.email || '—'}</span>
                             {m.phone && <span className="notranslate">{m.phone}</span>}
                             {m.regYear && <span>Εγγραφή: {m.regYear}</span>}
@@ -264,6 +409,25 @@ function MembersTable({ members, currentYear }: { members: OcMemberRow[]; curren
                               </Link>
                             )}
                           </div>
+                          {canDelete && (
+                            <div className="flex items-center gap-2 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                              {deleteError && confirmDelete === null && (
+                                <span className="text-red-600 dark:text-red-400">{deleteError}</span>
+                              )}
+                              <button
+                                type="button"
+                                disabled={deleting}
+                                onClick={() => removeMember(m)}
+                                className={`px-3 py-1 rounded-full text-xs font-bold transition-colors disabled:opacity-50 ${
+                                  confirmDelete === m.am
+                                    ? 'bg-red-600 text-white'
+                                    : 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/50 dark:text-red-200 dark:hover:bg-red-900/80'
+                                }`}
+                              >
+                                {confirmDelete === m.am ? 'Σίγουρα; Πάτησε ξανά' : 'Διαγραφή μέλους'}
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -284,9 +448,16 @@ function MembersTable({ members, currentYear }: { members: OcMemberRow[]; curren
 interface OcOverviewProps {
   data: OcOverviewData
   applications: OcApplicationSummary[]
+  /** Ενεργός ρόλος it/admin → δικαίωμα διαγραφής μέλους στον πίνακα */
+  canDeleteMembers?: boolean
+  tableCols?: string[]
+  tableDensity?: 'comfortable' | 'compact'
 }
 
-export default function OcOverview({ data, applications }: OcOverviewProps) {
+export default function OcOverview({
+  data, applications, canDeleteMembers = false,
+  tableCols, tableDensity,
+}: OcOverviewProps) {
   const pending = applications.filter(a => a.state === 'submitted')
   const y = data.currentYear
   const [showApproved, setShowApproved] = useState(false)
@@ -522,7 +693,12 @@ export default function OcOverview({ data, applications }: OcOverviewProps) {
       </div>
 
       {/* Πλήρης πίνακας μελών */}
-      <MembersTable members={data.members} currentYear={y} />
+      <MembersTable
+        members={data.members}
+        currentYear={y}
+        canDelete={canDeleteMembers}
+        initialPrefs={{ cols: tableCols ?? OC_TABLE_DEFAULT_COLS, density: tableDensity ?? 'comfortable' }}
+      />
     </div>
   )
 }

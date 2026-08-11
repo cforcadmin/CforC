@@ -41,6 +41,9 @@ interface OcShellProps {
   applications?: OcApplicationSummary[]
   /** Επισκόπηση data (server-fetched, board-gated) */
   overview?: OcOverviewData | null
+  /** Μητρώο μελών table prefs (από τα httpOnly cookies) */
+  tableCols?: string[]
+  tableDensity?: 'comfortable' | 'compact'
 }
 
 const APP_STATE_LABELS: Record<string, { label: string; cls: string }> = {
@@ -74,7 +77,7 @@ async function persistPrefs(prefs: { landing?: string; seat?: string }) {
   }
 }
 
-export default function OcShell({ seats, initialSeat, initialLandingPref, applications = [], overview = null }: OcShellProps) {
+export default function OcShell({ seats, initialSeat, initialLandingPref, applications = [], overview = null, tableCols, tableDensity }: OcShellProps) {
   const pending = applications.filter(a => a.state === 'submitted')
   const [activeSection, setActiveSection] = useState<SectionKey>(
     initialSeat === 'financer' ? 'finances' : 'overview'
@@ -220,7 +223,13 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           {activeSection === 'overview' && (
             overview ? (
-              <OcOverview data={overview} applications={applications} />
+              <OcOverview
+                data={overview}
+                applications={applications}
+                canDeleteMembers={activeSeat === 'it' || activeSeat === 'admin'}
+                tableCols={tableCols}
+                tableDensity={tableDensity}
+              />
             ) : (
               <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
                 <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-2">Επισκόπηση</h2>

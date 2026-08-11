@@ -13,6 +13,7 @@ export const OC_CURRENT_YEAR = new Date().getFullYear()
 
 export interface OcMemberRow {
   am: number
+  docId: string
   name: string
   email: string
   city: string
@@ -166,6 +167,7 @@ export async function fetchOcOverview(): Promise<OcOverviewData> {
       const regYear = m.RegistrationYear ?? null
       members.push({
         am: m.AM,
+        docId: m.documentId,
         name: m.Name || '—',
         email: m.Email || '',
         city: m.City || '',

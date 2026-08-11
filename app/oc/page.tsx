@@ -5,7 +5,10 @@ import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess } from '@/lib/ocRoles'
 import { fetchOcOverview } from '@/lib/ocOverview'
 import OcShell from '@/components/oc/OcShell'
-import { OC_LANDING_COOKIE, OC_LAST_SEAT_COOKIE } from '@/components/oc/ocPrefs'
+import {
+  OC_LANDING_COOKIE, OC_LAST_SEAT_COOKIE,
+  OC_TABLE_COLS_COOKIE, OC_TABLE_DENSITY_COOKIE, OC_TABLE_COLUMNS,
+} from '@/components/oc/ocPrefs'
 
 export const metadata: Metadata = {
   title: 'Operational Center | Culture for Change',
@@ -60,6 +63,15 @@ export default async function OcPage() {
   // αυτά σερβίρονται ΜΟΝΟ εδώ, πίσω από το board gate — ποτέ μέσω του public proxy.
   const overview = await fetchOcOverview()
 
+  // Μητρώο μελών table view prefs (per-browser, httpOnly cookies)
+  const validCols = new Set(OC_TABLE_COLUMNS.map(c => c.key))
+  const colsRaw = cookieStore.get(OC_TABLE_COLS_COOKIE)?.value
+  const tableCols = colsRaw !== undefined
+    ? colsRaw.split(',').map(s => s.trim()).filter(k => validCols.has(k))
+    : undefined
+  const densityRaw = cookieStore.get(OC_TABLE_DENSITY_COOKIE)?.value
+  const tableDensity = densityRaw === 'compact' || densityRaw === 'comfortable' ? densityRaw : undefined
+
   return (
     <OcShell
       seats={access.seats}
@@ -67,6 +79,8 @@ export default async function OcPage() {
       initialLandingPref={landingPref || 'ask'}
       applications={applications}
       overview={overview}
+      tableCols={tableCols}
+      tableDensity={tableDensity}
     />
   )
 }

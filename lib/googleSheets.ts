@@ -62,6 +62,28 @@ export async function appendApplicantToSheet(row: ApplicantRow): Promise<void> {
  * Throws on failure — the caller records the miss so the row can be moved
  * by hand (Strapi is already updated and remains the source of truth).
  */
+/**
+ * Executes the Sheet's member-deletion flow (snapshot → «Διαγρ. Μέλη»,
+ * removal from Επισκόπηση/Συνδρομές) for the given ΑΜ. Initiated from the
+ * OC — the Sheet skips its own back-sync (the site already updated Strapi).
+ */
+export async function sendMemberRemovalToSheet(am: number): Promise<void> {
+  if (!WEBAPP_URL || !WEBAPP_SECRET) throw new Error('Sheet web app not configured')
+  const res = await fetch(WEBAPP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ secret: WEBAPP_SECRET, action: 'removeMember', am }),
+    redirect: 'follow',
+  })
+  if (!res.ok) {
+    throw new Error(`Sheet web app HTTP ${res.status}: ${await res.text().catch(() => '')}`)
+  }
+  const json = await res.json().catch(() => null)
+  if (!json?.ok) {
+    throw new Error(`Sheet web app rejected: ${json?.error || 'unknown error'}`)
+  }
+}
+
 export async function sendDecisionToSheet(email: string, decision: 'approved' | 'rejected'): Promise<void> {
   if (!WEBAPP_URL || !WEBAPP_SECRET) throw new Error('Sheet web app not configured')
   const res = await fetch(WEBAPP_URL, {
