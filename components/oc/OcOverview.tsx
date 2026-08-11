@@ -502,14 +502,56 @@ interface OcOverviewProps {
   applications: OcApplicationSummary[]
   /** Ενεργός ρόλος it/admin → δικαίωμα διαγραφής μέλους στον πίνακα */
   canDeleteMembers?: boolean
+  /** Ενεργός ρόλος financer → κουμπιά πληρωμής/υπενθύμισης στο popup */
+  canRecordPayments?: boolean
   tableCols?: string[]
   tableDensity?: 'comfortable' | 'compact'
 }
 
 export default function OcOverview({
-  data, applications, canDeleteMembers = false,
+  data, applications, canDeleteMembers = false, canRecordPayments = false,
   tableCols, tableDensity,
 }: OcOverviewProps) {
+  const router = useRouter()
+  const [payConfirm, setPayConfirm] = useState<string | null>(null)
+  const [payBusy, setPayBusy] = useState<string | null>(null)
+  const [payNotes, setPayNotes] = useState<Record<string, string>>({})
+
+  async function financerAction(appId: string, action: 'paid' | 'remind') {
+    if (action === 'paid' && payConfirm !== appId) {
+      setPayConfirm(appId)
+      return
+    }
+    setPayConfirm(null)
+    setPayBusy(appId + action)
+    try {
+      const res = await fetch('/api/oc/applications/payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ applicationId: appId, action }),
+      })
+      const json = await res.json().catch(() => null)
+      if (!res.ok || !json?.ok) {
+        setPayNotes(n => ({ ...n, [appId]: json?.error || 'Κάτι πήγε στραβά — δοκίμασε ξανά' }))
+        return
+      }
+      if (action === 'remind') {
+        setPayNotes(n => ({ ...n, [appId]: 'Η υπενθύμιση εστάλη ✓' }))
+      } else {
+        setPayNotes(n => ({
+          ...n,
+          [appId]: json.emailSent
+            ? `Καταχωρήθηκε (ΑΜ ${json.am}) — στάλθηκε email καλωσορίσματος ✓`
+            : `Καταχωρήθηκε (ΑΜ ${json.am}) — το email ΔΕΝ στάλθηκε, στείλ'το χειροκίνητα`,
+        }))
+        router.refresh()
+      }
+    } catch {
+      setPayNotes(n => ({ ...n, [appId]: 'Κάτι πήγε στραβά — δοκίμασε ξανά' }))
+    } finally {
+      setPayBusy(null)
+    }
+  }
   const pending = applications.filter(a => a.state === 'submitted')
   const y = data.currentYear
   const [showApproved, setShowApproved] = useState(false)
@@ -575,17 +617,47 @@ export default function OcOverview({
             ) : (
               <ul className="space-y-2">
                 {data.approvedApps.map(app => (
-                  <li key={app.id} className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-gray-200 dark:border-gray-600">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-charcoal dark:text-gray-200 truncate">{app.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Αίτηση: {formatDate(app.submittedAt)}</p>
+                  <li key={app.id} className="p-3 rounded-2xl border border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-charcoal dark:text-gray-200 truncate">{app.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Αίτηση: {formatDate(app.submittedAt)}</p>
+                      </div>
+                      <Link
+                        href={`/oc/applications/${app.id}`}
+                        className="text-coral dark:text-coral-light text-sm whitespace-nowrap hover:underline flex-shrink-0"
+                      >
+                        Άνοιγμα αίτησης →
+                      </Link>
                     </div>
-                    <Link
-                      href={`/oc/applications/${app.id}`}
-                      className="text-coral dark:text-coral-light text-sm whitespace-nowrap hover:underline flex-shrink-0"
-                    >
-                      Άνοιγμα αίτησης →
-                    </Link>
+                    {canRecordPayments && (
+                      <div className="flex flex-wrap items-center gap-2 mt-2.5">
+                        <button
+                          type="button"
+                          disabled={payBusy !== null}
+                          onClick={() => financerAction(app.id, 'paid')}
+                          className={`px-3 py-1 rounded-full text-xs font-bold transition-colors disabled:opacity-50 ${
+                            payConfirm === app.id
+                              ? 'bg-green-600 text-white'
+                              : 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/50 dark:text-green-200 dark:hover:bg-green-900/80'
+                          }`}
+                        >
+                          {payBusy === app.id + 'paid' ? 'Καταχώρηση…'
+                            : payConfirm === app.id ? 'Σίγουρα; Πάτησε ξανά' : 'Πληρώθηκε η εγγραφή'}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={payBusy !== null}
+                          onClick={() => financerAction(app.id, 'remind')}
+                          className="px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-800 hover:bg-orange-200 dark:bg-orange-900/50 dark:text-orange-200 dark:hover:bg-orange-900/80 transition-colors disabled:opacity-50"
+                        >
+                          {payBusy === app.id + 'remind' ? 'Αποστολή…' : 'Υπενθύμιση'}
+                        </button>
+                        {payNotes[app.id] && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{payNotes[app.id]}</span>
+                        )}
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>

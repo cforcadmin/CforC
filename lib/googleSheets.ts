@@ -84,6 +84,30 @@ export async function sendMemberRemovalToSheet(am: number): Promise<void> {
   }
 }
 
+/**
+ * Records a subscription payment from the OC (Financer): the Sheet sets
+ * ΠΛΗΡΩΜΗ = «Ναι» on the applicant's ΕΓΚΕΚΡΙΜΕΝΑ row and runs the full
+ * promotion (ΑΜ, Επισκόπηση/Συνδρομές, member creation via sheet-sync).
+ * Returns the assigned ΑΜ. Throws on failure.
+ */
+export async function sendPaymentToSheet(email: string): Promise<string> {
+  if (!WEBAPP_URL || !WEBAPP_SECRET) throw new Error('Sheet web app not configured')
+  const res = await fetch(WEBAPP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ secret: WEBAPP_SECRET, action: 'recordPayment', email }),
+    redirect: 'follow',
+  })
+  if (!res.ok) {
+    throw new Error(`Sheet web app HTTP ${res.status}: ${await res.text().catch(() => '')}`)
+  }
+  const json = await res.json().catch(() => null)
+  if (!json?.ok) {
+    throw new Error(`Sheet web app rejected: ${json?.error || 'unknown error'}`)
+  }
+  return String(json.am || '')
+}
+
 export async function sendDecisionToSheet(email: string, decision: 'approved' | 'rejected'): Promise<void> {
   if (!WEBAPP_URL || !WEBAPP_SECRET) throw new Error('Sheet web app not configured')
   const res = await fetch(WEBAPP_URL, {

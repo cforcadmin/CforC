@@ -227,6 +227,7 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
                 data={overview}
                 applications={applications}
                 canDeleteMembers={activeSeat === 'it' || activeSeat === 'admin'}
+                canRecordPayments={activeSeat === 'financer'}
                 tableCols={tableCols}
                 tableDensity={tableDensity}
               />
