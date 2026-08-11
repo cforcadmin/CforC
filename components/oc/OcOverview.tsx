@@ -155,6 +155,8 @@ function PaymentCells({ m }: { m: OcMemberRow }) {
 
 type SortKey = 'am' | 'name' | 'status'
 
+const SORT_LABELS: Record<SortKey, string> = { am: 'ΑΜ', name: 'Όνομα', status: 'Κατάσταση' }
+
 interface TablePrefs {
   cols: string[]
   density: 'comfortable' | 'compact'
@@ -170,6 +172,7 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
   const router = useRouter()
   const [query, setQuery] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('am')
+  const [sortOpen, setSortOpen] = useState(false)
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
   const [cols, setCols] = useState<string[]>(initialPrefs.cols)
   const [density, setDensity] = useState<'comfortable' | 'compact'>(initialPrefs.density)
@@ -273,28 +276,56 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
               <path strokeLinecap="round" d="m20 20-3.5-3.5" />
             </svg>
             <input
-              type="search"
+              type="text"
+              role="searchbox"
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder="Αναζήτηση (όνομα, email, ΑΜ)…"
-              className="h-9 pl-9 pr-4 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-coral focus:ring-2 focus:ring-coral/30 w-60 transition-colors"
+              style={{ paddingLeft: '2.25rem' }}
+              className="h-9 pr-4 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-coral focus:ring-2 focus:ring-coral/30 w-60 transition-colors"
               aria-label="Αναζήτηση μέλους"
             />
           </div>
           <div className="relative">
-            <select
-              value={sortKey}
-              onChange={e => setSortKey(e.target.value as SortKey)}
-              className="h-9 pl-4 pr-9 text-sm rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 appearance-none cursor-pointer focus:outline-none focus:border-coral focus:ring-2 focus:ring-coral/30 transition-colors"
-              aria-label="Ταξινόμηση"
+            <button
+              type="button"
+              onClick={() => setSortOpen(v => !v)}
+              aria-expanded={sortOpen}
+              aria-haspopup="listbox"
+              className={`h-9 inline-flex items-center gap-2 px-4 text-sm rounded-full border bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 transition-colors ${
+                sortOpen
+                  ? 'border-coral ring-2 ring-coral/30'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-coral dark:hover:border-coral-light'
+              }`}
             >
-              <option value="am">Ταξινόμηση: ΑΜ</option>
-              <option value="name">Ταξινόμηση: Όνομα</option>
-              <option value="status">Ταξινόμηση: Κατάσταση</option>
-            </select>
-            <svg className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
-            </svg>
+              Ταξινόμηση: {SORT_LABELS[sortKey]}
+              <svg className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform ${sortOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+            {sortOpen && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setSortOpen(false)} aria-hidden="true" />
+                <div className="absolute right-0 top-full mt-2 z-40 w-48 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-600 py-2" role="listbox" aria-label="Ταξινόμηση">
+                  {(Object.keys(SORT_LABELS) as SortKey[]).map(k => (
+                    <button
+                      key={k}
+                      type="button"
+                      role="option"
+                      aria-selected={sortKey === k}
+                      onClick={() => { setSortKey(k); setSortOpen(false) }}
+                      className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                        sortKey === k
+                          ? 'text-coral dark:text-coral-light font-bold'
+                          : 'text-charcoal dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {SORT_LABELS[k]}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
           <div className="relative">
             <button
