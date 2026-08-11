@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
+import CforcLoader from '@/components/apply/CforcLoader'
 import PreviewCard from './PreviewCard'
 import StepIdentity from './StepIdentity'
 import StepActivity from './StepActivity'
@@ -191,6 +192,7 @@ export default function ApplyShell() {
   return (
     <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900 flex flex-col">
       <Navigation />
+      {submitting && <CforcLoader label="Υποβολή αίτησης" />}
 
       <main id="main-content" className="flex-1 pt-28 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

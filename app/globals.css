@@ -1739,3 +1739,51 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
 .dark .rich-text-editor .tiptap p.is-editor-empty:first-child::before {
   color: #6b7280;
 }
+
+/* ---- CforC loader: sweeping logo mark (used during slow submissions) ---- */
+.cforc-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  background: #F5F0EB;
+}
+.dark .cforc-loader { background: #111827; }
+.cforc-loader__mark { width: 5.5rem; height: 5.5rem; display: block; }
+.cforc-loader__mark path {
+  fill: #2D2D2D;
+  opacity: .16;
+  animation: cforc-sweep 1.8s linear infinite;
+}
+.dark .cforc-loader__mark path { fill: #F5F0EB; }
+.cforc-loader__label {
+  font-size: .75rem;
+  font-weight: 500;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: #2D2D2D;
+  opacity: .55;
+}
+.dark .cforc-loader__label { color: #F5F0EB; }
+@keyframes cforc-sweep {
+  0%   { fill: #2D2D2D; opacity: .16; }
+  7%   { fill: #FF8B6A; opacity: 1; }
+  26%  { fill: #2D2D2D; opacity: .16; }
+  100% { fill: #2D2D2D; opacity: .16; }
+}
+.dark .cforc-loader__mark path { animation-name: cforc-sweep-dark; }
+@keyframes cforc-sweep-dark {
+  0%   { fill: #F5F0EB; opacity: .16; }
+  7%   { fill: #FF8B6A; opacity: 1; }
+  26%  { fill: #F5F0EB; opacity: .16; }
+  100% { fill: #F5F0EB; opacity: .16; }
+}
+/* Accessibility parity: OS reduced-motion + the site's pause switch */
+@media (prefers-reduced-motion: reduce) {
+  .cforc-loader__mark path { animation: none; opacity: 1; }
+}
+.accessibility-pause-animations .cforc-loader__mark path { animation: none; opacity: 1; }
