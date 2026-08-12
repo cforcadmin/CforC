@@ -204,7 +204,7 @@ export function approvedEmailHtml(firstName: string, claimUrl: string, signerNam
 
   <tr>
     <td class="px" style="padding:24px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
-      <p style="margin:0 0 20px 0;">Μόλις ολοκληρώσεις την κατάθεση, πάτησε το παρακάτω κουμπί για να ενημερωθεί αυτόματα η ομάδα οικονομικών, και στείλε το αποδεικτικό της κατάθεσης απαντώντας σε αυτή την αλληλογραφία — θα λάβεις απόδειξη είσπραξης ψηφιακά. Αν χρειάζεσαι το πρωτότυπο της απόδειξης είσπραξης, μας ενημερώνεις για να τη στείλουμε ταχυδρομικά.</p>
+      <p style="margin:0 0 20px 0;">Μόλις ολοκληρώσεις την κατάθεση, πάτησε το παρακάτω κουμπί για να ενημερωθεί αυτόματα η ομάδα οικονομικών και ανέβασε το αποδεικτικό της κατάθεσης στην πλατφόρμα μας — θα λάβεις απόδειξη είσπραξης ψηφιακά. Αν χρειάζεσαι το πρωτότυπο της απόδειξης είσπραξης, μας ενημερώνεις για να τη στείλουμε ταχυδρομικά.</p>
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td class="btn" align="center" bgcolor="#FF8B6A" style="background-color:#FF8B6A;border-radius:999px;">
@@ -243,7 +243,7 @@ export function approvedEmailHtml(firstName: string, claimUrl: string, signerNam
                 <td class="stack" width="49%" style="width:49%;">
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                     <tr><td class="btn" align="center" style="border:1px solid #2D2D2D;border-radius:999px;">
-                      <a href="https://drive.google.com/file/d/1_53RI7N3q3PLUaC6dsv5uiUYBcmnr-Ie/view?usp=drive_link" style="display:block;padding:14px 20px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:20px;font-weight:bold;color:#2D2D2D;text-decoration:none;border-radius:999px;mso-line-height-rule:exactly;">Εσωτερικός Κανονισμός</a>
+                      <a href="https://drive.google.com/file/d/1bGdHe3rsuoCMNSPs7PUSEllG_0Ml5jrk/view?usp=sharing" style="display:block;padding:14px 20px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:20px;font-weight:bold;color:#2D2D2D;text-decoration:none;border-radius:999px;mso-line-height-rule:exactly;">Εσωτερικός Κανονισμός</a>
                     </td></tr>
                   </table>
                 </td>
@@ -308,30 +308,178 @@ export function approvedEmailHtml(firstName: string, claimUrl: string, signerNam
 
 /**
  * Reminder email — «Υπενθύμιση» από τον/την Financer στο popup του OC.
- * Ευγενική υπενθύμιση καταβολής συνδρομής σε εγκεκριμένο/η αιτούντα/ούσα.
+ * Ίδιο design shell με το approval email (παράγωγό του — αλλαγές: τίτλος,
+ * intro, κουμπί «Έχω ήδη πληρώσει», χωρίς Καταστατικό/Κανονισμό).
  */
-export function reminderEmailHtml(firstName: string, claimUrl: string): { subject: string; html: string } {
-  const p = PAYMENT_DETAILS
-  return {
-    subject: 'Υπενθύμιση: εκκρεμεί η συνδρομή σου στο Culture for Change',
-    html: wrap(`
-      <h2 style="color:#FF8B6A;">Γεια σου, ${firstName}!</h2>
-      <p>Μια φιλική υπενθύμιση από το Culture For Change: η αίτησή σου έχει εγκριθεί
-      και το μόνο που απομένει για να ολοκληρωθεί η εγγραφή σου είναι η καταβολή
-      της συνδρομής.</p>
-      ${sectionTitle('ΣΤΟΙΧΕΙΑ ΠΛΗΡΩΜΗΣ')}
-      <table style="font-size:15px;border-collapse:collapse;">
-        <tr><td style="padding:3px 14px 3px 0;color:#888;">Ποσό</td><td><strong>${p.amount}</strong></td></tr>
-        <tr><td style="padding:3px 14px 3px 0;color:#888;">Τράπεζα</td><td>${p.bank}</td></tr>
-        <tr><td style="padding:3px 14px 3px 0;color:#888;">IBAN</td><td style="font-family:monospace;">${p.iban}</td></tr>
-        <tr><td style="padding:3px 14px 3px 0;color:#888;">Δικαιούχος</td><td>${p.beneficiary}</td></tr>
-        <tr><td style="padding:3px 14px 3px 0;color:#888;">Αιτιολογία</td><td>${p.reference}</td></tr>
-      </table>
-      <p style="margin-top:22px;">Αν έχεις ήδη πληρώσει, πάτησε το κουμπί για να το
-      καταχωρήσουμε άμεσα — αλλιώς αγνόησε αυτό το μήνυμα. Για οποιαδήποτε απορία,
-      απάντησε σε αυτό το email.</p>
-      ${claimButton(claimUrl, 'Έχω ήδη πληρώσει')}`),
+export function reminderEmailHtml(firstName: string, claimUrl: string, signerName = 'Culture for Change — Community'): { subject: string; html: string } {
+  const year = new Date().getFullYear()
+  const html = `<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>Υπενθύμιση συνδρομής — Culture for Change</title>
+<!--[if mso]>
+<style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
+<![endif]-->
+<style>
+  @media only screen and (max-width:620px){
+    .px{padding-left:24px !important;padding-right:24px !important;}
+    .stack{display:block !important;width:100% !important;}
+    .btn a{display:block !important;}
+    .h1{font-size:26px !important;line-height:32px !important;}
   }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F0EB;">
+<span style="display:none;font-size:1px;color:#F5F0EB;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Φιλική υπενθύμιση: εκκρεμεί η συνδρομή εγγραφής σου στο Culture for Change.</span>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;">
+<tr><td align="center" style="padding:32px 12px 48px 12px;">
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #E5E7EB;">
+
+  <!-- Header -->
+  <tr>
+    <td class="px" style="background-color:#FF8B6A;padding:36px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:16px;letter-spacing:1.6px;color:#FFFFFF;font-weight:bold;mso-line-height-rule:exactly;">CULTURE FOR CHANGE</td>
+        </tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr>
+          <td class="h1" style="font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:36px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">ΥΠΕΝΘΥΜΙΣΗ ΣΥΝΔΡΟΜΗΣ</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Body -->
+  <tr>
+    <td class="px" style="padding:40px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 20px 0;">Aγαπητή/αγαπητέ ${firstName},</p>
+      <p style="margin:0 0 20px 0;">Μια φιλική υπενθύμιση από το Culture for Change: το αίτημα εγγραφής σου έχει εγκριθεί και το μόνο που απομένει για να ολοκληρωθεί η εγγραφή σου είναι η καταβολή της εγγραφής και της ετήσιας συνδρομής σου.</p>
+          </td>
+  </tr>
+
+  <!-- Amount summary -->
+  <tr>
+    <td class="px" style="padding:8px 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background-color:#F5F0EB;border-radius:16px;">
+        <tr>
+          <td style="padding:20px 24px 8px 24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#2D2D2D;mso-line-height-rule:exactly;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">Εγγραφή (εφάπαξ)</td>
+                <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">10,00 €</td>
+              </tr>
+              <tr>
+                <td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">Ετήσια συνδρομή ${year}</td>
+                <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">35,00 €</td>
+              </tr>
+              <tr><td colspan="2" style="padding:10px 0 0 0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:#E0D8D0;">&nbsp;</td></tr></table></td></tr>
+              <tr>
+                <td style="padding-top:10px;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#2D2D2D;font-weight:bold;">Σύνολο</td>
+                <td align="right" style="padding-top:10px;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#2D2D2D;font-weight:bold;">45,00 €</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr><td height="16" style="height:16px;line-height:16px;font-size:0;">&nbsp;</td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:24px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 20px 0;">Παρακάτω σημειώνονται τα στοιχεία του Τραπεζικού Λογαριασμού στην Τράπεζα ΑLPHA BANK, όπου θα χρειαστεί να καταθέσεις το συνολικό ποσό των 45€, σημειώνοντας στην Αιτιολογία:<br>Ονοματεπώνυμό και τη φράση Εγγραφή και Ετήσια Συνδρομή Μέλους CforC ${year}.</p>
+    </td>
+  </tr>
+
+  <!-- IBAN -->
+  <tr>
+    <td class="px" style="padding:0 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border:1px solid #E5E7EB;border-radius:16px;">
+        <tr>
+          <td style="padding:24px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;letter-spacing:1.2px;color:#FF8B6A;font-weight:bold;mso-line-height-rule:exactly;">ΙBAN CULTURE FOR CHANGE</td></tr>
+              <tr><td height="10" style="height:10px;line-height:10px;font-size:0;">&nbsp;</td></tr>
+              <tr><td style="font-family:'Courier New',Courier,monospace;font-size:17px;line-height:26px;color:#2D2D2D;font-weight:bold;word-break:break-all;mso-line-height-rule:exactly;">GR7101401420142002320005140</td></tr>
+              <tr><td height="10" style="height:10px;line-height:10px;font-size:0;">&nbsp;</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">ALPHA BANK — στη μεταφορά επίλεξε χρέωση εξόδων <strong>«OUR»</strong>, ώστε όλα τα τραπεζικά έξοδα να καλύπτονται από το μέλος. Αν η κατάθεση γίνει από λογαριασμό ALPHA BANK, δεν υπάρχουν επιπλέον έξοδα.</td></tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:24px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 20px 0;">Μόλις ολοκληρώσεις την κατάθεση, πάτησε το παρακάτω κουμπί για να ενημερωθεί αυτόματα η ομάδα οικονομικών και ανέβασε το αποδεικτικό της κατάθεσης στην πλατφόρμα μας — θα λάβεις απόδειξη είσπραξης ψηφιακά. Αν χρειάζεσαι το πρωτότυπο της απόδειξης είσπραξης, μας ενημερώνεις για να τη στείλουμε ταχυδρομικά.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td class="btn" align="center" bgcolor="#FF8B6A" style="background-color:#FF8B6A;border-radius:999px;">
+            <a href="${claimUrl}" style="display:block;padding:16px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:bold;color:#2D2D2D;text-decoration:none;border-radius:999px;mso-line-height-rule:exactly;">Έχω ήδη πληρώσει&nbsp;✓</a>
+          </td>
+        </tr>
+        <tr><td height="24" style="height:24px;line-height:24px;font-size:0;">&nbsp;</td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Signature -->
+  <tr>
+    <td class="px" style="padding:32px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 20px 0;">Αν η κατάθεσή σου διασταυρώθηκε με αυτό το email, αγνόησέ το — θα την καταχωρήσουμε άμεσα. Είμαστε στη διάθεσή σου για οτιδήποτε.</p>
+      <p style="margin:0;">Φιλικά,</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" style="padding:16px 48px 40px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:#E5E7EB;">&nbsp;</td></tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:24px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">${signerName}</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">Secretary General<br>Community - Culture for Change</td></tr>
+        <tr><td height="6" style="height:6px;line-height:6px;font-size:0;">&nbsp;</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;mso-line-height-rule:exactly;"><a href="mailto:community@cultureforchange.net" style="color:#C9552F;text-decoration:underline;">community@cultureforchange.net</a></td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Footer -->
+  <tr>
+    <td class="px" align="center" style="background-color:#2D2D2D;padding:32px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#F5F0EB;font-weight:bold;mso-line-height-rule:exactly;">Join our Social Networks &amp; Get Involved!</td></tr>
+        <tr><td height="14" style="height:14px;line-height:14px;font-size:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:26px;color:#F5F0EB;mso-line-height-rule:exactly;">
+          <a href="https://cultureforchange.net" style="color:#FF8B6A;text-decoration:none;">Website</a>&nbsp; |&nbsp;
+          <a href="https://www.facebook.com/cultureforchange" style="color:#FF8B6A;text-decoration:none;">Facebook</a>&nbsp; |&nbsp;
+          <a href="https://www.instagram.com/cultureforchange" style="color:#FF8B6A;text-decoration:none;">Instagram</a>&nbsp; |&nbsp;
+          <a href="https://www.linkedin.com/company/cultureforchange" style="color:#FF8B6A;text-decoration:none;">LinkedIn</a>&nbsp; |&nbsp;
+          <a href="https://www.youtube.com/@cultureforchange" style="color:#FF8B6A;text-decoration:none;">YouTube</a>
+        </td></tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#A0A0A0;mso-line-height-rule:exactly;">Δίκτυο Culture for Change — Αθήνα, Ελλάδα<br>Λαμβάνεις αυτό το email επειδή υπέβαλες αίτημα εγγραφής μέλους.</td></tr>
+        <tr><td height="18" style="height:18px;line-height:18px;font-size:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:17px;color:#8A8A8A;mso-line-height-rule:exactly;">_______________________________________________________________<br>This email may contain confidential information. Read full disclaimer <a href="https://www.cultureforchange.net/email-confidentiality-disclaimer" style="color:#FF8B6A;text-decoration:underline;">here</a></td></tr>
+      </table>
+    </td>
+  </tr>
+
+</table>
+
+</td></tr>
+</table>
+</body>
+</html>
+`
+  return { subject: 'Υπενθύμιση: εκκρεμεί η συνδρομή εγγραφής σου — Culture for Change', html }
 }
 
 /**
@@ -394,13 +542,16 @@ export function departureEmailHtml(firstName: string): { subject: string; html: 
 }
 
 /** Εσωτερική ειδοποίηση: αιτών/ούσα δήλωσε ότι πλήρωσε */
-export function paymentClaimNoticeHtml(name: string, email: string, applicationId: string): { subject: string; html: string } {
+export function paymentClaimNoticeHtml(name: string, email: string, applicationId: string, receiptUrl?: string | null): { subject: string; html: string } {
   return {
     subject: `Δήλωση πληρωμής: ${name}`,
     html: wrap(`
       <h2 style="color:#FF8B6A;">Δήλωση πληρωμής συνδρομής</h2>
       <p><strong>${name}</strong> (${email}) δήλωσε ότι ολοκλήρωσε την καταβολή της
       συνδρομής εγγραφής.</p>
+      ${receiptUrl
+        ? `<p>📎 <a href="${receiptUrl}" style="color:#FF8B6A;font-weight:bold;">Αποδεικτικό κατάθεσης</a></p>`
+        : '<p style="color:#888;">Δεν επισυνάφθηκε αποδεικτικό.</p>'}
       <p>Έλεγξε τον τραπεζικό λογαριασμό και, μόλις επιβεβαιωθεί, καταχώρησε την
       πληρωμή από το OC («Εγκρίθηκαν — αναμονή πληρωμής» → «Πληρώθηκε η εγγραφή»).</p>
       <p style="font-size:13px;color:#888;">Application: ${applicationId}</p>`),
