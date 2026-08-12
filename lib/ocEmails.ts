@@ -12,6 +12,8 @@ const FROM = 'Culture for Change <noreply@cultureforchange.net>'
 /** Approval flow: υπογράφει η Γεν. Γραμματέας — από/απαντήσεις στο community@ */
 export const COMMUNITY_FROM = 'Culture for Change <community@cultureforchange.net>'
 export const COMMUNITY_EMAIL = 'community@cultureforchange.net'
+/** Θέματα πληρωμών: αναλαμβάνει ο/η Financer — από/απαντήσεις στο finance@ */
+export const FINANCE_FROM = 'Culture for Change <finance@cultureforchange.net>'
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https')
   ? process.env.NEXT_PUBLIC_SITE_URL
   : 'https://www.cultureforchange.net'
@@ -486,7 +488,7 @@ export function reminderEmailHtml(firstName: string, claimUrl: string, signerNam
  * Payment-failure email — «Αποτυχία πληρωμής» από τον/την Financer όταν η
  * δηλωμένη κατάθεση δεν εμφανίστηκε στον λογαριασμό. Ίδιο design shell.
  */
-export function paymentFailedEmailHtml(firstName: string, claimUrl: string, signerName = 'Culture for Change — Community'): { subject: string; html: string } {
+export function paymentFailedEmailHtml(firstName: string, claimUrl: string, signerName = 'Culture for Change — Finance'): { subject: string; html: string } {
   const year = new Date().getFullYear()
   const html = `<!DOCTYPE html>
 <html lang="el">
@@ -624,9 +626,9 @@ export function paymentFailedEmailHtml(firstName: string, claimUrl: string, sign
         <tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:#E5E7EB;">&nbsp;</td></tr>
         <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
         <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:24px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">${signerName}</td></tr>
-        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">Secretary General<br>Community - Culture for Change</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">Finance - Culture for Change</td></tr>
         <tr><td height="6" style="height:6px;line-height:6px;font-size:0;">&nbsp;</td></tr>
-        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;mso-line-height-rule:exactly;"><a href="mailto:community@cultureforchange.net" style="color:#C9552F;text-decoration:underline;">community@cultureforchange.net</a></td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;mso-line-height-rule:exactly;"><a href="mailto:finance@cultureforchange.net" style="color:#C9552F;text-decoration:underline;">finance@cultureforchange.net</a></td></tr>
       </table>
     </td>
   </tr>

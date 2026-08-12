@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { verifyToken, generatePaymentClaimToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
 import { sendPaymentToSheet, sheetsConfigured } from '@/lib/googleSheets'
-import { sendOcEmail, welcomeEmailHtml, reminderEmailHtml, paymentFailedEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, welcomeEmailHtml, reminderEmailHtml, paymentFailedEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
 
 /**
  * Financer actions on approved-awaiting-payment applications (OC popup):
@@ -93,10 +93,11 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'failed') {
-      const signer = await getSeatHolder('community')
-      const signerName = signer?.engName || signer?.name || 'Culture for Change — Community'
+      // Θέματα πληρωμών: υπογράφει και απαντά ο/η Financer
+      const signer = await getSeatHolder('financer')
+      const signerName = signer?.engName || signer?.name || 'Culture for Change — Finance'
       const tpl = paymentFailedEmailHtml(firstName, claim, signerName)
-      const sent = await sendOcEmail(email, tpl.subject, tpl.html, { from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL })
+      const sent = await sendOcEmail(email, tpl.subject, tpl.html, { from: FINANCE_FROM, replyTo: FINANCE_EMAIL })
       if (!sent) {
         return NextResponse.json({ error: 'Αποτυχία αποστολής email' }, { status: 502 })
       }
