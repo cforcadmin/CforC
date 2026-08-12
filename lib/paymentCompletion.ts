@@ -227,6 +227,7 @@ export async function processPaymentCompletion(input: PaymentCompletionInput): P
     receiptSent = await sendOcEmail(email, fTpl.subject, fTpl.html, {
       from: FINANCE_FROM,
       replyTo: FINANCE_EMAIL,
+      cc: [FINANCE_EMAIL],   // αντίγραφο της απόδειξης στο αρχείο του finance@
       attachments: [{ filename: `apodeixi-eispraxis-${year}-${am}.pdf`, content: Buffer.from(pdf).toString('base64') }],
     })
   } catch (err) {
