@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { applyLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 import { checkCsrf } from '@/lib/csrf'
 import { appendApplicantToSheet, sheetsConfigured } from '@/lib/googleSheets'
+import { sendOcEmail, applicationReceivedEmailHtml, COMMUNITY_FROM, COMMUNITY_EMAIL } from '@/lib/ocEmails'
+import { getSeatHolder } from '@/lib/ocRoles'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://cultureforchange.net'
 
@@ -189,35 +191,13 @@ export async function POST(request: NextRequest) {
     }
 
     // 4) Confirmation email (best-effort — the application is already saved)
-    if (RESEND_API_KEY) {
-      try {
-        await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${RESEND_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: 'Culture for Change <noreply@cultureforchange.net>',
-            to: [data.Email.trim()],
-            subject: 'Λάβαμε την αίτησή σου — Culture for Change',
-            html: `
-              <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#2D2D2D;">
-                <h2 style="color:#FF8B6A;">Ευχαριστούμε, ${escapeHtml(data.FirstName.trim())}!</h2>
-                <p>Λάβαμε την αίτηση εγγραφής σου στο Culture for Change.</p>
-                <p>Η Ομάδα Συντονισμού θα την εξετάσει και θα λάβεις απάντηση στο email σου
-                το συντομότερο δυνατόν.</p>
-                <p>Μέχρι τότε, μπορείς να γνωρίσεις καλύτερα το δίκτυο στο
-                <a href="https://cultureforchange.net" style="color:#FF8B6A;">cultureforchange.net</a>.</p>
-                <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
-                <p style="font-size:12px;color:#888;">Αυτό είναι αυτοματοποιημένο μήνυμα — αν έχεις
-                απορίες, γράψε μας στο hello@cultureforchange.net</p>
-              </div>`,
-          }),
-        })
-      } catch (emailErr) {
-        console.error('Apply: confirmation email failed', emailErr)
-      }
+    try {
+      const signer = await getSeatHolder('community')
+      const signerName = signer?.engName || signer?.name || 'Culture for Change — Community'
+      const tpl = applicationReceivedEmailHtml(data.FirstName.trim(), signerName)
+      await sendOcEmail(data.Email.trim(), tpl.subject, tpl.html, { from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL })
+    } catch (emailErr) {
+      console.error('Apply: confirmation email failed', emailErr)
     }
 
     return NextResponse.json({ success: true, id: created?.data?.documentId || null })
