@@ -72,6 +72,16 @@ function euroWords(n: number): string {
 
 const eur = (n: number) => `${n.toFixed(2).replace('.', ',')} €`
 
+/** Στρογγυλεμένο ορθογώνιο με διαφορετική ακτίνα πάνω/κάτω (y προς τα κάτω) */
+function roundedRectPathRT(w: number, h: number, rTop: number, rBottom: number): string {
+  return [
+    `M ${rTop},0`, `L ${w - rTop},0`, `A ${rTop} ${rTop} 0 0 1 ${w},${rTop}`,
+    `L ${w},${h - rBottom}`, `A ${rBottom} ${rBottom} 0 0 1 ${w - rBottom},${h}`,
+    `L ${rBottom},${h}`, `A ${rBottom} ${rBottom} 0 0 1 0,${h - rBottom}`,
+    `L 0,${rTop}`, `A ${rTop} ${rTop} 0 0 1 ${rTop},0`, 'Z',
+  ].join(' ')
+}
+
 /** SVG path στρογγυλεμένου ορθογωνίου (y προς τα κάτω, αγκύρωση πάνω-αριστερά) */
 function roundedRectPath(w: number, h: number, r: number): string {
   return [
@@ -216,9 +226,14 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
     wy -= 13
   }
 
-  // Λευκό κουτί με διακριτικό περίγραμμα + coral μπάντα, όλα στρογγυλεμένα
+  // ΕΝΙΑΙΟ κουτί: γραμμές με διακριτικό περίγραμμα πάνω, coral μπάντα
+  // κολλητά από κάτω — μία σιλουέτα με στρογγυλεμένες μόνο τις έξω γωνίες
   const boxTop = y + 16
-  roundRect(boxX, boxTop, boxW, 62, 10, { borderColor: BORDER, borderWidth: 1 })
+  const rowsH = 62
+  const bandH = 34
+  page.drawSvgPath(roundedRectPathRT(boxW, rowsH + bandH, 12, 12), {
+    x: boxX, y: boxTop, borderColor: BORDER, borderWidth: 1,
+  })
   let by = boxTop - 18
   const boxRow = (label: string, value: string) => {
     text(label, boxX + 15, by, 9, regular, MUTED)
@@ -228,12 +243,14 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
   boxRow('Καθαρή αξία', eur(total))
   boxRow('Έκπτωση', eur(0))
   boxRow('ΦΠΑ', 'Απαλλαγή')
-  roundRect(boxX, boxTop - 66, boxW, 32, 10, { color: CORAL })
-  tracked('ΠΛΗΡΩΤΕΟ ΠΟΣΟ', boxX + 15, boxTop - 87, 8.6, semibold, INK, 0.7)
-  textR(eur(total), boxX + boxW - 15, boxTop - 90, 14.5, bold, INK)
+  page.drawSvgPath(roundedRectPathRT(boxW, bandH, 0, 12), {
+    x: boxX, y: boxTop - rowsH, color: CORAL,
+  })
+  tracked('ΠΛΗΡΩΤΕΟ ΠΟΣΟ', boxX + 15, boxTop - rowsH - 22, 8.6, semibold, INK, 0.7)
+  textR(eur(total), boxX + boxW - 15, boxTop - rowsH - 25, 14.5, bold, INK)
 
   // ── Λογαριασμός κατάθεσης (cream, στρογγυλεμένο) ──
-  y = boxTop - 122
+  y = boxTop - 124
   roundRect(M, y, W - 2 * M, 64, 14, { color: CREAM })
   tracked('ΛΟΓΑΡΙΑΣΜΟΣ ΚΑΤΑΘΕΣΗΣ', M + 20, y - 18, 7.8, semibold)
   text(ORG_DETAILS.bank, M + 20, y - 34, 9.4, semibold, INK)
