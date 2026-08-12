@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken, generatePaymentClaimToken } from '@/lib/auth'
-import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
+import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
 import { sendPaymentToSheet, sheetsConfigured } from '@/lib/googleSheets'
-import { sendOcEmail, welcomeEmailHtml, reminderEmailHtml, paymentFailedEmailHtml, paymentClaimUrl } from '@/lib/ocEmails'
+import { sendOcEmail, welcomeEmailHtml, reminderEmailHtml, paymentFailedEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL } from '@/lib/ocEmails'
 
 /**
  * Financer actions on approved-awaiting-payment applications (OC popup):
@@ -82,8 +82,10 @@ export async function POST(request: NextRequest) {
     const claim = paymentClaimUrl(generatePaymentClaimToken(app.documentId))
 
     if (action === 'remind') {
-      const tpl = reminderEmailHtml(firstName, claim)
-      const sent = await sendOcEmail(email, tpl.subject, tpl.html)
+      const signer = await getSeatHolder('community')
+      const signerName = signer?.engName || signer?.name || 'Culture for Change — Community'
+      const tpl = reminderEmailHtml(firstName, claim, signerName)
+      const sent = await sendOcEmail(email, tpl.subject, tpl.html, { from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL })
       if (!sent) {
         return NextResponse.json({ error: 'Αποτυχία αποστολής email' }, { status: 502 })
       }
@@ -91,8 +93,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'failed') {
-      const tpl = paymentFailedEmailHtml(firstName, claim)
-      const sent = await sendOcEmail(email, tpl.subject, tpl.html)
+      const signer = await getSeatHolder('community')
+      const signerName = signer?.engName || signer?.name || 'Culture for Change — Community'
+      const tpl = paymentFailedEmailHtml(firstName, claim, signerName)
+      const sent = await sendOcEmail(email, tpl.subject, tpl.html, { from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL })
       if (!sent) {
         return NextResponse.json({ error: 'Αποτυχία αποστολής email' }, { status: 502 })
       }
