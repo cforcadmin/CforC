@@ -26,7 +26,7 @@ export const ORG_DETAILS = {
 }
 
 // Παλέτα design: όχι καθαρό μαύρο — μελάνι/γραφίτης + απαλά γκρι
-const CORAL = rgb(0.937, 0.522, 0.404)          // #EF856x — το coral του design
+const CORAL = rgb(1, 0.545, 0.416)              // #FF8B6A — brand coral (ανοιχτό)
 const INK = rgb(0.137, 0.122, 0.125)            // #231F20 μόνο για έμφαση
 const VALUE = rgb(0.263, 0.263, 0.263)          // #434343 τιμές
 const MUTED = rgb(0.502, 0.502, 0.502)          // #808080 ετικέτες
@@ -134,9 +134,9 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
   page.drawImage(logo, { x: M, y: 795 - logoH, width: logoW, height: logoH })
 
   let ly = 795 - logoH - 20
-  text(ORG_DETAILS.legalName, M, ly, 8.6, semibold, VALUE); ly -= 14
-  text(ORG_DETAILS.address, M, ly, 8.6, regular, MUTED); ly -= 14
-  text(`ΑΦΜ ${ORG_DETAILS.afm}`, M, ly, 8.6, regular, MUTED); ly -= 14
+  text(ORG_DETAILS.legalName, M, ly, 8.6, semibold, VALUE); ly -= 15
+  text(ORG_DETAILS.address, M, ly, 8.6, regular, MUTED); ly -= 15
+  text(`ΑΦΜ ${ORG_DETAILS.afm}`, M, ly, 8.6, regular, MUTED); ly -= 15
   text(`${ORG_DETAILS.website} · ${ORG_DETAILS.email}`, M, ly, 8.6, regular, MUTED)
 
   // Badge (στρογγυλεμένο) + μετα-στοιχεία δεξιά
@@ -154,7 +154,7 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
   const metaRow = (label: string, value: string) => {
     text(value, valX, ry, 9.2, semibold, INK)
     textR(label, valX - 14, ry, 8.8, regular, MUTED)
-    ry -= 16
+    ry -= 17
   }
   metaRow('Σειρά', 'Α')
   metaRow('Αρ. παραστατικού', number)
@@ -165,29 +165,33 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
   page.drawRectangle({ x: M, y, width: W - 2 * M, height: 1.4, color: INK })
 
   // ── Στοιχεία μέλους / παραστατικού ──
-  y -= 30
+  y -= 36
   const colL = M
   const colR = W / 2 + 14
   tracked('ΣΤΟΙΧΕΙΑ ΜΕΛΟΥΣ', colL, y, 7.8, semibold)
   tracked('ΣΤΟΙΧΕΙΑ ΠΑΡΑΣΤΑΤΙΚΟΥ', colR, y, 7.8, semibold)
-  y -= 19
+  y -= 21
   const kv = (x: number, yy: number, label: string, value: string, strong = false) => {
     text(label, x, yy, 9, regular, MUTED)
     text(value, x + 96, yy, 9.4, strong ? semibold : regular, strong ? INK : VALUE)
   }
   let yl = y, yr = y
-  kv(colL, yl, 'Ονοματεπώνυμο', data.name, true); yl -= 16
-  kv(colL, yl, 'Αριθμός μητρώου', String(data.am)); yl -= 16
-  if (data.taxId) { kv(colL, yl, 'ΑΦΜ', String(data.taxId)); yl -= 16 }
-  if (data.city) { kv(colL, yl, 'Πόλη', String(data.city)); yl -= 16 }
-  kv(colL, yl, 'Email', data.email); yl -= 16
-  kv(colR, yr, 'Είδος', 'Απόδειξη είσπραξης'); yr -= 16
-  kv(colR, yr, 'Τρόπος πληρωμής', data.paymentMethod || 'Τραπεζική κατάθεση', true); yr -= 16
-  kv(colR, yr, 'Περίοδος', `Έτος ${data.year}`); yr -= 16
-  kv(colR, yr, 'Κατάσταση', '✓ Εξοφλήθη', true); yr -= 16
+  kv(colL, yl, 'Ονοματεπώνυμο', data.name, true); yl -= 18
+  kv(colL, yl, 'Αριθμός μητρώου', String(data.am)); yl -= 18
+  if (data.taxId) { kv(colL, yl, 'ΑΦΜ', String(data.taxId)); yl -= 18 }
+  if (data.city) { kv(colL, yl, 'Πόλη', String(data.city)); yl -= 18 }
+  kv(colL, yl, 'Email', data.email); yl -= 18
+  kv(colR, yr, 'Είδος', 'Απόδειξη είσπραξης'); yr -= 18
+  kv(colR, yr, 'Τρόπος πληρωμής', data.paymentMethod || 'Τραπεζική κατάθεση', true); yr -= 18
+  kv(colR, yr, 'Περίοδος', `Έτος ${data.year}`); yr -= 18
+  // «✓» δεν υπάρχει στη Liberation Sans — σχεδιάζεται ως διάνυσμα
+  kv(colR, yr, 'Κατάσταση', '     Εξοφλήθη', true)
+  page.drawLine({ start: { x: colR + 96, y: yr + 3 }, end: { x: colR + 99, y: yr }, thickness: 1.4, color: INK })
+  page.drawLine({ start: { x: colR + 99, y: yr }, end: { x: colR + 105, y: yr + 7 }, thickness: 1.4, color: INK })
+  yr -= 18
 
   // ── Πίνακας ──
-  y = Math.min(yl, yr) - 26
+  y = Math.min(yl, yr) - 32
   const cQty = right - 180, cUnit = right - 95, cVal = right
   tracked('ΑΙΤΙΟΛΟΓΙΑ', M, y, 7.8, semibold)
   tracked('ΠΟΣΟΤΗΤΑ', cQty - 52, y, 7.8, semibold)
@@ -196,19 +200,19 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
   y -= 8
   page.drawRectangle({ x: M, y, width: W - 2 * M, height: 1.1, color: CORAL })
   const item = (label: string, unit: number) => {
-    y -= 22
+    y -= 25
     text(label, M, y, 9.4, regular, VALUE)
     textR('1', cQty, y, 9.4, regular, VALUE)
     textR(eur(unit), cUnit, y, 9.4, regular, VALUE)
     textR(eur(unit), cVal, y, 9.4, regular, VALUE)
-    y -= 11
+    y -= 12
     page.drawRectangle({ x: M, y, width: W - 2 * M, height: 0.6, color: BORDER })
   }
   item('Εγγραφή μέλους (εφάπαξ)', data.registrationFee)
   item(`Ετήσια συνδρομή μέλους ${data.year}`, data.subscriptionFee)
 
   // ── Ολογράφως + κουτί συνόλων ──
-  y -= 32
+  y -= 38
   const boxW = 228
   const boxX = right - boxW
   const leftMax = boxX - M - 22
@@ -236,16 +240,16 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
   // ΕΝΙΑΙΟ κουτί: γραμμές με διακριτικό περίγραμμα πάνω, coral μπάντα
   // κολλητά από κάτω — μία σιλουέτα με στρογγυλεμένες μόνο τις έξω γωνίες
   const boxTop = y + 16
-  const rowsH = 62
-  const bandH = 34
+  const rowsH = 68
+  const bandH = 36
   page.drawSvgPath(roundedRectPathRT(boxW, rowsH + bandH, 12, 12), {
     x: boxX, y: boxTop, borderColor: BORDER, borderWidth: 1,
   })
-  let by = boxTop - 18
+  let by = boxTop - 20
   const boxRow = (label: string, value: string) => {
     text(label, boxX + 15, by, 9, regular, MUTED)
     textR(value, boxX + boxW - 15, by, 9.4, regular, VALUE)
-    by -= 16
+    by -= 17
   }
   boxRow('Καθαρή αξία', eur(total))
   boxRow('Έκπτωση', eur(0))
@@ -253,19 +257,19 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
   page.drawSvgPath(roundedRectPathRT(boxW, bandH, 0, 12), {
     x: boxX, y: boxTop - rowsH, color: CORAL,
   })
-  tracked('ΠΛΗΡΩΤΕΟ ΠΟΣΟ', boxX + 15, boxTop - rowsH - 22, 8.6, semibold, INK, 0.7)
-  textR(eur(total), boxX + boxW - 15, boxTop - rowsH - 25, 14.5, bold, INK)
+  tracked('ΠΛΗΡΩΤΕΟ ΠΟΣΟ', boxX + 15, boxTop - rowsH - 23, 8.6, semibold, INK, 0.7)
+  textR(eur(total), boxX + boxW - 15, boxTop - rowsH - 26, 14.5, bold, INK)
 
   // ── Λογαριασμός κατάθεσης (cream, στρογγυλεμένο) ──
-  y = boxTop - 124
-  roundRect(M, y, W - 2 * M, 64, 14, { color: CREAM })
-  tracked('ΛΟΓΑΡΙΑΣΜΟΣ ΚΑΤΑΘΕΣΗΣ', M + 20, y - 18, 7.8, semibold)
-  text(ORG_DETAILS.bank, M + 20, y - 34, 9.4, semibold, INK)
-  text(ORG_DETAILS.ibanSpaced, M + 20, y - 49, 9.4, regular, VALUE)
+  y = boxTop - 134
+  roundRect(M, y, W - 2 * M, 72, 14, { color: CREAM })
+  tracked('ΛΟΓΑΡΙΑΣΜΟΣ ΚΑΤΑΘΕΣΗΣ', M + 20, y - 20, 7.8, semibold)
+  text(ORG_DETAILS.bank, M + 20, y - 38, 9.4, semibold, INK)
+  text(ORG_DETAILS.ibanSpaced, M + 20, y - 55, 9.4, regular, VALUE)
   const c2 = W / 2 + 14
-  tracked('ΔΙΚΑΙΟΥΧΟΣ', c2, y - 18, 7.8, semibold)
-  text('Culture for Change — Σωματείο', c2, y - 34, 9.4, regular, VALUE)
-  text(`Πληροφορίες: ${ORG_DETAILS.financeEmail}`, c2, y - 49, 9, regular, MUTED)
+  tracked('ΔΙΚΑΙΟΥΧΟΣ', c2, y - 20, 7.8, semibold)
+  text('Culture for Change — Σωματείο', c2, y - 38, 9.4, regular, VALUE)
+  text(`Πληροφορίες: ${ORG_DETAILS.financeEmail}`, c2, y - 55, 9, regular, MUTED)
 
   // ── Υπογραφή Ταμία + σημείωση ΦΠΑ ──
   const sigY = 128
