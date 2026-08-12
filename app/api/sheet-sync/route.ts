@@ -255,6 +255,11 @@ export async function POST(request: NextRequest) {
           taxId: app?.TaxId || null,
           city: app?.ResidenceCity || String(body.city || '').trim() || null,
           financerName: finSigner?.name || null,   // ελληνικό όνομα για την υπογραφή
+          ...(app?.ReceiptType === 'Εταιρεία' && {
+            companyName: app.CompanyName || null,
+            companyAddress: app.CompanyAddress || null,
+            companyTaxId: app.CompanyTaxId || null,
+          }),
         })
         receiptSent = await sendOcEmail(email, fTpl.subject, fTpl.html, {
           from: FINANCE_FROM,

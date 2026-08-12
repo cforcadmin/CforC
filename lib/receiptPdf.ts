@@ -47,6 +47,11 @@ export interface ReceiptData {
   paymentMethod?: string
   /** Ελληνικό όνομα του/της Ταμία (Financer) για την υπογραφή */
   financerName?: string | null
+  /** Απόδειξη σε εταιρεία (ReceiptType «Εταιρεία» στην αίτηση):
+   *  Επωνυμία/Διεύθυνση/ΑΦΜ εταιρείας αντικαθιστούν τα προσωπικά στοιχεία */
+  companyName?: string | null
+  companyAddress?: string | null
+  companyTaxId?: string | null
 }
 
 /** Ακέραια ευρώ 0–999 ολογράφως (αρκεί για συνδρομές) */
@@ -176,11 +181,20 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
     text(value, x + 96, yy, 9.4, strong ? semibold : regular, strong ? INK : VALUE)
   }
   let yl = y, yr = y
-  kv(colL, yl, 'Ονοματεπώνυμο', data.name, true); yl -= 18
-  kv(colL, yl, 'Αριθμός μητρώου', String(data.am)); yl -= 18
-  if (data.taxId) { kv(colL, yl, 'ΑΦΜ', String(data.taxId)); yl -= 18 }
-  if (data.city) { kv(colL, yl, 'Πόλη', String(data.city)); yl -= 18 }
-  kv(colL, yl, 'Email', data.email); yl -= 18
+  if (data.companyName) {
+    // Απόδειξη σε εταιρεία: Επωνυμία / ΑΦΜ / Διεύθυνση εταιρείας
+    kv(colL, yl, 'Επωνυμία', data.companyName, true); yl -= 18
+    if (data.companyTaxId) { kv(colL, yl, 'ΑΦΜ', String(data.companyTaxId)); yl -= 18 }
+    if (data.companyAddress) { kv(colL, yl, 'Διεύθυνση', String(data.companyAddress)); yl -= 18 }
+    kv(colL, yl, 'Μέλος (ΑΜ)', `${data.name} (${data.am})`); yl -= 18
+    kv(colL, yl, 'Email', data.email); yl -= 18
+  } else {
+    kv(colL, yl, 'Ονοματεπώνυμο', data.name, true); yl -= 18
+    kv(colL, yl, 'Αριθμός μητρώου', String(data.am)); yl -= 18
+    if (data.taxId) { kv(colL, yl, 'ΑΦΜ', String(data.taxId)); yl -= 18 }
+    if (data.city) { kv(colL, yl, 'Πόλη', String(data.city)); yl -= 18 }
+    kv(colL, yl, 'Email', data.email); yl -= 18
+  }
   kv(colR, yr, 'Είδος', 'Απόδειξη είσπραξης'); yr -= 18
   kv(colR, yr, 'Τρόπος πληρωμής', data.paymentMethod || 'Τραπεζική κατάθεση', true); yr -= 18
   kv(colR, yr, 'Περίοδος', `Έτος ${data.year}`); yr -= 18
