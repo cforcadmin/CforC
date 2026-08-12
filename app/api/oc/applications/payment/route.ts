@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+
+// PDF + emails χρειάζονται χρόνο — μην αφήσεις το Vercel default (10s) να τα κόψει
+export const maxDuration = 60
 import { cookies } from 'next/headers'
 import { verifyToken, generatePaymentClaimToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
 import { sendPaymentToSheet, sheetsConfigured } from '@/lib/googleSheets'
 import { sendOcEmail, reminderEmailHtml, paymentFailedEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
+import { processPaymentCompletion } from '@/lib/paymentCompletion'
 
 /**
  * Financer actions on approved-awaiting-payment applications (OC popup):
@@ -114,9 +118,9 @@ export async function POST(request: NextRequest) {
     if (!sheetsConfigured()) {
       return NextResponse.json({ error: 'Το Μητρώο (Sheet) δεν είναι ρυθμισμένο' }, { status: 500 })
     }
-    // Η προαγωγή γίνεται από το Sheet (μία πηγή αλήθειας για τη ροή):
-    // ΠΛΗΡΩΜΗ=Ναι → ΑΜ + γραμμές + sheet-sync πίσω που δημιουργεί το μέλος
-    // στο Strapi και ολοκληρώνει τον φάκελο. Συγχρονισμό, όχι fire-and-forget.
+    // Το Sheet κάνει ΜΟΝΟ την προαγωγή (γρήγορο, skipSync) και επιστρέφει
+    // το ΑΜ· μέλος/φάκελος/emails τρέχουν εδώ απευθείας — όχι εμφωλευμένη
+    // κλήση Vercel μέσα από το Google (αργή/εύθραυστη).
     let am = ''
     try {
       am = await sendPaymentToSheet(email)
@@ -128,10 +132,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Τα emails ολοκλήρωσης (IT welcome + finance απόδειξη) στέλνονται από
-    // το κοινό σημείο /api/sheet-sync (payment) — ίδια συμπεριφορά είτε η
-    // πληρωμή καταχωρηθεί από το OC είτε απευθείας στο Sheet.
-    return NextResponse.json({ ok: true, action: 'paid', am, to: email, emailSent: true })
+    const result = await processPaymentCompletion({
+      email,
+      am: Number(am),
+      year: new Date().getFullYear(),
+      firstName,
+      lastName: String(app.LastName || '').trim(),
+      gender: String(app.Gender || '').trim(),
+      phone: String(app.Phone || '').trim(),
+      city: String(app.ResidenceCity || '').trim(),
+    })
+    if (!result.ok) {
+      return NextResponse.json(
+        { error: `Η καταχώρηση στο Μητρώο έγινε (ΑΜ ${am}), αλλά: ${result.error}` },
+        { status: 502 }
+      )
+    }
+    return NextResponse.json({ ok: true, action: 'paid', am, to: email, emailSent: !!(result.welcomeSent && result.receiptSent) })
   } catch (error) {
     console.error('oc payment error:', error)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
