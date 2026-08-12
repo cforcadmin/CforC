@@ -252,6 +252,9 @@ export async function POST(request: NextRequest) {
           registrationFee: 10,
           subscriptionFee: 35,
           date: new Date(),
+          taxId: app?.TaxId || null,
+          city: app?.ResidenceCity || String(body.city || '').trim() || null,
+          financerName: finSigner?.name || null,   // ελληνικό όνομα για την υπογραφή
         })
         receiptSent = await sendOcEmail(email, fTpl.subject, fTpl.html, {
           from: FINANCE_FROM,
