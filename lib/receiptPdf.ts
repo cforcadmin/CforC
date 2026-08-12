@@ -96,9 +96,11 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
   const doc = await PDFDocument.create()
   doc.registerFontkit(fontkit)
   const fontDir = path.join(process.cwd(), 'assets', 'fonts')
-  const regular = await doc.embedFont(await readFile(path.join(fontDir, 'Inter-Regular.ttf')))
-  const semibold = await doc.embedFont(await readFile(path.join(fontDir, 'Inter-SemiBold.ttf')))
-  const bold = await doc.embedFont(await readFile(path.join(fontDir, 'Inter-Bold.ttf')))
+  // Liberation Sans: μετρικός κλώνος της Arial (OFL) — ίδια εμφάνιση με το
+  // fallback που αποδίδει τα ελληνικά στο design, νόμιμα διανεμήσιμος
+  const regular = await doc.embedFont(await readFile(path.join(fontDir, 'LiberationSans-Regular.ttf')))
+  const semibold = await doc.embedFont(await readFile(path.join(fontDir, 'LiberationSans-Bold.ttf')))
+  const bold = semibold
   const logoBytes = await readFile(path.join(process.cwd(), 'assets', 'cforc-logo.png'))
   const logo = await doc.embedPng(logoBytes)
 
