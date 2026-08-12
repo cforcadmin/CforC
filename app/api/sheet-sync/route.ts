@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendOcEmail, departureEmailHtml } from '@/lib/ocEmails'
+import {
+  sendOcEmail, departureEmailHtml, welcomeEmailHtml, financeWelcomeEmailHtml,
+  IT_FROM, IT_EMAIL, WELCOME_CC, FINANCE_FROM, FINANCE_EMAIL,
+} from '@/lib/ocEmails'
+import { getSeatHolder } from '@/lib/ocRoles'
+import { generateReceiptPdf } from '@/lib/receiptPdf'
 
 /**
  * Reverse bridge: Μητρώο Google Sheet → site/Strapi.
@@ -46,9 +51,42 @@ async function strapi(path: string, method: string = 'GET', data?: any) {
 async function findApplication(email: string) {
   const r = await strapi(
     `/membership-applications?filters[Email][$eqi]=${encodeURIComponent(email)}` +
-    `&sort=SubmittedAt:desc&pagination[limit]=1`
+    `&sort=SubmittedAt:desc&pagination[limit]=1&populate=Photo`
   )
   return r.json?.data?.[0] || null
+}
+
+/**
+ * Δημόσια πεδία προφίλ από τον φάκελο της αίτησης, με σεβασμό στο
+ * PublishConsent που επέλεξε ο/η αιτών/ούσα. Χρησιμοποιείται στη
+ * δημιουργία του μέλους κατά την πληρωμή — το προφίλ ενεργοποιείται
+ * (ορατό) με τα στοιχεία που συναίνεσε να δημοσιευτούν.
+ */
+function profileFromApplication(app: any): Record<string, any> {
+  const consent: string[] = Array.isArray(app?.PublishConsent) ? app.PublishConsent : []
+  const has = (k: string) => consent.includes(k)
+  const links: string[] = []
+  if (has('website') && app.Website) links.push(String(app.Website).trim())
+  if (has('facebook') && app.Facebook) links.push(String(app.Facebook).trim())
+  if (has('linkedin') && app.LinkedIn) links.push(String(app.LinkedIn).trim())
+  if (has('instagram') && app.Instagram) links.push(String(app.Instagram).trim())
+  const fields = Array.isArray(app.FieldsOfActivity)
+    ? app.FieldsOfActivity.join(', ')
+    : String(app.FieldsOfActivity || '').trim()
+  const bioText = String(app.Bio || '').trim()
+  const out: Record<string, any> = {
+    Bio: [{ type: 'paragraph', children: [{ type: 'text', text: bioText || ' ' }] }],
+    FieldsOfWork: fields || ' ',
+    City: String(app.ResidenceCity || '').trim() || ' ',
+    Province: String(app.ResidenceRegion || '').trim() || ' ',
+    Websites: links.join(', ') || undefined,
+    Phone: has('phone') && app.Phone ? String(app.Phone).trim() : undefined,
+  }
+  if (app.Photo?.id) {
+    out.Image = [app.Photo.id]
+    out.ProfileImageAltText = `Φωτογραφία: ${app.FirstName || ''} ${app.LastName || ''}`.trim()
+  }
+  return out
 }
 
 const GENDER_MAP: Record<string, string> = {
@@ -113,7 +151,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: false, error: 'missing am' }, { status: 400 })
       }
 
-      // 1) Μέλος: ενημέρωση αν υπάρχει, αλλιώς δημιουργία κρυφού προφίλ
+      // Ο φάκελος της αίτησης οδηγεί το προφίλ (δημόσια στοιχεία με συναίνεση)
+      const app = await findApplication(email)
+
+      // 1) Μέλος: ενημέρωση αν υπάρχει, αλλιώς δημιουργία με τα στοιχεία της
+      // αίτησης. Η πληρωμή ΕΝΕΡΓΟΠΟΙΕΙ το προφίλ (ορατό σε όλους).
       const found = await strapi(
         `/members?filters[Email][$eqi]=${encodeURIComponent(email)}&fields[0]=Email&fields[1]=Payments`
       )
@@ -143,25 +185,29 @@ export async function POST(request: NextRequest) {
 
       let memberDocId: string | null = null
       if (existing) {
+        // Υπάρχων λογαριασμός: ΔΕΝ πατάμε τα στοιχεία του — μόνο μητρώο +
+        // ενεργοποίηση (η πληρωμή κάνει το προφίλ ορατό)
         // ΠΡΟΣΟΧΗ: το custom member controller δέχεται ΜΟΝΟ αριθμητικό id
-        const r = await strapi(`/members/${existing.id}`, 'PUT', memberData)
+        const r = await strapi(`/members/${existing.id}`, 'PUT', { ...memberData, HideProfile: false })
         if (!r.ok) {
           return NextResponse.json({ ok: false, error: `member update ${r.status}` }, { status: 502 })
         }
         memberDocId = existing.documentId
       } else {
         const name = `${String(body.firstName || '').trim()} ${String(body.lastName || '').trim()}`.trim()
+        const profile = app ? profileFromApplication(app) : {}
         const r = await strapi('/members', 'POST', {
-          ...memberData,
-          Name: name || email,
-          Email: email,
           Bio: [{ type: 'paragraph', children: [{ type: 'text', text: ' ' }] }],
           FieldsOfWork: ' ',
           City: String(body.city || '').trim() || ' ',
           Province: ' ',
           ProfileImageAltText: ' ',
           Phone: String(body.phone || '').trim() || undefined,
-          HideProfile: true,
+          ...profile,
+          ...memberData,
+          Name: name || email,
+          Email: email,
+          HideProfile: false,
         })
         if (!r.ok) {
           return NextResponse.json({ ok: false, error: `member create ${r.status}` }, { status: 502 })
@@ -170,7 +216,6 @@ export async function POST(request: NextRequest) {
       }
 
       // 2) Application dossier → completed + ΑΜ + σύνδεση με το μέλος
-      const app = await findApplication(email)
       let appResult = 'no application'
       if (app) {
         const r = await strapi(`/membership-applications/${app.documentId}`, 'PUT', {
@@ -183,11 +228,47 @@ export async function POST(request: NextRequest) {
         appResult = r.ok ? 'completed' : `strapi ${r.status}`
       }
 
+      // 3) Emails ολοκλήρωσης — ΚΟΙΝΟ σημείο για πληρωμές από Sheet ΚΑΙ από OC:
+      //    (α) welcome/πρώτη σύνδεση από IT (+cc), (β) απόδειξη από finance@
+      const firstName = String(app?.FirstName || body.firstName || '').trim() || 'μέλος'
+      const fullName = `${String(app?.FirstName || body.firstName || '').trim()} ${String(app?.LastName || body.lastName || '').trim()}`.trim() || email
+      let welcomeSent = false
+      let receiptSent = false
+      try {
+        const itSigner = await getSeatHolder('it')
+        const wTpl = welcomeEmailHtml(firstName, itSigner?.engName || itSigner?.name || 'Culture for Change — IT')
+        welcomeSent = await sendOcEmail(email, wTpl.subject, wTpl.html, { from: IT_FROM, replyTo: IT_EMAIL, cc: WELCOME_CC })
+      } catch (err) {
+        console.error('sheet-sync payment: welcome email failed:', err)
+      }
+      try {
+        const finSigner = await getSeatHolder('financer')
+        const fTpl = financeWelcomeEmailHtml(firstName, finSigner?.engName || finSigner?.name || 'Culture for Change — Finance')
+        const pdf = await generateReceiptPdf({
+          name: fullName,
+          email,
+          am,
+          year,
+          registrationFee: 10,
+          subscriptionFee: 35,
+          date: new Date(),
+        })
+        receiptSent = await sendOcEmail(email, fTpl.subject, fTpl.html, {
+          from: FINANCE_FROM,
+          replyTo: FINANCE_EMAIL,
+          attachments: [{ filename: `apodeixi-eispraxis-${year}-${am}.pdf`, content: Buffer.from(pdf).toString('base64') }],
+        })
+      } catch (err) {
+        console.error('sheet-sync payment: receipt email failed:', err)
+      }
+
       return NextResponse.json({
         ok: true,
         member: memberDocId,
         memberWas: existing ? 'updated' : 'created',
         application: appResult,
+        welcomeSent,
+        receiptSent,
       })
     }
 

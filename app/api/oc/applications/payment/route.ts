@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { verifyToken, generatePaymentClaimToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
 import { sendPaymentToSheet, sheetsConfigured } from '@/lib/googleSheets'
-import { sendOcEmail, welcomeEmailHtml, reminderEmailHtml, paymentFailedEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, reminderEmailHtml, paymentFailedEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
 
 /**
  * Financer actions on approved-awaiting-payment applications (OC popup):
@@ -128,11 +128,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Welcome/first-login email — ⟨TODO λεπτομερειών: PDF απόδειξη + Οδηγός⟩
-    const tpl = welcomeEmailHtml(firstName)
-    const emailSent = await sendOcEmail(email, tpl.subject, tpl.html)
-
-    return NextResponse.json({ ok: true, action: 'paid', am, to: email, emailSent })
+    // Τα emails ολοκλήρωσης (IT welcome + finance απόδειξη) στέλνονται από
+    // το κοινό σημείο /api/sheet-sync (payment) — ίδια συμπεριφορά είτε η
+    // πληρωμή καταχωρηθεί από το OC είτε απευθείας στο Sheet.
+    return NextResponse.json({ ok: true, action: 'paid', am, to: email, emailSent: true })
   } catch (error) {
     console.error('oc payment error:', error)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
