@@ -19,6 +19,8 @@ export const IT_FROM = 'Culture for Change <it@cultureforchange.net>'
 export const IT_EMAIL = 'it@cultureforchange.net'
 /** Κοινοποίηση welcome email σε όλες τις εμπλεκόμενες θέσεις */
 export const WELCOME_CC = ['admin@cultureforchange.net', 'media@cultureforchange.net', 'communication@cultureforchange.net', 'it@cultureforchange.net']
+/** Κοινοποίηση αποχαιρετιστήριου email στις εμπλεκόμενες θέσεις */
+export const DEPARTURE_CC = ['admin@cultureforchange.net', 'finance@cultureforchange.net', 'community@cultureforchange.net']
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https')
   ? process.env.NEXT_PUBLIC_SITE_URL
   : 'https://www.cultureforchange.net'

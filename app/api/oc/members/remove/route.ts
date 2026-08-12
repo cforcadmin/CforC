@@ -4,7 +4,7 @@ import { verifyToken, generateExitSurveyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
 import { sendMemberRemovalToSheet, sheetsConfigured } from '@/lib/googleSheets'
 import { OC_LAST_SEAT_COOKIE } from '@/components/oc/ocPrefs'
-import { sendOcEmail, departureEmailHtml, farewellUrl } from '@/lib/ocEmails'
+import { sendOcEmail, departureEmailHtml, farewellUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, DEPARTURE_CC } from '@/lib/ocEmails'
 
 /**
  * Member deletion from the OC Μητρώο μελών table — IT/Γραμματεία acting
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       const comSigner = await getSeatHolder('community')
       const fUrl = farewellUrl(generateExitSurveyToken(memberId, String(member.Name || '').trim()))
       const tpl = departureEmailHtml(exitName, comSigner?.engName || comSigner?.name || 'Culture for Change — Community', fUrl)
-      departureEmailSent = await sendOcEmail(String(member.Email).trim(), tpl.subject, tpl.html)
+      departureEmailSent = await sendOcEmail(String(member.Email).trim(), tpl.subject, tpl.html, { from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL, cc: DEPARTURE_CC })
     }
 
     return NextResponse.json({ ok: true, removed: member.Name, formerAM, sheetSynced, departureEmailSent })

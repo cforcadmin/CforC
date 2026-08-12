@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // PDF + emails χρειάζονται χρόνο — μην αφήσεις το Vercel default (10s) να τα κόψει
 export const maxDuration = 60
-import { sendOcEmail, departureEmailHtml, farewellUrl } from '@/lib/ocEmails'
+import { sendOcEmail, departureEmailHtml, farewellUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, DEPARTURE_CC } from '@/lib/ocEmails'
 import { getSeatHolder } from '@/lib/ocRoles'
 import { generateExitSurveyToken } from '@/lib/auth'
 import { processPaymentCompletion } from '@/lib/paymentCompletion'
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
       const comSigner = await getSeatHolder('community')
       const fUrl = farewellUrl(generateExitSurveyToken(member.documentId, String(member.Name || '').trim()))
       const tpl = departureEmailHtml(exitName, comSigner?.engName || comSigner?.name || 'Culture for Change — Community', fUrl)
-      const departureEmailSent = await sendOcEmail(email, tpl.subject, tpl.html)
+      const departureEmailSent = await sendOcEmail(email, tpl.subject, tpl.html, { from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL, cc: DEPARTURE_CC })
       return NextResponse.json({ ok: true, member: member.documentId, removed: true, departureEmailSent })
     }
 

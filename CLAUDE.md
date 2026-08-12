@@ -296,3 +296,22 @@ Strapi Cloud free tier sleeps after 10-15 minutes of inactivity.
 8. **Strapi Cloud Manual Setup**: After pushing new collection types or schema changes to the Strapi repo, always provide the user with a checklist of manual steps needed in the Strapi Cloud dashboard. This includes: creating the collection type if it doesn't auto-deploy, setting API permissions (Settings → Users & Permissions → Roles → Public → enable find/findOne for the new collection), and configuring any relation fields. Code changes alone are not enough — the cloud DB needs manual configuration too.
 
 @/Users/yoryosstyl/soul/projects/cforc-website.md
+
+## Architecture Lessons (post-mortems)
+
+1. **Never chain synchronous webhooks A→B→A** (Vercel → Apps Script → back
+   into Vercel). The OC «Πληρώθηκε» button (Aug 2026) reused the Sheet's
+   payment handler "for DRY", which called back into the site for member
+   creation + emails — a nested Google-in-the-middle round trip that
+   returned mangled responses ("unknown error") after the work had already
+   succeeded, and could exceed Vercel's function timeout. The trap: reuse
+   was achieved via a NETWORK hop instead of a code import. Correct
+   pattern: extract the shared logic into a lib (`lib/paymentCompletion.ts`)
+   and call it locally from every entry point; remote systems should do
+   only their own side (the Sheet promotes rows and returns the ΑΜ) and
+   never act as middlemen for work the caller can do itself.
+2. **Vercel functions default to a 10s limit** — any route that generates
+   PDFs or sends multiple emails needs `export const maxDuration = 60`.
+3. **Await every transactional side effect** (emails, webhooks) before
+   returning a response — un-awaited fetches die when the lambda freezes
+   (see the departure-email incident, patterns.md in project memory).
