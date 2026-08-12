@@ -144,9 +144,14 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
   roundRect(right - bw, 795, bw, 27, 6, { color: CORAL })
   tracked(badgeText, right - bw + 15, 795 - 18, 10.5, semibold, INK, 0.8)
   let ry = 795 - 44
+  // Πλέγμα όπως στο design: στήλη τιμών αριστερά-στοιχισμένη σε σταθερό x,
+  // ετικέτες δεξιά-στοιχισμένες ακριβώς πριν από αυτήν
+  const metaVals = ['Α', number, data.date.toLocaleDateString('el-GR')]
+  const valColW = Math.max(...metaVals.map(v => semibold.widthOfTextAtSize(v, 9.2)))
+  const valX = right - valColW
   const metaRow = (label: string, value: string) => {
-    textR(value, right, ry, 9.2, semibold, INK)
-    textR(label, right - semibold.widthOfTextAtSize(value, 9.2) - 16, ry, 8.8, regular, MUTED)
+    text(value, valX, ry, 9.2, semibold, INK)
+    textR(label, valX - 14, ry, 8.8, regular, MUTED)
     ry -= 16
   }
   metaRow('Σειρά', 'Α')
