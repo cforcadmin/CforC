@@ -100,6 +100,18 @@ export function clearOcRolesCache() {
   cache = null
 }
 
+/** Ο/η τρέχων κάτοχος μιας θέσης της Συντονιστικής Ομάδας (για υπογραφές emails κ.λπ.) */
+export async function getSeatHolder(seat: OcSeat): Promise<{ name: string; engName?: string; email?: string } | null> {
+  const field = SEAT_FIELDS.find(f => f.seat === seat)?.field
+  if (!field) return null
+  const teams = await fetchCurrentTeams()
+  for (const team of teams) {
+    const rel = team?.[field]
+    if (rel?.Name) return { name: rel.Name, engName: rel.EngName || undefined, email: rel.Email || undefined }
+  }
+  return null
+}
+
 export interface OcBoardMember {
   memberDocumentId: string
   seats: OcSeat[]

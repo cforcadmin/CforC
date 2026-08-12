@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken, generatePaymentClaimToken } from '@/lib/auth'
-import { resolveOcAccess, getBoardRoster, SEAT_LABELS, type OcSeat } from '@/lib/ocRoles'
+import { resolveOcAccess, getBoardRoster, getSeatHolder, SEAT_LABELS, type OcSeat } from '@/lib/ocRoles'
 import { sendDecisionToSheet, sheetsConfigured } from '@/lib/googleSheets'
-import { sendOcEmail, approvedEmailHtml, paymentClaimUrl } from '@/lib/ocEmails'
+import { sendOcEmail, approvedEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL } from '@/lib/ocEmails'
 import { OC_LAST_SEAT_COOKIE } from '@/components/oc/ocPrefs'
 
 /**
@@ -159,8 +159,11 @@ export async function POST(request: NextRequest) {
   // Await — σε serverless το fire-and-forget email συχνά δεν προλαβαίνει να φύγει
   if (finalState === 'approved' && app.Email) {
     const claim = paymentClaimUrl(generatePaymentClaimToken(app.documentId))
-    const tpl = approvedEmailHtml(String(app.FirstName || '').trim() || 'μέλος', claim)
-    await sendOcEmail(String(app.Email).trim(), tpl.subject, tpl.html)
+    // Υπογραφή: ο/η τρέχων κάτοχος της θέσης Community — όχι hardcoded όνομα
+    const signer = await getSeatHolder('community')
+    const signerName = signer?.engName || signer?.name || 'Culture for Change — Community'
+    const tpl = approvedEmailHtml(String(app.FirstName || '').trim() || 'μέλος', claim, signerName)
+    await sendOcEmail(String(app.Email).trim(), tpl.subject, tpl.html, { from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL })
   }
 
   // Ρόλοι που έχουν ψηφίσει (ποτέ ΤΙ ψήφισαν)

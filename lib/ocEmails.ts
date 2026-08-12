@@ -9,6 +9,9 @@
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const FROM = 'Culture for Change <noreply@cultureforchange.net>'
+/** Approval flow: υπογράφει η Γεν. Γραμματέας — από/απαντήσεις στο community@ */
+export const COMMUNITY_FROM = 'Culture for Change <community@cultureforchange.net>'
+export const COMMUNITY_EMAIL = 'community@cultureforchange.net'
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https')
   ? process.env.NEXT_PUBLIC_SITE_URL
   : 'https://www.cultureforchange.net'
@@ -34,7 +37,12 @@ export const PAYMENT_DETAILS = {
   paidNoticeAddress: 'finance@cultureforchange.net',
 }
 
-export async function sendOcEmail(to: string, subject: string, html: string): Promise<boolean> {
+export async function sendOcEmail(
+  to: string,
+  subject: string,
+  html: string,
+  opts?: { from?: string; replyTo?: string }
+): Promise<boolean> {
   if (!RESEND_API_KEY) return false
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -43,7 +51,13 @@ export async function sendOcEmail(to: string, subject: string, html: string): Pr
         'Content-Type': 'application/json',
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
-      body: JSON.stringify({ from: FROM, to, subject, html }),
+      body: JSON.stringify({
+        from: opts?.from || FROM,
+        to,
+        subject,
+        html,
+        ...(opts?.replyTo && { reply_to: opts.replyTo }),
+      }),
     })
     return res.ok
   } catch {
@@ -81,28 +95,215 @@ const claimButton = (claimUrl: string, label = 'Πλήρωσα — ενημερ�
  * Approval email — στέλνεται αυτόματα όταν η αίτηση εγκρίνεται (ψηφοφορία
  * ή IT/Admin). Ευχαριστεί και δίνει οδηγίες πληρωμής.
  */
-export function approvedEmailHtml(firstName: string, claimUrl: string): { subject: string; html: string } {
-  const p = PAYMENT_DETAILS
-  return {
-    subject: 'Η αίτησή σου στο Culture for Change εγκρίθηκε! 🎉',
-    html: wrap(`
-      <h2 style="color:#FF8B6A;">Καλώς ήρθες, ${firstName}!</h2>
-      <p>Σε ευχαριστούμε για την αίτησή σου στο Culture For Change — με χαρά σου
-      ανακοινώνουμε ότι <strong>εγκρίθηκε από την Ομάδα Συντονισμού</strong>!</p>
-      <p>Για να ολοκληρωθεί η εγγραφή σου, απομένει η καταβολή της συνδρομής:</p>
-      ${sectionTitle('ΣΤΟΙΧΕΙΑ ΠΛΗΡΩΜΗΣ')}
-      <table style="font-size:15px;border-collapse:collapse;">
-        <tr><td style="padding:3px 14px 3px 0;color:#888;">Ποσό</td><td><strong>${p.amount}</strong></td></tr>
-        <tr><td style="padding:3px 14px 3px 0;color:#888;">Τράπεζα</td><td>${p.bank}</td></tr>
-        <tr><td style="padding:3px 14px 3px 0;color:#888;">IBAN</td><td style="font-family:monospace;">${p.iban}</td></tr>
-        <tr><td style="padding:3px 14px 3px 0;color:#888;">Δικαιούχος</td><td>${p.beneficiary}</td></tr>
-        <tr><td style="padding:3px 14px 3px 0;color:#888;">Αιτιολογία</td><td>${p.reference}</td></tr>
-      </table>
-      <p style="margin-top:22px;">Μόλις ολοκληρώσεις την πληρωμή, πάτησε το κουμπί —
-      θα επιβεβαιώσουμε την κατάθεση, θα ενεργοποιήσουμε το προφίλ σου και θα λάβεις
-      τις οδηγίες πρώτης σύνδεσης.</p>
-      ${claimButton(claimUrl)}`),
+export function approvedEmailHtml(firstName: string, claimUrl: string, signerName = 'Culture for Change — Community'): { subject: string; html: string } {
+  const year = new Date().getFullYear()
+  const html = `<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>Έγκριση αιτήματος εγγραφής — Culture for Change</title>
+<!--[if mso]>
+<style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
+<![endif]-->
+<style>
+  @media only screen and (max-width:620px){
+    .px{padding-left:24px !important;padding-right:24px !important;}
+    .stack{display:block !important;width:100% !important;}
+    .btn a{display:block !important;}
+    .h1{font-size:26px !important;line-height:32px !important;}
   }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F0EB;">
+<span style="display:none;font-size:1px;color:#F5F0EB;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Το αίτημα εγγραφής σου στο Culture for Change εγκρίθηκε — δες τα επόμενα βήματα.</span>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;">
+<tr><td align="center" style="padding:32px 12px 48px 12px;">
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #E5E7EB;">
+
+  <!-- Header -->
+  <tr>
+    <td class="px" style="background-color:#FF8B6A;padding:36px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:16px;letter-spacing:1.6px;color:#FFFFFF;font-weight:bold;mso-line-height-rule:exactly;">CULTURE FOR CHANGE</td>
+        </tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr>
+          <td class="h1" style="font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:36px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">ΤΟ ΑΙΤΗΜΑ ΕΓΓΡΑΦΗΣ ΣΟΥ ΕΓΚΡΙΘΗΚΕ</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Body -->
+  <tr>
+    <td class="px" style="padding:40px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 20px 0;">Aγαπητή/αγαπητέ ${firstName},</p>
+      <p style="margin:0 0 20px 0;">Θα θέλαμε να σε ενημερώσουμε ότι το αίτημα εγγραφής μέλους που υπέβαλες στο Culture for Change έχει εγκριθεί!</p>
+      <p style="margin:0 0 20px 0;">Για να ολοκληρωθεί η διαδικασία της εγγραφής σου στο δίκτυο θα χρειαστεί, εντός 30 ημερών, να καταθέσεις το κόστος της εγγραφής που ανέρχεται στα 10€ (εφάπαξ ποσό) και την ετήσια συνδρομή σου για το οικονομικό έτος ${year} που ανέρχεται στα 35€ (ανανεώνεται κάθε έτος).</p>
+    </td>
+  </tr>
+
+  <!-- Amount summary -->
+  <tr>
+    <td class="px" style="padding:8px 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background-color:#F5F0EB;border-radius:16px;">
+        <tr>
+          <td style="padding:20px 24px 8px 24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#2D2D2D;mso-line-height-rule:exactly;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">Εγγραφή (εφάπαξ)</td>
+                <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">10,00 €</td>
+              </tr>
+              <tr>
+                <td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">Ετήσια συνδρομή ${year}</td>
+                <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">35,00 €</td>
+              </tr>
+              <tr><td colspan="2" style="padding:10px 0 0 0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:#E0D8D0;">&nbsp;</td></tr></table></td></tr>
+              <tr>
+                <td style="padding-top:10px;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#2D2D2D;font-weight:bold;">Σύνολο</td>
+                <td align="right" style="padding-top:10px;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#2D2D2D;font-weight:bold;">45,00 €</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr><td height="16" style="height:16px;line-height:16px;font-size:0;">&nbsp;</td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:24px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 20px 0;">Παρακάτω σημειώνονται τα στοιχεία του Τραπεζικού Λογαριασμού στην Τράπεζα ΑLPHA BANK, όπου θα χρειαστεί να καταθέσεις το συνολικό ποσό των 45€, σημειώνοντας στην Αιτιολογία:<br>Ονοματεπώνυμό και τη φράση Εγγραφή και Ετήσια Συνδρομή Μέλους CforC ${year}.</p>
+    </td>
+  </tr>
+
+  <!-- IBAN -->
+  <tr>
+    <td class="px" style="padding:0 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border:1px solid #E5E7EB;border-radius:16px;">
+        <tr>
+          <td style="padding:24px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;letter-spacing:1.2px;color:#FF8B6A;font-weight:bold;mso-line-height-rule:exactly;">ΙBAN CULTURE FOR CHANGE</td></tr>
+              <tr><td height="10" style="height:10px;line-height:10px;font-size:0;">&nbsp;</td></tr>
+              <tr><td style="font-family:'Courier New',Courier,monospace;font-size:17px;line-height:26px;color:#2D2D2D;font-weight:bold;word-break:break-all;mso-line-height-rule:exactly;">GR7101401420142002320005140</td></tr>
+              <tr><td height="10" style="height:10px;line-height:10px;font-size:0;">&nbsp;</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">ALPHA BANK — στη μεταφορά επίλεξε χρέωση εξόδων <strong>«OUR»</strong>, ώστε όλα τα τραπεζικά έξοδα να καλύπτονται από το μέλος. Αν η κατάθεση γίνει από λογαριασμό ALPHA BANK, δεν υπάρχουν επιπλέον έξοδα.</td></tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:24px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 20px 0;">Μόλις ολοκληρώσεις την κατάθεση, πάτησε το παρακάτω κουμπί για να ενημερωθεί αυτόματα η ομάδα οικονομικών, και στείλε το αποδεικτικό της κατάθεσης απαντώντας σε αυτή την αλληλογραφία — θα λάβεις απόδειξη είσπραξης ψηφιακά. Αν χρειάζεσαι το πρωτότυπο της απόδειξης είσπραξης, μας ενημερώνεις για να τη στείλουμε ταχυδρομικά.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td class="btn" align="center" bgcolor="#FF8B6A" style="background-color:#FF8B6A;border-radius:999px;">
+            <a href="${claimUrl}" style="display:block;padding:16px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:bold;color:#2D2D2D;text-decoration:none;border-radius:999px;mso-line-height-rule:exactly;">Έκανα την κατάθεση&nbsp;✓</a>
+          </td>
+        </tr>
+        <tr><td height="24" style="height:24px;line-height:24px;font-size:0;">&nbsp;</td></tr>
+      </table>
+      <p style="margin:0 0 20px 0;">Στην <a href="https://cultureforchange.net" style="color:#C9552F;text-decoration:underline;">πλατφόρμα</a> του Culture for Change μπορείς να ενημερωθείς για τις δράσεις και τα νέα του δικτύου και <a href="https://cultureforchange.net/members" style="color:#C9552F;text-decoration:underline;">εδώ</a> να γνωρίσεις τα μέλη και να συνδεθείς μαζί τους. Με την ολοκλήρωση της κατάθεσής σου θα μπορείς να φτιάξεις το δικό σου προφίλ στην ιστοσελίδα μας και θα προωθήσουμε το βιογραφικό σου ως νέο μέλος στα Social Media, Newsletter του δικτύου.</p>
+      <p style="margin:0 0 24px 0;">Εδώ σημειώνουμε συνδέσμους στο Καταστατικό και στον Εσωτερικό Κανονισμό για να ενημερωθείς για το όραμα και τις διαδικασίες του CforC.</p>
+    </td>
+  </tr>
+
+  <!-- Buttons -->
+  <tr>
+    <td class="px" style="padding:0 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td class="btn" align="center" style="border:1px solid #2D2D2D;border-radius:999px;">
+            <a href="https://cultureforchange.net" style="display:block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:20px;font-weight:bold;color:#2D2D2D;text-decoration:none;border-radius:999px;mso-line-height-rule:exactly;">Μετάβαση στην πλατφόρμα</a>
+          </td>
+        </tr>
+        <tr><td height="12" style="height:12px;line-height:12px;font-size:0;">&nbsp;</td></tr>
+        <tr>
+          <td>
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td class="stack" width="49%" style="width:49%;">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                    <tr><td class="btn" align="center" style="border:1px solid #2D2D2D;border-radius:999px;">
+                      <a href="https://drive.google.com/file/d/19lZ6Ns6ai-HNn91j2-gpxIAQa5380XNE/view" style="display:block;padding:14px 20px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:20px;font-weight:bold;color:#2D2D2D;text-decoration:none;border-radius:999px;mso-line-height-rule:exactly;">Καταστατικό</a>
+                    </td></tr>
+                  </table>
+                </td>
+                <td class="stack" width="2%" style="width:2%;font-size:0;line-height:12px;">&nbsp;</td>
+                <td class="stack" width="49%" style="width:49%;">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                    <tr><td class="btn" align="center" style="border:1px solid #2D2D2D;border-radius:999px;">
+                      <a href="https://drive.google.com/file/d/1_53RI7N3q3PLUaC6dsv5uiUYBcmnr-Ie/view?usp=drive_link" style="display:block;padding:14px 20px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:20px;font-weight:bold;color:#2D2D2D;text-decoration:none;border-radius:999px;mso-line-height-rule:exactly;">Εσωτερικός Κανονισμός</a>
+                    </td></tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Signature -->
+  <tr>
+    <td class="px" style="padding:32px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 20px 0;">Ευχαριστούμε πολύ και είμαστε στη διάθεσή σου για οτιδήποτε.</p>
+      <p style="margin:0;">Φιλικά,</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" style="padding:16px 48px 40px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:#E5E7EB;">&nbsp;</td></tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:24px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">${signerName}</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">Secretary General<br>Community - Culture for Change</td></tr>
+        <tr><td height="6" style="height:6px;line-height:6px;font-size:0;">&nbsp;</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;mso-line-height-rule:exactly;"><a href="mailto:community@cultureforchange.net" style="color:#C9552F;text-decoration:underline;">community@cultureforchange.net</a></td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Footer -->
+  <tr>
+    <td class="px" align="center" style="background-color:#2D2D2D;padding:32px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#F5F0EB;font-weight:bold;mso-line-height-rule:exactly;">Join our Social Networks &amp; Get Involved!</td></tr>
+        <tr><td height="14" style="height:14px;line-height:14px;font-size:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:26px;color:#F5F0EB;mso-line-height-rule:exactly;">
+          <a href="https://cultureforchange.net" style="color:#FF8B6A;text-decoration:none;">Website</a>&nbsp; |&nbsp;
+          <a href="https://www.facebook.com/cultureforchange" style="color:#FF8B6A;text-decoration:none;">Facebook</a>&nbsp; |&nbsp;
+          <a href="https://www.instagram.com/cultureforchange" style="color:#FF8B6A;text-decoration:none;">Instagram</a>&nbsp; |&nbsp;
+          <a href="https://www.linkedin.com/company/cultureforchange" style="color:#FF8B6A;text-decoration:none;">LinkedIn</a>&nbsp; |&nbsp;
+          <a href="https://www.youtube.com/@cultureforchange" style="color:#FF8B6A;text-decoration:none;">YouTube</a>
+        </td></tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#A0A0A0;mso-line-height-rule:exactly;">Δίκτυο Culture for Change — Αθήνα, Ελλάδα<br>Λαμβάνεις αυτό το email επειδή υπέβαλες αίτημα εγγραφής μέλους.</td></tr>
+        <tr><td height="18" style="height:18px;line-height:18px;font-size:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:17px;color:#8A8A8A;mso-line-height-rule:exactly;">_______________________________________________________________<br>This email may contain confidential information. Read full disclaimer <a href="https://www.cultureforchange.net/email-confidentiality-disclaimer" style="color:#FF8B6A;text-decoration:underline;">here</a></td></tr>
+      </table>
+    </td>
+  </tr>
+
+</table>
+
+</td></tr>
+</table>
+</body>
+</html>
+`
+  return { subject: 'Έγκριση αιτήματος εγγραφής — Culture for Change', html }
 }
 
 /**
