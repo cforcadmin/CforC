@@ -962,7 +962,11 @@ export function financeWelcomeEmailHtml(firstName: string, signerName = 'Culture
  * Departure email — στέλνεται όταν διαγράφεται μέλος (OC ή Sheet).
  * Design shell, υπογραφή Community. ⟨TODO⟩: πραγματικό URL ερωτηματολογίου.
  */
-export function departureEmailHtml(firstName: string, signerName = 'Culture for Change — Community'): { subject: string; html: string } {
+export function farewellUrl(token: string): string {
+  return `${SITE_URL}/farewell/${encodeURIComponent(token)}`
+}
+
+export function departureEmailHtml(firstName: string, signerName = 'Culture for Change — Community', questionnaireUrl = EXIT_QUESTIONNAIRE_URL): { subject: string; html: string } {
   const year = new Date().getFullYear()
   const html = `<!DOCTYPE html>
 <html lang="el">
@@ -1020,7 +1024,7 @@ export function departureEmailHtml(firstName: string, signerName = 'Culture for 
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td class="btn" align="center" bgcolor="#FF8B6A" style="background-color:#FF8B6A;border-radius:999px;">
-            <a href="${EXIT_QUESTIONNAIRE_URL}" style="display:block;padding:16px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:bold;color:#2D2D2D;text-decoration:none;border-radius:999px;mso-line-height-rule:exactly;">Ερωτηματολόγιο αποχώρησης</a>
+            <a href="${questionnaireUrl}" style="display:block;padding:16px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:bold;color:#2D2D2D;text-decoration:none;border-radius:999px;mso-line-height-rule:exactly;">Ερωτηματολόγιο αποχώρησης</a>
           </td>
         </tr>
       </table>

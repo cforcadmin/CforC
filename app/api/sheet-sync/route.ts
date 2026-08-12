@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
-  sendOcEmail, departureEmailHtml, welcomeEmailHtml, financeWelcomeEmailHtml,
+  sendOcEmail, departureEmailHtml, farewellUrl, welcomeEmailHtml, financeWelcomeEmailHtml,
   IT_FROM, IT_EMAIL, WELCOME_CC, FINANCE_FROM, FINANCE_EMAIL,
 } from '@/lib/ocEmails'
 import { getSeatHolder } from '@/lib/ocRoles'
+import { generateExitSurveyToken } from '@/lib/auth'
 import { generateReceiptPdf } from '@/lib/receiptPdf'
 
 /**
@@ -305,7 +306,8 @@ export async function POST(request: NextRequest) {
       // Αποχαιρετιστήριο email — await (serverless: fire-and-forget δεν φεύγει)
       const exitName = String(member.Name || '').trim().split(' ')[0] || 'μέλος'
       const comSigner = await getSeatHolder('community')
-      const tpl = departureEmailHtml(exitName, comSigner?.engName || comSigner?.name || 'Culture for Change — Community')
+      const fUrl = farewellUrl(generateExitSurveyToken(member.documentId, String(member.Name || '').trim()))
+      const tpl = departureEmailHtml(exitName, comSigner?.engName || comSigner?.name || 'Culture for Change — Community', fUrl)
       const departureEmailSent = await sendOcEmail(email, tpl.subject, tpl.html)
       return NextResponse.json({ ok: true, member: member.documentId, removed: true, departureEmailSent })
     }

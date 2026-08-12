@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
+import { verifyToken, generateExitSurveyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
 import { sendMemberRemovalToSheet, sheetsConfigured } from '@/lib/googleSheets'
 import { OC_LAST_SEAT_COOKIE } from '@/components/oc/ocPrefs'
-import { sendOcEmail, departureEmailHtml } from '@/lib/ocEmails'
+import { sendOcEmail, departureEmailHtml, farewellUrl } from '@/lib/ocEmails'
 
 /**
  * Member deletion from the OC Μητρώο μελών table — IT/Γραμματεία acting
@@ -112,7 +112,8 @@ export async function POST(request: NextRequest) {
     if (member.Email) {
       const exitName = String(member.Name || '').trim().split(' ')[0] || 'μέλος'
       const comSigner = await getSeatHolder('community')
-      const tpl = departureEmailHtml(exitName, comSigner?.engName || comSigner?.name || 'Culture for Change — Community')
+      const fUrl = farewellUrl(generateExitSurveyToken(memberId, String(member.Name || '').trim()))
+      const tpl = departureEmailHtml(exitName, comSigner?.engName || comSigner?.name || 'Culture for Change — Community', fUrl)
       departureEmailSent = await sendOcEmail(String(member.Email).trim(), tpl.subject, tpl.html)
     }
 

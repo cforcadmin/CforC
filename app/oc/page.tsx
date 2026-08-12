@@ -59,6 +59,22 @@ export default async function OcPage() {
     // OC still renders without application data
   }
 
+  // Φόρμες αποχώρησης (exit surveys) — εμφανίζονται στην ενότητα Μέλη
+  let exitSurveys: any[] = []
+  try {
+    const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
+    const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
+    if (STRAPI_URL && STRAPI_API_TOKEN) {
+      const res = await fetch(
+        `${STRAPI_URL}/api/exit-surveys?sort=SubmittedAt:desc&pagination[limit]=50`,
+        { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store' }
+      )
+      if (res.ok) exitSurveys = (await res.json())?.data || []
+    }
+  } catch {
+    // OC still renders without survey data
+  }
+
   // Επισκόπηση: μητρώο/οικονομικά (κρυφά πεδία), feed, newsletter. Τα δεδομένα
   // αυτά σερβίρονται ΜΟΝΟ εδώ, πίσω από το board gate — ποτέ μέσω του public proxy.
   const overview = await fetchOcOverview()
@@ -81,6 +97,7 @@ export default async function OcPage() {
       overview={overview}
       tableCols={tableCols}
       tableDensity={tableDensity}
+      exitSurveys={exitSurveys}
     />
   )
 }

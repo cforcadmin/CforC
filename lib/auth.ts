@@ -7,6 +7,7 @@ const JWT_EXPIRES_IN = 2592000 // 30 days
 const MAGIC_LINK_EXPIRES_IN = 21600 // 6 hours
 const NEWSLETTER_TOKEN_EXPIRES_IN = 86400 // 24 hours
 const PAYMENT_CLAIM_EXPIRES_IN = 5184000 // 60 days — link inside approval/reminder emails
+const EXIT_SURVEY_EXPIRES_IN = 7776000 // 90 days — link inside the departure email
 
 function getJwtSecret(): Secret {
   const secret = process.env.JWT_SECRET
@@ -53,7 +54,13 @@ interface PaymentClaimPayload {
   type: 'payment-claim'
 }
 
-type TokenPayload = SessionPayload | MagicLinkPayload | NewsletterPayload | PaymentClaimPayload
+interface ExitSurveyPayload {
+  memberId: string
+  name: string
+  type: 'exit-survey'
+}
+
+type TokenPayload = SessionPayload | MagicLinkPayload | NewsletterPayload | PaymentClaimPayload | ExitSurveyPayload
 
 export function generateSessionToken(memberId: string, email: string): string {
   const payload: SessionPayload = {
@@ -105,6 +112,13 @@ export function generateNewsletterToken(email: string, firstName?: string, lastN
 export function generatePaymentClaimToken(applicationId: string): string {
   const payload: PaymentClaimPayload = { applicationId, type: 'payment-claim' }
   const options: SignOptions = { algorithm: 'HS256', expiresIn: PAYMENT_CLAIM_EXPIRES_IN }
+  return jwt.sign(payload, getJwtSecret(), options)
+}
+
+/** Signed single-purpose link: φόρμα αποχώρησης — φέρει το μέλος για προαιρετική επωνυμία */
+export function generateExitSurveyToken(memberId: string, name: string): string {
+  const payload: ExitSurveyPayload = { memberId, name, type: 'exit-survey' }
+  const options: SignOptions = { algorithm: 'HS256', expiresIn: EXIT_SURVEY_EXPIRES_IN }
   return jwt.sign(payload, getJwtSecret(), options)
 }
 

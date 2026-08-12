@@ -44,6 +44,8 @@ interface OcShellProps {
   /** Μητρώο μελών table prefs (από τα httpOnly cookies) */
   tableCols?: string[]
   tableDensity?: 'comfortable' | 'compact'
+  /** Φόρμες αποχώρησης (server-fetched) */
+  exitSurveys?: any[]
 }
 
 const APP_STATE_LABELS: Record<string, { label: string; cls: string }> = {
@@ -77,7 +79,7 @@ async function persistPrefs(prefs: { landing?: string; seat?: string }) {
   }
 }
 
-export default function OcShell({ seats, initialSeat, initialLandingPref, applications = [], overview = null, tableCols, tableDensity }: OcShellProps) {
+export default function OcShell({ seats, initialSeat, initialLandingPref, applications = [], overview = null, tableCols, tableDensity, exitSurveys = [] }: OcShellProps) {
   const pending = applications.filter(a => a.state === 'submitted')
   const [activeSection, setActiveSection] = useState<SectionKey>(
     initialSeat === 'financer' ? 'finances' : 'overview'
@@ -282,6 +284,58 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-5">
                 Τα «Τακτικά μέλη» (μητρώο με πληρωμές ανά έτος) έρχονται με τη φάση των Οικονομικών.
               </p>
+
+              {/* Φόρμες αποχώρησης */}
+              <div className="border-t border-gray-200 dark:border-gray-700 mt-8 pt-6">
+                <h3 className="font-bold text-charcoal dark:text-gray-100 mb-4">
+                  Φόρμες αποχώρησης
+                  <span className="ml-2 text-sm font-normal text-gray-400 dark:text-gray-500">({exitSurveys.length})</span>
+                </h3>
+                {exitSurveys.length === 0 ? (
+                  <p className="text-gray-400 dark:text-gray-500 text-sm">Καμία φόρμα αποχώρησης ακόμη.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {exitSurveys.map((sv: any) => (
+                      <details key={sv.documentId} className="rounded-2xl border border-gray-200 dark:border-gray-600 group">
+                        <summary className="flex flex-wrap items-center gap-3 p-4 cursor-pointer list-none">
+                          <span className="font-medium text-sm text-charcoal dark:text-gray-200">
+                            {sv.Anonymous ? 'Ανώνυμο μέλος' : (sv.MemberName || '—')}
+                          </span>
+                          {sv.Satisfaction != null && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-coral/15 text-coral dark:text-coral-light font-bold">
+                              Ικανοποίηση {sv.Satisfaction}/5
+                            </span>
+                          )}
+                          {sv.AllowFollowUp && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200">δέχεται follow-up</span>
+                          )}
+                          <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto notranslate">{formatDate(sv.SubmittedAt)}</span>
+                          <span className="text-coral dark:text-coral-light text-xs select-none group-open:rotate-180 transition-transform" aria-hidden="true">▼</span>
+                        </summary>
+                        <div className="px-4 pb-4 text-sm text-gray-700 dark:text-gray-300 space-y-2">
+                          {Array.isArray(sv.Reasons) && sv.Reasons.length > 0 && (
+                            <p><span className="text-gray-400">Λόγοι:</span> {sv.Reasons.join(' · ')}{sv.ReasonOther ? ` · ${sv.ReasonOther}` : ''}</p>
+                          )}
+                          {Array.isArray(sv.MostUseful) && sv.MostUseful.length > 0 && (
+                            <p><span className="text-gray-400">Πιο χρήσιμα:</span> {sv.MostUseful.join(' · ')}</p>
+                          )}
+                          {Array.isArray(sv.Barriers) && sv.Barriers.length > 0 && (
+                            <p><span className="text-gray-400">Εμπόδια:</span> {sv.Barriers.join(' · ')}</p>
+                          )}
+                          {sv.WouldChange && <p><span className="text-gray-400">Τι θα άλλαζε:</span> {sv.WouldChange}</p>}
+                          {Array.isArray(sv.WouldReturn) && sv.WouldReturn.length > 0 && (
+                            <p><span className="text-gray-400">Θα επέστρεφε αν:</span> {sv.WouldReturn.join(' · ')}</p>
+                          )}
+                          {sv.KeepNewsletter != null && (
+                            <p><span className="text-gray-400">Newsletter:</span> {sv.KeepNewsletter ? 'παραμένει' : 'όχι'}</p>
+                          )}
+                          {sv.FinalComment && <p><span className="text-gray-400">Σχόλιο:</span> {sv.FinalComment}</p>}
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
