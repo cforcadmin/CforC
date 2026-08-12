@@ -304,7 +304,8 @@ export async function POST(request: NextRequest) {
       }
       // Αποχαιρετιστήριο email — await (serverless: fire-and-forget δεν φεύγει)
       const exitName = String(member.Name || '').trim().split(' ')[0] || 'μέλος'
-      const tpl = departureEmailHtml(exitName)
+      const comSigner = await getSeatHolder('community')
+      const tpl = departureEmailHtml(exitName, comSigner?.engName || comSigner?.name || 'Culture for Change — Community')
       const departureEmailSent = await sendOcEmail(email, tpl.subject, tpl.html)
       return NextResponse.json({ ok: true, member: member.documentId, removed: true, departureEmailSent })
     }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
-import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
+import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
 import { sendMemberRemovalToSheet, sheetsConfigured } from '@/lib/googleSheets'
 import { OC_LAST_SEAT_COOKIE } from '@/components/oc/ocPrefs'
 import { sendOcEmail, departureEmailHtml } from '@/lib/ocEmails'
@@ -111,7 +111,8 @@ export async function POST(request: NextRequest) {
     let departureEmailSent = false
     if (member.Email) {
       const exitName = String(member.Name || '').trim().split(' ')[0] || 'μέλος'
-      const tpl = departureEmailHtml(exitName)
+      const comSigner = await getSeatHolder('community')
+      const tpl = departureEmailHtml(exitName, comSigner?.engName || comSigner?.name || 'Culture for Change — Community')
       departureEmailSent = await sendOcEmail(String(member.Email).trim(), tpl.subject, tpl.html)
     }
 
