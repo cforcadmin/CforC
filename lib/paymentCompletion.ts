@@ -4,6 +4,7 @@ import {
   IT_FROM, IT_EMAIL, WELCOME_CC, FINANCE_FROM, FINANCE_EMAIL,
 } from '@/lib/ocEmails'
 import { generateReceiptPdf } from '@/lib/receiptPdf'
+import { createReceipt } from '@/lib/receipts'
 
 /**
  * Ολοκλήρωση πληρωμής μέλους — ΚΟΙΝΗ λογική για τα δύο σημεία εκκίνησης:
@@ -205,6 +206,26 @@ export async function processPaymentCompletion(input: PaymentCompletionInput): P
     console.error('payment completion: welcome email failed:', err)
   }
   try {
+    const isCompany = app?.ReceiptType === 'Εταιρεία'
+    // Επίσημος αριθμός από την ενιαία σειρά — αν η σειρά δεν έχει
+    // αρχικοποιηθεί (πριν το seeding), ΔΕΝ εκδίδουμε απόδειξη· το welcome
+    // έχει ήδη φύγει και το receiptSent:false το δείχνει στο αποτέλεσμα.
+    const receipt = await createReceipt({
+      type: 'registration',
+      amount: 45,
+      registrationFee: 10,
+      subscriptionFee: 35,
+      subscriptionYear: year,
+      memberName: fullName,
+      memberDocId,
+      paymentMethod: 'bank',
+      createdBy: 'payment-completion',
+      ...(isCompany && {
+        companyName: app.CompanyName || null,
+        companyAddress: app.CompanyAddress || null,
+        companyTaxId: app.CompanyTaxId || null,
+      }),
+    })
     const finSigner = await getSeatHolder('financer')
     const fTpl = financeWelcomeEmailHtml(firstName, finSigner?.engName || finSigner?.name || 'Culture for Change — Finance')
     const pdf = await generateReceiptPdf({
@@ -212,13 +233,14 @@ export async function processPaymentCompletion(input: PaymentCompletionInput): P
       email,
       am,
       year,
+      receiptNumber: receipt.number,
       registrationFee: 10,
       subscriptionFee: 35,
       date: new Date(),
       taxId: app?.TaxId || null,
       city: app?.ResidenceCity || String(input.city || '').trim() || null,
       financerName: finSigner?.name || null,
-      ...(app?.ReceiptType === 'Εταιρεία' && {
+      ...(isCompany && {
         companyName: app.CompanyName || null,
         companyAddress: app.CompanyAddress || null,
         companyTaxId: app.CompanyTaxId || null,
@@ -228,7 +250,7 @@ export async function processPaymentCompletion(input: PaymentCompletionInput): P
       from: FINANCE_FROM,
       replyTo: FINANCE_EMAIL,
       cc: [FINANCE_EMAIL],   // αντίγραφο της απόδειξης στο αρχείο του finance@
-      attachments: [{ filename: `apodeixi-eispraxis-${year}-${am}.pdf`, content: Buffer.from(pdf).toString('base64') }],
+      attachments: [{ filename: `apodeixi-eispraxis-${receipt.number}.pdf`, content: Buffer.from(pdf).toString('base64') }],
     })
   } catch (err) {
     console.error('payment completion: receipt email failed:', err)

@@ -10,13 +10,16 @@ import path from 'path'
  * (ελληνικά, κοντά στο grotesk του site), απαλοί τόνοι γκρι αντί για
  * καθαρό μαύρο, στρογγυλεμένα στοιχεία (badge, κουτί συνόλων, τράπεζα),
  * και υπογραφή Ταμία με το ελληνικό όνομα του/της τρέχοντος Financer.
- * ⟨TODO⟩: επίσημη σειριακή αρίθμηση (τώρα: Α-{έτος}-{ΑΜ με padding}).
+ * Αρίθμηση: ενιαία σειρά «ΑΠ. ΕΙΣ. Ν» (receiptNumber από lib/receipts.ts —
+ * το OC είναι η μοναδική αρχή αρίθμησης). Fallback στο παλιό
+ * Α-{έτος}-{ΑΜ} μόνο αν λείπει ο αριθμός (δεν πρέπει να συμβαίνει).
  */
 
 export const ORG_DETAILS = {
   name: 'Culture for Change',
   legalName: 'Σωματείο Κοινωνικής και Πολιτισμικής Καινοτομίας',
   afm: '996788256',
+  doy: 'ΚΕΦΟΔΕ ΑΤΤΙΚΗΣ',
   address: 'Λεωφόρος Αλεξάνδρας 48, ΤΚ 11473, Αθήνα',
   email: 'hello@cultureforchange.net',
   financeEmail: 'finance@cultureforchange.net',
@@ -47,6 +50,8 @@ export interface ReceiptData {
   paymentMethod?: string
   /** Ελληνικό όνομα του/της Ταμία (Financer) για την υπογραφή */
   financerName?: string | null
+  /** Αριθμός ενιαίας σειράς ΑΠ. ΕΙΣ. (από lib/receipts.ts) */
+  receiptNumber?: number | null
   /** Απόδειξη σε εταιρεία (ReceiptType «Εταιρεία» στην αίτηση):
    *  Επωνυμία/Διεύθυνση/ΑΦΜ εταιρείας αντικαθιστούν τα προσωπικά στοιχεία */
   companyName?: string | null
@@ -113,7 +118,10 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
   const W = 595
   const M = 48
   const right = W - M
-  const number = `Α-${data.year}-${String(data.am).padStart(4, '0')}`
+  const series = data.receiptNumber ? 'ΑΠ. ΕΙΣ.' : 'Α'
+  const number = data.receiptNumber
+    ? String(data.receiptNumber)
+    : `Α-${data.year}-${String(data.am).padStart(4, '0')}`
   const total = data.registrationFee + data.subscriptionFee
 
   const text = (t: string, x: number, y: number, size: number, font: PDFFont, color = VALUE) =>
@@ -141,7 +149,7 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
   let ly = 795 - logoH - 20
   text(ORG_DETAILS.legalName, M, ly, 8.6, semibold, VALUE); ly -= 15
   text(ORG_DETAILS.address, M, ly, 8.6, regular, MUTED); ly -= 15
-  text(`ΑΦΜ ${ORG_DETAILS.afm}`, M, ly, 8.6, regular, MUTED); ly -= 15
+  text(`ΑΦΜ ${ORG_DETAILS.afm} · ΔΟΥ ${ORG_DETAILS.doy}`, M, ly, 8.6, regular, MUTED); ly -= 15
   text(`${ORG_DETAILS.website} · ${ORG_DETAILS.email}`, M, ly, 8.6, regular, MUTED)
 
   // Badge (στρογγυλεμένο) + μετα-στοιχεία δεξιά
@@ -153,7 +161,7 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
   let ry = 795 - 44
   // Πλέγμα όπως στο design: στήλη τιμών αριστερά-στοιχισμένη σε σταθερό x,
   // ετικέτες δεξιά-στοιχισμένες ακριβώς πριν από αυτήν
-  const metaVals = ['Α', number, data.date.toLocaleDateString('el-GR')]
+  const metaVals = [series, number, data.date.toLocaleDateString('el-GR')]
   const valColW = Math.max(...metaVals.map(v => semibold.widthOfTextAtSize(v, 9.2)))
   const valX = right - valColW
   const metaRow = (label: string, value: string) => {
@@ -161,7 +169,7 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
     textR(label, valX - 14, ry, 8.8, regular, MUTED)
     ry -= 17
   }
-  metaRow('Σειρά', 'Α')
+  metaRow('Σειρά', series)
   metaRow('Αρ. παραστατικού', number)
   metaRow('Ημερομηνία', data.date.toLocaleDateString('el-GR'))
 
