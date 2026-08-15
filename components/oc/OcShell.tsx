@@ -7,6 +7,7 @@ import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import { OC_SEAT_LABELS, OC_SEAT_SHORT } from '@/components/oc/ocPrefs'
 import OcSeatChoiceModal from '@/components/oc/OcSeatChoiceModal'
 import OcOverview from '@/components/oc/OcOverview'
+import OcFinances from '@/components/oc/OcFinances'
 import type { OcOverviewData } from '@/lib/ocOverview'
 
 // OC categories. Chip style: first letter in a filled block, remainder in a
@@ -380,7 +381,16 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
             </div>
           )}
 
-          {activeSection !== 'overview' && activeSection !== 'settings' && activeSection !== 'members' && (
+          {activeSection === 'finances' && (
+            <OcFinances
+              canIssue={activeSeat === 'financer'}
+              members={(overview?.members || []).map(m => ({
+                docId: m.docId, name: m.name, am: m.am, email: m.email,
+              }))}
+            />
+          )}
+
+          {activeSection !== 'overview' && activeSection !== 'settings' && activeSection !== 'members' && activeSection !== 'finances' && (
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-12 text-center">
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5"

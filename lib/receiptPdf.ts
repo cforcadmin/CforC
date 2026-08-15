@@ -52,6 +52,13 @@ export interface ReceiptData {
   financerName?: string | null
   /** Αριθμός ενιαίας σειράς ΑΠ. ΕΙΣ. (από lib/receipts.ts) */
   receiptNumber?: number | null
+  /** Μία γραμμή πίνακα με αυτή την ετικέτα και το σύνολο — για δωρεές,
+   *  έκτακτες εισφορές κ.λπ. αντί για τις γραμμές εγγραφής/συνδρομής */
+  customItemLabel?: string | null
+  /** Παράκαμψη του επεξηγηματικού κειμένου κάτω από το ολογράφως */
+  description?: string | null
+  /** Παράκαμψη της τιμής «Περίοδος» (default: Έτος {year}) */
+  periodLabel?: string | null
   /** Απόδειξη σε εταιρεία (ReceiptType «Εταιρεία» στην αίτηση):
    *  Επωνυμία/Διεύθυνση/ΑΦΜ εταιρείας αντικαθιστούν τα προσωπικά στοιχεία */
   companyName?: string | null
@@ -198,14 +205,16 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
     kv(colL, yl, 'Email', data.email); yl -= 18
   } else {
     kv(colL, yl, 'Ονοματεπώνυμο', data.name, true); yl -= 18
-    kv(colL, yl, 'Αριθμός μητρώου', String(data.am)); yl -= 18
+    if (data.am !== '' && data.am !== null && data.am !== undefined) {
+      kv(colL, yl, 'Αριθμός μητρώου', String(data.am)); yl -= 18
+    }
     if (data.taxId) { kv(colL, yl, 'ΑΦΜ', String(data.taxId)); yl -= 18 }
     if (data.city) { kv(colL, yl, 'Πόλη', String(data.city)); yl -= 18 }
     kv(colL, yl, 'Email', data.email); yl -= 18
   }
   kv(colR, yr, 'Είδος', 'Απόδειξη είσπραξης'); yr -= 18
   kv(colR, yr, 'Τρόπος πληρωμής', data.paymentMethod || 'Τραπεζική κατάθεση', true); yr -= 18
-  kv(colR, yr, 'Περίοδος', `Έτος ${data.year}`); yr -= 18
+  kv(colR, yr, 'Περίοδος', data.periodLabel || `Έτος ${data.year}`); yr -= 18
   // «✓» δεν υπάρχει στη Liberation Sans — σχεδιάζεται ως διάνυσμα
   kv(colR, yr, 'Κατάσταση', '     Εξοφλήθη', true)
   page.drawLine({ start: { x: colR + 96, y: yr + 3 }, end: { x: colR + 99, y: yr }, thickness: 1.4, color: INK })
@@ -230,8 +239,12 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
     y -= 12
     page.drawRectangle({ x: M, y, width: W - 2 * M, height: 0.6, color: BORDER })
   }
-  item('Εγγραφή μέλους (εφάπαξ)', data.registrationFee)
-  item(`Ετήσια συνδρομή μέλους ${data.year}`, data.subscriptionFee)
+  if (data.customItemLabel) {
+    item(data.customItemLabel, total)
+  } else {
+    if (data.registrationFee > 0) item('Εγγραφή μέλους (εφάπαξ)', data.registrationFee)
+    if (data.subscriptionFee > 0) item(`Ετήσια συνδρομή μέλους ${data.year}`, data.subscriptionFee)
+  }
 
   // ── Ολογράφως + κουτί συνόλων ──
   y -= 38
@@ -253,8 +266,13 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
   const lbl = 'Ποσό ολογράφως: '
   text(lbl, M, y, 9, regular, MUTED)
   text(euroWords(total), M + regular.widthOfTextAtSize(lbl, 9), y, 9, semibold, INK)
+  const defaultDescription = data.registrationFee > 0
+    ? `Η συνδρομή αφορά την εγγραφή και την ετήσια συνδρομή μέλους στο Δίκτυο Culture for Change για το έτος ${data.year}.`
+    : data.customItemLabel
+      ? `Αφορά: ${data.customItemLabel} προς το Δίκτυο Culture for Change.`
+      : `Η συνδρομή αφορά την ετήσια συνδρομή μέλους στο Δίκτυο Culture for Change για το έτος ${data.year}.`
   let wy = y - 17
-  for (const line of wrapText(`Η συνδρομή αφορά την εγγραφή και την ετήσια συνδρομή μέλους στο Δίκτυο Culture for Change για το έτος ${data.year}.`, regular, 9)) {
+  for (const line of wrapText(data.description || defaultDescription, regular, 9)) {
     text(line, M, wy, 9, regular, MUTED)
     wy -= 13
   }

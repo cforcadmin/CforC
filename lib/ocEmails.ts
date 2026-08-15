@@ -1078,6 +1078,114 @@ export function financeWelcomeEmailHtml(firstName: string, signerName = 'Culture
 }
 
 /**
+ * Απόδειξη από χειροκίνητη έκδοση (φόρμα Financer στο OC) — ανανεώσεις
+ * συνδρομής, έκτακτες εισφορές, δωρεές. Design shell, υπογραφή Financer.
+ * detail: π.χ. «Ετήσια συνδρομή 2026» ή «Δωρεά».
+ */
+export function manualReceiptEmailHtml(firstName: string, detail: string, signerName = 'Culture for Change — Finance'): { subject: string; html: string } {
+  const html = `<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>Η απόδειξή σου — Culture for Change</title>
+<!--[if mso]>
+<style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
+<![endif]-->
+<style>
+  @media only screen and (max-width:620px){
+    .px{padding-left:24px !important;padding-right:24px !important;}
+    .stack{display:block !important;width:100% !important;}
+    .btn a{display:block !important;}
+    .h1{font-size:26px !important;line-height:32px !important;}
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F0EB;">
+<span style="display:none;font-size:1px;color:#F5F0EB;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Η απόδειξη είσπραξής σου — Culture for Change.</span>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;">
+<tr><td align="center" style="padding:32px 12px 48px 12px;">
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #E5E7EB;">
+
+  <!-- Header -->
+  <tr>
+    <td class="px" style="background-color:#FF8B6A;padding:36px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:16px;letter-spacing:1.6px;color:#FFFFFF;font-weight:bold;mso-line-height-rule:exactly;">CULTURE FOR CHANGE</td>
+        </tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr>
+          <td class="h1" style="font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:36px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">Η ΑΠΟΔΕΙΞΗ ΣΟΥ</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Body -->
+  <tr>
+    <td class="px" style="padding:40px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 20px 0;">Αγαπητή/αγαπητέ ${firstName},</p>
+      <p style="margin:0 0 20px 0;">Η πληρωμή σου (<strong>${detail}</strong>) καταχωρήθηκε. Σε ευχαριστούμε!</p>
+      <p style="margin:0 0 20px 0;">📎 Επισυνάπτεται η <strong>απόδειξη είσπραξης</strong> σε PDF. Αν χρειάζεσαι κάτι σχετικό με την απόδειξη, απάντησε σε αυτό το email.</p>
+    </td>
+  </tr>
+
+  <!-- Signature -->
+  <tr>
+    <td class="px" style="padding:32px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0;">Φιλικά,</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" style="padding:16px 48px 40px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:#E5E7EB;">&nbsp;</td></tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:24px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">${signerName}</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">Finance - Culture for Change</td></tr>
+        <tr><td height="6" style="height:6px;line-height:6px;font-size:0;">&nbsp;</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;mso-line-height-rule:exactly;"><a href="mailto:finance@cultureforchange.net" style="color:#C9552F;text-decoration:underline;">finance@cultureforchange.net</a></td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Footer -->
+  <tr>
+    <td class="px" align="center" style="background-color:#2D2D2D;padding:32px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#F5F0EB;font-weight:bold;mso-line-height-rule:exactly;">Join our Social Networks &amp; Get Involved!</td></tr>
+        <tr><td height="14" style="height:14px;line-height:14px;font-size:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:26px;color:#F5F0EB;mso-line-height-rule:exactly;">
+          <a href="https://cultureforchange.net" style="color:#FF8B6A;text-decoration:none;">Website</a>&nbsp; |&nbsp;
+          <a href="https://www.facebook.com/cultureforchange" style="color:#FF8B6A;text-decoration:none;">Facebook</a>&nbsp; |&nbsp;
+          <a href="https://www.instagram.com/cultureforchange" style="color:#FF8B6A;text-decoration:none;">Instagram</a>&nbsp; |&nbsp;
+          <a href="https://www.linkedin.com/company/cultureforchange" style="color:#FF8B6A;text-decoration:none;">LinkedIn</a>&nbsp; |&nbsp;
+          <a href="https://www.youtube.com/@cultureforchange" style="color:#FF8B6A;text-decoration:none;">YouTube</a>
+        </td></tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#A0A0A0;mso-line-height-rule:exactly;">Δίκτυο Culture for Change — Αθήνα, Ελλάδα<br>Λαμβάνεις αυτό το email επειδή καταχωρήθηκε πληρωμή σου προς το Culture for Change.</td></tr>
+        <tr><td height="18" style="height:18px;line-height:18px;font-size:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:17px;color:#8A8A8A;mso-line-height-rule:exactly;">_______________________________________________________________<br>This email may contain confidential information. Read full disclaimer <a href="https://www.cultureforchange.net/email-confidentiality-disclaimer" style="color:#FF8B6A;text-decoration:underline;">here</a></td></tr>
+      </table>
+    </td>
+  </tr>
+
+</table>
+
+</td></tr>
+</table>
+</body>
+</html>
+`
+  return { subject: 'Η απόδειξη είσπραξής σου — Culture for Change', html }
+}
+
+/**
  * Departure email — στέλνεται όταν διαγράφεται μέλος (OC ή Sheet).
  * Design shell, υπογραφή Community. ⟨TODO⟩: πραγματικό URL ερωτηματολογίου.
  */
