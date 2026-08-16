@@ -76,6 +76,7 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
   const [rows, setRows] = useState<IntakeRow[]>([])
   const [state, setState] = useState<Record<string, RowState>>({})
   const [activeQueryTxn, setActiveQueryTxn] = useState<string | null>(null)
+  const [showIncomeHelp, setShowIncomeHelp] = useState(false)
 
   async function analyze() {
     setAnalyzing(true); setError(null); setRows([]); setWarnings([])
@@ -234,9 +235,54 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
             </div>
           </div>
 
-          <h3 className="text-lg font-bold text-charcoal dark:text-gray-100">
-            Α. Έσοδα <span className="text-sm font-normal text-gray-400 dark:text-gray-500">πιστώσεις → αποδείξεις μελών</span>
-          </h3>
+          <div className="flex flex-wrap items-center gap-3">
+            <h3 className="text-lg font-bold text-charcoal dark:text-gray-100">
+              Α. Έσοδα <span className="text-sm font-normal text-gray-400 dark:text-gray-500">πιστώσεις → αποδείξεις μελών</span>
+            </h3>
+            <button type="button" onClick={() => setShowIncomeHelp(!showIncomeHelp)}
+              onMouseEnter={() => setShowIncomeHelp(true)}
+              aria-expanded={showIncomeHelp}
+              title="Οδηγίες: από πού παίρνω τα δύο μπλοκ και τι κάνει η ανάλυση"
+              className="w-6 h-6 rounded-full border border-coral text-coral text-xs font-bold hover:bg-coral hover:text-white transition-colors">
+              i
+            </button>
+          </div>
+
+          {showIncomeHelp && (
+            <div className="rounded-2xl bg-gray-50 dark:bg-gray-700/50 px-5 py-4 text-xs text-gray-600 dark:text-gray-300 space-y-2"
+              onMouseLeave={() => setShowIncomeHelp(false)}>
+              <p className="font-bold text-charcoal dark:text-gray-100">Από πού παίρνω τα δύο μπλοκ</p>
+              <p>
+                <strong>myAlpha Web → λογαριασμός → «Κινήσεις»</strong>: βάλε Από/Έως για τον μήνα → κουμπί <strong>CSV</strong>
+                (δεξιά, δίπλα στο PDF) → ανοίγει παράθυρο με κείμενο → <strong>⌘A, ⌘C</strong> → επικόλληση στο 1ο πλαίσιο.
+                Μετά καρτέλα <strong>«Εισερχόμενες εντολές»</strong> → CSV → ⌘A, ⌘C → 2ο πλαίσιο.
+              </p>
+              <p>
+                Επικόλλησε <strong>ολόκληρο</strong> το κείμενο, μαζί με τις γραμμές των υπολοίπων: από αυτές ελέγχεται ότι
+                δεν λείπει καμία κίνηση. Η ίδια επικόλληση τροφοδοτεί <strong>και τα έξοδα</strong> — δεν χρειάζεται δεύτερη.
+              </p>
+              <p className="font-bold text-charcoal dark:text-gray-100 pt-1">Τι σημαίνουν οι ενδείξεις</p>
+              <p>
+                <span className="px-1.5 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 font-bold">σίγουρο ταίριασμα</span>{' '}
+                ο matcher βρήκε το μέλος με ασφάλεια ·{' '}
+                <span className="px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200 font-bold">πιθανό — έλεγξε</span>{' '}
+                <strong>έλεγξέ το πάντα</strong>: ~14% των πληρωτών δεν είναι το ίδιο πρόσωπο με το μέλος (εταιρείες, συγγενείς) ·{' '}
+                <span className="px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200 font-bold">γνωστός πληρωτής</span>{' '}
+                το έχεις ξαναδηλώσει εσύ και θυμήθηκε.
+              </p>
+              <p>
+                Το <strong>όνομα του πληρωτή είναι read-only</strong> (όπως ήρθε από την τράπεζα)· το πεδίο δίπλα του το αλλάζεις
+                ελεύθερα. Οι <strong>εγγραφές 45 €</strong> δεν εκδίδονται εδώ — γίνονται από «Πληρώθηκε» στις αιτήσεις.
+                Οι <strong>χορηγίες/επιχορηγήσεις</strong> επιλέγονται ως «χωρίς απόδειξη»: μπαίνουν στο ΕΣΟΔΑ με την αναφορά
+                της τράπεζας, χωρίς να πάρουν αριθμό ΑΠ. ΕΙΣ.
+              </p>
+              <p>
+                Έγγραφο χορηγίας; Ρίξ' το στο <strong>Παραστατικά → έτος → Έσοδα → μήνας</strong> με το <strong>ποσό στο όνομα</strong>
+                (π.χ. <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">ECF_2500.pdf</code>) — μετονομάζεται αυτόματα με το Α/Α του.
+              </p>
+              <p>Καμία απόδειξη δεν εκδίδεται χωρίς τη ρητή σου επιβεβαίωση.</p>
+            </div>
+          )}
 
           <button type="button" onClick={analyze}
             disabled={!canIssue || analyzing || issuing || !kiniseis.trim()}
