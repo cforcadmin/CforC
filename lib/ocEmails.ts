@@ -17,6 +17,9 @@ export const FINANCE_FROM = 'Culture for Change <finance@cultureforchange.net>'
 /** Onboarding/τεχνικά: IT */
 export const IT_FROM = 'Culture for Change <it@cultureforchange.net>'
 export const IT_EMAIL = 'it@cultureforchange.net'
+/** Διαχείριση/Γραμματεία: επίσημη αλληλογραφία (λογιστήριο κ.λπ.) */
+export const ADMIN_FROM = 'Culture for Change <admin@cultureforchange.net>'
+export const ADMIN_EMAIL = 'admin@cultureforchange.net'
 /** Κοινοποίηση welcome email σε όλες τις εμπλεκόμενες θέσεις */
 export const WELCOME_CC = ['admin@cultureforchange.net', 'media@cultureforchange.net', 'communication@cultureforchange.net', 'it@cultureforchange.net']
 /** Κοινοποίηση αποχαιρετιστήριου email στις εμπλεκόμενες θέσεις */
@@ -1494,6 +1497,142 @@ export function renewalPaymentFailedEmailHtml(
 </html>
 `
   return { subject: 'Σχετικά με την πληρωμή της συνδρομής σου — Culture for Change', html }
+}
+
+/**
+ * Μηνιαία εικόνα προς το ΛΟΓΙΣΤΙΚΟ ΓΡΑΦΕΙΟ — επίσημο εξωτερικό email,
+ * πλήρες design shell, υπογραφή Διαχείρισης (admin), αποστολή από admin@.
+ * Μέχρι να οριστεί ACCOUNTANT_EMAIL πηγαίνει στο finance@ για δοκιμή/προώθηση.
+ */
+export function monthlyDispatchEmailHtml(
+  monthLabel: string,
+  count: number,
+  total: string,               // «80,00»
+  totalsLines: Array<[string, string]>,  // [κατηγορία, ποσό «45,00»]
+  signerName = 'Culture for Change — Διαχείριση',
+  viaFallback = false,
+): { subject: string; html: string } {
+  const totalsRows = totalsLines.map(([k, v]) => `
+              <tr>
+                <td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">${k}</td>
+                <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">${v} €</td>
+              </tr>`).join('')
+  const html = `<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>Μηνιαία εικόνα — Culture for Change</title>
+<!--[if mso]>
+<style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
+<![endif]-->
+<style>
+  @media only screen and (max-width:620px){
+    .px{padding-left:24px !important;padding-right:24px !important;}
+    .h1{font-size:26px !important;line-height:32px !important;}
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F0EB;">
+<span style="display:none;font-size:1px;color:#F5F0EB;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Η μηνιαία εικόνα εσόδων του Culture for Change — ${monthLabel}.</span>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;">
+<tr><td align="center" style="padding:32px 12px 48px 12px;">
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #E5E7EB;">
+
+  <!-- Header -->
+  <tr>
+    <td class="px" style="background-color:#FF8B6A;padding:36px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:16px;letter-spacing:1.6px;color:#FFFFFF;font-weight:bold;mso-line-height-rule:exactly;">CULTURE FOR CHANGE</td>
+        </tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr>
+          <td class="h1" style="font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:36px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">ΜΗΝΙΑΙΑ ΕΙΚΟΝΑ — ${monthLabel.toLocaleUpperCase('el')}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Body -->
+  <tr>
+    <td class="px" style="padding:40px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 20px 0;">Αγαπητοί συνεργάτες,</p>
+      <p style="margin:0 0 20px 0;">σας αποστέλλουμε τη μηνιαία εικόνα εσόδων του σωματείου για τον μήνα <strong>${monthLabel}</strong>. Επισυνάπτεται αναλυτικό αρχείο με ${count} παραστατικά.</p>
+    </td>
+  </tr>
+
+  <!-- Totals box -->
+  <tr>
+    <td class="px" style="padding:8px 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background-color:#F5F0EB;border-radius:16px;">
+        <tr>
+          <td style="padding:20px 24px 8px 24px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${totalsRows}
+              <tr><td colspan="2" style="padding:10px 0 0 0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:#E0D8D0;">&nbsp;</td></tr></table></td></tr>
+              <tr>
+                <td style="padding-top:10px;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#2D2D2D;font-weight:bold;">Σύνολο εσόδων</td>
+                <td align="right" style="padding-top:10px;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#2D2D2D;font-weight:bold;">${total} €</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr><td height="16" style="height:16px;line-height:16px;font-size:0;">&nbsp;</td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:16px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#5A5A5A;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 12px 0;">Το πλήρες αρχείο ΕΣΟΔΑ-ΕΞΟΔΑ και όλα τα παραστατικά βρίσκονται, ως συνήθως, στο κοινόχρηστο Excel και στους φακέλους Drive στους οποίους έχετε πρόσβαση.</p>
+      <p style="margin:0 0 12px 0;">Η ενσωμάτωση της αναλυτικής εικόνας εξόδων στο παρόν email θα προστεθεί σύντομα — μέχρι τότε ισχύει το φύλλο ΕΞΟΔΑ του Excel.</p>
+      <p style="margin:0;">Για οποιαδήποτε διευκρίνιση, απαντήστε σε αυτό το email.</p>
+      ${viaFallback ? '<p style="margin:12px 0 0 0;color:#a05a2c;">⚠ Δοκιμαστική αποστολή: δεν έχει οριστεί email λογιστηρίου — το μήνυμα ήρθε στο finance@ για έλεγχο/προώθηση.</p>' : ''}
+    </td>
+  </tr>
+
+  <!-- Signature -->
+  <tr>
+    <td class="px" style="padding:24px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0;">Με εκτίμηση,</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" style="padding:16px 48px 40px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:#E5E7EB;">&nbsp;</td></tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:24px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">${signerName}</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">Διαχείριση - Culture for Change</td></tr>
+        <tr><td height="6" style="height:6px;line-height:6px;font-size:0;">&nbsp;</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;mso-line-height-rule:exactly;"><a href="mailto:admin@cultureforchange.net" style="color:#C9552F;text-decoration:underline;">admin@cultureforchange.net</a></td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Footer -->
+  <tr>
+    <td class="px" align="center" style="background-color:#2D2D2D;padding:32px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#A0A0A0;mso-line-height-rule:exactly;">Σωματείο Κοινωνικής και Πολιτισμικής Καινοτομίας — Culture for Change<br>Λεωφόρος Αλεξάνδρας 48, 11473 Αθήνα · ΑΦΜ 996788256<br>Λαμβάνετε αυτό το email ως συνεργαζόμενο λογιστικό γραφείο του σωματείου.</td></tr>
+        <tr><td height="18" style="height:18px;line-height:18px;font-size:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:17px;color:#8A8A8A;mso-line-height-rule:exactly;">_______________________________________________________________<br>This email may contain confidential information. Read full disclaimer <a href="https://www.cultureforchange.net/email-confidentiality-disclaimer" style="color:#FF8B6A;text-decoration:underline;">here</a></td></tr>
+      </table>
+    </td>
+  </tr>
+
+</table>
+
+</td></tr>
+</table>
+</body>
+</html>
+`
+  return { subject: `Μηνιαία εικόνα εσόδων ${monthLabel} — Culture for Change`, html }
 }
 
 /**

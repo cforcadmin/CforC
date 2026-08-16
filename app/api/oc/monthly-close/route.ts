@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server'
 export const maxDuration = 60
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
-import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
+import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
 import { type ReceiptType } from '@/lib/receipts'
-import { sendOcEmail, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, monthlyDispatchEmailHtml, ADMIN_FROM, ADMIN_EMAIL, FINANCE_EMAIL } from '@/lib/ocEmails'
 
 /**
  * Μηνιαία εικόνα εσόδων + κλείσιμο μήνα («εστάλη στο λογιστήριο»).
@@ -82,6 +82,14 @@ function validMonth(raw: string | null): string {
   d.setDate(1)
   d.setMonth(d.getMonth() - 1)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+const MONTH_NAMES = ['Ιανουάριος','Φεβρουάριος','Μάρτιος','Απρίλιος','Μάιος','Ιούνιος',
+  'Ιούλιος','Αύγουστος','Σεπτέμβριος','Οκτώβριος','Νοέμβριος','Δεκέμβριος']
+
+function monthLabelOf(month: string): string {
+  const [y, m] = month.split('-').map(Number)
+  return `${MONTH_NAMES[m - 1]} ${y}`
 }
 
 function monthRange(month: string): { from: string; to: string } {
@@ -234,18 +242,34 @@ export async function POST(request: NextRequest) {
 
     const to_ = process.env.ACCOUNTANT_EMAIL || FINANCE_EMAIL
     const viaFallback = !process.env.ACCOUNTANT_EMAIL
-    const html = `<!DOCTYPE html><html lang="el"><body style="margin:0;padding:24px;background:#F5F0EB;font-family:Arial,Helvetica,sans-serif;color:#2D2D2D;">
-<div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:28px 32px;">
-<p style="margin:0 0 8px 0;font-size:13px;letter-spacing:1.4px;color:#FF8B6A;font-weight:bold;">CULTURE FOR CHANGE</p>
-<h2 style="margin:0 0 16px 0;font-size:20px;">Μηνιαία εικόνα — ${month}</h2>
-<p style="margin:0 0 6px 0;">Επισυνάπτεται η μηνιαία εικόνα εσόδων (${receipts.length} παραστατικά, σύνολο ${total.toFixed(2).replace('.', ',')} €).</p>
-<p style="margin:0 0 6px 0;">Το πλήρες αρχείο ΕΣΟΔΑ-ΕΞΟΔΑ και τα παραστατικά βρίσκονται ως πάντα στο κοινόχρηστο Excel και στους φακέλους Drive.</p>
-${viaFallback ? '<p style="margin:16px 0 0 0;font-size:13px;color:#a05a2c;">⚠ Δεν έχει οριστεί ACCOUNTANT_EMAIL — το μήνυμα ήρθε στο finance@ για χειροκίνητη προώθηση στο λογιστήριο.</p>' : ''}
-</div></body></html>`
-    const sent = await sendOcEmail(to_, `Μηνιαία εικόνα CforC — ${month}`, html, {
-      from: FINANCE_FROM,
-      replyTo: FINANCE_EMAIL,
-      cc: [FINANCE_EMAIL],
+    const monthLabel = monthLabelOf(month)
+
+    // Σύνολα ανά κατηγορία για το σώμα του email
+    const catTotals: Record<string, number> = {}
+    for (const r of receipts) {
+      const t = r.Type as ReceiptType
+      let key: string
+      if (t === 'registration') key = 'Εγγραφές + Συνδρομές'
+      else if (t === 'subscription') key = `Συνδρομές ${r.SubscriptionYear ?? ''}`.trim()
+      else key = TYPE_LABELS[t] || 'Λοιπά'
+      catTotals[key] = Math.round(((catTotals[key] || 0) + (Number(r.Amount) || 0)) * 100) / 100
+    }
+    const fmt = (n: number) => n.toFixed(2).replace('.', ',')
+    const totalsLines: Array<[string, string]> = Object.entries(catTotals)
+      .sort(([a], [b]) => a.localeCompare(b, 'el'))
+      .map(([k, v]) => [k, fmt(v)])
+
+    // Υπογραφή: ο/η τρέχων κάτοχος της θέσης Διαχείρισης (admin)
+    const adminSigner = await getSeatHolder('admin')
+    const tpl = monthlyDispatchEmailHtml(
+      monthLabel, receipts.length, fmt(total), totalsLines,
+      adminSigner?.name || adminSigner?.engName || 'Culture for Change — Διαχείριση',
+      viaFallback,
+    )
+    const sent = await sendOcEmail(to_, tpl.subject, tpl.html, {
+      from: ADMIN_FROM,
+      replyTo: ADMIN_EMAIL,
+      cc: [FINANCE_EMAIL, ADMIN_EMAIL],
       attachments: [{ filename: `CforC-μηνιαία-εικόνα-${month}.csv`, content: Buffer.from(csv, 'utf8').toString('base64') }],
     })
     if (!sent) return NextResponse.json({ error: 'Αποτυχία αποστολής email' }, { status: 502 })
