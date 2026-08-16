@@ -75,6 +75,8 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
   const [folderUrl, setFolderUrl] = useState<string | null>(null)
   const [mismatches, setMismatches] = useState<Array<{ fileId: string; fileName: string; fromName: number; fromBank: number }>>([])
   const [recon, setRecon] = useState<any>(null)
+  const [carried, setCarried] = useState<any[]>([])
+  const [carriedPick, setCarriedPick] = useState<Record<string, boolean>>({})
   const [approving, setApproving] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [results, setResults] = useState<Record<string, { ok: boolean; aa?: string; newName?: string; error?: string }>>({})
@@ -93,6 +95,8 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
       setWarnings(data.warnings || [])
       setStats(data.stats)
       setMismatches(data.mismatches || [])
+      setCarried(data.carriedOver || [])
+      setCarriedPick(Object.fromEntries((data.carriedOver || []).map((c: any) => [c.documentId, true])))
       setRecon(data.reconciliation || null)
       setFolderUrl(data.folderUrl)
       if (data.folderMissing) {
@@ -173,16 +177,25 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
           autoPaid: st.autoPaid,
         }
       })
+      const settlements = carried
+        .filter(c => carriedPick[c.documentId])
+        .map(c => ({
+          documentId: c.documentId, docRef: c.docRef, amount: c.amount,
+          paymentDate: c.paymentDate, paymentMethod: 'bank', txnId: c.txnId,
+        }))
       const res = await fetch('/api/oc/expense-intake', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'approve', month, items }),
+        body: JSON.stringify({ action: 'approve', month, items, settlements }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Αποτυχία έγκρισης')
       const map: Record<string, any> = {}
       for (const r of data.results || []) map[r.fileId] = r
       setResults(prev => ({ ...prev, ...map }))
+      if ((data.settled || []).some((x: any) => x.ok)) {
+        setCarried(prev => prev.filter(c => !(data.settled || []).some((x: any) => x.ok && x.documentId === c.documentId)))
+      }
     } catch (err: any) {
       setError(err?.message || 'Αποτυχία έγκρισης')
     } finally {
@@ -300,6 +313,34 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
           <p className="text-xs text-red-700 dark:text-red-300 mt-2">
             Έλεγξε ποιο ισχύει πριν εγκρίνεις — το πεδίο «Πληρωτέο» έχει την τιμή του ονόματος.
           </p>
+        </div>
+      )}
+
+      {carried.length > 0 && (
+        <div className="mt-4 rounded-2xl bg-sky-50 dark:bg-sky-900/25 border border-sky-300 dark:border-sky-700 px-5 py-4 text-sm">
+          <p className="font-bold text-sky-900 dark:text-sky-100 mb-1">
+            Εξοφλήσεις παλαιότερων παραστατικών ({carried.length})
+          </p>
+          <p className="text-xs text-sky-800 dark:text-sky-200 mb-3">
+            Τιμολόγια προηγούμενων μηνών που έμεναν απλήρωτα και πληρώθηκαν τώρα. Με την έγκριση
+            συμπληρώνεται η <strong>υπάρχουσα</strong> γραμμή τους στο ΕΞΟΔΑ (σβήνει και το «ΔΙΑΦΟΡΑ!»).
+          </p>
+          <ul className="space-y-1.5">
+            {carried.map(c => (
+              <li key={c.documentId} className="flex flex-wrap items-center gap-2">
+                <input type="checkbox" className="w-4 h-4 accent-coral" checked={!!carriedPick[c.documentId]}
+                  onChange={e => setCarriedPick(p => ({ ...p, [c.documentId]: e.target.checked }))}
+                  aria-label={`Εξόφληση ${c.aa}`} />
+                <span className="text-charcoal dark:text-gray-100 notranslate">
+                  {c.aa} · {c.supplierName || c.docRef} · {Number(c.amount).toFixed(2).replace('.', ',')} €
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 notranslate">
+                  έκδοση {c.issueDate ? new Date(c.issueDate).toLocaleDateString('el-GR') : '—'} →
+                  πληρωμή {new Date(c.paymentDate).toLocaleDateString('el-GR')}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
@@ -520,9 +561,12 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
           <div className="flex flex-wrap items-center gap-4 pt-2">
             {!confirming ? (
               <button type="button" onClick={() => setConfirming(true)}
-                disabled={!canIssue || approving || ready.length === 0}
+                disabled={!canIssue || approving || (ready.length === 0 && carried.filter(c => carriedPick[c.documentId]).length === 0)}
                 className="px-6 py-2.5 rounded-full bg-[#6A994E] text-white text-sm font-bold hover:opacity-90 disabled:opacity-40">
-                {approving ? 'Καταχώρηση…' : `Έγκριση ${ready.length} εξόδων`}
+                {approving ? 'Καταχώρηση…' : (() => {
+                  const stl = carried.filter(c => carriedPick[c.documentId]).length
+                  return `Έγκριση ${ready.length} εξόδων${stl ? ` + ${stl} εξοφλήσεων` : ''}`
+                })()}
               </button>
             ) : (
               <>

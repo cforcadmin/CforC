@@ -170,8 +170,9 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // αντιστοίχιση με χρεώσεις: ΜΟΝΟ ποσό, oldest-first σε ισοπαλίες
-    const matched: Record<string, { txnId: string; date: string; amount: number; reason: string }> = {}
+    // ── Αντιστοίχιση με χρεώσεις ──
+    // Πέρασμα 1: ΠΟΣΟ (απόφαση Financer), oldest-first σε ισοπαλίες
+    const matched: Record<string, { txnId: string; date: string; amount: number; reason: string; via: 'amount' | 'supplier' }> = {}
     const rowsWithAmount = rows
       .filter(r => !r.existing && r.parsed.amount !== null)
       .sort((a, b) => String(a.parsed.issueDate || '').localeCompare(String(b.parsed.issueDate || '')))
@@ -179,8 +180,59 @@ export async function POST(request: NextRequest) {
       const hit = debits.find(d => !d.used && Math.abs(d.amount - (r.parsed.amount as number)) < 0.005)
       if (hit) {
         hit.used = true
-        matched[r.fileId] = { txnId: hit.txnId, date: hit.date, amount: hit.amount, reason: hit.reason }
+        matched[r.fileId] = { txnId: hit.txnId, date: hit.date, amount: hit.amount, reason: hit.reason, via: 'amount' }
       }
+    }
+
+    // Πέρασμα 2: ΟΝΟΜΑ ΠΡΟΜΗΘΕΥΤΗ στην αιτιολογία, για όσα δεν έχουν ποσό
+    // στο όνομα αρχείου («SΤRΑΡΙ», «ΖΟΟΜ.CΟΜ», «ΤΠΥ 110 ΚΛΗΡΟΝ…»).
+    // Μοναδικό ταίριασμα μόνο — αν δύο χρεώσεις ταιριάζουν, αφήνεται στον
+    // Financer αντί να μαντέψουμε.
+    const norm = (t: string) => t
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLocaleUpperCase('el').replace(/[^A-ZΑ-Ω0-9]/g, '')
+    for (const r of rows) {
+      if (r.existing || matched[r.fileId]) continue
+      const hint = norm(r.suggestion.supplierName || r.parsed.supplierHint || '')
+      if (hint.length < 4) continue
+      const cands = debits.filter(d => {
+        if (d.used) return false
+        const reason = norm(d.reason || '')
+        return reason.includes(hint.slice(0, 8)) || hint.includes(reason.slice(0, 8))
+      })
+      if (cands.length === 1) {
+        cands[0].used = true
+        matched[r.fileId] = {
+          txnId: cands[0].txnId, date: cands[0].date,
+          amount: cands[0].amount, reason: cands[0].reason, via: 'supplier',
+        }
+      }
+    }
+
+    // Πέρασμα 3: ΕΞΟΦΛΗΣΕΙΣ ΠΑΛΑΙΟΤΕΡΩΝ παραστατικών — εγκεκριμένα έξοδα
+    // οποιουδήποτε μήνα που είχαν μείνει απλήρωτα και πληρώνονται τώρα.
+    const carriedRes = await strapi(
+      '/expenses?filters[State][$eq]=approved&filters[PaymentMethod][$eq]=unpaid' +
+      '&pagination[limit]=200&sort=IssueDate:asc' +
+      '&fields[0]=Aa&fields[1]=Month&fields[2]=DocRef&fields[3]=SupplierName' +
+      '&fields[4]=PayableAmount&fields[5]=IssueDate'
+    )
+    const carriedOver: Array<{
+      documentId: string; aa: string; month: string; docRef: string | null
+      supplierName: string | null; amount: number; issueDate: string | null
+      txnId: string; paymentDate: string; reason: string
+    }> = []
+    for (const e of carriedRes.json?.data || []) {
+      const amt = Number(e.PayableAmount) || 0
+      if (!(amt > 0)) continue
+      const hit = debits.find(d => !d.used && Math.abs(d.amount - amt) < 0.005)
+      if (!hit) continue
+      hit.used = true
+      carriedOver.push({
+        documentId: e.documentId, aa: e.Aa, month: e.Month, docRef: e.DocRef || null,
+        supplierName: e.SupplierName || null, amount: amt, issueDate: e.IssueDate || null,
+        txnId: hit.txnId, paymentDate: hit.date, reason: hit.reason,
+      })
     }
 
     // Ασυμφωνία ποσού: όνομα αρχείου vs τράπεζα (εκεί πιάνονται τα λάθη
@@ -204,6 +256,7 @@ export async function POST(request: NextRequest) {
       rows,
       matched,
       mismatches,
+      carriedOver,
       reconciliation: {
         debitsWithoutInvoice: leftoverDebits.map(d => ({
           txnId: d.txnId, date: d.date, amount: d.amount, reason: d.reason,
@@ -242,8 +295,32 @@ export async function POST(request: NextRequest) {
  */
 async function approveExpenses(month: string, body: any, memberId: string) {
   const items: any[] = Array.isArray(body?.items) ? body.items : []
-  if (items.length === 0) {
+  const settlements: any[] = Array.isArray(body?.settlements) ? body.settlements : []
+  if (items.length === 0 && settlements.length === 0) {
     return NextResponse.json({ error: 'Καμία γραμμή προς έγκριση' }, { status: 400 })
+  }
+
+  // Εξοφλήσεις παλαιότερων παραστατικών: ενημέρωση υπάρχουσας γραμμής
+  const settled: Array<{ documentId: string; ok: boolean; aa?: string; error?: string }> = []
+  for (const st of settlements) {
+    try {
+      const upd = await webApp('updateExpensePayment', {
+        docRef: st.docRef,
+        amount: Number(st.amount),
+        paymentDate: st.paymentDate,
+        paymentMethod: st.paymentMethod || 'bank',
+      })
+      if (!upd.ok) throw new Error(upd.error || 'Αποτυχία ενημέρωσης γραμμής')
+      const r = await strapi(`/expenses/${st.documentId}`, 'PUT', {
+        PaymentMethod: st.paymentMethod || 'bank',
+        PaymentDate: st.paymentDate,
+        TransactionId: st.txnId || null,
+      })
+      if (!r.ok) console.error('settle: strapi update failed', r.status)
+      settled.push({ documentId: st.documentId, ok: true, aa: upd.aa })
+    } catch (err: any) {
+      settled.push({ documentId: st.documentId, ok: false, error: err?.message || 'Αποτυχία' })
+    }
   }
 
   const results: Array<{ fileId: string; ok: boolean; aa?: string; newName?: string; error?: string }> = []
@@ -327,8 +404,9 @@ async function approveExpenses(month: string, body: any, memberId: string) {
   }
 
   return NextResponse.json({
-    ok: results.every(r => r.ok),
+    ok: results.every(r => r.ok) && settled.every(s => s.ok),
     results,
+    settled,
     approved: results.filter(r => r.ok).length,
     failed: results.filter(r => !r.ok).length,
   })
