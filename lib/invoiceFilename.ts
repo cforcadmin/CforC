@@ -224,18 +224,57 @@ export function parseInvoiceFilename(filename: string): ParsedInvoiceName {
   }
 }
 
+/** Ποσό σε ελληνική μορφή για όνομα αρχείου: 1299.52 → «1.299,52» */
+export function formatAmountForName(amount: number): string {
+  const [int, dec] = Math.abs(amount).toFixed(2).split('.')
+  const withDots = int.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  return `${withDots},${dec}`
+}
+
+/** Καθάρισμα κομματιού ονόματος από χαρακτήρες που μπερδεύουν το Drive */
+function sanitizePart(v: string): string {
+  return String(v)
+    .replace(/[\\/:*?"<>|]/g, '-')
+    .replace(/[_\s]+/g, ' ')
+    .trim()
+}
+
+export interface ApprovedNameParts {
+  /** Α/Α της γραμμής (περιέχει τον μήνα: «9.4») */
+  aa: string
+  /** Σε ποιον αφορά: επωνυμία προμηθευτή ή όνομα μέλους/χρηματοδότη */
+  subject?: string | null
+  /** Αριθμός παραστατικού ή «ΑΠ. ΕΙΣ. 365» */
+  docNumber?: string | null
+  /** ΜΑΡΚ, αν υπάρχει */
+  mark?: string | null
+  /** yyyy-MM-dd */
+  date: string
+  /** Ποσό */
+  amount?: number | null
+  /** Επέκταση χωρίς τελεία (pdf/png…) */
+  ext?: string | null
+}
+
 /**
- * Τελικό όνομα αρχείου μετά την έγκριση:
- *   {Α/Α}_{ό,τι έδωσε ο χρήστης}_{ημ. έκδοσης DD-MM-YYYY}.{ext}
- * Δεν ξαναγράφει ό,τι υπάρχει ήδη (Α/Α ή ημερομηνία στο τέλος).
+ * ΕΝΙΑΙΑ ονοματοδοσία μετά την έγκριση, χτισμένη από τα ΠΕΔΙΑ:
+ *
+ *   {Α/Α}_{σε ποιον}_{αριθμός}_{ΜΑΡΚ}_{ΗΗ-ΜΜ-ΕΕΕΕ}_{ποσό}.{ext}
+ *   9.4_ΑΒ Βασιλόπουλος_4471-88012_400014700880013_28-08-2026_62,50.pdf
+ *
+ * Ό,τι λείπει παραλείπεται καθαρά — καμία διπλή ημερομηνία, καμία
+ * κληρονομιά από το πρόχειρο όνομα που έδωσε ο/η Financer.
  */
-export function buildApprovedFilename(parsed: ParsedInvoiceName, aa: string, issueDate: string): string {
-  const [y, m, d] = issueDate.split('-')
-  const dateStr = `${d}-${m}-${y}`
-  // αφαίρεσε τυχόν υπάρχον Α/Α prefix και ημερομηνία-ουρά από το αρχικό
-  let core = parsed.original.replace(/\.[A-Za-z0-9]+$/, '')
-  core = core.replace(/^\d{1,2}\.\d{1,2}[_\s-]+/, '')
-  core = core.replace(/[_\s-]*\d{1,2}[.\-/_]\d{1,2}[.\-/_]\d{2,4}\s*$/, '')
-  core = core.replace(/(pdf|png|jpg|jpeg)$/i, '').replace(/[_\s-]+$/, '').trim()
-  return `${aa}_${core}_${dateStr}.${parsed.ext || 'pdf'}`
+export function buildApprovedFilename(parts: ApprovedNameParts): string {
+  const [y, m, d] = parts.date.split('-')
+  const pieces = [
+    parts.aa,
+    parts.subject ? sanitizePart(parts.subject) : null,
+    parts.docNumber ? sanitizePart(parts.docNumber) : null,
+    parts.mark || null,
+    `${d}-${m}-${y}`,
+    parts.amount != null ? formatAmountForName(parts.amount) : null,
+  ].filter(Boolean)
+  const ext = (parts.ext || 'pdf').replace(/^\./, '').toLowerCase()
+  return `${pieces.join('_')}.${ext}`
 }

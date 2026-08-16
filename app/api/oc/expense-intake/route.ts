@@ -353,7 +353,15 @@ async function approveExpenses(month: string, body: any, memberId: string) {
       let newName: string | undefined
       if (fileId && it.fileName) {
         const parsed = parseInvoiceFilename(String(it.fileName))
-        newName = buildApprovedFilename(parsed, aa, String(it.issueDate))
+        newName = buildApprovedFilename({
+          aa,
+          subject: it.supplierName || parsed.supplierHint || null,
+          docNumber: it.docNumber || parsed.docNumber || null,
+          mark: it.mark || parsed.mark || null,
+          date: String(it.issueDate),
+          amount: payable,
+          ext: parsed.ext,
+        })
         const ren = await webApp('renameFile', { fileId, newName })
         if (!ren.ok) console.error('expense approve: rename failed', ren.error)
       }

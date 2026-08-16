@@ -7,6 +7,7 @@ import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
 import { nextReceiptNumber, createReceipt, markReceiptSent, syncReceiptToSheet, type ReceiptType } from '@/lib/receipts'
 import { athensToday } from '@/lib/receipts'
+import { formatAmountForName } from '@/lib/invoiceFilename'
 import { generateReceiptPdf } from '@/lib/receiptPdf'
 import { sendOcEmail, manualReceiptEmailHtml, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
 import { upsertAlias } from '@/lib/payerAliases'
@@ -336,7 +337,7 @@ export async function POST(request: NextRequest) {
         sentAt: emailSent ? new Date().toISOString() : null,
         typeLabel: TYPE_LABELS[type],
         pdfBase64: issuePdfBase64,
-        pdfName: `ΑΠ. ΕΙΣ. ${receipt.number} - ${memberName || 'χωρίς όνομα'}.pdf`,
+        pdfName: `${memberName || 'χωρίς όνομα'}_ΑΠ. ΕΙΣ. ${receipt.number}_${athensToday().split('-').reverse().join('-')}_${formatAmountForName(amount)}.pdf`,
       })
     } catch (err) {
       console.error('oc/receipts: sheet sync failed (non-fatal):', err)

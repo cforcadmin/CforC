@@ -5,6 +5,7 @@ import {
 } from '@/lib/ocEmails'
 import { generateReceiptPdf } from '@/lib/receiptPdf'
 import { createReceipt, markReceiptSent, syncReceiptToSheet, athensToday } from '@/lib/receipts'
+import { formatAmountForName } from '@/lib/invoiceFilename'
 
 /**
  * Ολοκλήρωση πληρωμής μέλους — ΚΟΙΝΗ λογική για τα δύο σημεία εκκίνησης:
@@ -277,7 +278,7 @@ export async function processPaymentCompletion(input: PaymentCompletionInput): P
     try {
       await syncReceiptToSheet(receipt.documentId, {
         pdfBase64: Buffer.from(pdf).toString('base64'),
-        pdfName: `ΑΠ. ΕΙΣ. ${receipt.number} - ${fullName}.pdf`,
+        pdfName: `${fullName}_ΑΠ. ΕΙΣ. ${receipt.number}_${athensToday().split('-').reverse().join('-')}_${formatAmountForName(45)}.pdf`,
         number: receipt.number,
         type: 'registration',
         amount: 45,

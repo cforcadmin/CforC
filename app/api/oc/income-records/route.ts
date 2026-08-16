@@ -119,7 +119,15 @@ export async function POST(request: NextRequest) {
       if (target) {
         fileId = target.id
         const parsed = parseInvoiceFilename(target.name)
-        const newName = buildApprovedFilename(parsed, aa, paymentDate)
+        const newName = buildApprovedFilename({
+          aa,
+          subject: payerName || parsed.supplierHint || null,
+          docNumber: parsed.docNumber || null,
+          mark: parsed.mark || null,
+          date: paymentDate,
+          amount,
+          ext: parsed.ext,
+        })
         const ren = await webApp('renameFile', { fileId: target.id, newName })
         if (ren.ok) renamed = newName
       }

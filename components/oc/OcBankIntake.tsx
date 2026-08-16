@@ -284,7 +284,8 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
               </p>
               <p>
                 Έγγραφο χορηγίας; Ρίξ' το στο <strong>Παραστατικά → έτος → Έσοδα → μήνας</strong> με το <strong>ποσό στο όνομα</strong>
-                (π.χ. <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">ECF_2500.pdf</code>) — μετονομάζεται αυτόματα με το Α/Α του.
+                (π.χ. <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">ECF_2500.pdf</code>) — μετονομάζεται αυτόματα στην ενιαία μορφή{' '}
+                <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">Α/Α_σε ποιον αφορά_αριθμός_ΜΑΡΚ_ΗΗ-ΜΜ-ΕΕΕΕ_ποσό.pdf</code>, ίδια με τα έξοδα και τις αποδείξεις.
               </p>
               <p>Καμία απόδειξη δεν εκδίδεται χωρίς τη ρητή σου επιβεβαίωση.</p>
             </div>

@@ -161,20 +161,43 @@ describe('supplierAliasKey', () => {
   })
 })
 
-describe('buildApprovedFilename', () => {
-  it('προσθέτει Α/Α και ημερομηνία DD-MM-YYYY χωρίς διπλοεγγραφές', () => {
-    const p = parseInvoiceFilename('Strapi_72152.pdf')
-    expect(buildApprovedFilename(p, '3.1', '2026-03-01')).toBe('3.1_Strapi_72152_01-03-2026.pdf')
+describe('buildApprovedFilename — ΕΝΙΑΙΑ μορφή από τα πεδία', () => {
+  it('πλήρης εγγραφή: Α/Α_σε ποιον_αριθμός_ΜΑΡΚ_ημερομηνία_ποσό', () => {
+    expect(buildApprovedFilename({
+      aa: '9.4', subject: 'ΑΒ Βασιλόπουλος', docNumber: '4471-88012',
+      mark: '400014700880013', date: '2026-08-28', amount: 62.5, ext: 'pdf',
+    })).toBe('9.4_ΑΒ Βασιλόπουλος_4471-88012_400014700880013_28-08-2026_62,50.pdf')
   })
 
-  it('αντικαθιστά υπάρχον Α/Α και ημερομηνία-ουρά', () => {
-    const p = parseInvoiceFilename('3.1_Strapi_72152_01.03.26.pdf')
-    expect(buildApprovedFilename(p, '3.1', '2026-03-01')).toBe('3.1_Strapi_72152_01-03-2026.pdf')
+  it('χωρίς ΜΑΡΚ παραλείπεται καθαρά', () => {
+    expect(buildApprovedFilename({
+      aa: '9.3', subject: 'Strapi', docNumber: '91204',
+      date: '2026-08-03', amount: 16.2, ext: 'pdf',
+    })).toBe('9.3_Strapi_91204_03-08-2026_16,20.pdf')
   })
 
-  it('κρατά την επέκταση του αρχείου (png)', () => {
-    const p = parseInvoiceFilename('Παπαρούνα Αθήνα_60489212.PNG')
-    expect(buildApprovedFilename(p, '3.13', '2026-03-22')).toBe('3.13_Παπαρούνα Αθήνα_60489212_22-03-2026.png')
+  it('χιλιάδες με τελεία, δεκαδικά με κόμμα', () => {
+    expect(buildApprovedFilename({
+      aa: '9.2', subject: 'Παπαδοπούλου', docNumber: '112',
+      mark: '400014601880012', date: '2026-08-18', amount: 1299.52, ext: 'pdf',
+    })).toBe('9.2_Παπαδοπούλου_112_400014601880012_18-08-2026_1.299,52.pdf')
+  })
+
+  it('ΚΑΜΙΑ κληρονομιά από το πρόχειρο όνομα (χωρίς διπλή ημερομηνία)', () => {
+    const parsed = parseInvoiceFilename('1004250011_400014550880011_alpha_07-08-2026_4,00.pdf')
+    const name = buildApprovedFilename({
+      aa: '9.1', subject: 'ALPHA ΤΡΑΠΕΖΑ Α.Ε.', docNumber: parsed.docNumber,
+      mark: parsed.mark, date: '2026-08-07', amount: 4, ext: parsed.ext,
+    })
+    expect(name).toBe('9.1_ALPHA ΤΡΑΠΕΖΑ Α.Ε._1004250011_400014550880011_07-08-2026_4,00.pdf')
+    expect(name.match(/07-08-2026/g)).toHaveLength(1)
+  })
+
+  it('κρατά την επέκταση (png) και καθαρίζει επικίνδυνους χαρακτήρες', () => {
+    expect(buildApprovedFilename({
+      aa: '9.5', subject: 'Παπαρούνα/Αθήνα', docNumber: '60489212',
+      date: '2026-08-22', amount: 18.2, ext: 'png',
+    })).toBe('9.5_Παπαρούνα-Αθήνα_60489212_22-08-2026_18,20.png')
   })
 })
 
