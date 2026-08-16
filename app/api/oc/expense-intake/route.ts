@@ -162,6 +162,7 @@ export async function POST(request: NextRequest) {
           supplierName: alias?.supplierName || parsed.supplierHint || null,
           supplierTaxId: alias?.supplierTaxId || null,
           category: alias?.category || null,
+          autoPaid: !!alias?.autoPaid,
           fromRegistry: !!alias,
           confirmations: alias?.confirmations || 0,
         },
@@ -182,10 +183,36 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Ασυμφωνία ποσού: όνομα αρχείου vs τράπεζα (εκεί πιάνονται τα λάθη
+    // τύπου «Zoom 14,99 αντί 15,99»)
+    const mismatches: Array<{ fileId: string; fileName: string; fromName: number; fromBank: number }> = []
+    for (const r of rows) {
+      const bank = matched[r.fileId]
+      if (bank && r.parsed.amount !== null && Math.abs(bank.amount - r.parsed.amount) >= 0.005) {
+        mismatches.push({
+          fileId: r.fileId, fileName: r.fileName,
+          fromName: r.parsed.amount, fromBank: bank.amount,
+        })
+      }
+    }
+
+    const leftoverDebits = debits.filter(d => !d.used)
+    const unpaidInvoices = rows.filter(r => !r.existing && !matched[r.fileId])
+
     return NextResponse.json({
       month,
       rows,
       matched,
+      mismatches,
+      reconciliation: {
+        debitsWithoutInvoice: leftoverDebits.map(d => ({
+          txnId: d.txnId, date: d.date, amount: d.amount, reason: d.reason,
+        })),
+        debitsWithoutInvoiceTotal: Math.round(leftoverDebits.reduce((s, d) => s + d.amount, 0) * 100) / 100,
+        invoicesWithoutPayment: unpaidInvoices.map(r => ({
+          fileName: r.fileName, amount: r.parsed.amount, issueDate: r.parsed.issueDate,
+        })),
+      },
       nextSeq,
       unmatchedDebits: debits.filter(d => !d.used).map(d => ({
         txnId: d.txnId, date: d.date, amount: d.amount, reason: d.reason,
@@ -289,6 +316,7 @@ async function approveExpenses(month: string, body: any, memberId: string) {
           supplierName: String(it.supplierName),
           supplierTaxId: it.supplierTaxId || null,
           category: (it.category as ExpenseCategory) || null,
+          autoPaid: !!it.autoPaid,
         })
       }
 

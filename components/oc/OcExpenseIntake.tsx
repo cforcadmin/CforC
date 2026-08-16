@@ -29,6 +29,7 @@ interface IntakeRow {
     supplierName: string | null
     supplierTaxId: string | null
     category: string | null
+    autoPaid?: boolean
     fromRegistry: boolean
     confirmations: number
   }
@@ -51,6 +52,7 @@ interface RowState {
   paymentDate: string
   txnId: string
   notes: string
+  autoPaid: boolean
   showAll: boolean
 }
 
@@ -71,6 +73,8 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
   const [stats, setStats] = useState<any>(null)
   const [showHelp, setShowHelp] = useState(false)
   const [folderUrl, setFolderUrl] = useState<string | null>(null)
+  const [mismatches, setMismatches] = useState<Array<{ fileId: string; fileName: string; fromName: number; fromBank: number }>>([])
+  const [recon, setRecon] = useState<any>(null)
   const [approving, setApproving] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [results, setResults] = useState<Record<string, { ok: boolean; aa?: string; newName?: string; error?: string }>>({})
@@ -88,6 +92,8 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
       setRows(data.rows)
       setWarnings(data.warnings || [])
       setStats(data.stats)
+      setMismatches(data.mismatches || [])
+      setRecon(data.reconciliation || null)
       setFolderUrl(data.folderUrl)
       if (data.folderMissing) {
         setWarnings(w => [...w, `Δεν βρέθηκε φάκελος εξόδων για τον μήνα ${month} στο Drive.`])
@@ -99,6 +105,9 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
       for (const r of data.rows as IntakeRow[]) {
         const bank = data.matched?.[r.fileId]
         const amount = r.parsed.amount ?? bank?.amount ?? null
+        // Προμηθευτής με αυτόματη χρέωση (τραπεζικά έξοδα, κάρτα):
+        // πληρωμή την ίδια μέρα με την έκδοση, ακόμη κι αν δεν βρέθηκε κίνηση
+        const auto = !!r.suggestion.autoPaid
         init[r.fileId] = {
           include: !r.existing,
           aa: r.existing?.aa || `${monthIdx}.${r.existing ? '' : seq++}`,
@@ -111,10 +120,11 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
           vatAmount: '',
           withholding: '',
           payable: amount !== null ? String(amount) : '',
-          paymentMethod: bank ? 'bank' : 'unpaid',
-          paymentDate: bank?.date || '',
+          paymentMethod: bank || auto ? 'bank' : 'unpaid',
+          paymentDate: bank?.date || (auto ? (r.parsed.issueDate || '') : ''),
           txnId: bank?.txnId || '',
           notes: '',
+          autoPaid: auto,
           showAll: false,
         }
       }
@@ -160,6 +170,7 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
           paymentDate: st.paymentDate,
           txnId: st.txnId,
           notes: st.notes,
+          autoPaid: st.autoPaid,
         }
       })
       const res = await fetch('/api/oc/expense-intake', {
@@ -196,7 +207,7 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
             supplierName: st.supplierName, supplierTaxId: st.supplierTaxId, category: st.category,
             netAmount: st.netAmount, vatAmount: st.vatAmount, withholding: st.withholding,
             payable: st.payable, paymentMethod: st.paymentMethod, paymentDate: st.paymentDate,
-            txnId: st.txnId, notes: st.notes,
+            txnId: st.txnId, notes: st.notes, autoPaid: st.autoPaid,
           }],
         }),
       })
@@ -276,6 +287,63 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
         </p>
       )}
 
+      {mismatches.length > 0 && (
+        <div className="mt-4 rounded-2xl bg-red-50 dark:bg-red-900/25 border border-red-300 dark:border-red-700 px-5 py-4 text-sm">
+          <p className="font-bold text-red-800 dark:text-red-200 mb-2">⚠ Ασυμφωνία ποσού ονόματος ↔ τράπεζας</p>
+          <ul className="space-y-1 text-red-700 dark:text-red-300">
+            {mismatches.map(m => (
+              <li key={m.fileId} className="notranslate">
+                {m.fileName}: όνομα {m.fromName.toFixed(2).replace('.', ',')} € · τράπεζα {m.fromBank.toFixed(2).replace('.', ',')} €
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-red-700 dark:text-red-300 mt-2">
+            Έλεγξε ποιο ισχύει πριν εγκρίνεις — το πεδίο «Πληρωτέο» έχει την τιμή του ονόματος.
+          </p>
+        </div>
+      )}
+
+      {recon && (recon.debitsWithoutInvoice?.length > 0 || recon.invoicesWithoutPayment?.length > 0) && (
+        <div className="mt-4 rounded-2xl bg-gray-50 dark:bg-gray-700/50 px-5 py-4 text-sm space-y-3">
+          <p className="font-bold text-charcoal dark:text-gray-100">Συμφωνία μήνα</p>
+          {recon.debitsWithoutInvoice?.length > 0 && (
+            <div>
+              <p className="text-orange-800 dark:text-orange-200 font-medium">
+                {recon.debitsWithoutInvoice.length} χρεώσεις χωρίς παραστατικό
+                <span className="notranslate"> — σύνολο {Number(recon.debitsWithoutInvoiceTotal).toFixed(2).replace('.', ',')} €</span>
+              </p>
+              <ul className="mt-1 space-y-0.5 text-xs text-gray-600 dark:text-gray-300">
+                {recon.debitsWithoutInvoice.map((d: any) => (
+                  <li key={d.txnId} className="notranslate">
+                    {new Date(d.date).toLocaleDateString('el-GR')} · {Number(d.amount).toFixed(2).replace('.', ',')} € · {d.reason}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Ζήτησε τα τιμολόγια που λείπουν και ρίξ' τα στον φάκελο του μήνα.
+              </p>
+            </div>
+          )}
+          {recon.invoicesWithoutPayment?.length > 0 && (
+            <div>
+              <p className="text-charcoal dark:text-gray-200 font-medium">
+                {recon.invoicesWithoutPayment.length} παραστατικά χωρίς πληρωμή στην τράπεζα
+              </p>
+              <ul className="mt-1 space-y-0.5 text-xs text-gray-600 dark:text-gray-300">
+                {recon.invoicesWithoutPayment.map((i: any) => (
+                  <li key={i.fileName} className="notranslate">
+                    {i.fileName}{i.amount ? ` · ${Number(i.amount).toFixed(2).replace('.', ',')} €` : ''}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Φυσιολογικό αν είναι όντως απλήρωτα — θα πάρουν ημ. πληρωμής όταν εμφανιστούν σε επόμενη επικόλληση.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       {rows.length > 0 && (
         <div className="mt-4 space-y-3">
           {rows.map(r => {
@@ -312,6 +380,17 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
                   {st.txnId && !locked && (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200">
                       βρέθηκε στην τράπεζα
+                    </span>
+                  )}
+                  {!st.txnId && r.suggestion.autoPaid && !locked && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-200"
+                      title="Προμηθευτής με αυτόματη χρέωση — πληρωμή την ημέρα έκδοσης">
+                      αυτόματη χρέωση
+                    </span>
+                  )}
+                  {mismatches.some(m => m.fileId === r.fileId) && !locked && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200">
+                      ⚠ ασυμφωνία ποσού
                     </span>
                   )}
                   {results[r.fileId]?.ok && (
@@ -386,6 +465,17 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
                       <label className={labelCls}>Ημ. πληρωμής</label>
                       <input type="date" className={inputCls} value={st.paymentDate}
                         onChange={e => patch(r.fileId, { paymentDate: e.target.value })} />
+                      <label className="flex items-center gap-1.5 mt-1 text-[10px] text-gray-500 dark:text-gray-400">
+                        <input type="checkbox" className="w-3 h-3 accent-coral" checked={st.autoPaid}
+                          onChange={e => {
+                            const on = e.target.checked
+                            patch(r.fileId, {
+                              autoPaid: on,
+                              ...(on && !st.paymentDate ? { paymentDate: st.issueDate, paymentMethod: 'bank' as const } : {}),
+                            })
+                          }} />
+                        αυτόματη χρέωση (να το θυμάται)
+                      </label>
                     </div>
                     <div className="sm:col-span-2 lg:col-span-1">
                       <label className={labelCls}>Σημειώσεις</label>

@@ -18,6 +18,8 @@ export interface SupplierAlias {
   supplierName: string
   supplierTaxId: string | null
   category: ExpenseCategory | null
+  /** Χρεώνεται αυτόματα (τραπεζικά έξοδα, κάρτα): ημ. πληρωμής = ημ. έκδοσης */
+  autoPaid: boolean
   docPrefix: string
   confirmations: number
 }
@@ -44,6 +46,7 @@ function toAlias(e: any): SupplierAlias {
     supplierName: e.SupplierName,
     supplierTaxId: e.SupplierTaxId || null,
     category: (e.Category as ExpenseCategory) || null,
+    autoPaid: !!e.AutoPaid,
     docPrefix: e.DefaultDocPrefix || '2.1',
     confirmations: e.Confirmations ?? 1,
   }
@@ -90,6 +93,7 @@ export async function upsertSupplierAlias(input: {
   supplierName: string
   supplierTaxId?: string | null
   category?: ExpenseCategory | null
+  autoPaid?: boolean
   docPrefix?: string | null
 }): Promise<boolean> {
   const aliasKey = supplierAliasKey(input.hint)
@@ -102,6 +106,7 @@ export async function upsertSupplierAlias(input: {
       SupplierName: input.supplierName,
       SupplierTaxId: input.supplierTaxId || null,
       Category: input.category || null,
+      AutoPaid: !!input.autoPaid,
       DefaultDocPrefix: input.docPrefix || '2.1',
     }
     if (existing) {
