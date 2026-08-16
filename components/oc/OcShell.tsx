@@ -390,6 +390,7 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
               }))}
               subMembers={(overview?.members || []).map(m => ({
                 docId: m.docId, name: m.name, am: m.am, payments: m.payments, status: m.status,
+                renewalClaimedAt: m.renewalClaimedAt,
               }))}
             />
           )}

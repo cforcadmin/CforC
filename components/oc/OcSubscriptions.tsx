@@ -17,13 +17,16 @@ export interface SubMemberRow {
   am: number
   payments: Record<string, 0 | 1 | null>
   status: string
+  renewalClaimedAt: string | null
 }
 
-type SendState = 'idle' | 'sending' | 'sent' | 'error'
+type SendState = 'idle' | 'sending' | 'sent' | 'error' | 'issuing' | 'issued' | 'issue-error'
 
-export default function OcSubscriptions({ members, canRemind }: {
+export default function OcSubscriptions({ members, canRemind, canIssue, onIssued }: {
   members: SubMemberRow[]
   canRemind: boolean
+  canIssue: boolean
+  onIssued: () => void
 }) {
   const [open, setOpen] = useState(false)
   const [sendState, setSendState] = useState<Record<string, SendState>>({})
@@ -54,6 +57,43 @@ export default function OcSubscriptions({ members, canRemind }: {
     }
   }
 
+  /** Ποια έτη οφείλει (ίδια σημασιολογία με την Επισκόπηση) */
+  function owedYears(m: SubMemberRow): number[] {
+    const owed: number[] = []
+    const prev = m.payments[String(year - 1)]
+    if (m.status === 'owes-2') owed.push(year - 1)
+    else if (prev !== 1 && prev !== 0 && m.status !== 'new-unpaid') owed.push(year - 1)
+    const cur = m.payments[String(year)]
+    if (cur !== 1 && cur !== 0) owed.push(year)
+    return owed.length ? owed : [year]
+  }
+
+  /** Έκδοση αποδείξεων για δηλωμένη πληρωμή — μία ανά οφειλόμενο έτος */
+  async function issueFor(m: SubMemberRow) {
+    setConfirmFor(null)
+    setSendState(s => ({ ...s, [m.docId]: 'issuing' }))
+    const years = owedYears(m)
+    try {
+      for (const y of years) {
+        const res = await fetch('/api/oc/receipts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'issue', type: 'subscription', amount: 35, year: y,
+            memberDocId: m.docId, memberName: m.name, sendEmail: true,
+            paymentMethod: 'bank',
+            notes: 'Από δήλωση πληρωμής συνδρομής (renewal claim)',
+          }),
+        })
+        if (!res.ok) throw new Error((await res.json())?.error || 'Αποτυχία')
+      }
+      setSendState(s => ({ ...s, [m.docId]: 'issued' }))
+      onIssued()
+    } catch {
+      setSendState(s => ({ ...s, [m.docId]: 'issue-error' }))
+    }
+  }
+
   async function sendAll(list: SubMemberRow[]) {
     setConfirmFor(null)
     setBulkRunning(true)
@@ -68,30 +108,64 @@ export default function OcSubscriptions({ members, canRemind }: {
 
   function chip(m: SubMemberRow, tone: 'orange' | 'red') {
     const st = sendState[m.docId] || 'idle'
-    const toneCls = tone === 'orange'
-      ? 'border-orange-300 text-orange-900 dark:border-orange-500/60 dark:text-orange-200'
-      : 'border-red-300 text-red-900 dark:border-red-500/60 dark:text-red-200'
+    const claimed = !!m.renewalClaimedAt && st !== 'issued'
+    const toneCls = claimed
+      ? 'border-teal-400 bg-teal-50 text-teal-900 dark:bg-teal-900/30 dark:border-teal-500/60 dark:text-teal-200'
+      : st === 'issued'
+        ? 'border-green-400 bg-green-50 text-green-900 dark:bg-green-900/30 dark:border-green-500/60 dark:text-green-200'
+        : tone === 'orange'
+          ? 'border-orange-300 text-orange-900 dark:border-orange-500/60 dark:text-orange-200'
+          : 'border-red-300 text-red-900 dark:border-red-500/60 dark:text-red-200'
+    const clickable = canRemind && st !== 'sending' && st !== 'issuing' && st !== 'issued'
     return (
       <span key={m.docId} className="relative inline-block">
         <button type="button"
-          onClick={() => canRemind && st !== 'sending' && setConfirmFor(confirmFor === m.docId ? null : m.docId)}
+          onClick={() => clickable && setConfirmFor(confirmFor === m.docId ? null : m.docId)}
           disabled={!canRemind || bulkRunning}
-          title={canRemind ? 'Κλικ για υπενθύμιση συνδρομής' : 'Υπενθυμίσεις: μόνο Financer ή Community'}
+          title={!canRemind
+            ? 'Ενέργειες: μόνο Financer ή Community'
+            : claimed ? 'Δήλωσε πληρωμή — κλικ για ενέργειες' : 'Κλικ για υπενθύμιση συνδρομής'}
           className={`px-3.5 py-1.5 rounded-full border text-sm ${toneCls} ${
-            canRemind ? 'hover:ring-2 hover:ring-coral/40 cursor-pointer' : 'cursor-default opacity-80'
+            clickable ? 'hover:ring-2 hover:ring-coral/40 cursor-pointer' : 'cursor-default opacity-90'
           } disabled:opacity-50`}>
+          {claimed && <span className="mr-1" aria-hidden="true">💶</span>}
           {m.name}
           {st === 'sending' && <span className="ml-1.5 text-xs">…</span>}
           {st === 'sent' && <span className="ml-1.5 text-xs" aria-label="Η υπενθύμιση στάλθηκε">✉✓</span>}
           {st === 'error' && <span className="ml-1.5 text-xs text-red-600 dark:text-red-400">✗</span>}
+          {st === 'issuing' && <span className="ml-1.5 text-xs">έκδοση…</span>}
+          {st === 'issued' && <span className="ml-1.5 text-xs" aria-label="Η απόδειξη εκδόθηκε">🧾✓</span>}
+          {st === 'issue-error' && <span className="ml-1.5 text-xs text-red-600 dark:text-red-400">αποτυχία έκδοσης</span>}
         </button>
         {confirmFor === m.docId && (
           <span className="absolute left-0 top-full mt-1 z-20 flex items-center gap-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg px-3 py-2 whitespace-nowrap">
-            <span className="text-xs text-charcoal dark:text-gray-200">Υπενθύμιση σε {m.name.split(' ')[0]};</span>
-            <button type="button" onClick={() => { setConfirmFor(null); sendOne(m.docId) }}
-              className="px-2.5 py-1 rounded-lg bg-[#6A994E] text-white text-xs font-bold">Ναι</button>
-            <button type="button" onClick={() => setConfirmFor(null)}
-              className="px-2.5 py-1 rounded-lg border border-gray-300 dark:border-gray-500 text-xs text-charcoal dark:text-gray-200">Άκυρο</button>
+            {claimed ? (
+              <>
+                <span className="text-xs text-charcoal dark:text-gray-200">
+                  Δήλωσε πληρωμή {new Date(m.renewalClaimedAt!).toLocaleDateString('el-GR')} · οφείλει {owedYears(m).join('+')}
+                </span>
+                {canIssue ? (
+                  <button type="button" onClick={() => issueFor(m)}
+                    className="px-2.5 py-1 rounded-lg bg-[#6A994E] text-white text-xs font-bold">
+                    Έκδοση απόδειξης ({owedYears(m).length * 35} €)
+                  </button>
+                ) : (
+                  <span className="text-xs text-gray-400">έκδοση: μόνο Financer</span>
+                )}
+                <button type="button" onClick={() => { setConfirmFor(null); sendOne(m.docId) }}
+                  className="px-2.5 py-1 rounded-lg border border-gray-300 dark:border-gray-500 text-xs text-charcoal dark:text-gray-200">Υπενθύμιση</button>
+                <button type="button" onClick={() => setConfirmFor(null)}
+                  className="px-2.5 py-1 rounded-lg border border-gray-300 dark:border-gray-500 text-xs text-charcoal dark:text-gray-200">✕</button>
+              </>
+            ) : (
+              <>
+                <span className="text-xs text-charcoal dark:text-gray-200">Υπενθύμιση σε {m.name.split(' ')[0]};</span>
+                <button type="button" onClick={() => { setConfirmFor(null); sendOne(m.docId) }}
+                  className="px-2.5 py-1 rounded-lg bg-[#6A994E] text-white text-xs font-bold">Ναι</button>
+                <button type="button" onClick={() => setConfirmFor(null)}
+                  className="px-2.5 py-1 rounded-lg border border-gray-300 dark:border-gray-500 text-xs text-charcoal dark:text-gray-200">Άκυρο</button>
+              </>
+            )}
           </span>
         )}
       </span>
@@ -149,8 +223,10 @@ export default function OcSubscriptions({ members, canRemind }: {
 
           <p className="text-xs text-gray-500 dark:text-gray-400 rounded-xl bg-gray-50 dark:bg-gray-700/50 px-4 py-2.5">
             💡 <strong>Υπενθυμίσεις συνδρομής:</strong> κλικ σε οποιοδήποτε όνομα για ατομική υπενθύμιση, ή «✉ Σε όλους»
-            για μαζική αποστολή στη λίστα. Το email φεύγει από το finance@ με τα στοιχεία πληρωμής και τα έτη που
-            εκκρεμούν ανά μέλος. Διαθέσιμο σε Financer &amp; Community.
+            για μαζική αποστολή στη λίστα. Το email φεύγει από το finance@ με τα στοιχεία πληρωμής, τα έτη που
+            εκκρεμούν ανά μέλος και το κουμπί «Έκανα την κατάθεση». Όταν μέλος δηλώσει πληρωμή, το όνομά του γίνεται
+            <span className="text-teal-600 dark:text-teal-300 font-bold"> 💶 teal</span> — κλικ πάνω του → «Έκδοση απόδειξης»
+            (απόδειξη + email + ενημέρωση πληρωμών αυτόματα). Υπενθυμίσεις: Financer &amp; Community · Έκδοση: μόνο Financer.
           </p>
           {bulkProgress && (
             <p className="text-sm font-medium text-charcoal dark:text-gray-200" role="status">Μαζική αποστολή: {bulkProgress}</p>

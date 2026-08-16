@@ -222,7 +222,7 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
   return (
     <div className="space-y-8">
       {/* Συνδρομές: μετρητές + υπενθυμίσεις, πάντα πρώτο */}
-      <OcSubscriptions members={subMembers} canRemind={canRemind} />
+      <OcSubscriptions members={subMembers} canRemind={canRemind} canIssue={canIssue} onIssued={() => load()} />
 
       {notice && (
         <div role="status" className={`rounded-2xl px-5 py-4 text-sm font-medium ${

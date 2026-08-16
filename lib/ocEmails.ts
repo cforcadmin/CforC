@@ -1190,11 +1190,16 @@ export function manualReceiptEmailHtml(firstName: string, detail: string, signer
  * Προς διαγραφή» στα Οικονομικά του OC. Design shell, υπογραφή Financer.
  * owedYears: τα έτη που εκκρεμούν (1 ή 2) · amount: το σύνολο (35 ή 70).
  */
+export function renewalClaimUrl(token: string): string {
+  return `${SITE_URL}/renewal-claim/${encodeURIComponent(token)}`
+}
+
 export function subscriptionReminderEmailHtml(
   firstName: string,
   memberFullName: string,
   owedYears: number[],
   amount: number,
+  claimUrl: string,
   signerName = 'Culture for Change — Finance',
 ): { subject: string; html: string } {
   const yearsText = owedYears.length > 1
@@ -1247,7 +1252,7 @@ export function subscriptionReminderEmailHtml(
   <tr>
     <td class="px" style="padding:40px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
       <p style="margin:0 0 20px 0;">Αγαπητή/αγαπητέ ${firstName},</p>
-      <p style="margin:0 0 20px 0;">Μια φιλική υπενθύμιση: η συνδρομή σου στο Δίκτυο Culture for Change για ${yearsText} εκκρεμεί. Η ετήσια συνδρομή είναι το πιο άμεσο στήριγμα της δράσης του δικτύου — σε ευχαριστούμε που παραμένεις μέλος του!</p>
+      <p style="margin:0 0 20px 0;">Μια φιλική υπενθύμιση: η συνδρομή σου στο Δίκτυο Culture for Change για ${yearsText} εκκρεμεί. Η ετήσια συνδρομή είναι το πιο άμεσο στήριγμα της δράσης του δικτύου — σε ευχαριστούμε προκαταβολικά!</p>
     </td>
   </tr>
 
@@ -1263,6 +1268,20 @@ export function subscriptionReminderEmailHtml(
           <p style="margin:0;"><strong>Αιτιολογία:</strong> ${memberFullName} — Συνδρομή</p>
         </td></tr>
       </table>
+    </td>
+  </tr>
+
+  <!-- Claim button -->
+  <tr>
+    <td class="px" align="center" style="padding:24px 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="btn">
+        <tr>
+          <td style="background-color:#2D2D2D;border-radius:999px;">
+            <a href="${claimUrl}" style="display:inline-block;padding:15px 36px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:#FFFFFF;text-decoration:none;border-radius:999px;">Έκανα την κατάθεση ✓</a>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#8A8A8A;">Πάτησέ το μόλις κάνεις τη μεταφορά — έτσι η ομάδα οικονομικών ξέρει να την αναζητήσει και θα λάβεις την απόδειξή σου συντομότερα.</p>
     </td>
   </tr>
 

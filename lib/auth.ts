@@ -60,7 +60,12 @@ interface ExitSurveyPayload {
   type: 'exit-survey'
 }
 
-type TokenPayload = SessionPayload | MagicLinkPayload | NewsletterPayload | PaymentClaimPayload | ExitSurveyPayload
+interface RenewalClaimPayload {
+  memberId: string
+  type: 'renewal-claim'
+}
+
+type TokenPayload = SessionPayload | MagicLinkPayload | NewsletterPayload | PaymentClaimPayload | ExitSurveyPayload | RenewalClaimPayload
 
 export function generateSessionToken(memberId: string, email: string): string {
   const payload: SessionPayload = {
@@ -111,6 +116,13 @@ export function generateNewsletterToken(email: string, firstName?: string, lastN
 /** Signed single-purpose link: «δήλωσα ότι πλήρωσα» — carries only the application id */
 export function generatePaymentClaimToken(applicationId: string): string {
   const payload: PaymentClaimPayload = { applicationId, type: 'payment-claim' }
+  const options: SignOptions = { algorithm: 'HS256', expiresIn: PAYMENT_CLAIM_EXPIRES_IN }
+  return jwt.sign(payload, getJwtSecret(), options)
+}
+
+/** Signed single-purpose link: «πλήρωσα τη συνδρομή μου» (ανανέωση μέλους) */
+export function generateRenewalClaimToken(memberId: string): string {
+  const payload: RenewalClaimPayload = { memberId, type: 'renewal-claim' }
   const options: SignOptions = { algorithm: 'HS256', expiresIn: PAYMENT_CLAIM_EXPIRES_IN }
   return jwt.sign(payload, getJwtSecret(), options)
 }

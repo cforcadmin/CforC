@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const maxDuration = 60
 import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
+import { verifyToken, generateRenewalClaimToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
-import { sendOcEmail, subscriptionReminderEmailHtml, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, subscriptionReminderEmailHtml, renewalClaimUrl, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
 
 /**
  * Υπενθύμιση συνδρομής σε μέλος — από τα bubbles «Προς ειδοποίηση /
@@ -74,8 +74,9 @@ export async function POST(request: NextRequest) {
     const name = String(member.Name || '').trim()
     const firstName = name.split(' ')[0] || 'μέλος'
     const finSigner = await getSeatHolder('financer')
+    const claimUrl = renewalClaimUrl(generateRenewalClaimToken(memberDocId))
     const tpl = subscriptionReminderEmailHtml(
-      firstName, name, owed, owed.length * 35,
+      firstName, name, owed, owed.length * 35, claimUrl,
       finSigner?.engName || finSigner?.name || 'Culture for Change — Finance',
     )
     const sent = await sendOcEmail(email, tpl.subject, tpl.html, {

@@ -23,6 +23,8 @@ export interface OcMemberRow {
   /** 1 = πληρωμένο, 0 = δεν όφειλε, null = εκκρεμεί */
   payments: Record<string, 0 | 1 | null>
   profileVisible: boolean
+  /** Δήλωση «πλήρωσα τη συνδρομή» (ανανέωση) — teal ένδειξη στα Οικονομικά */
+  renewalClaimedAt: string | null
   status: OcMemberStatus
 }
 
@@ -155,7 +157,7 @@ export async function fetchOcOverview(): Promise<OcOverviewData> {
   while (true) {
     const page = await strapiGet(
       `/members?fields[0]=Name&fields[1]=Email&fields[2]=AM&fields[3]=RegistrationYear` +
-      `&fields[4]=Payments&fields[5]=HideProfile&fields[6]=City&fields[7]=Phone&fields[8]=Slug` +
+      `&fields[4]=Payments&fields[5]=HideProfile&fields[6]=City&fields[7]=Phone&fields[8]=Slug&fields[9]=RenewalClaimedAt` +
       `&pagination[start]=${start}&pagination[limit]=100&pagination[withCount]=true`
     )
     if (!page) break
@@ -178,6 +180,7 @@ export async function fetchOcOverview(): Promise<OcOverviewData> {
         regYear,
         payments,
         profileVisible: !m.HideProfile,
+        renewalClaimedAt: m.RenewalClaimedAt || null,
         status: memberStatus(payments, regYear, year),
       })
     }
