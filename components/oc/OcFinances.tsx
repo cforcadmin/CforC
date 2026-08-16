@@ -63,6 +63,9 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
   const [loadError, setLoadError] = useState(false)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
+  // Αποτυχία χειροκίνητης έκδοσης → ΟΡΑΤΟ popup (το top notice χάνεται
+  // εκτός οθόνης όταν η φόρμα είναι χαμηλά στη σελίδα)
+  const [issueError, setIssueError] = useState<string | null>(null)
 
   // ---- φόρμα έκδοσης ----
   const [type, setType] = useState<TypeKey>('subscription')
@@ -182,6 +185,7 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
     } catch (err: any) {
       setConfirming(false)
       setNotice({ kind: 'err', text: err?.message || 'Αποτυχία έκδοσης' })
+      setIssueError(err?.message || 'Αποτυχία έκδοσης — δοκίμασε ξανά')
     } finally {
       setBusy(false)
     }
@@ -221,6 +225,26 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
 
   return (
     <div className="space-y-8">
+      {/* Popup αποτυχίας χειροκίνητης έκδοσης — πάντα ορατό */}
+      {issueError && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          role="alertdialog" aria-modal="true" aria-label="Η έκδοση απέτυχε"
+          onClick={() => setIssueError(null)}>
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl max-w-md w-full p-6 sm:p-8 text-center"
+            onClick={e => e.stopPropagation()}>
+            <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl" aria-hidden="true">⚠️</span>
+            </div>
+            <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-2">Η απόδειξη ΔΕΝ εκδόθηκε</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">{issueError}</p>
+            <button type="button" onClick={() => setIssueError(null)}
+              className="px-6 py-2.5 rounded-full bg-coral text-white text-sm font-bold hover:bg-coral/90">
+              Εντάξει
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Συνδρομές: μετρητές + υπενθυμίσεις, πάντα πρώτο */}
       <OcSubscriptions members={subMembers} canRemind={canRemind} canIssue={canIssue} onIssued={() => load()} />
 
@@ -419,6 +443,16 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
               onChange={e => setNotes(e.target.value)} disabled={!canIssue || busy} />
           </div>
         </div>
+
+        {notice && (
+          <div className={`mt-5 rounded-2xl px-4 py-3 text-sm font-medium ${
+            notice.kind === 'ok'
+              ? 'bg-[#6A994E]/15 text-[#3f6b2d] dark:text-[#9bd47c]'
+              : 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'
+          }`}>
+            {notice.text}
+          </div>
+        )}
 
         <div className="mt-6 flex items-center gap-4">
           {!confirming ? (
