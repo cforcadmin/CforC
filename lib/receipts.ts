@@ -10,6 +10,8 @@
  * ΑΡΝΕΙΤΑΙ να εκδώσει (nextReceiptNumber → null) αντί να μαντέψει.
  */
 
+import { appendReceiptToEsoda, financeSheetConfigured, type EsodaReceiptRow } from '@/lib/financeSheet'
+
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
@@ -77,6 +79,20 @@ export async function markReceiptSent(documentId: string, when?: Date): Promise<
     SentAt: (when || new Date()).toISOString(),
   })
   return r.ok
+}
+
+/**
+ * Φάση Γ: γραμμή της απόδειξης στο ΕΣΟΔΑ sheet + SheetSynced:true.
+ * Best-effort και ΠΑΝΤΑ awaited από τους callers (serverless) — αποτυχία
+ * αφήνει απλώς το πορτοκαλί «χειροκίνητα» badge.
+ */
+export async function syncReceiptToSheet(documentId: string, row: EsodaReceiptRow): Promise<boolean> {
+  if (!financeSheetConfigured()) return false
+  const res = await appendReceiptToEsoda(row)
+  if (!res.ok) return false
+  const upd = await strapi(`/receipts/${documentId}`, 'PUT', { SheetSynced: true })
+  if (!upd.ok) console.error('syncReceiptToSheet: SheetSynced flip failed', upd.status)
+  return true
 }
 
 /**

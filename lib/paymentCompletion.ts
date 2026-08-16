@@ -4,7 +4,7 @@ import {
   IT_FROM, IT_EMAIL, WELCOME_CC, FINANCE_FROM, FINANCE_EMAIL,
 } from '@/lib/ocEmails'
 import { generateReceiptPdf } from '@/lib/receiptPdf'
-import { createReceipt, markReceiptSent } from '@/lib/receipts'
+import { createReceipt, markReceiptSent, syncReceiptToSheet, athensToday } from '@/lib/receipts'
 
 /**
  * Ολοκλήρωση πληρωμής μέλους — ΚΟΙΝΗ λογική για τα δύο σημεία εκκίνησης:
@@ -256,6 +256,25 @@ export async function processPaymentCompletion(input: PaymentCompletionInput): P
       try { await markReceiptSent(receipt.documentId) } catch (e) {
         console.error('payment completion: markReceiptSent failed (non-fatal):', e)
       }
+    }
+    // Φάση Γ: γραμμή εγγραφής στο ΕΣΟΔΑ sheet (best-effort, awaited)
+    try {
+      await syncReceiptToSheet(receipt.documentId, {
+        number: receipt.number,
+        type: 'registration',
+        amount: 45,
+        registrationFee: 10,
+        subscriptionYear: year,
+        paymentDate: athensToday(),
+        issueDate: athensToday(),
+        memberName: fullName,
+        payerName: null,
+        method: 'bank',
+        emailSent: receiptSent,
+        sentAt: receiptSent ? new Date().toISOString() : null,
+      })
+    } catch (e) {
+      console.error('payment completion: sheet sync failed (non-fatal):', e)
     }
   } catch (err) {
     console.error('payment completion: receipt email failed:', err)

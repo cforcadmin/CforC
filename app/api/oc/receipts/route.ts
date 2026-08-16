@@ -5,7 +5,8 @@ export const maxDuration = 60
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
-import { nextReceiptNumber, createReceipt, markReceiptSent, type ReceiptType } from '@/lib/receipts'
+import { nextReceiptNumber, createReceipt, markReceiptSent, syncReceiptToSheet, type ReceiptType } from '@/lib/receipts'
+import { athensToday } from '@/lib/receipts'
 import { generateReceiptPdf } from '@/lib/receiptPdf'
 import { sendOcEmail, manualReceiptEmailHtml, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
 import { upsertAlias } from '@/lib/payerAliases'
@@ -287,6 +288,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Φάση Γ: γραμμή στο ΕΣΟΔΑ sheet (best-effort, awaited)
+    let sheetSynced = false
+    try {
+      sheetSynced = await syncReceiptToSheet(receipt.documentId, {
+        number: receipt.number,
+        type,
+        amount,
+        registrationFee: registrationFee || null,
+        subscriptionYear: isSubscriptionLike ? year : null,
+        paymentDate: paymentDate || null,
+        issueDate: athensToday(),
+        memberName: memberName || null,
+        payerName: String(body?.payerName || '').trim() || null,
+        method: paymentMethod,
+        emailSent,
+        sentAt: emailSent ? new Date().toISOString() : null,
+        typeLabel: TYPE_LABELS[type],
+      })
+    } catch (err) {
+      console.error('oc/receipts: sheet sync failed (non-fatal):', err)
+    }
+
     // Learned alias: η επιβεβαίωση του Financer διδάσκει τον matcher
     const payerNameStr = String(body?.payerName || '').trim()
     if (payerNameStr && (memberDocId || memberName)) {
@@ -297,7 +320,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ ok: true, action: 'issue', number: receipt.number, emailSent, to: sendEmail ? email || null : null })
+    return NextResponse.json({ ok: true, action: 'issue', number: receipt.number, emailSent, sheetSynced, to: sendEmail ? email || null : null })
   } catch (err: any) {
     console.error('oc/receipts POST failed:', err)
     const msg = String(err?.message || '')
