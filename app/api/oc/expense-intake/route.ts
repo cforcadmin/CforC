@@ -5,7 +5,8 @@ import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import { parseInvoiceFilename, type ParsedInvoiceName } from '@/lib/invoiceFilename'
-import { getSupplierAliases, lookupAlias } from '@/lib/supplierAliases'
+import { getSupplierAliases, lookupAlias, upsertSupplierAlias, type ExpenseCategory } from '@/lib/supplierAliases'
+import { buildApprovedFilename } from '@/lib/invoiceFilename'
 import { parseKiniseis } from '@/lib/bankStatement'
 
 /**
@@ -27,9 +28,14 @@ const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 const WEBAPP_URL = process.env.FINANCE_SHEET_WEBAPP_URL
 const WEBAPP_SECRET = process.env.FINANCE_SHEET_WEBAPP_SECRET
 
-async function strapi(path: string) {
+async function strapi(path: string, method: string = 'GET', data?: any) {
   const res = await fetch(`${STRAPI_URL}/api${path}`, {
-    headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${STRAPI_API_TOKEN}`,
+    },
+    ...(data !== undefined && { body: JSON.stringify({ data }) }),
     cache: 'no-store',
   })
   let json: any = null
@@ -78,6 +84,10 @@ export async function POST(request: NextRequest) {
   const month = String(body?.month || '')
   if (!/^\d{4}-\d{2}$/.test(month)) {
     return NextResponse.json({ error: 'Μη έγκυρος μήνας' }, { status: 400 })
+  }
+
+  if (body?.action === 'approve') {
+    return approveExpenses(month, body, decoded.memberId)
   }
 
   try {
@@ -195,4 +205,103 @@ export async function POST(request: NextRequest) {
     console.error('expense-intake analyze failed:', err)
     return NextResponse.json({ error: 'Αποτυχία ανάλυσης' }, { status: 502 })
   }
+}
+
+/**
+ * Έγκριση: για κάθε εγκεκριμένη γραμμή — Strapi expense → γραμμή ΕΞΟΔΑ
+ * (η οποία επιστρέφει το Α/Α) → μετονομασία αρχείου στο Drive →
+ * εκμάθηση προμηθευτή. Best-effort ανά γραμμή: μια αποτυχία δεν ρίχνει
+ * τις υπόλοιπες, επιστρέφεται αναλυτικό αποτέλεσμα.
+ */
+async function approveExpenses(month: string, body: any, memberId: string) {
+  const items: any[] = Array.isArray(body?.items) ? body.items : []
+  if (items.length === 0) {
+    return NextResponse.json({ error: 'Καμία γραμμή προς έγκριση' }, { status: 400 })
+  }
+
+  const results: Array<{ fileId: string; ok: boolean; aa?: string; newName?: string; error?: string }> = []
+
+  for (const it of items) {
+    const fileId = String(it?.fileId || '')
+    try {
+      if (!it?.issueDate) throw new Error('Λείπει ημερομηνία έκδοσης — μετονόμασε το αρχείο και ξανατρέξε την ανάλυση')
+      const payable = Number(it?.payable)
+      if (!(payable > 0)) throw new Error('Λείπει ποσό')
+
+      // 1) γραμμή στο ΕΞΟΔΑ — δίνει το επίσημο Α/Α
+      const sheetRes = await webApp('appendExpense', {
+        month,
+        category: it.category || null,
+        issueDate: it.issueDate,
+        docRef: it.docRef || null,
+        supplierName: it.supplierName || null,
+        supplierTaxId: it.supplierTaxId || null,
+        amount: payable,
+        withholding: Number(it.withholding) || 0,
+        paymentMethod: it.paymentMethod || 'unpaid',
+        paymentDate: it.paymentDate || null,
+        notes: it.notes || null,
+      })
+      if (!sheetRes.ok) throw new Error(sheetRes.error || 'Αποτυχία εγγραφής στο ΕΞΟΔΑ')
+      const aa: string = sheetRes.aa
+
+      // 2) μετονομασία αρχείου: {Α/Α}_{όνομα που έδωσες}_{ΗΗ-ΜΜ-ΕΕΕΕ}
+      let newName: string | undefined
+      if (fileId && it.fileName) {
+        const parsed = parseInvoiceFilename(String(it.fileName))
+        newName = buildApprovedFilename(parsed, aa, String(it.issueDate))
+        const ren = await webApp('renameFile', { fileId, newName })
+        if (!ren.ok) console.error('expense approve: rename failed', ren.error)
+      }
+
+      // 3) εγγραφή στο Strapi
+      const created = await strapi('/expenses', 'POST', {
+        Month: month,
+        Aa: aa,
+        IssueDate: it.issueDate,
+        DocRef: it.docRef || null,
+        DocNumber: it.docNumber || null,
+        Mark: it.mark || null,
+        SupplierName: it.supplierName || null,
+        SupplierTaxId: it.supplierTaxId || null,
+        Category: it.category || null,
+        NetAmount: it.netAmount ? Number(it.netAmount) : null,
+        VatAmount: it.vatAmount ? Number(it.vatAmount) : null,
+        Withholding: Number(it.withholding) || null,
+        PayableAmount: payable,
+        PaymentMethod: it.paymentMethod || 'unpaid',
+        PaymentDate: it.paymentDate || null,
+        TransactionId: it.txnId || null,
+        Notes: it.notes || null,
+        FileName: newName || it.fileName || null,
+        FileId: fileId || null,
+        State: 'approved',
+        SheetSynced: true,
+        ApprovedAt: new Date().toISOString(),
+        ApprovedBy: `financer:${memberId}`,
+      })
+      if (!created.ok) console.error('expense approve: strapi create failed', created.status)
+
+      // 4) εκμάθηση προμηθευτή — η επόμενη φορά έρχεται συμπληρωμένη
+      if (it.supplierHint && it.supplierName) {
+        await upsertSupplierAlias({
+          hint: String(it.supplierHint),
+          supplierName: String(it.supplierName),
+          supplierTaxId: it.supplierTaxId || null,
+          category: (it.category as ExpenseCategory) || null,
+        })
+      }
+
+      results.push({ fileId, ok: true, aa, newName })
+    } catch (err: any) {
+      results.push({ fileId, ok: false, error: err?.message || 'Αποτυχία' })
+    }
+  }
+
+  return NextResponse.json({
+    ok: results.every(r => r.ok),
+    results,
+    approved: results.filter(r => r.ok).length,
+    failed: results.filter(r => !r.ok).length,
+  })
 }

@@ -71,6 +71,9 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
   const [stats, setStats] = useState<any>(null)
   const [showHelp, setShowHelp] = useState(false)
   const [folderUrl, setFolderUrl] = useState<string | null>(null)
+  const [approving, setApproving] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const [results, setResults] = useState<Record<string, { ok: boolean; aa?: string; newName?: string; error?: string }>>({})
 
   async function analyze() {
     setAnalyzing(true); setError(null); setRows([]); setWarnings([])
@@ -127,7 +130,86 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
     setState(s => ({ ...s, [id]: { ...s[id], ...p } }))
   }
 
-  const selected = rows.filter(r => state[r.fileId]?.include)
+  const selected = rows.filter(r => state[r.fileId]?.include && !results[r.fileId]?.ok)
+  const ready = selected.filter(r => {
+    const st = state[r.fileId]
+    return st.issueDate && Number(st.payable) > 0
+  })
+
+  async function approve() {
+    setConfirming(false); setApproving(true); setError(null)
+    try {
+      const items = ready.map(r => {
+        const st = state[r.fileId]
+        return {
+          fileId: r.fileId,
+          fileName: r.fileName,
+          issueDate: st.issueDate,
+          docRef: st.docRef,
+          docNumber: r.parsed.docNumber,
+          mark: r.parsed.mark,
+          supplierHint: r.parsed.supplierHint,
+          supplierName: st.supplierName,
+          supplierTaxId: st.supplierTaxId,
+          category: st.category,
+          netAmount: st.netAmount,
+          vatAmount: st.vatAmount,
+          withholding: st.withholding,
+          payable: st.payable,
+          paymentMethod: st.paymentMethod,
+          paymentDate: st.paymentDate,
+          txnId: st.txnId,
+          notes: st.notes,
+        }
+      })
+      const res = await fetch('/api/oc/expense-intake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve', month, items }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Αποτυχία έγκρισης')
+      const map: Record<string, any> = {}
+      for (const r of data.results || []) map[r.fileId] = r
+      setResults(prev => ({ ...prev, ...map }))
+    } catch (err: any) {
+      setError(err?.message || 'Αποτυχία έγκρισης')
+    } finally {
+      setApproving(false)
+    }
+  }
+
+  async function approveOne(fileId: string) {
+    const r = rows.find(x => x.fileId === fileId)
+    if (!r) return
+    const st = state[fileId]
+    setApproving(true); setError(null)
+    try {
+      const res = await fetch('/api/oc/expense-intake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'approve', month,
+          items: [{
+            fileId, fileName: r.fileName, issueDate: st.issueDate, docRef: st.docRef,
+            docNumber: r.parsed.docNumber, mark: r.parsed.mark, supplierHint: r.parsed.supplierHint,
+            supplierName: st.supplierName, supplierTaxId: st.supplierTaxId, category: st.category,
+            netAmount: st.netAmount, vatAmount: st.vatAmount, withholding: st.withholding,
+            payable: st.payable, paymentMethod: st.paymentMethod, paymentDate: st.paymentDate,
+            txnId: st.txnId, notes: st.notes,
+          }],
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Αποτυχία')
+      const one = (data.results || [])[0]
+      if (one) setResults(prev => ({ ...prev, [fileId]: one }))
+    } catch (err: any) {
+      setError(err?.message || 'Αποτυχία έγκρισης')
+    } finally {
+      setApproving(false)
+    }
+  }
 
   return (
     <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
@@ -232,9 +314,25 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
                       βρέθηκε στην τράπεζα
                     </span>
                   )}
+                  {results[r.fileId]?.ok && (
+                    <span className="ml-auto text-xs font-bold text-green-700 dark:text-green-300 notranslate">
+                      ✓ {results[r.fileId].aa} · {results[r.fileId].newName}
+                    </span>
+                  )}
+                  {results[r.fileId] && !results[r.fileId].ok && (
+                    <span className="ml-auto text-xs text-red-600 dark:text-red-400">{results[r.fileId].error}</span>
+                  )}
+                  {!locked && !results[r.fileId]?.ok && canIssue && (
+                    <button type="button" onClick={() => approveOne(r.fileId)}
+                      disabled={approving || !st.issueDate || !(Number(st.payable) > 0)}
+                      title={!st.issueDate ? 'Λείπει ημερομηνία έκδοσης' : !(Number(st.payable) > 0) ? 'Λείπει ποσό' : undefined}
+                      className="ml-auto px-3 py-1 rounded-full bg-[#6A994E] text-white text-xs font-bold hover:opacity-90 disabled:opacity-40">
+                      Έγκριση
+                    </button>
+                  )}
                 </div>
 
-                {!locked && (
+                {!locked && !results[r.fileId]?.ok && (
                   <div className="grid sm:grid-cols-3 lg:grid-cols-4 gap-3">
                     <div>
                       <label className={labelCls}>Α/Α (κλειδωμένο)</label>
@@ -329,9 +427,34 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
             )
           })}
 
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {selected.length} προς καταχώρηση — η έγκριση και η εγγραφή στο ΕΞΟΔΑ έρχονται στο επόμενο βήμα.
-          </p>
+          <div className="flex flex-wrap items-center gap-4 pt-2">
+            {!confirming ? (
+              <button type="button" onClick={() => setConfirming(true)}
+                disabled={!canIssue || approving || ready.length === 0}
+                className="px-6 py-2.5 rounded-full bg-[#6A994E] text-white text-sm font-bold hover:opacity-90 disabled:opacity-40">
+                {approving ? 'Καταχώρηση…' : `Έγκριση ${ready.length} εξόδων`}
+              </button>
+            ) : (
+              <>
+                <span className="text-sm font-medium text-charcoal dark:text-gray-200">
+                  Σίγουρα; Θα γραφτούν {ready.length} γραμμές στο ΕΞΟΔΑ και θα μετονομαστούν τα αρχεία.
+                </span>
+                <button type="button" onClick={approve} disabled={approving}
+                  className="px-5 py-2 rounded-full bg-[#6A994E] text-white text-sm font-bold hover:opacity-90 disabled:opacity-40">
+                  Ναι, καταχώρηση
+                </button>
+                <button type="button" onClick={() => setConfirming(false)} disabled={approving}
+                  className="px-5 py-2 rounded-full border border-gray-300 dark:border-gray-600 text-sm text-charcoal dark:text-gray-200">
+                  Άκυρο
+                </button>
+              </>
+            )}
+            {selected.length !== ready.length && (
+              <span className="text-xs text-orange-700 dark:text-orange-300">
+                {selected.length - ready.length} επιλεγμένα χωρίς ημερομηνία ή ποσό — συμπλήρωσε ή αποεπίλεξε.
+              </span>
+            )}
+          </div>
         </div>
       )}
     </div>
