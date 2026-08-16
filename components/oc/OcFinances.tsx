@@ -66,6 +66,11 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
   // Αποτυχία χειροκίνητης έκδοσης → ΟΡΑΤΟ popup (το top notice χάνεται
   // εκτός οθόνης όταν η φόρμα είναι χαμηλά στη σελίδα)
   const [issueError, setIssueError] = useState<string | null>(null)
+  // «Καλή Χρονιά» banner: Ιανουάριο/Φεβρουάριο, αν λείπει η δομή φακέλων
+  // Παραστατικών του νέου έτους — δημιουργία ΜΟΝΟ με το ΟΚ του Financer
+  const [yearPrompt, setYearPrompt] = useState<number | null>(null)
+  const [yearBusy, setYearBusy] = useState(false)
+  const [yearDone, setYearDone] = useState(false)
 
   // ---- φόρμα έκδοσης ----
   const [type, setType] = useState<TypeKey>('subscription')
@@ -102,6 +107,31 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
     }
   }
   useEffect(() => { load(listScope) }, [listScope]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    // Μόνο Ιανουάριο/Φεβρουάριο αξίζει ο έλεγχος — μετά, ή υπάρχει η δομή
+    // ή τη δημιούργησε ήδη lazily ο writer
+    const m = new Date().getMonth()
+    if (m > 1) return
+    fetch('/api/oc/finance-structure')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d && d.exists === false) setYearPrompt(d.year) })
+      .catch(() => { /* σιωπηλά — κανένα banner σε αμφιβολία */ })
+  }, [])
+
+  async function createYearStructure() {
+    setYearBusy(true)
+    try {
+      const res = await fetch('/api/oc/finance-structure', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Αποτυχία')
+      setYearDone(true)
+    } catch (err: any) {
+      setIssueError(err?.message || 'Αποτυχία δημιουργίας φακέλων')
+    } finally {
+      setYearBusy(false)
+    }
+  }
 
   const isSubscriptionLike = type === 'subscription' || type === 'registration'
 
@@ -242,6 +272,34 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
               Εντάξει
             </button>
           </div>
+        </div>
+      )}
+
+      {/* 🎉 Νέο έτος: πρόταση δημιουργίας δομής φακέλων Παραστατικών */}
+      {yearPrompt !== null && (
+        <div className="bg-gradient-to-r from-coral/15 to-[#E9A13B]/15 dark:from-coral/10 dark:to-[#E9A13B]/10 rounded-3xl shadow-sm p-6 border border-coral/30">
+          {yearDone ? (
+            <p className="text-sm font-medium text-charcoal dark:text-gray-100">
+              ✅ Η δομή φακέλων για το {yearPrompt} δημιουργήθηκε — Έσοδα, Έξοδα και Παράβολα με τους 12 μήνες τους. Καλή αρχή!
+            </p>
+          ) : (
+            <div className="flex flex-wrap items-center gap-4">
+              <p className="text-sm font-medium text-charcoal dark:text-gray-100">
+                🎉 <strong>Καλή Χρονιά!</strong> Να δημιουργήσω τη δομή φακέλων Παραστατικών για το {yearPrompt};
+                <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Θα φτιάξω: {yearPrompt} → Έσοδα/Έξοδα {yearPrompt} με φακέλους 01–12 μηνών + Παράβολα {yearPrompt}, στο Drive «Παραστατικά».
+                </span>
+              </p>
+              {canIssue ? (
+                <button type="button" onClick={createYearStructure} disabled={yearBusy}
+                  className="px-5 py-2.5 rounded-full bg-coral text-white text-sm font-bold hover:bg-coral/90 disabled:opacity-50">
+                  {yearBusy ? 'Δημιουργία…' : 'Ναι, δημιουργία 🎊'}
+                </button>
+              ) : (
+                <span className="text-xs text-gray-400 dark:text-gray-500">Δημιουργία: μόνο ο/η Financer</span>
+              )}
+            </div>
+          )}
         </div>
       )}
 
