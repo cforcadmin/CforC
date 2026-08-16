@@ -51,6 +51,9 @@ const labelCls = 'block text-xs font-bold text-gray-500 dark:text-gray-400 upper
 export default function OcFinances({ canIssue, members }: { canIssue: boolean; members: MemberOption[] }) {
   const [series, setSeries] = useState<SeriesState | null>(null)
   const [listScope, setListScope] = useState<'recent' | 'all'>('recent')
+  // Όλες οι ενότητες κλειστές στο φόρτωμα — άνοιγμα κατ' απαίτηση
+  const [openIssue, setOpenIssue] = useState(false)
+  const [openList, setOpenList] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
@@ -212,21 +215,38 @@ export default function OcFinances({ canIssue, members }: { canIssue: boolean; m
 
   return (
     <div className="space-y-8">
-      {/* Κατάσταση σειράς */}
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
-        <div className="flex flex-wrap items-center gap-4">
-          <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Σειρά αποδείξεων</h2>
-          {series?.seeded && (
-            <span className="notranslate px-4 py-1.5 rounded-full bg-[#6A994E]/15 text-[#4a7a35] dark:text-[#9bd47c] text-sm font-bold">
-              Επόμενη: ΑΠ. ΕΙΣ. {series.nextNumber}
-            </span>
-          )}
+      {notice && (
+        <div role="status" className={`rounded-2xl px-5 py-4 text-sm font-medium ${
+          notice.kind === 'ok'
+            ? 'bg-[#6A994E]/15 text-[#3f6b2d] dark:text-[#9bd47c]'
+            : 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'
+        }`}>
+          {notice.text}
         </div>
+      )}
+
+      {/* Έκδοση απόδειξης — με τον επόμενο αριθμό της σειράς στην κεφαλίδα */}
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
+        <button type="button" onClick={() => setOpenIssue(!openIssue)} className="w-full flex items-center gap-3 text-left"
+          aria-expanded={openIssue}>
+          <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Έκδοση απόδειξης</h2>
+          <span className="ml-auto flex items-center gap-3">
+            {series?.seeded && (
+              <span className="notranslate px-4 py-1.5 rounded-full bg-[#6A994E]/15 text-[#4a7a35] dark:text-[#9bd47c] text-sm font-bold">
+                Επόμενη: ΑΠ. ΕΙΣ. {series.nextNumber}
+              </span>
+            )}
+            <span className={`text-coral transition-transform ${openIssue ? 'rotate-180' : ''}`} aria-hidden="true">▼</span>
+          </span>
+        </button>
+
+        {openIssue && (
+        <div className="mt-6">
         {loadError && (
-          <p className="mt-3 text-sm text-red-600 dark:text-red-400">Αποτυχία φόρτωσης — δοκίμασε ανανέωση.</p>
+          <p className="mb-3 text-sm text-red-600 dark:text-red-400">Αποτυχία φόρτωσης — δοκίμασε ανανέωση.</p>
         )}
         {series && !series.seeded && (
-          <div className="mt-5 rounded-2xl border-2 border-dashed border-[#6A994E]/50 p-5">
+          <div className="mb-5 rounded-2xl border-2 border-dashed border-[#6A994E]/50 p-5">
             <p className="text-sm text-charcoal dark:text-gray-200 font-medium mb-1">Αρχικοποίηση σειράς</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               Καταχώρησε την <strong>τελευταία χειρόγραφη απόδειξη</strong> που εκδόθηκε εκτός συστήματος —
@@ -256,21 +276,8 @@ export default function OcFinances({ canIssue, members }: { canIssue: boolean; m
             {!canIssue && <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">Μόνο ο ενεργός ρόλος Financer.</p>}
           </div>
         )}
-      </div>
 
-      {notice && (
-        <div role="status" className={`rounded-2xl px-5 py-4 text-sm font-medium ${
-          notice.kind === 'ok'
-            ? 'bg-[#6A994E]/15 text-[#3f6b2d] dark:text-[#9bd47c]'
-            : 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'
-        }`}>
-          {notice.text}
-        </div>
-      )}
-
-      {/* Έκδοση απόδειξης */}
-      <div className={`bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8 ${series?.seeded ? '' : 'opacity-50 pointer-events-none'}`}>
-        <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-1">Έκδοση απόδειξης</h2>
+        <div className={series?.seeded ? '' : 'opacity-50 pointer-events-none'}>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
           {canIssue
             ? 'Για ανανεώσεις συνδρομής, μετρητά ΓΣ, δωρεές και έκτακτες εισφορές. Οι εγγραφές νέων μελών εκδίδονται αυτόματα από τη ροή πληρωμής.'
@@ -427,6 +434,9 @@ export default function OcFinances({ canIssue, members }: { canIssue: boolean; m
             </>
           )}
         </div>
+        </div>
+        </div>
+        )}
       </div>
 
       {/* Μηνιαία επικόλληση κινήσεων τράπεζας */}
@@ -436,10 +446,24 @@ export default function OcFinances({ canIssue, members }: { canIssue: boolean; m
 
       {/* Λίστα αποδείξεων: πρόσφατες / όλες */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
-        <div className="flex flex-wrap items-center gap-4 mb-5">
+        <button type="button" onClick={() => setOpenList(!openList)} className="w-full flex items-center gap-3 text-left"
+          aria-expanded={openList}>
           <h2 className="text-xl font-bold text-charcoal dark:text-gray-100">
             {listScope === 'recent' ? 'Πρόσφατες αποδείξεις' : 'Όλες οι αποδείξεις'}
           </h2>
+          <span className="ml-auto flex items-center gap-3">
+            {series && (
+              <span className="text-sm text-gray-400 dark:text-gray-500 notranslate">
+                {listScope === 'all' ? `${series.recent.length} αποδείξεις` : `${series.recent.length} από ${series.total}`}
+              </span>
+            )}
+            <span className={`text-coral transition-transform ${openList ? 'rotate-180' : ''}`} aria-hidden="true">▼</span>
+          </span>
+        </button>
+
+        {openList && (
+        <div className="mt-5">
+        <div className="flex flex-wrap items-center gap-4 mb-5">
           <div className="flex rounded-full border border-gray-200 dark:border-gray-600 overflow-hidden text-xs font-bold" role="group" aria-label="Εύρος λίστας αποδείξεων">
             <button type="button" onClick={() => setListScope('recent')}
               aria-pressed={listScope === 'recent'}
@@ -456,11 +480,6 @@ export default function OcFinances({ canIssue, members }: { canIssue: boolean; m
               Όλες
             </button>
           </div>
-          {series && (
-            <span className="text-sm text-gray-400 dark:text-gray-500 ml-auto notranslate">
-              {listScope === 'all' ? `${series.recent.length} αποδείξεις` : `${series.recent.length} από ${series.total}`}
-            </span>
-          )}
         </div>
         {!series || series.recent.length === 0 ? (
           <p className="text-gray-400 dark:text-gray-500 text-sm">Καμία απόδειξη στο σύστημα ακόμη.</p>
@@ -531,6 +550,8 @@ export default function OcFinances({ canIssue, members }: { canIssue: boolean; m
               </tbody>
             </table>
           </div>
+        )}
+        </div>
         )}
       </div>
     </div>
