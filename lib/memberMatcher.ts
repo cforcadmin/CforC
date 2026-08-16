@@ -64,6 +64,17 @@ export function wordSkeleton(word: string): string {
   return t
 }
 
+/**
+ * ΕΘΝΙΚΗ: «ΕΠΩΝΥΜΟ␣␣␣…ΟΝΟΜΑ␣␣␣…ΠΑΤΡΩΝΥΜΟ» σε τρεις στήλες με padding.
+ * Το ΠΑΤΡΩΝΥΜΟ πετιέται: αλλιώς «VLACHOS NIKOLAOS GEORGIOS» ταιριάζει με
+ * το επώνυμο «Γεωργίου» άλλου μέλους (πραγματικό περιστατικό, 16/8/26).
+ */
+export function stripPatronymic(payerName: string): string {
+  const cols = payerName.split(/\s{3,}/).map(c => c.trim()).filter(Boolean)
+  if (cols.length === 3) return `${cols[0]} ${cols[1]}`
+  return payerName
+}
+
 /** Όνομα → σκελετοί λέξεων (χωρίζει σε κενά/παύλες, πετά μονογράμματα) */
 export function nameSkeletons(name: string): string[] {
   return name.split(/[\s\-–—.,·]+/)
@@ -142,9 +153,20 @@ export function matchPayerToMembers(
   members: MatchableMember[],
   max = 3,
 ): MatchCandidate[] {
+  const cleanPayer = stripPatronymic(payerName)
+  const payerWords = nameSkeletons(cleanPayer)
   const scored: MatchCandidate[] = []
   for (const member of members) {
-    const score = nameSimilarity(payerName, member.name)
+    const score = nameSimilarity(cleanPayer, member.name)
+    // Ένα μόνο κοινό επώνυμο ΔΕΝ αρκεί: για δίλεκτα ονόματα μελών
+    // απαιτούνται δύο λέξεις που ταιριάζουν καλά — αλλιώς «Γεωργία
+    // Γεωργίου» ταιριάζει με οποιονδήποτε «…GEORGIOS/GEORGIOU»
+    const memberWords = nameSkeletons(member.name)
+    const strongWordHits = memberWords.filter(mw =>
+      payerWords.some(pw => wordSimilarity(mw, pw) >= 0.85)
+    ).length
+    const needed = Math.min(2, memberWords.length)
+    if (strongWordHits < needed) continue
     if (score >= MEDIUM_THRESHOLD) {
       scored.push({
         ...member,
