@@ -206,6 +206,22 @@ export async function processPaymentCompletion(input: PaymentCompletionInput): P
     console.error('payment completion: welcome email failed:', err)
   }
   try {
+    // Σημασιολογικό φρένο: αν υπάρχει ήδη απόδειξη συνδρομής/εγγραφής για
+    // αυτό το μέλος+έτος (π.χ. replay του sheet-sync), ΔΕΝ εκδίδουμε δεύτερη.
+    const dupQ = 'filters[Type][$in][0]=subscription&filters[Type][$in][1]=registration' +
+      `&filters[SubscriptionYear][$eq]=${year}&fields[0]=Number&pagination[limit]=1`
+    const dupByRel = memberDocId
+      ? await strapi(`/receipts?filters[member][documentId][$eq]=${memberDocId}&${dupQ}`)
+      : null
+    const dupByName = !dupByRel?.json?.data?.[0]
+      ? await strapi(`/receipts?filters[MemberName][$eqi]=${encodeURIComponent(fullName)}&${dupQ}`)
+      : null
+    const dupHit = dupByRel?.json?.data?.[0] || dupByName?.json?.data?.[0]
+    if (dupHit) {
+      console.log(`payment completion: receipt already exists for ${fullName}/${year} (ΑΠ. ΕΙΣ. ${dupHit.Number}) — skipping issue`)
+      return { ok: true, member: memberDocId, memberWas, application, welcomeSent, receiptSent: false }
+    }
+
     const isCompany = app?.ReceiptType === 'Εταιρεία'
     // Επίσημος αριθμός από την ενιαία σειρά — αν η σειρά δεν έχει
     // αρχικοποιηθεί (πριν το seeding), ΔΕΝ εκδίδουμε απόδειξη· το welcome

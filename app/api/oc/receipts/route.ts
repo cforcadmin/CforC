@@ -221,6 +221,30 @@ export async function POST(request: NextRequest) {
     }
 
     const isSubscriptionLike = type === 'subscription' || type === 'registration'
+
+    // Σημασιολογικό φρένο: ΜΙΑ απόδειξη συνδρομής/εγγραφής ανά μέλος+έτος.
+    // Έλεγχος και με σχέση μέλους ΚΑΙ με όνομα (οι εισαγμένες από το ΕΣΟΔΑ
+    // δεν έχουν member relation — μόνο MemberName).
+    if (isSubscriptionLike) {
+      const typeFilter = 'filters[Type][$in][0]=subscription&filters[Type][$in][1]=registration' +
+        `&filters[SubscriptionYear][$eq]=${year}&fields[0]=Number&fields[1]=Type&pagination[limit]=1`
+      let dupHit: any = null
+      if (memberDocId) {
+        const d = await strapi(`/receipts?filters[member][documentId][$eq]=${memberDocId}&${typeFilter}`)
+        dupHit = d.json?.data?.[0] || null
+      }
+      if (!dupHit && memberName) {
+        const d = await strapi(`/receipts?filters[MemberName][$eqi]=${encodeURIComponent(memberName)}&${typeFilter}`)
+        dupHit = d.json?.data?.[0] || null
+      }
+      if (dupHit) {
+        return NextResponse.json(
+          { error: `Υπάρχει ήδη απόδειξη ${dupHit.Type === 'registration' ? 'εγγραφής+συνδρομής' : 'συνδρομής'} ${year} για αυτό το μέλος — ΑΠ. ΕΙΣ. ${dupHit.Number}. Δεν εκδίδεται δεύτερη για το ίδιο έτος.`, number: dupHit.Number },
+          { status: 409 }
+        )
+      }
+    }
+
     const registrationFee = type === 'registration' ? (Number(body?.registrationFee) > 0 ? Number(body.registrationFee) : 10) : 0
     const subscriptionFee = type === 'registration'
       ? Math.max(0, amount - registrationFee)
