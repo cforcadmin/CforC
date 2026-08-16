@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import OcBankIntake from '@/components/oc/OcBankIntake'
+import OcSubscriptions, { type SubMemberRow } from '@/components/oc/OcSubscriptions'
 
 /**
  * OC → Οικονομικά: έκδοση αποδείξεων από την ενιαία σειρά «ΑΠ. ΕΙΣ.».
@@ -48,7 +49,12 @@ type TypeKey = (typeof TYPES)[number]['key']
 const inputCls = 'w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral'
 const labelCls = 'block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5'
 
-export default function OcFinances({ canIssue, members }: { canIssue: boolean; members: MemberOption[] }) {
+export default function OcFinances({ canIssue, canRemind, members, subMembers }: {
+  canIssue: boolean
+  canRemind: boolean
+  members: MemberOption[]
+  subMembers: SubMemberRow[]
+}) {
   const [series, setSeries] = useState<SeriesState | null>(null)
   const [listScope, setListScope] = useState<'recent' | 'all'>('recent')
   // Όλες οι ενότητες κλειστές στο φόρτωμα — άνοιγμα κατ' απαίτηση
@@ -215,6 +221,9 @@ export default function OcFinances({ canIssue, members }: { canIssue: boolean; m
 
   return (
     <div className="space-y-8">
+      {/* Συνδρομές: μετρητές + υπενθυμίσεις, πάντα πρώτο */}
+      <OcSubscriptions members={subMembers} canRemind={canRemind} />
+
       {notice && (
         <div role="status" className={`rounded-2xl px-5 py-4 text-sm font-medium ${
           notice.kind === 'ok'

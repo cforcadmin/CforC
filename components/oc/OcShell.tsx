@@ -384,8 +384,12 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
           {activeSection === 'finances' && (
             <OcFinances
               canIssue={activeSeat === 'financer'}
+              canRemind={activeSeat === 'financer' || activeSeat === 'community'}
               members={(overview?.members || []).map(m => ({
                 docId: m.docId, name: m.name, am: m.am, email: m.email,
+              }))}
+              subMembers={(overview?.members || []).map(m => ({
+                docId: m.docId, name: m.name, am: m.am, payments: m.payments, status: m.status,
               }))}
             />
           )}
