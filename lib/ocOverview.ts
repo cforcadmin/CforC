@@ -151,15 +151,26 @@ async function fetchNewsletters(): Promise<{ members: OcNewsletterStats[]; exter
 export async function fetchOcOverview(): Promise<OcOverviewData> {
   const year = OC_CURRENT_YEAR
 
-  // Μέλη με τα κρυφά πεδία μητρώου (paginated — clamp 100)
+  // Μέλη με τα κρυφά πεδία μητρώου (paginated — clamp 100).
+  // Το RenewalClaimedAt ζητείται προαιρετικά: αν το πεδίο δεν υπάρχει ακόμη
+  // στο Strapi Cloud (deploy-order), το query ΔΕΝ πρέπει να ρίξει όλο το
+  // dashboard — ξαναδοκιμάζουμε χωρίς αυτό.
+  const baseFields =
+    `fields[0]=Name&fields[1]=Email&fields[2]=AM&fields[3]=RegistrationYear` +
+    `&fields[4]=Payments&fields[5]=HideProfile&fields[6]=City&fields[7]=Phone&fields[8]=Slug`
+  let memberFields = `${baseFields}&fields[9]=RenewalClaimedAt`
   const members: OcMemberRow[] = []
   let start = 0
   while (true) {
-    const page = await strapiGet(
-      `/members?fields[0]=Name&fields[1]=Email&fields[2]=AM&fields[3]=RegistrationYear` +
-      `&fields[4]=Payments&fields[5]=HideProfile&fields[6]=City&fields[7]=Phone&fields[8]=Slug&fields[9]=RenewalClaimedAt` +
-      `&pagination[start]=${start}&pagination[limit]=100&pagination[withCount]=true`
+    let page = await strapiGet(
+      `/members?${memberFields}&pagination[start]=${start}&pagination[limit]=100&pagination[withCount]=true`
     )
+    if (!page && memberFields !== baseFields) {
+      memberFields = baseFields
+      page = await strapiGet(
+        `/members?${memberFields}&pagination[start]=${start}&pagination[limit]=100&pagination[withCount]=true`
+      )
+    }
     if (!page) break
     for (const m of page.data || []) {
       if (m.AM == null) continue // λογαριασμοί εκτός μητρώου (χωρίς ΑΜ) δεν είναι ενεργά μέλη
