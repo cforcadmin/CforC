@@ -72,13 +72,15 @@ async function authorize(needFinancer: boolean) {
   return { memberId: decoded.memberId }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const auth = await authorize(false)
   if ('error' in auth) return auth.error
   try {
+    // ?all=1 → ολόκληρο το μητρώο αποδείξεων (cap 1000), αλλιώς οι 12 πρόσφατες
+    const all = request.nextUrl.searchParams.get('all') === '1'
     const [next, recentRes] = await Promise.all([
       nextReceiptNumber(),
-      strapi('/receipts?sort=Number:desc&pagination[limit]=12' +
+      strapi(`/receipts?sort=Number:desc&pagination[limit]=${all ? 1000 : 12}` +
         '&fields[0]=Number&fields[1]=Type&fields[2]=Amount&fields[3]=MemberName' +
         '&fields[4]=IssueDate&fields[5]=PaymentDate&fields[6]=SheetSynced'),
     ])
@@ -92,7 +94,12 @@ export async function GET() {
       paymentDate: r.PaymentDate,
       sheetSynced: !!r.SheetSynced,
     }))
-    return NextResponse.json({ seeded: next !== null, nextNumber: next, recent })
+    return NextResponse.json({
+      seeded: next !== null,
+      nextNumber: next,
+      recent,
+      total: recentRes.json?.meta?.pagination?.total ?? recent.length,
+    })
   } catch (err) {
     console.error('oc/receipts GET failed:', err)
     return NextResponse.json({ error: 'Αποτυχία φόρτωσης σειράς' }, { status: 502 })

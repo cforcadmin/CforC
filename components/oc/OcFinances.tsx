@@ -29,6 +29,7 @@ interface SeriesState {
   seeded: boolean
   nextNumber: number | null
   recent: RecentReceipt[]
+  total: number
 }
 
 const TYPES = [
@@ -47,6 +48,7 @@ const labelCls = 'block text-xs font-bold text-gray-500 dark:text-gray-400 upper
 
 export default function OcFinances({ canIssue, members }: { canIssue: boolean; members: MemberOption[] }) {
   const [series, setSeries] = useState<SeriesState | null>(null)
+  const [listScope, setListScope] = useState<'recent' | 'all'>('recent')
   const [loadError, setLoadError] = useState(false)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
@@ -75,9 +77,9 @@ export default function OcFinances({ canIssue, members }: { canIssue: boolean; m
   const [seedName, setSeedName] = useState('')
   const [seedAmount, setSeedAmount] = useState('')
 
-  async function load() {
+  async function load(scope: 'recent' | 'all' = listScope) {
     try {
-      const res = await fetch('/api/oc/receipts')
+      const res = await fetch(scope === 'all' ? '/api/oc/receipts?all=1' : '/api/oc/receipts')
       if (!res.ok) throw new Error(String(res.status))
       setSeries(await res.json())
       setLoadError(false)
@@ -85,7 +87,7 @@ export default function OcFinances({ canIssue, members }: { canIssue: boolean; m
       setLoadError(true)
     }
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => { load(listScope) }, [listScope]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const isSubscriptionLike = type === 'subscription' || type === 'registration'
 
@@ -397,9 +399,34 @@ export default function OcFinances({ canIssue, members }: { canIssue: boolean; m
         </div>
       </div>
 
-      {/* Πρόσφατες αποδείξεις */}
+      {/* Λίστα αποδείξεων: πρόσφατες / όλες */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
-        <h2 className="text-xl font-bold text-charcoal dark:text-gray-100 mb-5">Πρόσφατες αποδείξεις</h2>
+        <div className="flex flex-wrap items-center gap-4 mb-5">
+          <h2 className="text-xl font-bold text-charcoal dark:text-gray-100">
+            {listScope === 'recent' ? 'Πρόσφατες αποδείξεις' : 'Όλες οι αποδείξεις'}
+          </h2>
+          <div className="flex rounded-full border border-gray-200 dark:border-gray-600 overflow-hidden text-xs font-bold" role="group" aria-label="Εύρος λίστας αποδείξεων">
+            <button type="button" onClick={() => setListScope('recent')}
+              aria-pressed={listScope === 'recent'}
+              className={`px-4 py-1.5 transition-colors ${listScope === 'recent'
+                ? 'bg-coral text-white'
+                : 'text-gray-500 dark:text-gray-400 hover:text-charcoal dark:hover:text-gray-200'}`}>
+              Πρόσφατες
+            </button>
+            <button type="button" onClick={() => setListScope('all')}
+              aria-pressed={listScope === 'all'}
+              className={`px-4 py-1.5 transition-colors ${listScope === 'all'
+                ? 'bg-coral text-white'
+                : 'text-gray-500 dark:text-gray-400 hover:text-charcoal dark:hover:text-gray-200'}`}>
+              Όλες
+            </button>
+          </div>
+          {series && (
+            <span className="text-sm text-gray-400 dark:text-gray-500 ml-auto notranslate">
+              {listScope === 'all' ? `${series.recent.length} αποδείξεις` : `${series.recent.length} από ${series.total}`}
+            </span>
+          )}
+        </div>
         {!series || series.recent.length === 0 ? (
           <p className="text-gray-400 dark:text-gray-500 text-sm">Καμία απόδειξη στο σύστημα ακόμη.</p>
         ) : (
