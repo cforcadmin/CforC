@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import OcBankIntake from '@/components/oc/OcBankIntake'
 
 /**
  * OC → Οικονομικά: έκδοση αποδείξεων από την ενιαία σειρά «ΑΠ. ΕΙΣ.».
@@ -398,6 +399,11 @@ export default function OcFinances({ canIssue, members }: { canIssue: boolean; m
           )}
         </div>
       </div>
+
+      {/* Μηνιαία επικόλληση κινήσεων τράπεζας */}
+      {series?.seeded && (
+        <OcBankIntake canIssue={canIssue} members={members} onIssued={() => load()} />
+      )}
 
       {/* Λίστα αποδείξεων: πρόσφατες / όλες */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">

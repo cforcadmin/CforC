@@ -8,6 +8,7 @@ import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
 import { nextReceiptNumber, createReceipt, type ReceiptType } from '@/lib/receipts'
 import { generateReceiptPdf } from '@/lib/receiptPdf'
 import { sendOcEmail, manualReceiptEmailHtml, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
+import { upsertAlias } from '@/lib/payerAliases'
 
 /**
  * Χειροκίνητη έκδοση αποδείξεων από τον/τη Financer (OC → Οικονομικά).
@@ -158,6 +159,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Δώσε μέλος ή ονοματεπώνυμο' }, { status: 400 })
     }
 
+    // Dedup: μία απόδειξη ανά τραπεζική συναλλαγή — επικόλληση μήνα με
+    // επικάλυψη δεν πρέπει να ξαναεκδώσει ό,τι έχει ήδη εκδοθεί
+    const transactionId = String(body?.transactionId || '').trim() || null
+    if (transactionId) {
+      const dup = await strapi(`/receipts?filters[TransactionId][$eq]=${encodeURIComponent(transactionId)}&fields[0]=Number&pagination[limit]=1`)
+      const hit = dup.json?.data?.[0]
+      if (hit) {
+        return NextResponse.json(
+          { error: `Υπάρχει ήδη απόδειξη (ΑΠ. ΕΙΣ. ${hit.Number}) για αυτή τη συναλλαγή`, number: hit.Number },
+          { status: 409 }
+        )
+      }
+    }
+
     // Μέλος: ΑΜ/email για την απόδειξη + ενημέρωση Payments για συνδρομές.
     // ΠΡΟΣΟΧΗ: το custom member controller δέχεται ΜΟΝΟ αριθμητικό id στο PUT.
     let memberAm: number | string = ''
@@ -200,6 +215,7 @@ export async function POST(request: NextRequest) {
       payerName: String(body?.payerName || '').trim() || null,
       memberName: memberName || null,
       memberDocId,
+      transactionId,
       paymentMethod,
       companyName: String(body?.companyName || '').trim() || null,
       companyAddress: String(body?.companyAddress || '').trim() || null,
@@ -239,6 +255,16 @@ export async function POST(request: NextRequest) {
         cc: [FINANCE_EMAIL],
         attachments: [{ filename: `apodeixi-eispraxis-${receipt.number}.pdf`, content: Buffer.from(pdf).toString('base64') }],
       })
+    }
+
+    // Learned alias: η επιβεβαίωση του Financer διδάσκει τον matcher
+    const payerNameStr = String(body?.payerName || '').trim()
+    if (payerNameStr && (memberDocId || memberName)) {
+      try {
+        await upsertAlias(payerNameStr, memberDocId, memberName || null)
+      } catch (err) {
+        console.error('oc/receipts: alias upsert failed (non-fatal):', err)
+      }
     }
 
     return NextResponse.json({ ok: true, action: 'issue', number: receipt.number, emailSent, to: sendEmail ? email || null : null })
