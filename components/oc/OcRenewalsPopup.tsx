@@ -21,22 +21,26 @@ export interface RenewalRow {
   reminderSentAt: string | null
 }
 
-type RowBusy = 'idle' | 'issuing' | 'issued' | 'reminding' | 'reminded' | 'error'
+type RowBusy = 'idle' | 'issuing' | 'issued' | 'reminding' | 'reminded' | 'failing' | 'failed-sent' | 'error'
 
-export default function OcRenewalsPopup({ members, canIssue, canRemind, onClose, onChanged }: {
+export default function OcRenewalsPopup({ members, canIssue, canRemind, onClose, onChanged, claimsOnly = false }: {
   members: RenewalRow[]
   canIssue: boolean
   canRemind: boolean
   onClose: () => void
   onChanged?: () => void
+  /** true = ΜΟΝΟ όσοι δήλωσαν πληρωμή (η ουρά εργασίας του tile Επισκόπησης) */
+  claimsOnly?: boolean
 }) {
   const [busy, setBusy] = useState<Record<string, RowBusy>>({})
   const [notes, setNotes] = useState<Record<string, string>>({})
   const [confirmIssue, setConfirmIssue] = useState<string | null>(null)
+  const [confirmFail, setConfirmFail] = useState<string | null>(null)
   const year = new Date().getFullYear()
 
   const unpaid = members
     .filter(m => m.status === 'owes-1' || m.status === 'owes-2' || m.status === 'new-unpaid')
+    .filter(m => !claimsOnly || m.renewalClaimedAt)
     .sort((a, b) => {
       const ca = a.renewalClaimedAt ? 0 : 1
       const cb = b.renewalClaimedAt ? 0 : 1
@@ -84,6 +88,25 @@ export default function OcRenewalsPopup({ members, canIssue, canRemind, onClose,
     }
   }
 
+  async function fail(m: RenewalRow) {
+    setConfirmFail(null)
+    setBusy(s => ({ ...s, [m.docId]: 'failing' }))
+    try {
+      const res = await fetch('/api/oc/renewal-claims', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'failed', memberDocId: m.docId }),
+      })
+      if (!res.ok) throw new Error((await res.json())?.error || 'Αποτυχία')
+      setBusy(s => ({ ...s, [m.docId]: 'failed-sent' }))
+      setNotes(n => ({ ...n, [m.docId]: 'Email «δεν εντοπίσαμε την κατάθεση» εστάλη — η δήλωση μηδενίστηκε' }))
+      onChanged?.()
+    } catch (err: any) {
+      setBusy(s => ({ ...s, [m.docId]: 'error' }))
+      setNotes(n => ({ ...n, [m.docId]: err?.message || 'Αποτυχία' }))
+    }
+  }
+
   async function remind(m: RenewalRow) {
     setBusy(s => ({ ...s, [m.docId]: 'reminding' }))
     try {
@@ -116,7 +139,7 @@ export default function OcRenewalsPopup({ members, canIssue, canRemind, onClose,
       >
         <div className="flex items-start justify-between gap-4 mb-1">
           <h3 className="font-bold text-lg text-charcoal dark:text-gray-100">
-            Ανεξόφλητες συνδρομές {year}
+            {claimsOnly ? 'Δήλωσαν πληρωμή συνδρομής' : `Ανεξόφλητες συνδρομές ${year}`}
             <span className="ml-2 text-sm font-normal text-gray-400">({unpaid.length})</span>
           </h3>
           <button type="button" onClick={onClose}
@@ -125,13 +148,18 @@ export default function OcRenewalsPopup({ members, canIssue, canRemind, onClose,
           </button>
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-          {claims > 0 ? `${claims} δήλωσαν ότι πλήρωσαν (💶 πρώτοι στη λίστα). ` : ''}
-          «Έκδοση απόδειξης» = εγγραφή, PDF με email στο μέλος και ενημέρωση πληρωμών, αυτόματα.
-          {canIssue ? '' : ' Έκδοση: μόνο ο ενεργός ρόλος Financer.'}
+          {claimsOnly
+            ? 'Μέλη που πάτησαν «Έκανα την κατάθεση» στο email υπενθύμισης. «Έγκριση» = απόδειξη + email + ενημέρωση πληρωμών, αυτόματα · «Αποτυχία» = email «δεν εντοπίσαμε την κατάθεση» και μηδενισμός της δήλωσης.'
+            : `${claims > 0 ? `${claims} δήλωσαν ότι πλήρωσαν (💶 πρώτοι στη λίστα). ` : ''}«Έκδοση απόδειξης» = εγγραφή, PDF με email στο μέλος και ενημέρωση πληρωμών, αυτόματα.`}
+          {canIssue ? '' : ' Έγκριση/Αποτυχία: μόνο ο ενεργός ρόλος Financer.'}
         </p>
 
         {unpaid.length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500">Καμία ανεξόφλητη συνδρομή. 🎉</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">
+            {claimsOnly
+              ? 'Καμία δήλωση πληρωμής προς επιβεβαίωση. 🎉 (Όλες οι ανεξόφλητες: Οικονομικά → Συνδρομές)'
+              : 'Καμία ανεξόφλητη συνδρομή. 🎉'}
+          </p>
         ) : (
           <ul className="space-y-2">
             {unpaid.map(m => {
@@ -164,7 +192,7 @@ export default function OcRenewalsPopup({ members, canIssue, canRemind, onClose,
                       </span>
                     )}
                     <span className="ml-auto flex items-center gap-2">
-                      {st === 'issued' || st === 'reminded' || st === 'error' ? (
+                      {st === 'issued' || st === 'reminded' || st === 'failed-sent' || st === 'error' ? (
                         <span className={`text-xs font-medium notranslate ${st === 'error' ? 'text-red-600 dark:text-red-400' : 'text-green-700 dark:text-green-300'}`}>
                           {notes[m.docId]}
                         </span>
@@ -182,16 +210,37 @@ export default function OcRenewalsPopup({ members, canIssue, canRemind, onClose,
                             Άκυρο
                           </button>
                         </>
+                      ) : confirmFail === m.docId ? (
+                        <>
+                          <span className="text-xs text-charcoal dark:text-gray-200 max-w-56">
+                            Σίγουρα; Θυμήσου: Σ/Κ εκκαθαρίζονται Δευτέρα, διατραπεζικές έως 2 εργάσιμες.
+                          </span>
+                          <button type="button" onClick={() => fail(m)}
+                            className="px-3 py-1.5 rounded-full bg-red-600 text-white text-xs font-bold hover:opacity-90">
+                            Ναι, αποστολή
+                          </button>
+                          <button type="button" onClick={() => setConfirmFail(null)}
+                            className="px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-xs text-charcoal dark:text-gray-200">
+                            Άκυρο
+                          </button>
+                        </>
                       ) : (
                         <>
                           {canIssue && (
                             <button type="button" onClick={() => setConfirmIssue(m.docId)}
                               disabled={st !== 'idle'}
                               className="px-3 py-1.5 rounded-full bg-[#6A994E] text-white text-xs font-bold hover:opacity-90 disabled:opacity-40">
-                              {st === 'issuing' ? 'Έκδοση…' : 'Έκδοση απόδειξης'}
+                              {st === 'issuing' ? 'Έκδοση…' : claimed ? 'Έγκριση + απόδειξη' : 'Έκδοση απόδειξης'}
                             </button>
                           )}
-                          {canRemind && (
+                          {canIssue && claimed && (
+                            <button type="button" onClick={() => setConfirmFail(m.docId)}
+                              disabled={st !== 'idle'}
+                              className="px-3 py-1.5 rounded-full border border-red-300 dark:border-red-500/60 text-xs font-medium text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-40">
+                              {st === 'failing' ? 'Αποστολή…' : 'Αποτυχία'}
+                            </button>
+                          )}
+                          {canRemind && !claimed && (
                             <button type="button" onClick={() => remind(m)}
                               disabled={st !== 'idle'}
                               className="px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-xs font-medium text-charcoal dark:text-gray-200 hover:border-coral disabled:opacity-40">

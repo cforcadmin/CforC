@@ -213,7 +213,8 @@ export async function POST(request: NextRequest) {
           }
         }
         payments[String(year)] = 1
-        const upd = await strapi(`/members/${member.id}`, 'PUT', { Payments: payments })
+        // Η έκδοση κλείνει και τυχόν ανοιχτή δήλωση πληρωμής (renewal claim)
+        const upd = await strapi(`/members/${member.id}`, 'PUT', { Payments: payments, RenewalClaimedAt: null })
         if (!upd.ok) console.error('oc/receipts: Payments update failed', upd.status)
       }
     }

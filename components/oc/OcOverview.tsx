@@ -638,6 +638,7 @@ export default function OcOverview({
           members={data.members}
           canIssue={canRecordPayments}
           canRemind={canRemind}
+          claimsOnly
           onClose={() => setShowRenewals(false)}
           onChanged={() => router.refresh()}
         />

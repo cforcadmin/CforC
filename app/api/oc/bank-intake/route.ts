@@ -91,7 +91,8 @@ export async function POST(request: NextRequest) {
     // από την επόμενη επικόλληση το πιάνει το ακριβές επίπεδο.
     const allRes = await strapi('/receipts?pagination[limit]=1000' +
       '&fields[0]=Number&fields[1]=TransactionId&fields[2]=Amount' +
-      '&fields[3]=PaymentDate&fields[4]=MemberName&fields[5]=PayerName')
+      '&fields[3]=PaymentDate&fields[4]=MemberName&fields[5]=PayerName' +
+      '&fields[6]=Type&fields[7]=SubscriptionYear')
     const allReceipts: any[] = allRes.json?.data || []
     const existingByTxn = new Map<string, number>()
     for (const e of allReceipts) {
@@ -117,7 +118,21 @@ export async function POST(request: NextRequest) {
           (e.PayerName && nameSimilarity(c.payerName!, e.PayerName) >= NAME_OK)
         )
       }
-      // (β) χωρίς όνομα αλλά μοναδικό 1:1 ταίριασμα ποσού+ημερομηνίας
+      // (β) ΣΗΜΑΣΙΟΛΟΓΙΚΟ: μία απόδειξη συνδρομής/εγγραφής ανά μέλος+έτος.
+      // Καλύπτει αποδείξεις που εκδόθηκαν από δήλωση πληρωμής (claim) ΠΡΙΝ
+      // από τη μηνιαία επικόλληση — η ημερομηνία έκδοσης μπορεί να απέχει
+      // από την τραπεζική, γι' αυτό εδώ ΔΕΝ κοιτάμε ημερομηνία/ποσό.
+      if (!hit && c.payerName) {
+        const creditYear = new Date(c.date).getFullYear()
+        hit = untagged.find(e =>
+          !claimed.has(e.documentId) &&
+          (e.Type === 'subscription' || e.Type === 'registration') &&
+          e.SubscriptionYear === creditYear &&
+          ((e.MemberName && nameSimilarity(c.payerName!, e.MemberName) >= NAME_OK) ||
+           (e.PayerName && nameSimilarity(c.payerName!, e.PayerName) >= NAME_OK))
+        )
+      }
+      // (γ) χωρίς όνομα αλλά μοναδικό 1:1 ταίριασμα ποσού+ημερομηνίας
       if (!hit && window.length === 1) {
         const competing = joined.credits.filter(o =>
           o !== c && !existingByTxn.has(o.txnId) &&
