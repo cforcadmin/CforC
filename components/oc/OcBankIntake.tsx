@@ -35,7 +35,7 @@ interface IntakeRow {
 
 interface RowState {
   include: boolean
-  type: 'subscription' | 'extraordinary' | 'donation' | 'grant' | 'other'
+  type: 'subscription' | 'extraordinary' | 'donation' | 'grant' | 'other' | 'record-grant'
   year: string
   memberDocId: string | null
   memberName: string
@@ -94,7 +94,7 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
         const isSub = r.kind === 'subscription'
         init[r.txnId] = {
           include: isSub && !r.existingNumber,
-          type: r.kind === 'grant-like' ? 'grant' : 'subscription',
+          type: r.kind === 'grant-like' ? 'record-grant' : 'subscription',
           year: String(new Date(r.date).getFullYear()),
           memberDocId: r.suggestion?.docId || null,
           memberName: r.suggestion?.name || '',
@@ -129,6 +129,32 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
       }
       patch(r.txnId, { status: 'issuing' })
       try {
+        // Χορηγίες χωρίς απόδειξη: δεν αγγίζουν τη σειρά ΑΠ. ΕΙΣ. —
+        // γράφονται στο ΕΣΟΔΑ με την αναφορά της τράπεζας
+        if (st.type === 'record-grant') {
+          const res = await fetch('/api/oc/income-records', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: r.amount,
+              paymentDate: r.date,
+              category: 'grant',
+              payerName: st.memberName.trim() || r.payerName || '',
+              description: r.reason,
+              docRef: r.reason,
+              txnId: r.txnId,
+              paymentMethod: 'bank',
+            }),
+          })
+          const data = await res.json()
+          if (!res.ok) throw new Error(data?.error || 'Αποτυχία')
+          patch(r.txnId, {
+            status: 'done',
+            resultText: `καταχωρήθηκε ${data.aa}${data.renamed ? ` · ${data.renamed}` : ' · χωρίς απόδειξη'}`,
+          })
+          continue
+        }
+
         const res = await fetch('/api/oc/receipts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -319,7 +345,8 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
                                 <option value="subscription">Συνδρομή {st.year}</option>
                                 <option value="extraordinary">Έκτακτη</option>
                                 <option value="donation">Δωρεά</option>
-                                <option value="grant">Χορηγία</option>
+                                <option value="grant">Χορηγία (με απόδειξη)</option>
+                                <option value="record-grant">Χορηγία/Επιχορήγηση — χωρίς απόδειξη</option>
                                 <option value="other">Άλλο</option>
                               </select>
                             )}
