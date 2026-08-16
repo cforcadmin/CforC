@@ -177,3 +177,27 @@ describe('buildApprovedFilename', () => {
     expect(buildApprovedFilename(p, '3.13', '2026-03-22')).toBe('3.13_Παπαρούνα Αθήνα_60489212_22-03-2026.png')
   })
 })
+
+describe('ποσό στο όνομα αρχείου — αποδεκτές μορφές', () => {
+  const amountOf = (n: string) => parseInvoiceFilename(n).amount
+
+  it('κόμμα με δύο δεκαδικά (ο βασικός κανόνας)', () => {
+    expect(amountOf('Strapi_72152_16,20_03-08-2026.pdf')).toBe(16.20)
+    expect(amountOf('Τσέλιου_90_1.299,52_04-03-2026.pdf')).toBe(1299.52)
+  })
+
+  it('με σύμβολο ευρώ δέχεται και τελεία, και χωρίς δεκαδικά', () => {
+    expect(amountOf('Strapi_72152_16.20€_03-08-2026.pdf')).toBe(16.20)
+    expect(amountOf('Strapi_72152_€16,20_03-08-2026.pdf')).toBe(16.20)
+    expect(amountOf('ECF_2500€.pdf')).toBe(2500)
+  })
+
+  it('ΔΕΝ μπερδεύει ημερομηνίες ή ΜΑΡΚ με ποσά', () => {
+    expect(amountOf('alpha_400012755975983_02-03-2026.pdf')).toBeNull()
+    expect(amountOf('ENCC_2026-0127_20-03-2026.pdf')).toBeNull()
+  })
+
+  it('τελεία ΧΩΡΙΣ ευρώ δεν θεωρείται ποσό (μπορεί να είναι αριθμός)', () => {
+    expect(amountOf('Προμηθευτής_16.20_03-08-2026.pdf')).toBeNull()
+  })
+})

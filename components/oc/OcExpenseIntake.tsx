@@ -265,7 +265,16 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
             Στο όνομα αρκεί: <strong>προμηθευτής</strong> + <strong>αριθμός παραστατικού</strong> (ή ID-ΜΑΡΚ) + <strong>ημερομηνία</strong>.
             Π.χ. <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">Strapi_72152_01-03-2026.pdf</code> ή σκέτο{' '}
             <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">2450-400012345678901.pdf</code>.
-            Αν γράψεις και το ποσό (π.χ. <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">36,26</code>) συμπληρώνεται κι αυτό.
+          </p>
+          <p>
+            <strong>Ποσό (προαιρετικό, αλλά χρήσιμο):</strong> γράψ' το ως ξεχωριστό κομμάτι του ονόματος, με{' '}
+            <strong>κόμμα και δύο δεκαδικά</strong> — <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">36,26</code>,{' '}
+            <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">1.299,52</code> — ή με{' '}
+            <strong>€</strong> οπότε επιτρέπεται και τελεία:{' '}
+            <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">16.20€</code>,{' '}
+            <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">2500€</code>.
+            Π.χ. <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">Strapi_72152_16,20_03-08-2026.pdf</code>.
+            Όταν υπάρχει και στο όνομα και στην τράπεζα, τα <strong>συγκρίνουμε</strong> και σου δείχνουμε τυχόν διαφορά.
           </p>
           <p>
             Μετά την έγκριση τα αρχεία <strong>μετονομάζονται αυτόματα</strong> σε{' '}

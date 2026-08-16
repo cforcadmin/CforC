@@ -87,10 +87,27 @@ function splitTrailingDate(token: string): { head: string; date: string | null }
   return { head: token, date: null }
 }
 
-/** Ποσό γραμμένο στο όνομα: «36,26» ή «1.299,52» (όχι ημερομηνία/ΜΑΡΚ) */
+/**
+ * Ποσό γραμμένο στο όνομα αρχείου. Δύο τρόποι:
+ *   1. κόμμα με 2 δεκαδικά: «36,26», «1.299,52», «1089,92»
+ *   2. με σύμβολο ευρώ (τότε δεκτή και η τελεία): «16.20€», «€16,20», «45€»
+ * Το € κάνει την πρόθεση σαφή, οπότε δεν μπερδεύεται με αριθμό παραστατικού.
+ */
 function parseAmountToken(token: string): number | null {
-  if (!/^\d{1,3}(\.\d{3})*,\d{2}$|^\d+,\d{2}$/.test(token)) return null
-  const n = parseFloat(token.replace(/\./g, '').replace(',', '.'))
+  const hasEuro = /€|EUR$/i.test(token)
+  const t = token.replace(/€/g, '').replace(/EUR$/i, '').trim()
+  if (!t) return null
+  if (hasEuro) {
+    // με ρητό νόμισμα: δεκτή τελεία ή κόμμα, με ή χωρίς δεκαδικά
+    if (!/^\d{1,3}(\.\d{3})*(,\d{1,2})?$|^\d+([.,]\d{1,2})?$/.test(t)) return null
+    const normalized = t.includes(',') ? t.replace(/\./g, '').replace(',', '.') : t
+    const n = parseFloat(normalized)
+    return Number.isFinite(n) ? n : null
+  }
+  // χωρίς νόμισμα: μόνο κόμμα + ΑΚΡΙΒΩΣ 2 δεκαδικά (αλλιώς μπορεί να είναι
+  // αριθμός παραστατικού ή ημερομηνία)
+  if (!/^\d{1,3}(\.\d{3})*,\d{2}$|^\d+,\d{2}$/.test(t)) return null
+  const n = parseFloat(t.replace(/\./g, '').replace(',', '.'))
   return Number.isFinite(n) ? n : null
 }
 
@@ -143,7 +160,7 @@ export function parseInvoiceFilename(filename: string): ParsedInvoiceName {
 
   for (const raw of rawTokens) {
     // καθάρισμα από σκουπίδια άκρων («.4.03.2026», «26pdf», «#»)
-    let token = raw.replace(/^[.,\-#]+/, '').replace(/[.,\-#]+$/, '')
+    let token = raw.replace(/^[.,\-#]+/, '').replace(/[.,\-#]+(?=$)/, '')
     if (!token) continue
     // «3_3_26pdf» → «3_3_26»
     token = token.replace(/(pdf|png|jpg|jpeg)$/i, '')
