@@ -1,9 +1,14 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import OcExpenseIntake from '@/components/oc/OcExpenseIntake'
 
 /**
- * Μηνιαία επικόλληση κινήσεων τράπεζας → λίστα ελέγχου → έκδοση αποδείξεων.
+ * ΑΝΑΦΟΡΑ ΕΣΟΔΩΝ/ΕΞΟΔΩΝ — μία μηνιαία επικόλληση τράπεζας, δύο ενότητες:
+ *   Α. ΕΣΟΔΑ  — πιστώσεις → αποδείξεις (εδώ)
+ *   Β. ΕΞΟΔΑ  — παραστατικά Drive + χρεώσεις (OcExpenseIntake)
+ * Η επικόλληση είναι ΚΟΙΝΗ: το ίδιο statement περιέχει και τα δύο, οπότε
+ * δεν γίνεται δύο φορές.
  *
  * Δύο πεδία επικόλλησης (Κινήσεις + Εισερχόμενες εντολές από myAlpha Web),
  * ανάλυση server-side (join στον Αρ. Συναλλαγής, dedup, προτάσεις μέλους),
@@ -55,6 +60,12 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
   onIssued: () => void
 }) {
   const [open, setOpen] = useState(false)
+  const [month, setMonth] = useState(() => {
+    const d = new Date()
+    d.setDate(1)
+    d.setMonth(d.getMonth() - 1)   // default: προηγούμενος μήνας
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  })
   const [kiniseis, setKiniseis] = useState('')
   const [incoming, setIncoming] = useState('')
   const [analyzing, setAnalyzing] = useState(false)
@@ -162,13 +173,24 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
       <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center gap-3 text-left">
-        <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Κινήσεις τράπεζας</h2>
-        <span className="text-sm text-gray-400 dark:text-gray-500">μηνιαία επικόλληση → αποδείξεις</span>
+        <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Αναφορά Εσόδων/Εξόδων</h2>
+        <span className="text-sm text-gray-400 dark:text-gray-500">μηνιαία επικόλληση τράπεζας → αποδείξεις &amp; έξοδα</span>
         <span className={`ml-auto text-coral transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true">▼</span>
       </button>
 
       {open && (
         <div className="mt-6 space-y-5">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide" htmlFor="bi-month">
+              Μήνας αναφοράς
+            </label>
+            <input id="bi-month" type="month" value={month} onChange={e => setMonth(e.target.value)}
+              className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-1.5 text-sm text-charcoal dark:text-gray-100" />
+            <span className="text-xs text-gray-400 dark:text-gray-500">
+              (η επικόλληση αφορά και τις δύο ενότητες — έσοδα και έξοδα)
+            </span>
+          </div>
+
           <div className="grid lg:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5" htmlFor="bi-kin">
@@ -185,6 +207,10 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
                 onChange={e => setIncoming(e.target.value)} placeholder="Τίτλος ; Εισερχόμενες εντολές: GR71…" disabled={!canIssue || analyzing || issuing} />
             </div>
           </div>
+
+          <h3 className="text-lg font-bold text-charcoal dark:text-gray-100">
+            Α. Έσοδα <span className="text-sm font-normal text-gray-400 dark:text-gray-500">πιστώσεις → αποδείξεις μελών</span>
+          </h3>
 
           <button type="button" onClick={analyze}
             disabled={!canIssue || analyzing || issuing || !kiniseis.trim()}
@@ -360,6 +386,9 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
               </div>
             </>
           )}
+
+          {/* Β. ΕΞΟΔΑ — παραστατικά Drive + χρεώσεις της ίδιας επικόλλησης */}
+          <OcExpenseIntake canIssue={canIssue} month={month} kiniseis={kiniseis} />
         </div>
       )}
     </div>
