@@ -8,6 +8,7 @@ import { OC_SEAT_LABELS, OC_SEAT_SHORT } from '@/components/oc/ocPrefs'
 import OcSeatChoiceModal from '@/components/oc/OcSeatChoiceModal'
 import OcOverview from '@/components/oc/OcOverview'
 import OcFinances from '@/components/oc/OcFinances'
+import OcMonthlyView from '@/components/oc/OcMonthlyView'
 import type { OcOverviewData } from '@/lib/ocOverview'
 
 // OC categories. Chip style: first letter in a filled block, remainder in a
@@ -400,7 +401,18 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
             />
           )}
 
-          {activeSection !== 'overview' && activeSection !== 'settings' && activeSection !== 'members' && activeSection !== 'finances' && (
+          {activeSection === 'admin' && (
+            <div className="space-y-8">
+              {/* Μηνιαία εικόνα σε λειτουργία Διαχείρισης: αποστολή στο
+                  λογιστήριο όταν ο/η Financer έχει εγκρίνει τον μήνα */}
+              <OcMonthlyView mode="admin" canDispatch={activeSeat === 'admin' || activeSeat === 'it'} />
+              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8 text-center">
+                <p className="text-gray-500 dark:text-gray-400">Οι υπόλοιπες λειτουργίες Διαχείρισης — σύντομα διαθέσιμες.</p>
+              </div>
+            </div>
+          )}
+
+          {activeSection !== 'overview' && activeSection !== 'settings' && activeSection !== 'members' && activeSection !== 'finances' && activeSection !== 'admin' && (
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-12 text-center">
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5"

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import OcBankIntake from '@/components/oc/OcBankIntake'
 import OcSubscriptions, { type SubMemberRow } from '@/components/oc/OcSubscriptions'
+import OcMonthlyView from '@/components/oc/OcMonthlyView'
 
 /**
  * OC → Οικονομικά: έκδοση αποδείξεων από την ενιαία σειρά «ΑΠ. ΕΙΣ.».
@@ -550,6 +551,9 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
       {series?.seeded && (
         <OcBankIntake canIssue={canIssue} members={members} onIssued={() => load()} />
       )}
+
+      {/* Μηνιαία εικόνα: έγκριση μήνα από Financer (η αποστολή: Διαχείριση) */}
+      <OcMonthlyView mode="financer" canReady={canIssue} />
 
       {/* Λίστα αποδείξεων: πρόσφατες / όλες */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
