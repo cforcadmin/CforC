@@ -26,6 +26,9 @@ export interface EsodaReceiptRow {
   emailSent?: boolean
   sentAt?: string | null        // ISO
   typeLabel?: string | null
+  /** Φάση Γ βήμα 2: το PDF της απόδειξης → Drive (φάκελος μήνα) + τικ ΑΡΧΕΙΟΘΕΤΗΣΗ */
+  pdfBase64?: string | null
+  pdfName?: string | null
 }
 
 /** Γράφει τη γραμμή της απόδειξης στο ΕΣΟΔΑ. Επιστρέφει ok=false σε

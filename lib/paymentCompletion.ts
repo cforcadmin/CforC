@@ -273,9 +273,11 @@ export async function processPaymentCompletion(input: PaymentCompletionInput): P
         console.error('payment completion: markReceiptSent failed (non-fatal):', e)
       }
     }
-    // Φάση Γ: γραμμή εγγραφής στο ΕΣΟΔΑ sheet (best-effort, awaited)
+    // Φάση Γ: γραμμή εγγραφής στο ΕΣΟΔΑ sheet + PDF στο Drive (best-effort, awaited)
     try {
       await syncReceiptToSheet(receipt.documentId, {
+        pdfBase64: Buffer.from(pdf).toString('base64'),
+        pdfName: `ΑΠ. ΕΙΣ. ${receipt.number} - ${fullName}.pdf`,
         number: receipt.number,
         type: 'registration',
         amount: 45,

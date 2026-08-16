@@ -272,9 +272,11 @@ export async function POST(request: NextRequest) {
       createdBy: `financer:${auth.memberId}`,
     })
 
-    // PDF + email — awaited (serverless: το fire-and-forget πεθαίνει)
+    // PDF ΠΑΝΤΑ (και χωρίς email — χρειάζεται για την αρχειοθέτηση Drive),
+    // email υπό όρους — όλα awaited (serverless: το fire-and-forget πεθαίνει)
     let emailSent = false
-    if (sendEmail && email) {
+    let issuePdfBase64: string | null = null
+    {
       const finSigner = await getSeatHolder('financer')
       const pdf = await generateReceiptPdf({
         name: memberName,
@@ -294,15 +296,19 @@ export async function POST(request: NextRequest) {
         companyAddress: String(body?.companyAddress || '').trim() || null,
         companyTaxId: String(body?.companyTaxId || '').trim() || null,
       })
-      const detail = isSubscriptionLike ? `${TYPE_LABELS[type]} ${year}` : (customLabel || TYPE_LABELS[type])
-      const firstName = memberName.split(' ')[0] || 'μέλος'
-      const tpl = manualReceiptEmailHtml(firstName, detail, finSigner?.engName || finSigner?.name || 'Culture for Change — Finance')
-      emailSent = await sendOcEmail(email, tpl.subject, tpl.html, {
-        from: FINANCE_FROM,
-        replyTo: FINANCE_EMAIL,
-        cc: [FINANCE_EMAIL],
-        attachments: [{ filename: `apodeixi-eispraxis-${receipt.number}.pdf`, content: Buffer.from(pdf).toString('base64') }],
-      })
+      const pdfBase64 = Buffer.from(pdf).toString('base64')
+      if (sendEmail && email) {
+        const detail = isSubscriptionLike ? `${TYPE_LABELS[type]} ${year}` : (customLabel || TYPE_LABELS[type])
+        const firstName = memberName.split(' ')[0] || 'μέλος'
+        const tpl = manualReceiptEmailHtml(firstName, detail, finSigner?.engName || finSigner?.name || 'Culture for Change — Finance')
+        emailSent = await sendOcEmail(email, tpl.subject, tpl.html, {
+          from: FINANCE_FROM,
+          replyTo: FINANCE_EMAIL,
+          cc: [FINANCE_EMAIL],
+          attachments: [{ filename: `apodeixi-eispraxis-${receipt.number}.pdf`, content: pdfBase64 }],
+        })
+      }
+      issuePdfBase64 = pdfBase64
     }
 
     // Η απόδειξη έφτασε στον παραλήπτη — κράτα την ημερομηνία αποστολής
@@ -329,6 +335,8 @@ export async function POST(request: NextRequest) {
         emailSent,
         sentAt: emailSent ? new Date().toISOString() : null,
         typeLabel: TYPE_LABELS[type],
+        pdfBase64: issuePdfBase64,
+        pdfName: `ΑΠ. ΕΙΣ. ${receipt.number} - ${memberName || 'χωρίς όνομα'}.pdf`,
       })
     } catch (err) {
       console.error('oc/receipts: sheet sync failed (non-fatal):', err)
