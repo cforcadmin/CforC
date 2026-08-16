@@ -69,8 +69,12 @@ export async function POST(request: NextRequest) {
 <p style="margin:0 0 6px 0;"><strong>Οφειλή:</strong> ${owed.length ? owed.join(' + ') + ` (${owed.length * 35},00 €)` : '—'}</p>
 <p style="margin:16px 0 0 0;font-size:14px;color:#5A5A5A;">Μόλις φανεί η κατάθεση στην τράπεζα:
 OC → Επισκόπηση → κλικ στο tile «Πληρωμένο» (ή Οικονομικά → Συνδρομές → κλικ στο badge) → στο popup
-το μέλος είναι πρώτο με 💶 → «Έκδοση απόδειξης» — η απόδειξη δημιουργείται, αποστέλλεται στο μέλος
-και ενημερώνει τις πληρωμές, όλα αυτόματα.</p>
+το μέλος είναι πρώτο με 💶 → «Έγκριση + απόδειξη» — η απόδειξη δημιουργείται, αποστέλλεται στο μέλος
+και ενημερώνει τις πληρωμές, όλα αυτόματα. Αν η κατάθεση δεν φανεί, «Αποτυχία» ενημερώνει το μέλος.</p>
+<p style="margin:20px 0 0 0;">
+<a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://cultureforchange.net'}/oc?open=renewals"
+   style="display:inline-block;background:#2D2D2D;color:#FFFFFF;font-weight:bold;font-size:14px;text-decoration:none;padding:12px 26px;border-radius:999px;">Άνοιγμα λίστας δηλώσεων →</a>
+</p>
 </div></body></html>`
     await sendOcEmail(FINANCE_EMAIL, `Δήλωση πληρωμής συνδρομής — ${name}`, html)
 

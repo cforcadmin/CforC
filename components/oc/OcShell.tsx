@@ -47,6 +47,9 @@ interface OcShellProps {
   tableDensity?: 'comfortable' | 'compact'
   /** Φόρμες αποχώρησης (server-fetched) */
   exitSurveys?: any[]
+  /** /oc?open=renewals — deep link από το finance@ notice: Επισκόπηση με
+   *  ανοιχτό το popup «Δήλωσαν πληρωμή συνδρομής» */
+  initialOpenRenewals?: boolean
 }
 
 const APP_STATE_LABELS: Record<string, { label: string; cls: string }> = {
@@ -80,10 +83,10 @@ async function persistPrefs(prefs: { landing?: string; seat?: string }) {
   }
 }
 
-export default function OcShell({ seats, initialSeat, initialLandingPref, applications = [], overview = null, tableCols, tableDensity, exitSurveys = [] }: OcShellProps) {
+export default function OcShell({ seats, initialSeat, initialLandingPref, applications = [], overview = null, tableCols, tableDensity, exitSurveys = [], initialOpenRenewals = false }: OcShellProps) {
   const pending = applications.filter(a => a.state === 'submitted')
   const [activeSection, setActiveSection] = useState<SectionKey>(
-    initialSeat === 'financer' ? 'finances' : 'overview'
+    initialOpenRenewals ? 'overview' : initialSeat === 'financer' ? 'finances' : 'overview'
   )
   const [landingPref, setLandingPref] = useState<string>(initialLandingPref)
   // TEMPORARY: which seat a multi-seat member is acting as right now
@@ -232,6 +235,7 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
                 canDeleteMembers={activeSeat === 'it' || activeSeat === 'admin'}
                 canRecordPayments={activeSeat === 'financer'}
                 canRemind={activeSeat === 'financer' || activeSeat === 'community'}
+                initialShowRenewals={initialOpenRenewals}
                 tableCols={tableCols}
                 tableDensity={tableDensity}
               />

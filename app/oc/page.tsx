@@ -19,7 +19,8 @@ export const metadata: Metadata = {
 // no session, invalid session, or a session whose member does not hold a
 // seat on the current Coordination Team → silent redirect to the homepage.
 // The UI buttons elsewhere are cosmetic; this check is the actual barrier.
-export default async function OcPage() {
+export default async function OcPage({ searchParams }: { searchParams: Promise<{ open?: string }> }) {
+  const { open } = await searchParams
   const cookieStore = await cookies()
   const sessionCookie = cookieStore.get('session')
   if (!sessionCookie) redirect('/')
@@ -98,6 +99,7 @@ export default async function OcPage() {
       tableCols={tableCols}
       tableDensity={tableDensity}
       exitSurveys={exitSurveys}
+      initialOpenRenewals={open === 'renewals'}
     />
   )
 }

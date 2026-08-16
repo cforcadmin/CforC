@@ -507,13 +507,15 @@ interface OcOverviewProps {
   canRecordPayments?: boolean
   /** Ενεργός ρόλος financer/community → υπενθυμίσεις συνδρομής */
   canRemind?: boolean
+  /** Deep link /oc?open=renewals → popup δηλώσεων ανοιχτό στο φόρτωμα */
+  initialShowRenewals?: boolean
   tableCols?: string[]
   tableDensity?: 'comfortable' | 'compact'
 }
 
 export default function OcOverview({
   data, applications, canDeleteMembers = false, canRecordPayments = false,
-  canRemind = false, tableCols, tableDensity,
+  canRemind = false, initialShowRenewals = false, tableCols, tableDensity,
 }: OcOverviewProps) {
   const router = useRouter()
   const [payConfirm, setPayConfirm] = useState<string | null>(null)
@@ -563,7 +565,7 @@ export default function OcOverview({
   const pending = applications.filter(a => a.state === 'submitted')
   const y = data.currentYear
   const [showApproved, setShowApproved] = useState(false)
-  const [showRenewals, setShowRenewals] = useState(false)
+  const [showRenewals, setShowRenewals] = useState(initialShowRenewals)
   const renewalClaims = data.members.filter(m =>
     m.renewalClaimedAt && (m.status === 'owes-1' || m.status === 'owes-2' || m.status === 'new-unpaid')
   ).length
