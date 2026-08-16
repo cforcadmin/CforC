@@ -94,13 +94,14 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
       for (const r of data.rows as IntakeRow[]) {
         const isSub = r.kind === 'subscription'
         init[r.txnId] = {
-          include: isSub && !r.existingNumber,
+          // Προεπιλογή: όλα εκτός των εγγραφών (που περνούν από τις αιτήσεις)
+          include: r.kind !== 'registration' && !r.existingNumber,
           type: r.kind === 'grant-like' ? 'record-grant' : 'subscription',
           year: String(new Date(r.date).getFullYear()),
           memberDocId: r.suggestion?.docId || null,
           memberName: r.suggestion?.name || '',
           query: '',
-          sendEmail: r.kind !== 'grant-like',
+          sendEmail: isSub,   // μόνο οι συνδρομές στέλνουν αυτόματα απόδειξη
           status: 'pending',
           resultText: '',
         }
@@ -118,13 +119,17 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
   }
 
   const selected = rows.filter(r => state[r.txnId]?.include && state[r.txnId]?.status !== 'done')
-  const readyCount = selected.filter(r => state[r.txnId].memberDocId || state[r.txnId].memberName.trim()).length
+  const readyCount = selected.filter(r => {
+    const st = state[r.txnId]
+    if (st.type === 'record-grant') return true   // το όνομα το δίνει η τράπεζα
+    return st.memberDocId || st.memberName.trim()
+  }).length
 
   async function issueSelected() {
     setIssuing(true); setConfirming(false)
     for (const r of selected) {
       const st = state[r.txnId]
-      if (!st.memberDocId && !st.memberName.trim()) {
+      if (st.type !== 'record-grant' && !st.memberDocId && !st.memberName.trim()) {
         patch(r.txnId, { status: 'error', resultText: 'Λείπει μέλος/όνομα' })
         continue
       }
@@ -178,7 +183,8 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
         if (!res.ok) throw new Error(data?.error || 'Αποτυχία')
         patch(r.txnId, {
           status: 'done',
-          resultText: `ΑΠ. ΕΙΣ. ${data.number}${data.emailSent ? ' · email ✓' : st.sendEmail ? ' · email ✗' : ''}`,
+          resultText: `ΑΠ. ΕΙΣ. ${data.number}` +
+            (data.emailSent ? ' · email ✓' : st.sendEmail ? (data.to ? ' · email ✗' : ' · χωρίς email') : ''),
         })
       } catch (err: any) {
         patch(r.txnId, { status: 'error', resultText: err?.message || 'Αποτυχία' })
@@ -386,15 +392,25 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
                               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">{KIND_LABEL[r.kind]}</span>
                             ) : (
                               <select className={inputCls} value={st.type}
-                                onChange={e => patch(r.txnId, { type: e.target.value as RowState['type'] })}
+                                onChange={e => {
+                                  const t = e.target.value as RowState['type']
+                                  patch(r.txnId, { type: t, sendEmail: t === 'subscription' })
+                                }}
                                 disabled={locked || !canIssue} aria-label="Τύπος απόδειξης">
-                                <option value="subscription">Συνδρομή {st.year}</option>
+                                <option value="subscription">Συνδρομή</option>
                                 <option value="extraordinary">Έκτακτη</option>
                                 <option value="donation">Δωρεά</option>
                                 <option value="grant">Χορηγία (με απόδειξη)</option>
                                 <option value="record-grant">Χορηγία/Επιχορήγηση — χωρίς απόδειξη</option>
                                 <option value="other">Άλλο</option>
                               </select>
+                            )}
+                            {!isReg && st.type === 'subscription' && (
+                              <input type="number" className={`${inputCls} mt-1`} value={st.year}
+                                onChange={e => patch(r.txnId, { year: e.target.value })}
+                                disabled={locked || !canIssue}
+                                aria-label="Έτος συνδρομής"
+                                title="Έτος συνδρομής — άλλαξέ το αν πληρώνεται οφειλή παλαιότερου έτους" />
                             )}
                           </td>
                           <td className="py-2.5 pr-3">
@@ -453,7 +469,7 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
                 )}
                 {doneCount > 0 && !issuing && (
                   <span className="text-sm text-green-700 dark:text-green-300 font-medium">
-                    {doneCount} εκδόθηκαν ✓ — μην ξεχάσεις τις γραμμές στο ΕΣΟΔΑ (χειροκίνητα μέχρι τη Φάση Γ).
+                    {doneCount} καταχωρήθηκαν ✓ — γραμμές ΕΣΟΔΑ και αρχειοθέτηση PDF έγιναν αυτόματα.
                   </span>
                 )}
               </div>
