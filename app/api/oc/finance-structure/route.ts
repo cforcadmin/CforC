@@ -48,12 +48,17 @@ async function authorize(needFinancer: boolean) {
   return null
 }
 
-export async function GET() {
+function requestedYear(raw: string | null): number {
+  const y = Number(raw)
+  return Number.isInteger(y) && y >= 2020 && y <= 2100 ? y : new Date().getFullYear()
+}
+
+export async function GET(request: NextRequest) {
   const denied = await authorize(false)
   if (denied) return denied
   if (!WEBAPP_URL || !WEBAPP_SECRET) return NextResponse.json({ exists: true, unconfigured: true })
   try {
-    const year = new Date().getFullYear()
+    const year = requestedYear(request.nextUrl.searchParams.get('year'))
     const r = await webApp('checkYearStructure', year)
     return NextResponse.json({ exists: r.ok ? !!r.exists : true, year })
   } catch (err) {
@@ -62,12 +67,13 @@ export async function GET() {
   }
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   const denied = await authorize(true)
   if (denied) return denied
   if (!WEBAPP_URL || !WEBAPP_SECRET) return NextResponse.json({ error: 'Μη διαμορφωμένο' }, { status: 500 })
   try {
-    const year = new Date().getFullYear()
+    const body = await request.json().catch(() => ({}))
+    const year = requestedYear(String(body?.year ?? ''))
     const r = await webApp('createYearStructure', year)
     if (!r.ok) return NextResponse.json({ error: r.error || 'Αποτυχία δημιουργίας' }, { status: 502 })
     return NextResponse.json({ ok: true, year })

@@ -110,10 +110,12 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
 
   useEffect(() => {
     // Μόνο Ιανουάριο/Φεβρουάριο αξίζει ο έλεγχος — μετά, ή υπάρχει η δομή
-    // ή τη δημιούργησε ήδη lazily ο writer
+    // ή τη δημιούργησε ήδη lazily ο writer. Override για δοκιμή ή πρόωρη
+    // δημιουργία (π.χ. Δεκέμβριο): /oc?testNewYear=2027
+    const testYear = new URLSearchParams(window.location.search).get('testNewYear')
     const m = new Date().getMonth()
-    if (m > 1) return
-    fetch('/api/oc/finance-structure')
+    if (!testYear && m > 1) return
+    fetch(`/api/oc/finance-structure${testYear ? `?year=${encodeURIComponent(testYear)}` : ''}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d && d.exists === false) setYearPrompt(d.year) })
       .catch(() => { /* σιωπηλά — κανένα banner σε αμφιβολία */ })
@@ -122,7 +124,11 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
   async function createYearStructure() {
     setYearBusy(true)
     try {
-      const res = await fetch('/api/oc/finance-structure', { method: 'POST' })
+      const res = await fetch('/api/oc/finance-structure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ year: yearPrompt }),
+      })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Αποτυχία')
       setYearDone(true)
