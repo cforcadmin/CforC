@@ -124,13 +124,22 @@ export async function POST(request: NextRequest) {
 
   try {
     if (action === 'mark-sent') {
-      // Χειροκίνητη σήμανση αποστολής (π.χ. απόδειξη που δόθηκε στο χέρι)
+      // Σήμανση/διόρθωση ημερομηνίας αποστολής — προαιρετική ημερομηνία
+      // (π.χ. απόδειξη που δόθηκε στο χέρι σε άλλη μέρα), default σήμερα
       const number = Number(body?.number)
       if (!Number.isInteger(number)) return NextResponse.json({ error: 'Μη έγκυρος αριθμός' }, { status: 400 })
+      const dateStr = String(body?.date || '')
+      let when: Date | undefined
+      if (dateStr) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+          return NextResponse.json({ error: 'Μη έγκυρη ημερομηνία' }, { status: 400 })
+        }
+        when = new Date(`${dateStr}T12:00:00.000Z`)
+      }
       const r = await strapi(`/receipts?filters[Number][$eq]=${number}&fields[0]=Number&fields[1]=SentAt&pagination[limit]=1`)
       const hit = r.json?.data?.[0]
       if (!hit) return NextResponse.json({ error: `Η ΑΠ. ΕΙΣ. ${number} δεν βρέθηκε` }, { status: 404 })
-      const ok = await markReceiptSent(hit.documentId)
+      const ok = await markReceiptSent(hit.documentId, when)
       if (!ok) return NextResponse.json({ error: 'Αποτυχία σήμανσης' }, { status: 502 })
       return NextResponse.json({ ok: true, action: 'mark-sent', number })
     }

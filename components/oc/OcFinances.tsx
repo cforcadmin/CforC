@@ -178,16 +178,26 @@ export default function OcFinances({ canIssue, members }: { canIssue: boolean; m
     }
   }
 
-  async function markSent(number: number) {
+  // Επεξεργασία ημερομηνίας αποστολής: κλικ στο badge → inline date input
+  const [editingSent, setEditingSent] = useState<number | null>(null)
+  const [editingSentDate, setEditingSentDate] = useState('')
+
+  function openSentEditor(r: RecentReceipt) {
+    setEditingSent(r.number)
+    setEditingSentDate((r.sentAt || new Date().toISOString()).slice(0, 10))
+  }
+
+  async function saveSent(number: number) {
     setBusy(true)
     try {
       const res = await fetch('/api/oc/receipts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'mark-sent', number }),
+        body: JSON.stringify({ action: 'mark-sent', number, date: editingSentDate || undefined }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Αποτυχία')
+      setEditingSent(null)
       await load()
     } catch (err: any) {
       setNotice({ kind: 'err', text: err?.message || 'Αποτυχία σήμανσης αποστολής' })
@@ -477,15 +487,32 @@ export default function OcFinances({ canIssue, members }: { canIssue: boolean; m
                     <td className="py-3 pr-4 text-charcoal dark:text-gray-200 notranslate">{Number(r.amount).toFixed(2).replace('.', ',')} €</td>
                     <td className="py-3 pr-4 text-gray-500 dark:text-gray-400 notranslate">{r.issueDate ? new Date(r.issueDate).toLocaleDateString('el-GR') : '—'}</td>
                     <td className="py-3 pr-4">
-                      {r.sentAt ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 notranslate"
-                          title={`Στάλθηκε ${new Date(r.sentAt).toLocaleDateString('el-GR')}`}>
-                          ✓ {new Date(r.sentAt).toLocaleDateString('el-GR')}
+                      {editingSent === r.number ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <input type="date" className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-xs text-charcoal dark:text-gray-100"
+                            value={editingSentDate} onChange={e => setEditingSentDate(e.target.value)}
+                            aria-label={`Ημερομηνία αποστολής ΑΠ. ΕΙΣ. ${r.number}`} />
+                          <button type="button" onClick={() => saveSent(r.number)} disabled={busy || !editingSentDate}
+                            className="px-2 py-1 rounded-lg bg-[#6A994E] text-white text-xs font-bold disabled:opacity-40">✓</button>
+                          <button type="button" onClick={() => setEditingSent(null)} disabled={busy}
+                            className="px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-xs text-charcoal dark:text-gray-200">✕</button>
                         </span>
+                      ) : r.sentAt ? (
+                        canIssue ? (
+                          <button type="button" onClick={() => openSentEditor(r)} disabled={busy}
+                            className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 notranslate hover:ring-2 hover:ring-green-300 disabled:opacity-50"
+                            title="Στάλθηκε — πάτησε για διόρθωση ημερομηνίας">
+                            ✓ {new Date(r.sentAt).toLocaleDateString('el-GR')}
+                          </button>
+                        ) : (
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 notranslate">
+                            ✓ {new Date(r.sentAt).toLocaleDateString('el-GR')}
+                          </span>
+                        )
                       ) : canIssue ? (
-                        <button type="button" onClick={() => markSent(r.number)} disabled={busy}
+                        <button type="button" onClick={() => openSentEditor(r)} disabled={busy}
                           className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200 hover:ring-2 hover:ring-orange-300 disabled:opacity-50"
-                          title="Δεν έχει σταλεί — πάτησε για χειροκίνητη σήμανση (π.χ. δόθηκε στο χέρι)">
+                          title="Δεν έχει σταλεί — πάτησε για σήμανση με ημερομηνία">
                           εκκρεμεί
                         </button>
                       ) : (
