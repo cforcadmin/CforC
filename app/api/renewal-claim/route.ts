@@ -67,9 +67,10 @@ export async function POST(request: NextRequest) {
 <p style="margin:0 0 6px 0;"><strong>Μέλος:</strong> ${name} (ΑΜ ${member.AM ?? '—'})</p>
 <p style="margin:0 0 6px 0;"><strong>Email:</strong> ${member.Email || '—'}</p>
 <p style="margin:0 0 6px 0;"><strong>Οφειλή:</strong> ${owed.length ? owed.join(' + ') + ` (${owed.length * 35},00 €)` : '—'}</p>
-<p style="margin:16px 0 0 0;font-size:14px;color:#5A5A5A;">Το μέλος εμφανίζεται με teal ένδειξη «δήλωσε πληρωμή» στα Οικονομικά του OC.
-Μόλις φανεί η κατάθεση στην τράπεζα: κλικ στο όνομα → «Έκδοση απόδειξης» — η απόδειξη
-δημιουργείται, αποστέλλεται και ενημερώνει τις πληρωμές αυτόματα.</p>
+<p style="margin:16px 0 0 0;font-size:14px;color:#5A5A5A;">Μόλις φανεί η κατάθεση στην τράπεζα:
+OC → Επισκόπηση → κλικ στο tile «Πληρωμένο» (ή Οικονομικά → Συνδρομές → κλικ στο badge) → στο popup
+το μέλος είναι πρώτο με 💶 → «Έκδοση απόδειξης» — η απόδειξη δημιουργείται, αποστέλλεται στο μέλος
+και ενημερώνει τις πληρωμές, όλα αυτόματα.</p>
 </div></body></html>`
     await sendOcEmail(FINANCE_EMAIL, `Δήλωση πληρωμής συνδρομής — ${name}`, html)
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import OcRenewalsPopup from '@/components/oc/OcRenewalsPopup'
 
 /**
  * Συνδρομές στην κορυφή των Οικονομικών: μετρητές πληρωμένων ανά έτος +
@@ -18,6 +19,7 @@ export interface SubMemberRow {
   payments: Record<string, 0 | 1 | null>
   status: string
   renewalClaimedAt: string | null
+  reminderSentAt: string | null
 }
 
 type SendState = 'idle' | 'sending' | 'sent' | 'error' | 'issuing' | 'issued' | 'issue-error'
@@ -29,6 +31,7 @@ export default function OcSubscriptions({ members, canRemind, canIssue, onIssued
   onIssued: () => void
 }) {
   const [open, setOpen] = useState(false)
+  const [showPopup, setShowPopup] = useState(false)
   const [sendState, setSendState] = useState<Record<string, SendState>>({})
   const [confirmFor, setConfirmFor] = useState<string | null>(null)   // docId ή 'all:notify' / 'all:delete'
   const [bulkRunning, setBulkRunning] = useState(false)
@@ -39,6 +42,7 @@ export default function OcSubscriptions({ members, canRemind, canIssue, onIssued
   const paidPrev = members.filter(m => m.payments[String(year - 1)] === 1).length
   const notifyList = members.filter(m => m.status === 'owes-1' || m.status === 'new-unpaid')
   const deleteList = members.filter(m => m.status === 'owes-2')
+  const claimsCount = [...notifyList, ...deleteList].filter(m => m.renewalClaimedAt).length
 
   async function sendOne(docId: string): Promise<boolean> {
     setSendState(s => ({ ...s, [docId]: 'sending' }))
@@ -113,9 +117,14 @@ export default function OcSubscriptions({ members, canRemind, canIssue, onIssued
       ? 'border-teal-400 bg-teal-50 text-teal-900 dark:bg-teal-900/30 dark:border-teal-500/60 dark:text-teal-200'
       : st === 'issued'
         ? 'border-green-400 bg-green-50 text-green-900 dark:bg-green-900/30 dark:border-green-500/60 dark:text-green-200'
-        : tone === 'orange'
-          ? 'border-orange-300 text-orange-900 dark:border-orange-500/60 dark:text-orange-200'
-          : 'border-red-300 text-red-900 dark:border-red-500/60 dark:text-red-200'
+        : (m.reminderSentAt || st === 'sent')
+          // Υπενθύμιση εστάλη → sky περίγραμμα, μόνιμο (ReminderSentAt)
+          ? tone === 'orange'
+            ? 'border-sky-400 dark:border-sky-500 text-orange-900 dark:text-orange-200'
+            : 'border-sky-400 dark:border-sky-500 text-red-900 dark:text-red-200'
+          : tone === 'orange'
+            ? 'border-orange-300 text-orange-900 dark:border-orange-500/60 dark:text-orange-200'
+            : 'border-red-300 text-red-900 dark:border-red-500/60 dark:text-red-200'
     const clickable = canRemind && st !== 'sending' && st !== 'issuing' && st !== 'issued'
     return (
       <span key={m.docId} className="relative inline-block">
@@ -124,7 +133,9 @@ export default function OcSubscriptions({ members, canRemind, canIssue, onIssued
           disabled={!canRemind || bulkRunning}
           title={!canRemind
             ? 'Ενέργειες: μόνο Financer ή Community'
-            : claimed ? 'Δήλωσε πληρωμή — κλικ για ενέργειες' : 'Κλικ για υπενθύμιση συνδρομής'}
+            : claimed ? 'Δήλωσε πληρωμή — κλικ για ενέργειες'
+              : m.reminderSentAt ? `Υπενθύμιση εστάλη ${new Date(m.reminderSentAt).toLocaleDateString('el-GR')} — κλικ για νέα`
+                : 'Κλικ για υπενθύμιση συνδρομής'}
           className={`px-3.5 py-1.5 rounded-full border text-sm ${toneCls} ${
             clickable ? 'hover:ring-2 hover:ring-coral/40 cursor-pointer' : 'cursor-default opacity-90'
           } disabled:opacity-50`}>
@@ -193,16 +204,35 @@ export default function OcSubscriptions({ members, canRemind, canIssue, onIssued
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
-      <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center gap-3 text-left"
-        aria-expanded={open}>
-        <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Συνδρομές</h2>
-        <span className="ml-auto flex items-center gap-3">
-          <span className="notranslate px-4 py-1.5 rounded-full bg-[#E9A13B]/15 text-[#a8701f] dark:text-[#E9A13B] text-sm font-bold">
-            {paidCurrent}/{members.length} Πληρωμένο {year}
-          </span>
-          <span className={`text-coral transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true">▼</span>
-        </span>
-      </button>
+      <div className="w-full flex items-center gap-3">
+        <button type="button" onClick={() => setOpen(!open)} className="flex-1 flex items-center text-left"
+          aria-expanded={open}>
+          <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Συνδρομές</h2>
+        </button>
+        <button type="button" onClick={() => setShowPopup(true)} aria-haspopup="dialog"
+          title="Ανεξόφλητες συνδρομές — λίστα με έκδοση/υπενθύμιση"
+          className={`notranslate px-4 py-1.5 rounded-full text-sm font-bold hover:ring-2 hover:ring-coral/40 ${
+            claimsCount > 0
+              ? 'bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200'
+              : 'bg-[#E9A13B]/15 text-[#a8701f] dark:text-[#E9A13B]'
+          }`}>
+          {paidCurrent}/{members.length} Πληρωμένο {year}{claimsCount > 0 ? ` · ${claimsCount} 💶` : ' →'}
+        </button>
+        <button type="button" onClick={() => setOpen(!open)} aria-expanded={open}
+          aria-label={open ? 'Σύμπτυξη ενότητας Συνδρομές' : 'Ανάπτυξη ενότητας Συνδρομές'}>
+          <span className={`text-coral transition-transform inline-block ${open ? 'rotate-180' : ''}`} aria-hidden="true">▼</span>
+        </button>
+      </div>
+
+      {showPopup && (
+        <OcRenewalsPopup
+          members={members}
+          canIssue={canIssue}
+          canRemind={canRemind}
+          onClose={() => setShowPopup(false)}
+          onChanged={onIssued}
+        />
+      )}
 
       {open && (
         <div className="mt-6 space-y-5">

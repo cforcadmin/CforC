@@ -84,6 +84,15 @@ export async function POST(request: NextRequest) {
       replyTo: FINANCE_EMAIL,
     })
     if (!sent) return NextResponse.json({ error: 'Αποτυχία αποστολής email' }, { status: 502 })
+
+    // Ίχνος αποστολής → αλλάζει το περίγραμμα του chip (ΜΟΝΟ αριθμητικό id στο PUT)
+    const stamp = await fetch(`${STRAPI_URL}/api/members/${member.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
+      body: JSON.stringify({ data: { ReminderSentAt: new Date().toISOString() } }),
+    })
+    if (!stamp.ok) console.error('subscription-reminders: ReminderSentAt stamp failed', stamp.status)
+
     return NextResponse.json({ ok: true, to: email, owedYears: owed, amount: owed.length * 35 })
   } catch (err) {
     console.error('subscription-reminders failed:', err)

@@ -25,6 +25,8 @@ export interface OcMemberRow {
   profileVisible: boolean
   /** Δήλωση «πλήρωσα τη συνδρομή» (ανανέωση) — teal ένδειξη στα Οικονομικά */
   renewalClaimedAt: string | null
+  /** Πότε στάλθηκε η τελευταία υπενθύμιση συνδρομής (outline στα chips) */
+  reminderSentAt: string | null
   status: OcMemberStatus
 }
 
@@ -158,7 +160,7 @@ export async function fetchOcOverview(): Promise<OcOverviewData> {
   const baseFields =
     `fields[0]=Name&fields[1]=Email&fields[2]=AM&fields[3]=RegistrationYear` +
     `&fields[4]=Payments&fields[5]=HideProfile&fields[6]=City&fields[7]=Phone&fields[8]=Slug`
-  let memberFields = `${baseFields}&fields[9]=RenewalClaimedAt`
+  let memberFields = `${baseFields}&fields[9]=RenewalClaimedAt&fields[10]=ReminderSentAt`
   const members: OcMemberRow[] = []
   let start = 0
   while (true) {
@@ -192,6 +194,7 @@ export async function fetchOcOverview(): Promise<OcOverviewData> {
         payments,
         profileVisible: !m.HideProfile,
         renewalClaimedAt: m.RenewalClaimedAt || null,
+        reminderSentAt: m.ReminderSentAt || null,
         status: memberStatus(payments, regYear, year),
       })
     }

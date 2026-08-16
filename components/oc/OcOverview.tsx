@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import type { OcOverviewData, OcMemberRow, OcMemberStatus, OcNewsletterStats } from '@/lib/ocOverview'
 import type { OcApplicationSummary } from '@/components/oc/OcShell'
 import { OC_TABLE_COLUMNS, OC_TABLE_DEFAULT_COLS } from '@/components/oc/ocPrefs'
+import OcRenewalsPopup from '@/components/oc/OcRenewalsPopup'
 
 const STATUS_META: Record<OcMemberStatus, { label: string; cls: string }> = {
   paid: { label: 'Τακτοποιημένο', cls: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' },
@@ -504,13 +505,15 @@ interface OcOverviewProps {
   canDeleteMembers?: boolean
   /** Ενεργός ρόλος financer → κουμπιά πληρωμής/υπενθύμισης στο popup */
   canRecordPayments?: boolean
+  /** Ενεργός ρόλος financer/community → υπενθυμίσεις συνδρομής */
+  canRemind?: boolean
   tableCols?: string[]
   tableDensity?: 'comfortable' | 'compact'
 }
 
 export default function OcOverview({
   data, applications, canDeleteMembers = false, canRecordPayments = false,
-  tableCols, tableDensity,
+  canRemind = false, tableCols, tableDensity,
 }: OcOverviewProps) {
   const router = useRouter()
   const [payConfirm, setPayConfirm] = useState<string | null>(null)
@@ -560,17 +563,44 @@ export default function OcOverview({
   const pending = applications.filter(a => a.state === 'submitted')
   const y = data.currentYear
   const [showApproved, setShowApproved] = useState(false)
+  const [showRenewals, setShowRenewals] = useState(false)
+  const renewalClaims = data.members.filter(m =>
+    m.renewalClaimedAt && (m.status === 'owes-1' || m.status === 'owes-2' || m.status === 'new-unpaid')
+  ).length
 
   return (
     <div className="space-y-6">
       {/* KPI tiles */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <Tile value={data.activeMembers} label="Ενεργά μέλη" />
-        <Tile
-          value={`${data.paidCurrent}/${data.activeMembers}`}
-          label={`Πληρωμένο ${y}`}
-          accent={data.paidCurrent >= data.activeMembers * 0.7 ? '#2A9D8F' : '#E9A13B'}
-        />
+        <button
+          type="button"
+          onClick={() => setShowRenewals(true)}
+          className="text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-coral rounded-2xl"
+          aria-haspopup="dialog"
+        >
+          <div className={`relative rounded-2xl shadow-sm p-5 flex flex-col h-full hover:shadow-md transition-shadow border ${
+            renewalClaims > 0
+              ? 'bg-teal-50 dark:bg-teal-900/30 border-teal-300 dark:border-teal-700'
+              : 'bg-white dark:bg-gray-800 border-transparent hover:border-coral/40'
+          }`}>
+            {renewalClaims > 0 && (
+              <span
+                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-teal-600 text-white text-xs font-bold flex items-center justify-center shadow"
+                title={`${renewalClaims} δήλωση/εις πληρωμής συνδρομής προς επιβεβαίωση`}
+              >
+                i
+              </span>
+            )}
+            <span className="text-3xl font-bold notranslate" style={{ color: data.paidCurrent >= data.activeMembers * 0.7 ? '#2A9D8F' : '#E9A13B' }}>
+              {data.paidCurrent}/{data.activeMembers}
+            </span>
+            <span className="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-snug">Πληρωμένο {y}</span>
+            <span className="text-xs text-coral dark:text-coral-light mt-0.5">
+              {renewalClaims > 0 ? `${renewalClaims} δήλωσαν ότι πλήρωσαν →` : 'Προβολή λίστας →'}
+            </span>
+          </div>
+        </button>
         <Tile value={pending.length} label="Εκκρεμείς αιτήσεις" accent={pending.length > 0 ? '#FF8B6A' : undefined} />
         <button
           type="button"
@@ -601,6 +631,17 @@ export default function OcOverview({
         <Tile value={data.newThisYear} label={`Νέα μέλη ${y}`} accent="#4A90D9" />
         <Tile value="—" label="Ταμείο" sub="ενημερώνεται από Οικονομικά" />
       </div>
+
+      {/* Popup: ανεξόφλητες συνδρομές — έκδοση/υπενθύμιση επιτόπου */}
+      {showRenewals && (
+        <OcRenewalsPopup
+          members={data.members}
+          canIssue={canRecordPayments}
+          canRemind={canRemind}
+          onClose={() => setShowRenewals(false)}
+          onChanged={() => router.refresh()}
+        />
+      )}
 
       {/* Popup: εγκεκριμένες αιτήσεις σε αναμονή πληρωμής */}
       {showApproved && (
