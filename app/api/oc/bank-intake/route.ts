@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import { parseKiniseis, parseIncoming, joinStatement } from '@/lib/bankStatement'
-import { matchPayerToMembers, payerAliasKey, type MatchableMember } from '@/lib/memberMatcher'
+import { matchPayerToMembers, payerAliasKey, nameSimilarity, type MatchableMember } from '@/lib/memberMatcher'
 import { getAliasesFor } from '@/lib/payerAliases'
 
 /**
@@ -23,14 +23,27 @@ import { getAliasesFor } from '@/lib/payerAliases'
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
-async function strapi(path: string) {
+async function strapi(path: string, method: string = 'GET', data?: any) {
   const res = await fetch(`${STRAPI_URL}/api${path}`, {
-    headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${STRAPI_API_TOKEN}`,
+    },
+    ...(data !== undefined && { body: JSON.stringify({ data }) }),
     cache: 'no-store',
   })
   let json: any = null
   try { json = await res.json() } catch { /* non-JSON */ }
   return { ok: res.ok, status: res.status, json }
+}
+
+/** Απόσταση σε ημέρες δύο yyyy-MM-dd (άπειρο αν κάποια λείπει) */
+function dayDiff(a: string | null, b: string | null): number {
+  if (!a || !b) return Infinity
+  const ta = Date.parse(a), tb = Date.parse(b)
+  if (Number.isNaN(ta) || Number.isNaN(tb)) return Infinity
+  return Math.abs(ta - tb) / 86400000
 }
 
 export async function POST(request: NextRequest) {
@@ -70,16 +83,58 @@ export async function POST(request: NextRequest) {
     const joined = joinStatement(kiniseis, incoming)
     const warnings = [...kiniseis.warnings, ...incoming.warnings, ...joined.warnings]
 
-    // dedup: υπάρχουσες αποδείξεις για αυτά τα txn ids (τμηματικά ανά 50)
-    const txnIds = joined.credits.map(c => c.txnId).filter(Boolean)
+    // dedup επίπεδο 1 — ακριβές: υπάρχουσα απόδειξη με ίδιο Αρ. Συναλλαγής.
+    // dedup επίπεδο 2 — fallback για αποδείξεις ΧΩΡΙΣ txn id (η εισαγωγή
+    // από το ΕΣΟΔΑ + όσες εκδόθηκαν χειροκίνητα): ταίριασμα σε ποσό +
+    // ημερομηνία πληρωμής (±2 ημέρες) + όνομα ή μοναδικότητα 1:1. Κάθε
+    // σίγουρο fallback ταίριασμα ΣΦΡΑΓΙΖΕΤΑΙ με το txn id (self-healing) —
+    // από την επόμενη επικόλληση το πιάνει το ακριβές επίπεδο.
+    const allRes = await strapi('/receipts?pagination[limit]=1000' +
+      '&fields[0]=Number&fields[1]=TransactionId&fields[2]=Amount' +
+      '&fields[3]=PaymentDate&fields[4]=MemberName&fields[5]=PayerName')
+    const allReceipts: any[] = allRes.json?.data || []
     const existingByTxn = new Map<string, number>()
-    for (let i = 0; i < txnIds.length; i += 50) {
-      const chunk = txnIds.slice(i, i + 50)
-      const filters = chunk.map((t, j) => `filters[TransactionId][$in][${j}]=${encodeURIComponent(t)}`).join('&')
-      const r = await strapi(`/receipts?${filters}&fields[0]=Number&fields[1]=TransactionId&pagination[limit]=${chunk.length}`)
-      for (const e of r.json?.data || []) {
-        if (e.TransactionId) existingByTxn.set(e.TransactionId, e.Number)
+    for (const e of allReceipts) {
+      if (e.TransactionId) existingByTxn.set(e.TransactionId, e.Number)
+    }
+    const NAME_OK = 0.72
+    const claimed = new Set<string>()          // documentIds που δέθηκαν σε πίστωση αυτού του run
+    const fallbackMatches = new Map<string, { number: number; docId: string; stamp: boolean }>()
+    const untagged = allReceipts.filter(e => !e.TransactionId)
+    for (const c of joined.credits) {
+      if (!c.txnId || existingByTxn.has(c.txnId)) continue
+      const window = untagged.filter(e =>
+        !claimed.has(e.documentId) &&
+        Math.abs(Number(e.Amount) - c.amount) < 0.005 &&
+        dayDiff(e.PaymentDate, c.date) <= 2
+      )
+      if (window.length === 0) continue
+      // (α) με όνομα: ο πληρωτής μοιάζει με το όνομα μέλους/πληρωτή της απόδειξης
+      let hit = null as any
+      if (c.payerName) {
+        hit = window.find(e =>
+          (e.MemberName && nameSimilarity(c.payerName!, e.MemberName) >= NAME_OK) ||
+          (e.PayerName && nameSimilarity(c.payerName!, e.PayerName) >= NAME_OK)
+        )
       }
+      // (β) χωρίς όνομα αλλά μοναδικό 1:1 ταίριασμα ποσού+ημερομηνίας
+      if (!hit && window.length === 1) {
+        const competing = joined.credits.filter(o =>
+          o !== c && !existingByTxn.has(o.txnId) &&
+          Math.abs(o.amount - c.amount) < 0.005 && dayDiff(window[0].PaymentDate, o.date) <= 2
+        )
+        if (competing.length === 0) hit = window[0]
+      }
+      if (hit) {
+        claimed.add(hit.documentId)
+        fallbackMatches.set(c.txnId, { number: hit.Number, docId: hit.documentId, stamp: true })
+      }
+    }
+    // self-healing: σφράγισε τα σίγουρα ταιριάσματα με το txn id τους
+    for (const [txnId, m] of fallbackMatches) {
+      if (!m.stamp) continue
+      const upd = await strapi(`/receipts/${m.docId}`, 'PUT', { TransactionId: txnId })
+      if (!upd.ok) console.error('bank-intake: txn stamp failed for', m.number, upd.status)
     }
 
     // μέλη για τον matcher (ενεργά, με ΑΜ)
@@ -92,7 +147,7 @@ export async function POST(request: NextRequest) {
     const aliases = await getAliasesFor(joined.credits.map(c => c.payerName || ''))
 
     const rows = joined.credits.map(c => {
-      const existingNumber = existingByTxn.get(c.txnId) ?? null
+      const existingNumber = existingByTxn.get(c.txnId) ?? fallbackMatches.get(c.txnId)?.number ?? null
       let suggestion: any = null
       let candidates: any[] = []
       if (c.payerName) {

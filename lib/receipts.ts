@@ -69,6 +69,17 @@ export function formatReceiptNumber(n: number): string {
 }
 
 /**
+ * Σήμανση «η απόδειξη έφτασε στον παραλήπτη» — μετά από επιτυχή αποστολή
+ * email ή χειροκίνητα από τον/τη Financer (π.χ. παράδοση σε ΓΣ).
+ */
+export async function markReceiptSent(documentId: string, when?: Date): Promise<boolean> {
+  const r = await strapi(`/receipts/${documentId}`, 'PUT', {
+    SentAt: (when || new Date()).toISOString(),
+  })
+  return r.ok
+}
+
+/**
  * Επόμενος αριθμός σειράς = μεγαλύτερος υπάρχων + 1.
  * null = η σειρά ΔΕΝ έχει αρχικοποιηθεί ακόμη (κενή συλλογή) — μην εκδώσεις.
  */

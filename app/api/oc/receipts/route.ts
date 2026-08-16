@@ -5,7 +5,7 @@ export const maxDuration = 60
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
-import { nextReceiptNumber, createReceipt, type ReceiptType } from '@/lib/receipts'
+import { nextReceiptNumber, createReceipt, markReceiptSent, type ReceiptType } from '@/lib/receipts'
 import { generateReceiptPdf } from '@/lib/receiptPdf'
 import { sendOcEmail, manualReceiptEmailHtml, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
 import { upsertAlias } from '@/lib/payerAliases'
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
       nextReceiptNumber(),
       strapi(`/receipts?sort=Number:desc&pagination[limit]=${all ? 1000 : 12}` +
         '&fields[0]=Number&fields[1]=Type&fields[2]=Amount&fields[3]=MemberName' +
-        '&fields[4]=IssueDate&fields[5]=PaymentDate&fields[6]=SheetSynced'),
+        '&fields[4]=IssueDate&fields[5]=PaymentDate&fields[6]=SheetSynced&fields[7]=SentAt'),
     ])
     const recent = (recentRes.json?.data || []).map((r: any) => ({
       number: r.Number,
@@ -94,6 +94,7 @@ export async function GET(request: NextRequest) {
       issueDate: r.IssueDate,
       paymentDate: r.PaymentDate,
       sheetSynced: !!r.SheetSynced,
+      sentAt: r.SentAt || null,
     }))
     return NextResponse.json({
       seeded: next !== null,
@@ -118,10 +119,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Μη έγκυρο αίτημα' }, { status: 400 })
   }
 
-  const action = body?.action === 'seed' ? 'seed' : body?.action === 'issue' ? 'issue' : null
+  const action = ['seed', 'issue', 'mark-sent'].includes(body?.action) ? body.action as string : null
   if (!action) return NextResponse.json({ error: 'Μη έγκυρη ενέργεια' }, { status: 400 })
 
   try {
+    if (action === 'mark-sent') {
+      // Χειροκίνητη σήμανση αποστολής (π.χ. απόδειξη που δόθηκε στο χέρι)
+      const number = Number(body?.number)
+      if (!Number.isInteger(number)) return NextResponse.json({ error: 'Μη έγκυρος αριθμός' }, { status: 400 })
+      const r = await strapi(`/receipts?filters[Number][$eq]=${number}&fields[0]=Number&fields[1]=SentAt&pagination[limit]=1`)
+      const hit = r.json?.data?.[0]
+      if (!hit) return NextResponse.json({ error: `Η ΑΠ. ΕΙΣ. ${number} δεν βρέθηκε` }, { status: 404 })
+      const ok = await markReceiptSent(hit.documentId)
+      if (!ok) return NextResponse.json({ error: 'Αποτυχία σήμανσης' }, { status: 502 })
+      return NextResponse.json({ ok: true, action: 'mark-sent', number })
+    }
+
     if (action === 'seed') {
       const number = Number(body?.number)
       if (!Number.isInteger(number) || number < 1) {
@@ -255,6 +268,13 @@ export async function POST(request: NextRequest) {
         cc: [FINANCE_EMAIL],
         attachments: [{ filename: `apodeixi-eispraxis-${receipt.number}.pdf`, content: Buffer.from(pdf).toString('base64') }],
       })
+    }
+
+    // Η απόδειξη έφτασε στον παραλήπτη — κράτα την ημερομηνία αποστολής
+    if (emailSent) {
+      try { await markReceiptSent(receipt.documentId) } catch (err) {
+        console.error('oc/receipts: markReceiptSent failed (non-fatal):', err)
+      }
     }
 
     // Learned alias: η επιβεβαίωση του Financer διδάσκει τον matcher

@@ -4,7 +4,7 @@ import {
   IT_FROM, IT_EMAIL, WELCOME_CC, FINANCE_FROM, FINANCE_EMAIL,
 } from '@/lib/ocEmails'
 import { generateReceiptPdf } from '@/lib/receiptPdf'
-import { createReceipt } from '@/lib/receipts'
+import { createReceipt, markReceiptSent } from '@/lib/receipts'
 
 /**
  * Ολοκλήρωση πληρωμής μέλους — ΚΟΙΝΗ λογική για τα δύο σημεία εκκίνησης:
@@ -252,6 +252,11 @@ export async function processPaymentCompletion(input: PaymentCompletionInput): P
       cc: [FINANCE_EMAIL],   // αντίγραφο της απόδειξης στο αρχείο του finance@
       attachments: [{ filename: `apodeixi-eispraxis-${receipt.number}.pdf`, content: Buffer.from(pdf).toString('base64') }],
     })
+    if (receiptSent) {
+      try { await markReceiptSent(receipt.documentId) } catch (e) {
+        console.error('payment completion: markReceiptSent failed (non-fatal):', e)
+      }
+    }
   } catch (err) {
     console.error('payment completion: receipt email failed:', err)
   }

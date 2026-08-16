@@ -24,6 +24,7 @@ interface RecentReceipt {
   memberName: string | null
   issueDate: string | null
   sheetSynced: boolean
+  sentAt: string | null
 }
 
 interface SeriesState {
@@ -172,6 +173,24 @@ export default function OcFinances({ canIssue, members }: { canIssue: boolean; m
     } catch (err: any) {
       setConfirming(false)
       setNotice({ kind: 'err', text: err?.message || 'Αποτυχία έκδοσης' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function markSent(number: number) {
+    setBusy(true)
+    try {
+      const res = await fetch('/api/oc/receipts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'mark-sent', number }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Αποτυχία')
+      await load()
+    } catch (err: any) {
+      setNotice({ kind: 'err', text: err?.message || 'Αποτυχία σήμανσης αποστολής' })
     } finally {
       setBusy(false)
     }
@@ -445,6 +464,7 @@ export default function OcFinances({ canIssue, members }: { canIssue: boolean; m
                   <th className="py-2 pr-4 font-medium">Τύπος</th>
                   <th className="py-2 pr-4 font-medium">Ποσό</th>
                   <th className="py-2 pr-4 font-medium">Ημ. έκδοσης</th>
+                  <th className="py-2 pr-4 font-medium">Αποστολή</th>
                   <th className="py-2 font-medium">ΕΣΟΔΑ</th>
                 </tr>
               </thead>
@@ -456,6 +476,22 @@ export default function OcFinances({ canIssue, members }: { canIssue: boolean; m
                     <td className="py-3 pr-4 text-gray-500 dark:text-gray-400">{r.typeLabel}</td>
                     <td className="py-3 pr-4 text-charcoal dark:text-gray-200 notranslate">{Number(r.amount).toFixed(2).replace('.', ',')} €</td>
                     <td className="py-3 pr-4 text-gray-500 dark:text-gray-400 notranslate">{r.issueDate ? new Date(r.issueDate).toLocaleDateString('el-GR') : '—'}</td>
+                    <td className="py-3 pr-4">
+                      {r.sentAt ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 notranslate"
+                          title={`Στάλθηκε ${new Date(r.sentAt).toLocaleDateString('el-GR')}`}>
+                          ✓ {new Date(r.sentAt).toLocaleDateString('el-GR')}
+                        </span>
+                      ) : canIssue ? (
+                        <button type="button" onClick={() => markSent(r.number)} disabled={busy}
+                          className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200 hover:ring-2 hover:ring-orange-300 disabled:opacity-50"
+                          title="Δεν έχει σταλεί — πάτησε για χειροκίνητη σήμανση (π.χ. δόθηκε στο χέρι)">
+                          εκκρεμεί
+                        </button>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200">εκκρεμεί</span>
+                      )}
+                    </td>
                     <td className="py-3">
                       {r.sheetSynced ? (
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200">✓</span>
