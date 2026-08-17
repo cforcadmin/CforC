@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import OcCalendar, { type CalEvent } from '@/components/oc/OcCalendar'
+import OcEventForm from '@/components/oc/OcEventForm'
 
 /**
  * ΕΠΙΚΟΙΝΩΝΙΑ — μία οθόνη για τον ρυθμό της επικοινωνίας:
@@ -12,10 +14,6 @@ import { useEffect, useState } from 'react'
 interface Campaign {
   subject: string; sentAt: string | null; recipients: number
   opens: number; clicks: number; openRate: number | null; clickRate: number | null
-}
-interface CalEvent {
-  id: string; title: string; start: string; allDay: boolean
-  category: string; meetLink: string | null; location: string | null; htmlLink: string | null
 }
 interface CommsData {
   lists: { paid: number; external: number; media: number } | null
@@ -41,15 +39,12 @@ interface CommsData {
   configured: { sender: boolean; calendar: boolean; analytics: boolean }
 }
 
-const CAT_STYLE: Record<string, { label: string; dot: string; text: string }> = {
-  cafe: { label: 'Cafe', dot: 'bg-teal-500', text: 'text-teal-700 dark:text-teal-300' },
-  'newsletter-internal': { label: 'Newsletter μελών', dot: 'bg-coral', text: 'text-coral' },
-  'newsletter-external': { label: 'Newsletter κοινού', dot: 'bg-orange-400', text: 'text-orange-600 dark:text-orange-300' },
-  governance: { label: 'Διοικητικά', dot: 'bg-red-500', text: 'text-red-600 dark:text-red-300' },
-  deadline: { label: 'Προθεσμία', dot: 'bg-amber-500', text: 'text-amber-700 dark:text-amber-300' },
-  share: { label: 'Share my experience', dot: 'bg-purple-500', text: 'text-purple-600 dark:text-purple-300' },
-  meeting: { label: 'Συνάντηση', dot: 'bg-gray-400', text: 'text-gray-500 dark:text-gray-400' },
-}
+/**
+ * Τι αφορά την Επικοινωνία: ο ρυθμός προς τα έξω. Οι προθεσμίες των έργων
+ * (Σ.Η.μα, παραδοτέα) και οι εσωτερικές συναντήσεις ανήκουν στη Διαχείριση —
+ * φαίνονται μόνο με τον διακόπτη, δεν χάνονται.
+ */
+const COMMS_CATEGORIES = new Set(['cafe', 'newsletter-internal', 'newsletter-external', 'share', 'governance'])
 
 const DOCS = [
   { label: 'Newsletter μελών — κείμενα', href: 'https://docs.google.com/document/d/1YLT-EJnUO5SLGe-l7Fh2sWaORTGEXzLb/edit' },
@@ -57,7 +52,6 @@ const DOCS = [
   { label: 'Sender (αποστολές)', href: 'https://app.sender.net' },
 ]
 
-const gr = (d: string) => new Date(d).toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit' })
 const grLong = (d: string) => new Date(d).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })
 const num = (n: number) => n.toLocaleString('el-GR')
 
@@ -165,15 +159,18 @@ export default function OcComms() {
   const [data, setData] = useState<CommsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [showMeetings, setShowMeetings] = useState(false)
+  const [showAll, setShowAll] = useState(false)
+  const [editing, setEditing] = useState<CalEvent | null>(null)
+  const [creatingOn, setCreatingOn] = useState<string | null>(null)
 
-  useEffect(() => {
+  const load = useCallback(() => {
     fetch('/api/oc/comms')
       .then(async r => { if (!r.ok) throw new Error((await r.json())?.error || 'Αποτυχία'); return r.json() })
       .then(setData)
       .catch(e => setError(e?.message || 'Αποτυχία φόρτωσης'))
       .finally(() => setLoading(false))
   }, [])
+  useEffect(() => { load() }, [load])
 
   if (loading) return <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8 text-gray-400">Φόρτωση…</div>
   if (error) return <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8 text-red-600 dark:text-red-400">{error}</div>
@@ -187,11 +184,8 @@ export default function OcComms() {
   const sessionDelta = ga && ga.prev.sessions
     ? Math.round(((ga.sessions / ga.prev.sessions) - 1) * 100) : null
 
-  const upcoming = events
-    .filter(e => daysUntil(e.start) >= 0)
-    .sort((a, b) => String(a.start).localeCompare(String(b.start)))
-  const highlights = upcoming.filter(e => e.category !== 'meeting')
-  const meetings = upcoming.filter(e => e.category === 'meeting')
+  const visibleEvents = (showAll ? events : events.filter(e => COMMS_CATEGORIES.has(e.category))) as CalEvent[]
+  const hiddenCount = events.length - events.filter(e => COMMS_CATEGORIES.has(e.category)).length
 
   return (
     <div className="space-y-6">
@@ -242,70 +236,27 @@ export default function OcComms() {
 
       {/* Ημερολόγιο */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
-        <div className="flex items-baseline justify-between gap-4 mb-5">
-          <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Ημερολόγιο δράσεων</h2>
-          <span className="text-base text-gray-500 dark:text-gray-400">επόμενοι 5 μήνες</span>
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+          <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Ημερολόγιο επικοινωνίας</h2>
+          <label className="flex items-center gap-2 text-base text-gray-600 dark:text-gray-300 cursor-pointer">
+            <input type="checkbox" checked={showAll} onChange={e => setShowAll(e.target.checked)}
+              className="w-4 h-4 accent-coral" />
+            Όλα τα γεγονότα του δικτύου
+            {hiddenCount > 0 && !showAll && <span className="text-gray-400 dark:text-gray-500">({hiddenCount} κρυφά)</span>}
+          </label>
         </div>
 
         {!configured.calendar ? (
-          <p className="text-sm text-gray-400">Δεν έχει ρυθμιστεί η σύνδεση με το Google Calendar.</p>
-        ) : highlights.length === 0 ? (
-          <p className="text-sm text-gray-400">Κανένα προγραμματισμένο γεγονός.</p>
+          <p className="text-base text-gray-400">Δεν έχει ρυθμιστεί η σύνδεση με το Google Calendar.</p>
         ) : (
-          <ul className="space-y-2">
-            {highlights.map(e => {
-              const st = CAT_STYLE[e.category] || CAT_STYLE.meeting
-              const soon = daysUntil(e.start) <= 2
-              return (
-                <li key={e.id} className={`flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3 ${
-                  soon ? 'bg-gray-50 dark:bg-gray-700/50' : ''}`}>
-                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${st.dot}`} aria-hidden="true" />
-                  <span className="w-16 shrink-0 text-base font-bold text-charcoal dark:text-gray-100 notranslate">{gr(e.start)}</span>
-                  <span className="flex-1 min-w-48">
-                    <span className="text-base text-charcoal dark:text-gray-100">{e.title}</span>
-                    <span className={`block text-sm ${st.text}`}>
-                      {st.label}
-                      {!e.allDay && <span className="notranslate"> · {new Date(e.start).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' })}</span>}
-                    </span>
-                  </span>
-                  <span className={`text-sm shrink-0 ${soon ? 'font-bold text-coral' : 'text-gray-500 dark:text-gray-400'}`}>
-                    {untilLabel(e.start)}
-                  </span>
-                  {e.meetLink && (
-                    <a href={e.meetLink} target="_blank" rel="noopener noreferrer"
-                      className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-bold ${
-                        e.category === 'cafe' && soon
-                          ? 'bg-teal-600 text-white hover:opacity-90'
-                          : 'border border-gray-300 dark:border-gray-600 text-charcoal dark:text-gray-200 hover:border-coral'}`}>
-                      {e.category === 'cafe' ? 'Σύνδεση στο Cafe' : 'Meet'}
-                    </a>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-        )}
-
-        {meetings.length > 0 && (
-          <div className="mt-5 pt-5 border-t border-gray-100 dark:border-gray-700">
-            <button type="button" onClick={() => setShowMeetings(!showMeetings)}
-              className="text-base text-gray-600 dark:text-gray-300 hover:text-coral">
-              {showMeetings ? '▾' : '▸'} Λοιπές συναντήσεις ({meetings.length})
-            </button>
-            {showMeetings && (
-              <ul className="mt-3 space-y-1.5">
-                {meetings.map(e => (
-                  <li key={e.id} className="flex items-center gap-3 text-base text-gray-600 dark:text-gray-300">
-                    <span className="w-16 shrink-0 notranslate">{gr(e.start)}</span>
-                    <span className="flex-1">{e.title}</span>
-                    {e.meetLink && (
-                      <a href={e.meetLink} target="_blank" rel="noopener noreferrer" className="text-coral hover:underline text-sm">meet ↗</a>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <OcCalendar
+            events={visibleEvents}
+            canEdit
+            storageKey="oc-cal-view-comms"
+            onEdit={setEditing}
+            onCreate={setCreatingOn}
+            emptyText="Κανένα γεγονός επικοινωνίας στο ημερολόγιο."
+          />
         )}
       </div>
 
@@ -361,6 +312,15 @@ export default function OcComms() {
           </>
         )}
       </div>
+
+      {(editing || creatingOn) && (
+        <OcEventForm
+          event={editing}
+          date={creatingOn || undefined}
+          onClose={() => { setEditing(null); setCreatingOn(null) }}
+          onSaved={load}
+        />
+      )}
 
       {/* Έγγραφα */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">

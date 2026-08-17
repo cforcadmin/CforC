@@ -18,6 +18,9 @@ const TOKEN_URL = 'https://oauth2.googleapis.com/token'
 export const SCOPES = {
   analytics: 'https://www.googleapis.com/auth/analytics.readonly',
   calendar: 'https://www.googleapis.com/auth/calendar.readonly',
+  /** Ανάγνωση ΚΑΙ εγγραφή γεγονότων — απαιτεί «Make changes to events»
+   *  στον διαμοιρασμό του ημερολογίου, όχι μόνο «See all event details». */
+  calendarWrite: 'https://www.googleapis.com/auth/calendar.events',
 } as const
 
 interface ServiceAccount {
@@ -60,6 +63,14 @@ function base64url(input: Buffer | string): string {
 // Ένα token ανά scope, μέχρι τη λήξη του (μείον 60'' περιθώριο)
 const tokenCache = new Map<string, { token: string; expiresAt: number }>()
 
+/**
+ * Ορισμένα scopes απαιτούν να ενεργεί το service account ΩΣ χρήστης του
+ * τομέα (domain-wide delegation). Η εγγραφή στο ημερολόγιο είναι τέτοια:
+ * το Workspace δεν επιτρέπει σε «εξωτερικό» λογαριασμό δικαιώματα εγγραφής,
+ * οπότε υπογράφουμε με sub= τον χρήστη και το Google το δέχεται ως εσωτερικό.
+ */
+const DELEGATED_SCOPES = new Set<string>([SCOPES.calendarWrite])
+
 export async function getAccessToken(scope: string): Promise<string | null> {
   const hit = tokenCache.get(scope)
   if (hit && hit.expiresAt > Date.now() + 60_000) return hit.token
@@ -69,12 +80,14 @@ export async function getAccessToken(scope: string): Promise<string | null> {
 
   const now = Math.floor(Date.now() / 1000)
   const header = base64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
+  const impersonate = DELEGATED_SCOPES.has(scope) ? process.env.GOOGLE_IMPERSONATE_USER : null
   const claims = base64url(JSON.stringify({
     iss: sa.client_email,
     scope,
     aud: TOKEN_URL,
     iat: now,
     exp: now + 3600,
+    ...(impersonate ? { sub: impersonate } : {}),
   }))
   const signingInput = `${header}.${claims}`
 

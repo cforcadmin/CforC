@@ -10,6 +10,7 @@ import OcOverview from '@/components/oc/OcOverview'
 import OcFinances from '@/components/oc/OcFinances'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
 import OcComms from '@/components/oc/OcComms'
+import OcAdmin from '@/components/oc/OcAdmin'
 import type { OcOverviewData } from '@/lib/ocOverview'
 
 // OC categories. Chip style: first letter in a filled block, remainder in a
@@ -412,14 +413,10 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
           )}
 
           {activeSection === 'admin' && (
-            <div className="space-y-8">
-              {/* Μηνιαία εικόνα σε λειτουργία Διαχείρισης: αποστολή στο
-                  λογιστήριο όταν ο/η Financer έχει εγκρίνει τον μήνα */}
-              <OcMonthlyView mode="admin" canDispatch={activeSeat === 'admin' || activeSeat === 'it'} />
-              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8 text-center">
-                <p className="text-gray-500 dark:text-gray-400">Οι υπόλοιπες λειτουργίες Διαχείρισης — σύντομα διαθέσιμες.</p>
-              </div>
-            </div>
+            <OcAdmin
+              canEdit={activeSeat === 'admin' || activeSeat === 'it'}
+              canDispatch={activeSeat === 'admin' || activeSeat === 'it'}
+            />
           )}
 
           {activeSection === 'comms' && <OcComms />}
