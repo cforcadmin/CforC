@@ -113,8 +113,11 @@ export async function POST(request: NextRequest) {
         if (/^ΑΠ\. ΕΙΣ\.|^\d+\.\d+_ΑΠ\. ΕΙΣ\./.test(f.name)) return false  // δικές μας αποδείξεις
         const p = parseInvoiceFilename(f.name)
         if (p.amount !== null && Math.abs(p.amount - amount) < 0.005) return true
-        // ποσό γραμμένο ως ακέραιος («10100.pdf»)
-        return new RegExp(`(^|[^\\d])${Math.round(amount)}([^\\d]|$)`).test(f.name)
+        // Ποσό γραμμένο ως ακέραιος («10100.pdf») ή με ελληνικό διαχωριστή
+        // χιλιάδων («2.500.pdf»): για ΤΑΙΡΙΑΣΜΑ αρκεί — δεν το εμπιστευόμαστε
+        // ως ποσό (το ποσό το δίνει η τράπεζα), οπότε η ασάφεια δεν κοστίζει.
+        const flat = f.name.replace(/(\d)[.](?=\d{3}(\D|$))/g, '$1')
+        return new RegExp(`(^|[^\\d])${Math.round(amount)}([^\\d]|$)`).test(flat)
       })
       if (target) {
         fileId = target.id
