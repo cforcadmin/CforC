@@ -7,10 +7,17 @@ import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 
 /**
  * Ετήσια δομή φακέλων Παραστατικών στο Drive — proxy προς το ΕΣΟΔΑ web app.
- *  GET  → υπάρχει η δομή του τρέχοντος έτους; (board)
+ *  GET  → δύο ΑΝΕΞΑΡΤΗΤΕΣ πληροφορίες (board):
+ *         exists     — υπάρχει η δομή του έτους; (οδηγεί το banner «Καλή Χρονιά»)
+ *         connection — απαντά το web app; ok | unconfigured | unauthorized | unreachable
+ *         Χώρια, γιατί «δεν ξέρω» ΔΕΝ σημαίνει «όλα καλά»: μέχρι τώρα κάθε
+ *         αποτυχία γύριζε exists:true και η βλάβη έμενε αόρατη μέχρι να
+ *         σκάσει στη μέση μιας έγκρισης.
  *  POST → δημιουργία της δομής (ΜΟΝΟ Financer) — καλείται από το banner
  *         «Καλή Χρονιά» στα Οικονομικά, ποτέ αυτόματα.
  */
+
+type Connection = 'ok' | 'unconfigured' | 'unauthorized' | 'unreachable'
 
 const WEBAPP_URL = process.env.FINANCE_SHEET_WEBAPP_URL
 const WEBAPP_SECRET = process.env.FINANCE_SHEET_WEBAPP_SECRET
@@ -56,14 +63,22 @@ function requestedYear(raw: string | null): number {
 export async function GET(request: NextRequest) {
   const denied = await authorize(false)
   if (denied) return denied
-  if (!WEBAPP_URL || !WEBAPP_SECRET) return NextResponse.json({ exists: true, unconfigured: true })
+  const year = requestedYear(request.nextUrl.searchParams.get('year'))
+  if (!WEBAPP_URL || !WEBAPP_SECRET) {
+    return NextResponse.json({ exists: true, year, connection: 'unconfigured' as Connection })
+  }
   try {
-    const year = requestedYear(request.nextUrl.searchParams.get('year'))
     const r = await webApp('checkYearStructure', year)
-    return NextResponse.json({ exists: r.ok ? !!r.exists : true, year })
+    if (r?.ok) return NextResponse.json({ exists: !!r.exists, year, connection: 'ok' as Connection })
+    // Το web app απάντησε αλλά αρνήθηκε: λάθος μυστικό ή σφάλμα script
+    const detail = String(r?.error || '').slice(0, 200)
+    const connection: Connection = /unauthorized/i.test(detail) ? 'unauthorized' : 'unreachable'
+    console.error('finance-structure: web app refused:', detail)
+    // exists:true → κανένα banner σε αμφιβολία· η βλάβη λέγεται από το connection
+    return NextResponse.json({ exists: true, year, connection, detail })
   } catch (err) {
     console.error('finance-structure check failed:', err)
-    return NextResponse.json({ exists: true }) // σε αμφιβολία, χωρίς banner
+    return NextResponse.json({ exists: true, year, connection: 'unreachable' as Connection })
   }
 }
 

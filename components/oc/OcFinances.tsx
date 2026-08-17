@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import OcBankIntake from '@/components/oc/OcBankIntake'
 import OcSubscriptions, { type SubMemberRow } from '@/components/oc/OcSubscriptions'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
@@ -50,6 +50,21 @@ type TypeKey = (typeof TYPES)[number]['key']
 const inputCls = 'w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral'
 const labelCls = 'block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5'
 
+const CONNECTION_MESSAGES: Record<string, { title: string; detail: string }> = {
+  unconfigured: {
+    title: 'Η σύνδεση με το ΕΣΟΔΑ-ΕΞΟΔΑ δεν έχει ρυθμιστεί σε αυτό το περιβάλλον',
+    detail: 'Λείπει το FINANCE_SHEET_WEBAPP_URL ή το FINANCE_SHEET_WEBAPP_SECRET. Οι αποδείξεις εκδίδονται κανονικά, αλλά ΔΕΝ γράφονται γραμμές στο φύλλο και δεν αρχειοθετούνται PDF στο Drive.',
+  },
+  unauthorized: {
+    title: 'Το ΕΣΟΔΑ-ΕΞΟΔΑ απορρίπτει τη σύνδεση',
+    detail: 'Η διεύθυνση απαντά, αλλά το μυστικό δεν ταιριάζει. Έλεγξε ότι το FINANCE_SHEET_WEBAPP_SECRET είναι ίδιο με αυτό μέσα στο Apps Script.',
+  },
+  unreachable: {
+    title: 'Δεν απαντά το ΕΣΟΔΑ-ΕΞΟΔΑ',
+    detail: 'Συνήθως σημαίνει ότι το Apps Script δημοσιεύτηκε ως ΝΕΟ deployment (νέα διεύθυνση) αντί για νέα έκδοση του υπάρχοντος — ή ότι η διεύθυνση στις μεταβλητές περιβάλλοντος είναι παλιά.',
+  },
+}
+
 export default function OcFinances({ canIssue, canRemind, members, subMembers }: {
   canIssue: boolean
   canRemind: boolean
@@ -72,6 +87,10 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
   const [yearPrompt, setYearPrompt] = useState<number | null>(null)
   const [yearBusy, setYearBusy] = useState(false)
   const [yearDone, setYearDone] = useState(false)
+  // Κατάσταση σύνδεσης με το ΕΣΟΔΑ-ΕΞΟΔΑ: αν είναι σπασμένη, πρέπει να
+  // φαίνεται ΕΔΩ και όχι στη μέση μιας έγκρισης
+  const [connection, setConnection] = useState<'ok' | 'unconfigured' | 'unauthorized' | 'unreachable' | null>(null)
+  const [connChecking, setConnChecking] = useState(false)
 
   // ---- φόρμα έκδοσης ----
   const [type, setType] = useState<TypeKey>('subscription')
@@ -109,18 +128,30 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
   }
   useEffect(() => { load(listScope) }, [listScope]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    // Μόνο Ιανουάριο/Φεβρουάριο αξίζει ο έλεγχος — μετά, ή υπάρχει η δομή
-    // ή τη δημιούργησε ήδη lazily ο writer. Override για δοκιμή ή πρόωρη
-    // δημιουργία (π.χ. Δεκέμβριο): /oc?testNewYear=2027
+  /**
+   * Ένα αίτημα, δύο απαντήσεις: κατάσταση σύνδεσης (πάντα) και δομή φακέλων
+   * του έτους (banner μόνο Ιανουάριο/Φεβρουάριο — μετά, ή υπάρχει ή τη
+   * φτιάχνει lazily ο writer). Override για δοκιμή ή πρόωρη δημιουργία
+   * (π.χ. Δεκέμβριο): /oc?testNewYear=2027
+   */
+  const checkStructure = useCallback(async () => {
+    if (!canIssue) return          // μόνο ο/η Financer μπορεί να το διορθώσει
+    setConnChecking(true)
     const testYear = new URLSearchParams(window.location.search).get('testNewYear')
-    const m = new Date().getMonth()
-    if (!testYear && m > 1) return
-    fetch(`/api/oc/finance-structure${testYear ? `?year=${encodeURIComponent(testYear)}` : ''}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d && d.exists === false) setYearPrompt(d.year) })
-      .catch(() => { /* σιωπηλά — κανένα banner σε αμφιβολία */ })
-  }, [])
+    try {
+      const res = await fetch(`/api/oc/finance-structure${testYear ? `?year=${encodeURIComponent(testYear)}` : ''}`)
+      const d = res.ok ? await res.json() : null
+      if (!d) { setConnection('unreachable'); return }
+      setConnection(d.connection || 'ok')
+      const m = new Date().getMonth()
+      if ((testYear || m <= 1) && d.exists === false) setYearPrompt(d.year)
+    } catch {
+      setConnection('unreachable')
+    } finally {
+      setConnChecking(false)
+    }
+  }, [canIssue])
+  useEffect(() => { checkStructure() }, [checkStructure])
 
   async function createYearStructure() {
     setYearBusy(true)
@@ -283,6 +314,22 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
       )}
 
       {/* 🎉 Νέο έτος: πρόταση δημιουργίας δομής φακέλων Παραστατικών */}
+      {connection && connection !== 'ok' && CONNECTION_MESSAGES[connection] && (
+        <div className="rounded-3xl border-2 border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20 p-6">
+          <div className="flex flex-wrap items-start gap-4">
+            <span className="text-2xl leading-none" aria-hidden="true">⚠️</span>
+            <div className="flex-1 min-w-60">
+              <p className="font-bold text-charcoal dark:text-gray-100">{CONNECTION_MESSAGES[connection].title}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{CONNECTION_MESSAGES[connection].detail}</p>
+            </div>
+            <button type="button" onClick={checkStructure} disabled={connChecking}
+              className="px-5 py-2 rounded-full border border-orange-400 dark:border-orange-600 text-sm font-bold text-charcoal dark:text-gray-100 hover:bg-orange-100 dark:hover:bg-orange-900/40 disabled:opacity-40">
+              {connChecking ? 'Έλεγχος…' : 'Επανέλεγχος'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {yearPrompt !== null && (
         <div className="bg-gradient-to-r from-coral/15 to-[#E9A13B]/15 dark:from-coral/10 dark:to-[#E9A13B]/10 rounded-3xl shadow-sm p-6 border border-coral/30">
           {yearDone ? (
