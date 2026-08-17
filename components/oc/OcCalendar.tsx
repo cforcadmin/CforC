@@ -26,14 +26,19 @@ export interface CalEvent {
   attendees?: Array<{ email: string; name: string | null; status: string }>
 }
 
-export const CAT_STYLE: Record<string, { label: string; dot: string; text: string; bg: string }> = {
-  cafe: { label: 'Meet Up Cafe', dot: 'bg-teal-500', text: 'text-teal-700 dark:text-teal-300', bg: 'bg-teal-100 dark:bg-teal-900/40' },
-  'newsletter-internal': { label: 'Newsletter μελών', dot: 'bg-coral', text: 'text-coral', bg: 'bg-orange-100 dark:bg-orange-900/40' },
-  'newsletter-external': { label: 'Newsletter κοινού', dot: 'bg-orange-400', text: 'text-orange-600 dark:text-orange-300', bg: 'bg-amber-100 dark:bg-amber-900/40' },
-  governance: { label: 'Διοικητικά', dot: 'bg-red-500', text: 'text-red-600 dark:text-red-300', bg: 'bg-red-100 dark:bg-red-900/40' },
-  deadline: { label: 'Προθεσμία', dot: 'bg-amber-500', text: 'text-amber-700 dark:text-amber-300', bg: 'bg-amber-100 dark:bg-amber-900/40' },
-  share: { label: 'Share my experience', dot: 'bg-purple-500', text: 'text-purple-600 dark:text-purple-300', bg: 'bg-purple-100 dark:bg-purple-900/40' },
-  meeting: { label: 'Συνάντηση', dot: 'bg-gray-400', text: 'text-gray-500 dark:text-gray-400', bg: 'bg-gray-100 dark:bg-gray-700' },
+/**
+ * Χρώματα κατηγοριών. Το `chip` κρατιέται ΞΕΧΩΡΙΣΤΑ από το `text`: μέσα σε
+ * χρωματιστό πλακίδιο χρειάζεται φωτεινό κείμενο στο σκοτεινό θέμα, ενώ
+ * πάνω σε λευκό φόντο χρειάζεται σκούρο. Ένα ζευγάρι δεν καλύπτει και τα δύο.
+ */
+export const CAT_STYLE: Record<string, { label: string; dot: string; text: string; bg: string; chip: string }> = {
+  cafe: { label: 'Meet Up Cafe', dot: 'bg-teal-500', text: 'text-teal-700 dark:text-teal-300', bg: 'bg-teal-100 dark:bg-teal-800', chip: 'text-teal-900 dark:text-teal-50' },
+  'newsletter-internal': { label: 'Newsletter μελών', dot: 'bg-coral', text: 'text-coral', bg: 'bg-orange-100 dark:bg-orange-800', chip: 'text-orange-900 dark:text-orange-50' },
+  'newsletter-external': { label: 'Newsletter κοινού', dot: 'bg-orange-400', text: 'text-orange-600 dark:text-orange-300', bg: 'bg-amber-100 dark:bg-amber-700', chip: 'text-amber-900 dark:text-amber-50' },
+  governance: { label: 'Διοικητικά', dot: 'bg-red-500', text: 'text-red-600 dark:text-red-300', bg: 'bg-red-100 dark:bg-red-800', chip: 'text-red-900 dark:text-red-50' },
+  deadline: { label: 'Προθεσμία', dot: 'bg-amber-500', text: 'text-amber-700 dark:text-amber-300', bg: 'bg-amber-100 dark:bg-amber-700', chip: 'text-amber-900 dark:text-amber-50' },
+  share: { label: 'Share my experience', dot: 'bg-purple-500', text: 'text-purple-600 dark:text-purple-300', bg: 'bg-purple-100 dark:bg-purple-800', chip: 'text-purple-900 dark:text-purple-50' },
+  meeting: { label: 'Συνάντηση', dot: 'bg-gray-400', text: 'text-gray-500 dark:text-gray-400', bg: 'bg-gray-200 dark:bg-gray-600', chip: 'text-gray-900 dark:text-gray-50' },
 }
 
 const MONTHS = ['Ιανουαρίου', 'Φεβρουαρίου', 'Μαρτίου', 'Απριλίου', 'Μαΐου', 'Ιουνίου',
@@ -55,7 +60,8 @@ const WEEK_GRID: React.CSSProperties = {
 
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 const dayKey = (e: CalEvent) => String(e.start).slice(0, 10)
-const timeOf = (e: CalEvent) => e.allDay ? '' : new Date(e.start).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' })
+const timeOf = (e: CalEvent) => e.allDay ? ''
+  : new Date(e.start).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit', hour12: false })
 
 export function daysUntil(d: string): number {
   const t = new Date(); t.setHours(0, 0, 0, 0)
@@ -152,7 +158,7 @@ export default function OcCalendar({
     return (
       <button type="button" onClick={() => onEdit?.(e)} disabled={!onEdit}
         title={`${e.title}${e.allDay ? '' : ' · ' + timeOf(e)}`}
-        className={`w-full text-left px-1.5 py-1 rounded text-xs leading-tight truncate ${st.bg} ${st.text} ${onEdit ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'}`}>
+        className={`w-full text-left px-1.5 py-1 rounded text-xs leading-tight truncate ${st.bg} ${st.chip} ${onEdit ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'}`}>
         {!e.allDay && <span className="notranslate font-medium">{timeOf(e)} </span>}{e.title}
       </button>
     )
@@ -308,11 +314,12 @@ export default function OcCalendar({
                   const otherMonth = d.getMonth() !== cursor.getMonth()
                   return (
                     <div key={k} style={{ minHeight: '6.5rem' }}
-                      className={`p-1.5 bg-white dark:bg-gray-800 ${otherMonth ? 'opacity-40' : ''}`}>
+                      className={`p-1.5 ${otherMonth ? 'bg-gray-50 dark:bg-gray-900/60' : 'bg-white dark:bg-gray-800'}`}>
                       <div className="flex items-center justify-between mb-1">
                         <span className={`text-sm notranslate ${k === todayIso
                           ? 'w-6 h-6 rounded-full bg-coral text-white flex items-center justify-center font-bold'
-                          : 'text-gray-500 dark:text-gray-400'}`}>{d.getDate()}</span>
+                          : otherMonth ? 'text-gray-400 dark:text-gray-600' : 'text-gray-500 dark:text-gray-400'}`}>
+                          {d.getDate()}</span>
                         {canEdit && onCreate && (
                           <button type="button" onClick={() => onCreate(k)} aria-label={`Νέο γεγονός ${k}`}
                             className="text-gray-300 dark:text-gray-600 hover:text-coral text-sm leading-none">+</button>
