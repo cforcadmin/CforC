@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { notifyFinanceChanged } from '@/lib/ocFinanceEvents'
 
 /**
  * Β. ΕΞΟΔΑ — παραστατικά του μήνα από το Drive → λίστα ελέγχου.
@@ -193,6 +194,7 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
       const map: Record<string, any> = {}
       for (const r of data.results || []) map[r.fileId] = r
       setResults(prev => ({ ...prev, ...map }))
+      if ((data.results || []).some((r: any) => r.ok)) notifyFinanceChanged(month)
       if ((data.settled || []).some((x: any) => x.ok)) {
         setCarried(prev => prev.filter(c => !(data.settled || []).some((x: any) => x.ok && x.documentId === c.documentId)))
       }
@@ -228,6 +230,7 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
       if (!res.ok) throw new Error(data?.error || 'Αποτυχία')
       const one = (data.results || [])[0]
       if (one) setResults(prev => ({ ...prev, [fileId]: one }))
+      if (one?.ok) notifyFinanceChanged(month)
     } catch (err: any) {
       setError(err?.message || 'Αποτυχία έγκρισης')
     } finally {

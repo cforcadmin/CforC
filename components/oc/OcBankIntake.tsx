@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { notifyFinanceChanged } from '@/lib/ocFinanceEvents'
 import OcExpenseIntake from '@/components/oc/OcExpenseIntake'
 
 /**
@@ -191,6 +192,7 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
       }
     }
     setIssuing(false)
+    notifyFinanceChanged(month)
     onIssued()
   }
 

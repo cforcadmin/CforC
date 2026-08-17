@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { FINANCE_CHANGED } from '@/lib/ocFinanceEvents'
 
 /**
  * «Μηνιαία εικόνα» εσόδων ΚΑΙ εξόδων — ό,τι θα δει το λογιστήριο:
@@ -100,9 +101,11 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
+  /** άλλαξε ΑΛΛΟΣ μήνας από άλλη κάρτα — το λέμε αντί να αλλάξουμε επιλογή */
+  const [staleMonth, setStaleMonth] = useState<string | null>(null)
   const [closing, setClosing] = useState(false)
 
-  async function load(m: string) {
+  const load = useCallback(async (m: string) => {
     setLoading(true); setError(null)
     try {
       const res = await fetch(`/api/oc/monthly-close?month=${m}`)
@@ -113,8 +116,24 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
     } finally {
       setLoading(false)
     }
-  }
-  useEffect(() => { if (open) load(month) }, [open, month]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
+  useEffect(() => { if (open) load(month) }, [open, month, load])
+
+  // Έγκριση εξόδων ή έκδοση απόδειξης σε άλλη κάρτα: ξαναδιαβάζουμε, αλλιώς
+  // η εικόνα δείχνει την κατάσταση ΠΡΙΝ την ενέργεια και μοιάζει με απώλεια.
+  useEffect(() => {
+    function onChanged(e: Event) {
+      const changed = (e as CustomEvent)?.detail?.month
+      if (!open) return
+      if (changed && changed !== month) {
+        setStaleMonth(changed)
+        return
+      }
+      load(month)
+    }
+    window.addEventListener(FINANCE_CHANGED, onChanged)
+    return () => window.removeEventListener(FINANCE_CHANGED, onChanged)
+  }, [open, month, load])
 
   const [dispatchNote, setDispatchNote] = useState<string | null>(null)
 
@@ -141,7 +160,10 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
     }
   }
 
+  function goToMonth(m: string) { setStaleMonth(null); setMonth(m) }
+
   function shiftMonth(delta: number) {
+    setStaleMonth(null)
     const [y, m] = month.split('-').map(Number)
     const d = new Date(y, m - 1 + delta, 1)
     setMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
@@ -176,6 +198,9 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
             <span className="font-bold text-charcoal dark:text-gray-100 min-w-40 text-center">{monthLabel(month)}</span>
             <button type="button" onClick={() => shiftMonth(1)} aria-label="Επόμενος μήνας"
               className="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-600 text-charcoal dark:text-gray-200 hover:border-coral">→</button>
+            <button type="button" onClick={() => load(month)} disabled={loading} aria-label="Ανανέωση"
+              title="Ανανέωση από το Strapi"
+              className="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-600 text-charcoal dark:text-gray-200 hover:border-coral disabled:opacity-40">↻</button>
             {data?.status === 'sent' ? (
               <span className="px-3 py-1 rounded-full bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 text-xs font-bold">
                 Εστάλη στο λογιστήριο {data.close?.sentAt ? new Date(data.close.sentAt).toLocaleDateString('el-GR') : ''} ✓
@@ -196,6 +221,13 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
               </span>
             )}
           </div>
+
+          {staleMonth && (
+            <p className="text-sm rounded-xl bg-teal-50 dark:bg-teal-900/20 text-teal-800 dark:text-teal-200 px-4 py-2.5">
+              Καταχωρήθηκε κίνηση στον <strong>{monthLabel(staleMonth)}</strong>.{' '}
+              <button type="button" onClick={() => goToMonth(staleMonth)} className="underline font-bold">Δες τον</button>
+            </p>
+          )}
 
           {loading && <p className="text-sm text-gray-400">Φόρτωση…</p>}
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
