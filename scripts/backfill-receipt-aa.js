@@ -65,9 +65,14 @@ async function main() {
   for (const r of rows) {
     const aa = String(r[iAa] || '').trim()
     const doc = String(r[iDoc] || '').trim()
-    if (!/^\d+\.\d+$/.test(aa)) continue
     const m = /ΑΠ\.\s*ΕΙΣ\.\s*(\d+)/i.exec(doc)
     if (!m) continue
+    if (!/^\d+\.\d+$/.test(aa)) {
+      // Δεν «διορθώνουμε» σιωπηλά: το Α/Α το ορίζει το φύλλο. Αν έχει
+      // τυπογραφικό (π.χ. ελληνικό «Ο» αντί για μηδέν) το ΑΝΑΦΕΡΟΥΜΕ.
+      console.warn(`⚠ ΑΠ. ΕΙΣ. ${m[1]}: μη έγκυρο Α/Α στο φύλλο («${aa}») — διόρθωσέ το εκεί και ξανατρέξε`)
+      continue
+    }
     const number = Number(m[1])
     if (map.has(number) && map.get(number) !== aa) {
       console.warn(`⚠ ΑΠ. ΕΙΣ. ${number}: δύο διαφορετικά Α/Α (${map.get(number)} και ${aa}) — κρατώ το πρώτο`)
