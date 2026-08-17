@@ -50,6 +50,13 @@ const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
   'Others': 'Λοιπά',
 }
 
+/** «9.10» > «9.2»: το Α/Α του φύλλου είναι μήνας.σειρά, όχι δεκαδικός */
+function aaOrder(aa: string | null | undefined): number {
+  const m = /^(\d+)\.(\d+)$/.exec(String(aa || ''))
+  if (!m) return Number.MAX_SAFE_INTEGER
+  return Number(m[1]) * 10000 + Number(m[2])
+}
+
 const METHOD_LABELS: Record<string, string> = {
   bank: 'Τράπεζα', cash: 'Μετρητά', offset: 'Συμψηφισμός', unpaid: 'Ανεξόφλητο',
 }
@@ -130,7 +137,7 @@ export async function GET(request: NextRequest) {
         '&sort[0]=PaymentDate:asc&sort[1]=Number:asc&pagination[limit]=500' +
         '&fields[0]=Number&fields[1]=Type&fields[2]=Amount&fields[3]=RegistrationFee' +
         '&fields[4]=SubscriptionYear&fields[5]=MemberName&fields[6]=PayerName' +
-        '&fields[7]=PaymentDate&fields[8]=IssueDate&fields[9]=SentAt&fields[10]=createdAt&fields[11]=PaymentMethod'),
+        '&fields[7]=PaymentDate&fields[8]=IssueDate&fields[9]=SentAt&fields[10]=createdAt&fields[11]=PaymentMethod&fields[12]=Aa'),
       strapi(`/income-records?filters[Month][$eq]=${month}&sort=Aa:asc&pagination[limit]=500`),
       strapi(`/expenses?filters[Month][$eq]=${month}&filters[State][$eq]=approved` +
         '&sort[0]=IssueDate:asc&pagination[limit]=500'),
@@ -146,6 +153,7 @@ export async function GET(request: NextRequest) {
       const isDelta = closeTime !== null && r.createdAt && Date.parse(r.createdAt) > closeTime
       return {
         number: r.Number,
+        aa: r.Aa || null,
         type: r.Type,
         typeLabel: TYPE_LABELS[r.Type as ReceiptType] || r.Type,
         amount: Number(r.Amount) || 0,
@@ -193,6 +201,18 @@ export async function GET(request: NextRequest) {
       fileName: e.FileName || null,
       notes: e.Notes || null,
     }))
+
+    // Ταξινόμηση όπως στο φύλλο: αύξον Α/Α. Ό,τι δεν έχει ακόμη Α/Α
+    // (παλιές αποδείξεις πριν την καταγραφή του, ή αποτυχημένο sync)
+    // πηγαίνει στο τέλος με τη σειρά πληρωμής.
+    receipts.sort((a: any, b: any) =>
+      aaOrder(a.aa) - aaOrder(b.aa) ||
+      String(a.paymentDate || '').localeCompare(String(b.paymentDate || '')) ||
+      a.number - b.number)
+    incomeRecords.sort((a: any, b: any) => aaOrder(a.aa) - aaOrder(b.aa))
+    expenses.sort((a: any, b: any) =>
+      aaOrder(a.aa) - aaOrder(b.aa) ||
+      String(a.issueDate || '').localeCompare(String(b.issueDate || '')))
 
     // Σύνολα ανά κατηγορία — αντιστοιχούν στις στήλες του ΕΣΟΔΑ
     const totals: Record<string, number> = {}
@@ -299,13 +319,13 @@ export async function POST(request: NextRequest) {
       strapi(`/receipts?filters[PaymentDate][$gte]=${from}&filters[PaymentDate][$lte]=${to}` +
         '&sort[0]=PaymentDate:asc&sort[1]=Number:asc&pagination[limit]=500' +
         '&fields[0]=Number&fields[1]=Type&fields[2]=Amount&fields[3]=MemberName' +
-        '&fields[4]=PaymentDate&fields[5]=IssueDate&fields[6]=SubscriptionYear&fields[7]=PaymentMethod'),
+        '&fields[4]=PaymentDate&fields[5]=IssueDate&fields[6]=SubscriptionYear&fields[7]=PaymentMethod&fields[8]=Aa'),
       strapi(`/income-records?filters[Month][$eq]=${month}&sort=Aa:asc&pagination[limit]=500`),
       strapi(`/expenses?filters[Month][$eq]=${month}&filters[State][$eq]=approved&sort[0]=IssueDate:asc&pagination[limit]=500`),
     ])
-    const receipts = recRes.json?.data || []
-    const incomeRecords = incRes2.json?.data || []
-    const expenses = expRes2.json?.data || []
+    const receipts = (recRes.json?.data || []).sort((a: any, b: any) => aaOrder(a.Aa) - aaOrder(b.Aa) || a.Number - b.Number)
+    const incomeRecords = (incRes2.json?.data || []).sort((a: any, b: any) => aaOrder(a.Aa) - aaOrder(b.Aa))
+    const expenses = (expRes2.json?.data || []).sort((a: any, b: any) => aaOrder(a.Aa) - aaOrder(b.Aa))
     const money = (n: any) => (Number(n) || 0).toFixed(2).replace('.', ',')
     const total = receipts.reduce((s: number, r: any) => s + (Number(r.Amount) || 0), 0)
       + incomeRecords.reduce((s: number, r: any) => s + (Number(r.Amount) || 0), 0)
@@ -320,7 +340,7 @@ export async function POST(request: NextRequest) {
     lines.push(['Α/Α', 'Παραστατικό', 'Ονοματεπώνυμο / Πληρωτής', 'Τύπος', 'Ημ. πληρωμής', 'Ημ. έκδοσης', 'Έτος συνδρομής', 'Τρόπος', 'Ποσό (€)'].map(esc).join(';'))
     for (const r of receipts) {
       lines.push([
-        '', `ΑΠ. ΕΙΣ. ${r.Number}`, r.MemberName || '', TYPE_LABELS[r.Type as ReceiptType] || r.Type,
+        r.Aa || '', `ΑΠ. ΕΙΣ. ${r.Number}`, r.MemberName || '', TYPE_LABELS[r.Type as ReceiptType] || r.Type,
         r.PaymentDate || '', r.IssueDate || '', r.SubscriptionYear ?? '',
         r.PaymentMethod === 'cash' ? 'Μετρητά' : 'Τράπεζα', money(r.Amount),
       ].map(esc).join(';'))

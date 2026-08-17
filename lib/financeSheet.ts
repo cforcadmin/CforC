@@ -33,7 +33,7 @@ export interface EsodaReceiptRow {
 
 /** Γράφει τη γραμμή της απόδειξης στο ΕΣΟΔΑ. Επιστρέφει ok=false σε
  *  οποιοδήποτε πρόβλημα (δίκτυο, secret, layout) — ο καλών συνεχίζει. */
-export async function appendReceiptToEsoda(row: EsodaReceiptRow): Promise<{ ok: boolean; duplicate?: boolean; error?: string }> {
+export async function appendReceiptToEsoda(row: EsodaReceiptRow): Promise<{ ok: boolean; duplicate?: boolean; aa?: string; error?: string }> {
   if (!financeSheetConfigured()) return { ok: false, error: 'not configured' }
   try {
     const res = await fetch(FINANCE_SHEET_WEBAPP_URL as string, {
@@ -57,7 +57,7 @@ export async function appendReceiptToEsoda(row: EsodaReceiptRow): Promise<{ ok: 
       console.error('financeSheet append failed:', error, text.slice(0, 200))
       return { ok: false, error }
     }
-    return { ok: true, duplicate: !!json.duplicate }
+    return { ok: true, duplicate: !!json.duplicate, aa: json.aa || undefined }
   } catch (err: any) {
     console.error('financeSheet append error:', err)
     return { ok: false, error: String(err?.message || err) }

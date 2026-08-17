@@ -83,6 +83,9 @@ export async function markReceiptSent(documentId: string, when?: Date): Promise<
 
 /**
  * Φάση Γ: γραμμή της απόδειξης στο ΕΣΟΔΑ sheet + SheetSynced:true.
+ * Κρατάμε και το Α/Α που ΕΔΩΣΕ το φύλλο (π.χ. «9.1»): είναι ο κοινός
+ * αριθμός με τον οποίο μιλάει το λογιστήριο, και η μόνη σειρά που ταιριάζει
+ * με το ΕΣΟΔΑ — ο αριθμός ΑΠ. ΕΙΣ. τρέχει χωριστά.
  * Best-effort και ΠΑΝΤΑ awaited από τους callers (serverless) — αποτυχία
  * αφήνει απλώς το πορτοκαλί «χειροκίνητα» badge.
  */
@@ -90,7 +93,10 @@ export async function syncReceiptToSheet(documentId: string, row: EsodaReceiptRo
   if (!financeSheetConfigured()) return false
   const res = await appendReceiptToEsoda(row)
   if (!res.ok) return false
-  const upd = await strapi(`/receipts/${documentId}`, 'PUT', { SheetSynced: true })
+  const upd = await strapi(`/receipts/${documentId}`, 'PUT', {
+    SheetSynced: true,
+    ...(res.aa ? { Aa: String(res.aa) } : {}),
+  })
   if (!upd.ok) console.error('syncReceiptToSheet: SheetSynced flip failed', upd.status)
   return true
 }

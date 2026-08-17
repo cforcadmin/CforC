@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react'
 
 interface MonthReceipt {
   number: number
+  aa: string | null
   typeLabel: string
   amount: number
   memberName: string | null
@@ -246,6 +247,7 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
+                          <th className="py-2 pr-4 font-medium">Α/Α</th>
                           <th className="py-2 pr-4 font-medium">Παραστατικό</th>
                           <th className="py-2 pr-4 font-medium">Προς</th>
                           <th className="py-2 pr-4 font-medium">Τύπος</th>
@@ -258,6 +260,9 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
                         {data.receipts.map(r => (
                           <tr key={`r-${r.number}`} className={`border-b border-gray-100 dark:border-gray-700 ${r.delta ? 'bg-red-50 dark:bg-red-900/15' : ''}`}>
                             <td className="py-2.5 pr-4 font-bold text-charcoal dark:text-gray-100 notranslate">
+                              {r.aa || <span className="text-gray-300 dark:text-gray-600" title="Δεν έχει καταγραφεί Α/Α φύλλου">—</span>}
+                            </td>
+                            <td className="py-2.5 pr-4 text-charcoal dark:text-gray-100 notranslate">
                               ΑΠ. ΕΙΣ. {r.number}
                               {r.delta && <span className="ml-2 px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-bold align-middle">δέλτα</span>}
                             </td>
@@ -270,16 +275,16 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
                         ))}
                         {data.incomeRecords.map(g => (
                           <tr key={`g-${g.aa}`} className="border-b border-gray-100 dark:border-gray-700">
-                            <td className="py-2.5 pr-4 text-charcoal dark:text-gray-100 notranslate">
-                              <span className="font-bold">{g.aa}</span>
-                              <span className="ml-2 px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 text-[10px] font-bold align-middle">
+                            <td className="py-2.5 pr-4 font-bold text-charcoal dark:text-gray-100 notranslate">{g.aa}</td>
+                            <td className="py-2.5 pr-4 notranslate">
+                              <span className="px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 text-[10px] font-bold">
                                 χωρίς απόδειξη
                               </span>
                             </td>
                             <td className="py-2.5 pr-4 text-gray-700 dark:text-gray-300">{g.payerName || g.description || '—'}</td>
                             <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400">{g.categoryLabel}</td>
                             <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400 notranslate">{g.paymentDate ? new Date(g.paymentDate).toLocaleDateString('el-GR') : '—'}</td>
-                            <td className="py-2.5 pr-4 text-gray-400 dark:text-gray-500 notranslate">{g.docRef || '—'}</td>
+                            <td className="py-2.5 pr-4 text-gray-400 dark:text-gray-500 notranslate" title={g.docRef || undefined}>{g.docRef || '—'}</td>
                             <td className="py-2.5 text-right text-charcoal dark:text-gray-200 notranslate">{eur(g.amount)}</td>
                           </tr>
                         ))}
