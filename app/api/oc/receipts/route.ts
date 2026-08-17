@@ -85,7 +85,8 @@ export async function GET(request: NextRequest) {
       nextReceiptNumber(),
       strapi(`/receipts?sort=Number:desc&pagination[limit]=${all ? 1000 : 12}` +
         '&fields[0]=Number&fields[1]=Type&fields[2]=Amount&fields[3]=MemberName' +
-        '&fields[4]=IssueDate&fields[5]=PaymentDate&fields[6]=SheetSynced&fields[7]=SentAt'),
+        '&fields[4]=IssueDate&fields[5]=PaymentDate&fields[6]=SheetSynced&fields[7]=SentAt' +
+        '&fields[8]=PaymentMethod'),
     ])
     const recent = (recentRes.json?.data || []).map((r: any) => ({
       number: r.Number,
@@ -97,6 +98,7 @@ export async function GET(request: NextRequest) {
       paymentDate: r.PaymentDate,
       sheetSynced: !!r.SheetSynced,
       sentAt: r.SentAt || null,
+      paymentMethod: r.PaymentMethod || null,
     }))
     return NextResponse.json({
       seeded: next !== null,

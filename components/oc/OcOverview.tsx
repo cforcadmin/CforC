@@ -154,9 +154,109 @@ function PaymentCells({ m }: { m: OcMemberRow }) {
   )
 }
 
-type SortKey = 'am' | 'name' | 'status'
+type SortKey = 'am' | 'name' | 'city' | 'email' | 'phone' | 'regYear' | 'year' | 'status' | 'payments'
+type SortDir = 'asc' | 'desc'
+type SortState = { key: SortKey; dir: SortDir }
 
-const SORT_LABELS: Record<SortKey, string> = { am: 'ΑΜ', name: 'Όνομα', status: 'Κατάσταση' }
+const SORT_LABELS: Record<SortKey, string> = {
+  am: 'ΑΜ', name: 'Όνομα', city: 'Πόλη', email: 'Email', phone: 'Τηλέφωνο',
+  regYear: 'Εγγραφή', year: 'Τρέχον έτος', status: 'Κατάσταση', payments: 'Πληρωμές',
+}
+
+// Ποια (προαιρετική) στήλη «κρατά» κάθε κλειδί — αν κρυφτεί, η ταξινόμηση
+// γυρίζει στο ΑΜ αντί να μένει ενεργή σε στήλη που δεν φαίνεται.
+const SORT_COL: Partial<Record<SortKey, string>> = {
+  city: 'city', email: 'email', phone: 'phone', regYear: 'regYear',
+  year: 'year', status: 'status', payments: 'payments',
+}
+
+// Βαρύτητα κατάστασης: φθίνουσα = τα πιο επείγοντα πρώτα
+const STATUS_RANK: Record<OcMemberStatus, number> = {
+  'owes-2': 4, 'owes-1': 3, 'new-unpaid': 2, paid: 1, unknown: 0,
+}
+
+/** Κενό πεδίο → πάντα στο τέλος, ανεξάρτητα από τη φορά */
+function isBlank(key: SortKey, m: OcMemberRow): boolean {
+  switch (key) {
+    case 'name': return !m.name.trim()
+    case 'city': return !m.city.trim()
+    case 'email': return !m.email.trim()
+    case 'phone': return !m.phone.trim()
+    case 'regYear': return m.regYear == null
+    default: return false
+  }
+}
+
+/** Πληρωμή τρέχοντος έτους: πληρωμένο → μηδενικό → εκκρεμεί */
+function yearRank(m: OcMemberRow, currentYear: number): number {
+  const v = m.payments[String(currentYear)]
+  return v === 1 ? 2 : v === 0 ? 1 : 0
+}
+
+function paidCount(m: OcMemberRow): number {
+  return Object.values(m.payments).filter(v => v === 1).length
+}
+
+function compareRows(a: OcMemberRow, b: OcMemberRow, sort: SortState, currentYear: number): number {
+  const blankA = isBlank(sort.key, a)
+  const blankB = isBlank(sort.key, b)
+  if (blankA !== blankB) return blankA ? 1 : -1
+  let c = 0
+  if (!blankA) {
+    switch (sort.key) {
+      case 'am': c = a.am - b.am; break
+      case 'name': c = a.name.localeCompare(b.name, 'el'); break
+      case 'city': c = a.city.localeCompare(b.city, 'el'); break
+      case 'email': c = a.email.localeCompare(b.email, 'el'); break
+      case 'phone': c = a.phone.localeCompare(b.phone, 'el'); break
+      case 'regYear': c = (a.regYear || 0) - (b.regYear || 0); break
+      case 'year': c = yearRank(a, currentYear) - yearRank(b, currentYear); break
+      case 'status': c = STATUS_RANK[a.status] - STATUS_RANK[b.status]; break
+      case 'payments': c = paidCount(a) - paidCount(b); break
+    }
+    if (sort.dir === 'desc') c = -c
+  }
+  return c || a.am - b.am
+}
+
+/** Κεφαλίδα με ταξινόμηση: 1ο κλικ φθίνουσα (▼), 2ο αύξουσα (▲) */
+function SortTh({ label, sortKey, sort, onSort, py, className = '' }: {
+  label: React.ReactNode
+  sortKey: SortKey
+  sort: SortState
+  onSort: (key: SortKey) => void
+  py: string
+  className?: string
+}) {
+  const active = sort.key === sortKey
+  return (
+    <th
+      className={`${py} pr-3 font-medium ${className}`}
+      aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className="group inline-flex items-center gap-1 whitespace-nowrap hover:text-charcoal dark:hover:text-gray-200 transition-colors"
+      >
+        {label}
+        <span
+          aria-hidden="true"
+          className={`text-[9px] leading-none ${
+            active ? 'text-coral dark:text-coral-light' : 'text-gray-400 opacity-0 group-hover:opacity-60'
+          }`}
+        >
+          {active && sort.dir === 'asc' ? '▲' : '▼'}
+        </span>
+        <span className="sr-only">
+          {active
+            ? sort.dir === 'asc' ? ' — ταξινόμηση αύξουσα' : ' — ταξινόμηση φθίνουσα'
+            : ' — ταξινόμηση'}
+        </span>
+      </button>
+    </th>
+  )
+}
 
 interface TablePrefs {
   cols: string[]
@@ -172,7 +272,7 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
 }) {
   const router = useRouter()
   const [query, setQuery] = useState('')
-  const [sortKey, setSortKey] = useState<SortKey>('am')
+  const [sort, setSort] = useState<SortState>({ key: 'am', dir: 'asc' })
   const [sortOpen, setSortOpen] = useState(false)
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
   const [cols, setCols] = useState<string[]>(initialPrefs.cols)
@@ -202,6 +302,13 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
       persist({ tableCols: next.join(',') })
       return next
     })
+    // κρύφτηκε η στήλη της ενεργής ταξινόμησης → πίσω στο ΑΜ
+    setSort(s => (SORT_COL[s.key] === key && cols.includes(key) ? { key: 'am', dir: 'asc' } : s))
+  }
+
+  /** Νέα στήλη → φθίνουσα· ίδια στήλη → εναλλαγή φοράς */
+  function toggleSort(key: SortKey) {
+    setSort(s => (s.key === key ? { key, dir: s.dir === 'desc' ? 'asc' : 'desc' } : { key, dir: 'desc' }))
   }
 
   function applyDensity(d: 'comfortable' | 'compact') {
@@ -209,18 +316,13 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
     persist({ tableDensity: d })
   }
 
-  const STATUS_ORDER: Record<OcMemberStatus, number> = { 'owes-2': 0, 'owes-1': 1, 'new-unpaid': 2, paid: 3, unknown: 4 }
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase()
     const filtered = q
       ? members.filter(m => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || String(m.am) === q)
       : members
-    return [...filtered].sort((a, b) =>
-      sortKey === 'am' ? a.am - b.am
-        : sortKey === 'name' ? a.name.localeCompare(b.name, 'el')
-        : STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || a.am - b.am
-    )
-  }, [members, query, sortKey])
+    return [...filtered].sort((a, b) => compareRows(a, b, sort, currentYear))
+  }, [members, query, sort, currentYear])
 
   function toggle(am: number) {
     setExpanded(prev => {
@@ -299,7 +401,10 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
                   : 'border-gray-300 dark:border-gray-600 hover:border-coral dark:hover:border-coral-light'
               }`}
             >
-              Ταξινόμηση: {SORT_LABELS[sortKey]}
+              Ταξινόμηση: {SORT_LABELS[sort.key]}
+              <span className="text-coral dark:text-coral-light text-[9px] leading-none" aria-hidden="true">
+                {sort.dir === 'asc' ? '▲' : '▼'}
+              </span>
               <svg className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform ${sortOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
               </svg>
@@ -308,20 +413,23 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
               <>
                 <div className="fixed inset-0 z-30" onClick={() => setSortOpen(false)} aria-hidden="true" />
                 <div className="absolute right-0 top-full mt-2 z-40 w-48 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-600 py-2" role="listbox" aria-label="Ταξινόμηση">
-                  {(Object.keys(SORT_LABELS) as SortKey[]).map(k => (
+                  {(Object.keys(SORT_LABELS) as SortKey[])
+                    .filter(k => !SORT_COL[k] || show(SORT_COL[k]!))
+                    .map(k => (
                     <button
                       key={k}
                       type="button"
                       role="option"
-                      aria-selected={sortKey === k}
-                      onClick={() => { setSortKey(k); setSortOpen(false) }}
+                      aria-selected={sort.key === k}
+                      onClick={() => { toggleSort(k); setSortOpen(false) }}
                       className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                        sortKey === k
+                        sort.key === k
                           ? 'text-coral dark:text-coral-light font-bold'
                           : 'text-charcoal dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
                       }`}
                     >
                       {SORT_LABELS[k]}
+                      {sort.key === k && <span className="ml-1 text-[9px]" aria-hidden="true">{sort.dir === 'asc' ? '▲' : '▼'}</span>}
                     </button>
                   ))}
                 </div>
@@ -395,15 +503,15 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
         <table className={`w-full ${txt}`}>
           <thead>
             <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
-              <th className={`${py} pr-3 font-medium`}>ΑΜ</th>
-              <th className={`${py} pr-3 font-medium`}>Ονοματεπώνυμο</th>
-              {show('city') && <th className={`${py} pr-3 font-medium hidden md:table-cell`}>Πόλη</th>}
-              {show('email') && <th className={`${py} pr-3 font-medium`}>Email</th>}
-              {show('phone') && <th className={`${py} pr-3 font-medium`}>Τηλέφωνο</th>}
-              {show('regYear') && <th className={`${py} pr-3 font-medium`}>Εγγραφή</th>}
-              {show('year') && <th className={`${py} pr-3 font-medium`}>{currentYear}</th>}
-              {show('status') && <th className={`${py} pr-3 font-medium`}>Κατάσταση</th>}
-              {show('payments') && <th className={`${py} pr-3 font-medium`}>Πληρωμές</th>}
+              <SortTh label="ΑΜ" sortKey="am" sort={sort} onSort={toggleSort} py={py} />
+              <SortTh label="Ονοματεπώνυμο" sortKey="name" sort={sort} onSort={toggleSort} py={py} />
+              {show('city') && <SortTh label="Πόλη" sortKey="city" sort={sort} onSort={toggleSort} py={py} className="hidden md:table-cell" />}
+              {show('email') && <SortTh label="Email" sortKey="email" sort={sort} onSort={toggleSort} py={py} />}
+              {show('phone') && <SortTh label="Τηλέφωνο" sortKey="phone" sort={sort} onSort={toggleSort} py={py} />}
+              {show('regYear') && <SortTh label="Εγγραφή" sortKey="regYear" sort={sort} onSort={toggleSort} py={py} />}
+              {show('year') && <SortTh label={currentYear} sortKey="year" sort={sort} onSort={toggleSort} py={py} />}
+              {show('status') && <SortTh label="Κατάσταση" sortKey="status" sort={sort} onSort={toggleSort} py={py} />}
+              {show('payments') && <SortTh label="Πληρωμές" sortKey="payments" sort={sort} onSort={toggleSort} py={py} />}
               <th className={`${py} font-medium sr-only`}>Λεπτομέρειες</th>
             </tr>
           </thead>

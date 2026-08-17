@@ -27,7 +27,10 @@ interface RecentReceipt {
   issueDate: string | null
   sheetSynced: boolean
   sentAt: string | null
+  paymentMethod: 'bank' | 'cash' | null
 }
+
+const METHOD_LABELS: Record<'bank' | 'cash', string> = { bank: 'Τράπεζα', cash: 'Μετρητά' }
 
 interface SeriesState {
   seeded: boolean
@@ -650,6 +653,7 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
                   <th className="py-2 pr-4 font-medium">Προς</th>
                   <th className="py-2 pr-4 font-medium">Τύπος</th>
                   <th className="py-2 pr-4 font-medium">Ποσό</th>
+                  <th className="py-2 pr-4 font-medium">Τρόπος</th>
                   <th className="py-2 pr-4 font-medium">Ημ. έκδοσης</th>
                   <th className="py-2 pr-4 font-medium">Αποστολή</th>
                   <th className="py-2 font-medium">ΕΣΟΔΑ</th>
@@ -662,6 +666,9 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
                     <td className="py-3 pr-4 text-gray-700 dark:text-gray-300">{r.memberName || '—'}</td>
                     <td className="py-3 pr-4 text-gray-500 dark:text-gray-400">{r.typeLabel}</td>
                     <td className="py-3 pr-4 text-charcoal dark:text-gray-200 notranslate">{Number(r.amount).toFixed(2).replace('.', ',')} €</td>
+                    <td className="py-3 pr-4 text-gray-500 dark:text-gray-400">
+                      {r.paymentMethod ? METHOD_LABELS[r.paymentMethod] : '—'}
+                    </td>
                     <td className="py-3 pr-4 text-gray-500 dark:text-gray-400 notranslate">{r.issueDate ? new Date(r.issueDate).toLocaleDateString('el-GR') : '—'}</td>
                     <td className="py-3 pr-4">
                       {editingSent === r.number ? (
