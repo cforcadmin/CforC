@@ -8,18 +8,21 @@ import { type ReceiptType } from '@/lib/receipts'
 import { sendOcEmail, monthlyDispatchEmailHtml, ADMIN_FROM, ADMIN_EMAIL, FINANCE_EMAIL } from '@/lib/ocEmails'
 
 /**
- * Μηνιαία εικόνα εσόδων + κλείσιμο μήνα («εστάλη στο λογιστήριο»).
+ * Μηνιαία εικόνα ΕΣΟΔΩΝ + ΕΞΟΔΩΝ και κλείσιμο μήνα («εστάλη στο λογιστήριο»).
  *
- *  GET ?month=yyyy-MM → αποδείξεις του μήνα ΚΑΤΑ ΗΜΕΡΟΜΗΝΙΑ ΠΛΗΡΩΜΗΣ
- *    (απόφαση λογιστηρίου), σύνολα ανά κατηγορία, κατάσταση κλεισίματος,
- *    και δέλτα: αποδείξεις που δημιουργήθηκαν ΜΕΤΑ το κλείσιμο του μήνα
- *    τους — εμφανίζονται, δεν σιωπούν (handoff note §2.4).
+ *  GET ?month=yyyy-MM → τρεις πηγές, όπως ακριβώς και στο Excel:
+ *    Α. έσοδα  = αποδείξεις ΚΑΤΑ ΗΜΕΡΟΜΗΝΙΑ ΠΛΗΡΩΜΗΣ (απόφαση λογιστηρίου)
+ *                + έσοδα χωρίς απόδειξη (χορηγίες/επιχορηγήσεις)
+ *    Β. έξοδα  = εγκεκριμένα παραστατικά του μπλοκ του μήνα (πεδίο Month —
+ *                ίδιο κριτήριο με τον φάκελο Drive και το Α/Α του ΕΞΟΔΑ)
+ *    συν σύνολα ανά κατηγορία, ισοζύγιο, κατάσταση κλεισίματος, και δέλτα:
+ *    αποδείξεις που δημιουργήθηκαν ΜΕΤΑ το κλείσιμο του μήνα τους —
+ *    εμφανίζονται, δεν σιωπούν (handoff note §2.4).
  *  POST {month, action}:
  *    'ready'    → «Έτοιμο προς αποστολή στο λογιστήριο» (ΜΟΝΟ Financer)
- *    'dispatch' → «Αποστολή στο λογιστήριο» (ΜΟΝΟ Διαχείριση/IT):
- *                 χτίζει το αρχείο του μήνα (έσοδα τώρα — τα έξοδα έχουν
- *                 έτοιμη θέση για τη μελλοντική αυτοματοποίηση) και το
- *                 στέλνει στο ACCOUNTANT_EMAIL (fallback: finance@).
+ *    'dispatch' → «Αποστολή στο λογιστήριο» (ΜΟΝΟ Διαχείριση/IT): χτίζει το
+ *                 CSV του μήνα με ΑΜΦΟΤΕΡΑ τα τμήματα και το στέλνει στο
+ *                 ACCOUNTANT_EMAIL (fallback: finance@).
  */
 
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
@@ -32,6 +35,23 @@ const TYPE_LABELS: Record<ReceiptType, string> = {
   donation: 'Δωρεά',
   grant: 'Χορηγία',
   other: 'Είσπραξη',
+}
+
+const INCOME_RECORD_LABELS: Record<string, string> = {
+  grant: 'Χορηγία', donation: 'Δωρεά', extraordinary: 'Έκτακτη εισφορά',
+  business: 'Επιχειρηματική δραστηριότητα', other: 'Λοιπά έσοδα',
+}
+
+/** Οι κατηγορίες του ΕΞΟΔΑ, όπως τις ονομάζει το ίδιο το φύλλο */
+const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
+  'Office Expenses': 'Λειτουργικά',
+  'Services': 'Υπηρεσίες',
+  'Travel and Accommodation': 'Μετακινήσεις & διαμονή',
+  'Others': 'Λοιπά',
+}
+
+const METHOD_LABELS: Record<string, string> = {
+  bank: 'Τράπεζα', cash: 'Μετρητά', offset: 'Συμψηφισμός', unpaid: 'Ανεξόφλητο',
 }
 
 async function strapi(path: string, method: string = 'GET', data?: any) {
@@ -105,12 +125,15 @@ export async function GET(request: NextRequest) {
     const month = validMonth(request.nextUrl.searchParams.get('month'))
     const { from, to } = monthRange(month)
 
-    const [recRes, closeRes, allClosesRes] = await Promise.all([
+    const [recRes, incRes, expRes, closeRes, allClosesRes] = await Promise.all([
       strapi(`/receipts?filters[PaymentDate][$gte]=${from}&filters[PaymentDate][$lte]=${to}` +
         '&sort[0]=PaymentDate:asc&sort[1]=Number:asc&pagination[limit]=500' +
         '&fields[0]=Number&fields[1]=Type&fields[2]=Amount&fields[3]=RegistrationFee' +
         '&fields[4]=SubscriptionYear&fields[5]=MemberName&fields[6]=PayerName' +
         '&fields[7]=PaymentDate&fields[8]=IssueDate&fields[9]=SentAt&fields[10]=createdAt&fields[11]=PaymentMethod'),
+      strapi(`/income-records?filters[Month][$eq]=${month}&sort=Aa:asc&pagination[limit]=500`),
+      strapi(`/expenses?filters[Month][$eq]=${month}&filters[State][$eq]=approved` +
+        '&sort[0]=IssueDate:asc&pagination[limit]=500'),
       strapi(`/monthly-closes?filters[Month][$eq]=${month}&pagination[limit]=1`),
       strapi('/monthly-closes?sort=Month:desc&pagination[limit]=24&fields[0]=Month&fields[1]=SentAt&fields[2]=ReadyAt'),
     ])
@@ -138,6 +161,39 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // Έσοδα χωρίς απόδειξη (χορηγίες/επιχορηγήσεις) — ίδιο τμήμα Α
+    const incomeRecords = (incRes.json?.data || []).map((r: any) => ({
+      aa: r.Aa,
+      docRef: r.DocRef || null,
+      payerName: r.PayerName || null,
+      description: r.Description || null,
+      category: r.Category,
+      categoryLabel: INCOME_RECORD_LABELS[r.Category] || r.Category,
+      amount: Number(r.Amount) || 0,
+      paymentDate: r.PaymentDate,
+      method: r.PaymentMethod || 'bank',
+      fileName: r.FileName || null,
+    }))
+
+    // Έξοδα του μπλοκ του μήνα — μόνο εγκεκριμένα
+    const expenses = (expRes.json?.data || []).map((e: any) => ({
+      aa: e.Aa,
+      issueDate: e.IssueDate,
+      docNumber: e.DocNumber || e.DocRef || null,
+      mark: e.Mark || null,
+      supplierName: e.SupplierName || null,
+      supplierTaxId: e.SupplierTaxId || null,
+      category: e.Category || null,
+      categoryLabel: e.Category ? (EXPENSE_CATEGORY_LABELS[e.Category] || e.Category) : null,
+      withholding: Number(e.Withholding) || 0,
+      amount: Number(e.PayableAmount) || 0,
+      method: e.PaymentMethod || 'unpaid',
+      methodLabel: METHOD_LABELS[e.PaymentMethod] || 'Ανεξόφλητο',
+      paymentDate: e.PaymentDate || null,
+      fileName: e.FileName || null,
+      notes: e.Notes || null,
+    }))
+
     // Σύνολα ανά κατηγορία — αντιστοιχούν στις στήλες του ΕΣΟΔΑ
     const totals: Record<string, number> = {}
     const add = (k: string, v: number) => { totals[k] = Math.round(((totals[k] || 0) + v) * 100) / 100 }
@@ -152,12 +208,40 @@ export async function GET(request: NextRequest) {
         add(TYPE_LABELS[r.type as ReceiptType] || 'Λοιπά', r.amount)
       }
     }
+    for (const g of incomeRecords) {
+      add('Σύνολο', g.amount)
+      add(g.categoryLabel, g.amount)
+    }
+
+    // Σύνολα εξόδων ανά κατηγορία του ΕΞΟΔΑ
+    const expenseTotals: Record<string, number> = {}
+    const addX = (k: string, v: number) => { expenseTotals[k] = Math.round(((expenseTotals[k] || 0) + v) * 100) / 100 }
+    for (const e of expenses) {
+      addX('Σύνολο', e.amount)
+      addX(e.categoryLabel || 'Χωρίς κατηγορία', e.amount)
+    }
+
+    const round2 = (n: number) => Math.round(n * 100) / 100
+    const incomeTotal = round2(totals['Σύνολο'] || 0)
+    const expenseTotal = round2(expenseTotals['Σύνολο'] || 0)
+    // Ανεξόφλητα: μπαίνουν στο αρχείο του μήνα αλλά δεν έχουν φύγει από το ταμείο
+    const unpaidCount = expenses.filter((e: any) => e.method === 'unpaid' || !e.paymentDate).length
+    const uncategorised = expenses.filter((e: any) => !e.category).length
 
     return NextResponse.json({
       month,
       receipts,
+      incomeRecords,
+      expenses,
       totals,
-      count: receipts.length,
+      expenseTotals,
+      summary: { income: incomeTotal, expenses: expenseTotal, balance: round2(incomeTotal - expenseTotal) },
+      count: receipts.length + incomeRecords.length,
+      receiptCount: receipts.length,
+      incomeRecordCount: incomeRecords.length,
+      expenseCount: expenses.length,
+      unpaidCount,
+      uncategorised,
       deltaCount: receipts.filter((r: any) => r.delta).length,
       close: close ? {
         readyAt: close.ReadyAt || null,
@@ -209,35 +293,62 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Ο μήνας ${month} έχει ήδη σταλεί στο λογιστήριο` }, { status: 409 })
     }
 
-    // Έσοδα του μήνα για το αρχείο
+    // Έσοδα + έξοδα του μήνα για το αρχείο
     const { from, to } = monthRange(month)
-    const recRes = await strapi(`/receipts?filters[PaymentDate][$gte]=${from}&filters[PaymentDate][$lte]=${to}` +
-      '&sort[0]=PaymentDate:asc&sort[1]=Number:asc&pagination[limit]=500' +
-      '&fields[0]=Number&fields[1]=Type&fields[2]=Amount&fields[3]=MemberName' +
-      '&fields[4]=PaymentDate&fields[5]=IssueDate&fields[6]=SubscriptionYear&fields[7]=PaymentMethod')
+    const [recRes, incRes2, expRes2] = await Promise.all([
+      strapi(`/receipts?filters[PaymentDate][$gte]=${from}&filters[PaymentDate][$lte]=${to}` +
+        '&sort[0]=PaymentDate:asc&sort[1]=Number:asc&pagination[limit]=500' +
+        '&fields[0]=Number&fields[1]=Type&fields[2]=Amount&fields[3]=MemberName' +
+        '&fields[4]=PaymentDate&fields[5]=IssueDate&fields[6]=SubscriptionYear&fields[7]=PaymentMethod'),
+      strapi(`/income-records?filters[Month][$eq]=${month}&sort=Aa:asc&pagination[limit]=500`),
+      strapi(`/expenses?filters[Month][$eq]=${month}&filters[State][$eq]=approved&sort[0]=IssueDate:asc&pagination[limit]=500`),
+    ])
     const receipts = recRes.json?.data || []
-    const total = receipts.reduce((sum: number, r: any) => sum + (Number(r.Amount) || 0), 0)
+    const incomeRecords = incRes2.json?.data || []
+    const expenses = expRes2.json?.data || []
+    const money = (n: any) => (Number(n) || 0).toFixed(2).replace('.', ',')
+    const total = receipts.reduce((s: number, r: any) => s + (Number(r.Amount) || 0), 0)
+      + incomeRecords.reduce((s: number, r: any) => s + (Number(r.Amount) || 0), 0)
+    const expenseTotal = expenses.reduce((s: number, e: any) => s + (Number(e.PayableAmount) || 0), 0)
 
     // CSV με BOM ώστε το Excel να διαβάζει σωστά τα ελληνικά.
-    // ΔΟΜΗ ΜΕ ΘΕΣΗ ΓΙΑ ΕΞΟΔΑ: όταν αυτοματοποιηθούν, γεμίζει το τμήμα Β.
     const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`
     const lines: string[] = []
     lines.push(`ΜΗΝΙΑΙΑ ΕΙΚΟΝΑ CULTURE FOR CHANGE — ${month}`)
     lines.push('')
     lines.push('Α. ΕΣΟΔΑ')
-    lines.push(['Παραστατικό', 'Ονοματεπώνυμο', 'Τύπος', 'Ημ. πληρωμής', 'Ημ. έκδοσης', 'Έτος συνδρομής', 'Τρόπος', 'Ποσό (€)'].map(esc).join(';'))
+    lines.push(['Α/Α', 'Παραστατικό', 'Ονοματεπώνυμο / Πληρωτής', 'Τύπος', 'Ημ. πληρωμής', 'Ημ. έκδοσης', 'Έτος συνδρομής', 'Τρόπος', 'Ποσό (€)'].map(esc).join(';'))
     for (const r of receipts) {
       lines.push([
-        `ΑΠ. ΕΙΣ. ${r.Number}`, r.MemberName || '', TYPE_LABELS[r.Type as ReceiptType] || r.Type,
+        '', `ΑΠ. ΕΙΣ. ${r.Number}`, r.MemberName || '', TYPE_LABELS[r.Type as ReceiptType] || r.Type,
         r.PaymentDate || '', r.IssueDate || '', r.SubscriptionYear ?? '',
-        r.PaymentMethod === 'cash' ? 'Μετρητά' : 'Τράπεζα',
-        (Number(r.Amount) || 0).toFixed(2).replace('.', ','),
+        r.PaymentMethod === 'cash' ? 'Μετρητά' : 'Τράπεζα', money(r.Amount),
       ].map(esc).join(';'))
     }
-    lines.push([esc('ΣΥΝΟΛΟ ΕΣΟΔΩΝ'), '', '', '', '', '', '', esc(total.toFixed(2).replace('.', ','))].join(';'))
+    for (const g of incomeRecords) {
+      lines.push([
+        g.Aa || '', g.DocRef || '(χωρίς απόδειξη)', g.PayerName || g.Description || '',
+        INCOME_RECORD_LABELS[g.Category] || g.Category || '', g.PaymentDate || '', '', '',
+        METHOD_LABELS[g.PaymentMethod] || 'Τράπεζα', money(g.Amount),
+      ].map(esc).join(';'))
+    }
+    lines.push([esc('ΣΥΝΟΛΟ ΕΣΟΔΩΝ'), '', '', '', '', '', '', '', esc(money(total))].join(';'))
     lines.push('')
     lines.push('Β. ΕΞΟΔΑ')
-    lines.push('(Η αυτόματη ενσωμάτωση εξόδων δεν είναι ακόμη διαθέσιμη — βλ. φύλλο ΕΞΟΔΑ στο κοινόχρηστο Excel.)')
+    lines.push(['Α/Α', 'Κατηγορία', 'Ημ. έκδοσης', 'Παραστατικό', 'ΜΑΡΚ', 'Επωνυμία', 'ΑΦΜ', 'Κρατήσεις (€)', 'Πληρωτέο (€)', 'Τρόπος', 'Ημ. πληρωμής', 'Αρχείο', 'Σημειώσεις'].map(esc).join(';'))
+    for (const e of expenses) {
+      lines.push([
+        e.Aa || '', EXPENSE_CATEGORY_LABELS[e.Category] || e.Category || '',
+        e.IssueDate || '', e.DocNumber || e.DocRef || '', e.Mark || '',
+        e.SupplierName || '', e.SupplierTaxId || '',
+        e.Withholding ? money(e.Withholding) : '', money(e.PayableAmount),
+        METHOD_LABELS[e.PaymentMethod] || 'Ανεξόφλητο', e.PaymentDate || '',
+        e.FileName || '', e.Notes || '',
+      ].map(esc).join(';'))
+    }
+    lines.push([esc('ΣΥΝΟΛΟ ΕΞΟΔΩΝ'), '', '', '', '', '', '', '', esc(money(expenseTotal))].join(';'))
+    lines.push('')
+    lines.push([esc('ΙΣΟΖΥΓΙΟ ΜΗΝΑ (έσοδα − έξοδα)'), esc(money(total - expenseTotal))].join(';'))
     const csv = '\ufeff' + lines.join('\r\n')
 
     const to_ = process.env.ACCOUNTANT_EMAIL || FINANCE_EMAIL
@@ -246,26 +357,40 @@ export async function POST(request: NextRequest) {
 
     // Σύνολα ανά κατηγορία για το σώμα του email
     const catTotals: Record<string, number> = {}
+    const bump = (k: string, v: number) => { catTotals[k] = Math.round(((catTotals[k] || 0) + v) * 100) / 100 }
     for (const r of receipts) {
       const t = r.Type as ReceiptType
       let key: string
       if (t === 'registration') key = 'Εγγραφές + Συνδρομές'
       else if (t === 'subscription') key = `Συνδρομές ${r.SubscriptionYear ?? ''}`.trim()
       else key = TYPE_LABELS[t] || 'Λοιπά'
-      catTotals[key] = Math.round(((catTotals[key] || 0) + (Number(r.Amount) || 0)) * 100) / 100
+      bump(key, Number(r.Amount) || 0)
+    }
+    for (const g of incomeRecords) {
+      bump(INCOME_RECORD_LABELS[g.Category] || 'Λοιπά έσοδα', Number(g.Amount) || 0)
+    }
+    const expCatTotals: Record<string, number> = {}
+    for (const e of expenses) {
+      const key = EXPENSE_CATEGORY_LABELS[e.Category] || e.Category || 'Χωρίς κατηγορία'
+      expCatTotals[key] = Math.round(((expCatTotals[key] || 0) + (Number(e.PayableAmount) || 0)) * 100) / 100
     }
     const fmt = (n: number) => n.toFixed(2).replace('.', ',')
-    const totalsLines: Array<[string, string]> = Object.entries(catTotals)
-      .sort(([a], [b]) => a.localeCompare(b, 'el'))
-      .map(([k, v]) => [k, fmt(v)])
+    const sortLines = (obj: Record<string, number>): Array<[string, string]> =>
+      Object.entries(obj).sort(([a], [b]) => a.localeCompare(b, 'el')).map(([k, v]) => [k, fmt(v)])
 
     // Υπογραφή: ο/η τρέχων κάτοχος της θέσης Διαχείρισης (admin)
     const adminSigner = await getSeatHolder('admin')
-    const tpl = monthlyDispatchEmailHtml(
-      monthLabel, receipts.length, fmt(total), totalsLines,
-      adminSigner?.name || adminSigner?.engName || 'Culture for Change — Διαχείριση',
+    const tpl = monthlyDispatchEmailHtml(monthLabel, {
+      incomeLines: sortLines(catTotals),
+      incomeCount: receipts.length + incomeRecords.length,
+      incomeTotal: fmt(total),
+      expenseLines: sortLines(expCatTotals),
+      expenseCount: expenses.length,
+      expenseTotal: fmt(expenseTotal),
+      balance: fmt(total - expenseTotal),
+      signerName: adminSigner?.name || adminSigner?.engName || 'Culture for Change — Διαχείριση',
       viaFallback,
-    )
+    })
     const sent = await sendOcEmail(to_, tpl.subject, tpl.html, {
       from: ADMIN_FROM,
       replyTo: ADMIN_EMAIL,

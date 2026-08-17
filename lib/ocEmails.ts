@@ -1504,19 +1504,37 @@ export function renewalPaymentFailedEmailHtml(
  * πλήρες design shell, υπογραφή Διαχείρισης (admin), αποστολή από admin@.
  * Μέχρι να οριστεί ACCOUNTANT_EMAIL πηγαίνει στο finance@ για δοκιμή/προώθηση.
  */
+export interface MonthlyDispatchInput {
+  /** [κατηγορία, ποσό «45,00»] */
+  incomeLines: Array<[string, string]>
+  incomeCount: number
+  incomeTotal: string          // «80,00»
+  expenseLines: Array<[string, string]>
+  expenseCount: number
+  expenseTotal: string
+  balance: string              // έσοδα − έξοδα, με πρόσημο
+  signerName?: string
+  viaFallback?: boolean
+}
+
 export function monthlyDispatchEmailHtml(
   monthLabel: string,
-  count: number,
-  total: string,               // «80,00»
-  totalsLines: Array<[string, string]>,  // [κατηγορία, ποσό «45,00»]
-  signerName = 'Culture for Change — Διαχείριση',
-  viaFallback = false,
+  input: MonthlyDispatchInput,
 ): { subject: string; html: string } {
-  const totalsRows = totalsLines.map(([k, v]) => `
+  const {
+    incomeLines, incomeCount, incomeTotal,
+    expenseLines, expenseCount, expenseTotal, balance,
+    signerName = 'Culture for Change — Διαχείριση', viaFallback = false,
+  } = input
+  const count = incomeCount + expenseCount
+  const total = incomeTotal
+  const rowsOf = (lines: Array<[string, string]>) => lines.map(([k, v]) => `
               <tr>
                 <td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">${k}</td>
                 <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">${v} €</td>
               </tr>`).join('')
+  const totalsRows = rowsOf(incomeLines)
+  const expenseRows = rowsOf(expenseLines)
   const html = `<!DOCTYPE html>
 <html lang="el">
 <head>
@@ -1536,7 +1554,7 @@ export function monthlyDispatchEmailHtml(
 </style>
 </head>
 <body style="margin:0;padding:0;background-color:#F5F0EB;">
-<span style="display:none;font-size:1px;color:#F5F0EB;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Η μηνιαία εικόνα εσόδων του Culture for Change — ${monthLabel}.</span>
+<span style="display:none;font-size:1px;color:#F5F0EB;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Η μηνιαία εικόνα εσόδων και εξόδων του Culture for Change — ${monthLabel}.</span>
 
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;">
 <tr><td align="center" style="padding:32px 12px 48px 12px;">
@@ -1562,7 +1580,7 @@ export function monthlyDispatchEmailHtml(
   <tr>
     <td class="px" style="padding:40px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
       <p style="margin:0 0 20px 0;">Αγαπητοί συνεργάτες,</p>
-      <p style="margin:0 0 20px 0;">σας αποστέλλουμε τη μηνιαία εικόνα εσόδων του σωματείου για τον μήνα <strong>${monthLabel}</strong>. Επισυνάπτεται αναλυτικό αρχείο με ${count} παραστατικά.</p>
+      <p style="margin:0 0 20px 0;">σας αποστέλλουμε τη μηνιαία εικόνα εσόδων και εξόδων του σωματείου για τον μήνα <strong>${monthLabel}</strong>. Επισυνάπτεται αναλυτικό αρχείο με ${count} παραστατικά (${incomeCount} εσόδων, ${expenseCount} εξόδων).</p>
     </td>
   </tr>
 
@@ -1586,10 +1604,34 @@ export function monthlyDispatchEmailHtml(
     </td>
   </tr>
 
+  <!-- Έξοδα -->
+  <tr>
+    <td class="px" style="padding:8px 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background-color:#F5F0EB;border-radius:16px;">
+        <tr>
+          <td style="padding:20px 24px 8px 24px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${expenseRows || `
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#5A5A5A;">Καμία δαπάνη τον μήνα αυτό.</td></tr>`}
+              <tr><td colspan="2" style="padding:10px 0 0 0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:#E0D8D0;">&nbsp;</td></tr></table></td></tr>
+              <tr>
+                <td style="padding-top:10px;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#2D2D2D;font-weight:bold;">Σύνολο εξόδων</td>
+                <td align="right" style="padding-top:10px;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#2D2D2D;font-weight:bold;">${expenseTotal} €</td>
+              </tr>
+              <tr>
+                <td style="padding-top:6px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#5A5A5A;">Ισοζύγιο μήνα</td>
+                <td align="right" style="padding-top:6px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#5A5A5A;">${balance} €</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr><td height="16" style="height:16px;line-height:16px;font-size:0;">&nbsp;</td></tr>
+      </table>
+    </td>
+  </tr>
+
   <tr>
     <td class="px" style="padding:16px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#5A5A5A;mso-line-height-rule:exactly;">
       <p style="margin:0 0 12px 0;">Το πλήρες αρχείο ΕΣΟΔΑ-ΕΞΟΔΑ και όλα τα παραστατικά βρίσκονται, ως συνήθως, στο κοινόχρηστο Excel και στους φακέλους Drive στους οποίους έχετε πρόσβαση.</p>
-      <p style="margin:0 0 12px 0;">Η ενσωμάτωση της αναλυτικής εικόνας εξόδων στο παρόν email θα προστεθεί σύντομα — μέχρι τότε ισχύει το φύλλο ΕΞΟΔΑ του Excel.</p>
       <p style="margin:0;">Για οποιαδήποτε διευκρίνιση, απαντήστε σε αυτό το email.</p>
       ${viaFallback ? '<p style="margin:12px 0 0 0;color:#a05a2c;">⚠ Δοκιμαστική αποστολή: δεν έχει οριστεί email λογιστηρίου — το μήνυμα ήρθε στο finance@ για έλεγχο/προώθηση.</p>' : ''}
     </td>
@@ -1632,7 +1674,7 @@ export function monthlyDispatchEmailHtml(
 </body>
 </html>
 `
-  return { subject: `Μηνιαία εικόνα εσόδων ${monthLabel} — Culture for Change`, html }
+  return { subject: `Μηνιαία εικόνα εσόδων-εξόδων ${monthLabel} — Culture for Change`, html }
 }
 
 /**

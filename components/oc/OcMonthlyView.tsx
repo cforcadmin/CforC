@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react'
 
 /**
- * «Μηνιαία εικόνα» εσόδων: αποδείξεις του μήνα κατά ημερομηνία πληρωμής,
- * σύνολα ανά κατηγορία, και το κλείσιμο «Εστάλη στο λογιστήριο ✓» (Financer).
- * Αποδείξεις που μπήκαν ΜΕΤΑ το κλείσιμο του μήνα τους σημαίνονται «δέλτα» —
- * ορατές, ώστε καμία αλλαγή να μη γλιστρά σιωπηλά σε απεσταλμένο μήνα.
+ * «Μηνιαία εικόνα» εσόδων ΚΑΙ εξόδων — ό,τι θα δει το λογιστήριο:
+ *   Α. έσοδα  — αποδείξεις κατά ημερομηνία πληρωμής + έσοδα χωρίς απόδειξη
+ *   Β. έξοδα  — εγκεκριμένα παραστατικά του μπλοκ του μήνα
+ * με σύνολα ανά κατηγορία, ισοζύγιο, και το διπλό κλείσιμο (Financer εγκρίνει,
+ * Διαχείριση αποστέλλει). Αποδείξεις που μπήκαν ΜΕΤΑ το κλείσιμο του μήνα τους
+ * σημαίνονται «δέλτα» — ορατές, ώστε καμία αλλαγή να μη γλιστρά σιωπηλά.
  */
 
 interface MonthReceipt {
@@ -22,11 +24,47 @@ interface MonthReceipt {
   delta: boolean
 }
 
+interface MonthIncomeRecord {
+  aa: string
+  docRef: string | null
+  payerName: string | null
+  description: string | null
+  categoryLabel: string
+  amount: number
+  paymentDate: string | null
+  method: string
+}
+
+interface MonthExpense {
+  aa: string
+  issueDate: string | null
+  docNumber: string | null
+  mark: string | null
+  supplierName: string | null
+  supplierTaxId: string | null
+  categoryLabel: string | null
+  withholding: number
+  amount: number
+  method: string
+  methodLabel: string
+  paymentDate: string | null
+  fileName: string | null
+}
+
 interface MonthData {
   month: string
   receipts: MonthReceipt[]
+  incomeRecords: MonthIncomeRecord[]
+  expenses: MonthExpense[]
   totals: Record<string, number>
+  expenseTotals: Record<string, number>
+  summary: { income: number; expenses: number; balance: number }
   count: number
+  receiptCount: number
+  incomeRecordCount: number
+  expenseCount: number
+  unpaidCount: number
+  uncategorised: number
   deltaCount: number
   close: { readyAt: string | null; readyBy: string | null; sentAt: string | null; sentBy: string | null } | null
   status: 'pending' | 'ready' | 'sent'
@@ -113,7 +151,7 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
       <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center gap-3 text-left"
         aria-expanded={open}>
         <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Μηνιαία εικόνα</h2>
-        <span className="text-sm text-gray-400 dark:text-gray-500">έσοδα ανά μήνα → λογιστήριο</span>
+        <span className="text-sm text-gray-400 dark:text-gray-500">έσοδα &amp; έξοδα ανά μήνα → λογιστήριο</span>
         <span className="ml-auto flex items-center gap-3">
           {data && open && data.status !== 'pending' && (
             <span className={`px-3 py-1 rounded-full text-xs font-bold notranslate ${
@@ -163,51 +201,167 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
 
           {data && !loading && (
             <>
-              {/* Σύνολα */}
-              <div className="flex flex-wrap gap-x-8 gap-y-2 rounded-2xl bg-gray-50 dark:bg-gray-700/50 px-5 py-4">
-                {Object.entries(data.totals).sort(([a], [b]) => a === 'Σύνολο' ? -1 : b === 'Σύνολο' ? 1 : a.localeCompare(b, 'el')).map(([k, v]) => (
-                  <span key={k} className="text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">{k}:</span>{' '}
-                    <span className={`notranslate ${k === 'Σύνολο' ? 'font-bold text-charcoal dark:text-gray-100' : 'text-charcoal dark:text-gray-200'}`}>{eur(v)}</span>
-                  </span>
-                ))}
-                <span className="text-sm text-gray-400 dark:text-gray-500 ml-auto notranslate">{data.count} αποδείξεις</span>
+              {/* Σύνολα: έσοδα − έξοδα = ισοζύγιο */}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl bg-gray-50 dark:bg-gray-700/50 px-5 py-4">
+                  <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Έσοδα</p>
+                  <p className="text-xl font-bold text-charcoal dark:text-gray-100 notranslate">{eur(data.summary.income)}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 notranslate">
+                    {data.receiptCount} αποδείξεις{data.incomeRecordCount > 0 && ` + ${data.incomeRecordCount} χωρίς απόδειξη`}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-gray-50 dark:bg-gray-700/50 px-5 py-4">
+                  <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Έξοδα</p>
+                  <p className="text-xl font-bold text-charcoal dark:text-gray-100 notranslate">{eur(data.summary.expenses)}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 notranslate">{data.expenseCount} παραστατικά</p>
+                </div>
+                <div className="rounded-2xl bg-gray-50 dark:bg-gray-700/50 px-5 py-4">
+                  <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Ισοζύγιο μήνα</p>
+                  <p className={`text-xl font-bold notranslate ${data.summary.balance < 0 ? 'text-red-600 dark:text-red-400' : 'text-[#6A994E]'}`}>
+                    {eur(data.summary.balance)}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">έσοδα − έξοδα</p>
+                </div>
               </div>
 
-              {/* Λίστα */}
-              {data.receipts.length === 0 ? (
-                <p className="text-sm text-gray-400 dark:text-gray-500">Καμία είσπραξη τον {monthLabel(month).split(' ')[0]}.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
-                        <th className="py-2 pr-4 font-medium">Αριθμός</th>
-                        <th className="py-2 pr-4 font-medium">Προς</th>
-                        <th className="py-2 pr-4 font-medium">Τύπος</th>
-                        <th className="py-2 pr-4 font-medium">Ημ. πληρωμής</th>
-                        <th className="py-2 pr-4 font-medium">Ημ. έκδοσης</th>
-                        <th className="py-2 font-medium text-right">Ποσό</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.receipts.map(r => (
-                        <tr key={r.number} className={`border-b border-gray-100 dark:border-gray-700 ${r.delta ? 'bg-red-50 dark:bg-red-900/15' : ''}`}>
-                          <td className="py-2.5 pr-4 font-bold text-charcoal dark:text-gray-100 notranslate">
-                            ΑΠ. ΕΙΣ. {r.number}
-                            {r.delta && <span className="ml-2 px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-bold align-middle">δέλτα</span>}
-                          </td>
-                          <td className="py-2.5 pr-4 text-gray-700 dark:text-gray-300">{r.memberName || '—'}</td>
-                          <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400">{r.typeLabel}</td>
-                          <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400 notranslate">{r.paymentDate ? new Date(r.paymentDate).toLocaleDateString('el-GR') : '—'}</td>
-                          <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400 notranslate">{r.issueDate ? new Date(r.issueDate).toLocaleDateString('el-GR') : '—'}</td>
-                          <td className="py-2.5 text-right text-charcoal dark:text-gray-200 notranslate">{eur(r.amount)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {/* ---- Α. ΕΣΟΔΑ ---- */}
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
+                  <h3 className="text-sm font-bold uppercase tracking-wide text-charcoal dark:text-gray-100">Α. Έσοδα</h3>
+                  {Object.entries(data.totals)
+                    .filter(([k]) => k !== 'Σύνολο')
+                    .sort(([a], [b]) => a.localeCompare(b, 'el'))
+                    .map(([k, v]) => (
+                      <span key={k} className="text-xs">
+                        <span className="text-gray-500 dark:text-gray-400">{k}:</span>{' '}
+                        <span className="text-charcoal dark:text-gray-200 notranslate">{eur(v)}</span>
+                      </span>
+                    ))}
                 </div>
-              )}
+
+                {data.receipts.length === 0 && data.incomeRecords.length === 0 ? (
+                  <p className="text-sm text-gray-400 dark:text-gray-500">Καμία είσπραξη τον {monthLabel(month).split(' ')[0]}.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
+                          <th className="py-2 pr-4 font-medium">Παραστατικό</th>
+                          <th className="py-2 pr-4 font-medium">Προς</th>
+                          <th className="py-2 pr-4 font-medium">Τύπος</th>
+                          <th className="py-2 pr-4 font-medium">Ημ. πληρωμής</th>
+                          <th className="py-2 pr-4 font-medium">Ημ. έκδοσης</th>
+                          <th className="py-2 font-medium text-right">Ποσό</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.receipts.map(r => (
+                          <tr key={`r-${r.number}`} className={`border-b border-gray-100 dark:border-gray-700 ${r.delta ? 'bg-red-50 dark:bg-red-900/15' : ''}`}>
+                            <td className="py-2.5 pr-4 font-bold text-charcoal dark:text-gray-100 notranslate">
+                              ΑΠ. ΕΙΣ. {r.number}
+                              {r.delta && <span className="ml-2 px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-bold align-middle">δέλτα</span>}
+                            </td>
+                            <td className="py-2.5 pr-4 text-gray-700 dark:text-gray-300">{r.memberName || '—'}</td>
+                            <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400">{r.typeLabel}</td>
+                            <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400 notranslate">{r.paymentDate ? new Date(r.paymentDate).toLocaleDateString('el-GR') : '—'}</td>
+                            <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400 notranslate">{r.issueDate ? new Date(r.issueDate).toLocaleDateString('el-GR') : '—'}</td>
+                            <td className="py-2.5 text-right text-charcoal dark:text-gray-200 notranslate">{eur(r.amount)}</td>
+                          </tr>
+                        ))}
+                        {data.incomeRecords.map(g => (
+                          <tr key={`g-${g.aa}`} className="border-b border-gray-100 dark:border-gray-700">
+                            <td className="py-2.5 pr-4 text-charcoal dark:text-gray-100 notranslate">
+                              <span className="font-bold">{g.aa}</span>
+                              <span className="ml-2 px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 text-[10px] font-bold align-middle">
+                                χωρίς απόδειξη
+                              </span>
+                            </td>
+                            <td className="py-2.5 pr-4 text-gray-700 dark:text-gray-300">{g.payerName || g.description || '—'}</td>
+                            <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400">{g.categoryLabel}</td>
+                            <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400 notranslate">{g.paymentDate ? new Date(g.paymentDate).toLocaleDateString('el-GR') : '—'}</td>
+                            <td className="py-2.5 pr-4 text-gray-400 dark:text-gray-500 notranslate">{g.docRef || '—'}</td>
+                            <td className="py-2.5 text-right text-charcoal dark:text-gray-200 notranslate">{eur(g.amount)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* ---- Β. ΕΞΟΔΑ ---- */}
+              <div className="space-y-3 pt-2">
+                <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
+                  <h3 className="text-sm font-bold uppercase tracking-wide text-charcoal dark:text-gray-100">Β. Έξοδα</h3>
+                  {Object.entries(data.expenseTotals)
+                    .filter(([k]) => k !== 'Σύνολο')
+                    .sort(([a], [b]) => a.localeCompare(b, 'el'))
+                    .map(([k, v]) => (
+                      <span key={k} className="text-xs">
+                        <span className="text-gray-500 dark:text-gray-400">{k}:</span>{' '}
+                        <span className="text-charcoal dark:text-gray-200 notranslate">{eur(v)}</span>
+                      </span>
+                    ))}
+                </div>
+
+                {data.expenses.length === 0 ? (
+                  <p className="text-sm text-gray-400 dark:text-gray-500">
+                    Καμία εγκεκριμένη δαπάνη τον {monthLabel(month).split(' ')[0]}. Τα παραστατικά μπαίνουν εδώ μόλις εγκριθούν στα Οικονομικά → Έξοδα.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
+                          <th className="py-2 pr-4 font-medium">Α/Α</th>
+                          <th className="py-2 pr-4 font-medium">Προμηθευτής</th>
+                          <th className="py-2 pr-4 font-medium">Κατηγορία</th>
+                          <th className="py-2 pr-4 font-medium">Παραστατικό</th>
+                          <th className="py-2 pr-4 font-medium">Ημ. έκδοσης</th>
+                          <th className="py-2 pr-4 font-medium">Πληρωμή</th>
+                          <th className="py-2 font-medium text-right">Ποσό</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.expenses.map(e => (
+                          <tr key={`x-${e.aa}`} className="border-b border-gray-100 dark:border-gray-700">
+                            <td className="py-2.5 pr-4 font-bold text-charcoal dark:text-gray-100 notranslate">{e.aa}</td>
+                            <td className="py-2.5 pr-4 text-gray-700 dark:text-gray-300">
+                              {e.supplierName || '—'}
+                              {e.supplierTaxId && <span className="block text-xs text-gray-400 dark:text-gray-500 notranslate">ΑΦΜ {e.supplierTaxId}</span>}
+                            </td>
+                            <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400">
+                              {e.categoryLabel || <span className="text-orange-600 dark:text-orange-400">λείπει ⚠</span>}
+                            </td>
+                            <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400 notranslate">{e.docNumber || '—'}</td>
+                            <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400 notranslate">{e.issueDate ? new Date(e.issueDate).toLocaleDateString('el-GR') : '—'}</td>
+                            <td className="py-2.5 pr-4 notranslate">
+                              {e.method === 'unpaid' ? (
+                                <span className="text-orange-600 dark:text-orange-400">ανεξόφλητο</span>
+                              ) : (
+                                <span className="text-gray-500 dark:text-gray-400">
+                                  {e.methodLabel}{e.paymentDate ? ` · ${new Date(e.paymentDate).toLocaleDateString('el-GR')}` : ''}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2.5 text-right text-charcoal dark:text-gray-200 notranslate">
+                              {eur(e.amount)}
+                              {e.withholding > 0 && <span className="block text-xs text-gray-400 dark:text-gray-500">κρατήσεις {eur(e.withholding)}</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {(data.unpaidCount > 0 || data.uncategorised > 0) && (
+                  <p className="text-xs text-orange-700 dark:text-orange-300 rounded-xl bg-orange-50 dark:bg-orange-900/20 px-4 py-2.5">
+                    {data.unpaidCount > 0 && `${data.unpaidCount} δαπάνη/ες χωρίς εξόφληση — μπαίνουν στο αρχείο του μήνα αλλά δεν έχουν φύγει από το ταμείο. `}
+                    {data.uncategorised > 0 && `${data.uncategorised} χωρίς κατηγορία — συμπλήρωσέ την στα Οικονομικά → Έξοδα ώστε να μπει σωστά στο ΕΞΟΔΑ.`}
+                  </p>
+                )}
+              </div>
 
               {data.deltaCount > 0 && (
                 <p className="text-xs text-red-700 dark:text-red-300 rounded-xl bg-red-50 dark:bg-red-900/20 px-4 py-2.5">
@@ -263,7 +417,8 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
                   ) : (
                     <>
                       <span className="text-sm font-medium text-charcoal dark:text-gray-200">
-                        Αποστολή του αρχείου {monthLabel(month)} (έσοδα{data.count ? ` — ${data.count} παραστατικά` : ''}) στο λογιστήριο;
+                        Αποστολή του αρχείου {monthLabel(month)} στο λογιστήριο; Περιλαμβάνει {data.count} έσοδα ({eur(data.summary.income)})
+                        και {data.expenseCount} έξοδα ({eur(data.summary.expenses)}).
                       </span>
                       <button type="button" onClick={() => act('dispatch')} disabled={closing}
                         className="px-5 py-2 rounded-full bg-coral text-white text-sm font-bold hover:bg-coral/90 disabled:opacity-40">
