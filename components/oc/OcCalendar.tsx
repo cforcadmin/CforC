@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 /**
  * Ημερολόγιο δράσεων — τρεις τρόποι να δεις τα ίδια δεδομένα:
@@ -40,6 +40,17 @@ const MONTHS = ['Ιανουαρίου', 'Φεβρουαρίου', 'Μαρτίο�
 const MONTHS_NOM = ['Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος',
   'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος']
 const DAYS_SHORT = ['Δε', 'Τρ', 'Τε', 'Πε', 'Πα', 'Σα', 'Κυ']
+
+/**
+ * Η δομή του πλέγματος μπαίνει inline, όχι με κλάσεις. Το grid-cols-7
+ * υπήρχε στο CSS αλλά δεν έφτανε στον browser, και οι μέρες στοιβάζονταν
+ * σε μία στήλη. Το layout ενός ημερολογιού δεν είναι θέμα θεματοδότησης —
+ * είναι δομή, και έτσι δεν μπορεί να σπάσει από ρύθμιση.
+ */
+const WEEK_GRID: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
+}
 
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 const dayKey = (e: CalEvent) => String(e.start).slice(0, 10)
@@ -160,7 +171,7 @@ export default function OcCalendar({
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => shift(-1)} aria-label="Προηγούμενο"
               className="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-600 text-charcoal dark:text-gray-200 hover:border-coral">←</button>
-            <span className="font-bold text-charcoal dark:text-gray-100 min-w-44 text-center">{periodLabel}</span>
+            <span className="font-bold text-charcoal dark:text-gray-100 min-w-[11rem] text-center">{periodLabel}</span>
             <button type="button" onClick={() => shift(1)} aria-label="Επόμενο"
               className="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-600 text-charcoal dark:text-gray-200 hover:border-coral">→</button>
             <button type="button" onClick={() => { const d = new Date(); d.setHours(0, 0, 0, 0); setCursor(d) }}
@@ -189,7 +200,7 @@ export default function OcCalendar({
                   <span className="w-16 shrink-0 text-base font-bold text-charcoal dark:text-gray-100 notranslate">
                     {new Date(e.start).toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit' })}
                   </span>
-                  <span className="flex-1 min-w-48">
+                  <span className="flex-1 min-w-[12rem]">
                     <button type="button" onClick={() => onEdit?.(e)} disabled={!onEdit}
                       className={`text-base text-left text-charcoal dark:text-gray-100 ${onEdit ? 'hover:text-coral' : 'cursor-default'}`}>
                       {e.title}
@@ -259,19 +270,20 @@ export default function OcCalendar({
         const todayIso = iso(new Date())
         return (
           <div className="overflow-x-auto">
-            <div className="min-w-[42rem]">
-              <div className="grid grid-cols-7 gap-px mb-px">
+            <div style={{ minWidth: '42rem' }}>
+              <div style={{ ...WEEK_GRID, gap: '1px', marginBottom: '1px' }}>
                 {DAYS_SHORT.map(d => (
                   <div key={d} className="text-center text-sm font-bold text-gray-500 dark:text-gray-400 py-2">{d}</div>
                 ))}
               </div>
-              <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700 rounded-2xl overflow-hidden">
+              <div style={{ ...WEEK_GRID, gap: '1px' }} className="bg-gray-200 dark:bg-gray-700 rounded-2xl overflow-hidden">
                 {cells.map(d => {
                   const k = iso(d)
                   const list = byDay.get(k) || []
                   const otherMonth = d.getMonth() !== cursor.getMonth()
                   return (
-                    <div key={k} className={`min-h-24 p-1.5 bg-white dark:bg-gray-800 ${otherMonth ? 'opacity-40' : ''}`}>
+                    <div key={k} style={{ minHeight: '6.5rem' }}
+                      className={`p-1.5 bg-white dark:bg-gray-800 ${otherMonth ? 'opacity-40' : ''}`}>
                       <div className="flex items-center justify-between mb-1">
                         <span className={`text-sm notranslate ${k === todayIso
                           ? 'w-6 h-6 rounded-full bg-coral text-white flex items-center justify-center font-bold'
@@ -304,12 +316,13 @@ export default function OcCalendar({
         const todayIso = iso(new Date())
         return (
           <div className="overflow-x-auto">
-            <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700 rounded-2xl overflow-hidden min-w-[42rem]">
+            <div style={{ ...WEEK_GRID, gap: '1px', minWidth: '42rem' }}
+              className="bg-gray-200 dark:bg-gray-700 rounded-2xl overflow-hidden">
               {days.map(d => {
                 const k = iso(d)
                 const list = byDay.get(k) || []
                 return (
-                  <div key={k} className="bg-white dark:bg-gray-800 p-2 min-h-48">
+                  <div key={k} style={{ minHeight: '12rem' }} className="bg-white dark:bg-gray-800 p-2">
                     <div className="flex items-center justify-between mb-2">
                       <span className={`text-sm font-bold ${k === todayIso ? 'text-coral' : 'text-charcoal dark:text-gray-100'}`}>
                         {DAYS_SHORT[(d.getDay() + 6) % 7]} <span className="notranslate font-normal text-gray-500 dark:text-gray-400">{d.getDate()}</span>
@@ -346,7 +359,7 @@ export default function OcCalendar({
                   <span className="w-20 shrink-0 text-base font-bold text-charcoal dark:text-gray-100 notranslate">
                     {e.allDay ? 'όλη μέρα' : timeOf(e)}
                   </span>
-                  <span className="flex-1 min-w-48">
+                  <span className="flex-1 min-w-[12rem]">
                     <button type="button" onClick={() => onEdit?.(e)} disabled={!onEdit}
                       className={`text-base text-left text-charcoal dark:text-gray-100 ${onEdit ? 'hover:text-coral' : 'cursor-default'}`}>
                       {e.title}

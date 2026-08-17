@@ -175,7 +175,7 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
                           ? `Ενεργός ρόλος: ${OC_SEAT_LABELS[activeSeat] || activeSeat}. Πάτησε για εναλλαγή ρόλου.`
                           : `Ενεργός ρόλος: ${OC_SEAT_LABELS[activeSeat] || activeSeat}`
                       }
-                      className={`notranslate bg-white/20 text-white dark:text-gray-200 border border-white/50 dark:border-gray-500 min-w-9 px-2.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap text-center ${
+                      className={`notranslate bg-white/20 text-white dark:text-gray-200 border border-white/50 dark:border-gray-500 min-w-[2.25rem] px-2.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap text-center ${
                         seats.length > 1 ? 'hover:bg-white/30 cursor-pointer' : 'cursor-default'
                       }`}
                     >

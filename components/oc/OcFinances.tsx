@@ -331,7 +331,7 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
         <div className="rounded-3xl border-2 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-6">
           <div className="flex flex-wrap items-center gap-4">
             <span className="text-2xl leading-none" aria-hidden="true">🏦</span>
-            <div className="flex-1 min-w-60">
+            <div className="flex-1 min-w-[15rem]">
               <p className="font-bold text-charcoal dark:text-gray-100">Το ταμείο δεν έχει ενημερωθεί αυτόν τον μήνα</p>
               <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                 {treasuryStale.asOf
@@ -347,7 +347,7 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
         <div className="rounded-3xl border-2 border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20 p-6">
           <div className="flex flex-wrap items-start gap-4">
             <span className="text-2xl leading-none" aria-hidden="true">⚠️</span>
-            <div className="flex-1 min-w-60">
+            <div className="flex-1 min-w-[15rem]">
               <p className="font-bold text-charcoal dark:text-gray-100">{CONNECTION_MESSAGES[connection].title}</p>
               <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{CONNECTION_MESSAGES[connection].detail}</p>
             </div>

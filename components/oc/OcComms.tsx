@@ -132,7 +132,7 @@ function NewsletterCard({ title, list, campaigns, avg, tone }: {
                 {[...campaigns].reverse().map((c, i) => (
                   <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1.5"
                     title={`${c.subject}${c.sentAt ? ' — ' + new Date(c.sentAt).toLocaleDateString('el-GR') : ''} · ${c.openRate}% άνοιγμα, ${c.clickRate}% κλικ`}>
-                    <span className="w-full rounded-t min-h-1" style={{ height: `${((c.openRate || 0) / max) * 100}%`, backgroundColor: tone, opacity: 0.4 + (i / campaigns.length) * 0.6 }} />
+                    <span className="w-full rounded-t min-h-[0.25rem]" style={{ height: `${((c.openRate || 0) / max) * 100}%`, backgroundColor: tone, opacity: 0.4 + (i / campaigns.length) * 0.6 }} />
                     <span className="text-sm font-medium text-gray-600 dark:text-gray-300 notranslate">{c.openRate}%</span>
                     <span className="text-xs text-gray-400 dark:text-gray-500 notranslate">
                       {c.sentAt ? new Date(c.sentAt).toLocaleDateString('el-GR', { month: 'short' }) : ''}

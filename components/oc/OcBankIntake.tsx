@@ -348,7 +348,7 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
                             <span className="text-gray-700 dark:text-gray-300 notranslate">{r.payerName || <em className="text-gray-400">— ({r.reason.slice(0, 22)})</em>}</span>
                             {r.payerBank && <span className="block text-gray-400 dark:text-gray-500 truncate notranslate">{r.payerBank}</span>}
                           </td>
-                          <td className="py-2.5 pr-3 min-w-52 relative">
+                          <td className="py-2.5 pr-3 min-w-[13rem] relative">
                             {isReg ? (
                               <span className="text-gray-500 dark:text-gray-400">
                                 Πιθανή εγγραφή — μέσω «Πληρώθηκε» στις <a href="/oc" className="text-coral hover:underline">αιτήσεις</a>

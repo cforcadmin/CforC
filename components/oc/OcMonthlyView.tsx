@@ -198,7 +198,7 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
           <div className="flex flex-wrap items-center gap-3">
             <button type="button" onClick={() => shiftMonth(-1)} aria-label="Προηγούμενος μήνας"
               className="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-600 text-charcoal dark:text-gray-200 hover:border-coral">←</button>
-            <span className="font-bold text-charcoal dark:text-gray-100 min-w-40 text-center">{monthLabel(month)}</span>
+            <span className="font-bold text-charcoal dark:text-gray-100 min-w-[10rem] text-center">{monthLabel(month)}</span>
             <button type="button" onClick={() => shiftMonth(1)} aria-label="Επόμενος μήνας"
               className="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-600 text-charcoal dark:text-gray-200 hover:border-coral">→</button>
             <button type="button" onClick={() => load(month)} disabled={loading} aria-label="Ανανέωση"
