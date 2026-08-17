@@ -1678,6 +1678,94 @@ export function monthlyDispatchEmailHtml(
 }
 
 /**
+ * Υπενθύμιση ταμείου — φεύγει την 1η κάθε μήνα στον/στην τρέχοντα Financer.
+ * Σκοπός: να μη βασίζεται η ενημέρωση του ταμείου στη μνήμη κανενός.
+ */
+export function treasuryReminderEmailHtml(
+  firstName: string,
+  monthLabel: string,
+  last: { amount: string; date: string } | null,
+  ocUrl: string,
+): { subject: string; html: string } {
+  const lastBlock = last
+    ? `<p style="margin:0 0 20px 0;">Η τελευταία καταχωρημένη μέτρηση είναι <strong>${last.amount} €</strong> στις ${last.date}.</p>`
+    : `<p style="margin:0 0 20px 0;">Δεν έχει καταχωρηθεί ακόμη καμία μέτρηση.</p>`
+  const html = `<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Ενημέρωση ταμείου — Culture for Change</title>
+<style>
+  @media only screen and (max-width:620px){
+    .px{padding-left:24px !important;padding-right:24px !important;}
+    .h1{font-size:26px !important;line-height:32px !important;}
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F0EB;">
+<span style="display:none;font-size:1px;color:#F5F0EB;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Ώρα να ενημερωθεί το ταμείο για τον ${monthLabel}.</span>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;">
+<tr><td align="center" style="padding:32px 12px 48px 12px;">
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #E5E7EB;">
+
+  <tr>
+    <td class="px" style="background-color:#FF8B6A;padding:36px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:16px;letter-spacing:1.6px;color:#FFFFFF;font-weight:bold;">CULTURE FOR CHANGE</td></tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr><td class="h1" style="font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:36px;color:#2D2D2D;font-weight:bold;">ΕΝΗΜΕΡΩΣΗ ΤΑΜΕΙΟΥ</td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:40px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;">
+      <p style="margin:0 0 20px 0;">${firstName ? firstName + ',' : 'Καλημέρα,'}</p>
+      <p style="margin:0 0 20px 0;">αρχή μήνα — ώρα να καταχωρηθεί το υπόλοιπο του ταμείου για τον <strong>${monthLabel}</strong>.</p>
+      ${lastBlock}
+      <p style="margin:0 0 8px 0;">Άνοιξε το πλακίδιο «Ταμείο» στην Επισκόπηση του OC και γράψε το υπόλοιπο της τράπεζας όπως το βλέπεις σήμερα.</p>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:16px 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="background-color:#FF8B6A;border-radius:999px;">
+          <a href="${ocUrl}" style="display:inline-block;padding:14px 32px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;color:#FFFFFF;text-decoration:none;font-weight:bold;">Ενημέρωση ταμείου</a>
+        </td>
+      </tr></table>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:24px 48px 40px 48px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#5A5A5A;">
+      <p style="margin:0;">Αυτόματη υπενθύμιση, την 1η κάθε μήνα.</p>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" align="center" style="background-color:#2D2D2D;padding:32px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#A0A0A0;">Σωματείο Κοινωνικής και Πολιτισμικής Καινοτομίας — Culture for Change</td></tr>
+      </table>
+    </td>
+  </tr>
+
+</table>
+
+</td></tr>
+</table>
+</body>
+</html>
+`
+  return { subject: `Ενημέρωση ταμείου — ${monthLabel}`, html }
+}
+
+/**
  * Departure email — στέλνεται όταν διαγράφεται μέλος (OC ή Sheet).
  * Design shell, υπογραφή Community. ⟨TODO⟩: πραγματικό URL ερωτηματολογίου.
  */

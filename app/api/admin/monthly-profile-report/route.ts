@@ -1,4 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSeatHolder } from '@/lib/ocRoles'
+import { sendOcEmail, treasuryReminderEmailHtml, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
+
+export const maxDuration = 60
+
+/**
+ * Υπενθύμιση ταμείου στον/στην τρέχοντα Financer — τρέχει μαζί με τη μηνιαία
+ * αναφορά, ΟΧΙ σε δικό της cron: το Vercel περιορίζει τα προγραμματισμένα
+ * jobs, και η ώρα («0 9 1 * *») είναι ήδη ακριβώς αυτή που θέλουμε.
+ * Best-effort: αν αποτύχει, δεν ρίχνει τη μηνιαία αναφορά.
+ */
+async function sendTreasuryReminder(): Promise<string> {
+  try {
+    const financer = await getSeatHolder('financer')
+    if (!financer?.email) return 'no financer seat'
+
+    const STRAPI = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
+    let last: { amount: string; date: string } | null = null
+    try {
+      const r = await fetch(`${STRAPI}/api/treasury-balances?sort=AsOf:desc&pagination[limit]=1`, {
+        headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` }, cache: 'no-store',
+      })
+      const row = r.ok ? (await r.json())?.data?.[0] : null
+      if (row) {
+        last = {
+          amount: Number(row.Bank).toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          date: new Date(row.AsOf).toLocaleDateString('el-GR'),
+        }
+      }
+    } catch { /* η συλλογή μπορεί να μην υπάρχει ακόμη */ }
+
+    const now = new Date()
+    const monthLabel = `${GREEK_MONTHS[now.getMonth()]} ${now.getFullYear()}`
+    const firstName = (financer.name || '').trim().split(' ')[0] || ''
+    const tpl = treasuryReminderEmailHtml(
+      firstName, monthLabel, last,
+      `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cultureforchange.net'}/oc`,
+    )
+    const sent = await sendOcEmail(financer.email, tpl.subject, tpl.html, {
+      from: FINANCE_FROM, replyTo: FINANCE_EMAIL,
+    })
+    return sent ? `sent to ${financer.email}` : 'send failed'
+  } catch (err) {
+    console.error('[MONTHLY-REPORT] treasury reminder failed:', err)
+    return 'error'
+  }
+}
 
 const STRAPI_URL = process.env.STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
@@ -227,11 +274,16 @@ export async function GET(request: NextRequest) {
 
     console.log(`[MONTHLY-REPORT] Sent report for ${monthName} ${year}: ${logs.length} profile changes, ${newSubscribers.length} new subscribers`)
 
+    // Awaited: un-awaited side effects πεθαίνουν με το πάγωμα της συνάρτησης
+    const treasury = await sendTreasuryReminder()
+    console.log(`[MONTHLY-REPORT] treasury reminder: ${treasury}`)
+
     return NextResponse.json({
       success: true,
       month: `${monthName} ${year}`,
       profileChanges: logs.length,
       newSubscribers: newSubscribers.length,
+      treasuryReminder: treasury,
     })
   } catch (error) {
     console.error('[MONTHLY-REPORT] Error:', error)

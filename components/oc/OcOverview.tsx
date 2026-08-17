@@ -1,12 +1,13 @@
 'use client'
 
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { OcOverviewData, OcMemberRow, OcMemberStatus, OcNewsletterStats } from '@/lib/ocOverview'
 import type { OcApplicationSummary } from '@/components/oc/OcShell'
 import { OC_TABLE_COLUMNS, OC_TABLE_DEFAULT_COLS } from '@/components/oc/ocPrefs'
 import OcRenewalsPopup from '@/components/oc/OcRenewalsPopup'
+import OcTreasuryPopup from '@/components/oc/OcTreasuryPopup'
 
 const STATUS_META: Record<OcMemberStatus, { label: string; cls: string }> = {
   paid: { label: 'Τακτοποιημένο', cls: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' },
@@ -674,9 +675,19 @@ export default function OcOverview({
   const y = data.currentYear
   const [showApproved, setShowApproved] = useState(false)
   const [showRenewals, setShowRenewals] = useState(initialShowRenewals)
+  const [showTreasury, setShowTreasury] = useState(false)
+  const [treasury, setTreasury] = useState<{ bank: number; asOf: string; stale: boolean } | null>(null)
   const renewalClaims = data.members.filter(m =>
     m.renewalClaimedAt && (m.status === 'owes-1' || m.status === 'owes-2' || m.status === 'new-unpaid')
   ).length
+
+  // Ταμείο: τελευταία μέτρηση για το πλακίδιο (όλο το ΔΣ βλέπει)
+  useEffect(() => {
+    fetch('/api/oc/treasury')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.latest) setTreasury({ bank: d.latest.bank, asOf: d.latest.asOf, stale: !!d.stale }) })
+      .catch(() => { /* σιωπηλά — το πλακίδιο μένει «—» */ })
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -739,8 +750,45 @@ export default function OcOverview({
           </div>
         </button>
         <Tile value={data.newThisYear} label={`Νέα μέλη ${y}`} accent="#4A90D9" />
-        <Tile value="—" label="Ταμείο" sub="ενημερώνεται από Οικονομικά" />
+        <button
+          type="button"
+          onClick={() => setShowTreasury(true)}
+          className="text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-coral rounded-2xl"
+          aria-haspopup="dialog"
+        >
+          <div className={`relative rounded-2xl shadow-sm p-5 flex flex-col h-full hover:shadow-md transition-shadow border ${
+            treasury?.stale
+              ? 'bg-amber-50 dark:bg-amber-900/25 border-amber-300 dark:border-amber-700'
+              : 'bg-white dark:bg-gray-800 border-transparent hover:border-coral/40'
+          }`}>
+            {treasury?.stale && (
+              <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center shadow"
+                title="Το ταμείο δεν έχει ενημερωθεί αυτόν τον μήνα">!</span>
+            )}
+            <span className="text-3xl font-bold text-charcoal dark:text-gray-100 notranslate">
+              {treasury ? `${Math.round(treasury.bank).toLocaleString('el-GR')} €` : '—'}
+            </span>
+            <span className="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-snug">Ταμείο</span>
+            <span className={`text-xs mt-0.5 ${treasury?.stale ? 'text-amber-700 dark:text-amber-300 font-medium' : 'text-coral dark:text-coral-light'}`}>
+              {treasury
+                ? `${treasury.stale ? '⚠ ' : ''}μέτρηση ${new Date(treasury.asOf).toLocaleDateString('el-GR')} →`
+                : 'καταχώρηση μέτρησης →'}
+            </span>
+          </div>
+        </button>
       </div>
+
+      {showTreasury && (
+        <OcTreasuryPopup
+          canEdit={canRecordPayments}
+          onClose={() => setShowTreasury(false)}
+          onSaved={() => {
+            fetch('/api/oc/treasury').then(r => r.ok ? r.json() : null).then(d => {
+              if (d?.latest) setTreasury({ bank: d.latest.bank, asOf: d.latest.asOf, stale: !!d.stale })
+            }).catch(() => {})
+          }}
+        />
+      )}
 
       {/* Popup: ανεξόφλητες συνδρομές — έκδοση/υπενθύμιση επιτόπου */}
       {showRenewals && (
