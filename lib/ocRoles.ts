@@ -141,27 +141,41 @@ export async function getBoardRoster(): Promise<OcBoardMember[]> {
 }
 
 /**
- * Όλοι οι τρέχοντες κάτοχοι θέσεων με email — για προσκλήσεις σε γεγονότα
- * του ημερολογίου. Ένα άτομο που κρατά δύο θέσεις εμφανίζεται ΜΙΑ φορά,
- * με όλες τις θέσεις του, ώστε να μην προσκληθεί δύο φορές.
+ * Θυρίδες ρόλων. Το ημερολόγιο του CforC ήδη προσκαλεί ΑΥΤΕΣ, όχι προσωπικά
+ * email — και σωστά: επιβιώνουν των εκλογών χωρίς να πειραχτεί κανένα
+ * επαναλαμβανόμενο γεγονός. Το προσωπικό email μένει ως εφεδρεία, για την
+ * περίπτωση που μια θυρίδα δεν υπάρχει.
+ */
+const SEAT_MAILBOX: Record<OcSeat, string> = {
+  coordinator: 'coordination@cultureforchange.net',
+  admin: 'hello@cultureforchange.net',
+  comms: 'communication@cultureforchange.net',
+  it: 'it@cultureforchange.net',
+  community: 'community@cultureforchange.net',
+  financer: 'finance@cultureforchange.net',
+  outreach: 'outreach@cultureforchange.net',
+}
+
+/**
+ * Όλοι οι τρέχοντες κάτοχοι θέσεων — για προσκλήσεις σε γεγονότα του
+ * ημερολογίου. Προσκαλείται η ΘΥΡΙΔΑ του ρόλου· το όνομα του ατόμου
+ * εμφανίζεται μόνο για να ξέρεις ποιον αφορά.
  */
 export async function getSeatHoldersWithEmail(): Promise<
-  Array<{ name: string; email: string; seats: OcSeat[]; labels: string }>
+  Array<{ name: string; email: string; personalEmail?: string; seats: OcSeat[]; labels: string }>
 > {
   const teams = await fetchCurrentTeams()
-  const byEmail = new Map<string, { name: string; email: string; seats: OcSeat[] }>()
+  const out: Array<{ name: string; email: string; personalEmail?: string; seats: OcSeat[] }> = []
   for (const team of teams) {
     for (const { field, seat } of SEAT_FIELDS) {
       const rel = team?.[field]
-      const email = String(rel?.Email || '').trim().toLowerCase()
-      if (!rel?.Name || !email) continue
-      const hit = byEmail.get(email)
-      if (hit) { if (!hit.seats.includes(seat)) hit.seats.push(seat) }
-      else byEmail.set(email, { name: rel.Name, email, seats: [seat] })
+      if (!rel?.Name) continue
+      const personal = String(rel.Email || '').trim().toLowerCase() || undefined
+      const email = SEAT_MAILBOX[seat] || personal
+      if (!email) continue
+      if (out.some(o => o.email === email)) continue   // ίδια θυρίδα, μία φορά
+      out.push({ name: rel.Name, email, personalEmail: personal, seats: [seat] })
     }
   }
-  return [...byEmail.values()].map(p => ({
-    ...p,
-    labels: p.seats.map(s => SEAT_LABELS[s]).join(' · '),
-  }))
+  return out.map(p => ({ ...p, labels: p.seats.map(s => SEAT_LABELS[s]).join(' · ') }))
 }

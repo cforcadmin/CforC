@@ -36,7 +36,7 @@ const PRESETS: Preset[] = [
 const inputCls = 'w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-base text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral'
 const labelCls = 'block text-sm font-bold text-gray-600 dark:text-gray-300 mb-1'
 
-export interface SeatHolder { name: string; email: string; labels: string }
+export interface SeatHolder { name: string; email: string; personalEmail?: string; labels: string }
 
 export default function OcEventForm({ event, date, seatHolders = [], onClose, onSaved }: {
   event?: CalEvent | null
@@ -211,13 +211,13 @@ export default function OcEventForm({ event, date, seatHolders = [], onClose, on
               <div className="flex flex-wrap gap-2">
                 {seatHolders.map(h => (
                   <button key={h.email} type="button" onClick={() => toggle(h.email)}
-                    title={`${h.labels} · ${h.email}`}
+                    title={`${h.labels} — ${h.name}\nΠρόσκληση στη θυρίδα ${h.email}`}
                     className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
                       has(h.email)
                         ? 'bg-coral text-white border-coral'
                         : 'border-gray-300 dark:border-gray-600 text-charcoal dark:text-gray-200 hover:border-coral'}`}>
-                    {has(h.email) ? '✓ ' : ''}{h.name.split(' ')[0]}
-                    <span className="opacity-70"> · {h.labels.split(' · ')[0]}</span>
+                    {has(h.email) ? '✓ ' : ''}{h.labels.split(' · ')[0]}
+                    <span className="opacity-70"> · {h.name.split(' ')[0]}</span>
                   </button>
                 ))}
               </div>
@@ -248,7 +248,9 @@ export default function OcEventForm({ event, date, seatHolders = [], onClose, on
 
             {attendees.length > 0 && (
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                Το Google θα στείλει πρόσκληση σε {attendees.length} {attendees.length === 1 ? 'άτομο' : 'άτομα'} μόλις αποθηκευτεί.
+                Πρόσκληση σε {attendees.length} {attendees.length === 1 ? 'παραλήπτη' : 'παραλήπτες'} μόλις αποθηκευτεί.
+                Οι θέσεις προσκαλούνται στη <strong>θυρίδα του ρόλου</strong> — έτσι οι προσκλήσεις δεν χρειάζονται
+                αλλαγή μετά από εκλογές.
               </p>
             )}
           </div>
