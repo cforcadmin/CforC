@@ -30,10 +30,13 @@ async function fetchLists() {
     const json: any = await res.json()
     const find = (title: string) => (json.data || []).find((g: any) => g.title === title)
     const count = (g: any) => Number(g?.recipient_count ?? g?.subscribers_count ?? 0)
+    const media = find(SENDER_GROUPS.media)
     return {
       paid: count(find(SENDER_GROUPS.paid)),
       external: count(find(SENDER_GROUPS.external)),
-      media: count(find(SENDER_GROUPS.media)),
+      media: count(media),
+      mediaGroupId: media?.id ?? null,
+      mediaCreated: media?.created ?? null,
     }
   } catch {
     return null
@@ -53,6 +56,7 @@ async function fetchCampaigns() {
     const json: any = await res.json()
     const members: any[] = []
     const external: any[] = []
+    const groupsUsed = new Set<string>()
     for (const c of json?.data || []) {
       const recipients = Number(c.recipient_count ?? 0)
       if (recipients < 10) continue                 // δοκιμαστική αποστολή
@@ -68,14 +72,15 @@ async function fetchCampaigns() {
         clickRate: sent > 0 ? Math.round((Number(c.clicks ?? 0) / sent) * 1000) / 10 : null,
       }
       const groups: string[] = Array.isArray(c.campaign_groups) ? c.campaign_groups : []
+      groups.forEach(g => groupsUsed.add(g))
       if (paidGroup && groups.includes(paidGroup)) members.push(stats)
       else external.push(stats)
     }
     const newest = (a: any, b: any) => String(b.sentAt || '').localeCompare(String(a.sentAt || ''))
     members.sort(newest); external.sort(newest)
-    return { members: members.slice(0, 6), external: external.slice(0, 6) }
+    return { members: members.slice(0, 6), external: external.slice(0, 6), groupsUsed: [...groupsUsed] }
   } catch {
-    return { members: [], external: [] }
+    return { members: [], external: [], groupsUsed: [] }
   }
 }
 
@@ -102,8 +107,13 @@ export async function GET() {
       ? Math.round(rows.reduce((s, r) => s + (r.openRate || 0), 0) / rows.length)
       : null
 
+    // Η λίστα Τύπου υπάρχει από τον Μάρτιο 2026 αλλά καμία καμπάνια δεν έχει
+    // σταλεί σε αυτήν. Ελέγχεται στα groups της κάθε αποστολής, όχι με εικασία.
+    const mediaUsed = !!lists?.mediaGroupId && (campaigns.groupsUsed || []).includes(lists.mediaGroupId)
+
     return NextResponse.json({
       lists,
+      mediaUsed,
       campaigns,
       averages: { members: avg(campaigns.members), external: avg(campaigns.external) },
       events,
