@@ -36,9 +36,12 @@ const PRESETS: Preset[] = [
 const inputCls = 'w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-base text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral'
 const labelCls = 'block text-sm font-bold text-gray-600 dark:text-gray-300 mb-1'
 
-export default function OcEventForm({ event, date, onClose, onSaved }: {
+export interface SeatHolder { name: string; email: string; labels: string }
+
+export default function OcEventForm({ event, date, seatHolders = [], onClose, onSaved }: {
   event?: CalEvent | null
   date?: string
+  seatHolders?: SeatHolder[]
   onClose: () => void
   onSaved: () => void
 }) {
@@ -56,6 +59,22 @@ export default function OcEventForm({ event, date, onClose, onSaved }: {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [attendees, setAttendees] = useState<string[]>(event?.attendees?.map(a => a.email) || [])
+  const [extraEmail, setExtraEmail] = useState('')
+
+  const has = (email: string) => attendees.includes(email.toLowerCase())
+  const toggle = (email: string) => setAttendees(a =>
+    has(email) ? a.filter(x => x !== email.toLowerCase()) : [...a, email.toLowerCase()])
+  const inviteAll = () => setAttendees(a =>
+    [...new Set([...a, ...seatHolders.map(h => h.email.toLowerCase())])])
+  const addExtra = () => {
+    const e = extraEmail.trim().toLowerCase()
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return
+    if (!has(e)) setAttendees(a => [...a, e])
+    setExtraEmail('')
+  }
+  const allInvited = seatHolders.length > 0 && seatHolders.every(h => has(h.email))
+  const others = attendees.filter(e => !seatHolders.some(h => h.email.toLowerCase() === e))
 
   function applyPreset(p: Preset) {
     if (p.title) setTitle(p.title)
@@ -68,7 +87,7 @@ export default function OcEventForm({ event, date, onClose, onSaved }: {
   async function save() {
     setBusy(true); setError(null)
     try {
-      const body = { title, date: day, allDay, startTime, endTime, description, location, meetLink }
+      const body = { title, date: day, allDay, startTime, endTime, description, location, meetLink, attendees }
       const res = await fetch('/api/oc/calendar', {
         method: editing ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -173,6 +192,65 @@ export default function OcEventForm({ event, date, onClose, onSaved }: {
                   className="text-sm text-gray-500 dark:text-gray-400 hover:text-coral">καθαρισμός</button>
               )}
             </div>
+          </div>
+
+          <div>
+            <div className="flex flex-wrap items-baseline justify-between gap-2 mb-1">
+              <span className={labelCls + ' mb-0'}>Προσκλήσεις</span>
+              {seatHolders.length > 0 && (
+                <button type="button" onClick={allInvited ? () => setAttendees(others) : inviteAll}
+                  className="text-sm font-bold text-coral hover:underline">
+                  {allInvited ? 'Καμία από την Ομάδα' : `Όλη η Ομάδα Συντονισμού (${seatHolders.length})`}
+                </button>
+              )}
+            </div>
+
+            {seatHolders.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">Δεν βρέθηκαν emails θέσεων.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {seatHolders.map(h => (
+                  <button key={h.email} type="button" onClick={() => toggle(h.email)}
+                    title={`${h.labels} · ${h.email}`}
+                    className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                      has(h.email)
+                        ? 'bg-coral text-white border-coral'
+                        : 'border-gray-300 dark:border-gray-600 text-charcoal dark:text-gray-200 hover:border-coral'}`}>
+                    {has(h.email) ? '✓ ' : ''}{h.name.split(' ')[0]}
+                    <span className="opacity-70"> · {h.labels.split(' · ')[0]}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <input className={inputCls + ' flex-1 min-w-[12rem]'} value={extraEmail}
+                onChange={e => setExtraEmail(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addExtra() } }}
+                placeholder="και άλλο email…" />
+              <button type="button" onClick={addExtra} disabled={!extraEmail.trim()}
+                className="px-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 text-sm text-charcoal dark:text-gray-200 disabled:opacity-40">
+                Προσθήκη
+              </button>
+            </div>
+
+            {others.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {others.map(e => (
+                  <span key={e} className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-sm text-charcoal dark:text-gray-200">
+                    {e}
+                    <button type="button" onClick={() => toggle(e)} aria-label={`Αφαίρεση ${e}`}
+                      className="ml-2 text-gray-400 hover:text-red-500">×</button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {attendees.length > 0 && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                Το Google θα στείλει πρόσκληση σε {attendees.length} {attendees.length === 1 ? 'άτομο' : 'άτομα'} μόλις αποθηκευτεί.
+              </p>
+            )}
           </div>
 
           <div>

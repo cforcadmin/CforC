@@ -23,6 +23,7 @@ export interface CalEvent {
   location: string | null
   description: string | null
   htmlLink: string | null
+  attendees?: Array<{ email: string; name: string | null; status: string }>
 }
 
 export const CAT_STYLE: Record<string, { label: string; dot: string; text: string; bg: string }> = {
@@ -92,6 +93,8 @@ export default function OcCalendar({
   emptyText?: string
 }) {
   const [view, setView] = useState<View>('list')
+  /** Η λίστα ξεκινά με 10· κάθε άνοιγμα δίνει 30 ακόμη */
+  const [listLimit, setListLimit] = useState(10)
   const [cursor, setCursor] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d })
 
   useEffect(() => {
@@ -190,8 +193,9 @@ export default function OcCalendar({
       {/* ΛΙΣΤΑ */}
       {view === 'list' && (
         upcoming.length === 0 ? <p className="text-base text-gray-400 dark:text-gray-500">{emptyText}</p> : (
+          <>
           <ul className="space-y-2">
-            {upcoming.map(e => {
+            {upcoming.slice(0, listLimit).map(e => {
               const st = CAT_STYLE[e.category] || CAT_STYLE.meeting
               const soon = daysUntil(e.start) <= 2
               return (
@@ -224,6 +228,27 @@ export default function OcCalendar({
               )
             })}
           </ul>
+
+          {(upcoming.length > listLimit || listLimit > 10) && (
+            <div className="flex flex-wrap items-center gap-4 mt-4">
+              {upcoming.length > listLimit && (
+                <button type="button" onClick={() => setListLimit(n => n + 30)}
+                  className="text-base font-medium text-coral hover:underline">
+                  ▾ Περισσότερα ({Math.min(30, upcoming.length - listLimit)} ακόμη)
+                </button>
+              )}
+              {listLimit > 10 && (
+                <button type="button" onClick={() => setListLimit(10)}
+                  className="text-base text-gray-500 dark:text-gray-400 hover:text-coral">
+                  ▴ Σύμπτυξη
+                </button>
+              )}
+              <span className="text-sm text-gray-400 dark:text-gray-500 notranslate">
+                {Math.min(listLimit, upcoming.length)} από {upcoming.length}
+              </span>
+            </div>
+          )}
+          </>
         )
       )}
 

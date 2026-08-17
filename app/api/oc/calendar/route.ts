@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
-import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
+import { resolveOcAccess, getSeatHoldersWithEmail, type OcSeat } from '@/lib/ocRoles'
 import {
   fetchEvents, createEvent, updateEvent, deleteEvent,
   calendarConfigured, type EventInput,
@@ -57,9 +57,15 @@ function readInput(body: any): { input: EventInput } | { error: string } {
     return /^\d{2}:\d{2}$/.test(s) ? s : null
   }
   if (!allDay && body?.startTime && !time(body.startTime)) return { error: 'Μη έγκυρη ώρα έναρξης' }
+  const attendees = Array.isArray(body?.attendees)
+    ? [...new Set(body.attendees
+        .map((e: any) => String(e || '').trim().toLowerCase())
+        .filter((e: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)))] as string[]
+    : []
   return {
     input: {
       title, date, allDay,
+      attendees: attendees.length ? attendees : null,
       startTime: allDay ? null : time(body?.startTime) || '19:00',
       endTime: allDay ? null : time(body?.endTime) || null,
       description: String(body?.description || '').trim() || null,
@@ -78,11 +84,15 @@ export async function GET(request: NextRequest) {
   const past = Number(request.nextUrl.searchParams.get('past'))
   const future = Number(request.nextUrl.searchParams.get('future'))
   try {
-    const events = await fetchEvents({
-      pastDays: Number.isFinite(past) && past >= 0 ? past : 60,
-      futureDays: Number.isFinite(future) && future > 0 ? future : 210,
-    })
-    return NextResponse.json({ events, configured: true })
+    const [events, seatHolders] = await Promise.all([
+      fetchEvents({
+        pastDays: Number.isFinite(past) && past >= 0 ? past : 60,
+        futureDays: Number.isFinite(future) && future > 0 ? future : 210,
+      }),
+      // Η Ομάδα Συντονισμού, για γρήγορη πρόσκληση χωρίς πληκτρολόγηση email
+      getSeatHoldersWithEmail().catch(() => []),
+    ])
+    return NextResponse.json({ events, seatHolders, configured: true })
   } catch (err) {
     console.error('oc/calendar GET failed:', err)
     return NextResponse.json({ error: 'Αποτυχία φόρτωσης ημερολογίου' }, { status: 502 })

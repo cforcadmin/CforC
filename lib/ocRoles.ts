@@ -139,3 +139,29 @@ export async function getBoardRoster(): Promise<OcBoardMember[]> {
     seats: Array.from(seats),
   }))
 }
+
+/**
+ * Όλοι οι τρέχοντες κάτοχοι θέσεων με email — για προσκλήσεις σε γεγονότα
+ * του ημερολογίου. Ένα άτομο που κρατά δύο θέσεις εμφανίζεται ΜΙΑ φορά,
+ * με όλες τις θέσεις του, ώστε να μην προσκληθεί δύο φορές.
+ */
+export async function getSeatHoldersWithEmail(): Promise<
+  Array<{ name: string; email: string; seats: OcSeat[]; labels: string }>
+> {
+  const teams = await fetchCurrentTeams()
+  const byEmail = new Map<string, { name: string; email: string; seats: OcSeat[] }>()
+  for (const team of teams) {
+    for (const { field, seat } of SEAT_FIELDS) {
+      const rel = team?.[field]
+      const email = String(rel?.Email || '').trim().toLowerCase()
+      if (!rel?.Name || !email) continue
+      const hit = byEmail.get(email)
+      if (hit) { if (!hit.seats.includes(seat)) hit.seats.push(seat) }
+      else byEmail.set(email, { name: rel.Name, email, seats: [seat] })
+    }
+  }
+  return [...byEmail.values()].map(p => ({
+    ...p,
+    labels: p.seats.map(s => SEAT_LABELS[s]).join(' · '),
+  }))
+}

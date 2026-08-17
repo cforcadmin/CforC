@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import OcCalendar, { daysUntil, untilLabel, type CalEvent } from '@/components/oc/OcCalendar'
-import OcEventForm from '@/components/oc/OcEventForm'
+import OcEventForm, { type SeatHolder } from '@/components/oc/OcEventForm'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
 
 /**
@@ -41,6 +41,7 @@ export default function OcAdmin({ canEdit, canDispatch }: { canEdit: boolean; ca
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<CalEvent | null>(null)
   const [creatingOn, setCreatingOn] = useState<string | null>(null)
+  const [seatHolders, setSeatHolders] = useState<SeatHolder[]>([])
 
   const load = useCallback(async () => {
     setLoading(true); setError(null)
@@ -49,6 +50,7 @@ export default function OcAdmin({ canEdit, canDispatch }: { canEdit: boolean; ca
       const d = await res.json()
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
       setEvents(d.events || [])
+      setSeatHolders(d.seatHolders || [])
     } catch (err: any) {
       setError(err?.message || 'Αποτυχία φόρτωσης ημερολογίου')
     } finally {
@@ -135,6 +137,7 @@ export default function OcAdmin({ canEdit, canDispatch }: { canEdit: boolean; ca
         <OcEventForm
           event={editing}
           date={creatingOn || undefined}
+          seatHolders={seatHolders}
           onClose={() => { setEditing(null); setCreatingOn(null) }}
           onSaved={load}
         />

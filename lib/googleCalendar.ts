@@ -22,6 +22,7 @@ export interface CalendarEvent {
   location: string | null
   description: string | null
   htmlLink: string | null
+  attendees: Array<{ email: string; name: string | null; status: string }>
 }
 
 /**
@@ -119,6 +120,9 @@ export async function fetchEvents(opts: { pastDays?: number; futureDays?: number
           location: e.location || null,
           description: e.description ? String(e.description).replace(/<[^>]+>/g, ' ').trim().slice(0, 300) : null,
           htmlLink: e.htmlLink || null,
+          attendees: (e.attendees || [])
+            .filter((a: any) => !a.resource)
+            .map((a: any) => ({ email: a.email, name: a.displayName || null, status: a.responseStatus || 'needsAction' })),
         }
       })
   } catch (err) {
@@ -169,6 +173,8 @@ export interface EventInput {
   description?: string | null
   location?: string | null
   meetLink?: string | null
+  /** emails προσκεκλημένων — το Google στέλνει τις προσκλήσεις */
+  attendees?: string[] | null
 }
 
 function toGoogle(input: EventInput) {
@@ -190,6 +196,9 @@ function toGoogle(input: EventInput) {
   }
   // Ο σύνδεσμος Meet μπαίνει στην περιγραφή: δημιουργία πραγματικού Meet
   // απαιτεί conferenceDataVersion και δικαιώματα που δεν έχουμε ζητήσει.
+  if (input.attendees?.length) {
+    body.attendees = input.attendees.map(email => ({ email }))
+  }
   if (input.meetLink) {
     body.description = `${body.description ? body.description + '\n\n' : ''}${input.meetLink}`
     body.location = body.location || input.meetLink
@@ -206,7 +215,10 @@ async function write(method: 'POST' | 'PATCH' | 'DELETE', eventId: string | null
   const cal = encodeURIComponent(String(process.env.GOOGLE_CALENDAR_ID))
   const url = `https://www.googleapis.com/calendar/v3/calendars/${cal}/events${eventId ? '/' + encodeURIComponent(eventId) : ''}`
   try {
-    const res = await fetch(url, {
+    // sendUpdates=all: οι προσκεκλημένοι να μάθουν όντως για το γεγονός.
+    // Χωρίς αυτό το Google καταχωρεί τη συμμετοχή αλλά δεν ειδοποιεί κανέναν.
+    const notify = (input?.attendees?.length || method === 'DELETE') ? '?sendUpdates=all' : ''
+    const res = await fetch(url + notify, {
       method,
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       ...(input ? { body: JSON.stringify(toGoogle(input)) } : {}),

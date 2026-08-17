@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import OcCalendar, { type CalEvent } from '@/components/oc/OcCalendar'
-import OcEventForm from '@/components/oc/OcEventForm'
+import OcEventForm, { type SeatHolder } from '@/components/oc/OcEventForm'
 
 /**
  * ΕΠΙΚΟΙΝΩΝΙΑ — μία οθόνη για τον ρυθμό της επικοινωνίας:
@@ -162,6 +162,15 @@ export default function OcComms() {
   const [showAll, setShowAll] = useState(false)
   const [editing, setEditing] = useState<CalEvent | null>(null)
   const [creatingOn, setCreatingOn] = useState<string | null>(null)
+  const [seatHolders, setSeatHolders] = useState<SeatHolder[]>([])
+
+  // Οι κάτοχοι θέσεων έρχονται από το ημερολόγιο — ίδια πηγή, μία φορά
+  useEffect(() => {
+    fetch('/api/oc/calendar?past=0&future=1')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setSeatHolders(d?.seatHolders || []))
+      .catch(() => { /* η φόρμα δουλεύει και χωρίς γρήγορες προσκλήσεις */ })
+  }, [])
 
   const load = useCallback(() => {
     fetch('/api/oc/comms')
@@ -317,6 +326,7 @@ export default function OcComms() {
         <OcEventForm
           event={editing}
           date={creatingOn || undefined}
+          seatHolders={seatHolders}
           onClose={() => { setEditing(null); setCreatingOn(null) }}
           onSaved={load}
         />
