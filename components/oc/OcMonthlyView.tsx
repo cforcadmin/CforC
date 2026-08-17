@@ -174,7 +174,9 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
     <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
       <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center gap-3 text-left"
         aria-expanded={open}>
-        <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Μηνιαία εικόνα</h2>
+        <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">
+          {mode === 'admin' ? 'Μηνιαία οικονομική εικόνα' : 'Μηνιαία εικόνα'}
+        </h2>
         <span className="text-sm text-gray-400 dark:text-gray-500">έσοδα &amp; έξοδα ανά μήνα → λογιστήριο</span>
         <span className="ml-auto flex items-center gap-3">
           {data && open && data.status !== 'pending' && (

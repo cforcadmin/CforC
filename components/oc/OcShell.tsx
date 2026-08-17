@@ -27,6 +27,14 @@ const SECTIONS = [
 
 type SectionKey = (typeof SECTIONS)[number]['key']
 
+/** Αρχική ενότητα ανά ρόλο — ο καθένας ανοίγει στο δικό του τραπέζι */
+const SEAT_LANDING: Record<string, SectionKey> = {
+  financer: 'finances',
+  comms: 'comms',
+  admin: 'admin',
+  it: 'admin',
+}
+
 export interface OcApplicationSummary {
   id: string
   name: string
@@ -87,8 +95,9 @@ async function persistPrefs(prefs: { landing?: string; seat?: string }) {
 
 export default function OcShell({ seats, initialSeat, initialLandingPref, applications = [], overview = null, tableCols, tableDensity, exitSurveys = [], initialOpenRenewals = false }: OcShellProps) {
   const pending = applications.filter(a => a.state === 'submitted')
+  // Κάθε ρόλος προσγειώνεται εκεί που δουλεύει — όχι σε γενική επισκόπηση
   const [activeSection, setActiveSection] = useState<SectionKey>(
-    initialOpenRenewals ? 'overview' : initialSeat === 'financer' ? 'finances' : 'overview'
+    initialOpenRenewals ? 'overview' : SEAT_LANDING[initialSeat || ''] || 'overview'
   )
   const [landingPref, setLandingPref] = useState<string>(initialLandingPref)
   // TEMPORARY: which seat a multi-seat member is acting as right now
