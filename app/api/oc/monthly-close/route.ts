@@ -146,8 +146,12 @@ export async function GET(request: NextRequest) {
     ])
 
     const close = closeRes.json?.data?.[0] || null
+    // Μήνας που καταχωρήθηκε ΑΝΑΔΡΟΜΙΚΑ (backfill από το φύλλο): η ημερομηνία
+    // αποστολής είναι μεταγενέστερη επινόηση, οπότε ΚΑΘΕ εγγραφή θα φαινόταν
+    // «δέλτα». Δεν συγκρίνουμε — δεν κρύβουμε τίποτα, απλώς δεν εφευρίσκουμε.
+    const backfilled = /^backfill/i.test(String(close?.SentBy || ''))
     // Τα «δέλτα» μετρούν από την ΑΠΟΣΤΟΛΗ (ό,τι έλαβε το λογιστήριο)
-    const closeTime = close?.SentAt ? Date.parse(close.SentAt) : null
+    const closeTime = !backfilled && close?.SentAt ? Date.parse(close.SentAt) : null
 
     const receipts = (recRes.json?.data || []).map((r: any) => {
       const isDelta = closeTime !== null && r.createdAt && Date.parse(r.createdAt) > closeTime
@@ -270,6 +274,7 @@ export async function GET(request: NextRequest) {
         sentBy: close.SentBy || null,
       } : null,
       status: close?.SentAt ? 'sent' : close?.ReadyAt ? 'ready' : 'pending',
+      backfilled,
       closes: (allClosesRes.json?.data || []).map((c: any) => ({ month: c.Month, readyAt: c.ReadyAt || null, sentAt: c.SentAt || null })),
     })
   } catch (err) {

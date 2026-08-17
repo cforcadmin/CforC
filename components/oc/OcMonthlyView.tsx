@@ -70,6 +70,7 @@ interface MonthData {
   deltaCount: number
   close: { readyAt: string | null; readyBy: string | null; sentAt: string | null; sentBy: string | null } | null
   status: 'pending' | 'ready' | 'sent'
+  backfilled: boolean
   closes: Array<{ month: string; readyAt: string | null; sentAt: string | null }>
 }
 
@@ -204,6 +205,7 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
             {data?.status === 'sent' ? (
               <span className="px-3 py-1 rounded-full bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 text-xs font-bold">
                 Εστάλη στο λογιστήριο {data.close?.sentAt ? new Date(data.close.sentAt).toLocaleDateString('el-GR') : ''} ✓
+                {data.backfilled && <span className="font-normal opacity-80"> · εκτός συστήματος</span>}
               </span>
             ) : data?.status === 'ready' ? (
               <span className="px-3 py-1 rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200 text-xs font-bold">
