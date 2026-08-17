@@ -10,7 +10,8 @@ import type { CalEvent } from '@/components/oc/OcCalendar'
  * Meet. Όλα παραμένουν επεξεργάσιμα — το είδος είναι αφετηρία, όχι κανόνας.
  */
 
-const CAFE_MEET = 'https://meet.google.com/xyi-kazc-yzy'
+/** Μόνιμος σύνδεσμος βιντεοκλήσης του CforC — ο ίδιος για κάθε συνάντηση */
+const CFORC_MEET = 'https://meet.google.com/xyi-kazc-yzy'
 
 interface Preset {
   key: string
@@ -23,11 +24,11 @@ interface Preset {
 }
 
 const PRESETS: Preset[] = [
-  { key: 'cafe', label: 'Meet Up Cafe', title: 'Meet Up Cafe ☕', allDay: false, startTime: '19:00', endTime: '20:30', meetLink: CAFE_MEET },
+  { key: 'cafe', label: 'Meet Up Cafe', title: 'Meet Up Cafe ☕', allDay: false, startTime: '19:00', endTime: '20:30', meetLink: CFORC_MEET },
   { key: 'nl-in', label: 'Newsletter μελών', title: 'Newsletter εσωτερικής κοινότητας', allDay: true },
   { key: 'nl-out', label: 'Newsletter κοινού', title: 'Newsletter εξωτερικής κοινότητας', allDay: true },
-  { key: 'share', label: 'Share my experience', title: 'Share my experience', allDay: false, startTime: '19:00', endTime: '20:30' },
-  { key: 'ds', label: 'ΔΣ', title: 'ΔΣ', allDay: false, startTime: '09:00', endTime: '11:00' },
+  { key: 'share', label: 'Share my experience', title: 'Share my experience', allDay: false, startTime: '19:00', endTime: '20:30', meetLink: CFORC_MEET },
+  { key: 'ds', label: 'ΔΣ', title: 'ΔΣ', allDay: false, startTime: '09:00', endTime: '11:00', meetLink: CFORC_MEET },
   { key: 'deadline', label: 'Προθεσμία', title: '', allDay: true },
   { key: 'other', label: 'Άλλο', title: '', allDay: false, startTime: '18:00', endTime: '19:00' },
 ]
@@ -51,7 +52,7 @@ export default function OcEventForm({ event, date, onClose, onSaved }: {
     event?.end && !event.allDay ? new Date(event.end).toTimeString().slice(0, 5) : '20:30')
   const [description, setDescription] = useState(event?.description || '')
   const [location, setLocation] = useState(event?.location || '')
-  const [meetLink, setMeetLink] = useState('')
+  const [meetLink, setMeetLink] = useState(event?.meetLink || '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -161,6 +162,17 @@ export default function OcEventForm({ event, date, onClose, onSaved }: {
             <label className={labelCls} htmlFor="ev-meet">Σύνδεσμος βιντεοκλήσης</label>
             <input id="ev-meet" className={inputCls} value={meetLink} onChange={e => setMeetLink(e.target.value)}
               placeholder="προαιρετικό" />
+            <div className="flex flex-wrap items-center gap-3 mt-2">
+              <button type="button" onClick={() => setMeetLink(CFORC_MEET)}
+                disabled={meetLink === CFORC_MEET}
+                className="px-3.5 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-sm text-charcoal dark:text-gray-200 hover:border-coral hover:text-coral disabled:opacity-40 disabled:hover:border-gray-300 dark:disabled:hover:border-gray-600">
+                {meetLink === CFORC_MEET ? '✓ Μόνιμος σύνδεσμος CforC' : 'Μόνιμος σύνδεσμος CforC'}
+              </button>
+              {meetLink && (
+                <button type="button" onClick={() => setMeetLink('')}
+                  className="text-sm text-gray-500 dark:text-gray-400 hover:text-coral">καθαρισμός</button>
+              )}
+            </div>
           </div>
 
           <div>
