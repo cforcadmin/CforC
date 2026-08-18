@@ -846,26 +846,43 @@ export default function OcOverview({
                 ✕
               </button>
             </div>
-            {canRemind && data.approvedApps.some(a => !a.claimedAt) && (
-              <div className="mb-4 rounded-2xl bg-gray-50 dark:bg-gray-700/50 px-4 py-3">
-                <p className="text-sm text-charcoal dark:text-gray-200">
-                  <strong>Αυτόματες υπενθυμίσεις προθεσμίας</strong> — στέλνονται στις 15 και στις 28 ημέρες
-                  από την έγκριση, μόνο σε όσους έχουν ενεργοποιηθεί.
-                </p>
-                <div className="flex flex-wrap items-center gap-2 mt-2">
-                  <button type="button" disabled={armBusy !== null}
-                    onClick={() => armReminders({ all: true, armed: true })}
-                    className="px-3.5 py-1.5 rounded-full bg-coral text-white text-xs font-bold hover:bg-coral/90 disabled:opacity-50">
-                    {armBusy === 'all' ? 'Ενεργοποίηση…' : 'Ενεργοποίηση σε όλους'}
-                  </button>
-                  <button type="button" disabled={armBusy !== null}
-                    onClick={() => armReminders({ all: true, armed: false })}
-                    className="px-3.5 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-xs text-charcoal dark:text-gray-200 disabled:opacity-50">
-                    Απενεργοποίηση σε όλους
-                  </button>
+            {canRemind && data.approvedApps.some(a => !a.claimedAt) && (() => {
+              // Κατάσταση, όχι μόνο ενέργειες: φαίνεται ΤΙ ισχύει τώρα, με
+              // πράσινο περίγραμμα στην τρέχουσα επιλογή. Προεπιλογή: ανενεργές.
+              const unpaid = data.approvedApps.filter(a => !a.claimedAt)
+              const armed = unpaid.filter(a => a.armed).length
+              const state = armed === 0 ? 'off' : armed === unpaid.length ? 'on' : 'mixed'
+              const pill = (current: boolean) =>
+                `px-4 py-1.5 rounded-full text-xs font-bold transition-colors disabled:opacity-50 ${current
+                  ? 'bg-green-100 text-green-800 ring-2 ring-green-600 dark:bg-green-900/50 dark:text-green-100 dark:ring-green-400'
+                  : 'border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-coral'}`
+              return (
+                <div className="mb-4 rounded-2xl bg-gray-50 dark:bg-gray-700/50 px-4 py-3">
+                  <p className="text-sm text-charcoal dark:text-gray-200">
+                    <strong>Αυτόματες υπενθυμίσεις προθεσμίας</strong> — στέλνονται στις 15 και στις 28 ημέρες
+                    από την έγκριση, μόνο σε όσους έχουν ενεργοποιηθεί.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <button type="button" disabled={armBusy !== null}
+                      onClick={() => armReminders({ all: true, armed: false })}
+                      className={pill(state === 'off')}>
+                      {state === 'off' && '✓ '}Ανενεργές
+                    </button>
+                    <button type="button" disabled={armBusy !== null}
+                      onClick={() => armReminders({ all: true, armed: true })}
+                      className={pill(state === 'on')}>
+                      {state === 'on' && '✓ '}Ενεργές σε όλους
+                    </button>
+                    {armBusy === 'all' && <span className="text-xs text-gray-500 dark:text-gray-400">Ενημέρωση…</span>}
+                    {state === 'mixed' && (
+                      <span className="text-xs font-medium text-amber-700 dark:text-amber-300 notranslate">
+                        ενεργές σε {armed} από {unpaid.length}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
             {data.approvedApps.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500">
                 Καμία εγκεκριμένη αίτηση σε αναμονή πληρωμής. 🎉
