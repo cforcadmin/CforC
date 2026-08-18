@@ -87,15 +87,20 @@ function startOfWeek(d: Date): Date {
 
 type View = 'list' | 'grid' | 'month' | 'week' | 'day'
 
+/** Είδη που μετράει το πλαίσιο παρακολούθησης ως «δράσεις» */
+const COUNTED = new Set(['cafe', 'governance', 'share'])
+
 export default function OcCalendar({
   events, canEdit = false, storageKey = 'oc-cal-view',
-  onEdit, onCreate, emptyText = 'Κανένα γεγονός.',
+  onEdit, onCreate, onAttendance, attendanceByEvent, emptyText = 'Κανένα γεγονός.',
 }: {
   events: CalEvent[]
   canEdit?: boolean
   storageKey?: string
   onEdit?: (e: CalEvent) => void
   onCreate?: (date: string) => void
+  onAttendance?: (e: CalEvent) => void
+  attendanceByEvent?: Record<string, number>
   emptyText?: string
 }) {
   const [view, setView] = useState<View>('list')
@@ -127,6 +132,14 @@ export default function OcCalendar({
 
   const upcoming = useMemo(
     () => events.filter(e => daysUntil(e.start) >= 0).sort((a, b) => String(a.start).localeCompare(String(b.start))),
+    [events],
+  )
+
+  /** Περασμένες δράσεις που μετράει το πλαίσιο — εκεί καταγράφονται παρουσίες */
+  const pastCounted = useMemo(
+    () => events
+      .filter(e => daysUntil(e.start) < 0 && COUNTED.has(e.category))
+      .sort((a, b) => String(b.start).localeCompare(String(a.start))),
     [events],
   )
 
@@ -256,6 +269,35 @@ export default function OcCalendar({
           )}
           </>
         )
+      )}
+
+      {view === 'list' && onAttendance && pastCounted.length > 0 && (
+        <div className="mt-6 pt-5 border-t border-gray-100 dark:border-gray-700">
+          <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+            Παρουσίες σε δράσεις που έγιναν
+          </p>
+          <ul className="space-y-1.5">
+            {pastCounted.slice(0, 8).map(e => {
+              const n = attendanceByEvent?.[e.id]
+              const st = CAT_STYLE[e.category] || CAT_STYLE.meeting
+              return (
+                <li key={e.id} className="flex flex-wrap items-center gap-3">
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${st.dot}`} aria-hidden="true" />
+                  <span className="w-16 shrink-0 text-sm text-gray-500 dark:text-gray-400 notranslate">
+                    {new Date(e.start).toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit' })}
+                  </span>
+                  <span className="flex-1 min-w-40 text-base text-charcoal dark:text-gray-100">{e.title}</span>
+                  <button type="button" onClick={() => onAttendance(e)}
+                    className={`px-4 py-1.5 rounded-full text-sm font-bold ${n !== undefined
+                      ? 'bg-[#6A994E]/20 text-[#3f5f2e] dark:bg-[#6A994E]/40 dark:text-green-100'
+                      : 'border border-gray-300 dark:border-gray-600 text-charcoal dark:text-gray-200 hover:border-coral'}`}>
+                    {n !== undefined ? `${n} παρόντες` : 'Καταγραφή παρουσιών'}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
       )}
 
       {/* ΠΛΕΓΜΑ */}

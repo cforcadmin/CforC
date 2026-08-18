@@ -6,6 +6,7 @@ import OcEventForm, { type SeatHolder } from '@/components/oc/OcEventForm'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
 import OcTasks from '@/components/oc/OcTasks'
 import OcAgenda from '@/components/oc/OcAgenda'
+import OcAttendance from '@/components/oc/OcAttendance'
 
 /**
  * ΔΙΑΧΕΙΡΙΣΗ — το γραφείο της Γραμματείας.
@@ -44,6 +45,9 @@ export default function OcAdmin({ canEdit, canDispatch }: { canEdit: boolean; ca
   const [editing, setEditing] = useState<CalEvent | null>(null)
   const [creatingOn, setCreatingOn] = useState<string | null>(null)
   const [seatHolders, setSeatHolders] = useState<SeatHolder[]>([])
+  const [members, setMembers] = useState<Array<{ documentId: string; name: string; am: number | null }>>([])
+  const [attendanceFor, setAttendanceFor] = useState<CalEvent | null>(null)
+  const [attendance, setAttendance] = useState<Record<string, number>>({})
 
   const load = useCallback(async () => {
     setLoading(true); setError(null)
@@ -53,12 +57,27 @@ export default function OcAdmin({ canEdit, canDispatch }: { canEdit: boolean; ca
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
       setEvents(d.events || [])
       setSeatHolders(d.seatHolders || [])
+      // Μέλη για την καταγραφή παρουσιών — ίδια πηγή με τις εκκρεμότητες
+      fetch('/api/oc/tasks').then(r => r.ok ? r.json() : null)
+        .then(t => setMembers(t?.members || [])).catch(() => {})
+      loadAttendance()
     } catch (err: any) {
       setError(err?.message || 'Αποτυχία φόρτωσης ημερολογίου')
     } finally {
       setLoading(false)
     }
   }, [])
+  const loadAttendance = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/oc/attendance?year=${new Date().getFullYear()}`)
+      if (!res.ok) return
+      const d = await res.json()
+      const map: Record<string, number> = {}
+      for (const r of d.records || []) map[r.eventId] = r.memberCount + (r.nonMemberCount || 0)
+      setAttendance(map)
+    } catch { /* σιωπηλά — η σελίδα δεν πρέπει να σπάει γι' αυτό */ }
+  }, [])
+
   useEffect(() => { load() }, [load])
 
   const upcoming = events.filter(e => daysUntil(e.start) >= 0)
@@ -113,6 +132,8 @@ export default function OcAdmin({ canEdit, canDispatch }: { canEdit: boolean; ca
                 storageKey="oc-cal-view-admin"
                 onEdit={canEdit ? setEditing : undefined}
                 onCreate={canEdit ? setCreatingOn : undefined}
+                onAttendance={setAttendanceFor}
+                attendanceByEvent={attendance}
                 emptyText="Κανένα γεγονός στο ημερολόγιο."
               />
             )}
@@ -137,6 +158,15 @@ export default function OcAdmin({ canEdit, canDispatch }: { canEdit: boolean; ca
           ))}
         </ul>
       </div>
+
+      {attendanceFor && (
+        <OcAttendance
+          event={{ id: attendanceFor.id, title: attendanceFor.title, start: attendanceFor.start, category: attendanceFor.category }}
+          members={members}
+          onClose={() => setAttendanceFor(null)}
+          onSaved={loadAttendance}
+        />
+      )}
 
       {(editing || creatingOn) && (
         <OcEventForm
