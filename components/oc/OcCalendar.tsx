@@ -106,6 +106,7 @@ export default function OcCalendar({
   const [view, setView] = useState<View>('list')
   /** Η λίστα ξεκινά με 10· κάθε άνοιγμα δίνει 30 ακόμη */
   const [listLimit, setListLimit] = useState(10)
+  const [showAllPast, setShowAllPast] = useState(false)
   const [cursor, setCursor] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d })
 
   useEffect(() => {
@@ -271,13 +272,13 @@ export default function OcCalendar({
         )
       )}
 
-      {view === 'list' && onAttendance && pastCounted.length > 0 && (
+      {onAttendance && pastCounted.length > 0 && (
         <div className="mt-6 pt-5 border-t border-gray-100 dark:border-gray-700">
           <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
             Παρουσίες σε δράσεις που έγιναν
           </p>
           <ul className="space-y-1.5">
-            {pastCounted.slice(0, 8).map(e => {
+            {pastCounted.slice(0, showAllPast ? 60 : 6).map(e => {
               const n = attendanceByEvent?.[e.id]
               const st = CAT_STYLE[e.category] || CAT_STYLE.meeting
               return (
@@ -297,6 +298,12 @@ export default function OcCalendar({
               )
             })}
           </ul>
+          {pastCounted.length > 6 && (
+            <button type="button" onClick={() => setShowAllPast(!showAllPast)}
+              className="mt-3 text-sm font-medium text-coral hover:underline">
+              {showAllPast ? '▴ Λιγότερα' : `▾ Όλες οι δράσεις (${pastCounted.length})`}
+            </button>
+          )}
         </div>
       )}
 

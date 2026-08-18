@@ -52,7 +52,7 @@ export default function OcAdmin({ canEdit, canDispatch }: { canEdit: boolean; ca
   const load = useCallback(async () => {
     setLoading(true); setError(null)
     try {
-      const res = await fetch('/api/oc/calendar')
+      const res = await fetch('/api/oc/calendar?past=365&future=210')
       const d = await res.json()
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
       setEvents(d.events || [])
