@@ -677,6 +677,7 @@ export default function OcOverview({
   const [showApproved, setShowApproved] = useState(false)
   const [showRenewals, setShowRenewals] = useState(initialShowRenewals)
   const [showTreasury, setShowTreasury] = useState(false)
+  const [armBusy, setArmBusy] = useState<string | null>(null)
   const [treasury, setTreasury] = useState<{ bank: number; asOf: string; stale: boolean } | null>(null)
   const renewalClaims = data.members.filter(m =>
     m.renewalClaimedAt && (m.status === 'owes-1' || m.status === 'owes-2' || m.status === 'new-unpaid')
@@ -689,6 +690,21 @@ export default function OcOverview({
       .then(d => { if (d?.latest) setTreasury({ bank: d.latest.bank, asOf: d.latest.asOf, stale: !!d.stale }) })
       .catch(() => { /* σιωπηλά — το πλακίδιο μένει «—» */ })
   }, [])
+
+  /** Οπλισμός αυτόματων υπενθυμίσεων — μία αίτηση ή όλη η λίστα */
+  async function armReminders(opts: { id?: string; all?: boolean; armed: boolean }) {
+    setArmBusy(opts.all ? 'all' : opts.id || null)
+    try {
+      const res = await fetch('/api/oc/applications/arm-reminders', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(opts),
+      })
+      if (!res.ok) throw new Error((await res.json())?.error || 'Αποτυχία')
+      router.refresh()
+    } catch (err) {
+      console.error('arm reminders failed:', err)
+    } finally { setArmBusy(null) }
+  }
 
   return (
     <div className="space-y-6">
@@ -830,6 +846,26 @@ export default function OcOverview({
                 ✕
               </button>
             </div>
+            {canRemind && data.approvedApps.some(a => !a.claimedAt) && (
+              <div className="mb-4 rounded-2xl bg-gray-50 dark:bg-gray-700/50 px-4 py-3">
+                <p className="text-sm text-charcoal dark:text-gray-200">
+                  <strong>Αυτόματες υπενθυμίσεις προθεσμίας</strong> — στέλνονται στις 15 και στις 28 ημέρες
+                  από την έγκριση, μόνο σε όσους έχουν ενεργοποιηθεί.
+                </p>
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <button type="button" disabled={armBusy !== null}
+                    onClick={() => armReminders({ all: true, armed: true })}
+                    className="px-3.5 py-1.5 rounded-full bg-coral text-white text-xs font-bold hover:bg-coral/90 disabled:opacity-50">
+                    {armBusy === 'all' ? 'Ενεργοποίηση…' : 'Ενεργοποίηση σε όλους'}
+                  </button>
+                  <button type="button" disabled={armBusy !== null}
+                    onClick={() => armReminders({ all: true, armed: false })}
+                    className="px-3.5 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-xs text-charcoal dark:text-gray-200 disabled:opacity-50">
+                    Απενεργοποίηση σε όλους
+                  </button>
+                </div>
+              </div>
+            )}
             {data.approvedApps.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500">
                 Καμία εγκεκριμένη αίτηση σε αναμονή πληρωμής. 🎉
@@ -853,6 +889,9 @@ export default function OcOverview({
                           {app.claimedAt && (
                             <span className="text-teal-700 dark:text-teal-300 font-medium"> · Δήλωσε πληρωμή {formatDate(app.claimedAt)}</span>
                           )}
+                          {!app.claimedAt && app.daysSinceDecision !== null && app.daysSinceDecision >= 30 && (
+                            <span className="text-red-600 dark:text-red-400 font-bold"> · ⚠ η προθεσμία έληξε ({app.daysSinceDecision} μέρες)</span>
+                          )}
                         </p>
                       </div>
                       <Link
@@ -862,6 +901,18 @@ export default function OcOverview({
                         Άνοιγμα αίτησης →
                       </Link>
                     </div>
+                    {canRemind && !app.claimedAt && (
+                      <button type="button" disabled={armBusy !== null}
+                        onClick={() => armReminders({ id: app.id, armed: !app.armed })}
+                        title={app.armed
+                          ? 'Οι αυτόματες υπενθυμίσεις είναι ενεργές — κλικ για απενεργοποίηση'
+                          : 'Ενεργοποίηση αυτόματων υπενθυμίσεων στις 15 και 28 ημέρες'}
+                        className={`mt-2.5 px-3 py-1 rounded-full text-xs font-bold transition-colors disabled:opacity-50 ${app.armed
+                          ? 'bg-coral/15 text-coral'
+                          : 'border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-coral'}`}>
+                        {armBusy === app.id ? '…' : app.armed ? '✓ Αυτόματες υπενθυμίσεις' : 'Αυτόματες υπενθυμίσεις'}
+                      </button>
+                    )}
                     {canRecordPayments && (
                       <div className="flex flex-wrap items-center gap-2 mt-2.5">
                         <button

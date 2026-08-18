@@ -5,6 +5,65 @@ import { sendOcEmail, treasuryReminderEmailHtml, FINANCE_FROM, FINANCE_EMAIL } f
 export const maxDuration = 60
 
 /**
+ * Μηνιαίο στιγμιότυπο μεγεθών λιστών.
+ *
+ * Το Sender επιστρέφει ΜΟΝΟ τον σημερινό αριθμό συνδρομητών — δεν κρατά
+ * ιστορικό. Χωρίς αυτή την εγγραφή, καμία καμπύλη ανάπτυξης δεν μπορεί να
+ * ανασυντεθεί αργότερα: κάθε μήνας που περνά χωρίς στιγμιότυπο χάνεται
+ * οριστικά. Γι' αυτό τρέχει από την πρώτη μέρα, πριν χρειαστεί.
+ */
+async function captureListSnapshot(): Promise<string> {
+  const key = process.env.SENDER_API_KEY
+  const STRAPI = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
+  if (!key) return 'no sender key'
+  try {
+    const res = await fetch('https://api.sender.net/v2/groups', {
+      headers: { Authorization: `Bearer ${key}`, Accept: 'application/json' }, cache: 'no-store',
+    })
+    if (!res.ok) return `sender ${res.status}`
+    const json: any = await res.json()
+    const find = (t: string) => (json.data || []).find((g: any) => g.title === t)
+    const count = (g: any) => Number(g?.recipient_count ?? g?.subscribers_count ?? 0)
+
+    // Και το μέγεθος του μητρώου, για να συγκρίνεται η λίστα με τα μέλη
+    let membersTotal: number | null = null
+    try {
+      const m = await fetch(`${STRAPI}/api/members?pagination[limit]=1&fields[0]=AM`, {
+        headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` }, cache: 'no-store',
+      })
+      if (m.ok) membersTotal = (await m.json())?.meta?.pagination?.total ?? null
+    } catch { /* προαιρετικό */ }
+
+    const now = new Date()
+    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const payload = {
+      Month: month,
+      Paid: count(find('Paid')),
+      External: count(find('External')),
+      Media: count(find('Media')),
+      Members: membersTotal,
+      CapturedAt: now.toISOString(),
+    }
+    const dup = await fetch(`${STRAPI}/api/list-snapshots?filters[Month][$eq]=${month}&pagination[limit]=1`, {
+      headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` }, cache: 'no-store',
+    })
+    const existing = dup.ok ? (await dup.json())?.data?.[0] : null
+    const w = await fetch(
+      `${STRAPI}/api/list-snapshots${existing ? '/' + existing.documentId : ''}`,
+      {
+        method: existing ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` },
+        body: JSON.stringify({ data: payload }),
+      },
+    )
+    return w.ok ? `${month}: paid ${payload.Paid} · external ${payload.External} · media ${payload.Media}` : `write ${w.status}`
+  } catch (err) {
+    console.error('[MONTHLY-REPORT] list snapshot failed:', err)
+    return 'error'
+  }
+}
+
+/**
  * Υπενθύμιση ταμείου στον/στην τρέχοντα Financer — τρέχει μαζί με τη μηνιαία
  * αναφορά, ΟΧΙ σε δικό της cron: το Vercel περιορίζει τα προγραμματισμένα
  * jobs, και η ώρα («0 9 1 * *») είναι ήδη ακριβώς αυτή που θέλουμε.
@@ -278,12 +337,16 @@ export async function GET(request: NextRequest) {
     const treasury = await sendTreasuryReminder()
     console.log(`[MONTHLY-REPORT] treasury reminder: ${treasury}`)
 
+    const snapshot = await captureListSnapshot()
+    console.log(`[MONTHLY-REPORT] list snapshot: ${snapshot}`)
+
     return NextResponse.json({
       success: true,
       month: `${monthName} ${year}`,
       profileChanges: logs.length,
       newSubscribers: newSubscribers.length,
       treasuryReminder: treasury,
+      listSnapshot: snapshot,
     })
   } catch (error) {
     console.error('[MONTHLY-REPORT] Error:', error)

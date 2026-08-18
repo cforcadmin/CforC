@@ -113,7 +113,12 @@ export async function POST(request: NextRequest) {
       const docs = await webApp('listMonthIncomeDocs', { month })
       const files: Array<{ id: string; name: string }> = docs.ok ? docs.files || [] : []
       const target = files.find(f => {
-        if (/^ΑΠ\. ΕΙΣ\.|^\d+\.\d+_ΑΠ\. ΕΙΣ\./.test(f.name)) return false  // δικές μας αποδείξεις
+        // Δικές μας αποδείξεις — ΟΧΙ έγγραφα χρηματοδότη. Τρεις μορφές
+        // ονομάτων κατά καιρούς: «ΑΠ. ΕΙΣ. 365…», «9.2_…ΑΠ. ΕΙΣ. 365…»,
+        // και οι παλιές «326_ Όνομα.pdf» — η τελευταία έλειπε και θα
+        // μετονομαζόταν ως έγγραφο χορηγίας.
+        if (/ΑΠ\.\s*ΕΙΣ\./i.test(f.name)) return false
+        if (/^\d{3}[_\s-]/.test(f.name)) return false
         const p = parseInvoiceFilename(f.name)
         if (p.amount !== null && Math.abs(p.amount - amount) < 0.005) return true
         // Ποσό γραμμένο ως ακέραιος («10100.pdf») ή με ελληνικό διαχωριστή

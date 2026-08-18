@@ -62,7 +62,10 @@ export interface OcOverviewData {
   /** Applications in Strapi with state=approved (εγκεκριμένες, αναμονή πληρωμής) */
   approvedUnpaidApps: number
   /** Οι εγκεκριμένες-ανεξόφλητες αιτήσεις για το popup του tile (νεότερη έγκριση πρώτη) */
-  approvedApps: Array<{ id: string; name: string; submittedAt: string | null; decisionDate: string | null; claimedAt: string | null }>
+  approvedApps: Array<{
+    id: string; name: string; submittedAt: string | null; decisionDate: string | null
+    claimedAt: string | null; armed: boolean; daysSinceDecision: number | null
+  }>
   /** Πόσοι έχουν δηλώσει ότι πλήρωσαν (εκκρεμεί επιβεβαίωση Financer) */
   paymentClaims: number
   notifyList: Array<{ am: number; name: string }>
@@ -217,7 +220,7 @@ export async function fetchOcOverview(): Promise<OcOverviewData> {
   const approvedRes = await strapiGet(
     `/membership-applications?filters[ApplicationState][$eq]=approved&pagination[limit]=100` +
     `&sort=DecisionDate:desc&fields[0]=FirstName&fields[1]=LastName&fields[2]=SubmittedAt` +
-    `&fields[3]=DecisionDate&fields[4]=PaymentClaimedAt`
+    `&fields[3]=DecisionDate&fields[4]=PaymentClaimedAt&fields[5]=AutoRemindersArmed`
   )
   const approvedApps = (approvedRes?.data || []).map((a: any) => ({
     id: a.documentId,
@@ -225,6 +228,11 @@ export async function fetchOcOverview(): Promise<OcOverviewData> {
     submittedAt: a.SubmittedAt || null,
     decisionDate: a.DecisionDate || null,
     claimedAt: a.PaymentClaimedAt || null,
+    armed: !!a.AutoRemindersArmed,
+    // Για την ένδειξη «η προθεσμία έληξε» στις 30 μέρες (§4α)
+    daysSinceDecision: a.DecisionDate
+      ? Math.floor((Date.now() - new Date(a.DecisionDate).getTime()) / 86400000)
+      : null,
   }))
   // Νεότερη έγκριση πρώτη (χωρίς ημ. έγκρισης → κατά υποβολή)
   approvedApps.sort((a: any, b: any) =>
