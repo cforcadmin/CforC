@@ -40,7 +40,10 @@ const daysSince = (iso: string) =>
   Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
 
 export async function GET(request: NextRequest) {
-  if (request.headers.get('authorization') !== `Bearer ${CRON_SECRET}`) {
+  // Το `!CRON_SECRET` ΔΕΝ είναι περιττό: αν λείψει η μεταβλητή, η σύγκριση
+  // γίνεται με το κείμενο «Bearer undefined» και οποιοσδήποτε το στείλει
+  // περνά. Χωρίς μυστικό, η διαδρομή κλείνει — δεν ανοίγει.
+  if (!CRON_SECRET || request.headers.get('authorization') !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   if (!STRAPI_URL || !STRAPI_API_TOKEN) {

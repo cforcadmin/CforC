@@ -119,9 +119,10 @@ const GREEK_MONTHS = [
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret
+    // Verify cron secret. Without the `!CRON_SECRET` guard a missing env var
+    // turns the check into `Bearer undefined` — which anyone can send.
     const authHeader = request.headers.get('authorization')
-    if (authHeader !== `Bearer ${CRON_SECRET}`) {
+    if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
