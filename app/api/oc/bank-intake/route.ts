@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export const maxDuration = 60
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
+import { strapiAll } from '@/lib/strapiPaged'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import { parseKiniseis, parseIncoming, joinStatement } from '@/lib/bankStatement'
 import { matchPayerToMembers, payerAliasKey, nameSimilarity, type MatchableMember } from '@/lib/memberMatcher'
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest) {
     // ημερομηνία πληρωμής (±2 ημέρες) + όνομα ή μοναδικότητα 1:1. Κάθε
     // σίγουρο fallback ταίριασμα ΣΦΡΑΓΙΖΕΤΑΙ με το txn id (self-healing) —
     // από την επόμενη επικόλληση το πιάνει το ακριβές επίπεδο.
-    const allRes = await strapi('/receipts?pagination[limit]=1000' +
+    const allRes = await strapi('/receipts?pagination[pageSize]=100' +
       '&fields[0]=Number&fields[1]=TransactionId&fields[2]=Amount' +
       '&fields[3]=PaymentDate&fields[4]=MemberName&fields[5]=PayerName' +
       '&fields[6]=Type&fields[7]=SubscriptionYear')
@@ -152,8 +153,11 @@ export async function POST(request: NextRequest) {
       if (!upd.ok) console.error('bank-intake: txn stamp failed for', m.number, upd.status)
     }
 
-    // μέλη για τον matcher (ενεργά, με ΑΜ)
-    const membersRes = await strapi('/members?fields[0]=Name&fields[1]=Email&fields[2]=AM&pagination[limit]=1000')
+    // Μέλη για τον matcher — ΣΕΛΙΔΟΠΟΙΗΜΕΝΑ. Με σκέτο limit=1000 το Strapi
+    // επιστρέφει 100 και ο matcher δεν βλέπει τα υπόλοιπα: το μέλος
+    // εμφανίζεται σαν άγνωστος πληρωτής και καταχωρείται με το χέρι.
+    const membersAll = await strapiAll('/members?fields[0]=Name&fields[1]=Email&fields[2]=AM')
+    const membersRes = { ok: membersAll.ok, json: { data: membersAll.data } }
     const members: MatchableMember[] = (membersRes.json?.data || [])
       .filter((m: any) => typeof m.AM === 'number' && m.Name)
       .map((m: any) => ({ docId: m.documentId, name: m.Name, am: m.AM, email: m.Email || '' }))

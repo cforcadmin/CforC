@@ -4,6 +4,7 @@ import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess } from '@/lib/ocRoles'
 import { fetchGaYear, gaConfigured } from '@/lib/ga4'
 import { fetchEvents } from '@/lib/googleCalendar'
+import { strapiAll } from '@/lib/strapiPaged'
 
 export const maxDuration = 60
 
@@ -68,10 +69,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const [membersJ, receiptsJ, incomeJ, expensesJ, attendanceJ, openCallsJ, ga, events] = await Promise.all([
-      strapi('/members?pagination[limit]=1000&fields[0]=Name&fields[1]=RegistrationYear&fields[2]=Gender&fields[3]=Province&fields[4]=FieldsOfWork&fields[5]=Payments'),
-      strapi(`/receipts?pagination[limit]=1000&filters[PaymentDate][$gte]=${from}&filters[PaymentDate][$lte]=${to}&fields[0]=Amount&fields[1]=Type&fields[2]=RegistrationFee&fields[3]=SubscriptionYear`),
+      strapiAll('/members?fields[0]=Name&fields[1]=RegistrationYear&fields[2]=Gender&fields[3]=Province&fields[4]=FieldsOfWork&fields[5]=Payments'),
+      strapiAll(`/receipts?filters[PaymentDate][$gte]=${from}&filters[PaymentDate][$lte]=${to}&fields[0]=Amount&fields[1]=Type&fields[2]=RegistrationFee&fields[3]=SubscriptionYear`),
       strapi(`/income-records?pagination[limit]=500&filters[Month][$startsWith]=${year}&fields[0]=Amount&fields[1]=Category&fields[2]=FunderType&fields[3]=PayerName`),
-      strapi(`/expenses?pagination[limit]=1000&filters[Month][$startsWith]=${year}&filters[State][$eq]=approved&fields[0]=PayableAmount&fields[1]=Category`),
+      strapiAll(`/expenses?filters[Month][$startsWith]=${year}&filters[State][$eq]=approved&fields[0]=PayableAmount&fields[1]=Category`),
       strapi(`/event-attendances?pagination[limit]=500&filters[EventDate][$gte]=${from}&filters[EventDate][$lte]=${to}&populate[attendees][fields][0]=Gender`),
       strapi(`/open-calls?pagination[limit]=1&filters[createdAt][$gte]=${from}&filters[createdAt][$lte]=${to}T23:59:59`),
       fetchGaYear(year).catch(() => null),

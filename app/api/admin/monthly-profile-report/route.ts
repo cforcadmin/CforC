@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
     const year = prevMonthStart.getFullYear()
 
     // Query Strapi for change logs in the previous month
-    const logsUrl = `${STRAPI_URL}/api/profile-change-logs?filters[changedAt][$gte]=${encodeURIComponent(startISO)}&filters[changedAt][$lte]=${encodeURIComponent(endISO)}&pagination[limit]=1000&sort=changedAt:asc`
+    const logsUrl = `${STRAPI_URL}/api/profile-change-logs?filters[changedAt][$gte]=${encodeURIComponent(startISO)}&filters[changedAt][$lte]=${encodeURIComponent(endISO)}&pagination[pageSize]=100&sort=changedAt:asc`
 
     const logsResponse = await fetch(logsUrl, {
       headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
     const logs = logsData.data || []
 
     // Query Strapi for new newsletter subscribers in the previous month
-    const subsUrl = `${STRAPI_URL}/api/newsletter-subscribers?filters[ConfirmedAt][$gte]=${encodeURIComponent(startISO)}&filters[ConfirmedAt][$lte]=${encodeURIComponent(endISO)}&pagination[limit]=1000&sort=ConfirmedAt:asc`
+    const subsUrl = `${STRAPI_URL}/api/newsletter-subscribers?filters[ConfirmedAt][$gte]=${encodeURIComponent(startISO)}&filters[ConfirmedAt][$lte]=${encodeURIComponent(endISO)}&pagination[pageSize]=100&sort=ConfirmedAt:asc`
 
     const subsResponse = await fetch(subsUrl, {
       headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },

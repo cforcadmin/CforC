@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHoldersWithEmail } from '@/lib/ocRoles'
+import { strapiAll } from '@/lib/strapiPaged'
 
 export const maxDuration = 60
 
@@ -125,7 +126,7 @@ export async function GET(request: NextRequest) {
       getSeatHoldersWithEmail().catch(() => []),
       // Για πίνακες με εμβέλεια «μέλη»: ανάδοχος μπορεί να είναι οποιοδήποτε
       // μέλος, όχι μόνο οι επτά θέσεις
-      strapi('/members?pagination[limit]=1000&sort=Name:asc&fields[0]=Name&fields[1]=AM&filters[HideProfile][$ne]=true'),
+      strapiAll('/members?sort=Name:asc&fields[0]=Name&fields[1]=AM&filters[HideProfile][$ne]=true'),
     ])
     if (!boardsRes.ok) {
       // Η συλλογή μπορεί να μην έχει φτάσει ακόμη στο Strapi Cloud
@@ -141,7 +142,7 @@ export async function GET(request: NextRequest) {
       boards,
       tasks: (tasksRes.json?.data || []).map(shape),
       seatHolders,
-      members: (membersRes.json?.data || []).map((m: any) => ({
+      members: (membersRes.data || []).map((m: any) => ({
         documentId: m.documentId, name: m.Name, am: m.AM ?? null,
       })),
       me: auth.memberId,
