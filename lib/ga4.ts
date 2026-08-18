@@ -156,3 +156,42 @@ export async function fetchGaDetail(): Promise<GaDetail | null> {
 
   return { channels, sections, countries, devices, fromNewsletter, applyViews }
 }
+
+/** Ετήσια σύνοψη για τους δείκτες — το πλαίσιο μετράει ανά έτος, όχι 30 μέρες */
+export async function fetchGaYear(year: number): Promise<{
+  sessions: number; users: number; pageViews: number
+  sections: GaBreakdown[]; countries: GaBreakdown[]; channels: GaBreakdown[]
+  partial: boolean
+} | null> {
+  if (!gaConfigured()) return null
+  const today = new Date().toISOString().slice(0, 10)
+  const end = `${year}-12-31` < today ? `${year}-12-31` : today
+  const range = [{ startDate: `${year}-01-01`, endDate: end }]
+
+  const [totals, pages, countries, channels] = await Promise.all([
+    runReport({ dateRanges: range, dimensionFilter: notSpam,
+      metrics: [{ name: 'sessions' }, { name: 'totalUsers' }, { name: 'screenPageViews' }] }),
+    runReport({ dateRanges: range, dimensionFilter: notSpam, dimensions: [{ name: 'pagePath' }],
+      metrics: [{ name: 'screenPageViews' }], orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }], limit: 200 }),
+    runReport({ dateRanges: range, dimensionFilter: notSpam, dimensions: [{ name: 'country' }],
+      metrics: [{ name: 'totalUsers' }], orderBys: [{ metric: { metricName: 'totalUsers' }, desc: true }], limit: 8 }),
+    runReport({ dateRanges: range, dimensionFilter: notSpam, dimensions: [{ name: 'sessionDefaultChannelGroup' }],
+      metrics: [{ name: 'sessions' }], orderBys: [{ metric: { metricName: 'sessions' }, desc: true }], limit: 8 }),
+  ])
+  if (!totals?.rows?.length) return null
+  const v = totals.rows[0].metricValues
+  const bySection = new Map<string, number>()
+  for (const r of pages?.rows || []) {
+    const k = sectionOf(r.dimensionValues[0].value)
+    bySection.set(k, (bySection.get(k) || 0) + num(r.metricValues[0].value))
+  }
+  const rows = (j: any): GaBreakdown[] => (j?.rows || []).map((r: any) => ({
+    label: r.dimensionValues[0].value, value: num(r.metricValues[0].value),
+  }))
+  return {
+    sessions: num(v[0]?.value), users: num(v[1]?.value), pageViews: num(v[2]?.value),
+    sections: [...bySection.entries()].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value),
+    countries: rows(countries), channels: rows(channels),
+    partial: end !== `${year}-12-31`,
+  }
+}

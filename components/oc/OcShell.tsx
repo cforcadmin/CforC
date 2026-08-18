@@ -11,6 +11,7 @@ import OcFinances from '@/components/oc/OcFinances'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
 import OcComms from '@/components/oc/OcComms'
 import OcAdmin from '@/components/oc/OcAdmin'
+import OcIndicators from '@/components/oc/OcIndicators'
 import type { OcOverviewData } from '@/lib/ocOverview'
 
 // OC categories. Chip style: first letter in a filled block, remainder in a
@@ -421,7 +422,9 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
 
           {activeSection === 'comms' && <OcComms />}
 
-          {activeSection !== 'overview' && activeSection !== 'settings' && activeSection !== 'members' && activeSection !== 'finances' && activeSection !== 'admin' && activeSection !== 'comms' && (
+          {activeSection === 'reports' && <OcIndicators />}
+
+          {activeSection !== 'overview' && activeSection !== 'settings' && activeSection !== 'members' && activeSection !== 'finances' && activeSection !== 'admin' && activeSection !== 'comms' && activeSection !== 'reports' && (
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-12 text-center">
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5"
