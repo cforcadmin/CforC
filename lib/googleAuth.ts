@@ -21,6 +21,7 @@ export const SCOPES = {
   /** Ανάγνωση ΚΑΙ εγγραφή γεγονότων — απαιτεί «Make changes to events»
    *  στον διαμοιρασμό του ημερολογίου, όχι μόνο «See all event details». */
   calendarWrite: 'https://www.googleapis.com/auth/calendar.events',
+  documents: 'https://www.googleapis.com/auth/documents.readonly',
 } as const
 
 interface ServiceAccount {

@@ -5,6 +5,7 @@ import OcCalendar, { daysUntil, untilLabel, type CalEvent } from '@/components/o
 import OcEventForm, { type SeatHolder } from '@/components/oc/OcEventForm'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
 import OcTasks from '@/components/oc/OcTasks'
+import OcAgenda from '@/components/oc/OcAgenda'
 
 /**
  * ΔΙΑΧΕΙΡΙΣΗ — το γραφείο της Γραμματείας.
@@ -91,6 +92,9 @@ export default function OcAdmin({ canEdit, canDispatch }: { canEdit: boolean; ca
         <Tile value={String(upcoming.length)} label="Γεγονότα στο ημερολόγιο" sub="επόμενοι 7 μήνες" />
       </div>
 
+      {/* Ημερήσια διάταξη */}
+      <OcAgenda />
+
       {/* Εκκρεμότητες */}
       <OcTasks />
 
@@ -132,9 +136,6 @@ export default function OcAdmin({ canEdit, canDispatch }: { canEdit: boolean; ca
             </li>
           ))}
         </ul>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-          Η ανάλυση των θεμάτων της ημερήσιας διάταξης μέσα στο OC ετοιμάζεται.
-        </p>
       </div>
 
       {(editing || creatingOn) && (
