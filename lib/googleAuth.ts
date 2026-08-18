@@ -22,6 +22,11 @@ export const SCOPES = {
    *  στον διαμοιρασμό του ημερολογίου, όχι μόνο «See all event details». */
   calendarWrite: 'https://www.googleapis.com/auth/calendar.events',
   documents: 'https://www.googleapis.com/auth/documents.readonly',
+  /** Ανάγνωση αρχείων της Ψηφιακής Βιβλιοθήκης από τον φάκελο του Drive.
+   *  Τα αρχεία μένουν «Περιορισμένη πρόσβαση»· το site τα σερβίρει στα μέλη. */
+  drive: 'https://www.googleapis.com/auth/drive.readonly',
+  /** Ανάγνωση του φύλλου καταγραφής για την εισαγωγή. */
+  sheets: 'https://www.googleapis.com/auth/spreadsheets.readonly',
 } as const
 
 interface ServiceAccount {
