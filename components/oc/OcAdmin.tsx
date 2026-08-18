@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import OcCalendar, { daysUntil, untilLabel, type CalEvent } from '@/components/oc/OcCalendar'
 import OcEventForm, { type SeatHolder } from '@/components/oc/OcEventForm'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
+import OcTasks from '@/components/oc/OcTasks'
 
 /**
  * ΔΙΑΧΕΙΡΙΣΗ — το γραφείο της Γραμματείας.
@@ -16,7 +17,7 @@ import OcMonthlyView from '@/components/oc/OcMonthlyView'
 
 const LINKS = [
   { label: 'Ημερήσια διάταξη & πρακτικά', href: 'https://docs.google.com/document/d/1FB5tjSpwbJMQuH_8fKSyhmh6ssEguHqxKx2OnbtHXwk/edit', primary: true },
-  { label: 'Project Tracker: Εκκρεμότητες Ομάδας Συντονισμού', href: 'https://culture-for-change.slack.com/lists/T01CTE4JUQK/F0AH3GTSJD9', primary: true },
+  { label: 'Παλιά λίστα Slack (ιστορικό & σχόλια)', href: 'https://culture-for-change.slack.com/lists/T01CTE4JUQK/F0AH3GTSJD9' },
   { label: 'Καταγραφή attendance Cafe', href: 'https://docs.google.com/document/d/1tP5RUg8nIBJgiDRC3J0A7mOZiNsJtiwU/edit' },
   { label: 'Προτάσεις κινητικότητας', href: 'https://docs.google.com/document/d/1z5K7ERtQUaJS81g90gPTx9nM__SItEuCwht158SoDyc/edit' },
   { label: 'Απολογισμός δραστηριότητας', href: 'https://docs.google.com/spreadsheets/d/1h5Pbmua2J1pcUZ1KiftufmaiVasCM-8T/edit' },
@@ -89,6 +90,9 @@ export default function OcAdmin({ canEdit, canDispatch }: { canEdit: boolean; ca
         />
         <Tile value={String(upcoming.length)} label="Γεγονότα στο ημερολόγιο" sub="επόμενοι 7 μήνες" />
       </div>
+
+      {/* Εκκρεμότητες */}
+      <OcTasks />
 
       {/* Ημερολόγιο */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">

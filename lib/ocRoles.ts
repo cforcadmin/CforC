@@ -162,10 +162,10 @@ const SEAT_MAILBOX: Record<OcSeat, string> = {
  * εμφανίζεται μόνο για να ξέρεις ποιον αφορά.
  */
 export async function getSeatHoldersWithEmail(): Promise<
-  Array<{ name: string; email: string; personalEmail?: string; seats: OcSeat[]; labels: string }>
+  Array<{ name: string; email: string; personalEmail?: string; memberDocId?: string; seats: OcSeat[]; labels: string }>
 > {
   const teams = await fetchCurrentTeams()
-  const out: Array<{ name: string; email: string; personalEmail?: string; seats: OcSeat[] }> = []
+  const out: Array<{ name: string; email: string; personalEmail?: string; memberDocId?: string; seats: OcSeat[] }> = []
   for (const team of teams) {
     for (const { field, seat } of SEAT_FIELDS) {
       const rel = team?.[field]
@@ -174,7 +174,9 @@ export async function getSeatHoldersWithEmail(): Promise<
       const email = SEAT_MAILBOX[seat] || personal
       if (!email) continue
       if (out.some(o => o.email === email)) continue   // ίδια θυρίδα, μία φορά
-      out.push({ name: rel.Name, email, personalEmail: personal, seats: [seat] })
+      // Το memberDocId χρειάζεται για ανάθεση εκκρεμοτήτων: εκεί ο δέκτης
+      // είναι ΠΡΟΣΩΠΟ (μια δουλειά την κάνει κάποιος), όχι θυρίδα.
+      out.push({ name: rel.Name, email, personalEmail: personal, memberDocId: rel.documentId, seats: [seat] })
     }
   }
   return out.map(p => ({ ...p, labels: p.seats.map(s => SEAT_LABELS[s]).join(' · ') }))
