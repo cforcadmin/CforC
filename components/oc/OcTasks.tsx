@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 /**
  * ΠΙΝΑΚΑΣ ΕΚΚΡΕΜΟΤΗΤΩΝ — η λίστα του Slack, μέσα στο OC.
@@ -49,6 +49,30 @@ const SCOPE_LABELS: Record<Scope, string> = {
 const GROUP_LABELS: Record<GroupBy, string> = {
   none: 'Χωρίς ομαδοποίηση', completed: 'Ολοκλήρωση', assignee: 'Ανάδοχο',
   due: 'Προθεσμία', priority: 'Προτεραιότητα', status: 'Κατάσταση', category: 'δράση/κατηγορία',
+}
+
+function PillSelect({ value, onChange, children, title }: {
+  value: string
+  onChange: (v: string) => void
+  children: React.ReactNode
+  title?: string
+}) {
+  return (
+    <span className="relative inline-flex">
+      <select
+        value={value}
+        title={title}
+        onChange={e => onChange(e.target.value)}
+        className="appearance-none rounded-full bg-gray-50 dark:bg-gray-700/50 border-0 pl-4 pr-9 py-2
+          text-sm font-medium text-charcoal dark:text-gray-200 cursor-pointer
+          hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral"
+      >
+        {children}
+      </select>
+      <span aria-hidden="true"
+        className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">▾</span>
+    </span>
+  )
 }
 
 const gr = (d: string) => new Date(d).toLocaleDateString('el-GR')
@@ -213,7 +237,7 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
         <td className="py-3 pr-4 align-top">
           {canEdit ? (
             <select value={t.status} onChange={e => patch(t.documentId, { status: e.target.value })}
-              className={`rounded-full px-2.5 py-1 text-sm border-0 cursor-pointer ${st.cls}`}>
+              className={`appearance-none rounded-full px-2.5 py-1 text-sm border-0 cursor-pointer text-center ${st.cls}`}>
               {(Object.keys(STATUS_META) as Task['status'][]).map(k =>
                 <option key={k} value={k}>{STATUS_META[k].label}</option>)}
             </select>
@@ -275,10 +299,9 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
       {/* Χειριστήρια */}
       <div className="flex flex-wrap items-center gap-3 mb-5">
         {boards.length > 1 && (
-          <select value={boardId || ''} onChange={e => setBoardId(e.target.value)}
-            className="rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-1.5 text-sm text-charcoal dark:text-gray-100">
+          <PillSelect value={boardId || ''} onChange={setBoardId} title="Πίνακας">
             {boards.map(b => <option key={b.documentId} value={b.documentId}>{b.title}</option>)}
-          </select>
+          </PillSelect>
         )}
 
         <div className="flex items-center gap-1 rounded-full bg-gray-50 dark:bg-gray-700/50 p-1">
@@ -289,11 +312,10 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
           ))}
         </div>
 
-        <select value={groupBy} onChange={e => setGroupBy(e.target.value as GroupBy)}
-          className="rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-1.5 text-sm text-charcoal dark:text-gray-100">
+        <PillSelect value={groupBy} onChange={v => setGroupBy(v as GroupBy)} title="Ομαδοποίηση">
           {(Object.keys(GROUP_LABELS) as GroupBy[]).map(g =>
             <option key={g} value={g}>{g === 'none' ? GROUP_LABELS[g] : `Ομαδοποίηση: ${GROUP_LABELS[g]}`}</option>)}
-        </select>
+        </PillSelect>
 
         <div className="flex items-center gap-1 rounded-full bg-gray-50 dark:bg-gray-700/50 p-1">
           <button type="button" onClick={() => setLayout('table')} className={pill(layout === 'table')}>Πίνακας</button>
@@ -301,7 +323,9 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
         </div>
 
         <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Αναζήτηση…"
-          className="rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-1.5 text-sm text-charcoal dark:text-gray-100 min-w-[10rem]" />
+          className="rounded-full bg-gray-50 dark:bg-gray-700/50 border-0 px-4 py-2 text-sm
+            text-charcoal dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500
+            focus:outline-none focus:ring-2 focus:ring-coral min-w-[10rem]" />
 
         {canEdit && boardId && (
           <button type="button" onClick={() => setCreating(true)}
