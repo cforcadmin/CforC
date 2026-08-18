@@ -27,6 +27,11 @@ export interface Task {
 }
 export interface Board { documentId: string; title: string; slug: string; scope: string; description: string | null }
 export interface Holder { name: string; email: string; labels: string; memberDocId?: string }
+export interface MemberLite { documentId: string; name: string; am: number | null }
+
+const SCOPE_META: Record<string, string> = {
+  coordination: 'Ομάδα Συντονισμού', members: 'Όλα τα μέλη', project: 'Έργο',
+}
 
 const STATUS_META: Record<Task['status'], { label: string; cls: string }> = {
   not_started: { label: 'Not started', cls: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200' },
@@ -110,6 +115,8 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
   const [boards, setBoards] = useState<Board[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
   const [holders, setHolders] = useState<Holder[]>([])
+  const [members, setMembers] = useState<MemberLite[]>([])
+  const [newBoard, setNewBoard] = useState(false)
   const [boardId, setBoardId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -144,6 +151,7 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
       const d = await res.json()
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
       setBoards(d.boards || []); setTasks(d.tasks || []); setHolders(d.seatHolders || [])
+      setMembers(d.members || [])
       setUnconfigured(!!d.unconfigured)
       setMeDocId(d.me || null)
       setBoardId(prev => prev || d.boards?.[0]?.documentId || null)
@@ -386,11 +394,19 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
             text-charcoal dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500
             focus:outline-none focus:ring-2 focus:ring-coral min-w-[10rem]" />
 
-        {canEdit && boardId && (
-          <button type="button" onClick={() => setCreating(true)}
-            className="ml-auto px-5 py-2 rounded-full bg-coral text-white text-sm font-bold hover:bg-coral/90">
-            + Νέα εκκρεμότητα
-          </button>
+        {canEdit && (
+          <span className="ml-auto flex items-center gap-2">
+            <button type="button" onClick={() => setNewBoard(true)}
+              className="px-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 text-sm text-charcoal dark:text-gray-200 hover:border-coral">
+              + Πίνακας
+            </button>
+            {boardId && (
+              <button type="button" onClick={() => setCreating(true)}
+                className="px-5 py-2 rounded-full bg-coral text-white text-sm font-bold hover:bg-coral/90">
+                + Νέα εκκρεμότητα
+              </button>
+            )}
+          </span>
         )}
       </div>
 
@@ -465,11 +481,15 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
         </div>
       )}
 
+      {newBoard && <BoardForm onClose={() => setNewBoard(false)} onSaved={load} />}
+
       {(editing || creating) && (
         <TaskForm
           task={editing}
           boardId={boardId!}
+          scope={board?.scope || 'coordination'}
           holders={holders}
+          members={members}
           onClose={() => { setEditing(null); setCreating(false) }}
           onSaved={load}
         />
@@ -483,8 +503,9 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
 const inputCls = 'w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-base text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral'
 const labelCls = 'block text-sm font-bold text-gray-600 dark:text-gray-300 mb-1'
 
-function TaskForm({ task, boardId, holders, onClose, onSaved }: {
-  task: Task | null; boardId: string; holders: Holder[]
+function TaskForm({ task, boardId, scope, holders, members, onClose, onSaved }: {
+  task: Task | null; boardId: string; scope: string
+  holders: Holder[]; members: MemberLite[]
   onClose: () => void; onSaved: () => void
 }) {
   const editing = !!task
@@ -499,8 +520,17 @@ function TaskForm({ task, boardId, holders, onClose, onSaved }: {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [memberQuery, setMemberQuery] = useState('')
 
   const toggle = (id: string) => setAssignees(a => a.includes(id) ? a.filter(x => x !== id) : [...a, id])
+
+  // Σε πίνακα «όλα τα μέλη» ο ανάδοχος μπορεί να είναι οποιοδήποτε μέλος —
+  // αναζήτηση αντί για 112 κουμπιά
+  const memberHits = memberQuery.trim().length < 2 ? [] : members
+    .filter(m => m.name.toLowerCase().includes(memberQuery.trim().toLowerCase()))
+    .filter(m => !assignees.includes(m.documentId))
+    .slice(0, 6)
+  const chosen = members.filter(m => assignees.includes(m.documentId))
 
   async function save() {
     setBusy(true); setError(null)
@@ -581,6 +611,33 @@ function TaskForm({ task, boardId, holders, onClose, onSaved }: {
 
           <div>
             <span className={labelCls}>Ανάδοχοι</span>
+            {scope === 'members' ? (
+              <>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {chosen.map(m => (
+                    <span key={m.documentId} className="px-3 py-1.5 rounded-full bg-coral text-white text-sm">
+                      {m.name}
+                      <button type="button" onClick={() => toggle(m.documentId)} aria-label={`Αφαίρεση ${m.name}`}
+                        className="ml-2 opacity-80 hover:opacity-100">×</button>
+                    </span>
+                  ))}
+                  {chosen.length === 0 && <span className="text-sm text-gray-400">Κανένας ακόμη</span>}
+                </div>
+                <input className={inputCls} value={memberQuery} onChange={e => setMemberQuery(e.target.value)}
+                  placeholder="Αναζήτηση μέλους…" />
+                {memberHits.length > 0 && (
+                  <div className="mt-1 rounded-xl border border-gray-200 dark:border-gray-600 divide-y divide-gray-100 dark:divide-gray-700">
+                    {memberHits.map(m => (
+                      <button key={m.documentId} type="button"
+                        onClick={() => { toggle(m.documentId); setMemberQuery('') }}
+                        className="w-full text-left px-3 py-2 text-sm text-charcoal dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        {m.name}{m.am ? <span className="text-gray-400 notranslate"> · ΑΜ {m.am}</span> : null}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
             <div className="flex flex-wrap gap-2">
               {holders.map(h => {
                 const id = h.memberDocId || ''
@@ -596,6 +653,7 @@ function TaskForm({ task, boardId, holders, onClose, onSaved }: {
                 )
               })}
             </div>
+            )}
           </div>
 
           <div>
@@ -638,6 +696,69 @@ function TaskForm({ task, boardId, holders, onClose, onSaved }: {
               )}
             </span>
           )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BoardForm({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const [title, setTitle] = useState('')
+  const [scope, setScope] = useState('project')
+  const [description, setDescription] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function save() {
+    setBusy(true); setError(null)
+    try {
+      const res = await fetch('/api/oc/tasks/boards', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, scope, description }),
+      })
+      if (!res.ok) throw new Error((await res.json())?.error || 'Αποτυχία')
+      onSaved(); onClose()
+    } catch (err: any) {
+      setError(err?.message || 'Αποτυχία')
+    } finally { setBusy(false) }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl max-w-md w-full p-6 sm:p-8"
+        onClick={e => e.stopPropagation()}>
+        <h3 className="text-xl font-bold text-charcoal dark:text-gray-100 mb-5">Νέος πίνακας</h3>
+        <div className="space-y-4">
+          <div>
+            <label className={labelCls} htmlFor="bd-title">Τίτλος</label>
+            <input id="bd-title" className={inputCls} value={title} onChange={e => setTitle(e.target.value)}
+              placeholder="π.χ. Σ.Η.μα — εκκρεμότητες" />
+          </div>
+          <div>
+            <label className={labelCls} htmlFor="bd-scope">Ποιοι αναλαμβάνουν</label>
+            <select id="bd-scope" className={inputCls} value={scope} onChange={e => setScope(e.target.value)}>
+              {Object.entries(SCOPE_META).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Ορίζει ποιοι εμφανίζονται ως πιθανοί ανάδοχοι — αλλάζει αργότερα.
+            </p>
+          </div>
+          <div>
+            <label className={labelCls} htmlFor="bd-desc">Περιγραφή</label>
+            <textarea id="bd-desc" rows={2} className={inputCls} value={description}
+              onChange={e => setDescription(e.target.value)} placeholder="προαιρετικό" />
+          </div>
+        </div>
+        {error && <p className="text-sm text-red-600 dark:text-red-400 mt-4">{error}</p>}
+        <div className="flex items-center gap-3 mt-6">
+          <button type="button" onClick={save} disabled={busy || !title.trim()}
+            className="px-6 py-2.5 rounded-full bg-coral text-white text-sm font-bold hover:bg-coral/90 disabled:opacity-40">
+            {busy ? 'Δημιουργία…' : 'Δημιουργία'}
+          </button>
+          <button type="button" onClick={onClose} disabled={busy}
+            className="px-5 py-2.5 rounded-full border border-gray-300 dark:border-gray-600 text-sm text-charcoal dark:text-gray-200">
+            Άκυρο
+          </button>
         </div>
       </div>
     </div>

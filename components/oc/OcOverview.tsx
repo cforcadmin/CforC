@@ -8,6 +8,7 @@ import type { OcApplicationSummary } from '@/components/oc/OcShell'
 import { OC_TABLE_COLUMNS, OC_TABLE_DEFAULT_COLS } from '@/components/oc/ocPrefs'
 import OcRenewalsPopup from '@/components/oc/OcRenewalsPopup'
 import OcTreasuryPopup from '@/components/oc/OcTreasuryPopup'
+import OcMyTasks from '@/components/oc/OcMyTasks'
 
 const STATUS_META: Record<OcMemberStatus, { label: string; cls: string }> = {
   paid: { label: 'Τακτοποιημένο', cls: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' },
@@ -1004,6 +1005,8 @@ export default function OcOverview({
             </div>
           </div>
         </div>
+
+        <OcMyTasks />
 
         <div className="grid sm:grid-cols-2 gap-6">
           <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6">

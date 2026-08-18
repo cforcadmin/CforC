@@ -119,10 +119,13 @@ export async function GET(request: NextRequest) {
   const auth = await authorize()
   if ('error' in auth) return auth.error
   try {
-    const [boardsRes, tasksRes, seatHolders] = await Promise.all([
+    const [boardsRes, tasksRes, seatHolders, membersRes] = await Promise.all([
       strapi('/oc-task-boards?sort[0]=SortIndex:asc&sort[1]=Title:asc&pagination[limit]=50'),
       strapi(`/oc-tasks?pagination[limit]=500&sort[0]=SortIndex:asc&sort[1]=createdAt:asc&${TASK_FIELDS}`),
       getSeatHoldersWithEmail().catch(() => []),
+      // Για πίνακες με εμβέλεια «μέλη»: ανάδοχος μπορεί να είναι οποιοδήποτε
+      // μέλος, όχι μόνο οι επτά θέσεις
+      strapi('/members?pagination[limit]=1000&sort=Name:asc&fields[0]=Name&fields[1]=AM&filters[HideProfile][$ne]=true'),
     ])
     if (!boardsRes.ok) {
       // Η συλλογή μπορεί να μην έχει φτάσει ακόμη στο Strapi Cloud
@@ -138,6 +141,9 @@ export async function GET(request: NextRequest) {
       boards,
       tasks: (tasksRes.json?.data || []).map(shape),
       seatHolders,
+      members: (membersRes.json?.data || []).map((m: any) => ({
+        documentId: m.documentId, name: m.Name, am: m.AM ?? null,
+      })),
       me: auth.memberId,
     })
   } catch (err) {
