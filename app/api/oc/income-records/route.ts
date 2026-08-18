@@ -70,6 +70,9 @@ export async function POST(request: NextRequest) {
   const category = ['grant', 'donation', 'extraordinary', 'business', 'other'].includes(body?.category)
     ? body.category as string : 'grant'
   const docRef = String(body?.docRef || '').trim() || null
+  // Τομέας προέλευσης — το ζητά το πλαίσιο παρακολούθησης (Α.1)
+  const funderType = ['public', 'european', 'private', 'services', 'other'].includes(body?.funderType)
+    ? body.funderType as string : null
   const payerName = String(body?.payerName || '').trim() || null
   const txnId = String(body?.txnId || '').trim() || null
 
@@ -150,6 +153,7 @@ export async function POST(request: NextRequest) {
           PayerName: payerName,
           Description: body?.description || null,
           Category: category,
+          FunderType: funderType,
           Amount: amount,
           PaymentDate: paymentDate,
           PaymentMethod: body?.paymentMethod || 'bank',

@@ -34,9 +34,20 @@ interface IntakeRow {
   candidates: Array<{ docId: string; name: string; am: number; score: number; confidence: string }>
 }
 
+/** Τομέας προέλευσης — ζητούμενο του πλαισίου παρακολούθησης (Α.1) */
+const FUNDER_TYPES: Array<{ key: string; label: string }> = [
+  { key: '', label: 'Τομέας; —' },
+  { key: 'public', label: 'Δημόσιος τομέας' },
+  { key: 'european', label: 'Ευρωπαϊκό πρόγραμμα' },
+  { key: 'private', label: 'Ιδιωτικοί πόροι' },
+  { key: 'services', label: 'Υπηρεσίες' },
+  { key: 'other', label: 'Άλλο' },
+]
+
 interface RowState {
   include: boolean
   type: 'subscription' | 'extraordinary' | 'donation' | 'grant' | 'other' | 'record-grant'
+  funderType: string
   year: string
   memberDocId: string | null
   memberName: string
@@ -98,6 +109,7 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
           // Προεπιλογή: όλα εκτός των εγγραφών (που περνούν από τις αιτήσεις)
           include: r.kind !== 'registration' && !r.existingNumber,
           type: r.kind === 'grant-like' ? 'record-grant' : 'subscription',
+          funderType: '',
           year: String(new Date(r.date).getFullYear()),
           memberDocId: r.suggestion?.docId || null,
           memberName: r.suggestion?.name || '',
@@ -151,6 +163,7 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
               docRef: r.reason,
               txnId: r.txnId,
               paymentMethod: 'bank',
+              funderType: st.funderType || null,
             }),
           })
           const data = await res.json()
@@ -406,6 +419,14 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
                                 <option value="grant">Χορηγία (με απόδειξη)</option>
                                 <option value="record-grant">Χορηγία/Επιχορήγηση — χωρίς απόδειξη</option>
                                 <option value="other">Άλλο</option>
+                              </select>
+                            )}
+                            {!isReg && st.type === 'record-grant' && (
+                              <select className={`${inputCls} mt-1`} value={st.funderType}
+                                onChange={e => patch(r.txnId, { funderType: e.target.value })}
+                                disabled={locked || !canIssue}
+                                aria-label="Τομέας προέλευσης χρηματοδότησης">
+                                {FUNDER_TYPES.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
                               </select>
                             )}
                             {!isReg && st.type === 'subscription' && (
