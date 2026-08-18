@@ -53,7 +53,12 @@ function splitOwner(text: string): AgendaItem {
   return { title: text, owner: null }
 }
 
-export async function fetchAgenda(limit = 3): Promise<{ meetings: AgendaMeeting[]; error?: string }> {
+/**
+ * fresh=true παρακάμπτει την προσωρινή αποθήκευση των 15'. Χρειάζεται όταν
+ * κάποιος γράφει την ημερήσια διάταξη ΤΗΝ ΩΡΑ που την κοιτάει κάποιος
+ * άλλος — η αναμονή τετάρτου εκεί είναι ενοχλητική.
+ */
+export async function fetchAgenda(limit = 3, fresh = false): Promise<{ meetings: AgendaMeeting[]; error?: string }> {
   if (!agendaConfigured()) return { meetings: [], error: 'unconfigured' }
   const token = await getAccessToken(SCOPES.documents)
   if (!token) return { meetings: [], error: 'auth' }
@@ -61,7 +66,7 @@ export async function fetchAgenda(limit = 3): Promise<{ meetings: AgendaMeeting[
   try {
     const res = await fetch(`https://docs.googleapis.com/v1/documents/${DOC_ID}`, {
       headers: { Authorization: `Bearer ${token}` },
-      next: { revalidate: 900 },
+      ...(fresh ? { cache: 'no-store' as const } : { next: { revalidate: 900 } }),
     })
     if (!res.ok) {
       const body = await res.text()

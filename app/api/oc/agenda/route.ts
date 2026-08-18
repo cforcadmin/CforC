@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess } from '@/lib/ocRoles'
@@ -10,7 +10,7 @@ export const maxDuration = 60
  * Ημερήσια διάταξη — ανάγνωση του εγγράφου πρακτικών.
  * Ορατή σε όλο το ΔΣ· καμία εγγραφή, το έγγραφο μένει η πηγή αλήθειας.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   const cookieStore = await cookies()
   const sessionCookie = cookieStore.get('session')
   const decoded = sessionCookie ? verifyToken(sessionCookie.value) : null
@@ -20,11 +20,13 @@ export async function GET() {
   const access = await resolveOcAccess(decoded.memberId)
   if (!access.isBoard) return NextResponse.json({ error: 'Δεν επιτρέπεται' }, { status: 403 })
 
-  const { meetings, error } = await fetchAgenda(3)
+  const fresh = request.nextUrl.searchParams.get('fresh') === '1'
+  const { meetings, error } = await fetchAgenda(3, fresh)
   return NextResponse.json({
     meetings,
     docUrl: agendaDocUrl(),
     configured: agendaConfigured(),
     error: error || null,
+    fetchedAt: new Date().toISOString(),
   })
 }

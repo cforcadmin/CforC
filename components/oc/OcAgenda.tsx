@@ -27,17 +27,22 @@ export default function OcAgenda() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<number | null>(0)
+  const [fetchedAt, setFetchedAt] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    fetch('/api/oc/agenda')
+  function load(fresh = false) {
+    if (fresh) setRefreshing(true)
+    fetch(`/api/oc/agenda${fresh ? '?fresh=1' : ''}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (!d) return
         setMeetings(d.meetings || []); setDocUrl(d.docUrl || ''); setError(d.error || null)
+        setFetchedAt(d.fetchedAt || null)
       })
       .catch(() => setError('unreachable'))
-      .finally(() => setLoading(false))
-  }, [])
+      .finally(() => { setLoading(false); setRefreshing(false) })
+  }
+  useEffect(() => { load() }, [])
 
   const latest = meetings[0]
 
@@ -45,12 +50,20 @@ export default function OcAgenda() {
     <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
       <div className="flex flex-wrap items-baseline justify-between gap-4 mb-5">
         <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Ημερήσια διάταξη &amp; πρακτικά</h2>
-        {docUrl && (
-          <a href={docUrl} target="_blank" rel="noopener noreferrer"
-            className="px-5 py-2 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-bold text-charcoal dark:text-gray-200 hover:border-coral">
-            Άνοιγμα εγγράφου ↗
-          </a>
-        )}
+        <span className="flex items-center gap-2">
+          <button type="button" onClick={() => load(true)} disabled={refreshing || loading}
+            title="Ανάγνωση του εγγράφου τώρα, χωρίς αναμονή του 15λέπτου"
+            aria-label="Ανανέωση"
+            className="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-600 text-charcoal dark:text-gray-200 hover:border-coral disabled:opacity-40">
+            {refreshing ? '…' : '↻'}
+          </button>
+          {docUrl && (
+            <a href={docUrl} target="_blank" rel="noopener noreferrer"
+              className="px-5 py-2 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-bold text-charcoal dark:text-gray-200 hover:border-coral">
+              Άνοιγμα εγγράφου ↗
+            </a>
+          )}
+        </span>
       </div>
 
       {loading && <p className="text-base text-gray-400">Φόρτωση…</p>}
@@ -110,6 +123,12 @@ export default function OcAgenda() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-5">
             Τα θέματα διαβάζονται από τις <strong>κυανές επισημάνσεις</strong> του εγγράφου και οι συνεδριάσεις
             από τις κίτρινες. Όσα δεν είναι επισημασμένα δεν εμφανίζονται εδώ.
+            {fetchedAt && (
+              <span className="block mt-1 notranslate">
+                Ανάγνωση: {new Date(fetchedAt).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' })}
+                {' '}· ανανεώνεται μόνο του κάθε 15΄
+              </span>
+            )}
           </p>
         </>
       )}
