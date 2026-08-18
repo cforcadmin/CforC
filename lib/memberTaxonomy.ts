@@ -80,6 +80,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
       'Φωτογραφία',
       'Ψηφιακές Πλατφόρμες',
       'Ψηφιακός Πολιτισμός',
+      'Νέες τεχνολογίες',
     ],
   },
   {
@@ -120,7 +121,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
     subcategories: [
       'Κοινοτική Τέχνη / Community Arts',
       'Συμμετοχικές Πρακτικές',
-      { label: 'Συνηγορία / Commons / Artivism', options: ['Συνηγορία', 'Commons', 'Artivism'] },
+      { label: 'Συνηγορία / Commons / Artivism / Activism', options: ['Συνηγορία', 'Commons', 'Artivism', 'Activism'] },
       { label: 'Νεολαία / Διαγενεακά', options: ['Νεολαία', 'Διαγενεακά'] },
       'Τοπική Αυτοδιοίκηση',
     ],
@@ -133,6 +134,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
       'Χαρτογράφηση',
       'Πολιτιστική Κληρονομιά',
       'Αρχαιολογία',
+      'Αστικό Περιβάλλον',
+      'Αγροτικός Χώρος / Ύπαιθρος',
     ],
   },
   {
