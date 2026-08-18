@@ -51,12 +51,38 @@ async function fetchStrapi(endpoint: string, options: RequestInit = {}) {
 }
 
 /**
+ * Same as fetchStrapi, but reads EVERY page.
+ *
+ * Το Strapi αγνοεί σιωπηλά το `pagination[limit]` πάνω από 100: ζητάς 1000,
+ * παίρνεις 100, κανένα σφάλμα. Στις 19/8/2026 τα open calls ήταν 103 — τρία
+ * δεν εμφανίζονταν καθόλου στο site και κανείς δεν το είχε προσέξει.
+ * Επιστρέφει το ίδιο σχήμα ({ data, meta }) ώστε να μην αλλάζουν οι καλούντες.
+ */
+async function fetchStrapiAll(endpoint: string, options: RequestInit = {}) {
+  const join = endpoint.includes('?') ? '&' : '?';
+  const data: any[] = [];
+  let meta: any = null;
+  for (let page = 1; page <= 50; page++) {
+    const json = await fetchStrapi(
+      `${endpoint}${join}pagination[page]=${page}&pagination[pageSize]=100`,
+      options,
+    );
+    const batch = json?.data || [];
+    data.push(...batch);
+    meta = json?.meta ?? meta;
+    const pageCount = json?.meta?.pagination?.pageCount ?? 1;
+    if (page >= pageCount || batch.length === 0) break;
+  }
+  return { data, meta };
+}
+
+/**
  * Get all activities
  */
 export async function getActivities() {
   // Strapi v5: Explicitly populate Visuals field (media fields need explicit population)
   // Set pagination limit to 1000 to get all activities
-  return fetchStrapi('/activities?populate=Visuals&pagination[limit]=1000');
+  return fetchStrapiAll('/activities?populate=Visuals');
 }
 
 /**
@@ -80,14 +106,14 @@ export async function getActivityById(idOrSlug: string | number) {
 export async function getOpenCalls() {
   // Strapi v5: Explicitly populate Image field (media fields need explicit population)
   // Set pagination limit to 1000 to get all open calls
-  return fetchStrapi('/open-calls?populate=Image&pagination[limit]=1000');
+  return fetchStrapiAll('/open-calls?populate=Image');
 }
 
 /**
  * Get all newsletters
  */
 export async function getNewsletters() {
-  return fetchStrapi('/newsletters?populate=Image&pagination[limit]=1000&sort=Date:desc');
+  return fetchStrapiAll('/newsletters?populate=Image&sort=Date:desc');
 }
 
 /**
@@ -112,7 +138,7 @@ export async function getOpenCallById(idOrSlug: string | number) {
  * Get all projects, ordered by sort_order
  */
 export async function getProjects() {
-  return fetchStrapi('/projects?populate[cover_image]=true&populate[partners][populate]=logo&populate[external_links]=true&pagination[limit]=1000&sort=sort_order:asc');
+  return fetchStrapiAll('/projects?populate[cover_image]=true&populate[partners][populate]=logo&populate[external_links]=true&sort=sort_order:asc');
 }
 
 /**
