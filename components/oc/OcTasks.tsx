@@ -51,6 +51,20 @@ const GROUP_LABELS: Record<GroupBy, string> = {
   due: 'Προθεσμία', priority: 'Προτεραιότητα', status: 'Κατάσταση', category: 'δράση/κατηγορία',
 }
 
+/**
+ * Το native select αγνοεί τα utility classes σε αυτό το project (ίδιο
+ * πρόβλημα με το grid του ημερολογίου): το appearance-none υπάρχει στο CSS
+ * αλλά δεν φτάνει στο στοιχείο, οπότε έμενε το διπλό βελάκι του συστήματος.
+ * Οι μηχανισμοί εμφάνισης μπαίνουν inline — δεν είναι θεματοδότηση, είναι
+ * το αν φαίνεται σωστά ή όχι.
+ */
+const RESET_SELECT: React.CSSProperties = {
+  WebkitAppearance: 'none',
+  MozAppearance: 'none',
+  appearance: 'none',
+  backgroundImage: 'none',
+}
+
 function PillSelect({ value, onChange, children, title }: {
   value: string
   onChange: (v: string) => void
@@ -58,19 +72,21 @@ function PillSelect({ value, onChange, children, title }: {
   title?: string
 }) {
   return (
-    <span className="relative inline-flex">
+    <span style={{ position: 'relative', display: 'inline-flex' }}>
       <select
         value={value}
         title={title}
         onChange={e => onChange(e.target.value)}
-        className="appearance-none rounded-full bg-gray-50 dark:bg-gray-700/50 border-0 pl-4 pr-9 py-2
+        style={{ ...RESET_SELECT, paddingRight: '2.25rem' }}
+        className="rounded-full bg-gray-50 dark:bg-gray-700/50 border-0 pl-4 py-2
           text-sm font-medium text-charcoal dark:text-gray-200 cursor-pointer
           hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-coral"
       >
         {children}
       </select>
       <span aria-hidden="true"
-        className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">▾</span>
+        style={{ position: 'absolute', right: '0.9rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+        className="text-xs text-gray-400 dark:text-gray-500">▾</span>
     </span>
   )
 }
@@ -236,11 +252,17 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
         </td>
         <td className="py-3 pr-4 align-top">
           {canEdit ? (
-            <select value={t.status} onChange={e => patch(t.documentId, { status: e.target.value })}
-              className={`appearance-none rounded-full px-2.5 py-1 text-sm border-0 cursor-pointer text-center ${st.cls}`}>
-              {(Object.keys(STATUS_META) as Task['status'][]).map(k =>
-                <option key={k} value={k}>{STATUS_META[k].label}</option>)}
-            </select>
+            <span style={{ position: 'relative', display: 'inline-flex' }}>
+              <select value={t.status} onChange={e => patch(t.documentId, { status: e.target.value })}
+                style={{ ...RESET_SELECT, paddingLeft: '0.7rem', paddingRight: '1.7rem' }}
+                className={`rounded-full py-1 text-sm border-0 cursor-pointer ${st.cls}`}>
+                {(Object.keys(STATUS_META) as Task['status'][]).map(k =>
+                  <option key={k} value={k}>{STATUS_META[k].label}</option>)}
+              </select>
+              <span aria-hidden="true"
+                style={{ position: 'absolute', right: '0.55rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+                className="text-[10px] opacity-60">▾</span>
+            </span>
           ) : <span className={`rounded-full px-2.5 py-1 text-sm ${st.cls}`}>{st.label}</span>}
         </td>
         <td className="py-3 pr-4 align-top">
