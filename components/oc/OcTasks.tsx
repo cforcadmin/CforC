@@ -33,10 +33,10 @@ const STATUS_META: Record<Task['status'], { label: string; cls: string }> = {
   in_progress: { label: 'In progress', cls: 'bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-100' },
   done: { label: 'Done', cls: 'bg-[#6A994E]/20 text-[#3f5f2e] dark:bg-[#6A994E]/40 dark:text-green-100' },
 }
-const PRIORITY_META: Record<Task['priority'], { label: string; cls: string }> = {
-  low: { label: 'Χαμηλή', cls: 'text-gray-400 dark:text-gray-500' },
-  normal: { label: 'Κανονική', cls: 'text-gray-500 dark:text-gray-400' },
-  high: { label: 'Υψηλή', cls: 'text-red-600 dark:text-red-400 font-bold' },
+const PRIORITY_META: Record<Task['priority'], { label: string; cls: string; rank: number }> = {
+  high: { label: 'Υψηλή', cls: 'bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-100', rank: 0 },
+  normal: { label: 'Κανονική', cls: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200', rank: 1 },
+  low: { label: 'Χαμηλή', cls: 'bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400', rank: 2 },
 }
 
 type Scope = 'all' | 'open' | 'completed' | 'mine'
@@ -174,6 +174,22 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
     () => tasks.filter(t => !boardId || t.boardId === boardId),
     [tasks, boardId])
 
+  /**
+   * Χωρίς ταξινόμηση η προτεραιότητα ήταν διακοσμητική. Σειρά που σημαίνει
+   * κάτι: πρώτα ό,τι έχει ήδη περάσει, μετά η προτεραιότητα, μετά η
+   * εγγύτερη προθεσμία — και τα ολοκληρωμένα πάντα στο τέλος.
+   */
+  const byUrgency = (a: Task, b: Task) => {
+    if (a.completed !== b.completed) return a.completed ? 1 : -1
+    const ov = (t: Task) => overdue(t) ? 0 : 1
+    if (ov(a) !== ov(b)) return ov(a) - ov(b)
+    const pr = PRIORITY_META[a.priority].rank - PRIORITY_META[b.priority].rank
+    if (pr !== 0) return pr
+    if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate)
+    if (a.dueDate !== b.dueDate) return a.dueDate ? -1 : 1
+    return a.sortIndex - b.sortIndex
+  }
+
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase()
     return boardTasks.filter(t => {
@@ -182,7 +198,7 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
       if (scope === 'mine' && !(meDocId && t.assignees.some(a => a.documentId === meDocId))) return false
       if (q && !(`${t.title} ${t.description || ''} ${t.categories.join(' ')}`.toLowerCase().includes(q))) return false
       return true
-    })
+    }).sort(byUrgency)
   }, [boardTasks, scope, query, meDocId])
 
   const counts = useMemo(() => ({
@@ -215,7 +231,12 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
         else t.categories.forEach(c => push(c, c, t))
       }
     }
-    return [...m.entries()].sort(([a], [b]) => a.localeCompare(b, 'el')).map(([key, v]) => ({ key, ...v }))
+    const order = groupBy === 'priority'
+      ? (k: string) => String(PRIORITY_META[k as Task['priority']]?.rank ?? 9)
+      : (k: string) => k
+    return [...m.entries()]
+      .sort(([a], [b]) => order(a).localeCompare(order(b), 'el'))
+      .map(([key, v]) => ({ key, ...v }))
   }, [visible, groupBy])
 
   const pill = (active: boolean) =>
@@ -291,7 +312,23 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
           ) : <span className="text-sm text-gray-300 dark:text-gray-600">—</span>}
         </td>
         <td className="py-3 align-top">
-          <span className={`text-sm ${PRIORITY_META[t.priority].cls}`}>{PRIORITY_META[t.priority].label}</span>
+          {canEdit ? (
+            <span style={{ position: 'relative', display: 'inline-flex' }}>
+              <select value={t.priority} onChange={e => patch(t.documentId, { priority: e.target.value })}
+                style={{ ...RESET_SELECT, paddingLeft: '0.7rem', paddingRight: '1.7rem' }}
+                className={`rounded-full py-1 text-sm border-0 cursor-pointer ${PRIORITY_META[t.priority].cls}`}>
+                {(['high', 'normal', 'low'] as Task['priority'][]).map(k =>
+                  <option key={k} value={k}>{PRIORITY_META[k].label}</option>)}
+              </select>
+              <span aria-hidden="true"
+                style={{ position: 'absolute', right: '0.55rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+                className="text-[10px] opacity-60">▾</span>
+            </span>
+          ) : (
+            <span className={`rounded-full px-2.5 py-1 text-sm ${PRIORITY_META[t.priority].cls}`}>
+              {PRIORITY_META[t.priority].label}
+            </span>
+          )}
         </td>
       </tr>
     )
@@ -376,6 +413,11 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
                         {t.title}
                       </span>
                       <span className="flex flex-wrap items-center gap-2 mt-1.5">
+                        {t.priority === 'high' && (
+                          <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-100 text-xs font-bold">
+                            Υψηλή
+                          </span>
+                        )}
                         {t.assignees.map(a => (
                           <span key={a.documentId} className="px-2 py-0.5 rounded-full bg-coral/15 text-coral text-xs">{a.name.split(' ')[0]}</span>
                         ))}
