@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { strapiAll } from '@/lib/strapiPaged'
-import { titleKey, titleSimilarity, DUPLICATE_THRESHOLD } from '@/lib/library'
+import { titleKey, titleSimilarity, isLikelyDuplicate, sharedWordCount } from '@/lib/library'
 import { uploadToLibrary, trashFile, ALLOWED_MIME, MAX_FILE_BYTES } from '@/lib/googleDrive'
 import { LIBRARY_TAXONOMY, getSubLabel } from '@/lib/memberTaxonomy'
 
@@ -75,11 +75,20 @@ export async function POST(request: NextRequest) {
     // ── Έλεγχος διπλοεγγραφής ΠΡΙΝ ανέβει οτιδήποτε ──────────────
     const key = titleKey(title)
     const existing = await strapiAll('/library-items?fields[0]=Title&fields[1]=TitleKey&fields[2]=State&filters[State][$ne]=rejected')
+    // Κρατάμε το ΠΙΟ κοντινό από όσα σημαίνονται — αν μοιάζει με δύο, ο
+    // Βιβλιοθηκάριος πρέπει να δει το πιο πιθανό δίπλα.
     let duplicateOf: any = null
     let best = 0
+    let bestShared = 0
     for (const row of existing.data) {
-      const score = row.TitleKey === key ? 1 : titleSimilarity(title, row.Title || '')
-      if (score > best) { best = score; if (score >= DUPLICATE_THRESHOLD) duplicateOf = row }
+      const other = row.Title || ''
+      if (!isLikelyDuplicate(title, other)) continue
+      const shared = row.TitleKey === key ? 99 : sharedWordCount(title, other)
+      if (shared > bestShared) {
+        bestShared = shared
+        best = row.TitleKey === key ? 1 : titleSimilarity(title, other)
+        duplicateOf = row
+      }
     }
 
     // ── Ανέβασμα ────────────────────────────────────────────────
@@ -141,6 +150,7 @@ export async function POST(request: NextRequest) {
         existing: { documentId: duplicateOf.documentId, title: duplicateOf.Title },
         submitter: me?.Name || 'μέλος',
         similarity: best,
+        sharedWords: bestShared === 99 ? undefined : bestShared,
       }).catch((err: unknown) => console.error('library/submit: ειδοποίηση διπλοεγγραφής', err))
     }
 

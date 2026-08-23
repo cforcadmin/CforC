@@ -49,30 +49,74 @@ export function titleKey(raw: string): string {
 }
 
 /** Λέξεις που δεν ξεχωρίζουν τεκμήρια και μόνο θόρυβο προσθέτουν */
-const STOP = new Set(['the', 'a', 'an', 'of', 'for', 'and', 'to', 'in', 'on',
-  'ο', 'η', 'το', 'οι', 'τα', 'του', 'της', 'των', 'στο', 'στη', 'στην', 'και', 'για'])
+const STOP = new Set([
+  'the', 'a', 'an', 'of', 'for', 'and', 'to', 'in', 'on', 'at', 'by', 'with',
+  'from', 'its', 'this', 'that', 'towards', 'more',
+  'ο', 'η', 'το', 'οι', 'τα', 'του', 'της', 'των', 'τον', 'την', 'στο', 'στη',
+  'στην', 'στον', 'στα', 'στις', 'στους', 'και', 'για', 'με', 'σε', 'από',
+  'προς', 'ως', 'μια', 'ενα', 'έναν',
+])
 
-function tokens(key: string): Set<string> {
-  return new Set(key.split(' ').filter(w => w.length > 2 && !STOP.has(w)))
+/** Οι ουσιαστικές λέξεις ενός τίτλου, κανονικοποιημένες */
+export function titleTokens(raw: string): Set<string> {
+  return new Set(titleKey(raw).split(' ').filter(w => w.length > 2 && !STOP.has(w)))
 }
 
 /**
- * Ομοιότητα δύο τίτλων, 0–1 (Jaccard πάνω στις ουσιαστικές λέξεις).
- * Δεν είναι έξυπνο, είναι προβλέψιμο — και ο άνθρωπος αποφασίζει στο τέλος.
+ * Πόσες ουσιαστικές λέξεις μοιράζονται δύο τίτλοι.
+ */
+export function sharedWordCount(a: string, b: string): number {
+  const ta = titleTokens(a), tb = titleTokens(b)
+  let n = 0
+  for (const t of ta) if (tb.has(t)) n++
+  return n
+}
+
+/**
+ * Ομοιότητα 0–1 (Jaccard). Δεν αποφασίζει πια — μπαίνει στο email ως
+ * ένδειξη για τον Βιβλιοθηκάριο.
  */
 export function titleSimilarity(a: string, b: string): number {
   const ka = titleKey(a), kb = titleKey(b)
   if (!ka || !kb) return 0
   if (ka === kb) return 1
-  const ta = tokens(ka), tb = tokens(kb)
+  const ta = titleTokens(ka), tb = titleTokens(kb)
   if (!ta.size || !tb.size) return 0
-  let shared = 0
-  for (const t of ta) if (tb.has(t)) shared++
+  const shared = sharedWordCount(a, b)
   return shared / (ta.size + tb.size - shared)
 }
 
-/** Πάνω από αυτό, το τεκμήριο πάει στον Βιβλιοθηκάριο αντί να δημοσιευτεί */
-export const DUPLICATE_THRESHOLD = 0.6
+/**
+ * ΤΡΕΙΣ κοινές ουσιαστικές λέξεις αρκούν για να σημανθεί το τεκμήριο.
+ *
+ * Ο προηγούμενος κανόνας ζητούσε 60% επικάλυψη και ήταν πολύ χαλαρός: ένας
+ * σύντομος τίτλος για το ίδιο έγγραφο («CREATIVE FLIP: Final Study») έβγαζε
+ * 40% απέναντι στον πλήρη και περνούσε σαν νέο τεκμήριο — οι επιπλέον λέξεις
+ * του μεγάλου τίτλου μετρούσαν ΕΝΑΝΤΙΟΝ της ομοιότητας.
+ *
+ * Ο νέος κανόνας δεν κοιτά αναλογίες, μόνο πλήθος. Σημαίνει περισσότερες
+ * σημάνσεις — σκόπιμα: το κόστος μιας περιττής σήμανσης είναι ένα κλικ του
+ * Βιβλιοθηκάριου, το κόστος μιας χαμένης διπλοεγγραφής είναι μόνιμο.
+ */
+export const SHARED_WORDS_TO_FLAG = 3
+
+export function isLikelyDuplicate(a: string, b: string): boolean {
+  const ka = titleKey(a), kb = titleKey(b)
+  if (!ka || !kb) return false
+  if (ka === kb) return true
+
+  const ta = titleTokens(a), tb = titleTokens(b)
+  if (!ta.size || !tb.size) return false
+
+  const shared = sharedWordCount(a, b)
+  if (shared >= SHARED_WORDS_TO_FLAG) return true
+
+  // Τίτλος με λιγότερες από τρεις ουσιαστικές λέξεις δεν ΜΠΟΡΕΙ να φτάσει
+  // το τρία. Εκεί σημαίνουμε αν ο ένας περιέχεται ολόκληρος στον άλλο:
+  // «Πολιτιστικός Χάρτης» μέσα στο «Πολιτιστικός Χάρτης της Αττικής».
+  const shorter = ta.size <= tb.size ? ta : tb
+  return shorter.size > 0 && shared === shorter.size
+}
 
 export function shapeItem(r: any): LibraryItem {
   const subs = r.Subthemes

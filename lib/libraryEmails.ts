@@ -179,12 +179,16 @@ export function libraryDuplicateReviewHtml(opts: {
   existingTitle: string
   submitter: string
   similarity: number
+  sharedWords?: number
   reviewUrl: string
 }): { subject: string; html: string } {
   const pct = Math.round(opts.similarity * 100)
   const body = `
       <p style="margin:0 0 20px 0;">Αγαπητή/αγαπητέ ${esc(opts.librarianName)},</p>
-      <p style="margin:0 0 20px 0;">Μια νέα καταχώρηση μοιάζει με τεκμήριο που υπάρχει ήδη στη βιβλιοθήκη (ομοιότητα τίτλου <strong>${pct}%</strong>). Δεν δημοσιεύτηκε — περιμένει την απόφασή σου.</p>
+      <p style="margin:0 0 20px 0;">Μια νέα καταχώρηση μοιάζει με τεκμήριο που υπάρχει ήδη στη βιβλιοθήκη${
+        opts.sharedWords ? ` — <strong>${opts.sharedWords} κοινές λέξεις</strong> στον τίτλο` : ''
+      } (ομοιότητα <strong>${pct}%</strong>). Δεν δημοσιεύτηκε — περιμένει την απόφασή σου.</p>
+      <p style="margin:0 0 20px 0;font-size:14px;color:#5A5A5A;">Η σήμανση είναι σκόπιμα ευαίσθητη: προτιμούμε έναν περιττό έλεγχο από μια χαμένη διπλοεγγραφή. Αν δεν είναι το ίδιο τεκμήριο, ένα κλικ στην έγκριση το δημοσιεύει.</p>
       <p style="margin:0 0 8px 0;font-size:13px;letter-spacing:1px;color:#8A8A8A;font-weight:bold;">ΝΕΑ ΚΑΤΑΧΩΡΗΣΗ</p>
       ${itemCard(opts.newTitle, [`Από: ${opts.submitter}`])}
       <p style="margin:0 0 8px 0;font-size:13px;letter-spacing:1px;color:#8A8A8A;font-weight:bold;">ΥΠΑΡΧΕΙ ΗΔΗ</p>
@@ -257,6 +261,7 @@ export async function notifyLibrariansOfDuplicate(opts: {
   existing: { documentId?: string; title: string }
   submitter: string
   similarity: number
+  sharedWords?: number
 }): Promise<void> {
   const librarians = await getLibrarians()
   if (!librarians.length) {
@@ -273,6 +278,7 @@ export async function notifyLibrariansOfDuplicate(opts: {
       existingTitle: opts.existing.title,
       submitter: opts.submitter,
       similarity: opts.similarity,
+      sharedWords: opts.sharedWords,
       reviewUrl,
     })
     await sendOcEmail(l.email, subject, html, { from: LIBRARY_FROM })
