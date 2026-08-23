@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 /**
  * Το κελί «Σύνδεσμος αρχείου».
@@ -8,10 +8,16 @@ import { useEffect, useRef, useState } from 'react'
  * Κλικ → ανοίγει το αρχείο σε νέα καρτέλα. Hover → δείχνει τη διεύθυνση με
  * κουμπί αντιγραφής.
  *
- * Η διεύθυνση που δείχνουμε ΔΕΝ είναι του Drive. Τα αρχεία είναι σκόπιμα
- * «Περιορισμένη πρόσβαση», οπότε σύνδεσμος Drive θα έβγαζε στα μέλη
- * «Ζητήστε πρόσβαση». Αυτή εδώ δουλεύει για κάθε συνδεδεμένο μέλος, και
- * για τον έξω κόσμο οδηγεί στη σύνδεση αντί να παραδίδει το αρχείο.
+ * Η διεύθυνση ΔΕΝ είναι του Drive. Τα αρχεία είναι σκόπιμα «Περιορισμένη
+ * πρόσβαση», οπότε σύνδεσμος Drive θα έβγαζε στα μέλη «Ζητήστε πρόσβαση».
+ * Αυτή δουλεύει για κάθε συνδεδεμένο μέλος και για τον έξω κόσμο οδηγεί
+ * στη σύνδεση αντί να παραδίδει το αρχείο.
+ *
+ * ΓΙΑΤΙ position:fixed ΚΑΙ ΟΧΙ absolute: ο πίνακας ζει μέσα σε δοχείο με
+ * overflow-x-auto, και ένα overflow ancestor ΚΟΒΕΙ τα absolute παιδιά του.
+ * Το popover εμφανιζόταν μισό, κομμένο στο περίγραμμα του πίνακα. Με fixed
+ * βγαίνει από κάθε τέτοιο δοχείο· τις συντεταγμένες τις υπολογίζουμε από
+ * το ίδιο το κουμπί.
  */
 export default function LibraryFileCell({ fileId, fileName, mimeType }: {
   fileId: string | null
@@ -20,9 +26,23 @@ export default function LibraryFileCell({ fileId, fileName, mimeType }: {
 }) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [above, setAbove] = useState(false)
-  const wrapRef = useRef<HTMLSpanElement>(null)
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
+  const anchorRef = useRef<HTMLAnchorElement>(null)
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const PANEL_W = 304
+  const PANEL_H = 190
+
+  const place = useCallback(() => {
+    const r = anchorRef.current?.getBoundingClientRect()
+    if (!r) return
+    const below = window.innerHeight - r.bottom > PANEL_H + 12
+    setPos({
+      top: below ? r.bottom + 8 : r.top - PANEL_H - 8,
+      // να μη βγει από τη δεξιά άκρη σε στενή οθόνη
+      left: Math.max(8, Math.min(r.left, window.innerWidth - PANEL_W - 8)),
+    })
+  }, [])
 
   useEffect(() => () => { if (hideTimer.current) clearTimeout(hideTimer.current) }, [])
   useEffect(() => {
@@ -30,6 +50,19 @@ export default function LibraryFileCell({ fileId, fileName, mimeType }: {
     const t = setTimeout(() => setCopied(false), 1600)
     return () => clearTimeout(t)
   }, [copied])
+
+  // Με fixed, το popover δεν ακολουθεί το scroll — το κλείνουμε αντί να
+  // το αφήσουμε να «κρέμεται» πάνω από άλλη γραμμή.
+  useEffect(() => {
+    if (!open) return
+    const close = () => setOpen(false)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [open])
 
   if (!fileId) return <span className="text-gray-400 dark:text-gray-500">—</span>
 
@@ -39,38 +72,36 @@ export default function LibraryFileCell({ fileId, fileName, mimeType }: {
 
   const show = () => {
     if (hideTimer.current) clearTimeout(hideTimer.current)
-    // Αν δεν χωράει από κάτω, το βγάζουμε από πάνω: σε τελευταία γραμμή
-    // πίνακα το popover θα έβγαινε εκτός οθόνης.
-    const r = wrapRef.current?.getBoundingClientRect()
-    if (r) setAbove(window.innerHeight - r.bottom < 130)
+    place()
     setOpen(true)
   }
-  const hide = () => { hideTimer.current = setTimeout(() => setOpen(false), 180) }
+  const hide = () => { hideTimer.current = setTimeout(() => setOpen(false), 200) }
 
   async function copy() {
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
     } catch {
-      // Κάποιοι browsers αρνούνται το clipboard χωρίς άμεση χειρονομία —
-      // η επιλογή του κειμένου είναι η εφεδρεία, όχι σιωπηλή αποτυχία.
       const el = document.getElementById(`liburl-${fileId}`) as HTMLInputElement | null
       el?.select()
     }
   }
 
-  const label = fileName || 'Άνοιγμα αρχείου'
   const isPdf = mimeType === 'application/pdf'
 
   return (
-    <span ref={wrapRef} className="relative inline-flex items-center"
-      onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide}>
+    <>
       <a
+        ref={anchorRef}
         href={url}
         target="_blank"
         rel="noopener noreferrer"
         onClick={e => e.stopPropagation()}
-        title={label}
+        onMouseEnter={show}
+        onMouseLeave={hide}
+        onFocus={show}
+        onBlur={hide}
+        aria-label={`Άνοιγμα: ${fileName || 'αρχείο'}`}
         className="inline-flex items-center gap-1.5 text-coral hover:text-coral/80 dark:text-coral-light font-medium focus:outline-none focus:ring-2 focus:ring-coral rounded"
       >
         <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
@@ -81,33 +112,55 @@ export default function LibraryFileCell({ fileId, fileName, mimeType }: {
         Άνοιγμα
       </a>
 
-      {open && (
-        <span
-          className={`absolute left-0 z-40 w-[19rem] rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-xl p-3 ${above ? 'bottom-full mb-2' : 'top-full mt-2'}`}
+      {open && pos && (
+        <div
+          role="dialog"
+          aria-label="Σύνδεσμος αρχείου"
+          onMouseEnter={show}
+          onMouseLeave={hide}
           onClick={e => e.stopPropagation()}
+          style={{
+            position: 'fixed', top: pos.top, left: pos.left,
+            width: PANEL_W, boxSizing: 'border-box',
+            // Στοίβα σε στήλη με inline style: το w-full στο κουμπί ΔΕΝ
+            // εφαρμοζόταν και το κουμπί καθόταν δίπλα στο πεδίο, μισό έξω
+            // από το πλαίσιο. Τρίτη φορά που κλάση διάταξης δεν φτάνει στο
+            // στοιχείο σε αυτό το project — η δομή μπαίνει inline.
+            display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 8,
+            zIndex: 60,
+          }}
+          className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-2xl p-3"
         >
-          <span className="block text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+          {fileName && (
+            <p style={{ margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+              className="text-xs font-medium text-charcoal dark:text-gray-100" title={fileName}>
+              {fileName}
+            </p>
+          )}
+          <p style={{ margin: 0 }} className="text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
             Σύνδεσμος
-          </span>
+          </p>
           <input
             id={`liburl-${fileId}`}
             readOnly
             value={url}
             onClick={e => (e.target as HTMLInputElement).select()}
-            className="w-full text-xs font-mono bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 text-charcoal dark:text-gray-100 mb-2"
+            style={{ display: 'block', width: '100%', boxSizing: 'border-box' }}
+            className="text-xs font-mono bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 text-charcoal dark:text-gray-100"
           />
           <button
             type="button"
             onClick={copy}
-            className="w-full px-3 py-1.5 rounded-full bg-coral text-white text-xs font-bold hover:bg-coral/90 transition-colors"
+            style={{ display: 'block', width: '100%', boxSizing: 'border-box' }}
+            className="px-3 py-2 rounded-full bg-coral text-white text-xs font-bold hover:bg-coral/90 transition-colors"
           >
             {copied ? 'Αντιγράφηκε ✓' : 'Αντιγραφή συνδέσμου'}
           </button>
-          <span className="block text-[11px] text-gray-500 dark:text-gray-400 mt-2 leading-snug">
+          <p style={{ margin: 0 }} className="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
             Ανοίγει μόνο για συνδεδεμένα μέλη.
-          </span>
-        </span>
+          </p>
+        </div>
       )}
-    </span>
+    </>
   )
 }

@@ -21,3 +21,34 @@ export const LIB_COLUMNS: Array<{ key: string; label: string }> = [
 ]
 
 export const LIB_DEFAULT_COLS = ['theme', 'subthemes', 'docType', 'file', 'language']
+
+/** Τα 25 είδη αρχείων της τυπολογίας, στη σειρά που τα όρισε η ομάδα */
+export const LIBRARY_DOC_TYPES: string[] = [
+  'Journal Article (Άρθρο Επιστημονικού Περιοδικού)',
+  'Book (Βιβλίο / Μονογραφία)',
+  'Conference Paper, Proceedings & Poster (Άρθρο, Πρακτικά & Αναρτημένη Ανακοίνωση Συνεδρίου)',
+  'Thesis & Dissertation (Ακαδημαϊκή Διατριβή / Διπλωματική Εργασία)',
+  'Academic Article & Paper (Ακαδημαϊκό Δοκίμιο / Μελέτη)',
+  'Report & Analysis (Έκθεση / Τεχνική Αναφορά / Ανάλυση)',
+  'Best Practices & Guidelines (Βέλτιστες Πρακτικές & Κατευθυντήριες Γραμμές)',
+  'Charter & Manifesto (Χάρτης / Διακήρυξη / Μανιφέστο)',
+  'Open Call, Application & Proposal (Πρόταση & Αίτηση Χρηματοδότησης)',
+  'Statute & National Laws (Εθνική Νομοθεσία & Νόμοι)',
+  'EU Directives & EU Laws (Ευρωπαϊκές Οδηγίες & Ευρωπαϊκό Δίκαιο)',
+  'Treaty & International Law (Διεθνείς Συνθήκες & Διεθνές Δίκαιο)',
+  'Legal Case (Δικαστική Απόφαση / Νομολογία)',
+  'Toolkit & Handbook (Εργαλειοθήκη & Εγχειρίδιο)',
+  'Guide & Manual (Οδηγός Εφαρμογής & Τεχνικό Εγχειρίδιο)',
+  'Workbook (Τετράδιο Εργασίας / Πρακτικός Οδηγός)',
+  'News Article (Άρθρο Ειδήσεων)',
+  'e-Publication & Website Content (Ψηφιακή Έκδοση & Περιεχόμενο Ιστοσελίδας)',
+  'Interview (Συνέντευξη)',
+  'Presentation (Παρουσίαση / Διαφάνειες)',
+  'Audio & Podcast (Ηχητικό Αρχείο & Πόντκαστ)',
+  'Video, Film & Broadcast (Βίντεο, Ταινία & Ραδιοτηλεοπτική Εκπομπή)',
+  'Dataset & Statistics (Σύνολα Δεδομένων & Στατιστικά Στοιχεία)',
+  'Figure & Chart (Διάγραμμα, Γράφημα & Οπτικοποίηση)',
+  'Plan & Strategy (Σχέδιο και Στρατηγική)',
+]
+
+export const LIBRARY_LANGUAGES = ['Ελληνικά', 'Αγγλικά', 'Δίγλωσσο', 'Άλλη'] as const

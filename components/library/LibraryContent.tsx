@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import LoadingIndicator from '@/components/LoadingIndicator'
 import FieldsFilter from '@/components/members/FieldsFilter'
 import LibraryFileCell from './LibraryFileCell'
+import LibraryIntroModal from './LibraryIntroModal'
+import LibraryForm from './LibraryForm'
 import { LIB_COLUMNS, LIB_DEFAULT_COLS } from './libraryPrefs'
 import { shortDocType, type LibraryItem } from '@/lib/library'
 import { doesFieldMatchFilter } from '@/lib/memberTaxonomy'
@@ -37,6 +39,11 @@ export default function LibraryContent() {
   const [language, setLanguage] = useState('')
   const [sort, setSort] = useState<{ key: SortKey; dir: Dir }>({ key: 'title', dir: 'asc' })
 
+  const [introSeen, setIntroSeen] = useState(false)
+  const [showIntro, setShowIntro] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [flash, setFlash] = useState<string | null>(null)
+
   useEffect(() => {
     let alive = true
     ;(async () => {
@@ -52,6 +59,7 @@ export default function LibraryContent() {
         setItems(list.items || [])
         if (prefs?.cols) setCols(prefs.cols)
         if (prefs?.density) setDensity(prefs.density)
+        if (prefs?.introSeen) setIntroSeen(true)
       } catch {
         if (alive) setError('Δεν ήταν δυνατή η φόρτωση της βιβλιοθήκης')
       } finally {
@@ -60,6 +68,20 @@ export default function LibraryContent() {
     })()
     return () => { alive = false }
   }, [])
+
+  /** Το ενημερωτικό εμφανίζεται μία φορά — εκτός αν το μέλος ζητήσει αλλιώς */
+  const startAdd = () => (introSeen ? setShowForm(true) : setShowIntro(true))
+
+  const acceptIntro = (dontShowAgain: boolean) => {
+    setShowIntro(false)
+    setShowForm(true)
+    if (dontShowAgain) { setIntroSeen(true); persist({ introSeen: true }) }
+  }
+
+  async function reload() {
+    const r = await fetch('/api/library')
+    if (r.ok) setItems((await r.json()).items || [])
+  }
 
   const persist = (body: Record<string, unknown>) =>
     fetch('/api/library/prefs', {
@@ -199,7 +221,29 @@ export default function LibraryContent() {
               </>
             )}
           </div>
+
+          <button
+            type="button"
+            onClick={startAdd}
+            aria-label="Προσθήκη τεκμηρίου"
+            title="Προσθήκη τεκμηρίου"
+            className="h-9 inline-flex items-center gap-2 px-4 rounded-full bg-coral text-white text-sm font-bold hover:bg-coral/90 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" d="M12 5v14M5 12h14" />
+            </svg>
+            Προσθήκη
+          </button>
         </div>
+
+        {flash && (
+          <div className="rounded-2xl border border-coral/40 bg-coral/10 dark:bg-coral/20 px-5 py-4 mb-5 flex items-start gap-3">
+            <span aria-hidden="true">✓</span>
+            <p className="text-sm text-charcoal dark:text-gray-100 flex-1">{flash}</p>
+            <button type="button" onClick={() => setFlash(null)} aria-label="Κλείσιμο"
+              className="text-gray-400 hover:text-charcoal dark:hover:text-gray-100 leading-none">×</button>
+          </div>
+        )}
 
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
           <span className="notranslate">{rows.length}</span>
@@ -209,7 +253,11 @@ export default function LibraryContent() {
         {items.length === 0 && !error ? (
           <div className="rounded-3xl border border-dashed border-gray-300 dark:border-gray-600 p-14 text-center">
             <p className="text-lg font-bold text-charcoal dark:text-gray-100 mb-1">Η βιβλιοθήκη είναι ακόμη άδεια</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Το πρώτο τεκμήριο μπορεί να είναι δικό σου.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Το πρώτο τεκμήριο μπορεί να είναι δικό σου.</p>
+            <button type="button" onClick={startAdd}
+              className="px-6 py-2.5 rounded-full bg-coral text-white text-sm font-bold hover:bg-coral/90 transition-colors">
+              Προσθήκη τεκμηρίου
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700">
@@ -278,6 +326,22 @@ export default function LibraryContent() {
           </div>
         )}
       </div>
+
+      {showIntro && (
+        <LibraryIntroModal onAccept={acceptIntro} onClose={() => setShowIntro(false)} />
+      )}
+      {showForm && (
+        <LibraryForm
+          onClose={() => setShowForm(false)}
+          onSaved={result => {
+            setShowForm(false)
+            setFlash(result.state === 'pending'
+              ? `Λάβαμε το τεκμήριο. Ο τίτλος μοιάζει με «${result.duplicateOf?.title ?? 'υπάρχον τεκμήριο'}», οπότε θα το ελέγξει ο Βιβλιοθηκάριος πριν δημοσιευτεί.`
+              : 'Το τεκμήριο καταχωρήθηκε και είναι ήδη ορατό σε όλα τα μέλη. Ευχαριστούμε!')
+            reload()
+          }}
+        />
+      )}
     </section>
   )
 }
