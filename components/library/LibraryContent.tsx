@@ -43,6 +43,7 @@ export default function LibraryContent() {
   const [showIntro, setShowIntro] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [flash, setFlash] = useState<string | null>(null)
+  const [librarians, setLibrarians] = useState<Array<{ name: string; until?: string | null }>>([])
 
   useEffect(() => {
     let alive = true
@@ -57,6 +58,7 @@ export default function LibraryContent() {
         const prefs = prefRes.ok ? await prefRes.json() : null
         if (!alive) return
         setItems(list.items || [])
+        setLibrarians(list.librarians || [])
         if (prefs?.cols) setCols(prefs.cols)
         if (prefs?.density) setDensity(prefs.density)
         if (prefs?.introSeen) setIntroSeen(true)
@@ -80,7 +82,10 @@ export default function LibraryContent() {
 
   async function reload() {
     const r = await fetch('/api/library')
-    if (r.ok) setItems((await r.json()).items || [])
+    if (!r.ok) return
+    const j = await r.json()
+    setItems(j.items || [])
+    setLibrarians(j.librarians || [])
   }
 
   const persist = (body: Record<string, unknown>) =>
@@ -344,7 +349,7 @@ export default function LibraryContent() {
       </div>
 
       {showIntro && (
-        <LibraryIntroModal onAccept={acceptIntro} onClose={() => setShowIntro(false)} />
+        <LibraryIntroModal onAccept={acceptIntro} onClose={() => setShowIntro(false)} librarians={librarians} />
       )}
       {showForm && (
         <LibraryForm

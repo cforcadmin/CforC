@@ -11,6 +11,8 @@ import { useState } from 'react'
  * είναι επιλογή του μέλους να την παρακάμψει, όχι προεπιλογή μας.
  */
 
+export interface Librarian { name: string; until?: string | null }
+
 const POINTS: Array<{ icon: string; title: string; text: string }> = [
   {
     icon: '⚖️',
@@ -44,9 +46,18 @@ const POINTS: Array<{ icon: string; title: string; text: string }> = [
   },
 ]
 
-export default function LibraryIntroModal({ onAccept, onClose }: {
+/** Ημερομηνία λήξης θητείας σε αναγνώσιμη μορφή */
+function until(d?: string | null): string {
+  if (!d) return ''
+  const t = Date.parse(d)
+  if (Number.isNaN(t)) return ''
+  return ` (έως ${new Date(t).toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })})`
+}
+
+export default function LibraryIntroModal({ onAccept, onClose, librarians = [] }: {
   onAccept: (dontShowAgain: boolean) => void
   onClose: () => void
+  librarians?: Librarian[]
 }) {
   const [dontShow, setDontShow] = useState(false)
 
@@ -77,6 +88,19 @@ export default function LibraryIntroModal({ onAccept, onClose }: {
               <span>
                 <span className="block text-sm font-bold text-charcoal dark:text-gray-100">{p.title}</span>
                 <span className="block text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{p.text}</span>
+                {p.title === 'Ο ρόλος του Βιβλιοθηκάριου' && librarians.length > 0 && (
+                  <span className="block mt-2 rounded-xl bg-gray-50 dark:bg-gray-700/60 px-3 py-2">
+                    <span className="block text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+                      {librarians.length > 1 ? 'Βιβλιοθηκάριοι αυτή τη στιγμή' : 'Βιβλιοθηκάριος αυτή τη στιγμή'}
+                    </span>
+                    {librarians.map(l => (
+                      <span key={l.name} className="block text-sm text-charcoal dark:text-gray-100">
+                        {l.name}
+                        <span className="text-gray-500 dark:text-gray-400 notranslate">{until(l.until)}</span>
+                      </span>
+                    ))}
+                  </span>
+                )}
               </span>
             </li>
           ))}

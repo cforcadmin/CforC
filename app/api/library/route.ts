@@ -29,9 +29,16 @@ export async function GET(_request: NextRequest) {
   if (!res.ok) {
     return NextResponse.json({ error: 'Αποτυχία φόρτωσης' }, { status: 502 })
   }
+
+  // Ποιοι κρατούν τη θητεία τώρα — φαίνεται στο ενημερωτικό της καταχώρησης,
+  // ώστε το μέλος να ξέρει σε ποιον απευθύνεται. ΜΟΝΟ ονόματα: το email του
+  // Βιβλιοθηκάριου δεν χρειάζεται να το δει όλο το δίκτυο.
+  const libs = await strapiAll('/members?filters[IsLibrarian][$eq]=true&fields[0]=Name&fields[1]=LibrarianUntil')
+
   return NextResponse.json({
     items: res.data.map(shapeItem),
     total: res.total,
     truncated: res.truncated,
+    librarians: libs.data.map((m: any) => ({ name: m.Name, until: m.LibrarianUntil ?? null })),
   })
 }
