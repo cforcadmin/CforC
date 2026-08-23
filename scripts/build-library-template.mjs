@@ -34,6 +34,7 @@ const DOC_TYPES = [
   'Video, Film & Broadcast (Βίντεο, Ταινία & Ραδιοτηλεοπτική Εκπομπή)',
   'Dataset & Statistics (Σύνολα Δεδομένων & Στατιστικά Στοιχεία)',
   'Figure & Chart (Διάγραμμα, Γράφημα & Οπτικοποίηση)',
+  'Plan & Strategy (Σχέδιο και Στρατηγική)',
 ]
 
 const payload = {
