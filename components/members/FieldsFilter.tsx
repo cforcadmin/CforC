@@ -153,6 +153,30 @@ export default function FieldsFilter({
     return `${selectedFields.length} πεδία επιλεγμένα`
   }
 
+  /** Ύφος στο πνεύμα του native menu του συστήματος: στενές γραμμές,
+   *  γεμάτη επιλεγμένη γραμμή με ✓, στρογγυλό πάνελ. Το accent μένει κοραλί
+   *  — το μοβ της δεύτερης εικόνας είναι το χρώμα του λειτουργικού, όχι δικό μας. */
+  const panelCls = compact
+    ? 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-2xl py-1.5 w-72 max-h-96 overflow-y-auto'
+    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl py-2 w-72 max-h-96 overflow-y-auto'
+  const rowBase = compact
+    ? 'w-full text-left pl-8 pr-3 py-1.5 text-sm flex items-center justify-between transition-colors cursor-pointer relative'
+    : 'w-full text-left px-4 py-2.5 text-sm flex items-center justify-between transition-colors cursor-pointer'
+  const rowOn = compact
+    ? 'bg-coral text-white'
+    : 'bg-charcoal dark:bg-coral text-white'
+  const rowHover = compact
+    ? 'bg-coral/15 dark:bg-gray-600 text-charcoal dark:text-white'
+    : 'bg-charcoal/10 dark:bg-gray-600 text-charcoal dark:text-white font-medium'
+  const rowOff = compact
+    ? 'text-charcoal dark:text-gray-200 hover:bg-coral/15 dark:hover:bg-gray-700'
+    : 'text-charcoal dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+  /** Το ✓ μπροστά από την επιλεγμένη γραμμή, όπως στο native menu */
+  const Tick = ({ on }: { on: boolean }) =>
+    compact
+      ? <span aria-hidden="true" className="absolute left-3 text-xs">{on ? '✓' : ''}</span>
+      : null
+
   return (
     <div className="relative" ref={panelRef}>
       {/* Trigger button */}
@@ -198,8 +222,8 @@ export default function FieldsFilter({
       {isOpen && (
         <div className="absolute top-full left-0 mt-2 z-[60] flex">
           {/* Categories panel */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl py-2 w-72 max-h-96 overflow-y-auto">
-            <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+          <div className={panelCls}>
+            <div className={`${compact ? 'px-3 py-1.5' : 'px-3 py-2'} border-b border-gray-100 dark:border-gray-700 flex items-center justify-between`}>
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Κατηγορίες</p>
               {selectedFields.length > 0 && (
                 <button
@@ -227,14 +251,15 @@ export default function FieldsFilter({
                   onMouseEnter={() => handleCategoryMouseEnter(catIndex)}
                   onMouseLeave={handleCategoryMouseLeave}
                   onClick={() => toggleSelection(category.label)}
-                  className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between transition-colors cursor-pointer ${
+                  className={`${rowBase} ${
                     isCategorySelected
-                      ? 'bg-charcoal dark:bg-coral text-white'
+                      ? rowOn
                       : hoveredCategory === catIndex
-                        ? 'bg-charcoal/10 dark:bg-gray-600 text-charcoal dark:text-white font-medium'
-                        : 'text-charcoal dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        ? rowHover
+                        : rowOff
                   }`}
                 >
+                  <Tick on={isCategorySelected} />
                   <span>{category.label}</span>
                   <div className="flex items-center gap-1">
                     {hasSelectedSub && !isCategorySelected && (
@@ -285,14 +310,11 @@ export default function FieldsFilter({
                             setCheckedOptions([])
                           }
                         }}
-                        className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between transition-colors cursor-pointer ${
-                          isAlreadyUsed
-                            ? 'bg-charcoal dark:bg-coral text-white'
-                            : isExpanded
-                              ? 'bg-charcoal/10 dark:bg-gray-600 text-charcoal dark:text-white font-medium'
-                              : 'text-charcoal dark:text-gray-200 hover:bg-charcoal/10 dark:hover:bg-gray-600 hover:text-charcoal dark:hover:text-white'
+                        className={`${rowBase} ${
+                          isAlreadyUsed ? rowOn : isExpanded ? rowHover : rowOff
                         }`}
                       >
+                        <Tick on={isAlreadyUsed} />
                         <span>{isAlreadyUsed ? splittableMatch : subLabel}</span>
                         <div className="flex items-center gap-1">
                           {!isAlreadyUsed && (
@@ -350,12 +372,9 @@ export default function FieldsFilter({
                   <button
                     key={subIndex}
                     onClick={() => toggleSelection(subLabel)}
-                    className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between transition-colors cursor-pointer ${
-                      isSubSelected
-                        ? 'bg-charcoal dark:bg-coral text-white'
-                        : 'text-charcoal dark:text-gray-200 hover:bg-charcoal/10 dark:hover:bg-gray-600 hover:text-charcoal dark:hover:text-white'
-                    }`}
+                    className={`${rowBase} ${isSubSelected ? rowOn : rowOff}`}
                   >
+                    <Tick on={isSubSelected} />
                     <span>{subLabel}</span>
                   </button>
                 )
