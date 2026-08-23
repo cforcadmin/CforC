@@ -121,6 +121,23 @@ export async function POST(request: NextRequest) {
       console.error('library/review: strapi', up.status, (await up.text()).slice(0, 200))
       return NextResponse.json({ error: 'Η ενημέρωση απέτυχε' }, { status: 502 })
     }
+
+    // Τώρα που δημοσιεύτηκε, μπαίνει και στο φύλλο της ομάδας
+    const { appendLibraryRow } = await import('@/lib/librarySheet')
+    await appendLibraryRow({
+      documentId,
+      title: item.Title,
+      description: item.Description ?? null,
+      year: item.Year ?? null,
+      theme: item.Theme,
+      subthemes: Array.isArray(item.Subthemes) ? item.Subthemes : [],
+      docType: item.DocType,
+      sourceUrl: item.SourceUrl ?? null,
+      driveFileId: item.DriveFileId ?? null,
+      language: item.Language ?? null,
+      submittedBy: item.SubmittedBy?.Name || item.SubmittedByName || null,
+    })
+
     return NextResponse.json({ ok: true, state: 'published' })
   }
 

@@ -29,6 +29,8 @@ export const SCOPES = {
   driveWrite: 'https://www.googleapis.com/auth/drive',
   /** Ανάγνωση του φύλλου καταγραφής για την εισαγωγή. */
   sheets: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+  /** Εγγραφή στη «Λίστα περιεχομένων» της βιβλιοθήκης. */
+  sheetsWrite: 'https://www.googleapis.com/auth/spreadsheets',
 } as const
 
 interface ServiceAccount {

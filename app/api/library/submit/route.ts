@@ -134,6 +134,19 @@ export async function POST(request: NextRequest) {
     }
     const created = (await res.json())?.data
 
+    // Καθρέφτισμα στο φύλλο της ομάδας — μόνο για ό,τι δημοσιεύεται. Τα
+    // εκκρεμή γράφονται μετά την έγκριση, ώστε να μην εμφανιστεί στο φύλλο
+    // κάτι που τελικά απορρίπτεται.
+    if (state === 'published' && created?.documentId) {
+      const { appendLibraryRow } = await import('@/lib/librarySheet')
+      await appendLibraryRow({
+        documentId: created.documentId,
+        title, description, year, theme, subthemes, docType,
+        sourceUrl, driveFileId: fileMeta?.id ?? null,
+        language, submittedBy: me?.Name ?? null,
+      })
+    }
+
     // Κάθε email γίνεται await: un-awaited fetch πεθαίνει με το πάγωμα της
     // συνάρτησης — το έχουμε ήδη πληρώσει στα email αποχώρησης.
     const { sendSubmissionThanks, notifyLibrariansOfDuplicate } = await import('@/lib/libraryEmails')
