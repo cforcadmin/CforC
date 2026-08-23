@@ -7,9 +7,17 @@ import type { SplittableSubcategory } from '@/lib/memberTaxonomy'
 interface FieldsFilterProps {
   selectedFields: string[]
   onSelectionChange: (fields: string[]) => void
+  /**
+   * Αν οι σύνθετες υποκατηγορίες ανοίγουν στα μέρη τους.
+   *
+   * ΝΑΙ στα μέλη: κάποιος κάνει Χορό και όχι Θέατρο, και θέλει να το πει.
+   * ΟΧΙ στη βιβλιοθήκη: το τεκμήριο αποθηκεύει πάντα την πλήρη ετικέτα,
+   * οπότε το βελάκι υποσχόταν τρίτο επίπεδο που δεν υπάρχει.
+   */
+  allowSplit?: boolean
 }
 
-export default function FieldsFilter({ selectedFields, onSelectionChange }: FieldsFilterProps) {
+export default function FieldsFilter({ selectedFields, onSelectionChange, allowSplit = true }: FieldsFilterProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [hoveredCategory, setHoveredCategory] = useState<number | null>(null)
   const [expandedSplittable, setExpandedSplittable] = useState<SplittableSubcategory | null>(null)
@@ -239,7 +247,7 @@ export default function FieldsFilter({ selectedFields, onSelectionChange }: Fiel
               {TAXONOMY[hoveredCategory].subcategories.map((sub, subIndex) => {
                 const subLabel = getSubLabel(sub)
                 const isSubSelected = selectedFields.includes(subLabel)
-                const splittable = isSplittable(sub)
+                const splittable = allowSplit && isSplittable(sub)
                 const splittableMatch = splittable ? getSplittableMatch(sub) : null
                 const isAlreadyUsed = !!splittableMatch
                 const isExpanded = expandedSplittable?.label === subLabel
