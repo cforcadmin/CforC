@@ -25,6 +25,8 @@ export const SCOPES = {
   /** Ανάγνωση αρχείων της Ψηφιακής Βιβλιοθήκης από τον φάκελο του Drive.
    *  Τα αρχεία μένουν «Περιορισμένη πρόσβαση»· το site τα σερβίρει στα μέλη. */
   drive: 'https://www.googleapis.com/auth/drive.readonly',
+  /** Ανέβασμα αρχείων της βιβλιοθήκης στον φάκελο του Drive. */
+  driveWrite: 'https://www.googleapis.com/auth/drive',
   /** Ανάγνωση του φύλλου καταγραφής για την εισαγωγή. */
   sheets: 'https://www.googleapis.com/auth/spreadsheets.readonly',
 } as const
@@ -77,8 +79,13 @@ const tokenCache = new Map<string, { token: string; expiresAt: number }>()
  */
 const DELEGATED_SCOPES = new Set<string>([SCOPES.calendarWrite])
 
-export async function getAccessToken(scope: string): Promise<string | null> {
-  const hit = tokenCache.get(scope)
+export async function getAccessToken(scope: string, forceDelegate = false): Promise<string | null> {
+  const impersonate = (forceDelegate || DELEGATED_SCOPES.has(scope)) ? process.env.GOOGLE_IMPERSONATE_USER : null
+  // Το κλειδί της μνήμης ΠΡΕΠΕΙ να περιλαμβάνει την ταυτότητα: με σκέτο scope,
+  // μια κλήση με delegation θα έπαιρνε το αποθηκευμένο token του σκέτου
+  // λογαριασμού υπηρεσίας (ή το αντίστροφο) και θα ενεργούσε ως λάθος χρήστης.
+  const cacheKey = `${scope}|${impersonate || ''}`
+  const hit = tokenCache.get(cacheKey)
   if (hit && hit.expiresAt > Date.now() + 60_000) return hit.token
 
   const sa = serviceAccount()
@@ -86,7 +93,6 @@ export async function getAccessToken(scope: string): Promise<string | null> {
 
   const now = Math.floor(Date.now() / 1000)
   const header = base64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
-  const impersonate = DELEGATED_SCOPES.has(scope) ? process.env.GOOGLE_IMPERSONATE_USER : null
   const claims = base64url(JSON.stringify({
     iss: sa.client_email,
     scope,
@@ -123,7 +129,7 @@ export async function getAccessToken(scope: string): Promise<string | null> {
       console.error('googleAuth: token exchange failed', res.status, json?.error_description || json?.error || '')
       return null
     }
-    tokenCache.set(scope, {
+    tokenCache.set(cacheKey, {
       token: json.access_token,
       expiresAt: Date.now() + (Number(json.expires_in) || 3600) * 1000,
     })

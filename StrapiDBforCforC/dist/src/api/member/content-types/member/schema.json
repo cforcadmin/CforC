@@ -178,6 +178,14 @@
             "default": false,
             "required": false
         },
+        "RenewalClaimedAt": {
+            "type": "datetime",
+            "required": false
+        },
+        "ReminderSentAt": {
+            "type": "datetime",
+            "required": false
+        },
         "AddedToPaidGroup": {
             "type": "boolean",
             "default": false,
@@ -198,22 +206,36 @@
         },
         "Gender": {
             "type": "enumeration",
-            "enum": ["Γυναίκα", "Άνδρας", "Μη-δυαδικό", "Επιθυμώ να μη δηλώσω"],
+            "enum": [
+                "Γυναίκα",
+                "Άνδρας",
+                "Μη-δυαδικό",
+                "Επιθυμώ να μη δηλώσω"
+            ],
             "required": false
         },
         "BAN": {
             "type": "enumeration",
-            "enum": ["Ναι", "Όχι"],
+            "enum": [
+                "Ναι",
+                "Όχι"
+            ],
             "required": false
         },
         "StartFellow": {
             "type": "enumeration",
-            "enum": ["Ναι", "Όχι"],
+            "enum": [
+                "Ναι",
+                "Όχι"
+            ],
             "required": false
         },
         "SocialMediaPresented": {
             "type": "enumeration",
-            "enum": ["Ναι", "Όχι"],
+            "enum": [
+                "Ναι",
+                "Όχι"
+            ],
             "required": false
         },
         "Payments": {
@@ -222,7 +244,10 @@
         },
         "ReceiptType": {
             "type": "enumeration",
-            "enum": ["Φυσικό πρόσωπο", "Εταιρεία"],
+            "enum": [
+                "Φυσικό πρόσωπο",
+                "Εταιρεία"
+            ],
             "default": "Φυσικό πρόσωπο",
             "required": false
         },
@@ -257,6 +282,15 @@
         "CommunityNotes": {
             "type": "text",
             "required": false
+        },
+        "IsLibrarian": {
+            "type": "boolean",
+            "default": false,
+            "description": "Βιβλιοθηκάριος: εποπτεύει την Ανοιχτή Βιβλιοθήκη, εγκρίνει διπλοεγγραφές, επεξεργάζεται και διαγράφει τεκμήρια. Θητεία έξι μηνών."
+        },
+        "LibrarianUntil": {
+            "type": "date",
+            "description": "Λήξη της εξάμηνης θητείας. Ενημερωτικό — δεν αφαιρεί μόνο του τον ρόλο, ώστε να μη μείνει η βιβλιοθήκη χωρίς επόπτη επειδή ξεχάστηκε μια ημερομηνία."
         }
     }
 }
