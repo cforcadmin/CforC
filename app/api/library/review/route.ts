@@ -4,6 +4,7 @@ import { verifyToken } from '@/lib/auth'
 import { strapiAll } from '@/lib/strapiPaged'
 import { shapeItem } from '@/lib/library'
 import { trashFile } from '@/lib/googleDrive'
+import { sharedWordCount } from '@/lib/library'
 
 export const maxDuration = 60
 
@@ -59,11 +60,27 @@ export async function GET() {
   )
   if (!pending.ok) return NextResponse.json({ error: 'Αποτυχία φόρτωσης' }, { status: 502 })
 
+  // Το ιστορικό απορρίψεων: το ίδιο το τεκμήριο έχει διαγραφεί, αλλά ο
+  // Βιβλιοθηκάριος πρέπει να μπορεί να απαντήσει σε ένσταση χωρίς Strapi.
+  const rejected = await strapiAll('/library-rejections?sort=createdAt:desc')
+
   return NextResponse.json({
     items: pending.data.map((r: any) => ({
       ...shapeItem(r),
       submitterEmail: r.SubmittedBy?.Email ?? null,
       existing: r.DuplicateOf ? shapeItem(r.DuplicateOf) : null,
+    })),
+    rejections: rejected.data.map((r: any) => ({
+      documentId: r.documentId,
+      title: r.Title,
+      theme: r.Theme ?? null,
+      duplicateOfTitle: r.DuplicateOfTitle ?? null,
+      submittedByName: r.SubmittedByName ?? null,
+      submittedAt: r.SubmittedAt ?? null,
+      rejectedBy: r.RejectedBy ?? null,
+      rejectedAt: r.createdAt ?? null,
+      reason: r.RejectionReason ?? null,
+      sharedWords: r.SharedWords ?? null,
     })),
   })
 }
@@ -127,6 +144,44 @@ export async function POST(request: NextRequest) {
   // η απόρριψη ήταν λάθος, ακόμη κι όταν η εγγραφή έχει φύγει.
   if (item.DriveFileId) await trashFile(item.DriveFileId).catch(() => {})
 
+  // Το ίχνος γράφεται ΠΡΙΝ τη διαγραφή: μετά, τα στοιχεία δεν υπάρχουν
+  // πουθενά. Χωρίς αυτό, μια ένσταση μέλους («γιατί απορρίφθηκε το δικό
+  // μου;») δεν μπορεί να απαντηθεί.
+  const logged = await strapi('/library-rejections', {
+    method: 'POST',
+    body: JSON.stringify({
+      data: {
+        Title: item.Title,
+        Theme: item.Theme ?? null,
+        DuplicateOfTitle: item.DuplicateOf?.Title ?? null,
+        SubmittedByName: item.SubmittedBy?.Name || item.SubmittedByName || null,
+        SubmittedByEmail: item.SubmittedBy?.Email ?? null,
+        SubmittedAt: item.createdAt ?? null,
+        RejectedBy: auth.name,
+        RejectionReason: body.reason ? String(body.reason).slice(0, 500) : null,
+        // Υπολογίζεται εδώ και δεν έρχεται από τον client: ο αριθμός είναι
+        // στοιχείο του ίχνους, όχι κάτι που δηλώνει ο φυλλομετρητής.
+        SharedWords: item.DuplicateOf?.Title ? sharedWordCount(item.Title, item.DuplicateOf.Title) : null,
+        DriveFileId: item.DriveFileId ?? null,
+      },
+    }),
+  })
+  if (!logged.ok) {
+    // Χωρίς ίχνος δεν διαγράφουμε: καλύτερα να μείνει το τεκμήριο στη βάση
+    // παρά να εξαφανιστεί χωρίς να ξέρει κανείς γιατί.
+    console.error('library/review: το ίχνος απόρριψης απέτυχε', logged.status, (await logged.text()).slice(0, 200))
+    await strapi(`/library-items/${documentId}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        data: {
+          State: 'rejected', ReviewedBy: auth.name, ReviewedAt: new Date().toISOString(),
+          ...(body.reason ? { RejectionReason: String(body.reason).slice(0, 500) } : {}),
+        },
+      }),
+    }).catch(() => {})
+    return NextResponse.json({ ok: true, state: 'rejected', deleted: false, logged: false })
+  }
+
   const del = await strapi(`/library-items/${documentId}`, { method: 'DELETE' })
   if (!del.ok) {
     // Δεν χάθηκε τίποτα, αλλά δεν αφήνουμε το τεκμήριο στην ουρά αναμονής:
@@ -141,8 +196,8 @@ export async function POST(request: NextRequest) {
         },
       }),
     }).catch(() => {})
-    return NextResponse.json({ ok: true, state: 'rejected', deleted: false })
+    return NextResponse.json({ ok: true, state: 'rejected', deleted: false, logged: true })
   }
 
-  return NextResponse.json({ ok: true, state: 'rejected', deleted: true })
+  return NextResponse.json({ ok: true, state: 'rejected', deleted: true, logged: true })
 }

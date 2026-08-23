@@ -17,6 +17,21 @@ interface PendingItem extends LibraryItem {
   existing: LibraryItem | null
 }
 
+interface Rejection {
+  documentId: string
+  title: string
+  theme: string | null
+  duplicateOfTitle: string | null
+  submittedByName: string | null
+  rejectedBy: string | null
+  rejectedAt: string | null
+  reason: string | null
+  sharedWords: number | null
+}
+
+const dt = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleDateString('el-GR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+
 const FIELDS: Array<{ label: string; get: (i: LibraryItem) => string }> = [
   { label: 'Έτος', get: i => String(i.year ?? '—') },
   { label: 'Θεματική', get: i => i.theme || '—' },
@@ -36,6 +51,8 @@ export default function LibraryReview({ focusId, onDone, onClose }: {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
+  const [rejections, setRejections] = useState<Rejection[]>([])
+  const [tab, setTab] = useState<'pending' | 'history'>('pending')
   const [reason, setReason] = useState('')
   const [idx, setIdx] = useState(0)
 
@@ -49,6 +66,7 @@ export default function LibraryReview({ focusId, onDone, onClose }: {
         if (!alive) return
         const list: PendingItem[] = j.items || []
         setItems(list)
+        setRejections(j.rejections || [])
         // Ο σύνδεσμος του email δείχνει σε συγκεκριμένο τεκμήριο
         const at = focusId ? list.findIndex(i => i.documentId === focusId) : -1
         setIdx(at >= 0 ? at : 0)
@@ -75,10 +93,17 @@ export default function LibraryReview({ focusId, onDone, onClose }: {
       if (!r.ok) throw new Error(j?.error || 'Η ενέργεια απέτυχε')
       const rest = items.filter(i => i.documentId !== current.documentId)
       setItems(rest)
+      if (action === 'reject') {
+        // Το νέο ίχνος πρέπει να φαίνεται αμέσως στο ιστορικό
+        fetch('/api/library/review')
+          .then(r => r.ok ? r.json() : null)
+          .then(d => { if (d) setRejections(d.rejections || []) })
+          .catch(() => { /* το ιστορικό δεν αξίζει σφάλμα στην οθόνη */ })
+      }
       setIdx(i => Math.min(i, Math.max(0, rest.length - 1)))
       setReason('')
       onDone()
-      if (rest.length === 0) onClose()
+      if (rest.length === 0 && action === 'approve') onClose()
     } catch (err: any) {
       setError(err?.message || 'Απρόσμενο σφάλμα')
     } finally {
@@ -100,7 +125,58 @@ export default function LibraryReview({ focusId, onDone, onClose }: {
             className="text-gray-400 hover:text-charcoal dark:hover:text-gray-100 text-2xl leading-none">×</button>
         </div>
 
-        {loading ? (
+        <div style={{ display: 'flex', gap: 8 }} className="mb-5">
+          {([['pending', `Σε αναμονή${items.length ? ` (${items.length})` : ''}`],
+             ['history', `Ιστορικό απορρίψεων${rejections.length ? ` (${rejections.length})` : ''}`]] as const).map(([k, l]) => (
+            <button key={k} type="button" onClick={() => setTab(k)}
+              className={`px-4 py-1.5 rounded-full text-sm font-bold border transition-colors ${
+                tab === k ? 'bg-coral text-white border-coral'
+                  : 'border-gray-300 dark:border-gray-600 text-charcoal dark:text-gray-200 hover:border-coral'
+              }`}>{l}</button>
+          ))}
+        </div>
+
+        {tab === 'history' ? (
+          rejections.length === 0 ? (
+            <p className="py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+              Καμία απόρριψη ακόμη.
+            </p>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                    <th className="py-2 px-3 font-medium">Τίτλος</th>
+                    <th className="py-2 px-3 font-medium">Διπλοέγραφε</th>
+                    <th className="py-2 px-3 font-medium">Από</th>
+                    <th className="py-2 px-3 font-medium">Απόρριψη</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rejections.map(r => (
+                    <tr key={r.documentId} className="border-b border-gray-100 dark:border-gray-700 last:border-0 align-top">
+                      <td className="py-2 px-3 text-charcoal dark:text-gray-100">
+                        {r.title}
+                        {r.reason && <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">{r.reason}</span>}
+                      </td>
+                      <td className="py-2 px-3 text-gray-600 dark:text-gray-300">
+                        {r.duplicateOfTitle || '—'}
+                        {r.sharedWords != null && (
+                          <span className="block text-xs text-gray-400 notranslate">{r.sharedWords} κοινές λέξεις</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-3 text-gray-600 dark:text-gray-300">{r.submittedByName || '—'}</td>
+                      <td className="py-2 px-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                        {dt(r.rejectedAt)}
+                        <span className="block text-xs">{r.rejectedBy || ''}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        ) : loading ? (
           <p className="text-base text-gray-400 py-10">Φόρτωση…</p>
         ) : !current ? (
           <div className="py-12 text-center">

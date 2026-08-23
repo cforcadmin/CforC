@@ -265,7 +265,7 @@ export default function LibraryContent() {
             <button
               type="button"
               onClick={() => { setFocusId(null); setShowReview(true) }}
-              aria-label={`Έλεγχος διπλοεγγραφών: ${pendingCount} σε αναμονή`}
+              aria-label={pendingCount > 0 ? `Έλεγχος διπλοεγγραφών: ${pendingCount} σε αναμονή` : 'Έλεγχος διπλοεγγραφών και ιστορικό απορρίψεων'}
               className={`h-9 inline-flex items-center gap-2 px-4 rounded-full border text-sm font-medium transition-colors ${
                 pendingCount > 0
                   ? 'border-coral text-coral dark:text-coral-light bg-coral/10'
