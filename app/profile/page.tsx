@@ -41,6 +41,19 @@ const DASHBOARD_SECTIONS = [
 
 type SectionKey = (typeof DASHBOARD_SECTIONS)[number]['key']
 
+/**
+ * Ενότητες που έχουν πραγματικό περιεχόμενο. Ό,τι ΔΕΝ είναι εδώ δείχνει
+ * την κάρτα «Σύντομα διαθέσιμο».
+ *
+ * Ήταν αλυσίδα από !== και κάθε νέα ενότητα έπρεπε να τη θυμηθεί κανείς:
+ * η Βιβλιοθήκη εμφανίστηκε σωστά ΚΑΙ με το «Σύντομα διαθέσιμο» από κάτω.
+ * Ως σύνολο, η παράλειψη είναι ορατή σε ένα σημείο.
+ */
+const IMPLEMENTED_SECTIONS = new Set<SectionKey>([
+  'profile', 'open-calls', 'newsletters', 'educational',
+  'networks', 'working-groups', 'pocket-guide', 'library',
+])
+
 export default function ProfilePage() {
   const router = useRouter()
   const { user, isAuthenticated, isLoading, refreshSession } = useAuth()
@@ -768,7 +781,7 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {activeSection !== 'profile' && activeSection !== 'open-calls' && activeSection !== 'newsletters' && activeSection !== 'educational' && activeSection !== 'networks' && activeSection !== 'working-groups' && activeSection !== 'pocket-guide' && (
+        {!IMPLEMENTED_SECTIONS.has(activeSection) && (
           <div className="pt-32 pb-24 max-w-4xl mx-auto px-4">
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-12 text-center">
               <div className="w-20 h-20 rounded-full bg-coral/10 dark:bg-coral/20 flex items-center justify-center mx-auto mb-6">
