@@ -1800,3 +1800,53 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
   .cforc-loader__mark path { animation: none; opacity: 1; }
 }
 .accessibility-pause-animations .cforc-loader__mark path { animation: none; opacity: 1; }
+
+/* ──────────────────────────────────────────────────────────────
+   Αναδυόμενο μενού σε ύφος συστήματος (vibrancy)
+   Γραμμένο εδώ και όχι ως utility classes: σε αυτό το project έχουν
+   αποτύχει σιωπηλά επανειλημμένα (grid-cols-7, appearance-none, w-full).
+   Ένας κανόνας στο globals.css φτάνει πάντα στο στοιχείο.
+   ────────────────────────────────────────────────────────────── */
+.menu-glass {
+  background-color: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.dark .menu-glass {
+  background-color: rgba(32, 35, 45, 0.72);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+/* Χωρίς backdrop-filter (παλιότεροι browsers) το διάφανο φόντο κάνει το
+   κείμενο δυσανάγνωστο — εκεί γίνεται συμπαγές. */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .menu-glass { background-color: #ffffff; }
+  .dark .menu-glass { background-color: #1f2230; }
+}
+
+/* Επιλεγμένη γραμμή — μοβ, στο πνεύμα του τονισμού του συστήματος */
+.menu-row-on {
+  background-color: #7C5CFF;
+  color: #ffffff;
+}
+.menu-row-off:hover {
+  background-color: rgba(124, 92, 255, 0.14);
+}
+.dark .menu-row-off:hover {
+  background-color: rgba(124, 92, 255, 0.32);
+}
+.menu-row-hover {
+  background-color: rgba(124, 92, 255, 0.14);
+}
+.dark .menu-row-hover {
+  background-color: rgba(124, 92, 255, 0.32);
+}
+/* Οι διαχωριστικές γραμμές πρέπει να είναι διακριτικές πάνω σε γυαλί */
+.menu-glass .menu-divider {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.dark .menu-glass .menu-divider {
+  border-color: rgba(255, 255, 255, 0.1);
+}
