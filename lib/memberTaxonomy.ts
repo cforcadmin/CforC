@@ -173,10 +173,30 @@ export const TAXONOMY: TaxonomyCategory[] = [
  */
 export const LIBRARY_EXTRA_SUBCATEGORY = 'Άλλο'
 
-export const LIBRARY_TAXONOMY: TaxonomyCategory[] = TAXONOMY.map(cat => ({
-  ...cat,
-  subcategories: [...cat.subcategories, LIBRARY_EXTRA_SUBCATEGORY],
-}))
+/**
+ * Υποθεματικές που ΔΕΝ εμφανίζονται στη βιβλιοθήκη, αν και μένουν στα μέλη.
+ *
+ * Είναι διπλοεγγραφές μετά τις προσθήκες της ομάδας: η «Ανάπτυξη Πολιτικών»
+ * καλύπτεται από την «Πολιτιστική Πολιτική / Συνηγορία», και η κληρονομιά με
+ * την αρχαιολογία πέρασαν στις Τέχνες ως «Υλική»/«Άυλη Πολιτιστική
+ * Κληρονομιά». Στα μέλη μένουν: 6 μέλη έχουν «Πολιτιστική Κληρονομιά» και 4
+ * «Αρχαιολογία», και δεν πειράζουμε δεδομένα που δεν μας ζητήθηκε.
+ */
+const LIBRARY_OMIT: Record<string, string[]> = {
+  'Ανθρωπιστικές & Κοινωνικές Επιστήμες': ['Ανάπτυξη Πολιτικών'],
+  'Αρχιτεκτονική & Χωρικές Πρακτικές': ['Πολιτιστική Κληρονομιά', 'Αρχαιολογία'],
+}
+
+export const LIBRARY_TAXONOMY: TaxonomyCategory[] = TAXONOMY.map(cat => {
+  const omit = LIBRARY_OMIT[cat.label] || []
+  return {
+    ...cat,
+    subcategories: [
+      ...cat.subcategories.filter(sub => !omit.includes(getSubLabel(sub))),
+      LIBRARY_EXTRA_SUBCATEGORY,
+    ],
+  }
+})
 
 /**
  * Check if a value is a known taxonomy value (not custom).
