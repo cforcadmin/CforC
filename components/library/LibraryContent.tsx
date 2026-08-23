@@ -10,7 +10,7 @@ import { LIB_COLUMNS, LIB_DEFAULT_COLS } from './libraryPrefs'
 import { shortDocType, type LibraryItem } from '@/lib/library'
 import { doesFieldMatchFilter } from '@/lib/memberTaxonomy'
 
-type SortKey = 'title' | 'theme' | 'docType' | 'year' | 'language'
+type SortKey = 'title' | 'theme' | 'subthemes' | 'docType' | 'file' | 'language' | 'year' | 'source' | 'submittedBy'
 type Dir = 'asc' | 'desc'
 
 /**
@@ -120,11 +120,27 @@ export default function LibraryContent() {
       return true
     })
     const dir = sort.dir === 'asc' ? 1 : -1
+    // Κάθε στήλη ταξινομείται. Τα κενά πάνε ΠΑΝΤΑ τελευταία, ό,τι φορά κι αν
+    // έχει η ταξινόμηση: μια στήλη με παύλες στην κορυφή δεν λέει τίποτα.
+    const keyOf = (i: LibraryItem): string | number => {
+      switch (sort.key) {
+        case 'year': return i.year ?? Number.NEGATIVE_INFINITY
+        case 'docType': return shortDocType(i.docType)
+        case 'subthemes': return i.subthemes.join(', ')
+        case 'file': return i.fileName ?? ''
+        case 'source': return i.sourceUrl ?? ''
+        case 'submittedBy': return i.submittedBy ?? ''
+        default: return String(i[sort.key] ?? '')
+      }
+    }
     return out.sort((a, b) => {
-      if (sort.key === 'year') return ((a.year ?? 0) - (b.year ?? 0)) * dir
-      const av = String(sort.key === 'docType' ? shortDocType(a.docType) : a[sort.key] ?? '')
-      const bv = String(sort.key === 'docType' ? shortDocType(b.docType) : b[sort.key] ?? '')
-      return av.localeCompare(bv, 'el') * dir
+      const av = keyOf(a), bv = keyOf(b)
+      const aEmpty = av === '' || av === Number.NEGATIVE_INFINITY
+      const bEmpty = bv === '' || bv === Number.NEGATIVE_INFINITY
+      if (aEmpty !== bEmpty) return aEmpty ? 1 : -1
+      if (aEmpty && bEmpty) return 0
+      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir
+      return String(av).localeCompare(String(bv), 'el') * dir
     })
   }, [items, query, docType, language, fields, sort])
 
@@ -266,13 +282,13 @@ export default function LibraryContent() {
                 <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                   <Th label="Τίτλος" k="title" sort={sort} onSort={toggleSort} py={py} />
                   {show('theme') && <Th label="Θεματική" k="theme" sort={sort} onSort={toggleSort} py={py} />}
-                  {show('subthemes') && <th className={`${py} px-3 font-medium`}>Υποθεματική</th>}
+                  {show('subthemes') && <Th label="Υποθεματική" k="subthemes" sort={sort} onSort={toggleSort} py={py} />}
                   {show('docType') && <Th label="Είδος" k="docType" sort={sort} onSort={toggleSort} py={py} />}
-                  {show('file') && <th className={`${py} px-3 font-medium`}>Αρχείο</th>}
+                  {show('file') && <Th label="Αρχείο" k="file" sort={sort} onSort={toggleSort} py={py} />}
                   {show('language') && <Th label="Γλώσσα" k="language" sort={sort} onSort={toggleSort} py={py} />}
                   {show('year') && <Th label="Έτος" k="year" sort={sort} onSort={toggleSort} py={py} />}
-                  {show('source') && <th className={`${py} px-3 font-medium`}>Πηγή</th>}
-                  {show('submittedBy') && <th className={`${py} px-3 font-medium`}>Καταχώρηση</th>}
+                  {show('source') && <Th label="Πηγή" k="source" sort={sort} onSort={toggleSort} py={py} />}
+                  {show('submittedBy') && <Th label="Καταχώρηση" k="submittedBy" sort={sort} onSort={toggleSort} py={py} />}
                 </tr>
               </thead>
               <tbody>
@@ -351,11 +367,14 @@ function Th({ label, k, sort, onSort, py }: {
 }) {
   const active = sort.key === k
   return (
-    <th className={`${py} px-3 font-medium`}>
+    <th className={`${py} px-3 font-medium`} aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
       <button type="button" onClick={() => onSort(k)}
+        aria-label={`Ταξινόμηση κατά ${label}${active ? (sort.dir === 'asc' ? ', αύξουσα' : ', φθίνουσα') : ''}`}
         className={`inline-flex items-center gap-1 hover:text-coral transition-colors ${active ? 'text-coral dark:text-coral-light font-bold' : ''}`}>
         {label}
-        {active && <span className="text-[9px]" aria-hidden="true">{sort.dir === 'asc' ? '▲' : '▼'}</span>}
+        <span className="text-[9px]" aria-hidden="true">
+          {active ? (sort.dir === 'asc' ? '▲' : '▼') : <span className="opacity-30">▲</span>}
+        </span>
       </button>
     </th>
   )
