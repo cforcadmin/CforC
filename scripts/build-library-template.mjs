@@ -6,7 +6,7 @@
  * μελών, φίλτρα, φόρμα εγγραφής). Έτσι η βιβλιοθήκη και τα μέλη δεν μπορούν
  * να αποκλίνουν: αν αλλάξει η ταξινομία, ξανατρέχει αυτό και βγαίνει νέο αρχείο.
  */
-import { TAXONOMY, getSubLabel } from '../lib/memberTaxonomy'
+import { LIBRARY_TAXONOMY, getSubLabel } from '../lib/memberTaxonomy'
 import { writeFileSync } from 'fs'
 
 const DOC_TYPES = [
@@ -37,8 +37,8 @@ const DOC_TYPES = [
 ]
 
 const payload = {
-  themes: TAXONOMY.map(c => c.label),
-  pairs: TAXONOMY.flatMap(c => c.subcategories.map(s => [c.label, getSubLabel(s)])),
+  themes: LIBRARY_TAXONOMY.map(c => c.label),
+  pairs: LIBRARY_TAXONOMY.flatMap(c => c.subcategories.map(s => [c.label, getSubLabel(s)])),
   docTypes: DOC_TYPES,
 }
 
