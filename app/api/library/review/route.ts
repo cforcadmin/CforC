@@ -92,33 +92,57 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Έχει ήδη κριθεί', alreadyDecided: item.State }, { status: 409 })
   }
 
-  const patch: Record<string, unknown> = {
-    State: action === 'approve' ? 'published' : 'rejected',
-    ReviewedBy: auth.name,
-    ReviewedAt: new Date().toISOString(),
-  }
-  if (action === 'reject' && body.reason) patch.RejectionReason = String(body.reason).slice(0, 500)
-
-  const up = await strapi(`/library-items/${documentId}`, { method: 'PUT', body: JSON.stringify({ data: patch }) })
-  if (!up.ok) {
-    console.error('library/review: strapi', up.status, (await up.text()).slice(0, 200))
-    return NextResponse.json({ error: 'Η ενημέρωση απέτυχε' }, { status: 502 })
-  }
-
-  if (action === 'reject') {
-    // Το αντίγραφο δεν χρειάζεται πια. Στον κάδο, ΟΧΙ οριστική διαγραφή:
-    // αν η απόρριψη ήταν λάθος, το αρχείο επαναφέρεται.
-    if (item.DriveFileId) await trashFile(item.DriveFileId).catch(() => {})
-
-    const { sendDuplicateRejection } = await import('@/lib/libraryEmails')
-    await sendDuplicateRejection({
-      to: item.SubmittedBy?.Email || '',
-      name: item.SubmittedBy?.Name || item.SubmittedByName || '',
-      title: item.Title,
-      existingTitle: item.DuplicateOf?.Title || 'υπάρχον τεκμήριο',
-      reason: body.reason || undefined,
-    }).catch((err: unknown) => console.error('library/review: email απόρριψης', err))
+  // ── ΕΓΚΡΙΣΗ ────────────────────────────────────────────────
+  if (action === 'approve') {
+    const up = await strapi(`/library-items/${documentId}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        data: { State: 'published', ReviewedBy: auth.name, ReviewedAt: new Date().toISOString() },
+      }),
+    })
+    if (!up.ok) {
+      console.error('library/review: strapi', up.status, (await up.text()).slice(0, 200))
+      return NextResponse.json({ error: 'Η ενημέρωση απέτυχε' }, { status: 502 })
+    }
+    return NextResponse.json({ ok: true, state: 'published' })
   }
 
-  return NextResponse.json({ ok: true, state: patch.State })
+  // ── ΑΠΟΡΡΙΨΗ: το τεκμήριο ΔΙΑΓΡΑΦΕΤΑΙ ──────────────────────
+  // Μια απορριφθείσα διπλοεγγραφή δεν είναι ιστορικό, είναι σκουπίδι: το
+  // περιεχόμενο υπάρχει ήδη στον κατάλογο. Αν έμενε ως «rejected» θα
+  // βάραινε κάθε ερώτημα και θα εμφανιζόταν στο Strapi σαν εκκρεμότητα.
+  //
+  // Η ΣΕΙΡΑ ΕΧΕΙ ΣΗΜΑΣΙΑ: πρώτα το email, γιατί χρειάζεται τα στοιχεία της
+  // εγγραφής· μετά το αρχείο· τελευταία η εγγραφή.
+  const { sendDuplicateRejection } = await import('@/lib/libraryEmails')
+  await sendDuplicateRejection({
+    to: item.SubmittedBy?.Email || '',
+    name: item.SubmittedBy?.Name || item.SubmittedByName || '',
+    title: item.Title,
+    existingTitle: item.DuplicateOf?.Title || 'υπάρχον τεκμήριο',
+    reason: body.reason || undefined,
+  }).catch((err: unknown) => console.error('library/review: email απόρριψης', err))
+
+  // Στον κάδο του Drive, ΟΧΙ οριστική διαγραφή: το αρχείο επαναφέρεται αν
+  // η απόρριψη ήταν λάθος, ακόμη κι όταν η εγγραφή έχει φύγει.
+  if (item.DriveFileId) await trashFile(item.DriveFileId).catch(() => {})
+
+  const del = await strapi(`/library-items/${documentId}`, { method: 'DELETE' })
+  if (!del.ok) {
+    // Δεν χάθηκε τίποτα, αλλά δεν αφήνουμε το τεκμήριο στην ουρά αναμονής:
+    // το σημαίνουμε ως απορριφθέν ώστε να φύγει από τον πάγκο ελέγχου.
+    console.error('library/review: η διαγραφή απέτυχε', del.status)
+    await strapi(`/library-items/${documentId}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        data: {
+          State: 'rejected', ReviewedBy: auth.name, ReviewedAt: new Date().toISOString(),
+          ...(body.reason ? { RejectionReason: String(body.reason).slice(0, 500) } : {}),
+        },
+      }),
+    }).catch(() => {})
+    return NextResponse.json({ ok: true, state: 'rejected', deleted: false })
+  }
+
+  return NextResponse.json({ ok: true, state: 'rejected', deleted: true })
 }
