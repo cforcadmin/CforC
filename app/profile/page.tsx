@@ -15,6 +15,7 @@ import ConfirmationModal from '@/components/ConfirmationModal'
 import ProfileGuidelinesModal from '@/components/profile/ProfileGuidelinesModal'
 import OpenCallsContent from '@/components/OpenCallsContent'
 import NewslettersContent from '@/components/NewslettersContent'
+import LibraryContent from '@/components/library/LibraryContent'
 import EducationalMaterialContent from '@/components/EducationalMaterialContent'
 import NetworksContent from '@/components/NetworksContent'
 import WorkingGroupsContent from '@/components/WorkingGroupsContent'
@@ -35,6 +36,7 @@ const DASHBOARD_SECTIONS = [
   { key: 'working-groups', label: 'Ομάδες Εργασίας', heroTitle: 'ΟΜΑΔΕΣ ΕΡΓΑΣΙΑΣ' },
   { key: 'pocket-guide', label: 'Οδηγός Τσέπης', heroTitle: 'ΟΔΗΓΟΣ ΤΣΕΠΗΣ' },
   { key: 'newsletters', label: 'Newsletters', heroTitle: 'NEWSLETTERS' },
+  { key: 'library', label: 'Βιβλιοθήκη', heroTitle: 'ΒΙΒΛΙΟΘΗΚΗ' },
 ] as const
 
 type SectionKey = (typeof DASHBOARD_SECTIONS)[number]['key']
@@ -724,6 +726,21 @@ export default function ProfilePage() {
         {activeSection === 'newsletters' && (
           <div className="pt-20">
             <NewslettersContent />
+          </div>
+        )}
+
+        {activeSection === 'library' && (
+          <div className="pt-20">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+              <h2 className="text-3xl sm:text-4xl font-bold text-charcoal dark:text-gray-100">
+                CforC Ανοιχτή βιβλιοθήκη
+              </h2>
+              <p className="mt-2 text-base text-gray-600 dark:text-gray-300 max-w-3xl">
+                Συλλογικά επιμελημένο υλικό για τον πολιτισμό — μελέτες, οδηγοί, νομοθεσία και
+                εργαλεία. Για εσωτερική και εκπαιδευτική χρήση των μελών του δικτύου.
+              </p>
+            </div>
+            <LibraryContent />
           </div>
         )}
 
