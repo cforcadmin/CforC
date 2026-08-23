@@ -12,6 +12,9 @@ export const maxDuration = 60
  * Επιστρέφει ΜΟΝΟ τα δημοσιευμένα. Τα «pending» (ύποπτα για διπλοεγγραφή)
  * και τα «rejected» τα βλέπει ο Βιβλιοθηκάριος από τη δική του διαδρομή.
  */
+const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
+const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
+
 export async function GET(_request: NextRequest) {
   const cookieStore = await cookies()
   const session = cookieStore.get('session')
@@ -35,10 +38,29 @@ export async function GET(_request: NextRequest) {
   // Βιβλιοθηκάριου δεν χρειάζεται να το δει όλο το δίκτυο.
   const libs = await strapiAll('/members?filters[IsLibrarian][$eq]=true&fields[0]=Name&fields[1]=LibrarianUntil')
 
+  // Είναι ο ίδιος Βιβλιοθηκάριος; Μόνο για να δείξουμε το κουμπί — η
+  // διαδρομή ελέγχου ξαναελέγχει τον ρόλο μόνη της.
+  let isLibrarian = false
+  let pendingCount = 0
+  try {
+    const meRes = await fetch(`${STRAPI_URL}/api/members/${decoded.memberId}?fields[0]=IsLibrarian`, {
+      headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store',
+    })
+    isLibrarian = !!(await meRes.json().catch(() => null))?.data?.IsLibrarian
+    if (isLibrarian) {
+      const pRes = await fetch(`${STRAPI_URL}/api/library-items?filters[State][$eq]=pending&pagination[pageSize]=1`, {
+        headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store',
+      })
+      pendingCount = (await pRes.json().catch(() => null))?.meta?.pagination?.total ?? 0
+    }
+  } catch { /* το κουμπί απλώς δεν εμφανίζεται */ }
+
   return NextResponse.json({
     items: res.data.map(shapeItem),
     total: res.total,
     truncated: res.truncated,
     librarians: libs.data.map((m: any) => ({ name: m.Name, until: m.LibrarianUntil ?? null })),
+    isLibrarian,
+    pendingCount,
   })
 }

@@ -6,6 +6,7 @@ import FieldsFilter from '@/components/members/FieldsFilter'
 import LibraryFileCell from './LibraryFileCell'
 import LibraryIntroModal from './LibraryIntroModal'
 import LibraryForm from './LibraryForm'
+import LibraryReview from './LibraryReview'
 import { LIB_COLUMNS, LIB_DEFAULT_COLS } from './libraryPrefs'
 import { shortDocType, type LibraryItem } from '@/lib/library'
 import { doesFieldMatchFilter } from '@/lib/memberTaxonomy'
@@ -44,6 +45,17 @@ export default function LibraryContent() {
   const [showForm, setShowForm] = useState(false)
   const [flash, setFlash] = useState<string | null>(null)
   const [librarians, setLibrarians] = useState<Array<{ name: string; until?: string | null }>>([])
+  const [isLibrarian, setIsLibrarian] = useState(false)
+  const [pendingCount, setPendingCount] = useState(0)
+  const [showReview, setShowReview] = useState(false)
+  const [focusId, setFocusId] = useState<string | null>(null)
+
+  // Ο σύνδεσμος στο email του Βιβλιοθηκάριου ανοίγει κατευθείαν το τεκμήριο
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search)
+    const id = p.get('review')
+    if (id) { setFocusId(id); setShowReview(true) }
+  }, [])
 
   useEffect(() => {
     let alive = true
@@ -59,6 +71,8 @@ export default function LibraryContent() {
         if (!alive) return
         setItems(list.items || [])
         setLibrarians(list.librarians || [])
+        setIsLibrarian(!!list.isLibrarian)
+        setPendingCount(list.pendingCount || 0)
         if (prefs?.cols) setCols(prefs.cols)
         if (prefs?.density) setDensity(prefs.density)
         if (prefs?.introSeen) setIntroSeen(true)
@@ -86,6 +100,8 @@ export default function LibraryContent() {
     const j = await r.json()
     setItems(j.items || [])
     setLibrarians(j.librarians || [])
+    setIsLibrarian(!!j.isLibrarian)
+    setPendingCount(j.pendingCount || 0)
   }
 
   const persist = (body: Record<string, unknown>) =>
@@ -243,6 +259,29 @@ export default function LibraryContent() {
             )}
           </div>
 
+          {isLibrarian && (
+            <button
+              type="button"
+              onClick={() => { setFocusId(null); setShowReview(true) }}
+              aria-label={`Έλεγχος διπλοεγγραφών: ${pendingCount} σε αναμονή`}
+              className={`h-9 inline-flex items-center gap-2 px-4 rounded-full border text-sm font-medium transition-colors ${
+                pendingCount > 0
+                  ? 'border-coral text-coral dark:text-coral-light bg-coral/10'
+                  : 'border-gray-300 dark:border-gray-600 text-charcoal dark:text-gray-100 bg-white dark:bg-gray-700'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Έλεγχος
+              {pendingCount > 0 && (
+                <span className="notranslate inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-coral text-white text-[11px] font-bold">
+                  {pendingCount}
+                </span>
+              )}
+            </button>
+          )}
+
           <button
             type="button"
             onClick={startAdd}
@@ -350,6 +389,21 @@ export default function LibraryContent() {
 
       {showIntro && (
         <LibraryIntroModal onAccept={acceptIntro} onClose={() => setShowIntro(false)} librarians={librarians} />
+      )}
+      {showReview && (
+        <LibraryReview
+          focusId={focusId}
+          onDone={reload}
+          onClose={() => {
+            setShowReview(false); setFocusId(null)
+            // Καθαρίζουμε το ?review= ώστε ένα refresh να μην ξανανοίγει το παράθυρο
+            const u = new URL(window.location.href)
+            if (u.searchParams.has('review')) {
+              u.searchParams.delete('review')
+              window.history.replaceState({}, '', u.toString())
+            }
+          }}
+        />
       )}
       {showForm && (
         <LibraryForm
