@@ -72,7 +72,10 @@ async function main() {
     let replaceId: string | undefined
     if (replace) {
       const q = encodeURIComponent(`'${folder}' in parents and name='${name.replace(/'/g, "\\'")}' and trashed=false`)
-      const l: any = await (await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&supportsAllDrives=true`,
+      // includeItemsFromAllDrives είναι ΑΠΑΡΑΙΤΗΤΟ: χωρίς αυτό το Drive
+      // επιστρέφει κενή λίστα για φάκελο που είναι απλώς μοιρασμένος μαζί μας,
+      // και το --replace θα έφτιαχνε σιωπηλά δεύτερο αρχείο αντί να αντικαταστήσει.
+      const l: any = await (await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&supportsAllDrives=true&includeItemsFromAllDrives=true`,
         { headers: { Authorization: `Bearer ${token}` } })).json()
       replaceId = l.files?.[0]?.id
     }
