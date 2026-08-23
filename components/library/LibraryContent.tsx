@@ -198,7 +198,7 @@ export default function LibraryContent() {
 
           {/* allowSplit=false: το τεκμήριο κρατά πάντα την πλήρη ετικέτα, οπότε
               το βελάκι θα υποσχόταν τρίτο επίπεδο που δεν υπάρχει. */}
-          <FieldsFilter selectedFields={fields} onSelectionChange={setFields} allowSplit={false} />
+          <FieldsFilter selectedFields={fields} onSelectionChange={setFields} allowSplit={false} variant="compact" />
 
           <div className="relative">
             <select value={docType} onChange={e => setDocType(e.target.value)}

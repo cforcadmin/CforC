@@ -15,9 +15,18 @@ interface FieldsFilterProps {
    * οπότε το βελάκι υποσχόταν τρίτο επίπεδο που δεν υπάρχει.
    */
   allowSplit?: boolean
+  /**
+   * 'default' — το κουμπί των μελών: ψηλό, με έντονο περίγραμμα.
+   * 'compact' — ταιριάζει με τα διπλανά select της βιβλιοθήκης: h-9,
+   *   ήπιο περίγραμμα, μικρό γκρι βελάκι.
+   */
+  variant?: 'default' | 'compact'
 }
 
-export default function FieldsFilter({ selectedFields, onSelectionChange, allowSplit = true }: FieldsFilterProps) {
+export default function FieldsFilter({
+  selectedFields, onSelectionChange, allowSplit = true, variant = 'default',
+}: FieldsFilterProps) {
+  const compact = variant === 'compact'
   const [isOpen, setIsOpen] = useState(false)
   const [hoveredCategory, setHoveredCategory] = useState<number | null>(null)
   const [expandedSplittable, setExpandedSplittable] = useState<SplittableSubcategory | null>(null)
@@ -149,10 +158,14 @@ export default function FieldsFilter({ selectedFields, onSelectionChange, allowS
       {/* Trigger button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`px-3 py-3 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral text-left flex items-center gap-2 w-44 md:w-56 transition-colors ${
+        className={`border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral text-left flex items-center gap-2 transition-colors ${
+          compact ? 'h-9 px-4 w-44 md:w-52' : 'px-3 py-3 w-44 md:w-56'
+        } ${
           selectedFields.length > 0
             ? 'border-charcoal dark:border-gray-100 bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900 font-medium'
-            : 'border-charcoal dark:border-gray-400 dark:bg-gray-700 text-charcoal dark:text-gray-200'
+            : compact
+              ? 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100'
+              : 'border-charcoal dark:border-gray-400 dark:bg-gray-700 text-charcoal dark:text-gray-200'
         }`}
       >
         <span className="flex-1 truncate">{getTriggerLabel()}</span>
@@ -171,15 +184,19 @@ export default function FieldsFilter({ selectedFields, onSelectionChange, allowS
           </span>
         )}
         {selectedFields.length === 0 && (
-          <svg className={`w-4 h-4 text-coral dark:text-coral-light transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+          compact
+            ? <span aria-hidden="true" className="text-gray-400 text-[10px] flex-shrink-0">▼</span>
+            : (
+              <svg className={`w-4 h-4 text-coral dark:text-coral-light transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            )
         )}
       </button>
 
       {/* Popover panel */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 z-50 flex">
+        <div className="absolute top-full left-0 mt-2 z-[60] flex">
           {/* Categories panel */}
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl py-2 w-72 max-h-96 overflow-y-auto">
             <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
