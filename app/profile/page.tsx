@@ -744,7 +744,10 @@ export default function ProfilePage() {
 
         {activeSection === 'library' && (
           <div className="pt-20">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+            {/* pt-24 όπως και οι άλλες ενότητες: εκείνες το παίρνουν από το
+                py-24 του component τους, εδώ ο τίτλος είναι έξω από αυτό και
+                κολλούσε στο hero. */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 mb-8">
               <h2 className="text-3xl sm:text-4xl font-bold text-charcoal dark:text-gray-100">
                 CforC Ανοιχτή βιβλιοθήκη
               </h2>
