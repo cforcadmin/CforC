@@ -65,7 +65,10 @@ export default function LibraryIntroModal({ onAccept, onClose, librarians = [], 
   const [dontShow, setDontShow] = useState(false)
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+    // Με inline zIndex: όταν ανοίγει ΠΑΝΩ από τη φόρμα «Νέο τεκμήριο» (κι
+    // εκείνη z-50), η σειρά στο DOM την έκρυβε πίσω της.
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
+      style={{ zIndex: manual ? 80 : 50 }} onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"

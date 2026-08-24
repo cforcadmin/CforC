@@ -400,16 +400,20 @@ export default function LibraryContent() {
                           το βάρος 500 δεν ξεχωρίζει από το κανονικό. Στο 600 ο
                           browser συνθέτει έντονη Arial και τα ελληνικά
                           «χοντραίνουν» όσο και τα λατινικά. */}
-                      {isNew(it.submittedAt) && (
-                        <span className="inline-block align-middle mr-2 px-2 py-0.5 rounded-full bg-coral text-white text-[10px] font-bold uppercase">Νέο</span>
-                      )}
-                      <span
-                        title={it.description || undefined}
-                        tabIndex={it.description ? 0 : -1}
-                        className={`font-semibold text-charcoal dark:text-gray-100 ${it.description ? 'cursor-help decoration-dotted underline-offset-4 hover:underline' : ''}`}
-                        style={CELL_CLAMP}
-                      >
-                        {it.title}
+                      {/* Σήμα ΔΕΞΙΑ του τίτλου, στην ίδια γραμμή — μπροστά του
+                          έσπαγε σε δική του γραμμή λόγω του line-clamp */}
+                      <span style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                        <span
+                          title={it.description || undefined}
+                          tabIndex={it.description ? 0 : -1}
+                          className={`font-semibold text-charcoal dark:text-gray-100 ${it.description ? 'cursor-help decoration-dotted underline-offset-4 hover:underline' : ''}`}
+                          style={{ ...CELL_CLAMP, minWidth: 0 }}
+                        >
+                          {it.title}
+                        </span>
+                        {isNew(it.submittedAt) && (
+                          <span style={{ flexShrink: 0 }} className="px-2 py-0.5 rounded-full bg-coral text-white text-[10px] font-bold uppercase">Νέο</span>
+                        )}
                       </span>
                     </td>
                     {show('theme') && (

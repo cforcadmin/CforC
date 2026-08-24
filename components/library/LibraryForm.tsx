@@ -25,6 +25,16 @@ const RESET_SELECT: React.CSSProperties = {
 const input = 'rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-base text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral'
 const label = 'block text-sm font-bold text-gray-600 dark:text-gray-300 mb-1'
 
+/** Ετικέτα που κοκκινίζει και λέει τι λείπει, δίπλα στο όνομα του πεδίου */
+function FieldLabel({ htmlFor, text, err }: { htmlFor?: string; text: string; err?: string }) {
+  return (
+    <label className={`block text-sm font-bold mb-1 ${err ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-300'}`} htmlFor={htmlFor}>
+      {text}
+      {err && <span className="font-normal"> — {err}</span>}
+    </label>
+  )
+}
+
 /** Μετρητής όπως στο προφίλ: εμφανίζεται πάντα, κοκκινίζει στο όριο */
 function Counter({ len, max }: { len: number; max: number }) {
   return (
@@ -59,7 +69,21 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Σφάλμα ΑΝΑ πεδίο, δίπλα στην ετικέτα του — ένα γενικό μήνυμα στο τέλος
+  // ανάγκαζε τον χρήστη να μαντέψει ποιο πεδίο φταίει.
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [showYears, setShowYears] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  const clearFieldError = (k: string) =>
+    setFieldErrors(p => (k in p ? Object.fromEntries(Object.entries(p).filter(([x]) => x !== k)) : p))
+
+  const YEARS = (() => {
+    const max = new Date().getFullYear() + 1
+    const out: number[] = []
+    for (let y = max; y >= LIMITS.yearMin; y--) out.push(y)
+    return out
+  })()
 
   const subOptions = useMemo(() => {
     const cat = LIBRARY_TAXONOMY.find(c => c.label === theme)
@@ -108,11 +132,18 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    if (!title.trim()) return setError('Συμπλήρωσε τον τίτλο.')
-    if (!theme) return setError('Διάλεξε θεματική.')
-    if (!docType) return setError('Διάλεξε είδος αρχείου.')
-    if (!editing && !file && !sourceUrl.trim()) return setError('Χρειάζεται αρχείο ή σύνδεσμος πηγής.')
-    if (secondary.some(b => !b.theme)) return setError('Μια δευτερεύουσα θεματική έμεινε κενή — διάλεξε ή αφαίρεσέ τη.')
+    // Όλα τα σφάλματα ΜΑΖΙ, το καθένα δίπλα στο πεδίο του
+    const errs: Record<string, string> = {}
+    if (!title.trim()) errs.title = 'Ξέχασες να βάλεις τον τίτλο.'
+    if (!theme) errs.theme = 'Ξέχασες να διαλέξεις θεματική.'
+    if (!docType) errs.docType = 'Ξέχασες να διαλέξεις είδος.'
+    if (!editing && !file && !sourceUrl.trim()) errs.file = 'Χρειάζεται αρχείο ή σύνδεσμος πηγής — τουλάχιστον ένα.'
+    secondary.forEach((b, i) => { if (!b.theme) errs[`sec-${i}`] = 'Διάλεξε θεματική ή αφαίρεσέ τη.' })
+    setFieldErrors(errs)
+    if (Object.keys(errs).length) {
+      setError(Object.keys(errs).length === 1 ? 'Λείπει ένα πεδίο — δες την κόκκινη ένδειξη.' : `Λείπουν ${Object.keys(errs).length} πεδία — δες τις κόκκινες ενδείξεις.`)
+      return
+    }
 
     setBusy(true)
     try {
@@ -223,9 +254,9 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
 
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label className={label} htmlFor="lib-title">Τίτλος *</label>
+            <FieldLabel htmlFor="lib-title" text="Τίτλος *" err={fieldErrors.title} />
             <input id="lib-title" value={title} maxLength={LIMITS.title}
-              onChange={e => setTitle(e.target.value)}
+              onChange={e => { setTitle(e.target.value); clearFieldError('title') }}
               style={FULL} className={input} placeholder="Ο πλήρης τίτλος του τεκμηρίου" />
             <Counter len={title.length} max={LIMITS.title} />
           </div>
@@ -241,13 +272,39 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <label className={label} htmlFor="lib-theme">Θεματική *</label>
-              {themeSelect(theme, usedThemes, pickTheme, 'lib-theme')}
+              <FieldLabel htmlFor="lib-theme" text="Θεματική *" err={fieldErrors.theme} />
+              {themeSelect(theme, usedThemes, t => { pickTheme(t); clearFieldError('theme') }, 'lib-theme')}
             </div>
             <div>
               <label className={label} htmlFor="lib-year">Έτος κυκλοφορίας</label>
-              <input id="lib-year" value={year} onChange={e => setYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                inputMode="numeric" style={FULL} className={input} placeholder="2026" />
+              <div style={{ position: 'relative' }}>
+                <input id="lib-year" value={year}
+                  onChange={e => setYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  onFocus={() => setShowYears(true)}
+                  inputMode="numeric" style={{ ...FULL, paddingRight: '2rem' }} className={input} placeholder="2026" />
+                <button type="button" aria-label="Επιλογή έτους από λίστα"
+                  onClick={() => setShowYears(v => !v)}
+                  style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)' }}
+                  className="text-gray-400 hover:text-coral text-[10px] px-1">▼</button>
+                {showYears && (
+                  <>
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 55 }} onClick={() => setShowYears(false)} aria-hidden="true" />
+                    <div className="menu-glass rounded-xl"
+                      style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, maxHeight: 200, overflowY: 'auto', zIndex: 56 }}>
+                      {YEARS.map(y => (
+                        <button key={y} type="button"
+                          onClick={() => { setYear(String(y)); setShowYears(false) }}
+                          className={`notranslate block w-full text-left px-4 py-1 text-sm ${
+                            String(y) === year ? 'menu-row-on' : 'menu-row-off text-charcoal dark:text-gray-100'
+                          }`}
+                          style={{ display: 'block', width: '100%', boxSizing: 'border-box' }}>
+                          {y}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
@@ -267,12 +324,20 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
               <div key={i} className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 p-4"
                 style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Δευτερεύουσα θεματική</span>
+                  <span className={`text-sm font-bold ${fieldErrors[`sec-${i}`] ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-300'}`}>
+                    Δευτερεύουσα θεματική
+                    {fieldErrors[`sec-${i}`] && <span className="font-normal"> — {fieldErrors[`sec-${i}`]}</span>}
+                  </span>
                   <button type="button" onClick={() => removeSecondary(i)} aria-label="Αφαίρεση δευτερεύουσας θεματικής"
                     className="text-gray-400 hover:text-red-500 text-lg leading-none">×</button>
                 </div>
-                {themeSelect(block.theme, usedThemes, t => setSecondaryTheme(i, t), `lib-sec-${i}`)}
-                {block.theme && subChips(opts, block.subthemes, s => toggleSecondarySub(i, s))}
+                {themeSelect(block.theme, usedThemes, t => { setSecondaryTheme(i, t); clearFieldError(`sec-${i}`) }, `lib-sec-${i}`)}
+                {block.theme && (
+                  <div>
+                    <span className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Υποθεματικές της δευτερεύουσας</span>
+                    {subChips(opts, block.subthemes, s => toggleSecondarySub(i, s))}
+                  </div>
+                )}
               </div>
             )
           })}
@@ -285,9 +350,9 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <label className={label} htmlFor="lib-type">Είδος αρχείου *</label>
+              <FieldLabel htmlFor="lib-type" text="Είδος αρχείου *" err={fieldErrors.docType} />
               <div style={{ position: 'relative' }}>
-                <select id="lib-type" value={docType} onChange={e => setDocType(e.target.value)}
+                <select id="lib-type" value={docType} onChange={e => { setDocType(e.target.value); clearFieldError('docType') }}
                   style={RESET_SELECT} className={input}>
                   <option value="">— Διάλεξε —</option>
                   {LIBRARY_DOC_TYPES.map(d => <option key={d} value={d}>{shortDocType(d)}</option>)}
@@ -311,7 +376,7 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
           <div>
             <label className={label} htmlFor="lib-src">Σύνδεσμος πηγής (εκδότη)</label>
             <input id="lib-src" value={sourceUrl ?? ''} maxLength={LIMITS.sourceUrl}
-              onChange={e => setSourceUrl(e.target.value)}
+              onChange={e => { setSourceUrl(e.target.value); clearFieldError('file') }}
               style={FULL} className={input} placeholder="https://…" />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Προαιρετικό, αλλά προτιμότερο όπου υπάρχει — σωστή απόδοση και κανένα ζήτημα δικαιωμάτων.
@@ -319,8 +384,8 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
           </div>
 
           <div>
-            <span className={label}>{editing ? 'Αντικατάσταση αρχείου (προαιρετικό)' : 'Αρχείο'}</span>
-            <input ref={fileRef} type="file" onChange={e => setFile(e.target.files?.[0] ?? null)}
+            <FieldLabel text={editing ? 'Αντικατάσταση αρχείου (προαιρετικό)' : 'Αρχείο'} err={fieldErrors.file} />
+            <input ref={fileRef} type="file" onChange={e => { setFile(e.target.files?.[0] ?? null); clearFieldError('file') }}
               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.epub,.txt,.csv,.png,.jpg,.jpeg"
               style={FULL}
               className="text-sm text-charcoal dark:text-gray-200 file:mr-3 file:px-4 file:py-2 file:rounded-full file:border-0 file:bg-coral file:text-white file:text-sm file:font-bold" />
