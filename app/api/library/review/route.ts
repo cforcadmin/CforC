@@ -174,7 +174,9 @@ export async function POST(request: NextRequest) {
     body: JSON.stringify({
       data: {
         Title: item.Title,
-        Theme: item.Theme ?? null,
+        // Και οι δευτερεύουσες στο ίχνος, μέσα στο ίδιο πεδίο κειμένου —
+        // η συλλογή του ιστορικού δεν χρειάζεται δικό της σχήμα γι' αυτό.
+        Theme: [item.Theme, ...(Array.isArray(item.SecondaryThemes) ? item.SecondaryThemes.map((b: any) => b?.theme).filter(Boolean) : [])].filter(Boolean).join(' · ') || null,
         DuplicateOfTitle: item.DuplicateOf?.Title ?? null,
         SubmittedByName: item.SubmittedBy?.Name || item.SubmittedByName || null,
         SubmittedByEmail: item.SubmittedBy?.Email ?? null,
