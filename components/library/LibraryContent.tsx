@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useEscape } from '@/hooks/useEscape'
 import LoadingIndicator from '@/components/LoadingIndicator'
 import FieldsFilter from '@/components/members/FieldsFilter'
 import LibraryFileCell from './LibraryFileCell'
@@ -38,6 +39,7 @@ export default function LibraryContent() {
   const [cols, setCols] = useState<string[]>(LIB_DEFAULT_COLS)
   const [density, setDensity] = useState<'comfortable' | 'compact'>('comfortable')
   const [showCols, setShowCols] = useState(false)
+  useEscape(() => setShowCols(false), showCols)
 
   const [query, setQuery] = useState('')
   const [fields, setFields] = useState<string[]>([])

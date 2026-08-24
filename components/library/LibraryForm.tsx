@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useRef, useState } from 'react'
+import { useEscape } from '@/hooks/useEscape'
 import { LIBRARY_TAXONOMY, getSubLabel } from '@/lib/memberTaxonomy'
 import { LIBRARY_DOC_TYPES, LIBRARY_LANGUAGES } from './libraryPrefs'
 import { shortDocType, LIMITS, type LibraryItem, type SecondaryTheme } from '@/lib/library'
@@ -77,6 +78,11 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
 
   const clearFieldError = (k: string) =>
     setFieldErrors(p => (k in p ? Object.fromEntries(Object.entries(p).filter(([x]) => x !== k)) : p))
+
+  useEscape(() => {
+    if (showYears) { setShowYears(false); return }
+    if (!busy) onClose()   // στη μέση ανεβάσματος το Escape δεν πετά τη δουλειά
+  })
 
   const YEARS = (() => {
     const max = new Date().getFullYear() + 1

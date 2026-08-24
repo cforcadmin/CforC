@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useEscape } from '@/hooks/useEscape'
 import LibraryFileCell from './LibraryFileCell'
 import { shortDocType, type LibraryItem } from '@/lib/library'
 
@@ -55,6 +56,7 @@ export default function LibraryReview({ focusId, onDone, onClose }: {
   const [tab, setTab] = useState<'pending' | 'history'>('pending')
   const [reason, setReason] = useState('')
   const [idx, setIdx] = useState(0)
+  useEscape(() => { if (!busy) onClose() })
 
   useEffect(() => {
     let alive = true

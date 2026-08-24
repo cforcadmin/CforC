@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useEscape } from '@/hooks/useEscape'
 import { LIMITS } from '@/lib/library'
 
 /**
@@ -63,6 +64,7 @@ export default function LibraryIntroModal({ onAccept, onClose, librarians = [], 
   manual?: boolean
 }) {
   const [dontShow, setDontShow] = useState(false)
+  useEscape(onClose)
 
   return (
     // Με inline zIndex: όταν ανοίγει ΠΑΝΩ από τη φόρμα «Νέο τεκμήριο» (κι
