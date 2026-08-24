@@ -47,3 +47,6 @@ members-export-*.csv
 strapi-backup-*/
 docs/External-activity.csv
 docs/Subscribers-export-*.csv
+
+# Playwright: αποθηκευμένη συνεδρία των e2e tests
+playwright/.auth/

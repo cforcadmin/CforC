@@ -65,6 +65,16 @@ export default function ProfilePage() {
 
   // Read hash from URL to determine initial section
   useEffect(() => {
+    // ?section= πριν από το hash: οι σύνδεσμοι των email της βιβλιοθήκης
+    // (?section=library&review=…) δεν διαβάζονταν ποτέ — η σελίδα άνοιγε
+    // στο προφίλ και ο έλεγχος διπλοεγγραφής δεν εμφανιζόταν. Εντοπίστηκε
+    // γράφοντας τα e2e tests, όχι από αναφορά χρήστη.
+    const qs = new URLSearchParams(window.location.search).get('section')
+    if (qs && DASHBOARD_SECTIONS.some(s => s.key === qs)) {
+      setActiveSectionState(qs as SectionKey)
+      try { sessionStorage.setItem('cforc-profile-section', qs) } catch {}
+      return
+    }
     const hash = window.location.hash.replace('#', '')
     if (hash && DASHBOARD_SECTIONS.some(s => s.key === hash)) {
       setActiveSectionState(hash as SectionKey)
