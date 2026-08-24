@@ -160,26 +160,16 @@ export default function FieldsFilter({
   /** Ύφος στο πνεύμα του native menu του συστήματος: στενές γραμμές,
    *  γεμάτη επιλεγμένη γραμμή με ✓, στρογγυλό πάνελ. Το accent μένει κοραλί
    *  — το μοβ της δεύτερης εικόνας είναι το χρώμα του λειτουργικού, όχι δικό μας. */
-  const panelCls = compact
-    ? 'menu-glass rounded-xl py-1.5 w-72 max-h-96 overflow-y-auto'
-    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl py-2 w-72 max-h-96 overflow-y-auto'
-  const rowBase = compact
-    ? 'w-full text-left pl-8 pr-3 py-1.5 text-sm flex items-center justify-between transition-colors cursor-pointer relative'
-    : 'w-full text-left px-4 py-2.5 text-sm flex items-center justify-between transition-colors cursor-pointer'
-  const rowOn = compact
-    ? 'menu-row-on'
-    : 'bg-charcoal dark:bg-coral text-white'
-  const rowHover = compact
-    ? 'menu-row-hover text-charcoal dark:text-white'
-    : 'bg-charcoal/10 dark:bg-gray-600 text-charcoal dark:text-white font-medium'
-  const rowOff = compact
-    ? 'menu-row-off text-charcoal dark:text-gray-100'
-    : 'text-charcoal dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+  // Το γυαλί παντού — η σελίδα μελών ήταν το πρωτότυπο αυτού του φίλτρου
+  // και έμεινε τελευταία χωρίς τη γλώσσα που γέννησε.
+  const panelCls = 'menu-glass rounded-xl py-1.5 w-72 max-h-96 overflow-y-auto'
+  const rowBase = 'w-full text-left pl-8 pr-3 py-1.5 text-sm flex items-center justify-between transition-colors cursor-pointer relative'
+  const rowOn = 'menu-row-on'
+  const rowHover = 'menu-row-hover text-charcoal dark:text-white'
+  const rowOff = 'menu-row-off text-charcoal dark:text-gray-100'
   /** Το ✓ μπροστά από την επιλεγμένη γραμμή, όπως στο native menu */
   const Tick = ({ on }: { on: boolean }) =>
-    compact
-      ? <span aria-hidden="true" className="absolute left-3 text-xs">{on ? '✓' : ''}</span>
-      : null
+    <span aria-hidden="true" className="absolute left-3 text-xs">{on ? '✓' : ''}</span>
 
   return (
     <div className="relative" ref={panelRef}>
@@ -189,7 +179,7 @@ export default function FieldsFilter({
         onClick={() => setIsOpen(!isOpen)}
         className={`border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral text-left flex items-center gap-2 transition-colors ${
           compact ? 'h-9 px-4 w-44 md:w-52' : 'px-3 py-3 w-44 md:w-56'
-        } ${compact && isOpen ? 'ring-2 ring-coral ' : ''}${
+        } ${isOpen ? 'ring-2 ring-coral ' : ''}${
           selectedFields.length > 0
             ? 'border-charcoal dark:border-gray-100 bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900 font-medium'
             : compact
@@ -230,7 +220,7 @@ export default function FieldsFilter({
           : 'absolute top-full left-0 mt-2 z-[60] flex'}>
           {/* Categories panel */}
           <div className={panelCls}>
-            <div className={`${compact ? 'px-3 py-1.5' : 'px-3 py-2'} border-b ${compact ? 'menu-divider' : 'border-gray-100 dark:border-gray-700'} flex items-center justify-between`}>
+            <div className={`${compact ? 'px-3 py-1.5' : 'px-3 py-2'} border-b menu-divider flex items-center justify-between`}>
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Κατηγορίες</p>
               {selectedFields.length > 0 && (
                 <button
@@ -284,13 +274,11 @@ export default function FieldsFilter({
           {/* Subcategories panel */}
           {hoveredCategory !== null && (
             <div
-              className={compact
-                ? 'menu-glass rounded-xl py-1.5 w-80 max-h-96 overflow-y-auto ml-1'
-                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl py-2 w-80 max-h-96 overflow-y-auto ml-1'}
+              className="menu-glass rounded-xl py-1.5 w-80 max-h-96 overflow-y-auto ml-1"
               onMouseEnter={handleSubcategoryMouseEnter}
               onMouseLeave={handleSubcategoryMouseLeave}
             >
-              <div className={`${compact ? 'px-3 py-1.5' : 'px-3 py-2'} border-b ${compact ? 'menu-divider' : 'border-gray-100 dark:border-gray-700'}`}>
+              <div className={`${compact ? 'px-3 py-1.5' : 'px-3 py-2'} border-b menu-divider`}>
                 <p className="text-xs font-semibold text-charcoal dark:text-gray-100 uppercase tracking-wider">
                   {TAXONOMY[hoveredCategory].label}
                 </p>
@@ -336,7 +324,7 @@ export default function FieldsFilter({
 
                       {/* Expanded checkboxes */}
                       {isExpanded && (
-                        <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700/50 border-y border-gray-100 dark:border-gray-700">
+                        <div className="px-4 py-2 bg-black/5 dark:bg-white/5 border-y menu-divider">
                           <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 italic">Επέλεξε ένα ή περισσότερα:</p>
                           <div className="space-y-1.5">
                             {sub.options.map((option, optIndex) => (

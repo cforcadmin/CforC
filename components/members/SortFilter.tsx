@@ -60,7 +60,7 @@ export default function SortFilter({ sortMode, onSortChange }: SortFilterProps) 
       {/* Trigger button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="px-3 py-3 border border-charcoal dark:border-gray-400 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral text-left flex items-center gap-2 w-auto min-w-0 whitespace-nowrap transition-colors dark:bg-gray-700 text-charcoal dark:text-gray-200"
+        className={`${isOpen ? 'ring-2 ring-coral ' : ''}px-3 py-3 border border-charcoal dark:border-gray-400 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral text-left flex items-center gap-2 w-auto min-w-0 whitespace-nowrap transition-colors dark:bg-gray-700 text-charcoal dark:text-gray-200`}
       >
         <span className="flex-1 truncate">{currentLabel}</span>
         <svg className={`w-4 h-4 text-coral dark:text-coral-light transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -71,9 +71,9 @@ export default function SortFilter({ sortMode, onSortChange }: SortFilterProps) 
       {/* Popover panel */}
       {isOpen && (
         <div className="absolute top-full left-0 mt-2 z-50">
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl py-2 w-52">
+          <div className="menu-glass rounded-xl py-1.5 w-52">
             {/* Header */}
-            <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
+            <div className="px-3 py-2 border-b menu-divider">
               <p className="text-xs font-semibold text-charcoal dark:text-gray-100 uppercase tracking-wider">Ταξινόμηση</p>
             </div>
 
@@ -87,12 +87,11 @@ export default function SortFilter({ sortMode, onSortChange }: SortFilterProps) 
                     onSortChange(option.value)
                     closePanel()
                   }}
-                  className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between transition-colors cursor-pointer ${
-                    isSelected
-                      ? 'bg-charcoal dark:bg-coral text-white'
-                      : 'text-charcoal dark:text-gray-200 hover:bg-charcoal/10 dark:hover:bg-gray-600 hover:text-charcoal dark:hover:text-white'
+                  className={`w-full text-left pl-8 pr-3 py-1.5 text-sm flex items-center justify-between transition-colors cursor-pointer relative ${
+                    isSelected ? 'menu-row-on' : 'menu-row-off text-charcoal dark:text-gray-100'
                   }`}
                 >
+                  <span aria-hidden="true" className="absolute left-3 text-xs">{isSelected ? '✓' : ''}</span>
                   <span>{option.label}</span>
                 </button>
               )

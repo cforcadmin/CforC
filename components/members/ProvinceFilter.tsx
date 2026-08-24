@@ -78,7 +78,7 @@ export default function ProvinceFilter({ provinces, selectedProvinces, onSelecti
       {/* Trigger button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`px-3 py-3 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral text-left flex items-center gap-2 w-40 md:w-48 transition-colors ${
+        className={`${isOpen ? 'ring-2 ring-coral ' : ''}px-3 py-3 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral text-left flex items-center gap-2 w-40 md:w-48 transition-colors ${
           selectedProvinces.length > 0
             ? 'border-charcoal dark:border-gray-100 bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900 font-medium'
             : 'border-charcoal dark:border-gray-400 dark:bg-gray-700 text-charcoal dark:text-gray-200'
@@ -109,9 +109,9 @@ export default function ProvinceFilter({ provinces, selectedProvinces, onSelecti
       {/* Popover panel */}
       {isOpen && (
         <div className="absolute top-full left-0 mt-2 z-50">
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl py-2 w-64 max-h-80 flex flex-col">
+          <div className="menu-glass rounded-xl py-1.5 w-64 max-h-80 flex flex-col">
             {/* Header */}
-            <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <div className="px-3 py-2 border-b menu-divider flex items-center justify-between">
               <p className="text-xs font-semibold text-charcoal dark:text-gray-100 uppercase tracking-wider">Επαρχίες</p>
               {selectedProvinces.length > 0 && (
                 <button
@@ -125,7 +125,7 @@ export default function ProvinceFilter({ provinces, selectedProvinces, onSelecti
 
             {/* Search within list */}
             {provinces.length > 8 && (
-              <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
+              <div className="px-3 py-2 border-b menu-divider">
                 <input
                   ref={searchRef}
                   type="text"
@@ -145,12 +145,11 @@ export default function ProvinceFilter({ provinces, selectedProvinces, onSelecti
                   <button
                     key={province}
                     onClick={() => toggleSelection(province)}
-                    className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between transition-colors cursor-pointer ${
-                      isSelected
-                        ? 'bg-charcoal dark:bg-coral text-white'
-                        : 'text-charcoal dark:text-gray-200 hover:bg-charcoal/10 dark:hover:bg-gray-600 hover:text-charcoal dark:hover:text-white'
+                    className={`w-full text-left pl-8 pr-3 py-1.5 text-sm flex items-center justify-between transition-colors cursor-pointer relative ${
+                      isSelected ? 'menu-row-on' : 'menu-row-off text-charcoal dark:text-gray-100'
                     }`}
                   >
+                    <span aria-hidden="true" className="absolute left-3 text-xs">{isSelected ? '✓' : ''}</span>
                     <span>{province}</span>
                   </button>
                 )
