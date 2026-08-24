@@ -29,7 +29,7 @@ test.describe('Ανοιχτή Βιβλιοθήκη', () => {
   test('το φίλτρο πεδίων ανοίγει γυάλινο πάνελ', async ({ page }) => {
     await page.goto('/profile?section=library')
     await page.getByRole('button', { name: /Όλα τα πεδία εργασίας/ }).click()
-    await expect(page.locator('.menu-glass').first()).toBeVisible()
+    await expect(page.locator('.menu-glass:visible').first()).toBeVisible()
     await expect(page.getByText('Κατηγορίες')).toBeVisible()
     // Escape κλείνει το πάνω-πάνω επίπεδο
     await page.keyboard.press('Escape')
@@ -38,7 +38,7 @@ test.describe('Ανοιχτή Βιβλιοθήκη', () => {
 
   test('το «Κάθε είδος» είναι το κοινό γυάλινο dropdown', async ({ page }) => {
     await page.goto('/profile?section=library')
-    await page.getByRole('button', { name: 'Κάθε είδος' }).click()
+    await page.getByRole('button', { name: 'Είδος αρχείου' }).click()
     const listbox = page.getByRole('listbox', { name: /Είδος αρχείου/ })
     await expect(listbox).toBeVisible()
     await expect(listbox.locator('[role="option"]').first()).toBeVisible()

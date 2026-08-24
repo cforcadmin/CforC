@@ -29,4 +29,16 @@ export default async function globalSetup(config: FullConfig) {
   }
   await ctx.storageState({ path: STORAGE_STATE })
   await ctx.dispose()
+
+  // Το consent των cookies ζει στο localStorage — ένα φρέσκο test context
+  // δεν το έχει, το πανό εμφανίζεται ΠΑΝΩ από τη σελίδα (fixed, z-50) και
+  // ρουφά τα κλικ: 8 tests της βιβλιοθήκης «απέτυχαν» έτσι, χωρίς κανένα
+  // πραγματικό bug. Το storageState κουβαλά και localStorage ανά origin.
+  const { readFileSync, writeFileSync } = await import('fs')
+  const state = JSON.parse(readFileSync(STORAGE_STATE, 'utf-8'))
+  state.origins = [{
+    origin: baseURL,
+    localStorage: [{ name: 'cookieConsent', value: 'declined' }],
+  }]
+  writeFileSync(STORAGE_STATE, JSON.stringify(state, null, 2))
 }

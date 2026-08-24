@@ -229,6 +229,16 @@ export default function ProfilePage() {
   // Show guidelines modal on login (only once per session, not after profile updates)
   useEffect(() => {
     if (isAuthenticated && user && !hasShownGuidelinesRef.current) {
+      // ΟΧΙ όταν ο επισκέπτης προσγειώνεται σε ΑΛΛΗ ενότητα: ο σύνδεσμος
+      // του email του Βιβλιοθηκάριου (?section=library&review=…) άνοιγε τις
+      // οδηγίες ΠΡΟΦΙΛ πάνω από τον έλεγχο διπλοεγγραφής. Οι οδηγίες του
+      // προφίλ αφορούν όποιον ήρθε για το προφίλ.
+      const target = new URLSearchParams(window.location.search).get('section')
+        || window.location.hash.replace('#', '')
+      if (target && target !== 'profile') {
+        hasShownGuidelinesRef.current = true
+        return
+      }
       const hasSeenGuidelines = sessionStorage.getItem(`profileGuidelines_${user.id}`)
       if (!hasSeenGuidelines) {
         setShowGuidelinesModal(true)

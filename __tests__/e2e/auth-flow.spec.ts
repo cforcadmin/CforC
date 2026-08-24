@@ -12,15 +12,16 @@ import { STORAGE_STATE, TEST_EMAIL, TEST_PASSWORD } from './global-setup'
 test.describe('Auth Flow', () => {
   test('login page renders with email and password fields', async ({ page }) => {
     await page.goto('/login')
-    await expect(page.locator('input#login-email')).toBeVisible()
-    await expect(page.locator('input#password')).toBeVisible()
+    // TODO προϊόντος: διπλό id=login-email στο DOM (desktop+mobile) — άκυρο HTML
+    await expect(page.locator('input#login-email').first()).toBeVisible()
+    await expect(page.locator('input#password').first()).toBeVisible()
   })
 
   test('successful login with test account', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'ένα πραγματικό login αρκεί — βλ. προϋπολογισμό limiter')
     await page.goto('/login')
-    await page.locator('input#login-email').fill(TEST_EMAIL)
-    await page.locator('input#password').fill(TEST_PASSWORD)
+    await page.locator('input#login-email').first().fill(TEST_EMAIL)
+    await page.locator('input#password').first().fill(TEST_PASSWORD)
     await page.locator('button[type="submit"]').first().click()
     await page.waitForURL(/\/(profile|members)/, { timeout: 15000 })
   })
@@ -28,8 +29,8 @@ test.describe('Auth Flow', () => {
   test('wrong password shows error and stays on login', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'βλ. προϋπολογισμό limiter')
     await page.goto('/login')
-    await page.locator('input#login-email').fill(TEST_EMAIL)
-    await page.locator('input#password').fill('WrongPassword1!')
+    await page.locator('input#login-email').first().fill(TEST_EMAIL)
+    await page.locator('input#password').first().fill('WrongPassword1!')
     await page.locator('button[type="submit"]').first().click()
     await page.waitForTimeout(2000)
     expect(page.url()).toContain('/login')
@@ -40,9 +41,14 @@ test.describe('Auth Flow', () => {
     // Κανένα login εδώ — το cookie έρχεται από το global-setup
     test.use({ storageState: STORAGE_STATE })
 
-    test('session persists across pages', async ({ page }) => {
+    test('session persists across pages', async ({ page }, testInfo) => {
       await page.goto('/')
-      const loggedIn = page.locator('a[href="/profile"], button:has-text("Αποσύνδεση"), nav:has-text("Ο ΧΩΡΟΣ ΜΟΥ")').first()
+      // Στο κινητό οι δείκτες σύνδεσης ζουν μέσα στο κλειστό hamburger —
+      // υπάρχουν στο DOM αλλά δεν είναι ορατοί αν δεν το ανοίξεις.
+      if (testInfo.project.name === 'mobile') {
+        await page.getByRole('button', { name: 'Άνοιγμα μενού', exact: true }).click()
+      }
+      const loggedIn = page.locator('a[href="/profile"]:visible, button:has-text("Αποσύνδεση"):visible').first()
       await expect(loggedIn).toBeVisible({ timeout: 10000 })
     })
 
