@@ -1867,8 +1867,17 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Υγρή κάρτα: το γυαλί των μενού ως επιφάνεια περιεχομένου. Δηλώνεται ΜΕΤΑ
-   το .menu-glass ώστε το hover να νικά το border του shorthand — τα σκέτα
-   hover:border-* utilities χάνουν από το μεταγενέστερο .menu-glass. */
+/* Υγρή κάρτα: το γυαλί των μενού ως επιφάνεια περιεχομένου, με τη ΓΡΑΜΜΑΤΙΚΗ
+   των καρτών του site (βλ. Πρόσφατα Νέα): κοραλί ΑΡΙΣΤΕΡΗ γραμμή — ποτέ
+   ολόκληρο περίγραμμα — και στο σκοτεινό θέμα φωτεινή άλως αντί για μαύρη
+   σκιά. Δηλώνονται ΜΕΤΑ το .menu-glass για να νικούν το shorthand του. */
+.card-liquid { border-left-width: 4px; border-left-color: transparent; }
 .card-liquid-hover { transition: border-color .3s ease, transform .3s ease; }
-.card-liquid-hover:hover { border-color: #FF8B6A; transform: translateY(-2px); }
+.card-liquid-hover:hover { border-left-color: #FF8B6A; transform: translateY(-2px); }
+.card-liquid-featured { border-left-color: #FF8B6A; }
+.dark .card-liquid {
+  box-shadow:
+    0 20px 25px -5px rgba(55, 65, 81, 0.5),
+    0 8px 10px -6px rgba(55, 65, 81, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}

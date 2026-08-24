@@ -93,7 +93,7 @@ function FlipCard({ call, expired, onClick }: { call: OpenCall; expired?: boolea
         <div className="[backface-visibility:hidden] w-full h-full">
           <Wrapper
             {...wrapperProps as any}
-            className={`menu-glass card-liquid-hover rounded-3xl overflow-hidden transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full text-left ${expired ? 'opacity-75' : ''}`}
+            className={`menu-glass card-liquid card-liquid-hover rounded-3xl overflow-hidden transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full text-left ${expired ? 'opacity-75' : ''}`}
             aria-label={`${call.Title}${onClick ? '' : ' (ανοίγει σε νέα καρτέλα)'}`}
           >
             {imageUrl ? (
@@ -166,7 +166,7 @@ function FlipCard({ call, expired, onClick }: { call: OpenCall; expired?: boolea
         <div ref={backRef} className="absolute top-0 left-0 w-full [backface-visibility:hidden] [transform:rotateY(180deg)]">
           <Wrapper
             {...wrapperProps as any}
-            className={`menu-glass rounded-3xl overflow-hidden border-l-4 border-coral dark:border-coral-light flex flex-col text-left ${expired ? 'opacity-75' : ''}`}
+            className={`menu-glass card-liquid card-liquid-featured rounded-3xl overflow-hidden border-l-4 border-coral dark:border-coral-light flex flex-col text-left ${expired ? 'opacity-75' : ''}`}
             aria-label={`${call.Title} — πλήρης περιγραφή`}
           >
             <div className="p-6 flex flex-col">
