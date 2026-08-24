@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // VERIFY_BUILD=1 npm run build → χτίζει σε χωριστό φάκελο ώστε να μην
+  // πατά το .next του dev server (που μετά σερβίρει μπαγιάτικο κώδικα).
+  // Το hook του project μπλοκάρει το σκέτο build όσο τρέχει dev server
+  // και δείχνει εδώ.
+  distDir: process.env.VERIFY_BUILD ? '.next-verify' : '.next',
   async headers() {
     return [
       {

@@ -50,3 +50,4 @@ docs/Subscribers-export-*.csv
 
 # Playwright: αποθηκευμένη συνεδρία των e2e tests
 playwright/.auth/
+.next-verify/
