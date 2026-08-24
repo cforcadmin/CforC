@@ -108,7 +108,7 @@ export default function FundingGuidelinesModal({ compact = false, onHoverChange 
           aria-modal="true"
           aria-label="Περιεχόμενο μελών"
         >
-          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-8 relative">
+          <div className="menu-glass rounded-2xl max-w-md w-full p-8 relative">
             <button
               type="button"
               onClick={() => setShowMemberModal(false)}
@@ -167,7 +167,7 @@ export default function FundingGuidelinesModal({ compact = false, onHoverChange 
           aria-modal="true"
           aria-label="Οδηγίες χρηματοδότησης"
         >
-          <div className="bg-[#F5F0EB] dark:bg-gray-900 rounded-3xl max-w-4xl w-full max-h-[85vh] overflow-y-auto shadow-2xl">
+          <div className="menu-glass rounded-3xl max-w-4xl w-full max-h-[85vh] overflow-y-auto">
             {/* Header */}
             <div className="sticky top-0 bg-[#F5F0EB] dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 rounded-t-3xl px-8 py-6 flex items-center justify-between z-10">
               <div>

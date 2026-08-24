@@ -52,7 +52,7 @@ export default function CityMemberPanel({ cluster, onClose }: CityMemberPanelPro
       {/* Desktop: side panel */}
       <div
         ref={panelRef}
-        className="fixed z-50 bg-white dark:bg-gray-800 shadow-2xl
+        className="fixed z-50 menu-glass
           lg:right-0 lg:top-0 lg:bottom-0 lg:w-96 lg:rounded-l-2xl
           bottom-0 left-0 right-0 lg:left-auto max-h-[70vh] lg:max-h-full
           rounded-t-2xl lg:rounded-t-none

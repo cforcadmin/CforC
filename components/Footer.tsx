@@ -42,7 +42,7 @@ export default function Footer({ variant = 'default' }: FooterProps) {
       {/* Member-Only Modal */}
       {showMemberModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-8 relative">
+          <div className="menu-glass rounded-2xl max-w-md w-full p-8 relative">
             <button
               type="button"
               onClick={() => setShowMemberModal(false)}

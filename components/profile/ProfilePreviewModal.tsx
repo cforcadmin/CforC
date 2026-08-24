@@ -194,7 +194,7 @@ export default function ProfilePreviewModal({ isOpen, onClose, user }: ProfilePr
       {/* Modal */}
       <div
         ref={modalRef}
-        className="relative bg-[#F5F0EB] dark:bg-gray-900 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        className="relative menu-glass rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
       >
         {/* Sticky Header */}
         <div className="sticky top-0 z-10 bg-[#F5F0EB] dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 rounded-t-3xl px-6 py-4 flex items-center justify-between">
