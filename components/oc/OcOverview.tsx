@@ -461,7 +461,17 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
               <>
                 <div className="fixed inset-0 z-30" onClick={() => setShowCols(false)} aria-hidden="true" />
                 <div className="absolute right-0 top-full mt-2 z-40 w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-600 p-4">
-                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Ορατές στήλες</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Ορατές στήλες</p>
+                    <span style={{ display: 'flex', gap: 8 }}>
+                      <button type="button"
+                        onClick={() => { const all = OC_TABLE_COLUMNS.map(c => c.key); setCols(all); persist({ tableCols: all.join(',') }) }}
+                        className="text-[11px] text-coral dark:text-coral-light hover:underline">Όλες</button>
+                      <button type="button"
+                        onClick={() => { setCols(OC_TABLE_DEFAULT_COLS); persist({ tableCols: OC_TABLE_DEFAULT_COLS.join(',') }) }}
+                        className="text-[11px] text-coral dark:text-coral-light hover:underline">Προεπιλογή</button>
+                    </span>
+                  </div>
                   <div className="space-y-1.5 mb-4">
                     {OC_TABLE_COLUMNS.map(c => (
                       <label key={c.key} className="flex items-center gap-2 text-sm text-charcoal dark:text-gray-200 cursor-pointer">

@@ -322,7 +322,17 @@ export default function LibraryContent() {
                 <div className="fixed inset-0 z-30" onClick={() => setShowCols(false)} aria-hidden="true" />
                 {/* Ίδια λογική με το φίλτρο πεδίων: γυάλινο, ανοίγει πάνω στο κουμπί */}
                 <div className="absolute -right-1.5 -top-1.5 z-[60] w-64 menu-glass rounded-xl p-4">
-                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Ορατές στήλες</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Ορατές στήλες</p>
+                    <span style={{ display: 'flex', gap: 8 }}>
+                      <button type="button"
+                        onClick={() => { const all = LIB_COLUMNS.map(c => c.key); setCols(all); persist({ cols: all }) }}
+                        className="text-[11px] text-coral dark:text-coral-light hover:underline">Όλες</button>
+                      <button type="button"
+                        onClick={() => { setCols(LIB_DEFAULT_COLS); persist({ cols: LIB_DEFAULT_COLS }) }}
+                        className="text-[11px] text-coral dark:text-coral-light hover:underline">Προεπιλογή</button>
+                    </span>
+                  </div>
                   <div className="space-y-1.5 mb-4">
                     {LIB_COLUMNS.map(c => (
                       <label key={c.key} className="flex items-center gap-2 text-sm text-charcoal dark:text-gray-200 cursor-pointer">
