@@ -45,6 +45,11 @@ export default function LibraryContent() {
   const [fields, setFields] = useState<string[]>([])
   const [docType, setDocType] = useState('')
   const [language, setLanguage] = useState('')
+  // Έτος και καταχωρητής δεν έχουν δικό τους dropdown — φιλτράρονται μόνο
+  // με κλικ στο κελί, γι' αυτό δείχνονται ως αφαιρούμενα chips στη γραμμή
+  // του πλήθους: ένα ενεργό φίλτρο χωρίς ορατό χειριστήριο είναι παγίδα.
+  const [yearFilter, setYearFilter] = useState<number | null>(null)
+  const [submitterFilter, setSubmitterFilter] = useState<string | null>(null)
   // Νεότερα πρώτα — οι βιβλιοθηκάριοι θέλουν να φαίνεται ότι ανανεώνεται.
   const [sort, setSort] = useState<{ key: SortKey; dir: Dir }>({ key: 'created', dir: 'desc' })
   const [editItem, setEditItem] = useState<LibraryItem | null>(null)
@@ -179,6 +184,8 @@ export default function LibraryContent() {
       if (q && !(`${i.title} ${i.description ?? ''}`.toLocaleLowerCase('el').includes(q))) return false
       if (docType && i.docType !== docType) return false
       if (language && i.language !== language) return false
+      if (yearFilter !== null && i.year !== yearFilter) return false
+      if (submitterFilter && i.submittedBy !== submitterFilter) return false
       if (fields.length) {
         // Η ίδια λογική με τα φίλτρα των μελών: κατηγορία ταιριάζει και με
         // τις υποκατηγορίες της, ώστε «Τέχνες & Πολιτισμός» να πιάνει και
@@ -215,7 +222,7 @@ export default function LibraryContent() {
       if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir
       return String(av).localeCompare(String(bv), 'el') * dir
     })
-  }, [items, query, docType, language, fields, sort])
+  }, [items, query, docType, language, fields, yearFilter, submitterFilter, sort])
 
   const py = density === 'compact' ? 'py-1.5' : 'py-3'
   const txt = density === 'compact' ? 'text-xs' : 'text-sm'
@@ -400,9 +407,23 @@ export default function LibraryContent() {
           </div>
         )}
 
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-          <span className="notranslate">{rows.length}</span>
-          {rows.length === items.length ? ' τεκμήρια' : <> από <span className="notranslate">{items.length}</span> τεκμήρια</>}
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+          <span>
+            <span className="notranslate">{rows.length}</span>
+            {rows.length === items.length ? ' τεκμήρια' : <> από <span className="notranslate">{items.length}</span> τεκμήρια</>}
+          </span>
+          {yearFilter !== null && (
+            <button type="button" onClick={() => setYearFilter(null)}
+              className="notranslate px-2 py-0.5 rounded-full bg-coral text-white text-[11px] font-bold">
+              {yearFilter} ×
+            </button>
+          )}
+          {submitterFilter && (
+            <button type="button" onClick={() => setSubmitterFilter(null)}
+              className="px-2 py-0.5 rounded-full bg-coral text-white text-[11px] font-bold">
+              {submitterFilter} ×
+            </button>
+          )}
         </p>
 
         {items.length === 0 && !error ? (
@@ -515,10 +536,38 @@ export default function LibraryContent() {
                         </span>
                       </td>
                     )}
-                    {show('docType') && <td className={`${py} px-3 text-gray-600 dark:text-gray-300`} title={it.docType} style={CELL_CLAMP}>{shortDocType(it.docType)}</td>}
+                    {show('docType') && (
+                      <td className={`${py} px-3 text-gray-600 dark:text-gray-300`}>
+                        <button type="button" onClick={() => setDocType(d => d === it.docType ? '' : it.docType)}
+                          aria-pressed={docType === it.docType}
+                          title={docType === it.docType ? 'Αφαίρεση φίλτρου είδους' : `Όλα τα τεκμήρια «${shortDocType(it.docType)}»`}
+                          className={`transition-colors cursor-pointer hover:text-coral dark:hover:text-coral-light ${docType === it.docType ? 'text-coral dark:text-coral-light font-medium' : ''}`}
+                          style={{ ...CELL_CLAMP, textAlign: 'left', background: 'none', border: 'none', padding: 0 }}>{shortDocType(it.docType)}</button>
+                      </td>
+                    )}
                     {show('file') && <td className={`${py} px-3 whitespace-nowrap`}><LibraryFileCell fileId={it.fileId} fileName={it.fileName} mimeType={it.mimeType} /></td>}
-                    {show('language') && <td className={`${py} px-3 text-gray-600 dark:text-gray-300 whitespace-nowrap`}>{it.language || '—'}</td>}
-                    {show('year') && <td className={`${py} px-3 text-gray-600 dark:text-gray-300 notranslate`}>{it.year ?? '—'}</td>}
+                    {show('language') && (
+                      <td className={`${py} px-3 text-gray-600 dark:text-gray-300 whitespace-nowrap`}>
+                        {it.language ? (
+                          <button type="button" onClick={() => setLanguage(l => l === it.language ? '' : it.language!)}
+                            aria-pressed={language === it.language}
+                            title={language === it.language ? 'Αφαίρεση φίλτρου γλώσσας' : `Όλα τα τεκμήρια στα ${it.language}`}
+                            className={`transition-colors cursor-pointer hover:text-coral dark:hover:text-coral-light ${language === it.language ? 'text-coral dark:text-coral-light font-medium' : ''}`}
+                            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>{it.language}</button>
+                        ) : '—'}
+                      </td>
+                    )}
+                    {show('year') && (
+                      <td className={`${py} px-3 text-gray-600 dark:text-gray-300 notranslate`}>
+                        {it.year !== null ? (
+                          <button type="button" onClick={() => setYearFilter(y => y === it.year ? null : it.year)}
+                            aria-pressed={yearFilter === it.year}
+                            title={yearFilter === it.year ? 'Αφαίρεση φίλτρου έτους' : `Όλα τα τεκμήρια του ${it.year}`}
+                            className={`transition-colors cursor-pointer hover:text-coral dark:hover:text-coral-light ${yearFilter === it.year ? 'text-coral dark:text-coral-light font-medium' : ''}`}
+                            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>{it.year}</button>
+                        ) : '—'}
+                      </td>
+                    )}
                     {show('source') && (
                       <td className={`${py} px-3`}>
                         {it.sourceUrl
@@ -527,7 +576,17 @@ export default function LibraryContent() {
                           : <span className="text-gray-400">—</span>}
                       </td>
                     )}
-                    {show('submittedBy') && <td className={`${py} px-3 text-gray-500 dark:text-gray-400`} style={CELL_CLAMP}>{it.submittedBy || '—'}</td>}
+                    {show('submittedBy') && (
+                      <td className={`${py} px-3 text-gray-500 dark:text-gray-400`}>
+                        {it.submittedBy ? (
+                          <button type="button" onClick={() => setSubmitterFilter(f => f === it.submittedBy ? null : it.submittedBy)}
+                            aria-pressed={submitterFilter === it.submittedBy}
+                            title={submitterFilter === it.submittedBy ? 'Αφαίρεση φίλτρου' : `Όλες οι καταχωρήσεις: ${it.submittedBy}`}
+                            className={`transition-colors cursor-pointer hover:text-coral dark:hover:text-coral-light ${submitterFilter === it.submittedBy ? 'text-coral dark:text-coral-light font-medium' : ''}`}
+                            style={{ ...CELL_CLAMP, textAlign: 'left', background: 'none', border: 'none', padding: 0 }}>{it.submittedBy}</button>
+                        ) : '—'}
+                      </td>
+                    )}
                     {isLibrarian && (
                       <td className={`${py} px-3 whitespace-nowrap`}>
                         <button type="button" onClick={() => setEditItem(it)}
