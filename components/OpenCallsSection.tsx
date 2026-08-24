@@ -93,7 +93,7 @@ function FlipCard({ call, expired, onClick }: { call: OpenCall; expired?: boolea
         <div className="[backface-visibility:hidden] w-full h-full">
           <Wrapper
             {...wrapperProps as any}
-            className={`bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-gray-700/50 transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full text-left ${expired ? 'opacity-75' : ''}`}
+            className={`bg-white dark:bg-gray-700 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-black/40 transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full text-left ${expired ? 'opacity-75' : ''}`}
             aria-label={`${call.Title}${onClick ? '' : ' (ανοίγει σε νέα καρτέλα)'}`}
           >
             {imageUrl ? (
@@ -111,7 +111,7 @@ function FlipCard({ call, expired, onClick }: { call: OpenCall; expired?: boolea
                 )}
               </div>
             ) : (
-              <div className="aspect-video bg-gray-100 dark:bg-gray-700 flex items-center justify-center relative">
+              <div className="aspect-video bg-gray-100 dark:bg-gray-600 flex items-center justify-center relative">
                 <svg className="w-12 h-12 text-gray-300 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                 </svg>
@@ -128,12 +128,12 @@ function FlipCard({ call, expired, onClick }: { call: OpenCall; expired?: boolea
                 {call.Deadline ? (
                   <time
                     dateTime={call.Deadline}
-                    className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${expired ? 'bg-gray-500 text-white' : 'bg-charcoal dark:bg-gray-600 text-white'}`}
+                    className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${expired ? 'bg-gray-500 text-white' : 'bg-charcoal dark:bg-gray-800 text-white'}`}
                   >
                     {new Date(call.Deadline).toLocaleDateString('el-GR')}
                   </time>
                 ) : (
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${expired ? 'bg-gray-500 text-white' : 'bg-charcoal dark:bg-gray-600 text-white'}`}>
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${expired ? 'bg-gray-500 text-white' : 'bg-charcoal dark:bg-gray-800 text-white'}`}>
                     <LocalizedText text="Ανοιχτή" engText="Ongoing" />
                   </span>
                 )}
@@ -166,7 +166,7 @@ function FlipCard({ call, expired, onClick }: { call: OpenCall; expired?: boolea
         <div ref={backRef} className="absolute top-0 left-0 w-full [backface-visibility:hidden] [transform:rotateY(180deg)]">
           <Wrapper
             {...wrapperProps as any}
-            className={`bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-700/50 border-l-4 border-coral dark:border-coral-light flex flex-col text-left ${expired ? 'opacity-75' : ''}`}
+            className={`bg-white dark:bg-gray-700 rounded-3xl overflow-hidden shadow-xl dark:shadow-black/40 border-l-4 border-coral dark:border-coral-light flex flex-col text-left ${expired ? 'opacity-75' : ''}`}
             aria-label={`${call.Title} — πλήρης περιγραφή`}
           >
             <div className="p-6 flex flex-col">
@@ -174,12 +174,12 @@ function FlipCard({ call, expired, onClick }: { call: OpenCall; expired?: boolea
                 {call.Deadline ? (
                   <time
                     dateTime={call.Deadline}
-                    className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${expired ? 'bg-gray-500 text-white' : 'bg-charcoal dark:bg-gray-600 text-white'}`}
+                    className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${expired ? 'bg-gray-500 text-white' : 'bg-charcoal dark:bg-gray-800 text-white'}`}
                   >
                     {new Date(call.Deadline).toLocaleDateString('el-GR')}
                   </time>
                 ) : (
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${expired ? 'bg-gray-500 text-white' : 'bg-charcoal dark:bg-gray-600 text-white'}`}>
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${expired ? 'bg-gray-500 text-white' : 'bg-charcoal dark:bg-gray-800 text-white'}`}>
                     <LocalizedText text="Ανοιχτή" engText="Ongoing" />
                   </span>
                 )}
