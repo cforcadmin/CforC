@@ -108,7 +108,12 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
       : b))
   const removeSecondary = (i: number) => setSecondary(p => p.filter((_, j) => j !== i))
 
-  /** Bytes κατευθείαν στην Google, με πρόοδο. Επιστρέφει το id του αρχείου. */
+  /** Bytes κατευθείαν στην Google, με πρόοδο. Επιστρέφει το id του αρχείου.
+   *
+   * ΠΡΟΣΟΧΗ ΣΤΟ 100%: το onprogress μετρά bytes που ΣΤΑΛΘΗΚΑΝ, όχι που
+   * έγιναν δεκτά — μπάρα στο 100% δεν σημαίνει επιτυχία. Γι' αυτό κάθε
+   * κατάληξη εδώ λέει ΑΚΡΙΒΩΣ τι απάντησε (ή δεν απάντησε) η Google, και
+   * όλα τα βήματα γράφουν [library-upload] στην κονσόλα για ιχνηλάτηση. */
   function putToDrive(uploadUrl: string, f: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest()
@@ -118,13 +123,19 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
         if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100))
       }
       xhr.onload = () => {
+        console.info('[library-upload] PUT απάντηση:', xhr.status, String(xhr.responseText).slice(0, 200))
         try {
           const j = JSON.parse(xhr.responseText)
-          if (xhr.status < 300 && j.id) resolve(j.id)
-          else reject(new Error('Το ανέβασμα απορρίφθηκε από το Drive.'))
-        } catch { reject(new Error('Απρόσμενη απάντηση από το Drive.')) }
+          if (xhr.status < 300 && j.id) { console.info('[library-upload] ✓ id:', j.id); resolve(j.id) }
+          else reject(new Error(`Το Drive απέρριψε το ανέβασμα (HTTP ${xhr.status}): ${String(xhr.responseText).slice(0, 120)}`))
+        } catch {
+          reject(new Error(`Απρόσμενη απάντηση από το Drive (HTTP ${xhr.status}).`))
+        }
       }
-      xhr.onerror = () => reject(new Error('Το ανέβασμα διακόπηκε — έλεγξε τη σύνδεση και δοκίμασε ξανά.'))
+      xhr.onerror = () => {
+        console.error('[library-upload] PUT onerror — η απάντηση μπλοκαρίστηκε (πιθανό CORS) ή κόπηκε η σύνδεση')
+        reject(new Error('Το ανέβασμα ολοκληρώθηκε αλλά η απάντηση της Google μπλοκαρίστηκε (πιθανό CORS) ή διακόπηκε η σύνδεση. Στείλε μας τι γράφει η κονσόλα (⌥⌘J).'))
+      }
       xhr.send(f)
     })
   }
@@ -155,7 +166,8 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
           body: JSON.stringify({ name: file.name, mimeType: file.type, size: file.size }),
         })
         const sj = await sess.json().catch(() => null)
-        if (!sess.ok) throw new Error(sj?.error || 'Δεν άνοιξε συνεδρία ανεβάσματος.')
+        console.info('[library-upload] συνεδρία:', sess.status, sj?.uploadUrl ? 'ok' : sj)
+        if (!sess.ok) throw new Error(sj?.error || `Δεν άνοιξε συνεδρία ανεβάσματος (HTTP ${sess.status}).`)
         setProgress(0)
         driveFileId = await putToDrive(sj.uploadUrl, file)
         setProgress(null)
@@ -190,6 +202,7 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
         if (driveFileId) fd.set('driveFileId', driveFileId)
         const res = await fetch('/api/library/submit', { method: 'POST', body: fd })
         const j = await res.json().catch(() => null)
+        console.info('[library-submit] απάντηση:', res.status, j)
         if (!res.ok) throw new Error(j?.error || 'Η καταχώρηση απέτυχε — αν το πρόβλημα επιμένει, ενημέρωσε το it@cultureforchange.net.')
         onSaved({ state: j.state, duplicateOf: j.duplicateOf })
       }

@@ -119,7 +119,7 @@ export async function PUT(request: NextRequest) {
         Title: title, TitleKey: titleKey(title),
         Description: description || null, Year: year,
         Theme: theme, Subthemes: subthemes,
-        SecondaryThemes: secondary.length ? secondary : null,
+        ...(secondary.length ? { SecondaryThemes: secondary } : {}),
         DocType: docType, Language: language || null, SourceUrl: sourceUrl || null,
         ...fileFields,
         ReviewedBy: auth.name, ReviewedAt: new Date().toISOString(),

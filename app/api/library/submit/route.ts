@@ -160,7 +160,12 @@ export async function POST(request: NextRequest) {
         Title: title, TitleKey: key,
         Description: description || null,
         Year: year, Theme: theme, Subthemes: subthemes,
-        SecondaryThemes: secondary.length ? secondary : null,
+        // Το κλειδί μπαίνει ΜΟΝΟ αν υπάρχουν δευτερεύουσες: το Strapi
+        // απορρίπτει άγνωστο κλειδί ακόμη και με τιμή null, και μέχρι να
+        // γίνει deploy το πεδίο δεν υπάρχει στο Cloud. Με το σκέτο
+        // «SecondaryThemes: null» ΚΑΘΕ καταχώρηση απέτυχε — και το γενικό
+        // μήνυμα έκρυβε την αιτία.
+        ...(secondary.length ? { SecondaryThemes: secondary } : {}),
         DocType: docType,
         SourceUrl: sourceUrl || null,
         DriveFileId: fileMeta?.id || null,
@@ -181,7 +186,13 @@ export async function POST(request: NextRequest) {
       // Το αρχείο ανέβηκε αλλά η εγγραφή απέτυχε: χωρίς καθάρισμα θα έμενε
       // ορφανό στο Drive, αόρατο από τη βιβλιοθήκη και αμέτρητο.
       if (uploadedId) await trashFile(uploadedId)
-      return NextResponse.json({ error: 'Η καταχώρηση απέτυχε' }, { status: 502 })
+      // Η ΠΡΑΓΜΑΤΙΚΗ αιτία φτάνει στον χρήστη — το σκέτο «απέτυχε» έστειλε
+      // τους βιβλιοθηκάριους σε μάντεμα και εμάς σε λάθος υποψήφιους.
+      let detail = ''
+      try { detail = JSON.parse(t)?.error?.message || '' } catch { /* όχι JSON */ }
+      return NextResponse.json({
+        error: `Η αποθήκευση στη βάση απέτυχε (${res.status}${detail ? `: ${detail}` : ''}). Το αρχείο μεταφέρθηκε στον κάδο — δοκίμασε ξανά.`,
+      }, { status: 502 })
     }
     const created = (await res.json())?.data
 
