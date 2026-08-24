@@ -8,6 +8,7 @@ import LibraryFileCell from './LibraryFileCell'
 import LibraryIntroModal from './LibraryIntroModal'
 import LibraryForm from './LibraryForm'
 import LibraryReview from './LibraryReview'
+import GlassSelect from './GlassSelect'
 import { LIB_COLUMNS, LIB_DEFAULT_COLS } from './libraryPrefs'
 import { shortDocType, type LibraryItem } from '@/lib/library'
 import { doesFieldMatchFilter } from '@/lib/memberTaxonomy'
@@ -226,11 +227,6 @@ export default function LibraryContent() {
 
   const py = density === 'compact' ? 'py-1.5' : 'py-3'
   const txt = density === 'compact' ? 'text-xs' : 'text-sm'
-  const RESET_SELECT: React.CSSProperties = {
-    appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none',
-    backgroundImage: 'none', paddingRight: '2rem',
-  }
-  const selectCls = 'h-9 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 pl-4 text-sm text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral'
 
   if (loading) return <section className="py-24"><LoadingIndicator /></section>
 
@@ -283,52 +279,17 @@ export default function LibraryContent() {
               το βελάκι θα υποσχόταν τρίτο επίπεδο που δεν υπάρχει. */}
           <FieldsFilter selectedFields={fields} onSelectionChange={setFields} allowSplit={false} variant="compact" />
 
-          {/* Όπως το «Όλα τα πεδία εργασίας»: με ενεργό φίλτρο το χειριστήριο
-              γεμίζει και το βελάκι γίνεται × που καθαρίζει με ένα κλικ —
-              χωρίς άνοιγμα λίστας και ψάξιμο του «Κάθε είδος». */}
-          <div className="relative">
-            <select value={docType} onChange={e => setDocType(e.target.value)}
-              aria-label="Είδος αρχείου"
-              className={docType
-                ? 'h-9 rounded-full border border-charcoal dark:border-gray-100 bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900 pl-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-coral'
-                : selectCls}
-              style={RESET_SELECT}>
-              <option value="">Κάθε είδος</option>
-              {docTypes.map(d => <option key={d} value={d}>{shortDocType(d)}</option>)}
-            </select>
-            {docType ? (
-              <button type="button" onClick={() => setDocType('')} aria-label="Καθαρισμός φίλτρου είδους"
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-white/20 dark:bg-gray-900/20 hover:bg-white hover:text-charcoal dark:hover:bg-gray-900 dark:hover:text-gray-100 text-white/80 dark:text-gray-900/80 transition-colors">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            ) : (
-              <span aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">▼</span>
-            )}
-          </div>
+          <GlassSelect
+            value={docType} onChange={setDocType} clearable
+            ariaLabel="Είδος αρχείου" placeholder="Κάθε είδος"
+            options={docTypes.map(d => ({ value: d, label: shortDocType(d) }))}
+          />
 
-          <div className="relative">
-            <select value={language} onChange={e => setLanguage(e.target.value)}
-              aria-label="Γλώσσα"
-              className={language
-                ? 'h-9 rounded-full border border-charcoal dark:border-gray-100 bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900 pl-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-coral'
-                : selectCls}
-              style={RESET_SELECT}>
-              <option value="">Κάθε γλώσσα</option>
-              {languages.map(l => <option key={l} value={l}>{l}</option>)}
-            </select>
-            {language ? (
-              <button type="button" onClick={() => setLanguage('')} aria-label="Καθαρισμός φίλτρου γλώσσας"
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-white/20 dark:bg-gray-900/20 hover:bg-white hover:text-charcoal dark:hover:bg-gray-900 dark:hover:text-gray-100 text-white/80 dark:text-gray-900/80 transition-colors">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            ) : (
-              <span aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">▼</span>
-            )}
-          </div>
+          <GlassSelect
+            value={language} onChange={setLanguage} clearable
+            ariaLabel="Γλώσσα" placeholder="Κάθε γλώσσα"
+            options={languages.map(l => ({ value: l, label: l }))}
+          />
 
           {/* Στήλες */}
           <div className="relative">

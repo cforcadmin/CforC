@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react'
 import { useEscape } from '@/hooks/useEscape'
+import GlassSelect from './GlassSelect'
 import { LIBRARY_TAXONOMY, getSubLabel } from '@/lib/memberTaxonomy'
 import { LIBRARY_DOC_TYPES, LIBRARY_LANGUAGES } from './libraryPrefs'
 import { shortDocType, LIMITS, type LibraryItem, type SecondaryTheme } from '@/lib/library'
@@ -19,10 +20,6 @@ import { shortDocType, LIMITS, type LibraryItem, type SecondaryTheme } from '@/l
  */
 
 const FULL: React.CSSProperties = { display: 'block', width: '100%', boxSizing: 'border-box' }
-const RESET_SELECT: React.CSSProperties = {
-  ...FULL, appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none',
-  backgroundImage: 'none', paddingRight: '2rem',
-}
 const input = 'rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-base text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral'
 const label = 'block text-sm font-bold text-gray-600 dark:text-gray-300 mb-1'
 
@@ -43,10 +40,6 @@ function Counter({ len, max }: { len: number; max: number }) {
       <span className="notranslate">{len} / {max}</span> χαρακτήρες
     </p>
   )
-}
-
-function Chevron() {
-  return <span aria-hidden="true" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: 10 }} className="text-gray-400">▼</span>
 }
 
 export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }: {
@@ -221,14 +214,12 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
   }
 
   const themeSelect = (value: string, exclude: string[], onChange: (t: string) => void, id: string) => (
-    <div style={{ position: 'relative' }}>
-      <select id={id} value={value} onChange={e => onChange(e.target.value)} style={RESET_SELECT} className={input}>
-        <option value="">— Διάλεξε —</option>
-        {LIBRARY_TAXONOMY.filter(c => c.label === value || !exclude.includes(c.label))
-          .map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
-      </select>
-      <Chevron />
-    </div>
+    <GlassSelect
+      id={id} value={value} onChange={onChange} variant="field" placeholder="— Διάλεξε —"
+      options={LIBRARY_TAXONOMY
+        .filter(c => c.label === value || !exclude.includes(c.label))
+        .map(c => ({ value: c.label, label: c.label }))}
+    />
   )
 
   const subChips = (options: string[], picked: string[], toggle: (s: string) => void) => (
@@ -370,25 +361,19 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
               <FieldLabel htmlFor="lib-type" text="Είδος αρχείου *" err={fieldErrors.docType} />
-              <div style={{ position: 'relative' }}>
-                <select id="lib-type" value={docType} onChange={e => { setDocType(e.target.value); clearFieldError('docType') }}
-                  style={RESET_SELECT} className={input}>
-                  <option value="">— Διάλεξε —</option>
-                  {LIBRARY_DOC_TYPES.map(d => <option key={d} value={d}>{shortDocType(d)}</option>)}
-                </select>
-                <Chevron />
-              </div>
+              <GlassSelect
+                id="lib-type" value={docType} variant="field" placeholder="— Διάλεξε —"
+                onChange={v => { setDocType(v); clearFieldError('docType') }}
+                options={LIBRARY_DOC_TYPES.map(d => ({ value: d, label: shortDocType(d) }))}
+              />
             </div>
             <div>
               <label className={label} htmlFor="lib-lang">Γλώσσα</label>
-              <div style={{ position: 'relative' }}>
-                <select id="lib-lang" value={language ?? ''} onChange={e => setLanguage(e.target.value)}
-                  style={RESET_SELECT} className={input}>
-                  <option value="">— Διάλεξε —</option>
-                  {LIBRARY_LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
-                </select>
-                <Chevron />
-              </div>
+              <GlassSelect
+                id="lib-lang" value={language ?? ''} variant="field" placeholder="— Διάλεξε —"
+                onChange={setLanguage}
+                options={LIBRARY_LANGUAGES.map(l => ({ value: l, label: l }))}
+              />
             </div>
           </div>
 
