@@ -403,14 +403,30 @@ export default function LibraryContent() {
                       {/* Σήμα ΔΕΞΙΑ του τίτλου, στην ίδια γραμμή — μπροστά του
                           έσπαγε σε δική του γραμμή λόγω του line-clamp */}
                       <span style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                        <span
-                          title={it.description || undefined}
-                          tabIndex={it.description ? 0 : -1}
-                          className={`font-semibold text-charcoal dark:text-gray-100 ${it.description ? 'cursor-help decoration-dotted underline-offset-4 hover:underline' : ''}`}
-                          style={{ ...CELL_CLAMP, minWidth: 0 }}
-                        >
-                          {it.title}
-                        </span>
+                        {/* Για τον Βιβλιοθηκάριο ο τίτλος είναι ο συντομότερος
+                            δρόμος προς την επεξεργασία — το μολύβι μένει ως
+                            ορατή ένδειξη, αλλά δεν χρειάζεται σκόπευση. */}
+                        {isLibrarian ? (
+                          <button
+                            type="button"
+                            onClick={() => setEditItem(it)}
+                            title={(it.description ? it.description + '\n\n' : '') + 'Κλικ για επεξεργασία'}
+                            aria-label={`Επεξεργασία: ${it.title}`}
+                            className="font-semibold text-charcoal dark:text-gray-100 hover:text-coral dark:hover:text-coral-light decoration-dotted underline-offset-4 hover:underline transition-colors"
+                            style={{ ...CELL_CLAMP, minWidth: 0, textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                          >
+                            {it.title}
+                          </button>
+                        ) : (
+                          <span
+                            title={it.description || undefined}
+                            tabIndex={it.description ? 0 : -1}
+                            className={`font-semibold text-charcoal dark:text-gray-100 ${it.description ? 'cursor-help decoration-dotted underline-offset-4 hover:underline' : ''}`}
+                            style={{ ...CELL_CLAMP, minWidth: 0 }}
+                          >
+                            {it.title}
+                          </span>
+                        )}
                         {isNew(it.submittedAt) && (
                           <span style={{ flexShrink: 0 }} className="px-2 py-0.5 rounded-full bg-coral text-white text-[10px] font-bold uppercase">Νέο</span>
                         )}
