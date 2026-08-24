@@ -38,7 +38,7 @@ export default function SortDropdown({ options, selected, onSortChange }: SortDr
     <div className="relative" ref={ref}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-3 rounded-full border border-charcoal dark:border-gray-400 text-sm font-medium text-charcoal dark:text-gray-200 hover:bg-charcoal/10 dark:hover:bg-gray-600 transition-colors whitespace-nowrap"
+        className={`${isOpen ? 'ring-2 ring-coral ' : ''}flex items-center gap-2 px-4 py-3 rounded-full border border-charcoal dark:border-gray-400 text-sm font-medium text-charcoal dark:text-gray-200 hover:bg-charcoal/10 dark:hover:bg-gray-600 transition-colors whitespace-nowrap`}
         aria-label={`Ταξινόμηση: ${selectedLabel}`}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
@@ -59,19 +59,20 @@ export default function SortDropdown({ options, selected, onSortChange }: SortDr
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-600 z-50 min-w-[180px] py-2" role="listbox" aria-label="Ταξινόμηση">
+        <div className="absolute top-full right-0 mt-2 menu-glass rounded-xl z-50 min-w-[180px] py-2" role="listbox" aria-label="Ταξινόμηση">
           {options.map(opt => (
             <button
               key={opt.value}
               onClick={() => { onSortChange(opt.value); setIsOpen(false) }}
-              className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+              className={`w-full text-left pl-8 pr-3 py-1.5 text-sm transition-colors relative ${
                 selected === opt.value
-                  ? 'bg-coral/10 dark:bg-coral/20 text-charcoal dark:text-gray-100 font-medium'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'menu-row-on'
+                  : 'menu-row-off text-charcoal dark:text-gray-100'
               }`}
               role="option"
               aria-selected={selected === opt.value}
             >
+              <span aria-hidden="true" className="absolute left-3 text-xs">{(selected === opt.value) ? '✓' : ''}</span>
               {opt.label}
             </button>
           ))}
