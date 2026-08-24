@@ -1866,3 +1866,9 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
 .dark .menu-glass .menu-divider {
   border-color: rgba(255, 255, 255, 0.1);
 }
+
+/* Υγρή κάρτα: το γυαλί των μενού ως επιφάνεια περιεχομένου. Δηλώνεται ΜΕΤΑ
+   το .menu-glass ώστε το hover να νικά το border του shorthand — τα σκέτα
+   hover:border-* utilities χάνουν από το μεταγενέστερο .menu-glass. */
+.card-liquid-hover { transition: border-color .3s ease, transform .3s ease; }
+.card-liquid-hover:hover { border-color: #FF8B6A; transform: translateY(-2px); }
