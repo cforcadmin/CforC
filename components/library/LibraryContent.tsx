@@ -52,7 +52,10 @@ export default function LibraryContent() {
   const [introSeen, setIntroSeen] = useState(false)
   const [showIntro, setShowIntro] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [flash, setFlash] = useState<string | null>(null)
+  // Το μήνυμα επιτυχίας κουβαλά προαιρετικά και την αναίρεσή του — μαζί
+  // γεννιούνται, μαζί σβήνουν.
+  const [flash, setFlash] = useState<{ text: string; undo?: () => Promise<string> } | null>(null)
+  const [undoBusy, setUndoBusy] = useState(false)
   const [librarians, setLibrarians] = useState<Array<{ name: string; until?: string | null }>>([])
   const [isLibrarian, setIsLibrarian] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
@@ -113,8 +116,22 @@ export default function LibraryContent() {
     setDeleteArm(null)
     const r = await fetch(`/api/library/manage?documentId=${encodeURIComponent(documentId)}`, { method: 'DELETE' })
     const j = await r.json().catch(() => null)
-    if (!r.ok) { setFlash(j?.error || 'Η διαγραφή απέτυχε'); return }
-    setFlash('Το τεκμήριο διαγράφηκε. Το αρχείο του είναι στον κάδο του Drive.')
+    if (!r.ok) { setFlash({ text: j?.error || 'Η διαγραφή απέτυχε' }); return }
+    const snapshot = j?.snapshot
+    setFlash({
+      text: 'Το τεκμήριο διαγράφηκε. Το αρχείο του είναι στον κάδο του Drive.',
+      ...(snapshot ? {
+        undo: async () => {
+          const rr = await fetch('/api/library/manage', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ snapshot }),
+          })
+          const jj = await rr.json().catch(() => null)
+          if (!rr.ok) throw new Error(jj?.error || 'Η επαναφορά απέτυχε')
+          return 'Το τεκμήριο επανήλθε — μαζί με το αρχείο του.'
+        },
+      } : {}),
+    })
     reload()
   }
 
@@ -354,7 +371,23 @@ export default function LibraryContent() {
         {flash && (
           <div className="rounded-2xl border border-coral/40 bg-coral/10 dark:bg-coral/20 px-5 py-4 mb-5 flex items-start gap-3">
             <span aria-hidden="true">✓</span>
-            <p className="text-sm text-charcoal dark:text-gray-100 flex-1">{flash}</p>
+            <p className="text-sm text-charcoal dark:text-gray-100 flex-1">{flash.text}</p>
+            {flash.undo && (
+              <button type="button" disabled={undoBusy}
+                onClick={async () => {
+                  setUndoBusy(true)
+                  try {
+                    const msg = await flash.undo!()
+                    setFlash({ text: msg })
+                    reload()
+                  } catch (err: any) {
+                    setFlash({ text: err?.message || 'Η αναίρεση απέτυχε' })
+                  } finally { setUndoBusy(false) }
+                }}
+                className="px-3 py-1 rounded-full border border-coral text-coral dark:text-coral-light text-xs font-bold hover:bg-coral hover:text-white transition-colors disabled:opacity-40 whitespace-nowrap">
+                {undoBusy ? 'Αναίρεση…' : 'Αναίρεση'}
+              </button>
+            )}
             <button type="button" onClick={() => setFlash(null)} aria-label="Κλείσιμο"
               className="text-gray-400 hover:text-charcoal dark:hover:text-gray-100 leading-none">×</button>
           </div>
@@ -519,9 +552,23 @@ export default function LibraryContent() {
           editItem={editItem}
           onShowGuide={() => setGuideManual(true)}
           onClose={() => setEditItem(null)}
-          onSaved={() => {
+          onSaved={result => {
             setEditItem(null)
-            setFlash('Το τεκμήριο ενημερώθηκε.')
+            const prev = result.previous
+            setFlash({
+              text: 'Το τεκμήριο ενημερώθηκε.',
+              ...(prev ? {
+                undo: async () => {
+                  const rr = await fetch('/api/library/manage', {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(prev),
+                  })
+                  const jj = await rr.json().catch(() => null)
+                  if (!rr.ok) throw new Error(jj?.error || 'Η αναίρεση απέτυχε')
+                  return 'Η επεξεργασία αναιρέθηκε — το τεκμήριο γύρισε όπως ήταν.'
+                },
+              } : {}),
+            })
             reload()
           }}
         />
@@ -547,9 +594,11 @@ export default function LibraryContent() {
           onClose={() => setShowForm(false)}
           onSaved={result => {
             setShowForm(false)
-            setFlash(result.state === 'pending'
-              ? `Λάβαμε το τεκμήριο. Ο τίτλος μοιάζει με «${result.duplicateOf?.title ?? 'υπάρχον τεκμήριο'}», οπότε θα το ελέγξει ο Βιβλιοθηκάριος πριν δημοσιευτεί.`
-              : 'Το τεκμήριο καταχωρήθηκε και είναι ήδη ορατό σε όλα τα μέλη. Ευχαριστούμε!')
+            setFlash({
+              text: result.state === 'pending'
+                ? `Λάβαμε το τεκμήριο. Ο τίτλος μοιάζει με «${result.duplicateOf?.title ?? 'υπάρχον τεκμήριο'}», οπότε θα το ελέγξει ο Βιβλιοθηκάριος πριν δημοσιευτεί.`
+                : 'Το τεκμήριο καταχωρήθηκε και είναι ήδη ορατό σε όλα τα μέλη. Ευχαριστούμε!',
+            })
             reload()
           }}
         />

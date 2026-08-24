@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { titleKey, LIMITS } from '@/lib/library'
-import { trashFile, ALLOWED_MIME, MAX_FILE_BYTES, LIBRARY_FOLDER_ID } from '@/lib/googleDrive'
+import { trashFile, untrashFile, ALLOWED_MIME, MAX_FILE_BYTES, LIBRARY_FOLDER_ID } from '@/lib/googleDrive'
 import { getAccessToken, SCOPES } from '@/lib/googleAuth'
 import { LIBRARY_TAXONOMY, getSubLabel } from '@/lib/memberTaxonomy'
 import { updateLibraryRow, clearLibraryRow } from '@/lib/librarySheet'
@@ -92,6 +92,18 @@ export async function PUT(request: NextRequest) {
   const item = (await cur.json().catch(() => null))?.data
   if (!cur.ok || !item) return NextResponse.json({ error: 'Δεν βρέθηκε' }, { status: 404 })
 
+  // Το «πριν», σε σχήμα που ξαναταΐζεται σε αυτό το PUT — η αναίρεση της
+  // επεξεργασίας είναι απλώς μια δεύτερη επεξεργασία με τις παλιές τιμές.
+  const previous = {
+    documentId,
+    title: item.Title, description: item.Description ?? '',
+    year: item.Year ?? null, theme: item.Theme,
+    subthemes: Array.isArray(item.Subthemes) ? item.Subthemes : [],
+    secondaryThemes: Array.isArray(item.SecondaryThemes) ? item.SecondaryThemes : [],
+    docType: item.DocType, language: item.Language ?? '',
+    sourceUrl: item.SourceUrl ?? '', driveFileId: item.DriveFileId ?? null,
+  }
+
   // Νέο αρχείο; Επαλήθευση ότι ζει στον φάκελό μας, και το παλιό στον κάδο.
   let fileFields: Record<string, unknown> = {}
   const newFileId = String(b.driveFileId || '').trim()
@@ -99,12 +111,14 @@ export async function PUT(request: NextRequest) {
     if (!/^[A-Za-z0-9_-]{10,}$/.test(newFileId)) return NextResponse.json({ error: 'Άκυρο αναγνωριστικό αρχείου.' }, { status: 400 })
     const tok = await getAccessToken(SCOPES.drive)
     const meta: any = await (await fetch(
-      `https://www.googleapis.com/drive/v3/files/${newFileId}?fields=id,name,mimeType,size,parents&supportsAllDrives=true`,
+      `https://www.googleapis.com/drive/v3/files/${newFileId}?fields=id,name,mimeType,size,parents,trashed&supportsAllDrives=true`,
       { headers: { Authorization: `Bearer ${tok}` }, cache: 'no-store' },
     )).json().catch(() => null)
     if (!meta?.id || !(meta.parents || []).includes(LIBRARY_FOLDER_ID)) {
       return NextResponse.json({ error: 'Το νέο αρχείο δεν βρέθηκε στον φάκελο της βιβλιοθήκης.' }, { status: 400 })
     }
+    // Η αναίρεση γυρίζει σε αρχείο που η επεξεργασία είχε στείλει στον κάδο
+    if (meta.trashed) await untrashFile(newFileId)
     if (Number(meta.size) > MAX_FILE_BYTES || !ALLOWED_MIME[meta.mimeType]) {
       return NextResponse.json({ error: 'Μη αποδεκτό αρχείο.' }, { status: 400 })
     }
@@ -141,7 +155,7 @@ export async function PUT(request: NextRequest) {
     language, submittedBy: item.SubmittedBy?.Name || item.SubmittedByName || null,
   }).catch(() => {})
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, previous })
 }
 
 export async function DELETE(request: NextRequest) {
@@ -151,9 +165,26 @@ export async function DELETE(request: NextRequest) {
   const documentId = String(request.nextUrl.searchParams.get('documentId') || '')
   if (!documentId) return NextResponse.json({ error: 'Λείπει το τεκμήριο' }, { status: 400 })
 
-  const cur = await strapi(`/library-items/${documentId}?fields[0]=Title&fields[1]=DriveFileId`)
+  const cur = await strapi(`/library-items/${documentId}?populate[SubmittedBy][fields][0]=Name`)
   const item = (await cur.json().catch(() => null))?.data
   if (!cur.ok || !item) return NextResponse.json({ error: 'Δεν βρέθηκε' }, { status: 404 })
+
+  // Πλήρες στιγμιότυπο ΠΡΙΝ χαθεί οτιδήποτε: η αναίρεση της διαγραφής το
+  // ξαναχτίζει από αυτό — μαζί με τη σχέση του μέλους που το κατέθεσε,
+  // που αλλιώς δεν ανακτάται.
+  const snapshot = {
+    title: item.Title, titleKey: item.TitleKey ?? null,
+    description: item.Description ?? '', year: item.Year ?? null,
+    theme: item.Theme,
+    subthemes: Array.isArray(item.Subthemes) ? item.Subthemes : [],
+    secondaryThemes: Array.isArray(item.SecondaryThemes) ? item.SecondaryThemes : [],
+    docType: item.DocType, language: item.Language ?? '',
+    sourceUrl: item.SourceUrl ?? '',
+    driveFileId: item.DriveFileId ?? null, fileName: item.FileName ?? null,
+    mimeType: item.MimeType ?? null, fileSize: item.FileSize ?? null,
+    submittedById: item.SubmittedBy?.documentId ?? null,
+    submittedByName: item.SubmittedByName ?? item.SubmittedBy?.Name ?? null,
+  }
 
   // Κάδος, όχι οριστική διαγραφή — λάθος διαγραφή πρέπει να γυρίζει πίσω.
   if (item.DriveFileId) await trashFile(item.DriveFileId).catch(() => {})
@@ -162,5 +193,70 @@ export async function DELETE(request: NextRequest) {
   if (!del.ok) return NextResponse.json({ error: 'Η διαγραφή απέτυχε' }, { status: 502 })
 
   await clearLibraryRow(documentId).catch(() => {})
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, snapshot })
+}
+
+/**
+ * Αναίρεση διαγραφής: ξαναχτίζει το τεκμήριο από το στιγμιότυπο που
+ * επέστρεψε το DELETE και επαναφέρει το αρχείο από τον κάδο. Το τεκμήριο
+ * παίρνει ΝΕΟ αναγνωριστικό — το παλιό έχει πάψει να υπάρχει.
+ */
+export async function POST(request: NextRequest) {
+  const auth = await requireLibrarian()
+  if (!auth.ok) return auth.res
+
+  const body = await request.json().catch(() => ({}))
+  const sn = body?.snapshot
+  if (!sn?.title || !sn?.theme || !sn?.docType) {
+    return NextResponse.json({ error: 'Ελλιπές στιγμιότυπο' }, { status: 400 })
+  }
+
+  if (sn.driveFileId) await untrashFile(String(sn.driveFileId)).catch(() => {})
+
+  const secondary = Array.isArray(sn.secondaryThemes)
+    ? sn.secondaryThemes.filter((x: any) => x?.theme)
+    : []
+  const res = await strapi('/library-items', {
+    method: 'POST',
+    body: JSON.stringify({
+      data: {
+        Title: String(sn.title), TitleKey: sn.titleKey || titleKey(String(sn.title)),
+        Description: sn.description || null, Year: sn.year ?? null,
+        Theme: String(sn.theme),
+        Subthemes: Array.isArray(sn.subthemes) ? sn.subthemes : [],
+        ...(secondary.length ? { SecondaryThemes: secondary } : {}),
+        DocType: String(sn.docType), Language: sn.language || null,
+        SourceUrl: sn.sourceUrl || null,
+        DriveFileId: sn.driveFileId || null, FileName: sn.fileName || null,
+        MimeType: sn.mimeType || null, FileSize: sn.fileSize ?? null,
+        State: 'published',
+        ...(sn.submittedById ? { SubmittedBy: sn.submittedById } : {}),
+        SubmittedByName: sn.submittedByName || null,
+        ReviewedBy: auth.name, ReviewedAt: new Date().toISOString(),
+      },
+    }),
+  })
+  const j: any = await res.json().catch(() => null)
+  if (!res.ok) {
+    let detail = ''
+    try { detail = j?.error?.message || '' } catch { /* όχι JSON */ }
+    return NextResponse.json({ error: `Η επαναφορά απέτυχε (${res.status}${detail ? `: ${detail}` : ''}).` }, { status: 502 })
+  }
+  const newId = j?.data?.documentId
+
+  const { appendLibraryRow } = await import('@/lib/librarySheet')
+  await appendLibraryRow({
+    documentId: newId,
+    title: String(sn.title), description: sn.description || null, year: sn.year ?? null,
+    theme: [String(sn.theme), ...secondary.map((bl: any) => bl.theme)].join(' · '),
+    subthemes: [
+      ...(Array.isArray(sn.subthemes) ? sn.subthemes : []),
+      ...secondary.flatMap((bl: any) => bl.subthemes || []),
+    ],
+    docType: String(sn.docType), sourceUrl: sn.sourceUrl || null,
+    driveFileId: sn.driveFileId || null, language: sn.language || null,
+    submittedBy: sn.submittedByName || null,
+  }).catch(() => {})
+
+  return NextResponse.json({ ok: true, documentId: newId })
 }

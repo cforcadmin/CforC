@@ -117,3 +117,15 @@ export async function trashFile(fileId: string): Promise<boolean> {
   })
   return res.ok
 }
+
+/** Επαναφέρει αρχείο από τον κάδο — για την αναίρεση διαγραφής/επεξεργασίας. */
+export async function untrashFile(fileId: string): Promise<boolean> {
+  const token = await getAccessToken(SCOPES.driveWrite)
+  if (!token) return false
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?supportsAllDrives=true`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ trashed: false }),
+  })
+  return res.ok
+}

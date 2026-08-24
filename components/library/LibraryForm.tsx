@@ -50,7 +50,7 @@ function Chevron() {
 
 export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }: {
   onClose: () => void
-  onSaved: (result: { state: string; duplicateOf: { title: string } | null }) => void
+  onSaved: (result: { state: string; duplicateOf: { title: string } | null; previous?: Record<string, unknown> }) => void
   onShowGuide?: () => void
   /** Αν δοθεί, η φόρμα επεξεργάζεται υπάρχον τεκμήριο (μόνο Βιβλιοθηκάριος) */
   editItem?: LibraryItem | null
@@ -187,7 +187,7 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
         })
         const j = await res.json().catch(() => null)
         if (!res.ok) throw new Error(j?.error || 'Η ενημέρωση απέτυχε — δοκίμασε ξανά.')
-        onSaved({ state: 'updated', duplicateOf: null })
+        onSaved({ state: 'updated', duplicateOf: null, previous: j?.previous })
       } else {
         const fd = new FormData()
         fd.set('title', title.trim())
