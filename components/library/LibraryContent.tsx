@@ -114,6 +114,11 @@ export default function LibraryContent() {
     if (dontShowAgain) { setIntroSeen(true); persist({ introSeen: true }) }
   }
 
+  /** Κλικ σε chip = «δείξε μου ό,τι άλλο έχει αυτή την ετικέτα».
+   *  Ίδια χειρονομία με τα προφίλ των μελών — δεύτερο κλικ την αφαιρεί. */
+  const pivotTo = (value: string) =>
+    setFields(p => p.includes(value) ? p.filter(x => x !== value) : [...p, value])
+
   async function removeItem(documentId: string) {
     setDeleteArm(null)
     const r = await fetch(`/api/library/manage?documentId=${encodeURIComponent(documentId)}`, { method: 'DELETE' })
@@ -469,7 +474,13 @@ export default function LibraryContent() {
                     </td>
                     {show('theme') && (
                       <td className={`${py} px-3 text-gray-600 dark:text-gray-300`}>
-                        <span style={CELL_CLAMP}>{it.theme}</span>
+                        <button type="button" onClick={() => pivotTo(it.theme)}
+                          aria-pressed={fields.includes(it.theme)}
+                          title={fields.includes(it.theme) ? `Αφαίρεση φίλτρου «${it.theme}»` : `Όλα τα τεκμήρια στη θεματική «${it.theme}»`}
+                          className={`transition-colors cursor-pointer hover:text-coral dark:hover:text-coral-light ${
+                            fields.includes(it.theme) ? 'text-coral dark:text-coral-light font-medium' : ''
+                          }`}
+                          style={{ ...CELL_CLAMP, textAlign: 'left', background: 'none', border: 'none', padding: 0 }}>{it.theme}</button>
                         {it.secondaryThemes.length > 0 && (
                           <span className="block text-xs text-gray-400 dark:text-gray-500" style={CELL_CLAMP}>
                             + {it.secondaryThemes.map(b => b.theme).join(' · ')}
@@ -481,10 +492,24 @@ export default function LibraryContent() {
                       <td className={`${py} px-3`}>
                         <span className="flex flex-wrap gap-1">
                           {it.subthemes.map(s => (
-                            <span key={s} className="px-2 py-0.5 rounded-full bg-coral/10 dark:bg-coral/20 text-coral dark:text-coral-light text-[11px] whitespace-nowrap">{s}</span>
+                            <button key={s} type="button" onClick={() => pivotTo(s)}
+                              aria-pressed={fields.includes(s)}
+                              title={fields.includes(s) ? `Αφαίρεση φίλτρου «${s}»` : `Όλα τα τεκμήρια με «${s}»`}
+                              className={`px-2 py-0.5 rounded-full text-[11px] whitespace-nowrap cursor-pointer transition-colors ${
+                                fields.includes(s)
+                                  ? 'bg-coral text-white'
+                                  : 'bg-coral/10 dark:bg-coral/20 text-coral dark:text-coral-light hover:bg-coral hover:text-white'
+                              }`}>{s}</button>
                           ))}
                           {it.secondaryThemes.flatMap(b => b.subthemes).map(s => (
-                            <span key={'sec-' + s} className="px-2 py-0.5 rounded-full bg-gray-200/60 dark:bg-gray-600/50 text-gray-600 dark:text-gray-300 text-[11px] whitespace-nowrap">{s}</span>
+                            <button key={'sec-' + s} type="button" onClick={() => pivotTo(s)}
+                              aria-pressed={fields.includes(s)}
+                              title={fields.includes(s) ? `Αφαίρεση φίλτρου «${s}»` : `Όλα τα τεκμήρια με «${s}»`}
+                              className={`px-2 py-0.5 rounded-full text-[11px] whitespace-nowrap cursor-pointer transition-colors ${
+                                fields.includes(s)
+                                  ? 'bg-coral text-white'
+                                  : 'bg-gray-200/60 dark:bg-gray-600/50 text-gray-600 dark:text-gray-300 hover:bg-coral hover:text-white'
+                              }`}>{s}</button>
                           ))}
                           {it.subthemes.length === 0 && it.secondaryThemes.every(b => !b.subthemes.length) && <span className="text-gray-400">—</span>}
                         </span>
