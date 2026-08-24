@@ -228,7 +228,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
   }
 
   const bgColor = variant === 'members' ? 'bg-[#F5F0EB] dark:bg-gray-800' : 'bg-coral dark:bg-gray-900'
-  const bgOpacity = isScrolled ? (variant === 'members' ? 'bg-[#F5F0EB]/90 dark:bg-gray-800/90' : 'bg-coral/90 dark:bg-gray-900/90') : bgColor
+  const bgOpacity = isScrolled ? (variant === 'members' ? 'nav-glass nav-glass-cream' : 'nav-glass nav-glass-coral') : bgColor
 
   return (
     <header className={`fixed ${isScrolled ? 'top-2' : 'top-0'} w-full z-50 ${isScrolled ? 'shadow-none' : 'shadow-sm dark:shadow-gray-700'} transition-all duration-300 ${isScrolled ? 'px-4' : ''}`}>
