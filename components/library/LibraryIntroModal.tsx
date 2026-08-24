@@ -75,7 +75,7 @@ export default function LibraryIntroModal({ onAccept, onClose, librarians = [], 
         role="dialog"
         aria-modal="true"
         aria-labelledby="lib-intro-title"
-        className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto"
+        className="menu-glass rounded-3xl max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4 mb-2">

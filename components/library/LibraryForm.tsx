@@ -241,7 +241,7 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-labelledby="lib-form-title"
-        className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto"
+        className="menu-glass rounded-3xl max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-4 mb-6">
           <h3 id="lib-form-title" className="text-2xl font-bold text-charcoal dark:text-gray-100">
