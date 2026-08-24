@@ -47,13 +47,15 @@ export default function GlassSelect({
   const selected = options.find(o => o.value === value) || null
   const filled = clearable && !!value
 
+  // Ίδιο σήμα με το φίλτρο πεδίων: κοραλί δαχτυλίδι όσο το μενού είναι ανοιχτό
+  const openRing = open ? 'ring-2 ring-coral ' : ''
   const trigger = variant === 'pill'
-    ? `h-9 rounded-full pl-4 text-sm focus:outline-none focus:ring-2 focus:ring-coral text-left border transition-colors ${
+    ? `${openRing}h-9 rounded-full pl-4 text-sm focus:outline-none focus:ring-2 focus:ring-coral text-left border transition-colors ${
         filled
           ? 'border-charcoal dark:border-gray-100 bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900 font-medium'
           : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100'
       }`
-    : 'rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-base text-charcoal dark:text-gray-100 text-left focus:outline-none focus:ring-2 focus:ring-coral'
+    : `${openRing}rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-base text-charcoal dark:text-gray-100 text-left focus:outline-none focus:ring-2 focus:ring-coral`
 
   // Πρώτο γράμμα → άλμα στην επόμενη επιλογή που αρχίζει έτσι (όπως το native)
   function typeAhead(e: React.KeyboardEvent) {
