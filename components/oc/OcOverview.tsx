@@ -468,7 +468,16 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
                         onClick={() => { const all = OC_TABLE_COLUMNS.map(c => c.key); setCols(all); persist({ tableCols: all.join(',') }) }}
                         className="text-[11px] text-coral dark:text-coral-light hover:underline">Όλες</button>
                       <button type="button"
-                        onClick={() => { setCols(OC_TABLE_DEFAULT_COLS); persist({ tableCols: OC_TABLE_DEFAULT_COLS.join(',') }) }}
+                        onClick={() => {
+                          setCols(OC_TABLE_DEFAULT_COLS)
+                          persist({ tableCols: OC_TABLE_DEFAULT_COLS.join(',') })
+                          // ίδια προστασία με το toggleCol: ταξινόμηση σε
+                          // στήλη που μόλις κρύφτηκε → πίσω στο ΑΜ
+                          setSort(s => {
+                            const col = SORT_COL[s.key]
+                            return col && !OC_TABLE_DEFAULT_COLS.includes(col) ? { key: 'am', dir: 'asc' } : s
+                          })
+                        }}
                         className="text-[11px] text-coral dark:text-coral-light hover:underline">Προεπιλογή</button>
                     </span>
                   </div>
