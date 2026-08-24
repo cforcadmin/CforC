@@ -25,7 +25,7 @@ export default function ProfileGuidelinesModal({
       />
 
       {/* Modal */}
-      <div ref={modalRef} className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div ref={modalRef} className="relative menu-glass rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white dark:bg-gray-800 p-6 border-b border-gray-200 dark:border-gray-700 rounded-t-3xl">
           <div className="flex items-center justify-between">

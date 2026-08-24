@@ -566,7 +566,7 @@ function TaskForm({ task, boardId, scope, holders, members, onClose, onSaved }: 
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl max-w-lg w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto"
+      <div className="menu-glass rounded-3xl max-w-lg w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-4 mb-5">
           <h3 className="text-xl font-bold text-charcoal dark:text-gray-100">
@@ -725,7 +725,7 @@ function BoardForm({ onClose, onSaved }: { onClose: () => void; onSaved: () => v
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl max-w-md w-full p-6 sm:p-8"
+      <div className="menu-glass rounded-3xl max-w-md w-full p-6 sm:p-8"
         onClick={e => e.stopPropagation()}>
         <h3 className="text-xl font-bold text-charcoal dark:text-gray-100 mb-5">Νέος πίνακας</h3>
         <div className="space-y-4">

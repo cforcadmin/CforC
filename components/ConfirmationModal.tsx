@@ -86,7 +86,7 @@ export default function ConfirmationModal({
       />
 
       {/* Modal */}
-      <div ref={modalRef} className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-md w-full p-8 transform transition-all">
+      <div ref={modalRef} className="relative menu-glass rounded-3xl max-w-md w-full p-8 transform transition-all">
         {/* Close button */}
         <button
           onClick={onCancel}

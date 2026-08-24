@@ -25,7 +25,7 @@ export default function ThankYouModal({
       />
 
       {/* Modal */}
-      <div ref={modalRef} className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden">
+      <div ref={modalRef} className="relative menu-glass rounded-3xl max-w-lg w-full overflow-hidden">
         {/* Header with gradient */}
         <div className="bg-gradient-to-br from-coral to-orange-400 dark:from-coral-light dark:to-orange-500 p-8 text-center">
           {/* Success Icon */}

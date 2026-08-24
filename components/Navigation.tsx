@@ -315,7 +315,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 <div
                   role="menu"
                   aria-label="Σχετικά με εμάς"
-                  className={`absolute top-full left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50 transition-[opacity,visibility] duration-150 ${aboutDropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+                  className={`absolute top-full left-0 mt-2 w-56 menu-glass rounded-xl py-1.5 z-50 transition-[opacity,visibility] duration-150 ${aboutDropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
                 >
                   {aboutSubPages.map((item, i) => (
                     <Link
@@ -361,7 +361,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                     <div
                       role="menu"
                       aria-label="Έργα"
-                      className={`absolute top-full left-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50 transition-[opacity,visibility] duration-150 ${projectsDropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+                      className={`absolute top-full left-0 mt-2 w-80 menu-glass rounded-xl py-1.5 z-50 transition-[opacity,visibility] duration-150 ${projectsDropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
                     >
                       {featuredProjects.map((project, i) => {
                         const imgUrl = getImageUrl(project.cover_image)

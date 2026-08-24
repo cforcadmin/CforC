@@ -134,7 +134,7 @@ export default function OcRenewalsPopup({ members, canIssue, canRemind, onClose,
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 sm:p-8"
+        className="menu-glass rounded-3xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 sm:p-8"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4 mb-1">

@@ -23,7 +23,7 @@ export default function OcSeatChoiceModal({ seats, onChoose, onDismiss }: OcSeat
       onClick={onDismiss}
     >
       <div
-        className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6 w-full max-w-sm animate-flyIn"
+        className="menu-glass rounded-3xl p-6 w-full max-w-sm animate-flyIn"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-4">

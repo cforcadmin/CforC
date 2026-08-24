@@ -414,7 +414,7 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
             {sortOpen && (
               <>
                 <div className="fixed inset-0 z-30" onClick={() => setSortOpen(false)} aria-hidden="true" />
-                <div className="absolute right-0 top-full mt-2 z-40 w-48 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-600 py-2" role="listbox" aria-label="Ταξινόμηση">
+                <div className="absolute right-0 top-full mt-2 z-40 w-48 menu-glass rounded-2xl border border-gray-200 dark:border-gray-600 py-2" role="listbox" aria-label="Ταξινόμηση">
                   {(Object.keys(SORT_LABELS) as SortKey[])
                     .filter(k => !SORT_COL[k] || show(SORT_COL[k]!))
                     .map(k => (
@@ -460,7 +460,7 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
             {showCols && (
               <>
                 <div className="fixed inset-0 z-30" onClick={() => setShowCols(false)} aria-hidden="true" />
-                <div className="absolute right-0 top-full mt-2 z-40 w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-600 p-4">
+                <div className="absolute right-0 top-full mt-2 z-40 w-64 menu-glass rounded-2xl border border-gray-200 dark:border-gray-600 p-4">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Ορατές στήλες</p>
                     <span style={{ display: 'flex', gap: 8 }}>
@@ -848,7 +848,7 @@ export default function OcOverview({
           onClick={() => setShowApproved(false)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 sm:p-8"
+            className="menu-glass rounded-3xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 sm:p-8"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4 mb-4">

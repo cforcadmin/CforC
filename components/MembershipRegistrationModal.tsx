@@ -62,7 +62,7 @@ export default function MembershipRegistrationModal({
       />
 
       {/* Modal */}
-      <div ref={modalRef} className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+      <div ref={modalRef} className="relative menu-glass rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-coral dark:bg-gray-700 p-6 rounded-t-3xl">
           <div className="flex items-center justify-between">

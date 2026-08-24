@@ -1426,7 +1426,7 @@ export default function ProfilePage() {
           />
 
           {/* Modal */}
-          <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-md w-full p-8">
+          <div className="relative menu-glass rounded-3xl max-w-md w-full p-8">
             {/* Icon */}
             <div className="flex justify-center mb-4">
               <div className="w-16 h-16 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">

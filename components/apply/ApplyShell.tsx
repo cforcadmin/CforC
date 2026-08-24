@@ -377,7 +377,7 @@ export default function ApplyShell() {
       {/* Intro popup */}
       {showIntro && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="apply-intro-title">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 w-full max-w-lg animate-flyIn max-h-[90vh] overflow-y-auto">
+          <div className="menu-glass rounded-3xl p-8 w-full max-w-lg animate-flyIn max-h-[90vh] overflow-y-auto">
             <h2 id="apply-intro-title" className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-4">Καλωσήρθες! 👋</h2>
             <div className="space-y-4 text-gray-700 dark:text-gray-300">
               <p>Σ&rsquo; ευχαριστούμε για το ενδιαφέρον σου να γίνεις μέλος του Culture for Change!</p>

@@ -280,7 +280,7 @@ export default function GlobalSearch({ isOpen, onClose }: { isOpen: boolean; onC
         role="dialog"
         aria-modal="true"
         aria-label="Αναζήτηση"
-        className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[75vh] flex flex-col animate-flyIn"
+        className="relative menu-glass rounded-3xl w-full max-w-2xl max-h-[75vh] flex flex-col animate-flyIn"
         onKeyDown={handleKeyDown}
       >
         {/* Search Input */}

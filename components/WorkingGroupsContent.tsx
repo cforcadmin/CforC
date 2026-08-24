@@ -496,7 +496,7 @@ function JoinGroupModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto">
+      <div className="relative menu-glass rounded-3xl max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto">
         {/* Close button */}
         <button
           onClick={onClose}

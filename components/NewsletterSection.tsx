@@ -194,7 +194,7 @@ export default function NewsletterSection({ variant = 'default' }: NewsletterSec
           />
 
           {/* Popup */}
-          <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 md:p-12 max-w-md w-full animate-scale-in">
+          <div className="relative menu-glass rounded-3xl p-8 md:p-12 max-w-md w-full animate-scale-in">
             <div className="text-center">
               {/* Icon */}
               <div className="w-16 h-16 bg-coral/10 dark:bg-coral/20 rounded-full flex items-center justify-center mx-auto mb-6">

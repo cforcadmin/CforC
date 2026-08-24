@@ -311,7 +311,7 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
           role="alertdialog" aria-modal="true" aria-label="Η έκδοση απέτυχε"
           onClick={() => setIssueError(null)}>
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl max-w-md w-full p-6 sm:p-8 text-center"
+          <div className="menu-glass rounded-3xl max-w-md w-full p-6 sm:p-8 text-center"
             onClick={e => e.stopPropagation()}>
             <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl" aria-hidden="true">⚠️</span>
