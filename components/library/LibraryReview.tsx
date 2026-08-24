@@ -34,8 +34,8 @@ const dt = (iso: string | null) =>
 
 const FIELDS: Array<{ label: string; get: (i: LibraryItem) => string }> = [
   { label: 'Έτος', get: i => String(i.year ?? '—') },
-  { label: 'Θεματική', get: i => i.theme || '—' },
-  { label: 'Υποθεματική', get: i => i.subthemes.join(', ') || '—' },
+  { label: 'Θεματική', get: i => [i.theme, ...i.secondaryThemes.map(b => b.theme)].filter(Boolean).join(' · ') || '—' },
+  { label: 'Υποθεματική', get: i => [...i.subthemes, ...i.secondaryThemes.flatMap(b => b.subthemes)].join(', ') || '—' },
   { label: 'Είδος', get: i => shortDocType(i.docType) || '—' },
   { label: 'Γλώσσα', get: i => i.language || '—' },
   { label: 'Πηγή', get: i => i.sourceUrl || '—' },

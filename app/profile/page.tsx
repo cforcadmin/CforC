@@ -744,18 +744,8 @@ export default function ProfilePage() {
 
         {activeSection === 'library' && (
           <div className="pt-20">
-            {/* pt-24 όπως και οι άλλες ενότητες: εκείνες το παίρνουν από το
-                py-24 του component τους, εδώ ο τίτλος είναι έξω από αυτό και
-                κολλούσε στο hero. */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 mb-8">
-              <h2 className="text-3xl sm:text-4xl font-bold text-charcoal dark:text-gray-100">
-                CforC Ανοιχτή βιβλιοθήκη
-              </h2>
-              <p className="mt-2 text-base text-gray-600 dark:text-gray-300 max-w-3xl">
-                Συλλογικά επιμελημένο υλικό για τον πολιτισμό — μελέτες, οδηγοί, νομοθεσία και
-                εργαλεία. Για εσωτερική και εκπαιδευτική χρήση των μελών του δικτύου.
-              </p>
-            </div>
+            {/* Ο τίτλος, το σήμα δοκιμαστικής λειτουργίας και οι οδηγίες ζουν
+                μέσα στο LibraryContent — οι οδηγίες ανοίγουν το δικό του modal. */}
             <LibraryContent />
           </div>
         )}

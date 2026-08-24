@@ -32,6 +32,7 @@ export default function FieldsFilter({
   const [expandedSplittable, setExpandedSplittable] = useState<SplittableSubcategory | null>(null)
   const [checkedOptions, setCheckedOptions] = useState<string[]>([])
   const panelRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const subcategoryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const toggleSelection = (value: string) => {
@@ -51,6 +52,9 @@ export default function FieldsFilter({
     setHoveredCategory(null)
     setExpandedSplittable(null)
     setCheckedOptions([])
+    // Όπως το native select: το focus γυρίζει στο χειριστήριο, ώστε το
+    // δαχτυλίδι εστίασης να φανεί μετά το κλείσιμο.
+    triggerRef.current?.focus()
   }, [])
 
   // Handle escape key
@@ -181,10 +185,11 @@ export default function FieldsFilter({
     <div className="relative" ref={panelRef}>
       {/* Trigger button */}
       <button
+        ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
         className={`border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-coral text-left flex items-center gap-2 transition-colors ${
           compact ? 'h-9 px-4 w-44 md:w-52' : 'px-3 py-3 w-44 md:w-56'
-        } ${
+        } ${compact && isOpen ? 'ring-2 ring-coral ' : ''}${
           selectedFields.length > 0
             ? 'border-charcoal dark:border-gray-100 bg-charcoal dark:bg-gray-100 text-white dark:text-gray-900 font-medium'
             : compact
@@ -220,7 +225,9 @@ export default function FieldsFilter({
 
       {/* Popover panel */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 z-[60] flex">
+        <div className={compact
+          ? 'absolute -top-1.5 -left-1.5 z-[60] flex'
+          : 'absolute top-full left-0 mt-2 z-[60] flex'}>
           {/* Categories panel */}
           <div className={panelCls}>
             <div className={`${compact ? 'px-3 py-1.5' : 'px-3 py-2'} border-b ${compact ? 'menu-divider' : 'border-gray-100 dark:border-gray-700'} flex items-center justify-between`}>

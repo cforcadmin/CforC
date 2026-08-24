@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { LIMITS } from '@/lib/library'
 
 /**
  * Το ενημερωτικό παράθυρο πριν από κάθε καταχώρηση.
@@ -54,10 +55,12 @@ function until(d?: string | null): string {
   return ` (έως ${new Date(t).toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })})`
 }
 
-export default function LibraryIntroModal({ onAccept, onClose, librarians = [] }: {
+export default function LibraryIntroModal({ onAccept, onClose, librarians = [], manual = false }: {
   onAccept: (dontShowAgain: boolean) => void
   onClose: () => void
   librarians?: Librarian[]
+  /** true όταν ανοίγει από το κουμπί «Οδηγίες» — χωρίς «να μην εμφανιστεί ξανά» */
+  manual?: boolean
 }) {
   const [dontShow, setDontShow] = useState(false)
 
@@ -106,20 +109,36 @@ export default function LibraryIntroModal({ onAccept, onClose, librarians = [] }
           ))}
         </ul>
 
-        <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer mb-6">
-          <input type="checkbox" checked={dontShow} onChange={e => setDontShow(e.target.checked)} className="accent-[#FF8B6A]" />
-          Να μην εμφανιστεί ξανά
-        </label>
+        <div className="rounded-2xl bg-gray-50 dark:bg-gray-700/50 p-4 mb-6">
+          <p className="text-sm font-bold text-charcoal dark:text-gray-100 mb-2">Όρια της φόρμας</p>
+          <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+            <li>• Αρχείο έως <strong className="notranslate">40 MB</strong> — PDF, Word, Excel, PowerPoint, OpenDocument, ePub, κείμενο, CSV, εικόνες</li>
+            <li>• Τίτλος έως <span className="notranslate">{LIMITS.title}</span> χαρακτήρες · Περιγραφή έως <span className="notranslate">{LIMITS.description}</span> · Σύνδεσμος έως <span className="notranslate">{LIMITS.sourceUrl}</span></li>
+            <li>• Έτος από <span className="notranslate">{LIMITS.yearMin}</span> έως σήμερα</li>
+            <li>• Χρειάζεται αρχείο <strong>ή</strong> σύνδεσμος πηγής — τουλάχιστον ένα από τα δύο</li>
+            <li>• Μία κύρια θεματική· προαιρετικά δευτερεύουσες για τεκμήρια που εμπίπτουν σε περισσότερα πεδία</li>
+            <li>• Τίτλος που μοιάζει με υπάρχον τεκμήριο περνά πρώτα από τον Βιβλιοθηκάριο</li>
+          </ul>
+        </div>
+
+        {!manual && (
+          <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer mb-6">
+            <input type="checkbox" checked={dontShow} onChange={e => setDontShow(e.target.checked)} className="accent-[#FF8B6A]" />
+            Να μην εμφανιστεί ξανά
+          </label>
+        )}
 
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" onClick={() => onAccept(dontShow)}
             className="px-6 py-2.5 rounded-full bg-coral text-white text-sm font-bold hover:bg-coral/90 transition-colors">
-            Κατάλαβα, συνέχεια
+            {manual ? 'Κατάλαβα' : 'Κατάλαβα, συνέχεια'}
           </button>
-          <button type="button" onClick={onClose}
-            className="px-5 py-2.5 rounded-full border border-gray-300 dark:border-gray-600 text-sm text-charcoal dark:text-gray-200">
-            Άκυρο
-          </button>
+          {!manual && (
+            <button type="button" onClick={onClose}
+              className="px-5 py-2.5 rounded-full border border-gray-300 dark:border-gray-600 text-sm text-charcoal dark:text-gray-200">
+              Άκυρο
+            </button>
+          )}
         </div>
       </div>
     </div>

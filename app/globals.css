@@ -1808,16 +1808,29 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
    Ένας κανόνας στο globals.css φτάνει πάντα στο στοιχείο.
    ────────────────────────────────────────────────────────────── */
 .menu-glass {
-  background-color: rgba(255, 255, 255, 0.72);
-  -webkit-backdrop-filter: blur(22px) saturate(180%);
-  backdrop-filter: blur(22px) saturate(180%);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
+  /* Πιο διάφανο απ' ό,τι θα έβαζε κανείς με το μάτι: πάνω σε σχεδόν ενιαίο
+     σκούρο φόντο, ένα 72% αδιαφανές σκούρο πάνελ δεν ξεχωρίζει καθόλου από
+     ένα συμπαγές. Η θόλωση φαίνεται μόνο όταν έχει κάτι να θολώσει. */
+  background-color: rgba(255, 255, 255, 0.55);
+  -webkit-backdrop-filter: blur(24px) saturate(210%);
+  backdrop-filter: blur(24px) saturate(210%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.24),
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 .dark .menu-glass {
-  background-color: rgba(32, 35, 45, 0.72);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3);
+  /* 0.42 και όχι 0.55: πάνω σε σχεδόν ενιαίο σκούρο φόντο, μόνο έντονη
+     διαφάνεια κάνει το γυαλί αντιληπτό. Η θόλωση κρατά το κείμενο αναγνώσιμο. */
+  background-color: rgba(52, 57, 75, 0.42);
+  border-color: rgba(255, 255, 255, 0.16);
+  /* Η εσωτερική φωτεινή γραμμή στην κορυφή είναι αυτό που κάνει το πάνελ να
+     διαβάζεται ως γυαλί και όχι ως σκούρο κουτί. */
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 /* Χωρίς backdrop-filter (παλιότεροι browsers) το διάφανο φόντο κάνει το
    κείμενο δυσανάγνωστο — εκεί γίνεται συμπαγές. */

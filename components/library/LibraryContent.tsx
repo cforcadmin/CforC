@@ -11,7 +11,7 @@ import { LIB_COLUMNS, LIB_DEFAULT_COLS } from './libraryPrefs'
 import { shortDocType, type LibraryItem } from '@/lib/library'
 import { doesFieldMatchFilter } from '@/lib/memberTaxonomy'
 
-type SortKey = 'title' | 'theme' | 'subthemes' | 'docType' | 'file' | 'language' | 'year' | 'source' | 'submittedBy'
+type SortKey = 'created' | 'title' | 'theme' | 'subthemes' | 'docType' | 'file' | 'language' | 'year' | 'source' | 'submittedBy'
 type Dir = 'asc' | 'desc'
 
 /**
@@ -20,6 +20,11 @@ type Dir = 'asc' | 'desc'
  * πληρώσει με grid-cols-7 και appearance-none). Ό,τι είναι ΜΗΧΑΝΙΣΜΟΣ
  * διάταξης εδώ μπαίνει με inline style· η θεματοδότηση μένει σε κλάσεις.
  */
+/** «Νέο» για 30 μέρες — αντί για shuffle: η ανανέωση φαίνεται χωρίς να
+ *  αποδιοργανώνεται ο πίνακας. */
+const isNew = (iso: string | null) =>
+  !!iso && Date.now() - Date.parse(iso) < 30 * 24 * 3600 * 1000
+
 const CELL_CLAMP: React.CSSProperties = {
   display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
   overflow: 'hidden', textOverflow: 'ellipsis',
@@ -38,7 +43,11 @@ export default function LibraryContent() {
   const [fields, setFields] = useState<string[]>([])
   const [docType, setDocType] = useState('')
   const [language, setLanguage] = useState('')
-  const [sort, setSort] = useState<{ key: SortKey; dir: Dir }>({ key: 'title', dir: 'asc' })
+  // Νεότερα πρώτα — οι βιβλιοθηκάριοι θέλουν να φαίνεται ότι ανανεώνεται.
+  const [sort, setSort] = useState<{ key: SortKey; dir: Dir }>({ key: 'created', dir: 'desc' })
+  const [editItem, setEditItem] = useState<LibraryItem | null>(null)
+  const [guideManual, setGuideManual] = useState(false)
+  const [deleteArm, setDeleteArm] = useState<string | null>(null)
 
   const [introSeen, setIntroSeen] = useState(false)
   const [showIntro, setShowIntro] = useState(false)
@@ -51,6 +60,12 @@ export default function LibraryContent() {
   const [focusId, setFocusId] = useState<string | null>(null)
 
   // Ο σύνδεσμος στο email του Βιβλιοθηκάριου ανοίγει κατευθείαν το τεκμήριο
+  useEffect(() => {
+    if (!deleteArm) return
+    const t = setTimeout(() => setDeleteArm(null), 4000)
+    return () => clearTimeout(t)
+  }, [deleteArm])
+
   useEffect(() => {
     const p = new URLSearchParams(window.location.search)
     const id = p.get('review')
@@ -94,6 +109,15 @@ export default function LibraryContent() {
     if (dontShowAgain) { setIntroSeen(true); persist({ introSeen: true }) }
   }
 
+  async function removeItem(documentId: string) {
+    setDeleteArm(null)
+    const r = await fetch(`/api/library/manage?documentId=${encodeURIComponent(documentId)}`, { method: 'DELETE' })
+    const j = await r.json().catch(() => null)
+    if (!r.ok) { setFlash(j?.error || 'Η διαγραφή απέτυχε'); return }
+    setFlash('Το τεκμήριο διαγράφηκε. Το αρχείο του είναι στον κάδο του Drive.')
+    reload()
+  }
+
   async function reload() {
     const r = await fetch('/api/library')
     if (!r.ok) return
@@ -135,7 +159,10 @@ export default function LibraryContent() {
         // Η ίδια λογική με τα φίλτρα των μελών: κατηγορία ταιριάζει και με
         // τις υποκατηγορίες της, ώστε «Τέχνες & Πολιτισμός» να πιάνει και
         // το «Χειροτεχνία».
-        const tags = [i.theme, ...i.subthemes].join(', ')
+        const tags = [
+          i.theme, ...i.subthemes,
+          ...i.secondaryThemes.flatMap(b => [b.theme, ...b.subthemes]),
+        ].join(', ')
         if (!fields.some(f => doesFieldMatchFilter(tags, f))) return false
       }
       return true
@@ -145,6 +172,7 @@ export default function LibraryContent() {
     // έχει η ταξινόμηση: μια στήλη με παύλες στην κορυφή δεν λέει τίποτα.
     const keyOf = (i: LibraryItem): string | number => {
       switch (sort.key) {
+        case 'created': return i.submittedAt ?? ''
         case 'year': return i.year ?? Number.NEGATIVE_INFINITY
         case 'docType': return shortDocType(i.docType)
         case 'subthemes': return i.subthemes.join(', ')
@@ -178,6 +206,30 @@ export default function LibraryContent() {
   return (
     <section className="pb-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* pt-24: οι άλλες ενότητες το παίρνουν από το py-24 του component τους */}
+        <div className="pt-24 mb-8" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', gap: 16 }}>
+          <div style={{ flex: '1 1 24rem', minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+              <h2 className="text-3xl sm:text-4xl font-bold text-charcoal dark:text-gray-100">
+                CforC Ανοιχτή βιβλιοθήκη
+              </h2>
+              <span className="px-3 py-1 rounded-full border border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-500/10 text-xs font-bold uppercase tracking-wide whitespace-nowrap">
+                Δοκιμαστική λειτουργία
+              </span>
+            </div>
+            <p className="mt-2 text-base text-gray-600 dark:text-gray-300 max-w-3xl">
+              Συλλογικά επιμελημένο υλικό για τον πολιτισμό — μελέτες, οδηγοί, νομοθεσία και
+              εργαλεία. Για εσωτερική και εκπαιδευτική χρήση των μελών του δικτύου.
+            </p>
+          </div>
+          <button type="button" onClick={() => setGuideManual(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-charcoal dark:text-gray-200 rounded-full text-sm font-medium transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Οδηγίες συμπλήρωσης
+          </button>
+        </div>
         {error && (
           <div className="bg-orange-50 dark:bg-gray-700 border border-orange-200 dark:border-gray-600 rounded-2xl p-6 text-center mb-8">
             <p className="text-orange-600 dark:text-orange-400 font-medium">{error}</p>
@@ -225,7 +277,7 @@ export default function LibraryContent() {
               onClick={() => setShowCols(v => !v)}
               aria-expanded={showCols}
               className={`h-9 inline-flex items-center gap-2 px-4 text-sm font-medium rounded-full border bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 transition-colors ${
-                showCols ? 'border-coral ring-2 ring-coral/30' : 'border-gray-300 dark:border-gray-600 hover:border-coral dark:hover:border-coral-light'
+                showCols ? 'border-coral ring-2 ring-coral' : 'border-gray-300 dark:border-gray-600 hover:border-coral dark:hover:border-coral-light'
               }`}
             >
               <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
@@ -237,7 +289,8 @@ export default function LibraryContent() {
             {showCols && (
               <>
                 <div className="fixed inset-0 z-30" onClick={() => setShowCols(false)} aria-hidden="true" />
-                <div className="absolute right-0 top-full mt-2 z-40 w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-600 p-4">
+                {/* Ίδια λογική με το φίλτρο πεδίων: γυάλινο, ανοίγει πάνω στο κουμπί */}
+                <div className="absolute -right-1.5 -top-1.5 z-[60] w-64 menu-glass rounded-xl p-4">
                   <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Ορατές στήλες</p>
                   <div className="space-y-1.5 mb-4">
                     {LIB_COLUMNS.map(c => (
@@ -335,31 +388,50 @@ export default function LibraryContent() {
                   {show('year') && <Th label="Έτος" k="year" sort={sort} onSort={toggleSort} py={py} />}
                   {show('source') && <Th label="Πηγή" k="source" sort={sort} onSort={toggleSort} py={py} />}
                   {show('submittedBy') && <Th label="Καταχώρηση" k="submittedBy" sort={sort} onSort={toggleSort} py={py} />}
+                  {isLibrarian && <th className={`${py} px-3 font-medium sr-only`}>Ενέργειες</th>}
                 </tr>
               </thead>
               <tbody>
                 {rows.map(it => (
                   <tr key={it.documentId} className="border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/40 align-top">
                     <td className={`${py} px-3 max-w-md`}>
-                      {/* Ο τίτλος κρατά την περιγραφή σε tooltip — title ώστε να
-                          δουλεύει και με πληκτρολόγιο και σε κινητό με long-press */}
+                      {/* semibold και όχι medium: η Founders Grotesk δεν έχει
+                          ελληνικά και το ελληνικό κείμενο πέφτει σε Arial, όπου
+                          το βάρος 500 δεν ξεχωρίζει από το κανονικό. Στο 600 ο
+                          browser συνθέτει έντονη Arial και τα ελληνικά
+                          «χοντραίνουν» όσο και τα λατινικά. */}
+                      {isNew(it.submittedAt) && (
+                        <span className="inline-block align-middle mr-2 px-2 py-0.5 rounded-full bg-coral text-white text-[10px] font-bold uppercase">Νέο</span>
+                      )}
                       <span
                         title={it.description || undefined}
                         tabIndex={it.description ? 0 : -1}
-                        className={`font-medium text-charcoal dark:text-gray-100 ${it.description ? 'cursor-help decoration-dotted underline-offset-4 hover:underline' : ''}`}
+                        className={`font-semibold text-charcoal dark:text-gray-100 ${it.description ? 'cursor-help decoration-dotted underline-offset-4 hover:underline' : ''}`}
                         style={CELL_CLAMP}
                       >
                         {it.title}
                       </span>
                     </td>
-                    {show('theme') && <td className={`${py} px-3 text-gray-600 dark:text-gray-300`} style={CELL_CLAMP}>{it.theme}</td>}
+                    {show('theme') && (
+                      <td className={`${py} px-3 text-gray-600 dark:text-gray-300`}>
+                        <span style={CELL_CLAMP}>{it.theme}</span>
+                        {it.secondaryThemes.length > 0 && (
+                          <span className="block text-xs text-gray-400 dark:text-gray-500" style={CELL_CLAMP}>
+                            + {it.secondaryThemes.map(b => b.theme).join(' · ')}
+                          </span>
+                        )}
+                      </td>
+                    )}
                     {show('subthemes') && (
                       <td className={`${py} px-3`}>
                         <span className="flex flex-wrap gap-1">
                           {it.subthemes.map(s => (
                             <span key={s} className="px-2 py-0.5 rounded-full bg-coral/10 dark:bg-coral/20 text-coral dark:text-coral-light text-[11px] whitespace-nowrap">{s}</span>
                           ))}
-                          {it.subthemes.length === 0 && <span className="text-gray-400">—</span>}
+                          {it.secondaryThemes.flatMap(b => b.subthemes).map(s => (
+                            <span key={'sec-' + s} className="px-2 py-0.5 rounded-full bg-gray-200/60 dark:bg-gray-600/50 text-gray-600 dark:text-gray-300 text-[11px] whitespace-nowrap">{s}</span>
+                          ))}
+                          {it.subthemes.length === 0 && it.secondaryThemes.every(b => !b.subthemes.length) && <span className="text-gray-400">—</span>}
                         </span>
                       </td>
                     )}
@@ -376,6 +448,33 @@ export default function LibraryContent() {
                       </td>
                     )}
                     {show('submittedBy') && <td className={`${py} px-3 text-gray-500 dark:text-gray-400`} style={CELL_CLAMP}>{it.submittedBy || '—'}</td>}
+                    {isLibrarian && (
+                      <td className={`${py} px-3 whitespace-nowrap`}>
+                        <button type="button" onClick={() => setEditItem(it)}
+                          aria-label={`Επεξεργασία: ${it.title}`} title="Επεξεργασία"
+                          className="text-gray-400 hover:text-coral dark:hover:text-coral-light transition-colors mr-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        {/* Διαγραφή σε δύο βήματα — όχι native confirm, που
+                            μπλοκάρει και δεν έχει δικό μας λεκτικό */}
+                        {deleteArm === it.documentId ? (
+                          <button type="button" onClick={() => removeItem(it.documentId)}
+                            className="px-2 py-0.5 rounded-full bg-red-600 text-white text-[11px] font-bold">
+                            Οριστικά;
+                          </button>
+                        ) : (
+                          <button type="button" onClick={() => setDeleteArm(it.documentId)}
+                            aria-label={`Διαγραφή: ${it.title}`} title="Διαγραφή"
+                            className="text-gray-400 hover:text-red-500 transition-colors">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
                 {rows.length === 0 && items.length > 0 && (
@@ -391,6 +490,21 @@ export default function LibraryContent() {
 
       {showIntro && (
         <LibraryIntroModal onAccept={acceptIntro} onClose={() => setShowIntro(false)} librarians={librarians} />
+      )}
+      {guideManual && (
+        <LibraryIntroModal manual onAccept={() => setGuideManual(false)} onClose={() => setGuideManual(false)} librarians={librarians} />
+      )}
+      {editItem && (
+        <LibraryForm
+          editItem={editItem}
+          onShowGuide={() => setGuideManual(true)}
+          onClose={() => setEditItem(null)}
+          onSaved={() => {
+            setEditItem(null)
+            setFlash('Το τεκμήριο ενημερώθηκε.')
+            reload()
+          }}
+        />
       )}
       {showReview && (
         <LibraryReview
@@ -409,6 +523,7 @@ export default function LibraryContent() {
       )}
       {showForm && (
         <LibraryForm
+          onShowGuide={() => setGuideManual(true)}
           onClose={() => setShowForm(false)}
           onSaved={result => {
             setShowForm(false)

@@ -2,6 +2,8 @@
  * Ανοιχτή Βιβλιοθήκη — κοινός κώδικας για site και OC.
  */
 
+export interface SecondaryTheme { theme: string; subthemes: string[] }
+
 export interface LibraryItem {
   documentId: string
   title: string
@@ -9,6 +11,7 @@ export interface LibraryItem {
   year: number | null
   theme: string
   subthemes: string[]
+  secondaryThemes: SecondaryTheme[]
   docType: string
   sourceUrl: string | null
   fileId: string | null
@@ -127,6 +130,11 @@ export function shapeItem(r: any): LibraryItem {
     year: r.Year ?? null,
     theme: r.Theme,
     subthemes: Array.isArray(subs) ? subs : (typeof subs === 'string' && subs ? [subs] : []),
+    secondaryThemes: Array.isArray(r.SecondaryThemes)
+      ? r.SecondaryThemes.filter((b: any) => b?.theme).map((b: any) => ({
+          theme: String(b.theme), subthemes: Array.isArray(b.subthemes) ? b.subthemes : [],
+        }))
+      : [],
     docType: r.DocType,
     sourceUrl: r.SourceUrl || null,
     fileId: r.DriveFileId || null,
@@ -145,3 +153,14 @@ export function shortDocType(full: string): string {
   const m = String(full || '').match(/\(([^)]+)\)\s*$/)
   return m ? m[1] : String(full || '')
 }
+
+/**
+ * Όρια καταχώρησης — ΕΝΑ σημείο αλήθειας για φόρμα και server.
+ * Ο Τίτλος χωρά έως 255 στη βάση (string στο Strapi)· το 250 αφήνει περιθώριο.
+ */
+export const LIMITS = {
+  title: 250,
+  description: 2000,
+  sourceUrl: 255,
+  yearMin: 1800,
+} as const

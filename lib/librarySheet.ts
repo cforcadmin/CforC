@@ -100,3 +100,59 @@ export async function appendLibraryRow(item: SheetRow): Promise<number | null> {
     return null
   }
 }
+
+/** Βρίσκει τη γραμμή ενός τεκμηρίου από τη στήλη «Κωδικός» (M). */
+async function findRowByCode(token: string, documentId: string): Promise<number | null> {
+  const codes = await values(token, 'M2:M1000')
+  for (let i = 0; i < codes.length; i++) {
+    if ((codes[i]?.[0] || '').trim() === documentId) return i + 2
+  }
+  return null
+}
+
+/** Ενημερώνει τη γραμμή του τεκμηρίου στο φύλλο· αν δεν υπάρχει, την προσθέτει. */
+export async function updateLibraryRow(item: SheetRow): Promise<boolean> {
+  try {
+    const token = await getAccessToken(SCOPES.sheetsWrite)
+    if (!token) return false
+    const row = await findRowByCode(token, item.documentId)
+    if (row === null) return (await appendLibraryRow(item)) !== null
+
+    const driveUrl = item.driveFileId ? `https://drive.google.com/file/d/${item.driveFileId}/view` : ''
+    const today = new Date().toISOString().slice(0, 10)
+    const line = [
+      item.title, item.description || '', item.year ?? '',
+      item.theme, item.subthemes.join(', '), item.docType,
+      item.sourceUrl || '', driveUrl, item.language || '',
+      item.submittedBy || '', today, item.documentId,
+    ]
+    const w = await fetch(api(`/values/${rng(`B${row}:M${row}`)}?valueInputOption=USER_ENTERED`), {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: [line] }),
+    })
+    return w.ok
+  } catch (err) {
+    console.error('librarySheet.update:', err)
+    return false
+  }
+}
+
+/** Καθαρίζει τη γραμμή διαγραμμένου τεκμηρίου (B:M — το Α/Α μένει, είναι του φύλλου). */
+export async function clearLibraryRow(documentId: string): Promise<boolean> {
+  try {
+    const token = await getAccessToken(SCOPES.sheetsWrite)
+    if (!token) return false
+    const row = await findRowByCode(token, documentId)
+    if (row === null) return true
+    const w = await fetch(api(`/values/${rng(`B${row}:M${row}`)}:clear`), {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: '{}',
+    })
+    return w.ok
+  } catch (err) {
+    console.error('librarySheet.clear:', err)
+    return false
+  }
+}

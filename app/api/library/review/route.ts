@@ -124,13 +124,18 @@ export async function POST(request: NextRequest) {
 
     // Τώρα που δημοσιεύτηκε, μπαίνει και στο φύλλο της ομάδας
     const { appendLibraryRow } = await import('@/lib/librarySheet')
+    const sec: Array<{ theme: string; subthemes: string[] }> =
+      Array.isArray(item.SecondaryThemes) ? item.SecondaryThemes : []
     await appendLibraryRow({
       documentId,
       title: item.Title,
       description: item.Description ?? null,
       year: item.Year ?? null,
-      theme: item.Theme,
-      subthemes: Array.isArray(item.Subthemes) ? item.Subthemes : [],
+      theme: [item.Theme, ...sec.map(bl => bl.theme)].join(' · '),
+      subthemes: [
+        ...(Array.isArray(item.Subthemes) ? item.Subthemes : []),
+        ...sec.flatMap(bl => bl.subthemes || []),
+      ],
       docType: item.DocType,
       sourceUrl: item.SourceUrl ?? null,
       driveFileId: item.DriveFileId ?? null,
