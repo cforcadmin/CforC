@@ -114,6 +114,14 @@ export default function LibraryContent() {
   /** Το ενημερωτικό εμφανίζεται μία φορά — εκτός αν το μέλος ζητήσει αλλιώς */
   const startAdd = () => (introSeen ? setShowForm(true) : setShowIntro(true))
 
+  // Το «+ Προσθήκη τεκμηρίου» του hero ανοίγει τη φόρμα από απόσταση
+  useEffect(() => {
+    const h = () => startAdd()
+    window.addEventListener('cforc:library-add', h)
+    return () => window.removeEventListener('cforc:library-add', h)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [introSeen])
+
   const acceptIntro = (dontShowAgain: boolean) => {
     setShowIntro(false)
     setShowForm(true)

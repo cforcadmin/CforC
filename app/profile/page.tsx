@@ -63,6 +63,100 @@ export default function ProfilePage() {
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
   const [activeSection, setActiveSectionState] = useState<SectionKey>('profile')
 
+  // ── Ζωντανοί δείκτες του hero (απόφαση 25/8: εκδοχή Β, χωρίς ομαδοποίηση) ──
+  const [heroStats, setHeroStats] = useState<{
+    openCallsActive: number; openCallsExpiringSoon: number
+    newsletterLatest: string | null; workingGroupsUpdated: string | null
+    libraryNew30: number; libraryPending: number
+  } | null>(null)
+  // «Τελευταία είδα» ανά ενότητα — localStorage προς το παρόν (μηδέν αλλαγή
+  // βάσης)· αν αποδώσει, μετακομίζει στο προφίλ για συνέπεια μεταξύ συσκευών.
+  const [seen, setSeen] = useState<Record<string, string>>({})
+  const [heroOut, setHeroOut] = useState(false)
+  const heroRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+    fetch('/api/profile/hero-stats').then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setHeroStats(d) }).catch(() => {})
+    try { setSeen(JSON.parse(localStorage.getItem('cforc-section-seen') || '{}')) } catch {}
+  }, [isAuthenticated])
+
+  // Η επίσκεψη σε ενότητα σβήνει την τελεία της
+  useEffect(() => {
+    setSeen(prev => {
+      const next = { ...prev, [activeSection]: new Date().toISOString() }
+      try { localStorage.setItem('cforc-section-seen', JSON.stringify(next)) } catch {}
+      return next
+    })
+  }, [activeSection])
+
+  // Λεπτή γυάλινη λωρίδα όταν το hero βγει από το οπτικό πεδίο
+  useEffect(() => {
+    const el = heroRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(([e]) => setHeroOut(!e.isIntersecting), { threshold: 0 })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  const isNewSince = (iso: string | null, key: string) =>
+    !!iso && (!seen[key] || iso > seen[key])
+
+  /** αριθμός | 'dot' | null — ο πίνακας της απόφασης, σε κώδικα */
+  const indicatorFor = (key: SectionKey): number | 'dot' | null => {
+    if (!heroStats) return null
+    switch (key) {
+      case 'profile': {
+        const gaps = [user?.Bio, user?.Province, user?.FieldsOfWork, user?.Image].filter(v => !v).length
+        return gaps > 0 ? gaps : null
+      }
+      case 'open-calls': return heroStats.openCallsActive || null
+      case 'educational': return null  // στατικό υλικό χωρίς χρονοσήμανση — τίποτα, όχι ψέμα
+      case 'working-groups': return isNewSince(heroStats.workingGroupsUpdated, 'working-groups') ? 'dot' : null
+      case 'newsletters': return isNewSince(heroStats.newsletterLatest, 'newsletters') ? 'dot' : null
+      case 'library': return (heroStats.libraryPending || heroStats.libraryNew30) || null
+      default: return null
+    }
+  }
+
+  const greeting = () => {
+    const first = (user?.Name || '').trim().split(/\s+/)[0]
+    const hour = new Date().getHours()
+    const hello = hour < 12 ? 'Καλημέρα' : hour < 18 ? 'Καλό απόγευμα' : 'Καλησπέρα'
+    return first ? `${hello}, ${first}` : hello
+  }
+
+  /** Τίτλος + κύρια πράξη ανά ενότητα — το hero λέει κάτι αληθινό, όχι το όνομά της ξανά */
+  const heroContext = (): { title: string; cta: string | null; onCta: () => void } => {
+    const toContent = () => document.getElementById('main-content')?.scrollIntoView({ behavior: 'smooth' })
+    switch (activeSection) {
+      case 'open-calls': {
+        const n = heroStats?.openCallsActive ?? 0
+        const soonN = heroStats?.openCallsExpiringSoon ?? 0
+        return {
+          title: n ? `${n} προσκλήσεις ενεργές${soonN ? ` — ${soonN} λήγει σύντομα` : ''}` : greeting(),
+          cta: 'Δες τις ενεργές', onCta: toContent,
+        }
+      }
+      case 'library': {
+        const pend = heroStats?.libraryPending ?? 0
+        const fresh = heroStats?.libraryNew30 ?? 0
+        return {
+          title: pend ? `${pend} τεκμήρια περιμένουν έλεγχο` : fresh ? `${fresh} νέα τεκμήρια αυτόν τον μήνα` : greeting(),
+          cta: '+ Προσθήκη τεκμηρίου',
+          onCta: () => { toContent(); window.dispatchEvent(new Event('cforc:library-add')) },
+        }
+      }
+      case 'newsletters':
+        return { title: isNewSince(heroStats?.newsletterLatest ?? null, 'newsletters') ? 'Νέο τεύχος σε περιμένει' : greeting(), cta: null, onCta: toContent }
+      case 'profile':
+        return { title: greeting(), cta: 'Επεξεργασία προφίλ', onCta: toContent }
+      default:
+        return { title: greeting(), cta: null, onCta: toContent }
+    }
+  }
+
   // Read hash from URL to determine initial section
   useEffect(() => {
     // ?section= πριν από το hash: οι σύνδεσμοι των email της βιβλιοθήκης
@@ -663,16 +757,40 @@ export default function ProfilePage() {
       <Navigation />
       <main id="main-content">
         {/* Dashboard Hero Section */}
-        <section className="relative -bottom-20">
+        <section className="relative -bottom-20" ref={heroRef}>
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 min-h-[25vh] flex items-center rounded-b-3xl relative z-10 py-8">
             {/* Content area: same inset as accessibility button on both sides, minus space for the button itself on the right */}
             <div className="w-full px-6 lg:px-12">
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6 lg:gap-8 pr-16 lg:pr-16">
-                {/* Left: Active section title (fixed half, shrinks to fit) */}
-                <div className="flex items-center min-w-0">
-                  <h1 className="text-[clamp(1.25rem,3.5vw,3.75rem)] font-bold leading-none whitespace-nowrap dark:text-coral">
+                {/* Αριστερά: χαιρετισμός + κατάσταση + κύρια πράξη (εκδοχή Β, 25/8).
+                    Ο τίτλος ενότητας έγινε eyebrow — το φωτισμένο pill τον δείχνει ήδη,
+                    και το μεγάλο κείμενο πλέον ΛΕΕΙ κάτι: ποιος είσαι ή τι σε περιμένει. */}
+                <div className="flex flex-col justify-center min-w-0 gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-charcoal/70 dark:text-gray-400 m-0">
                     {currentSection.heroTitle}
+                  </p>
+                  <h1 className="text-[clamp(1.4rem,3vw,2.6rem)] font-bold leading-tight dark:text-coral m-0">
+                    {heroContext().title}
                   </h1>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <span className="text-xs font-bold rounded-full px-3 py-1 bg-white/85 dark:bg-white/10 text-green-800 dark:text-green-300">
+                      ✓ Μέλος του δικτύου
+                    </span>
+                    {activeSection === 'profile' && typeof indicatorFor('profile') === 'number' && (
+                      <span className="text-xs font-bold rounded-full px-3 py-1 bg-white/85 dark:bg-white/10 text-amber-800 dark:text-amber-300">
+                        {indicatorFor('profile')} πεδία προφίλ κενά
+                      </span>
+                    )}
+                    {heroContext().cta && (
+                      <button
+                        type="button"
+                        onClick={heroContext().onCta}
+                        className="text-sm font-bold rounded-full px-4 py-1.5 bg-charcoal text-white hover:opacity-90 transition-opacity"
+                      >
+                        {heroContext().cta}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Right: Navigation buttons (fixed half) */}
@@ -688,6 +806,16 @@ export default function ProfilePage() {
                         }`}
                       >
                         {section.label}
+                        {(() => {
+                          const ind = indicatorFor(section.key)
+                          if (ind === null) return null
+                          if (ind === 'dot') return <span aria-label="νέο περιεχόμενο" className="inline-block w-1.5 h-1.5 rounded-full bg-white ml-1.5 align-middle" />
+                          return (
+                            <span className={`notranslate inline-flex items-center justify-center min-w-[1.1rem] h-[1.1rem] px-1 ml-1.5 rounded-full text-[10px] font-bold align-middle ${
+                              activeSection === section.key ? 'bg-white text-coral' : 'bg-coral text-white'
+                            }`}>{ind}</span>
+                          )
+                        })()}
                       </button>
                       {section.key === 'educational' && (
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tab:block z-10">
@@ -748,6 +876,38 @@ export default function ProfilePage() {
             </div>
           </div>
         </section>
+
+        {/* Λεπτή γυάλινη λωρίδα: η πλοήγηση ακολουθεί όταν το hero έχει
+            φύγει ψηλά — αλλαγή ενότητας χωρίς επιστροφή στην κορυφή.
+            top κάτω από τη φουσκωμένη μπάρα πλοήγησης· ίδιο γυαλί με τα μενού. */}
+        <div
+          className={`fixed left-0 right-0 z-40 transition-transform duration-300 ${heroOut ? 'translate-y-0' : '-translate-y-[130%]'}`}
+          style={{ top: '4.25rem' }}
+          aria-hidden={!heroOut}
+        >
+          <div className="mx-4 rounded-2xl px-3 py-2 flex items-center gap-2 overflow-x-auto menu-glass" style={{ scrollbarWidth: 'none' }}>
+            {DASHBOARD_SECTIONS.map(section => (
+              <button
+                key={section.key}
+                onClick={() => { setActiveSection(section.key); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                tabIndex={heroOut ? 0 : -1}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                  activeSection === section.key
+                    ? 'bg-coral text-white'
+                    : 'text-charcoal dark:text-gray-200 hover:bg-coral/15'
+                }`}
+              >
+                {section.label}
+                {(() => {
+                  const ind = indicatorFor(section.key)
+                  if (ind === null) return null
+                  if (ind === 'dot') return <span className="inline-block w-1.5 h-1.5 rounded-full bg-coral ml-1 align-middle" />
+                  return <span className="notranslate inline-flex items-center justify-center min-w-[1rem] h-4 px-1 ml-1 rounded-full text-[9px] font-bold align-middle bg-coral text-white">{ind}</span>
+                })()}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Section Content */}
         {activeSection === 'open-calls' && (
