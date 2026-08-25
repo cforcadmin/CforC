@@ -83,11 +83,8 @@ export default function HeroSection() {
   return (
     <section className="relative -bottom-20">
       {/* Orange Card with Rotating Text - 25% viewport height */}
-      <div className="h-[25vh] flex items-center rounded-b-3xl overflow-hidden relative z-10">
-        {/* Το σβήσιμο αρχίζει στο 70% (κάτω 30%): ο τίτλος εδώ κατεβαίνει
-            χαμηλά και θέλει γυαλί από πίσω του σχεδόν ως το τέλος. */}
-        <div className="hero-glass-fade" style={{ '--hero-fade-start': '70%' } as React.CSSProperties} aria-hidden="true" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative">
+      <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           {/* Στο πνεύμα του λογότυπου: βαρύτερο βάρος (η Roboto Flex είναι
               variable ως το 1000) και ελαφρύ «πάτημα» στο ύψος με scaleY —
               το transform δεν αγγίζει το layout, μόνο το σχήμα των γραμμάτων. */}

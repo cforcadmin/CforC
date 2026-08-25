@@ -1897,31 +1897,6 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
 }
 .nav-glass-coral { background-color: rgba(255, 139, 106, 0.55); }
 .dark .nav-glass-coral { background-color: rgba(50, 55, 72, 0.35); }
-
-/* Κρύσταλλο των hero (αρχική & σχετικά): το γυαλί της μπάρας πάνω στο ίδιο
-   το μέσο (βίντεο/φωτογραφία) που περνά πίσω από την κάρτα. Η μάσκα σβήνει
-   ΚΑΙ την απόχρωση ΚΑΙ τη θόλωση ομαλά προς τα κάτω, ώστε να μη διαβάζεται
-   πουθενά η ακμή της κάρτας — το γυαλί «λιώνει» μέσα στην εικόνα.
-   --hero-fade-start: από πού αρχίζει το σβήσιμο (η αρχική θέλει 70% γιατί
-   τα γράμματα του τίτλου κατεβαίνουν χαμηλότερα). */
-.hero-glass-fade {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  --hero-fade-start: 50%;
-  background-color: rgba(255, 139, 106, 0.55);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-mask-image: linear-gradient(to bottom, black var(--hero-fade-start), transparent 100%);
-  mask-image: linear-gradient(to bottom, black var(--hero-fade-start), transparent 100%);
-}
-.dark .hero-glass-fade { background-color: rgba(50, 55, 72, 0.45); }
-/* Χωρίς backdrop-filter το μέσο θα περνούσε αθόλωτο κάτω από τον τίτλο —
-   εκεί η απόχρωση γίνεται σχεδόν συμπαγής· η μάσκα κρύβει τη ραφή όπως πριν. */
-@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  .hero-glass-fade { background-color: rgba(255, 139, 106, 0.92); }
-  .dark .hero-glass-fade { background-color: rgba(31, 34, 48, 0.92); }
-}
 .nav-glass-cream { background-color: rgba(245, 240, 235, 0.6); }
 .dark .nav-glass-cream { background-color: rgba(50, 55, 72, 0.35); }
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
