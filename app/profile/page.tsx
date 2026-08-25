@@ -36,7 +36,7 @@ const DASHBOARD_SECTIONS = [
   { key: 'working-groups', label: 'Ομάδες Εργασίας', heroTitle: 'ΟΜΑΔΕΣ ΕΡΓΑΣΙΑΣ' },
   { key: 'pocket-guide', label: 'Οδηγός Τσέπης', heroTitle: 'ΟΔΗΓΟΣ ΤΣΕΠΗΣ' },
   { key: 'newsletters', label: 'Newsletters', heroTitle: 'NEWSLETTERS' },
-  { key: 'library', label: 'Βιβλιοθήκη', heroTitle: 'ΒΙΒΛΙΟΘΗΚΗ' },
+  { key: 'library', label: 'Ανοιχτή Βιβλιοθήκη', heroTitle: 'ΑΝΟΙΧΤΗ ΒΙΒΛΙΟΘΗΚΗ' },
 ] as const
 
 type SectionKey = (typeof DASHBOARD_SECTIONS)[number]['key']
