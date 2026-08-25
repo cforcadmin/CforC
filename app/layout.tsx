@@ -1,16 +1,24 @@
 import type { Metadata } from 'next'
-import localFont from 'next/font/local'
+import { Roboto_Flex } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 
-const foundersGrotesk = localFont({
-  src: [
-    { path: '../fonts/TestFoundersGrotesk-Light.otf', weight: '300', style: 'normal' },
-    { path: '../fonts/TestFoundersGrotesk-Regular.otf', weight: '400', style: 'normal' },
-    { path: '../fonts/TestFoundersGrotesk-Medium.otf', weight: '500', style: 'normal' },
-    { path: '../fonts/TestFoundersGrotesk-Semibold.otf', weight: '600', style: 'normal' },
-    { path: '../fonts/TestFoundersGrotesk-Bold.otf', weight: '700', style: 'normal' },
-  ],
+/**
+ * ΓΡΑΜΜΑΤΟΣΕΙΡΑ ΤΟΥ SITE — Roboto Flex (25/8/2026, εκκρεμεί επικύρωση Επικοινωνίας).
+ *
+ * Αντικατέστησε την Test Founders Grotesk για δύο λόγους: (α) δεν είχε
+ * ΚΑΘΟΛΟΥ ελληνικές γλυφές — τα ελληνικά έπεφταν σε Arial και οι έντονοι
+ * τίτλοι δεν «χόντραιναν» (αναφορά βιβλιοθηκάριων)· (β) τα αρχεία ήταν η
+ * ΔΟΚΙΜΑΣΤΙΚΗ έκδοση της Klim, χωρίς άδεια παραγωγής.
+ *
+ * Η CSS μεταβλητή μένει --font-founders ΕΠΙΤΗΔΕΣ: globals.css και
+ * tailwind.config.js δεν αγγίχτηκαν, οπότε η επαναφορά είναι μόνο αυτό το
+ * μπλοκ. ΕΠΑΝΑΦΟΡΑ: docs/Font-Rollback.md (τα παλιά OTF μένουν στο fonts/).
+ * Το next/font κατεβάζει τη γραμματοσειρά στο build και τη σερβίρουμε
+ * εμείς — ο επισκέπτης δεν μιλά ποτέ με την Google.
+ */
+const foundersGrotesk = Roboto_Flex({
+  subsets: ['latin', 'greek'],
   variable: '--font-founders',
   display: 'swap',
 })
