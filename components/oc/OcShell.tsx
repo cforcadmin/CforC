@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Navigation from '@/components/Navigation'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
@@ -108,14 +108,28 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
   )
   // Direct entry without a stored seat and several seats held — ask in place
   const [showSeatModal, setShowSeatModal] = useState(!initialSeat && seats.length > 1)
-  // Same threshold as Navigation: the OC hero minimizes in sync with the
-  // header pill, and its accessibility button yields to the header's own
+  // Same threshold as Navigation (scrollY > 150): the glass strip below the
+  // header copies the pill's geometry, and the hero's accessibility button
+  // yields to the header's own
   const [isScrolled, setIsScrolled] = useState(false)
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 150)
     onScroll()
     window.addEventListener('scroll', onScroll)
     return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+  // Όπως στο /profile: το hero κυλά ΕΞΩ από την οθόνη και τη θέση του
+  // παίρνει η γυάλινη λωρίδα — όχι sticky συμπαγές κοραλί, που επιπλέον
+  // καθόταν πίσω από το μενού και έκρυβε το υγρό γυαλί του (θόλωση πάνω σε
+  // ενιαίο κοραλί = αόρατη).
+  const [heroOut, setHeroOut] = useState(false)
+  const heroRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const el = heroRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(([e]) => setHeroOut(!e.isIntersecting), { threshold: 0 })
+    obs.observe(el)
+    return () => obs.disconnect()
   }, [])
 
   useEffect(() => {
@@ -142,12 +156,11 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
     <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
       <Navigation />
       <main id="main-content">
-        {/* Minimized OC hero — sticky so the category chips never scroll away.
+        {/* OC hero σε κανονική ροή (όπως στο /profile): κυλά έξω από την
+            οθόνη και τα chips συνεχίζουν στη γυάλινη λωρίδα πιο κάτω.
             pt clears the fixed site navbar, which overlays the padding area. */}
-        <section className="sticky top-0 z-40">
-          <div className={`bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 rounded-b-3xl relative transition-all duration-300 ${
-            isScrolled ? 'pt-24 pb-3' : 'pt-28 pb-6'
-          }`}>
+        <section ref={heroRef}>
+          <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 rounded-b-3xl relative pt-28 pb-6">
             <div className="w-full px-6 lg:px-12">
               <div className="flex flex-wrap items-center gap-4">
                 {/* Title + member-area switch */}
@@ -237,6 +250,57 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
             </div>
           </div>
         </section>
+
+        {/* Γυάλινη λωρίδα (ίδια γραμματική με το /profile): εμφανίζεται όταν
+            το hero βγει από το οπτικό πεδίο, δένει με το κύριο μενού και
+            κάθεται λίγο πίσω του — ίδιες πλευρές, γωνίες μόνο κάτω, z-40
+            κάτω από το z-50 του μενού. Το μενού έχει δύο καταστάσεις (πλήρες
+            πλάτος στην κορυφή · πλωτό pill 90% όταν κυλήσει), οπότε η
+            λωρίδα ακολουθεί: πλήρες πλάτος ή (100%−2rem)×0.9 αντίστοιχα. */}
+        <div
+          className={`fixed z-40 transition-all duration-300 ${heroOut ? 'translate-y-0 opacity-100' : '-translate-y-[130%] opacity-0'}`}
+          style={isScrolled
+            ? { top: '5.1rem', left: '50%', transform: 'translateX(-50%)', width: 'calc((100% - 2rem) * 0.9)' }
+            : { top: '4.5rem', left: 0, right: 0, width: '100%' }}
+          aria-hidden={!heroOut}
+        >
+          <div className="px-3 pt-3 pb-2 flex items-center gap-2.5 overflow-x-auto menu-glass rounded-b-2xl"
+            style={{ scrollbarWidth: 'none', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
+            <span className="text-sm font-bold text-charcoal dark:text-gray-100 whitespace-nowrap pl-1 notranslate">OC</span>
+            {SECTIONS.map(section => {
+              const active = section.key === activeSection
+              return (
+                <button
+                  key={section.key}
+                  type="button"
+                  onClick={() => { setActiveSection(section.key); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                  tabIndex={heroOut ? 0 : -1}
+                  aria-current={active ? 'page' : undefined}
+                  className={`inline-flex items-stretch rounded-lg overflow-hidden text-xs font-bold flex-shrink-0 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-coral ${
+                    active ? 'shadow-md' : 'opacity-85 hover:opacity-100'
+                  }`}
+                >
+                  <span
+                    className="px-2 py-1.5 text-white flex items-center flex-shrink-0"
+                    style={{ backgroundColor: section.hue }}
+                    aria-hidden="true"
+                  >
+                    {section.letter}
+                  </span>
+                  <span
+                    className={`flex-1 pl-1.5 pr-2.5 py-1.5 text-left ${active ? 'text-charcoal dark:text-white' : 'text-charcoal/80 dark:text-gray-200'}`}
+                    style={{
+                      backgroundColor: active ? `${section.hue}55` : `${section.hue}26`,
+                    }}
+                  >
+                    {section.rest}
+                  </span>
+                  <span className="sr-only">{section.title}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
 
         {/* Section content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
