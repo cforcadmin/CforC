@@ -85,7 +85,13 @@ export default function HeroSection() {
       {/* Orange Card with Rotating Text - 25% viewport height */}
       <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-none dark:text-coral">
+          {/* Στο πνεύμα του λογότυπου: βαρύτερο βάρος (η Roboto Flex είναι
+              variable ως το 1000) και ελαφρύ «πάτημα» στο ύψος με scaleY —
+              το transform δεν αγγίζει το layout, μόνο το σχήμα των γραμμάτων. */}
+          <h1
+            className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl leading-none dark:text-coral"
+            style={{ fontWeight: 850, transform: 'scaleY(0.86)', transformOrigin: 'left center', letterSpacing: '0.01em' }}
+          >
             <div>CULTURE</div>
             <div className="flex items-center">
               <span>FOR&nbsp;</span>
