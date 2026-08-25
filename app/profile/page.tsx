@@ -73,7 +73,17 @@ export default function ProfilePage() {
   // βάσης)· αν αποδώσει, μετακομίζει στο προφίλ για συνέπεια μεταξύ συσκευών.
   const [seen, setSeen] = useState<Record<string, string>>({})
   const [heroOut, setHeroOut] = useState(false)
+  // Καρφιτσωμένη συμπαγής εκδοχή: το hero κρύβεται και μένει μόνο η λωρίδα
+  // — προτίμηση χρήστη, επιμένει στον browser.
+  const [heroCompact, setHeroCompactState] = useState(false)
   const heroRef = useRef<HTMLElement>(null)
+  const setHeroCompact = (v: boolean) => {
+    setHeroCompactState(v)
+    try { localStorage.setItem('cforc-hero-compact', v ? '1' : '0') } catch {}
+  }
+  useEffect(() => {
+    try { setHeroCompactState(localStorage.getItem('cforc-hero-compact') === '1') } catch {}
+  }, [])
 
   useEffect(() => {
     if (!isAuthenticated) return
@@ -91,14 +101,17 @@ export default function ProfilePage() {
     })
   }, [activeSection])
 
-  // Λεπτή γυάλινη λωρίδα όταν το hero βγει από το οπτικό πεδίο
+  // Λεπτή γυάλινη λωρίδα όταν το hero βγει από το οπτικό πεδίο.
+  // Εξαρτάται από το heroCompact: όταν το hero ξαναεμφανιστεί (restore),
+  // το στοιχείο ΞΑΝΑμπαίνει στο DOM και ο observer πρέπει να ξαναδεθεί.
   useEffect(() => {
+    if (heroCompact) { setHeroOut(false); return }
     const el = heroRef.current
     if (!el) return
     const obs = new IntersectionObserver(([e]) => setHeroOut(!e.isIntersecting), { threshold: 0 })
     obs.observe(el)
     return () => obs.disconnect()
-  }, [])
+  }, [heroCompact])
 
   const isNewSince = (iso: string | null, key: string) =>
     !!iso && (!seen[key] || iso > seen[key])
@@ -757,8 +770,23 @@ export default function ProfilePage() {
       <Navigation />
       <main id="main-content">
         {/* Dashboard Hero Section */}
+        {heroCompact && <div className="h-28" aria-hidden="true" />}
+        {!heroCompact && (
         <section className="relative -bottom-20" ref={heroRef}>
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 min-h-[25vh] flex items-center rounded-b-3xl relative z-10 py-8">
+            {/* Διακριτικός διακόπτης: καρφιτσώνει τη συμπαγή εκδοχή —
+                το hero φεύγει, μένει μόνο η λωρίδα κάτω από το μενού */}
+            <button
+              type="button"
+              onClick={() => setHeroCompact(true)}
+              aria-label="Συμπαγής προβολή — μόνο η μπάρα πλοήγησης"
+              title="Συμπαγής προβολή"
+              className="absolute right-5 top-4 z-20 p-1.5 rounded-full text-charcoal/50 dark:text-gray-500 hover:text-charcoal hover:bg-white/30 dark:hover:text-gray-200 dark:hover:bg-white/10 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 9L4 4m0 0v4m0-4h4m7 5l5-5m0 0v4m0-4h-4m-7 11l-5 5m0 0v-4m0 4h4m7-5l5 5m0 0v-4m0 4h-4" />
+              </svg>
+            </button>
             {/* Content area: same inset as accessibility button on both sides, minus space for the button itself on the right */}
             <div className="w-full px-6 lg:px-12">
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6 lg:gap-8 pr-16 lg:pr-16">
@@ -876,21 +904,47 @@ export default function ProfilePage() {
             </div>
           </div>
         </section>
+        )}
 
-        {/* Λεπτή γυάλινη λωρίδα: η πλοήγηση ακολουθεί όταν το hero έχει
-            φύγει ψηλά — αλλαγή ενότητας χωρίς επιστροφή στην κορυφή.
-            top κάτω από τη φουσκωμένη μπάρα πλοήγησης· ίδιο γυαλί με τα μενού. */}
+        {/* Γυάλινη λωρίδα: εμφανίζεται στο scroll Ή μόνιμα όταν το hero είναι
+            καρφιτσωμένο συμπαγές. ΓΕΩΜΕΤΡΙΑ: δένει με το κύριο μενού και
+            «κάθεται» λίγο ΠΙΣΩ του — ίδιες πλευρές, γωνίες μόνο κάτω, z κάτω
+            από το z-50 του μενού ώστε η μπάρα να την επικαλύπτει ελαφρά.
+            Το μενού έχει δύο καταστάσεις (πλήρες πλάτος στην κορυφή · πλωτό
+            pill 90% όταν κυλήσει, ~25vh — ίδιο κατώφλι με το heroOut), οπότε
+            η λωρίδα ακολουθεί: πλήρες πλάτος ή (100%−2rem)×0.9 αντίστοιχα. */}
+        {(() => {
+          const visible = heroOut || heroCompact
+          const navScrolled = heroOut  // το μενού κυλά στο ίδιο κατώφλι
+          return (
         <div
-          className={`fixed left-0 right-0 z-40 transition-transform duration-300 ${heroOut ? 'translate-y-0' : '-translate-y-[130%]'}`}
-          style={{ top: '4.25rem' }}
-          aria-hidden={!heroOut}
+          className={`fixed z-40 transition-all duration-300 ${visible ? 'translate-y-0 opacity-100' : '-translate-y-[130%] opacity-0'}`}
+          style={navScrolled
+            ? { top: '4.6rem', left: '50%', transform: 'translateX(-50%)', width: 'calc((100% - 2rem) * 0.9)' }
+            : { top: '4.5rem', left: 0, right: 0, width: '100%' }}
+          aria-hidden={!visible}
         >
-          <div className="mx-4 rounded-2xl px-3 py-2 flex items-center gap-2 overflow-x-auto menu-glass" style={{ scrollbarWidth: 'none' }}>
+          <div className={`px-3 pt-3 pb-2 flex items-center gap-2 overflow-x-auto menu-glass rounded-b-2xl`}
+            style={{ scrollbarWidth: 'none', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
+            <span className="text-sm font-bold text-charcoal dark:text-gray-100 whitespace-nowrap pl-1">CforC</span>
+            {heroCompact && (
+              <button
+                type="button"
+                onClick={() => { setHeroCompact(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                aria-label="Επαναφορά πλήρους προβολής"
+                title="Επαναφορά πλήρους προβολής"
+                className="p-1 rounded-full text-gray-400 hover:text-coral dark:hover:text-coral-light transition-colors flex-shrink-0"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 9l6-6m0 0v4m0-4h-4M9 15l-6 6m0 0v-4m0 4h4m8-6l6 6m0 0v-4m0 4h-4M9 9L3 3m0 0v4m0-4h4" />
+                </svg>
+              </button>
+            )}
             {DASHBOARD_SECTIONS.map(section => (
               <button
                 key={section.key}
                 onClick={() => { setActiveSection(section.key); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-                tabIndex={heroOut ? 0 : -1}
+                tabIndex={(heroOut || heroCompact) ? 0 : -1}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                   activeSection === section.key
                     ? 'bg-coral text-white'
@@ -908,6 +962,8 @@ export default function ProfilePage() {
             ))}
           </div>
         </div>
+          )
+        })()}
 
         {/* Section Content */}
         {activeSection === 'open-calls' && (
