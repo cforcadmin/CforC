@@ -17,6 +17,8 @@ interface Member {
   Province?: string
   Phone?: string
   Websites?: string
+  /** Πληρωμές ανά έτος ({'2026': 1}) — τροφοδοτεί το chip συνδρομής στο hero */
+  Payments?: Record<string, number>
   Image?: Array<{
     id?: number
     url: string

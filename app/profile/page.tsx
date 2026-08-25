@@ -787,19 +787,7 @@ export default function ProfilePage() {
         {!heroCompact && (
         <section className="relative -bottom-20" ref={heroRef}>
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 min-h-[25vh] flex items-center rounded-b-3xl relative z-10 py-8">
-            {/* Διακριτικός διακόπτης: καρφιτσώνει τη συμπαγή εκδοχή —
-                το hero φεύγει, μένει μόνο η λωρίδα κάτω από το μενού */}
-            <button
-              type="button"
-              onClick={() => setHeroCompact(true)}
-              aria-label="Συμπαγής προβολή — μόνο η μπάρα πλοήγησης"
-              title="Συμπαγής προβολή"
-              className="absolute right-5 top-4 z-20 p-1.5 rounded-full text-charcoal/50 dark:text-gray-500 hover:text-charcoal hover:bg-white/30 dark:hover:text-gray-200 dark:hover:bg-white/10 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 9L4 4m0 0v4m0-4h4m7 5l5-5m0 0v4m0-4h-4m-7 11l-5 5m0 0v-4m0 4h4m7-5l5 5m0 0v-4m0 4h-4" />
-              </svg>
-            </button>
+
             {/* Content area: same inset as accessibility button on both sides, minus space for the button itself on the right */}
             <div className="w-full px-6 lg:px-12">
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6 lg:gap-8 pr-16 lg:pr-16">
@@ -814,9 +802,19 @@ export default function ProfilePage() {
                     {heroContext().title}
                   </h1>
                   <div className="flex flex-wrap items-center gap-2 mt-1">
-                    <span className="text-xs font-bold rounded-full px-3 py-1 bg-white/85 dark:bg-white/10 text-green-800 dark:text-green-300">
-                      ✓ Μέλος του δικτύου
-                    </span>
+                    {(() => {
+                      const year = new Date().getFullYear()
+                      const paid = user?.Payments?.[String(year)] === 1
+                      return paid ? (
+                        <span className="text-xs font-bold rounded-full px-3 py-1 bg-white/85 dark:bg-white/10 text-green-800 dark:text-green-300">
+                          ✓ Συνδρομή {year} εντάξει
+                        </span>
+                      ) : (
+                        <span className="text-xs font-bold rounded-full px-3 py-1 bg-white/85 dark:bg-white/10 text-amber-800 dark:text-amber-300">
+                          Συνδρομή {year} σε εκκρεμότητα
+                        </span>
+                      )
+                    })()}
                     {activeSection === 'profile' && typeof indicatorFor('profile') === 'number' && (
                       <span className="text-xs font-bold rounded-full px-3 py-1 bg-white/85 dark:bg-white/10 text-amber-800 dark:text-amber-300">
                         {indicatorFor('profile')} πεδία προφίλ κενά
@@ -831,6 +829,20 @@ export default function ProfilePage() {
                         {heroContext().cta}
                       </button>
                     )}
+                    {/* Συμπαγής προβολή: φούσκα δίπλα στην κύρια πράξη — βέλη
+                        ΠΡΟΣ το κέντρο (μαζεύει)· η επαναφορά στη λωρίδα κρατά
+                        τα βέλη προς τα έξω (απλώνει). */}
+                    <button
+                      type="button"
+                      onClick={() => setHeroCompact(true)}
+                      aria-label="Συμπαγής προβολή — μόνο η μπάρα πλοήγησης"
+                      title="Συμπαγής προβολή"
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white/85 dark:bg-white/10 text-charcoal dark:text-gray-200 hover:bg-white dark:hover:bg-white/20 transition-colors flex-shrink-0"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
 
