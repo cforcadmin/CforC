@@ -85,6 +85,19 @@ export default function ProfilePage() {
     try { setHeroCompactState(localStorage.getItem('cforc-hero-compact') === '1') } catch {}
   }, [])
 
+  // Η ΓΕΩΜΕΤΡΙΑ της λωρίδας ακολουθεί το μενού με το ΔΙΚΟ ΤΟΥ κατώφλι
+  // (scrollY > 150, βλ. Navigation). Πριν χρησιμοποιούσαμε το heroOut ως
+  // προσέγγιση — αλλά στην καρφιτσωμένη προβολή το hero δεν υπάρχει, το
+  // heroOut μένει false, και η λωρίδα έμενε full-width ενώ το μενού είχε
+  // γίνει πλωτό pill.
+  const [navScrolled, setNavScrolled] = useState(false)
+  useEffect(() => {
+    const h = () => setNavScrolled(window.scrollY > 150)
+    h()
+    window.addEventListener('scroll', h)
+    return () => window.removeEventListener('scroll', h)
+  }, [])
+
   useEffect(() => {
     if (!isAuthenticated) return
     fetch('/api/profile/hero-stats').then(r => r.ok ? r.json() : null)
@@ -915,12 +928,11 @@ export default function ProfilePage() {
             η λωρίδα ακολουθεί: πλήρες πλάτος ή (100%−2rem)×0.9 αντίστοιχα. */}
         {(() => {
           const visible = heroOut || heroCompact
-          const navScrolled = heroOut  // το μενού κυλά στο ίδιο κατώφλι
           return (
         <div
           className={`fixed z-40 transition-all duration-300 ${visible ? 'translate-y-0 opacity-100' : '-translate-y-[130%] opacity-0'}`}
           style={navScrolled
-            ? { top: '4.6rem', left: '50%', transform: 'translateX(-50%)', width: 'calc((100% - 2rem) * 0.9)' }
+            ? { top: '5.1rem', left: '50%', transform: 'translateX(-50%)', width: 'calc((100% - 2rem) * 0.9)' }
             : { top: '4.5rem', left: 0, right: 0, width: '100%' }}
           aria-hidden={!visible}
         >
