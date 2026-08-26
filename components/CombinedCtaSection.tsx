@@ -48,6 +48,15 @@ export default function CombinedCtaSection({ variant = 'default' }: CombinedCtaS
   }
 
   const showBackgroundImage = variant === 'default'
+  // Πάνω στη φωτογραφία τα πάνελ γίνονται υγρό γυαλί· στη variant χωρίς
+  // εικόνα το γυαλί δεν έχει τίποτα να θολώσει (βλ. την απόπειρα στο hero
+  // του «Σχετικά») και μένουν τα σχεδόν συμπαγή.
+  const leftPanel = showBackgroundImage
+    ? 'nav-glass cta-glass-coral'
+    : 'bg-coral/95 dark:bg-gradient-to-br dark:from-gray-700/95 dark:to-gray-800/95'
+  const rightPanel = showBackgroundImage
+    ? 'nav-glass cta-glass-light'
+    : 'bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm'
 
   return (
     <>
@@ -70,7 +79,7 @@ export default function CombinedCtaSection({ variant = 'default' }: CombinedCtaS
         <div className={`relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${showBackgroundImage ? 'py-16 flex items-center justify-center min-h-[400px]' : ''}`}>
           <div className={`rounded-3xl overflow-hidden grid md:grid-cols-2 w-full ${showBackgroundImage ? 'max-w-5xl shadow-2xl' : ''}`}>
             {/* Left: Become a Member */}
-            <div className="bg-coral/95 dark:bg-gradient-to-br dark:from-gray-700/95 dark:to-gray-800/95 p-10 md:p-12 flex flex-col justify-center">
+            <div className={`${leftPanel} p-10 md:p-12 flex flex-col justify-center`}>
               <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-charcoal dark:text-gray-100 mb-4">
                 ΓΙΝΕ ΜΕΛΟΣ ΤΟΥ{'\n'}ΔΙΚΤΥΟΥ ΜΑΣ
               </h2>
@@ -88,7 +97,7 @@ export default function CombinedCtaSection({ variant = 'default' }: CombinedCtaS
             </div>
 
             {/* Right: Newsletter */}
-            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-10 md:p-12 flex flex-col justify-center">
+            <div className={`${rightPanel} p-10 md:p-12 flex flex-col justify-center`}>
               <span className="inline-block self-start bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light px-3 py-1 rounded-full text-xs font-medium mb-4">
                 ΟΛΑ TA NEA ΣTO EMAIL ΣΟΥ!
               </span>
