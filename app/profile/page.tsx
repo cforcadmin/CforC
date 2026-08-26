@@ -952,7 +952,7 @@ export default function ProfilePage() {
             : { top: '4.5rem', left: 0, right: 0, width: '100%' }}
           aria-hidden={!visible}
         >
-          <div className={`px-3 pt-3 pb-2 flex items-center gap-2 overflow-x-auto menu-glass rounded-b-2xl transition-[transform,opacity] duration-300 ${visible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}
+          <div className={`px-3 pt-3 pb-2 flex items-center gap-2 overflow-x-auto menu-glass rounded-b-2xl strip-slide ${visible ? 'strip-shown' : 'strip-hidden'}`}
             style={{ scrollbarWidth: 'none', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
             <span className="text-sm font-bold text-charcoal dark:text-gray-100 whitespace-nowrap pl-1">CforC</span>
             {heroCompact && (

@@ -1912,6 +1912,14 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
   .cta-glass-light { background-color: rgba(255, 255, 255, 0.95); }
   .dark .cta-glass-light { background-color: rgba(31, 41, 55, 0.97); }
 }
+
+/* Η γυάλινη λωρίδα κάτω από το μενού (/profile, /oc): εμφάνιση με
+   ολίσθηση από την πλάτη του μενού προς τα κάτω + fade. Σε globals.css
+   και ΟΧΙ σε utilities: τα translate/transition classes εδώ έχουν
+   αποτύχει σιωπηλά (βλ. σχόλιο του .menu-glass). */
+.strip-slide { transition: transform .3s ease, opacity .3s ease; }
+.strip-hidden { transform: translateY(-110%); opacity: 0; }
+.strip-shown { transform: translateY(0); opacity: 1; }
 .nav-glass-cream { background-color: rgba(245, 240, 235, 0.6); }
 .dark .nav-glass-cream { background-color: rgba(50, 55, 72, 0.35); }
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
