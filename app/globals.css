@@ -1899,12 +1899,13 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
 .dark .nav-glass-coral { background-color: rgba(50, 55, 72, 0.35); }
 
 /* Η διπλή κάρτα CTA (γίνε μέλος + newsletter) πάνω στη φωτογραφία της:
-   υγρό γυαλί αντί για σχεδόν συμπαγή πάνελ. Λίγο πιο αδιαφανή από τη
-   μπάρα — εδώ υπάρχει πολύ μικρό κείμενο πάνω σε πολύβουη εικόνα. */
-.cta-glass-coral { background-color: rgba(255, 139, 106, 0.72); }
-.dark .cta-glass-coral { background-color: rgba(50, 55, 72, 0.5); }
-.cta-glass-light { background-color: rgba(255, 255, 255, 0.62); }
-.dark .cta-glass-light { background-color: rgba(31, 41, 55, 0.55); }
+   υγρό γυαλί αντί για σχεδόν συμπαγή πάνελ. Πιο αδιαφανή από τη μπάρα —
+   εδώ υπάρχει πολύ μικρό κείμενο πάνω σε πολύβουη εικόνα. Το αριστερό
+   (τίτλος) μένει πιο διάφανο από το δεξί (φόρμα με ψιλά γράμματα). */
+.cta-glass-coral { background-color: rgba(255, 139, 106, 0.78); }
+.dark .cta-glass-coral { background-color: rgba(50, 55, 72, 0.62); }
+.cta-glass-light { background-color: rgba(255, 255, 255, 0.9); }
+.dark .cta-glass-light { background-color: rgba(31, 41, 55, 0.8); }
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   .cta-glass-coral { background-color: rgba(255, 139, 106, 0.95); }
   .dark .cta-glass-coral { background-color: rgba(55, 65, 81, 0.97); }
