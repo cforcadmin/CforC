@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess } from '@/lib/ocRoles'
 import {
-  OC_LANDING_COOKIE, OC_LAST_SEAT_COOKIE,
+  OC_LANDING_COOKIE, OC_LAST_SEAT_COOKIE, OC_HERO_COMPACT_COOKIE,
   OC_TABLE_COLS_COOKIE, OC_TABLE_DENSITY_COOKIE, OC_TABLE_COLUMNS,
 } from '@/components/oc/ocPrefs'
 
@@ -37,8 +37,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}))
-    const { landing, seat, tableCols, tableDensity } = body as {
+    const { landing, seat, tableCols, tableDensity, heroCompact } = body as {
       landing?: string; seat?: string; tableCols?: string; tableDensity?: string
+      heroCompact?: boolean
+    }
+
+    if (heroCompact !== undefined) {
+      if (heroCompact) cookieStore.set(OC_HERO_COMPACT_COOKIE, '1', COOKIE_OPTS)
+      else cookieStore.delete(OC_HERO_COMPACT_COOKIE)
     }
 
     if (tableCols !== undefined) {

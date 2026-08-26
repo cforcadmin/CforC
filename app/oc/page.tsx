@@ -6,7 +6,7 @@ import { resolveOcAccess } from '@/lib/ocRoles'
 import { fetchOcOverview } from '@/lib/ocOverview'
 import OcShell from '@/components/oc/OcShell'
 import {
-  OC_LANDING_COOKIE, OC_LAST_SEAT_COOKIE,
+  OC_LANDING_COOKIE, OC_HERO_COMPACT_COOKIE, OC_LAST_SEAT_COOKIE,
   OC_TABLE_COLS_COOKIE, OC_TABLE_DENSITY_COOKIE, OC_TABLE_COLUMNS,
 } from '@/components/oc/ocPrefs'
 
@@ -34,6 +34,7 @@ export default async function OcPage({ searchParams }: { searchParams: Promise<{
   // Server-stored preferences (httpOnly cookies — survive content blockers)
   const landingPref = cookieStore.get(OC_LANDING_COOKIE)?.value || null
   const lastSeatRaw = cookieStore.get(OC_LAST_SEAT_COOKIE)?.value || null
+  const initialHeroCompact = cookieStore.get(OC_HERO_COMPACT_COOKIE)?.value === '1'
   const initialSeat = lastSeatRaw && access.seats.includes(lastSeatRaw as any) ? lastSeatRaw : null
 
   // Applications for Επισκόπηση (pending) and Μέλη → Νέα μέλη (all states)
@@ -93,6 +94,7 @@ export default async function OcPage({ searchParams }: { searchParams: Promise<{
     <OcShell
       seats={access.seats}
       initialSeat={initialSeat}
+      initialHeroCompact={initialHeroCompact}
       initialLandingPref={landingPref || 'ask'}
       applications={applications}
       overview={overview}

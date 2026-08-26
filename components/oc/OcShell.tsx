@@ -48,6 +48,8 @@ interface OcShellProps {
   seats: string[]
   /** Last-used seat from the server-stored cookie (null = none stored) */
   initialSeat: string | null
+  /** Καρφιτσωμένο συμπαγές hero (από το httpOnly cookie) */
+  initialHeroCompact?: boolean
   /** 'oc' | 'members' | 'ask' from the server-stored cookie */
   initialLandingPref: string
   /** Membership applications (server-fetched) */
@@ -82,7 +84,7 @@ function formatDate(iso: string | null): string {
 
 // Preferences persist via /api/oc/prefs (httpOnly cookies) — client web
 // storage is unreliable under content blockers, so it is not used at all.
-async function persistPrefs(prefs: { landing?: string; seat?: string }) {
+async function persistPrefs(prefs: { landing?: string; seat?: string; heroCompact?: boolean }) {
   try {
     await fetch('/api/oc/prefs', {
       method: 'POST',
@@ -95,7 +97,7 @@ async function persistPrefs(prefs: { landing?: string; seat?: string }) {
   }
 }
 
-export default function OcShell({ seats, initialSeat, initialLandingPref, applications = [], overview = null, tableCols, tableDensity, exitSurveys = [], initialOpenRenewals = false }: OcShellProps) {
+export default function OcShell({ seats, initialSeat, initialHeroCompact = false, initialLandingPref, applications = [], overview = null, tableCols, tableDensity, exitSurveys = [], initialOpenRenewals = false }: OcShellProps) {
   const pending = applications.filter(a => a.state === 'submitted')
   // Κάθε ρόλος προσγειώνεται εκεί που δουλεύει — όχι σε γενική επισκόπηση
   const [activeSection, setActiveSection] = useState<SectionKey>(
@@ -123,14 +125,24 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
   // καθόταν πίσω από το μενού και έκρυβε το υγρό γυαλί του (θόλωση πάνω σε
   // ενιαίο κοραλί = αόρατη).
   const [heroOut, setHeroOut] = useState(false)
+  // Καρφιτσωμένη συμπαγής εκδοχή: το hero κρύβεται και μένει μόνο η λωρίδα —
+  // προτίμηση μέσω /api/oc/prefs (httpOnly cookie), όπως όλες οι OC ρυθμίσεις
+  const [heroCompact, setHeroCompactState] = useState(initialHeroCompact)
   const heroRef = useRef<HTMLElement>(null)
+  const setHeroCompact = (v: boolean) => {
+    setHeroCompactState(v)
+    persistPrefs({ heroCompact: v })
+  }
+  // Εξαρτάται από το heroCompact: στο restore το hero ΞΑΝΑμπαίνει στο DOM
+  // και ο observer πρέπει να ξαναδεθεί
   useEffect(() => {
+    if (heroCompact) { setHeroOut(false); return }
     const el = heroRef.current
     if (!el) return
     const obs = new IntersectionObserver(([e]) => setHeroOut(!e.isIntersecting), { threshold: 0 })
     obs.observe(el)
     return () => obs.disconnect()
-  }, [])
+  }, [heroCompact])
 
   useEffect(() => {
     // Single-seat members: make sure the cookie reflects their one seat
@@ -159,6 +171,8 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
         {/* OC hero σε κανονική ροή (όπως στο /profile): κυλά έξω από την
             οθόνη και τα chips συνεχίζουν στη γυάλινη λωρίδα πιο κάτω.
             pt clears the fixed site navbar, which overlays the padding area. */}
+        {heroCompact && <div className="h-28" aria-hidden="true" />}
+        {!heroCompact && (
         <section ref={heroRef}>
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 rounded-b-3xl relative pt-28 pb-6">
             <div className="w-full px-6 lg:px-12">
@@ -202,6 +216,19 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
                   >
                     Ο Χώρος μου
                   </Link>
+                  {/* Ελαχιστοποίηση: βέλη ΠΡΟΣ το κέντρο (μαζεύει)· η
+                      επαναφορά στη λωρίδα έχει βέλη προς τα έξω (απλώνει) */}
+                  <button
+                    type="button"
+                    onClick={() => setHeroCompact(true)}
+                    aria-label="Συμπαγής προβολή — μόνο η λωρίδα ενοτήτων"
+                    title="Συμπαγής προβολή"
+                    className="w-9 h-9 flex items-center justify-center rounded-full bg-white/85 dark:bg-white/10 text-charcoal dark:text-gray-200 hover:bg-white dark:hover:bg-white/20 transition-colors flex-shrink-0"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                    </svg>
+                  </button>
                 </div>
 
                 {/* Category chips */}
@@ -250,6 +277,7 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
             </div>
           </div>
         </section>
+        )}
 
         {/* Γυάλινη λωρίδα (ίδια γραμματική με το /profile): εμφανίζεται όταν
             το hero βγει από το οπτικό πεδίο, δένει με το κύριο μενού και
@@ -258,15 +286,28 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
             πλάτος στην κορυφή · πλωτό pill 90% όταν κυλήσει), οπότε η
             λωρίδα ακολουθεί: πλήρες πλάτος ή (100%−2rem)×0.9 αντίστοιχα. */}
         <div
-          className={`fixed z-40 transition-all duration-300 ${heroOut ? 'translate-y-0 opacity-100' : '-translate-y-[130%] opacity-0'}`}
+          className={`fixed z-40 transition-all duration-300 ${(heroOut || heroCompact) ? 'translate-y-0 opacity-100' : '-translate-y-[130%] opacity-0'}`}
           style={isScrolled
             ? { top: '5.1rem', left: '50%', transform: 'translateX(-50%)', width: 'calc((100% - 2rem) * 0.9)' }
             : { top: '4.5rem', left: 0, right: 0, width: '100%' }}
-          aria-hidden={!heroOut}
+          aria-hidden={!(heroOut || heroCompact)}
         >
           <div className="px-3 pt-3 pb-2 flex items-center gap-2.5 overflow-x-auto menu-glass rounded-b-2xl"
             style={{ scrollbarWidth: 'none', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
             <span className="text-sm font-bold text-charcoal dark:text-gray-100 whitespace-nowrap pl-1 notranslate">OC</span>
+            {heroCompact && (
+              <button
+                type="button"
+                onClick={() => { setHeroCompact(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                aria-label="Επαναφορά πλήρους προβολής"
+                title="Επαναφορά πλήρους προβολής"
+                className="p-1 rounded-full text-gray-400 hover:text-coral dark:hover:text-coral-light transition-colors flex-shrink-0"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 9l6-6m0 0v4m0-4h-4M9 15l-6 6m0 0v-4m0 4h4m8-6l6 6m0 0v-4m0 4h-4M9 9L3 3m0 0v4m0-4h4" />
+                </svg>
+              </button>
+            )}
             {SECTIONS.map(section => {
               const active = section.key === activeSection
               return (
@@ -274,7 +315,7 @@ export default function OcShell({ seats, initialSeat, initialLandingPref, applic
                   key={section.key}
                   type="button"
                   onClick={() => { setActiveSection(section.key); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-                  tabIndex={heroOut ? 0 : -1}
+                  tabIndex={(heroOut || heroCompact) ? 0 : -1}
                   aria-current={active ? 'page' : undefined}
                   className={`inline-flex items-stretch rounded-lg overflow-hidden text-xs font-bold flex-shrink-0 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-coral ${
                     active ? 'shadow-md' : 'opacity-85 hover:opacity-100'

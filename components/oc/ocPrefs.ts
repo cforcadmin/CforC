@@ -8,6 +8,8 @@
 export const OC_LANDING_COOKIE = 'oc-landing'
 // last seat a multi-seat member worked as — lets logins enter silently
 export const OC_LAST_SEAT_COOKIE = 'oc-last-seat'
+// '1' όταν το hero μένει καρφιτσωμένο συμπαγές (μόνο η γυάλινη λωρίδα)
+export const OC_HERO_COMPACT_COOKIE = 'oc-hero-compact'
 // Μητρώο μελών table view: visible optional columns (csv) + row density
 export const OC_TABLE_COLS_COOKIE = 'oc-table-cols'
 export const OC_TABLE_DENSITY_COOKIE = 'oc-table-density'
