@@ -321,7 +321,7 @@ export default function CoolNav() {
       {showIntro && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={dismissIntro} aria-hidden="true" />
-          <div role="dialog" aria-modal="true" aria-labelledby="cool-intro-title" className="relative menu-glass-dense rounded-3xl max-w-md w-full p-8">
+          <div role="dialog" aria-modal="true" aria-labelledby="cool-intro-title" className="relative menu-glass-dense glass-rim rounded-3xl max-w-md w-full p-8">
             <h2 id="cool-intro-title" className="text-xl font-bold text-charcoal dark:text-gray-100 mb-4">
               Καλωσήρθες στο στυλ <span className="notranslate">Cool</span>
             </h2>
