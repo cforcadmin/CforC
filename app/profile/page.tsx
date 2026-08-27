@@ -92,7 +92,7 @@ export default function ProfilePage() {
   // heroOut μένει false, και η λωρίδα έμενε full-width ενώ το μενού είχε
   // γίνει πλωτό pill.
   const [navScrolled, setNavScrolled] = useState(false)
-  // Το modern header μένει full-width — μόνο το classic γίνεται πλωτό pill
+  // Classic και Modern γίνονται πλωτό pill στο scroll — το Cool όχι
   const { mode: navMode } = useNavMode()
   useEffect(() => {
     const h = () => setNavScrolled(window.scrollY > 150)
@@ -950,7 +950,7 @@ export default function ProfilePage() {
         // από πίσω από το πλωτό μενού προς τα κάτω, με fade μαζί.
         <div
           className={`fixed z-40 transition-all duration-300 ${visible ? '' : 'pointer-events-none'}`}
-          style={navScrolled && navMode === 'classic'
+          style={navScrolled && navMode !== 'cool'
             ? { top: '5.1rem', left: '50%', transform: 'translateX(-50%)', width: 'calc((100% - 2rem) * 0.9)' }
             : { top: '4.5rem', left: 0, right: 0, width: '100%' }}
           aria-hidden={!visible}

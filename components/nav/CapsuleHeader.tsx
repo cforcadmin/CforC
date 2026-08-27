@@ -162,7 +162,10 @@ export default function CapsuleHeader(_props: CapsuleHeaderProps) {
   const searchChips = ['Όλα', 'Μέλη', 'Νέα', 'Ανοιχτές Προσκλήσεις', 'Σελίδες']
 
   return (
-    <header className="fixed top-0 w-full z-50 bg-[#F5F0EB] dark:bg-gray-900 shadow-sm dark:shadow-gray-700">
+    <header className={`fixed ${isScrolled ? 'top-2 px-4' : 'top-0'} w-full z-50 ${isScrolled ? 'shadow-none' : 'shadow-sm dark:shadow-gray-700'} transition-all duration-300`}>
+      {/* Ίδια χορογραφία με το Classic: στο scroll το header γίνεται πλωτό
+          γυάλινο pill (κρεμ γυαλί, δαχτυλίδι κοραλί, scale-90) */}
+      <div className={`${isScrolled ? 'nav-glass nav-glass-cream rounded-2xl scale-90 ring-2 ring-coral' : 'bg-[#F5F0EB] dark:bg-gray-900'} transition-all duration-300`}>
       <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-20 gap-3">
           {/* Λογότυπο */}
@@ -171,7 +174,7 @@ export default function CapsuleHeader(_props: CapsuleHeaderProps) {
           </Link>
 
           {/* Αριστερή φούσκα εργαλείων */}
-          <div className="hidden lg:flex items-center gap-1 bg-charcoal dark:bg-gray-800 rounded-full p-1.5 ml-1">
+          <div className="hidden lg:flex items-center gap-1 bubble-glass rounded-full p-1.5 ml-1">
             {/* Α-συστάδα: ορατό μόνο το τρίτο (δεξί) Α — hover ξεδιπλώνει τα δύο μεγαλύτερα */}
             <div className="a-cluster" role="group" aria-label="Μέγεθος κειμένου">
               <div className="a-nest">{A_SIZES.slice(0, 2).map(renderA)}</div>
@@ -241,7 +244,7 @@ export default function CapsuleHeader(_props: CapsuleHeaderProps) {
 
           {/* Δεξιά: κάψουλα πλοήγησης + ΣΥΝΔΕΣΗ + γη + προσβασιμότητα */}
           <div className="hidden lg:flex items-center gap-2.5 ml-auto">
-            <nav aria-label="Κύρια πλοήγηση" className="flex items-center gap-1 bg-charcoal dark:bg-gray-800 rounded-full p-1.5">
+            <nav aria-label="Κύρια πλοήγηση" className="flex items-center gap-1 bubble-glass rounded-full p-1.5">
               {visibleItems.map(item => {
                 const active = isItemActive(item)
                 const pillCls = `${PILL} ${active ? PILL_ACTIVE : PILL_IDLE}`
@@ -254,15 +257,15 @@ export default function CapsuleHeader(_props: CapsuleHeaderProps) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </Link>
-                      <div className="reveal-panel absolute top-full left-0 mt-3 w-60 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-white/10 shadow-lg py-1.5 z-50">
+                      <div className="reveal-panel absolute top-full left-0 mt-3 w-60 menu-glass rounded-2xl py-1.5 z-50">
                         {ABOUT_SUBPAGES.map(sub => (
                           <Link
                             key={sub.href}
                             href={sub.href}
                             className={`block px-4 py-2.5 text-sm min-h-11 flex items-center transition-colors ${
                               pathname === sub.href
-                                ? 'text-coral dark:text-coral-light font-bold bg-[#F5F0EB] dark:bg-gray-700'
-                                : 'text-charcoal dark:text-gray-200 hover:bg-[#F5F0EB] dark:hover:bg-gray-700'
+                                ? 'text-coral dark:text-coral-light font-bold bg-gray-50/60 dark:bg-gray-700/60'
+                                : 'text-charcoal dark:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-gray-700/70'
                             }`}
                           >
                             {sub.label}
@@ -282,12 +285,12 @@ export default function CapsuleHeader(_props: CapsuleHeaderProps) {
                         </svg>
                       </Link>
                       {featuredProjects.length > 0 && (
-                        <div className="reveal-panel absolute top-full left-0 mt-3 w-72 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-white/10 shadow-lg py-1.5 z-50">
+                        <div className="reveal-panel absolute top-full left-0 mt-3 w-72 menu-glass rounded-2xl py-1.5 z-50">
                           {featuredProjects.map(project => (
                             <Link
                               key={project.id}
                               href={`/projects/${project.slug}`}
-                              className="block px-4 py-2.5 text-sm min-h-11 flex items-center text-charcoal dark:text-gray-200 hover:bg-[#F5F0EB] dark:hover:bg-gray-700 transition-colors"
+                              className="block px-4 py-2.5 text-sm min-h-11 flex items-center text-charcoal dark:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-gray-700/70 transition-colors"
                             >
                               <span className="truncate">{project.title}</span>
                             </Link>
@@ -446,6 +449,8 @@ export default function CapsuleHeader(_props: CapsuleHeaderProps) {
             </div>
           </div>
         </nav>
+      </div>
+
       </div>
 
       {/* TEMPORARY: επιλογή ρόλου για multi-seat μέλη προς το OC */}
