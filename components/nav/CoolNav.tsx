@@ -264,7 +264,6 @@ export default function CoolNav() {
               style={{
                 backgroundColor: hexToRgba(item.hue, theme === 'dark' ? 0.4 : 0.6),
                 borderRadius: i === 0 ? '1.25rem 0 0 1.25rem' : undefined,
-                borderLeft: `4px solid ${item.edge}`,
                 width: expanded ? 'clamp(4.5rem, 7vw, 7rem)' : '1.1rem',
                 opacity: partIdx >= 0 ? (i === partIdx ? 1 : 0) : expanded ? 1 : 0.5,
                 transform,
