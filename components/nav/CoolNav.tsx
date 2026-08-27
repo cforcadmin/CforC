@@ -267,7 +267,9 @@ export default function CoolNav() {
               aria-current={active ? 'page' : undefined}
               className="cool-col"
               style={{
-                backgroundColor: hexToRgba(item.hue, theme === 'dark' ? 0.4 : 0.6),
+                // Στο σκοτεινό το 0.4 πάνω σε σχεδόν μαύρο έδινε λασπωμένο καφέ —
+                // το πορτοκαλί πρέπει να κυριαρχεί στο μείγμα για να διαβάζεται
+                backgroundColor: hexToRgba(item.hue, theme === 'dark' ? 0.8 : 0.6),
                 borderRadius: i === 0 ? '1.25rem 0 0 1.25rem' : undefined,
                 borderLeftColor: (theme === 'dark' ? EDGE_GRAYS_DARK : EDGE_GRAYS_LIGHT)[i % 6],
                 width: expanded ? 'clamp(4.5rem, 7vw, 7rem)' : '1.1rem',
