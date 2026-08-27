@@ -1986,6 +1986,33 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
   .bubble-glass { background-color: #2D2D2D; }
   .dark .bubble-glass { background-color: #1F2937; }
 }
+
+/* Πυκνό γυαλί για τα αναδυόμενα των μενού: μέση λύση ανάμεσα στο menu-glass
+   (πολύ διάφανο όταν η θόλωση δεν δουλεύει — μέσα σε πρόγονο με
+   backdrop-filter δεν φωλιάζει) και στο συμπαγές. Η απόχρωση σηκώνει την
+   αναγνωσιμότητα μόνη της· όπου η θόλωση πιάνει, απλώς δείχνει καλύτερο. */
+.menu-glass-dense {
+  background-color: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: blur(24px) saturate(210%);
+  backdrop-filter: blur(24px) saturate(210%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.24),
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.dark .menu-glass-dense {
+  background-color: rgba(31, 36, 51, 0.88);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .menu-glass-dense { background-color: #ffffff; }
+  .dark .menu-glass-dense { background-color: #1f2433; }
+}
 .nav-glass-cream { background-color: rgba(245, 240, 235, 0.6); }
 .dark .nav-glass-cream { background-color: rgba(50, 55, 72, 0.35); }
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
