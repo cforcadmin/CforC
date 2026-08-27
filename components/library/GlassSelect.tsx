@@ -102,7 +102,7 @@ export default function GlassSelect({
           <div style={{ position: 'fixed', inset: 0, zIndex: 55 }} onClick={() => setOpen(false)} aria-hidden="true" />
           {/* Πάνω στο κουμπί, όπως το native menu και το φίλτρο πεδίων */}
           <div ref={listRef} role="listbox" aria-label={ariaLabel || placeholder}
-            className="menu-glass rounded-xl py-1.5"
+            className="menu-glass-dense glass-rim rounded-xl py-1.5"
             style={{ position: 'absolute', top: -6, left: -6, minWidth: 'calc(100% + 12px)', maxWidth: '20rem', maxHeight: 260, overflowY: 'auto', zIndex: 56 }}>
             {[{ value: '', label: placeholder }, ...options].map(o => {
               const on = o.value === value
