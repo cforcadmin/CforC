@@ -1951,6 +1951,10 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
    -bottom-20 των hero (που τα κατέβαζε κάτω από το fixed header) μηδενίζεται
    και η κάρτα πατά στην πραγματική κορυφή, ΠΑΝΩ από την εικόνα της. */
 html.nav-cool .page-hero { bottom: 0; }
+/* Στο Cool η προσβασιμότητα ζει ΜΟΝΙΜΑ στην πάνω δεξιά φούσκα — οι
+   ενσωματωμένες φούσκες των hero (που «μετακόμιζαν» στο scroll) κρύβονται,
+   αλλιώς εμφανίζονταν δύο μαζί. */
+html.nav-cool .hero-a11y { display: none; }
 .cool-rail { transition: height .3s ease; }
 .cool-col {
   position: relative;

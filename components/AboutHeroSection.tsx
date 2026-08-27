@@ -50,7 +50,7 @@ export default function AboutHeroSection() {
 
         {/* Accessibility Menu Trigger Button */}
         <div
-          className="absolute right-6 lg:right-12 top-1/2 -translate-y-1/2 transition-all duration-200"
+          className="hero-a11y absolute right-6 lg:right-12 top-1/2 -translate-y-1/2 transition-all duration-200"
           style={{
             transform: `translateY(-50%) scale(${accessibilityButtonScale})`,
             opacity: accessibilityButtonScale,

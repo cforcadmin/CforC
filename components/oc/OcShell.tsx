@@ -271,7 +271,7 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
 
                 {/* Accessibility Menu Trigger — in-flow so it aligns with the row.
                     Hidden while scrolled: the header pill shows its own. */}
-                <div className={`flex-shrink-0 transition-all duration-300 ${
+                <div className={`hero-a11y flex-shrink-0 transition-all duration-300 ${
                   isScrolled ? 'opacity-0 scale-0 w-0 overflow-hidden' : 'opacity-100 scale-100'
                 }`}>
                   <AccessibilityButton />
