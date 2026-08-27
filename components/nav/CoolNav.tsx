@@ -62,7 +62,11 @@ export default function CoolNav() {
   }, [])
 
   const items = NAV_ITEMS.filter(item => !(item.anonOnly && isAuthenticated))
-  const expanded = !isScrolled || railHover || partingKey !== null
+  // Το πλήρες άνοιγμα στην κορυφή είναι το «καλωσόρισμα» της ΑΡΧΙΚΗΣ μόνο
+  // (η αρχική πρόθεση του 1a). Στις σελίδες εργασίας το dock μένει πάντα
+  // λεπτό και ανοίγει μόνο με hover/focus — αλλιώς κάθεται πάνω στη δουλειά.
+  const isHome = pathname === '/'
+  const expanded = (isHome && !isScrolled) || railHover || partingKey !== null
 
   // Κλικ: οι αριστερές κολόνες φεύγουν αριστερά, οι δεξιές δεξιά — μετά πλοήγηση
   const handleColumnClick = (key: string, href: string) => {
@@ -176,6 +180,8 @@ export default function CoolNav() {
         style={{ height: expanded ? '64vh' : '42vh' }}
         onMouseEnter={() => setRailHover(true)}
         onMouseLeave={() => setRailHover(false)}
+        onFocus={() => setRailHover(true)}
+        onBlur={() => setRailHover(false)}
       >
         {items.map((item, i) => {
           const active = item.key === 'about'
@@ -215,7 +221,7 @@ export default function CoolNav() {
       </nav>
 
       {/* Ένδειξη κύλισης — μόνο στην κορυφή */}
-      {!isScrolled && (
+      {isHome && !isScrolled && (
         <div className="fixed bottom-4 inset-x-0 z-30 pointer-events-none flex flex-col items-center gap-1 text-charcoal dark:text-gray-200" aria-hidden="true">
           <span className="text-[10px] font-bold tracking-widest">ΚΥΛΙΣΕ</span>
           <svg className="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
