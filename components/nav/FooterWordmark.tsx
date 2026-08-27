@@ -30,12 +30,13 @@ export default function FooterWordmark() {
   const { user, logout } = useAuth()
   const [showMemberModal, setShowMemberModal] = useState(false)
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
-  // Πραγματικά νούμερα από τη βάση (μέλη με ΑΜ, διακριτές περιφέρειες)·
-  // ώσπου να απαντήσει το API, τα στατικά του σχεδίου
-  const [stats, setStats] = useState({ members: 110, provinces: 13 })
+  // Τα μέλη ζωντανά από τη βάση (με ΑΜ — ο ορισμός της Επισκόπησης OC)·
+  // οι περιφέρειες ΣΤΑΘΕΡΑ 13 (απόφαση Γιώργου 27/8: το πεδίο Province
+  // της βάσης δεν χαρτογραφεί αξιόπιστα τις 13 διοικητικές περιφέρειες)
+  const [memberCount, setMemberCount] = useState(110)
   useEffect(() => {
     fetch('/api/stats/network').then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.members) setStats(d) }).catch(() => {})
+      .then(d => { if (d?.members) setMemberCount(d.members) }).catch(() => {})
   }, [])
 
   const handleOpenCallsClick = (e: React.MouseEvent) => {
@@ -144,9 +145,9 @@ export default function FooterWordmark() {
               </span>
               <span className="w-px h-4 bg-white/20" aria-hidden="true" />
               <span className="flex items-baseline gap-3 text-[13px] font-bold tracking-[.12em] text-coral" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                <span className="notranslate">{stats.members} ΜΕΛΗ</span>
+                <span className="notranslate">{memberCount} ΜΕΛΗ</span>
                 <span className="text-white/25" aria-hidden="true">·</span>
-                <span className="notranslate">{stats.provinces} ΠΕΡΙΦΕΡΕΙΕΣ</span>
+                <span className="notranslate">13 ΠΕΡΙΦΕΡΕΙΕΣ</span>
               </span>
             </div>
             {/* Νομική σειρά */}
