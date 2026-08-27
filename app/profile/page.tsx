@@ -94,6 +94,9 @@ export default function ProfilePage() {
   const [navScrolled, setNavScrolled] = useState(false)
   // Classic και Modern γίνονται πλωτό pill στο scroll — το Cool όχι
   const { mode: navMode } = useNavMode()
+  // Στο Cool το hero δεν εμφανίζεται καθόλου: η φούσκα-λωρίδα είναι το
+  // μενού της σελίδας από την πρώτη στιγμή, και στο scroll χαμηλώνει 50%
+  const coolMode = navMode === 'cool'
   useEffect(() => {
     const h = () => setNavScrolled(window.scrollY > 150)
     h()
@@ -786,8 +789,8 @@ export default function ProfilePage() {
       <Navigation />
       <main id="main-content">
         {/* Dashboard Hero Section */}
-        {heroCompact && <div className="h-28" aria-hidden="true" />}
-        {!heroCompact && (
+        {(heroCompact || coolMode) && <div className="h-28" aria-hidden="true" />}
+        {!heroCompact && !coolMode && (
         <section className="relative -bottom-20" ref={heroRef}>
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 min-h-[25vh] flex items-center rounded-b-3xl relative z-10 py-8">
 
@@ -942,7 +945,7 @@ export default function ProfilePage() {
             pill 90% όταν κυλήσει, ~25vh — ίδιο κατώφλι με το heroOut), οπότε
             η λωρίδα ακολουθεί: πλήρες πλάτος ή (100%−2rem)×0.9 αντίστοιχα. */}
         {(() => {
-          const visible = heroOut || heroCompact
+          const visible = heroOut || heroCompact || coolMode
           return (
         // Η κίνηση εμφάνισης ζει στο ΕΣΩΤΕΡΙΚΟ στοιχείο: το εξωτερικό
         // κεντράρεται με inline transform (translateX), που θα πατούσε
@@ -957,7 +960,7 @@ export default function ProfilePage() {
               : { top: '4.5rem', left: 0, right: 0, width: '100%' }}
           aria-hidden={!visible}
         >
-          <div className={`flex items-center gap-2 overflow-x-auto menu-glass strip-slide ${navMode === 'cool' ? 'rounded-full px-4 py-2' : 'rounded-b-2xl px-3 pt-3 pb-2'} ${visible ? 'strip-shown' : 'strip-hidden'}`}
+          <div className={`flex items-center gap-2 overflow-x-auto menu-glass strip-slide ${navMode === 'cool' ? 'rounded-full px-4 py-2' : 'rounded-b-2xl px-3 pt-3 pb-2'} ${coolMode && navScrolled ? 'cool-dim' : ''} ${visible ? 'strip-shown' : 'strip-hidden'}`}
             style={{ scrollbarWidth: 'none', ...(navMode === 'cool' ? { borderRadius: '9999px' } : { borderTopLeftRadius: 0, borderTopRightRadius: 0 }) }}>
             <span className="text-sm font-bold text-charcoal dark:text-gray-100 whitespace-nowrap pl-1">CforC</span>
             {heroCompact && (
@@ -977,7 +980,7 @@ export default function ProfilePage() {
               <button
                 key={section.key}
                 onClick={() => { setActiveSection(section.key); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-                tabIndex={(heroOut || heroCompact) ? 0 : -1}
+                tabIndex={(heroOut || heroCompact || coolMode) ? 0 : -1}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                   activeSection === section.key
                     ? 'bg-coral text-white'

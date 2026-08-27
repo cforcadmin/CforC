@@ -1955,6 +1955,12 @@ html.nav-cool .page-hero { bottom: 0; }
    ενσωματωμένες φούσκες των hero (που «μετακόμιζαν» στο scroll) κρύβονται,
    αλλιώς εμφανίζονταν δύο μαζί. */
 html.nav-cool .hero-a11y { display: none; }
+/* Στο Cool η φούσκα-λωρίδα χαμηλώνει στο 50% όταν κυλά η σελίδα — όπως το
+   dock — και ξαναζωντανεύει με hover/focus. Νικά το opacity του .strip-shown
+   λόγω υψηλότερης ειδικότητας. */
+html.nav-cool .cool-dim { opacity: .5; }
+html.nav-cool .cool-dim:hover,
+html.nav-cool .cool-dim:focus-within { opacity: 1; }
 .cool-rail { transition: height .3s ease; }
 .cool-col {
   position: relative;
