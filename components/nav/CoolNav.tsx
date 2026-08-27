@@ -160,7 +160,7 @@ export default function CoolNav() {
           προσβασιμότητα. Στο scroll μαζεύουν ελαφρά (scale). */}
       <header className="fixed top-3 left-4 right-4 z-50 flex items-start justify-between gap-3 pointer-events-none">
         <div
-          className={`menu-glass rounded-full flex items-center gap-1 pl-2 pr-2.5 py-1.5 pointer-events-auto transition-all duration-300 ${isScrolled ? 'scale-90' : ''}`}
+          className={`menu-glass glass-rim rounded-full flex items-center gap-1 pl-2 pr-2.5 py-1.5 pointer-events-auto transition-all duration-300 ${isScrolled ? 'scale-90' : ''}`}
           style={{ transformOrigin: 'left top' }}
         >
           <Link href="/" className="flex items-center flex-shrink-0 mr-1">
@@ -195,7 +195,7 @@ export default function CoolNav() {
         </div>
 
         <div
-          className={`menu-glass rounded-full flex items-center gap-1.5 px-2.5 py-1.5 pointer-events-auto transition-all duration-300 ${isScrolled ? 'scale-90' : ''}`}
+          className={`menu-glass glass-rim rounded-full flex items-center gap-1.5 px-2.5 py-1.5 pointer-events-auto transition-all duration-300 ${isScrolled ? 'scale-90' : ''}`}
           style={{ transformOrigin: 'right top' }}
         >
           {!isAuthenticated ? (

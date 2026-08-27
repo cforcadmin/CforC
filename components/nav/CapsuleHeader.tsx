@@ -174,7 +174,7 @@ export default function CapsuleHeader(_props: CapsuleHeaderProps) {
           </Link>
 
           {/* Αριστερή φούσκα εργαλείων */}
-          <div className="hidden lg:flex items-center gap-1 bubble-glass rounded-full p-1.5 ml-1">
+          <div className="hidden lg:flex items-center gap-1 bubble-glass glass-rim rounded-full p-1.5 ml-1">
             {/* Α-συστάδα: ορατό μόνο το τρίτο (δεξί) Α — hover ξεδιπλώνει τα δύο μεγαλύτερα */}
             <div className="a-cluster" role="group" aria-label="Μέγεθος κειμένου">
               <div className="a-nest">{A_SIZES.slice(0, 2).map(renderA)}</div>
@@ -244,7 +244,7 @@ export default function CapsuleHeader(_props: CapsuleHeaderProps) {
 
           {/* Δεξιά: κάψουλα πλοήγησης + ΣΥΝΔΕΣΗ + γη + προσβασιμότητα */}
           <div className="hidden lg:flex items-center gap-2.5 ml-auto">
-            <nav aria-label="Κύρια πλοήγηση" className="flex items-center gap-1 bubble-glass rounded-full p-1.5">
+            <nav aria-label="Κύρια πλοήγηση" className="flex items-center gap-1 bubble-glass glass-rim rounded-full p-1.5">
               {visibleItems.map(item => {
                 const active = isItemActive(item)
                 const pillCls = `${PILL} ${active ? PILL_ACTIVE : PILL_IDLE}`

@@ -1811,6 +1811,7 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
   /* Πιο διάφανο απ' ό,τι θα έβαζε κανείς με το μάτι: πάνω σε σχεδόν ενιαίο
      σκούρο φόντο, ένα 72% αδιαφανές σκούρο πάνελ δεν ξεχωρίζει καθόλου από
      ένα συμπαγές. Η θόλωση φαίνεται μόνο όταν έχει κάτι να θολώσει. */
+  --glass-fill: rgba(255, 255, 255, 0.55);
   background-color: rgba(255, 255, 255, 0.55);
   -webkit-backdrop-filter: blur(24px) saturate(210%);
   backdrop-filter: blur(24px) saturate(210%);
@@ -1826,6 +1827,7 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
   /* 0.30: πάνω από το ίδιο του το κουμπί και τον πίνακα, το 0.42 διαβαζόταν
      ακόμη ως συμπαγής πλάκα — τα μικρά πάνελ πέφτουν σχεδόν εξ ολοκλήρου
      πάνω σε δικές τους σκούρες επιφάνειες. Κοινή τιμή, ίδιο γυαλί παντού. */
+  --glass-fill: rgba(50, 55, 72, 0.30);
   background-color: rgba(50, 55, 72, 0.30);
   border-color: rgba(255, 255, 255, 0.16);
   /* Η εσωτερική φωτεινή γραμμή στην κορυφή είναι αυτό που κάνει το πάνελ να
@@ -2001,16 +2003,32 @@ html.nav-cool .cool-dim:focus-within { opacity: 1; }
    Στην κορυφή πατούν σε συμπαγές κρεμ (η θόλωση αδρανής)· στο scroll το
    header γίνεται κι αυτό γυαλί και το περιεχόμενο περνά από πίσω τους. */
 .bubble-glass {
+  --glass-fill: rgba(45, 45, 45, 0.78);
   background-color: rgba(45, 45, 45, 0.78);
   -webkit-backdrop-filter: blur(18px) saturate(170%);
   backdrop-filter: blur(18px) saturate(170%);
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
-.dark .bubble-glass { background-color: rgba(31, 41, 55, 0.6); }
+.dark .bubble-glass { --glass-fill: rgba(31, 41, 55, 0.6); background-color: rgba(31, 41, 55, 0.6); }
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   .bubble-glass { background-color: #2D2D2D; }
   .dark .bubble-glass { background-color: #1F2937; }
+}
+
+/* Υγρό γυάλινο rim (Modern + Cool): το περίγραμμα γίνεται διαβάθμιση —
+   έντονο φως στην πάνω ακμή, σβήνει στα πλάγια, ελαφρύ γύρισμα κάτω, σαν
+   φως που πιάνει το χείλος του γυαλιού. Το γέμισμα έρχεται από το
+   --glass-fill του εκάστοτε glass class (menu-glass / bubble-glass). */
+.glass-rim {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--glass-fill, rgba(50, 55, 72, 0.5)), var(--glass-fill, rgba(50, 55, 72, 0.5))) padding-box,
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.45) 0%,
+      rgba(255, 255, 255, 0.10) 40%,
+      rgba(255, 255, 255, 0.03) 70%,
+      rgba(255, 255, 255, 0.16) 100%) border-box;
 }
 
 /* Πυκνό γυαλί για τα αναδυόμενα των μενού: μέση λύση ανάμεσα στο menu-glass
