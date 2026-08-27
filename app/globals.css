@@ -1947,6 +1947,7 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
 /* Cool στυλ (κολόνες 1a): liquid-glass κάθετες κολόνες στη δεξιά άκρη.
    Χρώμα/πλάτος/θέση έρχονται inline από το CoolNav (δυναμικά ανά κολόνα)·
    εδώ ζουν η θόλωση και οι μεταβάσεις — όχι σε utilities (γνωστό μοτίβο). */
+.cool-rail { transition: height .3s ease; }
 .cool-col {
   position: relative;
   display: flex; align-items: flex-end; justify-content: center;

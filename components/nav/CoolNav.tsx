@@ -103,12 +103,16 @@ export default function CoolNav() {
 
   return (
     <>
-      {/* Πάνω γυάλινη μπάρα — μικραίνει στο scroll */}
-      <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${isScrolled ? 'px-4 pt-2' : ''}`}>
-        <div className={`menu-glass flex items-center gap-1.5 transition-all duration-300 ${isScrolled ? 'rounded-2xl h-12 px-3' : 'h-16 px-6'}`}
-          style={isScrolled ? {} : { borderTopLeftRadius: 0, borderTopRightRadius: 0, borderLeftWidth: 0, borderRightWidth: 0, borderTopWidth: 0 }}>
-          <Link href="/" className="flex items-center flex-shrink-0 mr-2">
-            <img src="/cforc_logo.svg" alt="Culture for Change" className={`dark:invert header-logo transition-all duration-300 ${isScrolled ? 'h-7' : 'h-9'}`} />
+      {/* Δύο πλωτές γυάλινες φούσκες αντί για ολόκληρη γραμμή:
+          αριστερά λογότυπο + εργαλεία, δεξιά λογαριασμός + γλώσσα +
+          προσβασιμότητα. Στο scroll μαζεύουν ελαφρά (scale). */}
+      <header className="fixed top-3 left-4 right-4 z-50 flex items-start justify-between gap-3 pointer-events-none">
+        <div
+          className={`menu-glass rounded-full flex items-center gap-1 pl-2 pr-2.5 py-1.5 pointer-events-auto transition-all duration-300 ${isScrolled ? 'scale-90' : ''}`}
+          style={{ transformOrigin: 'left top' }}
+        >
+          <Link href="/" className="flex items-center flex-shrink-0 mr-1">
+            <img src="/cforc_logo.svg" alt="Culture for Change" className="h-8 dark:invert header-logo" />
           </Link>
 
           {/* Α-συστάδα — συμπτυγμένη όπως στο Modern */}
@@ -136,35 +140,40 @@ export default function CoolNav() {
           </button>
 
           <NavModeSwitch align="left" buttonClassName={iconBtn} />
+        </div>
 
-          <div className="ml-auto flex items-center gap-2">
-            {!isAuthenticated ? (
-              <Link href="/login" className={`inline-flex items-center rounded-full bg-coral text-white text-[13px] font-bold tracking-widest whitespace-nowrap hover:bg-[#F07551] transition-all duration-300 ${isScrolled ? 'min-h-9 px-4' : 'min-h-10 px-5'}`}>
-                ΣΥΝΔΕΣΗ
+        <div
+          className={`menu-glass rounded-full flex items-center gap-1.5 px-2.5 py-1.5 pointer-events-auto transition-all duration-300 ${isScrolled ? 'scale-90' : ''}`}
+          style={{ transformOrigin: 'right top' }}
+        >
+          {!isAuthenticated ? (
+            <Link href="/login" className="inline-flex items-center min-h-9 px-4 rounded-full bg-coral text-white text-[13px] font-bold tracking-widest whitespace-nowrap hover:bg-[#F07551] transition-colors">
+              ΣΥΝΔΕΣΗ
+            </Link>
+          ) : (
+            <>
+              <Link href="/profile" className="inline-flex items-center min-h-9 px-4 rounded-full bg-coral text-white text-[13px] font-bold tracking-widest whitespace-nowrap hover:bg-[#F07551] transition-colors">
+                Ο ΧΩΡΟΣ ΜΟΥ
               </Link>
-            ) : (
-              <>
-                <Link href="/profile" className={`inline-flex items-center rounded-full bg-coral text-white text-[13px] font-bold tracking-widest whitespace-nowrap hover:bg-[#F07551] transition-all duration-300 ${isScrolled ? 'min-h-9 px-4' : 'min-h-10 px-5'}`}>
-                  Ο ΧΩΡΟΣ ΜΟΥ
-                </Link>
-                <button type="button" onClick={() => setIsLogoutModalOpen(true)} aria-label="Αποσύνδεση" title="Αποσύνδεση" className={iconBtn}>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3-3H9m12 0l-3-3m3 3l-3 3" />
-                  </svg>
-                </button>
-              </>
-            )}
-            <LanguageSwitcher />
-            <AccessibilityButton size="small" />
-          </div>
+              <button type="button" onClick={() => setIsLogoutModalOpen(true)} aria-label="Αποσύνδεση" title="Αποσύνδεση" className={iconBtn}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3-3H9m12 0l-3-3m3 3l-3 3" />
+                </svg>
+              </button>
+            </>
+          )}
+          <LanguageSwitcher />
+          <AccessibilityButton size="small" />
         </div>
       </header>
 
       {/* Οι κολόνες: δεξιά άκρη, πάνω από το περιεχόμενο */}
+      {/* Κάθετα κεντραρισμένο dock: αναπνέει πάνω και κάτω, δεν πιάνει
+          ποτέ τις γωνίες — τα πλωτά κουμπιά (κορυφή/σχόλια) μένουν δικά τους */}
       <nav
         aria-label="Κύρια πλοήγηση"
-        className="fixed right-0 z-40 flex items-stretch"
-        style={{ top: isScrolled ? '3.5rem' : '4rem', bottom: 0 }}
+        className="cool-rail fixed right-0 top-1/2 -translate-y-1/2 z-40 flex items-stretch"
+        style={{ height: expanded ? '64vh' : '42vh' }}
         onMouseEnter={() => setRailHover(true)}
         onMouseLeave={() => setRailHover(false)}
       >
@@ -186,6 +195,7 @@ export default function CoolNav() {
               className="cool-col"
               style={{
                 backgroundColor: hexToRgba(item.hue, theme === 'dark' ? 0.4 : 0.6),
+                borderRadius: i === 0 ? '1.25rem 0 0 1.25rem' : undefined,
                 borderLeft: `4px solid ${item.edge}`,
                 width: expanded ? 'clamp(4.5rem, 7vw, 7rem)' : '1.1rem',
                 opacity: partIdx >= 0 ? (i === partIdx ? 1 : 0) : expanded ? 1 : 0.5,
@@ -206,7 +216,7 @@ export default function CoolNav() {
 
       {/* Ένδειξη κύλισης — μόνο στην κορυφή */}
       {!isScrolled && (
-        <div className="fixed bottom-5 right-6 z-40 pointer-events-none flex flex-col items-center gap-1 text-charcoal dark:text-gray-200" aria-hidden="true">
+        <div className="fixed bottom-4 inset-x-0 z-30 pointer-events-none flex flex-col items-center gap-1 text-charcoal dark:text-gray-200" aria-hidden="true">
           <span className="text-[10px] font-bold tracking-widest">ΚΥΛΙΣΕ</span>
           <svg className="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
