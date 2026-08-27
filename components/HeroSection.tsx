@@ -85,7 +85,7 @@ export default function HeroSection() {
     // από την κάρτα, και σε ψηλές οθόνες η κορυφή του ξεπρόβαλλε ΠΑΝΩ από
     // την κάρτα — αόρατο πίσω από τα full-width headers, ολοφάνερο στο Cool
     // που έχει μόνο φούσκες. Το κόψιμο δεν αλλάζει τίποτα ορατό στα άλλα.
-    <section className="page-hero relative -bottom-20 overflow-hidden">
+    <section className="relative -bottom-20 overflow-hidden">
       {/* Orange Card with Rotating Text - 25% viewport height */}
       <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
