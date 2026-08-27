@@ -1947,6 +1947,10 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
 /* Cool στυλ (κολόνες 1a): liquid-glass κάθετες κολόνες στη δεξιά άκρη.
    Χρώμα/πλάτος/θέση έρχονται inline από το CoolNav (δυναμικά ανά κολόνα)·
    εδώ ζουν η θόλωση και οι μεταβάσεις — όχι σε utilities (γνωστό μοτίβο). */
+/* Στο Cool δεν υπάρχει full-width header να γεμίσει τη ζώνη 0–5rem: το
+   -bottom-20 των hero (που τα κατέβαζε κάτω από το fixed header) μηδενίζεται
+   και η κάρτα πατά στην πραγματική κορυφή, ΠΑΝΩ από την εικόνα της. */
+html.nav-cool .page-hero { bottom: 0; }
 .cool-rail { transition: height .3s ease; }
 .cool-col {
   position: relative;

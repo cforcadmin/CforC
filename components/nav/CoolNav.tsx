@@ -38,9 +38,20 @@ export default function CoolNav() {
 
   const [isScrolled, setIsScrolled] = useState(false)
   const [railHover, setRailHover] = useState(false)
+  // Χειροκίνητη εντολή από Escape: true/false υπερισχύει του αυτόματου,
+  // null = αυτόματη συμπεριφορά. Μηδενίζεται σε κάθε αλλαγή σελίδας.
+  const [manualExpand, setManualExpand] = useState<boolean | null>(null)
   const [partingKey, setPartingKey] = useState<string | null>(null)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
+
+  // Όσο το Cool είναι ενεργό, το <html> φέρει τη σημαία nav-cool: το CSS
+  // των hero ανεβάζει την κάρτα στην πραγματική κορυφή (δεν υπάρχει
+  // full-width header να καλύψει τη ζώνη των 5rem).
+  useEffect(() => {
+    document.documentElement.classList.add('nav-cool')
+    return () => document.documentElement.classList.remove('nav-cool')
+  }, [])
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 80)
@@ -61,12 +72,26 @@ export default function CoolNav() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
 
+  useEffect(() => { setManualExpand(null) }, [pathname])
+
   const items = NAV_ITEMS.filter(item => !(item.anonOnly && isAuthenticated))
   // Το πλήρες άνοιγμα στην κορυφή είναι το «καλωσόρισμα» της ΑΡΧΙΚΗΣ μόνο
   // (η αρχική πρόθεση του 1a). Στις σελίδες εργασίας το dock μένει πάντα
   // λεπτό και ανοίγει μόνο με hover/focus — αλλιώς κάθεται πάνω στη δουλειά.
   const isHome = pathname === '/'
-  const expanded = (isHome && !isScrolled) || railHover || partingKey !== null
+  const autoExpanded = isHome && !isScrolled
+  const expanded = partingKey !== null || railHover || (manualExpand ?? autoExpanded)
+
+  // Escape: αν το dock είναι ανοιχτό κλείνει, αν είναι κλειστό ανοίγει.
+  // Αδρανές όσο είναι ανοιχτά αναζήτηση/modal (εκεί ο Escape είναι δικός τους).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || isSearchOpen || isLogoutModalOpen) return
+      setManualExpand(!expanded)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [expanded, isSearchOpen, isLogoutModalOpen])
 
   // Κλικ: οι αριστερές κολόνες φεύγουν αριστερά, οι δεξιές δεξιά — μετά πλοήγηση
   const handleColumnClick = (key: string, href: string) => {
