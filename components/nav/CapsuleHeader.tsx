@@ -194,7 +194,7 @@ export default function CapsuleHeader(_props: CapsuleHeaderProps) {
                 </svg>
               </button>
               <div className="reveal-panel absolute top-full left-0 mt-3 w-96 z-50 pointer-events-none" aria-hidden="true">
-                <div className="reveal-solid rounded-3xl overflow-hidden">
+                <div className="menu-glass rounded-3xl overflow-hidden">
                   <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <svg className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -257,7 +257,7 @@ export default function CapsuleHeader(_props: CapsuleHeaderProps) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </Link>
-                      <div className="reveal-panel absolute top-full left-0 mt-3 w-60 reveal-solid rounded-2xl py-1.5 z-50">
+                      <div className="reveal-panel absolute top-full left-0 mt-3 w-60 menu-glass rounded-2xl py-1.5 z-50">
                         {ABOUT_SUBPAGES.map(sub => (
                           <Link
                             key={sub.href}
@@ -285,7 +285,7 @@ export default function CapsuleHeader(_props: CapsuleHeaderProps) {
                         </svg>
                       </Link>
                       {featuredProjects.length > 0 && (
-                        <div className="reveal-panel absolute top-full left-0 mt-3 w-72 reveal-solid rounded-2xl py-1.5 z-50">
+                        <div className="reveal-panel absolute top-full left-0 mt-3 w-72 menu-glass rounded-2xl py-1.5 z-50">
                           {featuredProjects.map(project => (
                             <Link
                               key={project.id}

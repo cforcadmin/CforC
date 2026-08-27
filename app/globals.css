@@ -1985,21 +1985,6 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
   .bubble-glass { background-color: #2D2D2D; }
   .dark .bubble-glass { background-color: #1F2937; }
 }
-
-/* Τα αναδυόμενα του Modern header ΔΕΝ μπορούν να είναι γυαλί: κάθονται μέσα
-   σε πρόγονο με backdrop-filter (φούσκες/πλωτό pill), και η θόλωση δεν
-   φωλιάζει — το παιδί δειγματίζει μόνο μέσα στο backdrop root του προγόνου,
-   οπότε έμενε ωμή διαφάνεια. Σχεδόν συμπαγή, με την όψη του menu-glass. */
-.reveal-solid {
-  background-color: rgba(255, 255, 255, 0.97);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.24), 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-.dark .reveal-solid {
-  background-color: #1f2433;
-  border-color: rgba(255, 255, 255, 0.14);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-}
 .nav-glass-cream { background-color: rgba(245, 240, 235, 0.6); }
 .dark .nav-glass-cream { background-color: rgba(50, 55, 72, 0.35); }
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
