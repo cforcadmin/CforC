@@ -47,27 +47,14 @@ export default function FooterWordmark() {
 
   return (
     <>
+      {/* Το περιτύλιγμα βάφει ό,τι φαίνεται ΠΙΣΩ από τις στρογγυλεμένες
+          γωνίες — χωρίς αυτό ξεπρόβαλλε το λευκό του body */}
+      <div className="bg-[#F5F0EB] dark:bg-gray-900">
       <footer role="contentinfo" aria-label="Πληροφορίες ιστότοπου" className="bg-charcoal rounded-t-3xl overflow-hidden">
-        <div className="max-w-[80rem] mx-auto px-6 pt-8 md:px-14 md:pt-14 flex flex-col gap-11">
+        <div className="max-w-[80rem] mx-auto px-6 pt-8 md:px-14 md:pt-10 flex flex-col gap-8 pb-6 md:pb-8">
 
           {/* Στήλες */}
           <div className="flex flex-col lg:flex-row items-start lg:justify-between gap-10 lg:gap-12">
-            {/* Κάθετο wordmark + στατιστικά δικτύου — διαβάζεται από κάτω
-                προς τα πάνω, όπως οι κολόνες του Cool */}
-            <div className="hidden lg:flex flex-col items-center justify-between gap-5 self-stretch">
-              <span
-                aria-hidden="true"
-                className="footer-wordmark notranslate uppercase font-bold text-white/15 whitespace-nowrap text-2xl tracking-[.04em]"
-                style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-              >
-                Culture for Change
-              </span>
-              <div className="flex flex-col gap-1 text-[13px] font-bold tracking-[.12em] text-coral" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                <span className="notranslate">{stats.members} ΜΕΛΗ</span>
-                <span className="notranslate">{stats.provinces} ΠΕΡΙΦΕΡΕΙΕΣ</span>
-              </div>
-            </div>
-
             {/* ΕΠΙΚΟΙΝΩΝΙΑ — το κοραλί eyebrow είναι σκόπιμη ασυμμετρία:
                 η επαφή είναι η στήλη που θέλουμε να βρίσκεται πρώτη */}
             <div className="max-w-[30ch]">
@@ -149,26 +136,33 @@ export default function FooterWordmark() {
             </nav>
           </div>
 
-          {/* Νομική σειρά */}
-          <div className="border-t border-white/[.14] pt-5 flex flex-col lg:flex-row lg:justify-between gap-2 text-sm text-white/50">
-            <p>Πνευματικά δικαιώματα © {new Date().getFullYear()} Culture For Change</p>
-            <p>
-              Developed by{' '}
-              <a href="https://yoryosstyl.com" target="_blank" rel="noopener noreferrer" className="font-bold text-white hover:text-coral transition-colors duration-200">
-                Yoryos Styl
-              </a>
-            </p>
+          {/* Wordmark και αριθμοί δικτύου σε μία σειρά, πάνω από τη νομική */}
+          <div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3">
+              <span className="footer-wordmark notranslate uppercase font-bold text-sm tracking-[.18em] text-white/60">
+                Culture for Change
+              </span>
+              <span className="w-px h-4 bg-white/20" aria-hidden="true" />
+              <span className="flex items-baseline gap-3 text-[13px] font-bold tracking-[.12em] text-coral" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                <span className="notranslate">{stats.members} ΜΕΛΗ</span>
+                <span className="text-white/25" aria-hidden="true">·</span>
+                <span className="notranslate">{stats.provinces} ΠΕΡΙΦΕΡΕΙΕΣ</span>
+              </span>
+            </div>
+            {/* Νομική σειρά */}
+            <div className="border-t border-white/[.14] pt-4 flex flex-col lg:flex-row lg:justify-between gap-2 text-sm text-white/50">
+              <p>Πνευματικά δικαιώματα © {new Date().getFullYear()} Culture For Change</p>
+              <p>
+                Developed by{' '}
+                <a href="https://yoryosstyl.com" target="_blank" rel="noopener noreferrer" className="font-bold text-white hover:text-coral transition-colors duration-200">
+                  Yoryos Styl
+                </a>
+              </p>
+            </div>
           </div>
-
-          {/* Κινητό: τα στατιστικά σε απλή σειρά (το κάθετο wordmark είναι
-              desktop-μόνο) */}
-          <div className="lg:hidden flex items-baseline gap-7 text-[13px] font-bold tracking-[.12em] text-coral pb-8" style={{ fontVariantNumeric: 'tabular-nums' }}>
-            <span className="notranslate">{stats.members} ΜΕΛΗ</span>
-            <span className="notranslate">{stats.provinces} ΠΕΡΙΦΕΡΕΙΕΣ</span>
-          </div>
-          <div className="hidden lg:block pb-10" />
         </div>
       </footer>
+      </div>
 
       {/* Modal «μόνο για μέλη» των ανοιχτών προσκλήσεων — ίδιο με το Classic */}
       {showMemberModal && (
