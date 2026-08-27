@@ -1955,10 +1955,13 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
    Tailwind κλάση, οπότε καλύπτει ΟΛΕΣ τις σελίδες — και τις μελλοντικές·
    όλα τα -bottom-20 του project είναι page heroes (έλεγχος 27/8/26). */
 html.nav-cool .-bottom-20 {
-  bottom: 0;
-  /* Το ανέβασμα κατά 5rem άφηνε ισόποσο κενό στο ΤΕΛΟΣ του hero (η ροή
-     δεν αλλάζει με relative offset) — η επόμενη ενότητα ανεβαίνει εξίσου */
-  margin-bottom: -5rem;
+  /* margin-top ΚΑΙ ΟΧΙ bottom:0 + margin-bottom: το αρνητικό margin-bottom
+     ΚΑΤΑΡΡΕΕΙ με τα αρνητικά margin-top των επόμενων ενοτήτων (π.χ. το
+     -mt-[10%] του AboutSection «κατάπινε» τα -5rem — ο browser κρατά το
+     πιο αρνητικό, δεν τα αθροίζει) και το κενό έμενε. Το margin-top στην
+     ΠΡΩΤΗ ενότητα ανεβάζει ΟΛΗ τη ροή κατά 5rem, το bottom:-5rem της
+     Tailwind μένει ως έχει, και όλες οι ραφές μένουν ίδιες με το Classic. */
+  margin-top: -5rem;
 }
 /* Στο Cool η προσβασιμότητα ζει ΜΟΝΙΜΑ στην πάνω δεξιά φούσκα — οι
    ενσωματωμένες φούσκες των hero (που «μετακόμιζαν» στο scroll) κρύβονται,
