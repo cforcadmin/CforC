@@ -18,6 +18,7 @@ import GlobalSearch from './GlobalSearch'
 import { useOcAccess } from './useOcAccess'
 import OcSeatChoiceModal from './oc/OcSeatChoiceModal'
 import CapsuleHeader from './nav/CapsuleHeader'
+import CoolNav from './nav/CoolNav'
 import { useNavMode } from './nav/useNavMode'
 
 interface NavigationProps {
@@ -231,10 +232,18 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
     return null
   }
 
-  // Modern = προεπιλογή (κάψουλα 1b)· Classic = το παρακάτω header· Cool
-  // (κολόνες 1a) έρχεται σε δεύτερη φάση και προς το παρόν πέφτει στο Modern.
-  // Η διακλάδωση ζει ΜΕΤΑ από όλα τα hooks ώστε η σειρά τους να μένει σταθερή.
-  if (navMode !== 'classic') {
+  // Modern = προεπιλογή (κάψουλα 1b)· Classic = το παρακάτω header· Cool =
+  // κολόνες 1a σε desktop, Modern στο κινητό. Η διακλάδωση ζει ΜΕΤΑ από όλα
+  // τα hooks ώστε η σειρά τους να μένει σταθερή.
+  if (navMode === 'cool') {
+    return (
+      <>
+        <div className="hidden lg:block"><CoolNav /></div>
+        <div className="lg:hidden"><CapsuleHeader variant={variant} /></div>
+      </>
+    )
+  }
+  if (navMode === 'modern') {
     return <CapsuleHeader variant={variant} />
   }
 
