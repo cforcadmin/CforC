@@ -18,6 +18,7 @@ import GlobalSearch from './GlobalSearch'
 import { useOcAccess } from './useOcAccess'
 import OcSeatChoiceModal from './oc/OcSeatChoiceModal'
 import CapsuleHeader from './nav/CapsuleHeader'
+import NavModeSwitch from './nav/NavModeSwitch'
 import CoolNav from './nav/CoolNav'
 import { useNavMode } from './nav/useNavMode'
 
@@ -311,6 +312,8 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 </svg>
               )}
             </button>
+            {/* Στυλ μενού — παρών και στο Classic ώστε να υπάρχει έξοδος */}
+            <NavModeSwitch align="left" buttonClassName="p-2 rounded-full hover:bg-white/20 transition-colors flex items-center justify-center" />
             {/* Navigation links wrapped in nav element */}
             <nav aria-label="Κύρια πλοήγηση" className="flex items-center space-x-4">
               {/* About Dropdown */}
@@ -648,8 +651,9 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 <Link href="/login" className={`block text-sm py-2 transition-colors ${pathname === '/login' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>ΣΥΝΔΕΣΗ</Link>
               )}
             </nav>
-            <div className="pt-2">
+            <div className="pt-2 flex items-center gap-3">
               <LanguageSwitcher />
+              <NavModeSwitch align="left" buttonClassName="p-2 rounded-full hover:bg-white/20 transition-colors flex items-center justify-center" />
             </div>
           </div>
         </div>
