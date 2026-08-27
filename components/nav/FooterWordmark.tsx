@@ -4,12 +4,13 @@
 // Cool· το Classic κρατά το παλιό Footer ανέγγιχτο. Ίδιο περιεχόμενο με το
 // σημερινό, αναδιοργανωμένο: τρεις στήλες (ΕΠΙΚΟΙΝΩΝΙΑ με κοραλί CTA,
 // SITEMAP σε δύο στήλες, ΠΟΛΙΤΙΚΗ με τα social από κάτω), νομική σειρά,
-// στατιστικά σε κοραλί, και το wordmark τεράστιο σε 10% λευκό, κομμένο από
-// την κάτω ακμή — το κόψιμο είναι το σχέδιο, όχι σφάλμα.
-// Αποφάσεις στα ανοιχτά ερωτήματα του handoff: το CTA κρατιέται· το «110»
-// μένει στατικό προς το παρόν· σε contrast boost το wordmark κρύβεται.
+// και (προσαρμογή 27/8) το wordmark ΚΑΘΕΤΟ αριστερά
+// της ΕΠΙΚΟΙΝΩΝΙΑΣ σε μικρότερα γράμματα, με τα στατιστικά δικτύου από
+// κάτω — πραγματικά νούμερα από το /api/stats/network (μέλη με ΑΜ,
+// διακριτές περιφέρειες), με τα στατικά του σχεδίου ως fallback.
+// Σε contrast boost το wordmark κρύβεται.
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useAuth } from '../AuthProvider'
@@ -29,6 +30,13 @@ export default function FooterWordmark() {
   const { user, logout } = useAuth()
   const [showMemberModal, setShowMemberModal] = useState(false)
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
+  // Πραγματικά νούμερα από τη βάση (μέλη με ΑΜ, διακριτές περιφέρειες)·
+  // ώσπου να απαντήσει το API, τα στατικά του σχεδίου
+  const [stats, setStats] = useState({ members: 110, provinces: 13 })
+  useEffect(() => {
+    fetch('/api/stats/network').then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.members) setStats(d) }).catch(() => {})
+  }, [])
 
   const handleOpenCallsClick = (e: React.MouseEvent) => {
     if (!user) {
@@ -44,6 +52,22 @@ export default function FooterWordmark() {
 
           {/* Στήλες */}
           <div className="flex flex-col lg:flex-row items-start lg:justify-between gap-10 lg:gap-12">
+            {/* Κάθετο wordmark + στατιστικά δικτύου — διαβάζεται από κάτω
+                προς τα πάνω, όπως οι κολόνες του Cool */}
+            <div className="hidden lg:flex flex-col items-center justify-between gap-5 self-stretch">
+              <span
+                aria-hidden="true"
+                className="footer-wordmark notranslate uppercase font-bold text-white/15 whitespace-nowrap text-2xl tracking-[.04em]"
+                style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+              >
+                Culture for Change
+              </span>
+              <div className="flex flex-col gap-1 text-[13px] font-bold tracking-[.12em] text-coral" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                <span className="notranslate">{stats.members} ΜΕΛΗ</span>
+                <span className="notranslate">{stats.provinces} ΠΕΡΙΦΕΡΕΙΕΣ</span>
+              </div>
+            </div>
+
             {/* ΕΠΙΚΟΙΝΩΝΙΑ — το κοραλί eyebrow είναι σκόπιμη ασυμμετρία:
                 η επαφή είναι η στήλη που θέλουμε να βρίσκεται πρώτη */}
             <div className="max-w-[30ch]">
@@ -136,19 +160,13 @@ export default function FooterWordmark() {
             </p>
           </div>
 
-          {/* Στατιστικά — λεζάντα πάνω στο υπερμέγεθες όνομα */}
-          <div className="flex items-baseline gap-7 text-[15px] font-bold tracking-[.12em] text-coral" style={{ fontVariantNumeric: 'tabular-nums' }}>
-            <span className="notranslate">110 ΜΕΛΗ</span>
-            <span className="notranslate">13 ΠΕΡΙΦΕΡΕΙΕΣ</span>
+          {/* Κινητό: τα στατιστικά σε απλή σειρά (το κάθετο wordmark είναι
+              desktop-μόνο) */}
+          <div className="lg:hidden flex items-baseline gap-7 text-[13px] font-bold tracking-[.12em] text-coral pb-8" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            <span className="notranslate">{stats.members} ΜΕΛΗ</span>
+            <span className="notranslate">{stats.provinces} ΠΕΡΙΦΕΡΕΙΕΣ</span>
           </div>
-
-          {/* Wordmark: διακοσμητικό κείμενο (όχι εικόνα — επιβιώνει από την
-              απόκρυψη εικόνων), κομμένο από την κάτω ακμή του footer */}
-          <div className="footer-wordmark h-[15vw] lg:h-[7.375rem] -mt-4 lg:-mt-7 overflow-hidden flex items-start" aria-hidden="true">
-            <span className="uppercase whitespace-nowrap font-bold text-white/10 text-[18vw] lg:text-[9.875rem] leading-[.82] tracking-[-.02em]">
-              Culture for change
-            </span>
-          </div>
+          <div className="hidden lg:block pb-10" />
         </div>
       </footer>
 
