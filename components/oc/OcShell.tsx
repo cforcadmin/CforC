@@ -13,6 +13,7 @@ import OcComms from '@/components/oc/OcComms'
 import OcAdmin from '@/components/oc/OcAdmin'
 import OcIndicators from '@/components/oc/OcIndicators'
 import type { OcOverviewData } from '@/lib/ocOverview'
+import { useNavMode } from '@/components/nav/useNavMode'
 
 // OC categories. Chip style: first letter in a filled block, remainder in a
 // tinted panel — Inside Spaceman pattern, CforC identity (one hue per section).
@@ -125,6 +126,8 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
   // καθόταν πίσω από το μενού και έκρυβε το υγρό γυαλί του (θόλωση πάνω σε
   // ενιαίο κοραλί = αόρατη).
   const [heroOut, setHeroOut] = useState(false)
+  // Το modern header μένει full-width — μόνο το classic γίνεται πλωτό pill
+  const { mode: navMode } = useNavMode()
   // Καρφιτσωμένη συμπαγής εκδοχή: το hero κρύβεται και μένει μόνο η λωρίδα —
   // προτίμηση μέσω /api/oc/prefs (httpOnly cookie), όπως όλες οι OC ρυθμίσεις
   const [heroCompact, setHeroCompactState] = useState(initialHeroCompact)
@@ -291,7 +294,7 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
             από πίσω από το πλωτό μενού προς τα κάτω, με fade μαζί. */}
         <div
           className={`fixed z-40 transition-all duration-300 ${(heroOut || heroCompact) ? '' : 'pointer-events-none'}`}
-          style={isScrolled
+          style={isScrolled && navMode === 'classic'
             ? { top: '5.1rem', left: '50%', transform: 'translateX(-50%)', width: 'calc((100% - 2rem) * 0.9)' }
             : { top: '4.5rem', left: 0, right: 0, width: '100%' }}
           aria-hidden={!(heroOut || heroCompact)}

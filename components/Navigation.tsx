@@ -17,6 +17,8 @@ import type { Project, StrapiResponse } from '@/lib/types'
 import GlobalSearch from './GlobalSearch'
 import { useOcAccess } from './useOcAccess'
 import OcSeatChoiceModal from './oc/OcSeatChoiceModal'
+import CapsuleHeader from './nav/CapsuleHeader'
+import { useNavMode } from './nav/useNavMode'
 
 interface NavigationProps {
   variant?: 'default' | 'members'
@@ -50,6 +52,8 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
     }
   }
   const pathname = usePathname()
+  // Στυλ μενού (modern | classic | cool) — βλ. docs/Nav-Modes.md
+  const { mode: navMode } = useNavMode()
   const dropdownRef = useRef<HTMLDivElement>(null)
   const dropdownItemsRef = useRef<(HTMLAnchorElement | null)[]>([])
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -225,6 +229,13 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
       return url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`
     }
     return null
+  }
+
+  // Modern = προεπιλογή (κάψουλα 1b)· Classic = το παρακάτω header· Cool
+  // (κολόνες 1a) έρχεται σε δεύτερη φάση και προς το παρόν πέφτει στο Modern.
+  // Η διακλάδωση ζει ΜΕΤΑ από όλα τα hooks ώστε η σειρά τους να μένει σταθερή.
+  if (navMode !== 'classic') {
+    return <CapsuleHeader variant={variant} />
   }
 
   const bgColor = variant === 'members' ? 'bg-[#F5F0EB] dark:bg-gray-800' : 'bg-coral dark:bg-gray-900'

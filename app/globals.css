@@ -1920,6 +1920,29 @@ html.accessibility-contrast-invert [role="dialog"][aria-label="Μενού Προ
 .strip-slide { transition: transform .3s ease, opacity .3s ease; }
 .strip-hidden { transform: translateY(-110%); opacity: 0; }
 .strip-shown { transform: translateY(0); opacity: 1; }
+
+/* Modern header (κάψουλα 1b): αποκαλύψεις με hover/focus. Σε globals.css
+   και όχι σε utilities — τα animated classes εδώ έχουν αποτύχει σιωπηλά
+   (βλ. .menu-glass, .strip-slide). Το .reveal-panel έχει δικό του transform,
+   γι' αυτό ΠΟΤΕ translate-x utilities πάνω του (ίδιο property). */
+.hover-reveal { position: relative; }
+.hover-reveal > .reveal-panel {
+  opacity: 0; visibility: hidden; transform: translateY(-4px);
+  transition: opacity .2s ease, transform .2s ease, visibility .2s;
+}
+.hover-reveal:hover > .reveal-panel,
+.hover-reveal:focus-within > .reveal-panel {
+  opacity: 1; visibility: visible; transform: translateY(0);
+}
+/* Α-συστάδα: τα δύο μεγαλύτερα Α ξεδιπλώνονται προς τα ΑΡΙΣΤΕΡΑ του τρίτου */
+.a-cluster { display: flex; align-items: center; }
+.a-cluster .a-nest {
+  display: flex; align-items: center; overflow: hidden;
+  max-width: 0; opacity: 0;
+  transition: max-width .3s ease, opacity .2s ease;
+}
+.a-cluster:hover .a-nest,
+.a-cluster:focus-within .a-nest { max-width: 6rem; opacity: 1; }
 .nav-glass-cream { background-color: rgba(245, 240, 235, 0.6); }
 .dark .nav-glass-cream { background-color: rgba(50, 55, 72, 0.35); }
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
