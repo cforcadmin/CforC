@@ -960,7 +960,7 @@ export default function ProfilePage() {
               : { top: '4.5rem', left: 0, right: 0, width: '100%' }}
           aria-hidden={!visible}
         >
-          <div className={`flex items-center gap-2 overflow-x-auto menu-glass strip-slide ${navMode === 'cool' ? 'rounded-full px-4 py-2 glass-rim' : 'rounded-b-2xl px-3 pt-3 pb-2'} ${coolMode && navScrolled ? 'cool-dim' : ''} ${visible ? 'strip-shown' : 'strip-hidden'}`}
+          <div className={`flex items-center gap-2 overflow-x-auto menu-glass glass-rim strip-slide ${navMode === 'cool' ? 'rounded-full px-4 py-2' : 'rounded-b-2xl px-3 pt-3 pb-2'} ${coolMode && navScrolled ? 'cool-dim' : ''} ${visible ? 'strip-shown' : 'strip-hidden'}`}
             style={{ scrollbarWidth: 'none', ...(navMode === 'cool' ? { borderRadius: '9999px' } : { borderTopLeftRadius: 0, borderTopRightRadius: 0 }) }}>
             <span className="text-sm font-bold text-charcoal dark:text-gray-100 whitespace-nowrap pl-1">CforC</span>
             {heroCompact && (

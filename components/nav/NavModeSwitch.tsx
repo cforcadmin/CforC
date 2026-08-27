@@ -32,7 +32,7 @@ export default function NavModeSwitch({
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5" />
         </svg>
       </button>
-      <div className={`reveal-panel absolute top-full ${align === 'right' ? 'right-0' : 'left-0'} mt-3 w-44 menu-glass-dense rounded-2xl py-1.5 z-50`}>
+      <div className={`reveal-panel absolute top-full ${align === 'right' ? 'right-0' : 'left-0'} mt-3 w-44 menu-glass-dense glass-rim rounded-2xl py-1.5 z-50`}>
         <p className="px-4 pt-1 pb-1.5 text-[10px] font-bold tracking-widest text-gray-500 dark:text-gray-400">
           ΣΤΥΛ ΜΕΝΟΥ
         </p>

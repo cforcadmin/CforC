@@ -2025,10 +2025,10 @@ html.nav-cool .cool-dim:focus-within { opacity: 1; }
   background:
     linear-gradient(var(--glass-fill, rgba(50, 55, 72, 0.5)), var(--glass-fill, rgba(50, 55, 72, 0.5))) padding-box,
     linear-gradient(180deg,
-      rgba(255, 255, 255, 0.45) 0%,
-      rgba(255, 255, 255, 0.10) 40%,
-      rgba(255, 255, 255, 0.03) 70%,
-      rgba(255, 255, 255, 0.16) 100%) border-box;
+      rgba(255, 255, 255, 0.26) 0%,
+      rgba(255, 255, 255, 0.07) 40%,
+      rgba(255, 255, 255, 0.02) 70%,
+      rgba(255, 255, 255, 0.10) 100%) border-box;
 }
 
 /* Πυκνό γυαλί για τα αναδυόμενα των μενού: μέση λύση ανάμεσα στο menu-glass
@@ -2036,6 +2036,7 @@ html.nav-cool .cool-dim:focus-within { opacity: 1; }
    backdrop-filter δεν φωλιάζει) και στο συμπαγές. Η απόχρωση σηκώνει την
    αναγνωσιμότητα μόνη της· όπου η θόλωση πιάνει, απλώς δείχνει καλύτερο. */
 .menu-glass-dense {
+  --glass-fill: rgba(255, 255, 255, 0.86);
   background-color: rgba(255, 255, 255, 0.86);
   -webkit-backdrop-filter: blur(24px) saturate(210%);
   backdrop-filter: blur(24px) saturate(210%);
@@ -2046,6 +2047,7 @@ html.nav-cool .cool-dim:focus-within { opacity: 1; }
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 .dark .menu-glass-dense {
+  --glass-fill: rgba(31, 36, 51, 0.88);
   background-color: rgba(31, 36, 51, 0.88);
   border-color: rgba(255, 255, 255, 0.16);
   box-shadow:
