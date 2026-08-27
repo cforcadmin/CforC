@@ -49,6 +49,17 @@ export default function CoolNav() {
   const [partingKey, setPartingKey] = useState<string | null>(null)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
+  // Πρώτη επαφή με το Cool: μια φορά ανά browser, εξήγηση του dock + Escape
+  const [showIntro, setShowIntro] = useState(false)
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('cforc-cool-intro-seen') !== '1') setShowIntro(true)
+    } catch {}
+  }, [])
+  const dismissIntro = () => {
+    setShowIntro(false)
+    try { localStorage.setItem('cforc-cool-intro-seen', '1') } catch {}
+  }
 
   // Όσο το Cool είναι ενεργό, το <html> φέρει τη σημαία nav-cool: το CSS
   // των hero ανεβάζει την κάρτα στην πραγματική κορυφή (δεν υπάρχει
@@ -92,11 +103,13 @@ export default function CoolNav() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || isSearchOpen || isLogoutModalOpen) return
+      if (showIntro) { dismissIntro(); return }
       setManualExpand(!expanded)
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [expanded, isSearchOpen, isLogoutModalOpen])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expanded, isSearchOpen, isLogoutModalOpen, showIntro])
 
   // Κλικ: οι αριστερές κολόνες φεύγουν αριστερά, οι δεξιές δεξιά — μετά πλοήγηση
   const handleColumnClick = (key: string, href: string) => {
@@ -297,6 +310,35 @@ export default function CoolNav() {
           }}
           onDismiss={() => setShowOcSeatModal(false)}
         />
+      )}
+
+      {/* Πρώτη φορά στο Cool: πώς δουλεύει το μενού */}
+      {showIntro && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={dismissIntro} aria-hidden="true" />
+          <div role="dialog" aria-modal="true" aria-labelledby="cool-intro-title" className="relative menu-glass-dense rounded-3xl max-w-md w-full p-8">
+            <h2 id="cool-intro-title" className="text-xl font-bold text-charcoal dark:text-gray-100 mb-4">
+              Καλωσήρθες στο στυλ <span className="notranslate">Cool</span>
+            </h2>
+            <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+              <p>
+                Το μενού ζει στις χρωματιστές κολόνες στη δεξιά άκρη — άνοιξέ το
+                περνώντας το ποντίκι από πάνω και πάτησε μια ενότητα για να πας εκεί.
+              </p>
+              <p className="flex items-center gap-2">
+                <kbd className="px-2 py-1 rounded-lg bg-charcoal/10 dark:bg-white/15 border border-charcoal/20 dark:border-white/30 font-mono text-xs font-bold text-charcoal dark:text-white">Esc</kbd>
+                <span>κρύβει ή εμφανίζει το μενού όποτε το θελήσεις.</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={dismissIntro}
+              className="mt-6 w-full px-6 py-3 bg-coral hover:bg-[#F07551] text-white font-medium rounded-full transition-colors"
+            >
+              Το κατάλαβα
+            </button>
+          </div>
+        </div>
       )}
 
       <ConfirmationModal
