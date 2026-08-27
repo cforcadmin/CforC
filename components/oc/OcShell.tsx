@@ -128,6 +128,9 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
   const [heroOut, setHeroOut] = useState(false)
   // Classic και Modern γίνονται πλωτό pill στο scroll — το Cool όχι
   const { mode: navMode } = useNavMode()
+  // Στο Cool το OC hero δεν εμφανίζεται καθόλου: η φούσκα-λωρίδα με τα
+  // chips είναι το μενού από την πρώτη στιγμή, και στο scroll χαμηλώνει 50%
+  const coolMode = navMode === 'cool'
   // Καρφιτσωμένη συμπαγής εκδοχή: το hero κρύβεται και μένει μόνο η λωρίδα —
   // προτίμηση μέσω /api/oc/prefs (httpOnly cookie), όπως όλες οι OC ρυθμίσεις
   const [heroCompact, setHeroCompactState] = useState(initialHeroCompact)
@@ -174,8 +177,8 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
         {/* OC hero σε κανονική ροή (όπως στο /profile): κυλά έξω από την
             οθόνη και τα chips συνεχίζουν στη γυάλινη λωρίδα πιο κάτω.
             pt clears the fixed site navbar, which overlays the padding area. */}
-        {heroCompact && <div className="h-28" aria-hidden="true" />}
-        {!heroCompact && (
+        {(heroCompact || coolMode) && <div className="h-28" aria-hidden="true" />}
+        {!heroCompact && !coolMode && (
         <section ref={heroRef}>
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 rounded-b-3xl relative pt-28 pb-6">
             <div className="w-full px-6 lg:px-12">
@@ -293,15 +296,15 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
             κάθε translate-y class στο ίδιο property — η λωρίδα γλιστρά
             από πίσω από το πλωτό μενού προς τα κάτω, με fade μαζί. */}
         <div
-          className={`fixed z-40 transition-all duration-300 ${(heroOut || heroCompact) ? '' : 'pointer-events-none'}`}
+          className={`fixed z-40 transition-all duration-300 ${(heroOut || heroCompact || coolMode) ? '' : 'pointer-events-none'}`}
           style={navMode === 'cool'
             ? { top: '0.75rem', left: '50%', transform: 'translateX(-50%)', maxWidth: '46vw' }
             : isScrolled
               ? { top: '5.1rem', left: '50%', transform: 'translateX(-50%)', width: 'calc((100% - 2rem) * 0.9)' }
               : { top: '4.5rem', left: 0, right: 0, width: '100%' }}
-          aria-hidden={!(heroOut || heroCompact)}
+          aria-hidden={!(heroOut || heroCompact || coolMode)}
         >
-          <div className={`flex items-center gap-2.5 overflow-x-auto menu-glass strip-slide ${navMode === 'cool' ? 'rounded-full px-4 py-2' : 'rounded-b-2xl px-3 pt-3 pb-2'} ${(heroOut || heroCompact) ? 'strip-shown' : 'strip-hidden'}`}
+          <div className={`flex items-center gap-2.5 overflow-x-auto menu-glass strip-slide ${navMode === 'cool' ? 'rounded-full px-4 py-2' : 'rounded-b-2xl px-3 pt-3 pb-2'} ${coolMode && isScrolled ? 'cool-dim' : ''} ${(heroOut || heroCompact || coolMode) ? 'strip-shown' : 'strip-hidden'}`}
             style={{ scrollbarWidth: 'none', ...(navMode === 'cool' ? { borderRadius: '9999px' } : { borderTopLeftRadius: 0, borderTopRightRadius: 0 }) }}>
             <span className="text-sm font-bold text-charcoal dark:text-gray-100 whitespace-nowrap pl-1 notranslate">OC</span>
             {heroCompact && (
@@ -324,7 +327,7 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
                   key={section.key}
                   type="button"
                   onClick={() => { setActiveSection(section.key); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-                  tabIndex={(heroOut || heroCompact) ? 0 : -1}
+                  tabIndex={(heroOut || heroCompact || coolMode) ? 0 : -1}
                   aria-current={active ? 'page' : undefined}
                   className={`inline-flex items-stretch rounded-lg overflow-hidden text-xs font-bold flex-shrink-0 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-coral ${
                     active ? 'shadow-md' : 'opacity-85 hover:opacity-100'
