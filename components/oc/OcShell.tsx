@@ -294,13 +294,15 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
             από πίσω από το πλωτό μενού προς τα κάτω, με fade μαζί. */}
         <div
           className={`fixed z-40 transition-all duration-300 ${(heroOut || heroCompact) ? '' : 'pointer-events-none'}`}
-          style={isScrolled && navMode !== 'cool'
-            ? { top: '5.1rem', left: '50%', transform: 'translateX(-50%)', width: 'calc((100% - 2rem) * 0.9)' }
-            : { top: '4.5rem', left: 0, right: 0, width: '100%' }}
+          style={navMode === 'cool'
+            ? { top: '0.75rem', left: '50%', transform: 'translateX(-50%)', maxWidth: '46vw' }
+            : isScrolled
+              ? { top: '5.1rem', left: '50%', transform: 'translateX(-50%)', width: 'calc((100% - 2rem) * 0.9)' }
+              : { top: '4.5rem', left: 0, right: 0, width: '100%' }}
           aria-hidden={!(heroOut || heroCompact)}
         >
-          <div className={`px-3 pt-3 pb-2 flex items-center gap-2.5 overflow-x-auto menu-glass rounded-b-2xl strip-slide ${(heroOut || heroCompact) ? 'strip-shown' : 'strip-hidden'}`}
-            style={{ scrollbarWidth: 'none', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
+          <div className={`flex items-center gap-2.5 overflow-x-auto menu-glass strip-slide ${navMode === 'cool' ? 'rounded-full px-4 py-2' : 'rounded-b-2xl px-3 pt-3 pb-2'} ${(heroOut || heroCompact) ? 'strip-shown' : 'strip-hidden'}`}
+            style={{ scrollbarWidth: 'none', ...(navMode === 'cool' ? { borderRadius: '9999px' } : { borderTopLeftRadius: 0, borderTopRightRadius: 0 }) }}>
             <span className="text-sm font-bold text-charcoal dark:text-gray-100 whitespace-nowrap pl-1 notranslate">OC</span>
             {heroCompact && (
               <button
