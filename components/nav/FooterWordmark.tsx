@@ -48,10 +48,11 @@ export default function FooterWordmark() {
 
   return (
     <>
-      {/* Το περιτύλιγμα βάφει ό,τι φαίνεται ΠΙΣΩ από τις στρογγυλεμένες
-          γωνίες — χωρίς αυτό ξεπρόβαλλε το λευκό του body */}
-      <div className="bg-[#F5F0EB] dark:bg-gray-900">
-      <footer role="contentinfo" aria-label="Πληροφορίες ιστότοπου" className="bg-charcoal rounded-t-3xl overflow-hidden">
+      {/* -mt-6 = η ακτίνα των γωνιών: το footer καβαλάει το τέλος της
+          προηγούμενης ενότητας ώστε οι εγκοπές των γωνιών να δείχνουν ΑΥΤΗΝ
+          (φωτογραφία ή φόντο σελίδας) — καμία βαμμένη λωρίδα, που πάντα θα
+          ξένιζε κάπου (η κρεμ διαβαζόταν λευκή πλάι στη φωτογραφία). */}
+      <footer role="contentinfo" aria-label="Πληροφορίες ιστότοπου" className="relative -mt-6 bg-charcoal rounded-t-3xl overflow-hidden">
         <div className="max-w-[80rem] mx-auto px-6 pt-8 md:px-14 md:pt-10 flex flex-col gap-8 pb-6 md:pb-8">
 
           {/* Στήλες */}
@@ -163,7 +164,6 @@ export default function FooterWordmark() {
           </div>
         </div>
       </footer>
-      </div>
 
       {/* Modal «μόνο για μέλη» των ανοιχτών προσκλήσεων — ίδιο με το Classic */}
       {showMemberModal && (
