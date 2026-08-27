@@ -124,13 +124,13 @@ export default function ProfilePage() {
   // Εξαρτάται από το heroCompact: όταν το hero ξαναεμφανιστεί (restore),
   // το στοιχείο ΞΑΝΑμπαίνει στο DOM και ο observer πρέπει να ξαναδεθεί.
   useEffect(() => {
-    if (heroCompact) { setHeroOut(false); return }
+    if (heroCompact || coolMode) { setHeroOut(false); return }
     const el = heroRef.current
     if (!el) return
     const obs = new IntersectionObserver(([e]) => setHeroOut(!e.isIntersecting), { threshold: 0 })
     obs.observe(el)
     return () => obs.disconnect()
-  }, [heroCompact])
+  }, [heroCompact, coolMode])
 
   const isNewSince = (iso: string | null, key: string) =>
     !!iso && (!seen[key] || iso > seen[key])

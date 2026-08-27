@@ -141,14 +141,18 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
   }
   // Εξαρτάται από το heroCompact: στο restore το hero ΞΑΝΑμπαίνει στο DOM
   // και ο observer πρέπει να ξαναδεθεί
+  // Εξαρτάται ΚΑΙ από το coolMode: στο Cool το hero δεν υπάρχει στο DOM,
+  // και χωρίς re-run ο παλιός observer έμενε καρφωμένος σε αποσυνδεμένο
+  // στοιχείο με heroOut=true — γυρνώντας σε Classic εμφανίζονταν λωρίδα
+  // ΚΑΙ hero μαζί (διπλό μενού).
   useEffect(() => {
-    if (heroCompact) { setHeroOut(false); return }
+    if (heroCompact || coolMode) { setHeroOut(false); return }
     const el = heroRef.current
     if (!el) return
     const obs = new IntersectionObserver(([e]) => setHeroOut(!e.isIntersecting), { threshold: 0 })
     obs.observe(el)
     return () => obs.disconnect()
-  }, [heroCompact])
+  }, [heroCompact, coolMode])
 
   useEffect(() => {
     // Single-seat members: make sure the cookie reflects their one seat
