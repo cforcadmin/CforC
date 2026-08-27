@@ -1957,6 +1957,12 @@ html.nav-cool .-bottom-20 { bottom: 0; }
    ενσωματωμένες φούσκες των hero (που «μετακόμιζαν» στο scroll) κρύβονται,
    αλλιώς εμφανίζονταν δύο μαζί. */
 html.nav-cool .hero-a11y { display: none; }
+/* Υποσέλιδο 2c: σε contrast boost το διακοσμητικό wordmark (10% λευκό)
+   κρύβεται αντί να μείνει μισοσβησμένο (απόφαση στο ανοιχτό ερώτημα #3
+   του handoff). */
+.accessibility-contrast-light .footer-wordmark,
+.accessibility-contrast-dark .footer-wordmark,
+.accessibility-contrast-invert .footer-wordmark { display: none; }
 /* Στο Cool η φούσκα-λωρίδα χαμηλώνει στο 50% όταν κυλά η σελίδα — όπως το
    dock — και ξαναζωντανεύει με hover/focus. Νικά το opacity του .strip-shown
    λόγω υψηλότερης ειδικότητας. */

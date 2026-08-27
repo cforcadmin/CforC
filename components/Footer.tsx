@@ -5,12 +5,17 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useAuth } from './AuthProvider'
 import ConfirmationModal from './ConfirmationModal'
+import FooterWordmark from './nav/FooterWordmark'
+import { useNavMode } from './nav/useNavMode'
 
 interface FooterProps {
   variant?: 'default' | 'members'
 }
 
 export default function Footer({ variant = 'default' }: FooterProps) {
+  // Το υποσέλιδο ακολουθεί το στυλ μενού: Modern/Cool → 2c wordmark,
+  // Classic → το παρακάτω, ανέγγιχτο (βλ. docs/Nav-Modes.md)
+  const { mode: navMode } = useNavMode()
   const { user, logout } = useAuth()
   const [showMemberModal, setShowMemberModal] = useState(false)
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
@@ -35,6 +40,10 @@ export default function Footer({ variant = 'default' }: FooterProps) {
       e.preventDefault()
       setShowMemberModal(true)
     }
+  }
+
+  if (navMode !== 'classic') {
+    return <FooterWordmark />
   }
 
   return (
