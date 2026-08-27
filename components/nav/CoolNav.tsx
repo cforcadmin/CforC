@@ -26,6 +26,11 @@ import OcSeatChoiceModal from '../oc/OcSeatChoiceModal'
 import NavModeSwitch from './NavModeSwitch'
 import { NAV_ITEMS } from './navItems'
 
+// Διαχωριστικές γραμμές: διαφορετική απόχρωση γκρι ανά κολόνα — σκούρες
+// στο φωτεινό θέμα, ανοιχτές στο σκοτεινό, πάντα ορατές πάνω στο πορτοκαλί
+const EDGE_GRAYS_LIGHT = ['#1f1f1f', '#333333', '#474747', '#5b5b5b', '#6f6f6f', '#838383']
+const EDGE_GRAYS_DARK = ['#f5f5f5', '#dedede', '#c7c7c7', '#b0b0b0', '#999999', '#828282']
+
 function hexToRgba(hex: string, alpha: number): string {
   const n = parseInt(hex.slice(1), 16)
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
@@ -264,6 +269,7 @@ export default function CoolNav() {
               style={{
                 backgroundColor: hexToRgba(item.hue, theme === 'dark' ? 0.4 : 0.6),
                 borderRadius: i === 0 ? '1.25rem 0 0 1.25rem' : undefined,
+                borderLeftColor: (theme === 'dark' ? EDGE_GRAYS_DARK : EDGE_GRAYS_LIGHT)[i % 6],
                 width: expanded ? 'clamp(4.5rem, 7vw, 7rem)' : '1.1rem',
                 opacity: partIdx >= 0 ? (i === partIdx ? 1 : 0) : expanded ? 1 : 0.5,
                 transform,
