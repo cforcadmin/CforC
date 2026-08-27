@@ -60,16 +60,24 @@ const STOP = new Set([
   'προς', 'ως', 'μια', 'ενα', 'έναν',
 ])
 
-/** Οι ουσιαστικές λέξεις ενός τίτλου, κανονικοποιημένες */
-export function titleTokens(raw: string): Set<string> {
-  return new Set(titleKey(raw).split(' ').filter(w => w.length > 2 && !STOP.has(w)))
+/** Οι ουσιαστικές λέξεις ενός τίτλου, κανονικοποιημένες.
+ *  Με limit, μόνο οι ΠΡΩΤΕΣ Ν: στους μακριούς ακαδημαϊκούς τίτλους ο
+ *  υπότιτλος κουβαλά γενικόλογες λέξεις (research, culture, social…) που
+ *  σκόραραν ψευδώς — πρόταση βιβλιοθηκάριου 27/8: μετράνε οι πρώτες 5. */
+export function titleTokens(raw: string, limit = Infinity): Set<string> {
+  return new Set(
+    titleKey(raw).split(' ').filter(w => w.length > 2 && !STOP.has(w)).slice(0, limit)
+  )
 }
+
+/** Πόσες ουσιαστικές λέξεις συγκρίνονται ανά τίτλο στη διπλοεγγραφή */
+export const DUP_TOKEN_LIMIT = 5
 
 /**
  * Πόσες ουσιαστικές λέξεις μοιράζονται δύο τίτλοι.
  */
 export function sharedWordCount(a: string, b: string): number {
-  const ta = titleTokens(a), tb = titleTokens(b)
+  const ta = titleTokens(a, DUP_TOKEN_LIMIT), tb = titleTokens(b, DUP_TOKEN_LIMIT)
   let n = 0
   for (const t of ta) if (tb.has(t)) n++
   return n
@@ -108,7 +116,7 @@ export function isLikelyDuplicate(a: string, b: string): boolean {
   if (!ka || !kb) return false
   if (ka === kb) return true
 
-  const ta = titleTokens(a), tb = titleTokens(b)
+  const ta = titleTokens(a, DUP_TOKEN_LIMIT), tb = titleTokens(b, DUP_TOKEN_LIMIT)
   if (!ta.size || !tb.size) return false
 
   const shared = sharedWordCount(a, b)

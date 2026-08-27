@@ -66,14 +66,12 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
   // Σφάλμα ΑΝΑ πεδίο, δίπλα στην ετικέτα του — ένα γενικό μήνυμα στο τέλος
   // ανάγκαζε τον χρήστη να μαντέψει ποιο πεδίο φταίει.
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const [showYears, setShowYears] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const clearFieldError = (k: string) =>
     setFieldErrors(p => (k in p ? Object.fromEntries(Object.entries(p).filter(([x]) => x !== k)) : p))
 
   useEscape(() => {
-    if (showYears) { setShowYears(false); return }
     if (!busy) onClose()   // στη μέση ανεβάσματος το Escape δεν πετά τη δουλειά
   })
 
@@ -151,7 +149,16 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
     secondary.forEach((b, i) => { if (!b.theme) errs[`sec-${i}`] = 'Διάλεξε θεματική ή αφαίρεσέ τη.' })
     setFieldErrors(errs)
     if (Object.keys(errs).length) {
-      setError(Object.keys(errs).length === 1 ? 'Λείπει ένα πεδίο — δες την κόκκινη ένδειξη.' : `Λείπουν ${Object.keys(errs).length} πεδία — δες τις κόκκινες ενδείξεις.`)
+      // Με ΟΝΟΜΑΤΑ πεδίων: το σκέτο «λείπουν 2 πεδία» έστελνε τον χρήστη
+      // να ψάχνει και στα προαιρετικά (αναφορά βιβλιοθηκάριου 27/8)
+      const FIELD_NAMES: Record<string, string> = {
+        title: 'Τίτλος', theme: 'Θεματική', docType: 'Είδος αρχείου',
+        file: 'Αρχείο ή σύνδεσμος πηγής',
+      }
+      const names = Object.keys(errs).map(k => FIELD_NAMES[k] ?? 'Δευτερεύουσα θεματική')
+      setError(names.length === 1
+        ? `Λείπει υποχρεωτικό πεδίο: ${names[0]} — δες την κόκκινη ένδειξη.`
+        : `Λείπουν υποχρεωτικά πεδία: ${names.join(', ')} — δες τις κόκκινες ενδείξεις.`)
       return
     }
 
@@ -286,35 +293,14 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
               {themeSelect(theme, usedThemes, t => { pickTheme(t); clearFieldError('theme') }, 'lib-theme')}
             </div>
             <div>
+              {/* ΜΟΝΟ από τη λίστα (αίτημα βιβλιοθηκάριου 27/8): το ελεύθερο
+                  πεδίο + πρόσφατα έτη μπέρδευε — μία συμπεριφορά, ένα μενού */}
               <label className={label} htmlFor="lib-year">Έτος κυκλοφορίας</label>
-              <div style={{ position: 'relative' }}>
-                <input id="lib-year" value={year}
-                  onChange={e => setYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                  onFocus={() => setShowYears(true)}
-                  inputMode="numeric" style={{ ...FULL, paddingRight: '2rem' }} className={input} placeholder="2026" />
-                <button type="button" aria-label="Επιλογή έτους από λίστα"
-                  onClick={() => setShowYears(v => !v)}
-                  style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)' }}
-                  className="text-gray-400 hover:text-coral text-[10px] px-1">▼</button>
-                {showYears && (
-                  <>
-                    <div style={{ position: 'fixed', inset: 0, zIndex: 55 }} onClick={() => setShowYears(false)} aria-hidden="true" />
-                    <div className="menu-glass rounded-xl"
-                      style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, maxHeight: 200, overflowY: 'auto', zIndex: 56 }}>
-                      {YEARS.map(y => (
-                        <button key={y} type="button"
-                          onClick={() => { setYear(String(y)); setShowYears(false) }}
-                          className={`notranslate block w-full text-left px-4 py-1 text-sm ${
-                            String(y) === year ? 'menu-row-on' : 'menu-row-off text-charcoal dark:text-gray-100'
-                          }`}
-                          style={{ display: 'block', width: '100%', boxSizing: 'border-box' }}>
-                          {y}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
+              <GlassSelect
+                id="lib-year" value={year} variant="field" placeholder="— Διάλεξε —" clearable
+                onChange={setYear}
+                options={YEARS.map(y => ({ value: String(y), label: String(y) }))}
+              />
             </div>
           </div>
 
@@ -364,7 +350,9 @@ export default function LibraryForm({ onClose, onSaved, onShowGuide, editItem }:
               <GlassSelect
                 id="lib-type" value={docType} variant="field" placeholder="— Διάλεξε —"
                 onChange={v => { setDocType(v); clearFieldError('docType') }}
-                options={LIBRARY_DOC_TYPES.map(d => ({ value: d, label: shortDocType(d) }))}
+                options={[...LIBRARY_DOC_TYPES]
+                  .sort((a, b) => shortDocType(a).localeCompare(shortDocType(b), 'el'))
+                  .map(d => ({ value: d, label: shortDocType(d) }))}
               />
             </div>
             <div>
