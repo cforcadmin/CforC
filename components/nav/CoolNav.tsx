@@ -21,6 +21,8 @@ import { useTextSize } from '../TextSizeProvider'
 import ConfirmationModal from '../ConfirmationModal'
 import { AccessibilityButton } from '../AccessibilityMenu'
 import GlobalSearch from '../GlobalSearch'
+import { useOcAccess } from '../useOcAccess'
+import OcSeatChoiceModal from '../oc/OcSeatChoiceModal'
 import NavModeSwitch from './NavModeSwitch'
 import { NAV_ITEMS } from './navItems'
 
@@ -35,6 +37,9 @@ export default function CoolNav() {
   const { theme, toggleTheme } = useTheme()
   const { textSize, setTextSize } = useTextSize()
   const { isAuthenticated, logout } = useAuth()
+  // UI-gating μόνο — το πραγματικό φράγμα του /oc το επιβάλλει ο server
+  const ocAccess = useOcAccess(isAuthenticated)
+  const [showOcSeatModal, setShowOcSeatModal] = useState(false)
 
   const [isScrolled, setIsScrolled] = useState(false)
   const [railHover, setRailHover] = useState(false)
@@ -184,6 +189,25 @@ export default function CoolNav() {
               <Link href="/profile" className="inline-flex items-center min-h-9 px-4 rounded-full bg-coral text-white text-[13px] font-bold tracking-widest whitespace-nowrap hover:bg-[#F07551] transition-colors">
                 Ο ΧΩΡΟΣ ΜΟΥ
               </Link>
+              {ocAccess.isBoard && (
+                <Link
+                  href="/oc"
+                  onClick={(e) => {
+                    // TEMPORARY: multi-seat μέλη διαλέγουν ρόλο σε κάθε είσοδο
+                    if (ocAccess.seats.length > 1) {
+                      e.preventDefault()
+                      setShowOcSeatModal(true)
+                    }
+                  }}
+                  className={`notranslate inline-flex items-center min-h-9 px-3.5 rounded-full text-[13px] font-bold tracking-widest whitespace-nowrap border transition-colors ${
+                    pathname?.startsWith('/oc')
+                      ? 'bg-coral text-white border-coral'
+                      : 'border-charcoal/40 text-charcoal dark:border-gray-400 dark:text-gray-200 hover:bg-black/10 dark:hover:bg-white/10'
+                  }`}
+                >
+                  OC
+                </Link>
+              )}
               <button type="button" onClick={() => setIsLogoutModalOpen(true)} aria-label="Αποσύνδεση" title="Αποσύνδεση" className={iconBtn}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3-3H9m12 0l-3-3m3 3l-3 3" />
@@ -253,6 +277,26 @@ export default function CoolNav() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
         </div>
+      )}
+
+      {/* TEMPORARY: επιλογή ρόλου για multi-seat μέλη προς το OC */}
+      {showOcSeatModal && (
+        <OcSeatChoiceModal
+          seats={ocAccess.seats}
+          onChoose={async (seat) => {
+            try {
+              await fetch('/api/oc/prefs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ seat }),
+                keepalive: true,
+              })
+            } catch { /* non-fatal */ }
+            setShowOcSeatModal(false)
+            router.push('/oc')
+          }}
+          onDismiss={() => setShowOcSeatModal(false)}
+        />
       )}
 
       <ConfirmationModal
