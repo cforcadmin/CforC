@@ -12,7 +12,7 @@
 //   καβαλάει τη φωτογραφία
 // - Πάνω από το footer, η ζώνη ΓΙΝΕ ΜΕΛΟΣ όπως σε όλες τις Cool σελίδες
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import Navigation from '@/components/Navigation'
@@ -31,6 +31,18 @@ export default function HomeCool() {
   const [isPlaying, setIsPlaying] = useState(false)
   // Ποια ενότητα έχει αποκαλυφθεί από τα κουτιά (αρχικά καμία)
   const [reveal, setReveal] = useState<'news' | 'calls' | null>(null)
+  const boxesRef = useRef<HTMLElement>(null)
+
+  // Hover σε οποιοδήποτε κουτί: η σειρά ανεβαίνει στην κορυφή της οθόνης
+  // (κάτω από τις φούσκες), ώστε η αποκαλυπτόμενη ενότητα να έχει σκηνή
+  const scrollToBoxes = useCallback(() => {
+    const el = boxesRef.current
+    if (!el) return
+    // Μόνο αν δεν είναι ήδη εκεί — αλλιώς κάθε hover ξανασκουντά τη σελίδα
+    if (Math.abs(el.getBoundingClientRect().top - 88) > 24) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [])
 
   // Ίδια λογική με το κλασικό hero: το βίντεο ξεκινά μετά τη συγκατάθεση
   // cookies (ή στο πρώτο κλικ αν υπάρχει ήδη) — ποτέ αυτόβουλα πριν από αυτήν
@@ -95,9 +107,9 @@ export default function HomeCool() {
         </section>
 
         {/* ═══ Τρία κουτιά — τα δύο αποκαλύπτουν την ενότητά τους ═══ */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <section ref={boxesRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8" style={{ scrollMarginTop: '5.5rem' }}>
           <div className="grid md:grid-cols-3 gap-5">
-            <a href="#poioi-eimaste" className={`${boxBase} block hover:-translate-y-0.5`}>
+            <a href="#poioi-eimaste" onMouseEnter={scrollToBoxes} className={`${boxBase} block hover:-translate-y-0.5`}>
               <span className="logo-reveal" aria-hidden="true" />
               <span className="inline-block bg-charcoal text-coral px-3 py-1 rounded-full text-xs font-bold">ΠΟΙΟΙ ΕΙΜΑΣΤΕ</span>
               <h2 className="text-lg font-bold text-charcoal dark:text-gray-100 mt-3 leading-snug">ΤΟ CULTURE FOR CHANGE ΜΕ ΜΙΑ ΜΑΤΙΑ</h2>
@@ -107,7 +119,7 @@ export default function HomeCool() {
 
             <button
               type="button"
-              onMouseEnter={() => setReveal('news')}
+              onMouseEnter={() => { setReveal('news'); scrollToBoxes() }}
               onFocus={() => setReveal('news')}
               onClick={() => setReveal('news')}
               aria-expanded={reveal === 'news'}
@@ -122,7 +134,7 @@ export default function HomeCool() {
 
             <button
               type="button"
-              onMouseEnter={() => setReveal('calls')}
+              onMouseEnter={() => { setReveal('calls'); scrollToBoxes() }}
               onFocus={() => setReveal('calls')}
               onClick={() => setReveal('calls')}
               aria-expanded={reveal === 'calls'}

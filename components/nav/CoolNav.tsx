@@ -316,15 +316,6 @@ export default function CoolNav() {
         })}
       </nav>
 
-      {/* Ένδειξη κύλισης — μόνο στην κορυφή */}
-      {isHome && !isScrolled && (
-        <div className="fixed bottom-4 inset-x-0 z-30 pointer-events-none flex flex-col items-center gap-1 text-charcoal dark:text-gray-200" aria-hidden="true">
-          <span className="text-[10px] font-bold tracking-widest">ΚΥΛΙΣΕ</span>
-          <svg className="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
-        </div>
-      )}
 
       {/* TEMPORARY: επιλογή ρόλου για multi-seat μέλη προς το OC */}
       {showOcSeatModal && (
