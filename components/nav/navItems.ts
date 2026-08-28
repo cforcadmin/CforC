@@ -23,9 +23,12 @@ export interface NavItem {
   anonOnly?: boolean
   /** Ποιο dropdown κουβαλά (τα περιεχόμενα ζουν στο header component) */
   dropdown?: 'about' | 'projects'
+  /** Μόνο στις κολόνες του Cool — τα Modern/Classic έχουν το λογότυπο ως αρχική */
+  coolOnly?: boolean
 }
 
 export const NAV_ITEMS: NavItem[] = [
+  { key: 'home', label: 'ΑΡΧΙΚΗ', href: '/', hue: '#FFC9B8', edge: '#2D2D2D', coolOnly: true },
   { key: 'about', label: 'ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ', href: '/about', dropdown: 'about', hue: '#FFB199', edge: '#2A9D8F' },
   { key: 'news', label: 'ΝΕΑ', href: '/news', hue: '#FF9E80', edge: '#4A90D9' },
   { key: 'projects', label: 'ΕΡΓΑ', href: '/projects', dropdown: 'projects', hue: '#FF8B6A', edge: '#6A994E' },

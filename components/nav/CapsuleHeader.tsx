@@ -120,7 +120,7 @@ export default function CapsuleHeader(_props: CapsuleHeaderProps) {
     return item.label
   }
 
-  const visibleItems = NAV_ITEMS.filter(item => !(item.anonOnly && isAuthenticated))
+  const visibleItems = NAV_ITEMS.filter(item => !(item.anonOnly && isAuthenticated) && !item.coolOnly)
 
   // TEMPORARY: multi-seat μέλη διαλέγουν ρόλο σε κάθε είσοδο στο OC από το μενού
   const handleOcNavClick = (e: React.MouseEvent) => {
