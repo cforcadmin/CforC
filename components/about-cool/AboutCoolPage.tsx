@@ -51,6 +51,24 @@ const LOGOS = [
   { src: '/about-us-CAN-logo.png', alt: 'Community Arts Network', title: 'Το δίκτυο CforC είναι μέλος των: Community Arts Network' },
 ]
 
+/** Τεράστιο λογότυπο-υδατόσημο: δίνει στο γυαλί των επίπεδων ενοτήτων κάτι
+ *  να θολώσει — αχνό έξω από τα πάνελ, «πιασμένο» μέσα τους */
+function LogoWatermark({ side = 'right' }: { side?: 'left' | 'right' }) {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      <img
+        src="/cforc_logo.svg" alt="" className="dark:invert"
+        style={{
+          position: 'absolute', top: '50%',
+          [side]: '-6%',
+          transform: 'translateY(-50%) rotate(-8deg)',
+          width: 'min(75vw, 62rem)', opacity: 0.05,
+        }}
+      />
+    </div>
+  )
+}
+
 function SectionHeading({ n, text }: { n: string; text: string }) {
   return (
     <div className="mb-10">
@@ -136,8 +154,9 @@ export default function AboutCoolPage() {
       </section>
 
       {/* ═══ 01 · ΠΟΙΟΙ ΕΙΜΑΣΤΕ ═══ */}
-      <section className="py-20 bg-[#F5F0EB] dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative py-20 bg-[#F5F0EB] dark:bg-gray-900">
+        <LogoWatermark side="right" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeading n="01" text="ΠΟΙΟΙ ΕΙΜΑΣΤΕ" />
           <h3 className="text-xl md:text-2xl font-bold leading-tight text-charcoal dark:text-gray-100 max-w-3xl">
             Είμαστε το πρώτο ελληνικό Δίκτυο που εκπροσωπεί τη φωνή περισσότερων από 100 επαγγελματιών
@@ -179,8 +198,9 @@ export default function AboutCoolPage() {
       </section>
 
       {/* ═══ 02 · ΤΙ ΚΑΝΟΥΜΕ — τρεις κάρτες + ψηφίδες δράσεων ═══ */}
-      <section className="py-20 bg-white dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative py-20 bg-white dark:bg-gray-800">
+        <LogoWatermark side="left" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeading n="02" text="ΠΩΣ ΤΟ CFORC ΠΡΟΩΘΕΙ ΤΗΝ ΑΛΛΑΓΗ" />
           <div className="grid md:grid-cols-3 gap-6">
             {[
@@ -203,7 +223,7 @@ export default function AboutCoolPage() {
                 bullets: [],
               },
             ].map(card => (
-              <article key={card.title} className="border border-[#E5E7EB] dark:border-gray-600 rounded-2xl overflow-hidden bg-white dark:bg-gray-800 flex flex-col">
+              <article key={card.title} className="menu-glass glass-rim rounded-2xl overflow-hidden flex flex-col">
                 <div className="h-36 relative flex-shrink-0">
                   <Image src={card.img} alt="" fill className="object-cover" />
                 </div>
@@ -237,8 +257,9 @@ export default function AboutCoolPage() {
       </section>
 
       {/* ═══ 03 · ΠΟΥ ΕΙΜΑΣΤΕ — βίντεο + χάρτης ═══ */}
-      <section className="py-20 bg-[#F5F0EB] dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative py-20 bg-[#F5F0EB] dark:bg-gray-900">
+        <LogoWatermark side="right" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeading n="03" text="ΣΕ ΟΛΟΚΛΗΡΗ ΤΗΝ ΕΛΛΑΔΑ" />
           <div className="grid lg:grid-cols-[1.15fr_1fr] gap-8">
             {/* Βίντεο — χωρίς autoplay, με ρητό χειριστήριο παύσης (native controls) */}
@@ -275,7 +296,7 @@ export default function AboutCoolPage() {
             </div>
 
             {/* Κάρτα χάρτη */}
-            <div className="rounded-2xl border border-[#E5E7EB] dark:border-gray-600 bg-white dark:bg-gray-800 overflow-hidden flex flex-col">
+            <div className="menu-glass glass-rim rounded-2xl overflow-hidden flex flex-col">
               <div className="relative h-44 flex-shrink-0 bg-gray-100 dark:bg-gray-700">
                 <Image src="/map-of-greece.jpg" alt="Διαδραστικός χάρτης μελών του Culture for Change" fill className="object-cover" />
               </div>
@@ -294,27 +315,28 @@ export default function AboutCoolPage() {
       </section>
 
       {/* ═══ 04 · Ο ΠΥΡΗΝΑΣ ΜΑΣ — τρίπτυχο + σκοποί + διαφάνεια ═══ */}
-      <section className="py-20 bg-white dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative py-20 bg-white dark:bg-gray-800">
+        <LogoWatermark side="left" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-10">
             <span className="text-coral font-bold text-sm tracking-[.18em]">ΤΟ ΤΡΙΠΤΥΧΟ ΜΑΣ</span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight text-charcoal dark:text-gray-100 mt-1">Ο ΠΥΡΗΝΑΣ ΜΑΣ</h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            <div className="rounded-2xl border border-[#E5E7EB] dark:border-gray-600 p-6">
+            <div className="menu-glass glass-rim rounded-2xl p-6">
               <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-3">ΟΡΑΜΑ</h3>
               <p className="text-sm text-gray-700 dark:text-gray-300" style={{ lineHeight: 1.6, textWrap: 'pretty' } as React.CSSProperties}>
                 <strong>Όραμα</strong> του Culture for Change είναι να συμβάλει στην ενδυνάμωση της κοινωνικό-πολιτισμικής καινοτομίας στην Ελλάδα, με απώτερο σκοπό τη βελτίωση των πρακτικών, μεθόδων και εργαλείων που χρησιμοποιούνται σύμφωνα με τις δυναμικές, και τις εκάστοτε προκλήσεις και ανάγκες της κοινωνίας.
               </p>
             </div>
-            <div className="rounded-2xl border border-[#E5E7EB] dark:border-gray-600 p-6">
+            <div className="menu-glass glass-rim rounded-2xl p-6">
               <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-3">ΑΠΟΣΤΟΛΗ</h3>
               <p className="text-sm text-gray-700 dark:text-gray-300" style={{ lineHeight: 1.6, textWrap: 'pretty' } as React.CSSProperties}>
                 <strong>Αποστολή</strong> του Culture for Change είναι να δημιουργεί ευκαιρίες συνεργασίας και ανάπτυξης για τα μέλη του, να συνδράμει στη διασύνδεσή του έργου τους με τις κοινότητες στις οποίες απευθύνονται και να αναδεικνύει την κοινωνικό-πολιτισμική καινοτομία στα ενδιαφερόμενα μέρη (stakeholders).
               </p>
             </div>
-            <div className="rounded-2xl border border-[#E5E7EB] dark:border-gray-600 p-6">
+            <div className="menu-glass glass-rim rounded-2xl p-6">
               <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-3">ΑΞΙΕΣ</h3>
               <div className="flex flex-wrap gap-2">
                 {(allValues ? VALUES : VALUES.slice(0, 4)).map(v => (
@@ -331,7 +353,7 @@ export default function AboutCoolPage() {
           </div>
 
           {/* Οι 7 σκοποί του καταστατικού, διπλωμένοι — δουλεύει και χωρίς JS */}
-          <details className="mt-8 rounded-2xl border border-[#E5E7EB] dark:border-gray-600 group">
+          <details className="menu-glass glass-rim mt-8 rounded-2xl group">
             <summary className={`flex items-center justify-between gap-4 px-6 py-4 cursor-pointer list-none font-bold text-charcoal dark:text-gray-100 min-h-11 ${focusRing}`}>
               <span>ΟΙ ΣΚΟΠΟΙ ΜΑΣ — 7 σκοποί από το καταστατικό</span>
               <span className="text-coral group-open:rotate-180 transition-transform duration-200" aria-hidden="true">▾</span>
@@ -351,7 +373,7 @@ export default function AboutCoolPage() {
           </details>
 
           {/* ΔΙΑΦΑΝΕΙΑ — από τη μέση της παλιάς σελίδας, δίπλα στις Αξίες όπου ανήκει */}
-          <div className="mt-8 rounded-2xl bg-[#F5F0EB] dark:bg-gray-700 p-8 md:p-10">
+          <div className="menu-glass glass-rim mt-8 rounded-2xl p-8 md:p-10">
             <h3 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-4">ΔΙΑΦΑΝΕΙΑ</h3>
             <p className="text-gray-700 dark:text-gray-300 max-w-3xl" style={{ lineHeight: 1.6, textWrap: 'pretty' } as React.CSSProperties}>
               Η διαφάνεια αποτελεί θεμελιώδη αξία του Culture for Change. Πιστεύουμε στην ανοιχτή επικοινωνία
@@ -367,8 +389,9 @@ export default function AboutCoolPage() {
       </section>
 
       {/* ═══ 05 · ΥΠΟΣΤΗΡΙΚΤΕΣ — ένα ενιαίο πλέγμα ═══ */}
-      <section className="py-20 bg-[#F5F0EB] dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative py-20 bg-[#F5F0EB] dark:bg-gray-900">
+        <LogoWatermark side="right" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeading n="05" text="ΟΙ ΥΠΟΣΤΗΡΙΚΤΕΣ ΚΑΙ ΟΙ ΣΥΝΕΡΓΑΤΕΣ ΜΑΣ" />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {LOGOS.map(l => (
@@ -387,14 +410,14 @@ export default function AboutCoolPage() {
         <div className="relative rounded-3xl overflow-hidden" style={{ backgroundColor: '#1B2438' }}>
           <Image src="/becomeamember.webp" alt="" fill className="object-cover" />
           <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,.45)' }} aria-hidden="true" />
-          <div className="relative px-6 md:px-12 py-16 md:py-20 max-w-3xl">
+          <div className="relative px-6 md:px-12 py-16 md:py-20 max-w-4xl">
             <h2 className="text-white font-bold text-3xl md:text-4xl leading-tight">
               ΓΙΝΕ ΜΕΛΟΣ ΤΟΥ ΔΙΚΤΥΟΥ ΜΑΣ
             </h2>
             <p className="text-white/90 mt-4" style={{ lineHeight: 1.6 }}>
               Γίνε τώρα μέλος του πρώτου Δικτύου για την κοινωνική και πολιτιστική καινοτομία στην Ελλάδα.
             </p>
-            <div className="flex flex-wrap items-center gap-3 mt-8">
+            <div className="flex flex-wrap md:flex-nowrap items-center gap-3 mt-8">
               <Link href="/participation" className={`inline-flex items-center min-h-11 px-6 rounded-full bg-coral text-charcoal text-sm font-bold tracking-widest hover:bg-[#F07551] transition-colors duration-200 ${focusRing}`}>
                 ΓΙΝΕ ΜΕΛΟΣ ΤΩΡΑ
               </Link>
