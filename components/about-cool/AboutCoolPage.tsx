@@ -535,7 +535,7 @@ export default function AboutCoolPage({ initialSection = 'diktyo' }: { initialSe
       {/* ═══ ΟΨΗ: ΟΜΑΔΑ ΣΥΝΤΟΝΙΣΜΟΥ ═══ */}
       {section === 'team' && (
         <section className="py-16 bg-[#F5F0EB] dark:bg-gray-900">
-          <CoordinationTeamContent />
+          <CoordinationTeamContent variant="cool" />
         </section>
       )}
 
