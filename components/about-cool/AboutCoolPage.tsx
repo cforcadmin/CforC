@@ -112,6 +112,18 @@ export default function AboutCoolPage({ initialSection = 'diktyo' }: { initialSe
     window.scrollTo({ top: 0 })
   }
 
+  // Back/Forward: το pushState των καρτελών πρέπει να ΞΕγράφεται — στο
+  // popstate η όψη ακολουθεί το URL, αλλιώς το κουμπί Πίσω άλλαζε μόνο
+  // τη γραμμή διεύθυνσης
+  useEffect(() => {
+    const onPop = () => {
+      const hit = ABOUT_SECTIONS.find(t => t.href === window.location.pathname)
+      if (hit) setSection(hit.key)
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+
   // Πραγματικός αριθμός μελών — ΠΟΤΕ μηδέν: μέχρι/αν δεν απαντήσει το API,
   // μένει η τελευταία γνωστή τιμή (brief: «Never render 0»)
   const [memberCount, setMemberCount] = useState(110)

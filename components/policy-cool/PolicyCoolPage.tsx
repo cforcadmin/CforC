@@ -7,7 +7,7 @@
 // γυάλινο πάνελ με το παράθυρο-λογότυπο, και η ζώνη ΓΙΝΕ ΜΕΛΟΣ στη θέση του
 // παλιού CombinedCtaSection.
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
@@ -46,6 +46,18 @@ export default function PolicyCoolPage({ initialSection = 'terms' }: { initialSe
     }
     window.scrollTo({ top: 0 })
   }
+
+  // Back/Forward: το pushState των καρτελών πρέπει να ΞΕγράφεται — στο
+  // popstate η όψη ακολουθεί το URL, αλλιώς το κουμπί Πίσω άλλαζε μόνο
+  // τη γραμμή διεύθυνσης
+  useEffect(() => {
+    const onPop = () => {
+      const hit = POLICY_SECTIONS.find(t => t.href === window.location.pathname)
+      if (hit) setSection(hit.key)
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
 
   const Body = BODIES[section]
   const title = POLICY_SECTIONS.find(t => t.key === section)!.label

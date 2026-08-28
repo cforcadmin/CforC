@@ -115,7 +115,9 @@ export default function FooterWordmark() {
 
             {/* ΠΟΛΙΤΙΚΗ + social */}
             <nav aria-label="Πολιτική">
-              <h3 className="text-xs font-bold tracking-[.14em] uppercase text-white/45 mb-4">ΠΟΛΙΤΙΚΗ</h3>
+              <h3 className="text-xs font-bold tracking-[.14em] uppercase mb-4">
+                <Link href="/terms" className="text-white/45 hover:text-coral transition-colors duration-200">ΠΟΛΙΤΙΚΗ</Link>
+              </h3>
               <ul role="list" className="space-y-2 text-[15px] text-white">
                 <li><Link href="/terms" className={LINK}>Όροι &amp; Προϋποθέσεις</Link></li>
                 <li><Link href="/privacy" className={LINK}>Πολιτική Απορρήτου</Link></li>
