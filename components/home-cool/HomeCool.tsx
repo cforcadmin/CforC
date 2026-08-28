@@ -74,7 +74,7 @@ export default function HomeCool() {
     return () => window.removeEventListener('cookie-consent-dismissed', tryPlay)
   }, [isPlaying])
 
-  const boxBase = 'relative overflow-hidden menu-glass glass-rim rounded-2xl p-6 text-left transition-all duration-200'
+  const boxBase = 'relative overflow-hidden menu-glass glass-rim rounded-2xl p-6 text-left transition-all duration-200 flex flex-col items-start justify-start'
 
   return (
     <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
@@ -123,7 +123,10 @@ export default function HomeCool() {
         {/* ═══ Τρία κουτιά — τα δύο αποκαλύπτουν την ενότητά τους ═══ */}
         <section ref={boxesRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8" style={{ scrollMarginTop: '5.5rem' }}>
           <div className="grid md:grid-cols-3 gap-5">
-            <a href="#poioi-eimaste" onMouseEnter={scrollToBoxes} className={`${boxBase} block hover:-translate-y-0.5`}>
+            <a href="#poioi-eimaste"
+              onMouseEnter={() => { setReveal(null); scrollToBoxes() }}
+              onFocus={() => setReveal(null)}
+              className={`${boxBase} hover:-translate-y-0.5`}>
               <span className="logo-reveal" aria-hidden="true" />
               <span className="inline-block bg-charcoal text-coral px-3 py-1 rounded-full text-xs font-bold">ΠΟΙΟΙ ΕΙΜΑΣΤΕ</span>
               <h2 className="text-lg font-bold text-charcoal dark:text-gray-100 mt-3 leading-snug">ΤΟ CULTURE FOR CHANGE ΜΕ ΜΙΑ ΜΑΤΙΑ</h2>
