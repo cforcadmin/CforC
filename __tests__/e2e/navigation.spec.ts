@@ -77,8 +77,9 @@ test.describe('Mobile Navigation', () => {
     // Open menu (force click to bypass overlay intercept)
     await menuButton.click({ force: true })
 
-    // Menu should now be visible
-    const mobileMenu = page.locator('#mobile-menu')
+    // Menu should now be visible — το id διαφέρει ανά στυλ μενού:
+    // #mobile-menu (Classic) ή #capsule-mobile-menu (Modern, η προεπιλογή)
+    const mobileMenu = page.locator('#mobile-menu, #capsule-mobile-menu')
     await expect(mobileMenu).toBeVisible()
 
     // Close menu — label changes to "Κλείσιμο μενού" (Close menu)
