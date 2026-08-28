@@ -8,8 +8,11 @@ import CombinedCtaSection from '@/components/CombinedCtaSection'
 import ScrollToTop from '@/components/ScrollToTop'
 import CoordinationTeamContent from '@/components/CoordinationTeamContent'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
+import CoolSubpageShell from '@/components/about-cool/CoolSubpageShell'
+import { useNavMode } from '@/components/nav/useNavMode'
 
 export default function CoordinationTeamPage() {
+  const { mode } = useNavMode()
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
 
   useEffect(() => {
@@ -31,6 +34,26 @@ export default function CoordinationTeamPage() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  // Cool: το κέλυφος των υποσελίδων Σχετικά — ίδιο περιεχόμενο, νέα σκηνή
+  if (mode === 'cool') {
+    return (
+      <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
+        <Navigation />
+        <main id="main-content">
+          <CoolSubpageShell title="ΟΜΑΔΑ ΣΥΝΤΟΝΙΣΜΟΥ">
+            <section className="py-16">
+              <CoordinationTeamContent />
+            </section>
+          </CoolSubpageShell>
+          <CombinedCtaSection />
+        </main>
+        <Footer />
+        <CookieConsent />
+        <ScrollToTop />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen dark:bg-gray-900">
