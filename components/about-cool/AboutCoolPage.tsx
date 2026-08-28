@@ -463,7 +463,9 @@ export default function AboutCoolPage({ initialSection = 'diktyo' }: { initialSe
       {/* ═══ ΟΨΗ: ΕΠΙΚΟΙΝΩΝΙΑ ═══ */}
       {section === 'contact' && (
         <section className="py-16 bg-[#F5F0EB] dark:bg-gray-900">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* cool-contact: οι κάρτες του κοινού ContactContent ντύνονται γυαλί
+              + παράθυρο-λογότυπο μέσω CSS (globals) — το component ανέγγιχτο */}
+          <div className="cool-contact max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <ContactContent />
           </div>
         </section>
