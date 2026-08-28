@@ -17,13 +17,16 @@ import type { NavMode } from './navItems'
 const KEY = 'cforc-nav-mode'
 const EVT = 'cforc:nav-mode'
 
+// Το τελευταίο γνωστό στυλ: αν μια ανάγνωση localStorage αποτύχει παροδικά,
+// ΔΕΝ γυρνάμε σε «modern» — το στυλ δεν επιτρέπεται να αλλάξει μόνο του.
+let lastKnown: NavMode = 'modern'
+
 function readStored(): NavMode {
   try {
     const v = localStorage.getItem(KEY)
-    return v === 'classic' || v === 'cool' ? v : 'modern'
-  } catch {
-    return 'modern'
-  }
+    lastKnown = v === 'classic' || v === 'cool' ? v : 'modern'
+  } catch { /* κράτα το lastKnown */ }
+  return lastKnown
 }
 
 function subscribe(onChange: () => void) {

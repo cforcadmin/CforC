@@ -18,24 +18,14 @@ import CombinedCtaSection from '@/components/CombinedCtaSection'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
 import ScrollToTop from '@/components/ScrollToTop'
-import AboutCoolPage from './AboutCoolPage'
+import { CoolAboutRoute } from './AboutCoolPage'
 import { useNavMode } from '@/components/nav/useNavMode'
 
 export default function AboutVariantSwitch() {
   const { mode } = useNavMode()
 
   if (mode === 'cool') {
-    return (
-      <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
-        <Navigation />
-        <main id="main-content">
-          <AboutCoolPage />
-        </main>
-        <Footer />
-        <CookieConsent />
-        <ScrollToTop />
-      </div>
-    )
+    return <CoolAboutRoute section="diktyo" />
   }
 
   // Classic / Modern: η σελίδα όπως ήταν, γραμμή προς γραμμή

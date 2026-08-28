@@ -10,31 +10,15 @@ import CombinedCtaSection from '@/components/CombinedCtaSection'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
 import ScrollToTop from '@/components/ScrollToTop'
-import CoolSubpageShell from './CoolSubpageShell'
+import { CoolAboutRoute } from './AboutCoolPage'
 import { useNavMode } from '@/components/nav/useNavMode'
 
 export default function ContactVariant() {
   const { mode } = useNavMode()
 
+  // Cool: η όψη «Επικοινωνία» του ενιαίου Σχετικά (χωρίς redirect)
   if (mode === 'cool') {
-    return (
-      <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
-        <Navigation />
-        <main id="main-content">
-          <CoolSubpageShell title="ΕΠΙΚΟΙΝΩΝΙΑ" standfirst="Επίλεξε τον τρόπο επικοινωνίας που σου ταιριάζει.">
-            <section className="py-16">
-              <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                <ContactContent />
-              </div>
-            </section>
-          </CoolSubpageShell>
-          <CombinedCtaSection />
-        </main>
-        <Footer />
-        <CookieConsent />
-        <ScrollToTop />
-      </div>
-    )
+    return <CoolAboutRoute section="contact" />
   }
 
   // Classic / Modern: γραμμή προς γραμμή η υπάρχουσα σελίδα

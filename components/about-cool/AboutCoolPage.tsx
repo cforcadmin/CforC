@@ -10,9 +10,43 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import AboutTabs from './AboutTabs'
+import Navigation from '@/components/Navigation'
+import Footer from '@/components/Footer'
+import CookieConsent from '@/components/CookieConsent'
+import ScrollToTop from '@/components/ScrollToTop'
+import CoordinationTeamContent from '@/components/CoordinationTeamContent'
+import ContactContent from '@/components/ContactContent'
+import AboutTabs, { ABOUT_SECTIONS, type AboutSectionKey } from './AboutTabs'
 
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2'
+
+// Οι τέσσερις «όψεις» της μίας σελίδας: τίτλος, εικόνα και standfirst του
+// hero αλλάζουν ΕΠΙ ΤΟΠΟΥ όταν αλλάζει καρτέλα — καμία πλοήγηση.
+const HEROES: Record<AboutSectionKey, { title: string; standfirst?: string; image: string | null; alt: string }> = {
+  diktyo: {
+    title: 'ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ',
+    standfirst: 'Το πρώτο ελληνικό δίκτυο κοινωνικής καινοτομίας για πολιτιστική και πολιτική αλλαγή.',
+    image: '/about-us.jpg',
+    alt: 'Ομαδική φωτογραφία μελών του δικτύου Culture for Change',
+  },
+  team: {
+    title: 'ΟΜΑΔΑ ΣΥΝΤΟΝΙΣΜΟΥ',
+    image: '/about-us-our-targets.jpg',
+    alt: 'Συμμετέχοντες σε δράση του Culture for Change συζητούν τους στόχους του δικτύου',
+  },
+  transparency: {
+    title: 'ΔΙΑΦΑΝΕΙΑ',
+    standfirst: 'Η διαφάνεια είναι μία από τις κύριες αξίες του CforC, την οποία εφαρμόζουμε με τον διαμοιρασμό των οικονομικών μας στοιχείων και του καταστατικού χάρτη του οργανισμού μας.',
+    image: '/about-us-what-we-offer3.jpg',
+    alt: '',
+  },
+  contact: {
+    title: 'ΕΠΙΚΟΙΝΩΝΙΑ',
+    standfirst: 'Επίλεξε τον τρόπο επικοινωνίας που σου ταιριάζει.',
+    image: '/becomeamember.webp',
+    alt: '',
+  },
+}
 
 // Οι 10 αξίες, από το υπάρχον κείμενο του ΑΞΙΕΣ — ως ψηφίδες αντί για λίστα
 const VALUES = [
@@ -62,7 +96,19 @@ function SectionHeading({ n, text }: { n: string; text: string }) {
   )
 }
 
-export default function AboutCoolPage() {
+export default function AboutCoolPage({ initialSection = 'diktyo' }: { initialSection?: AboutSectionKey }) {
+  const [section, setSection] = useState<AboutSectionKey>(initialSection)
+  // Αλλαγή καρτέλας = αλλαγή όψης επί τόπου· το URL ακολουθεί με pushState
+  // (ο App Router το υποστηρίζει shallow) ώστε τα deep links να ζουν
+  const selectSection = (k: AboutSectionKey) => {
+    setSection(k)
+    const href = ABOUT_SECTIONS.find(t => t.key === k)?.href
+    if (href && typeof window !== 'undefined' && window.location.pathname !== href) {
+      window.history.pushState({}, '', href)
+    }
+    window.scrollTo({ top: 0 })
+  }
+
   // Πραγματικός αριθμός μελών — ΠΟΤΕ μηδέν: μέχρι/αν δεν απαντήσει το API,
   // μένει η τελευταία γνωστή τιμή (brief: «Never render 0»)
   const [memberCount, setMemberCount] = useState(110)
@@ -99,24 +145,30 @@ export default function AboutCoolPage() {
 
   return (
     <>
-      {/* ═══ HERO — η φωτογραφία ΕΙΝΑΙ το hero ═══ */}
+      {/* ═══ HERO — μία σκηνή, τέσσερις όψεις: τίτλος/εικόνα/πληροφορία
+          αλλάζουν με την ενεργή καρτέλα ═══ */}
       <section className="px-2 pt-2 md:px-3 md:pt-3">
         {/* Το navy φόντο κρατά τίτλο/standfirst αναγνώσιμα όταν οι εικόνες
             είναι κρυμμένες (CTRL+U) */}
-        <div className="relative rounded-3xl overflow-hidden min-h-[60vh] md:min-h-[70vh] flex flex-col justify-end" style={{ backgroundColor: '#1B2438' }}>
-          <Image src="/about-us.jpg" alt="Ομαδική φωτογραφία μελών του δικτύου Culture for Change" fill priority quality={90} className="object-cover" />
+        <div className={`relative rounded-3xl overflow-hidden flex flex-col justify-end ${section === 'diktyo' ? 'min-h-[60vh] md:min-h-[70vh]' : 'min-h-[45vh] md:min-h-[52vh]'}`} style={{ backgroundColor: '#1B2438' }}>
+          {HEROES[section].image && (
+            <Image key={HEROES[section].image} src={HEROES[section].image!} alt={HEROES[section].alt} fill priority quality={90} className="object-cover" />
+          )}
           {/* Το μόνο επιτρεπτό gradient της σελίδας — σταθερό, όχι προαιρετικό */}
           <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.10) 30%, rgba(0,0,0,.75) 100%)' }} aria-hidden="true" />
 
           <div className="relative px-6 md:px-12 pb-20 md:pb-24 pt-32">
             <p className="text-coral font-bold text-sm tracking-[.18em] mb-3">ΤΟ ΔΙΚΤΥΟ</p>
             <h1 className="text-white font-bold" style={{ fontSize: 'clamp(2.5rem, 6vw, 5rem)', lineHeight: 0.92 }}>
-              ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ
+              {HEROES[section].title}
             </h1>
-            <p className="text-white/90 mt-4 max-w-xl text-base md:text-lg" style={{ lineHeight: 1.6 }}>
-              Το πρώτο ελληνικό δίκτυο κοινωνικής καινοτομίας για πολιτιστική και πολιτική αλλαγή.
-            </p>
+            {HEROES[section].standfirst && (
+              <p className="text-white/90 mt-4 max-w-xl text-base md:text-lg" style={{ lineHeight: 1.6 }}>
+                {HEROES[section].standfirst}
+              </p>
+            )}
             {/* Μετρητές — αληθινά νούμερα, στο hero και όχι κάτω από το fold */}
+            {section === 'diktyo' && (
             <div className="flex gap-8 md:gap-12 mt-8" style={{ fontVariantNumeric: 'tabular-nums' }}>
               {[
                 { v: String(memberCount), l: 'ΜΕΛΗ' },
@@ -129,11 +181,14 @@ export default function AboutCoolPage() {
                 </div>
               ))}
             </div>
+            )}
           </div>
 
-          <AboutTabs />
+          <AboutTabs active={section} onSelect={selectSection} />
         </div>
       </section>
+
+      {section === 'diktyo' && (<>
 
       {/* ═══ 01 · ΠΟΙΟΙ ΕΙΜΑΣΤΕ ═══ */}
       <section className="relative py-20 bg-[#F5F0EB] dark:bg-gray-900">
@@ -471,6 +526,63 @@ export default function AboutCoolPage() {
           </div>
         </div>
       </section>
+      </>)}
+
+      {/* ═══ ΟΨΗ: ΟΜΑΔΑ ΣΥΝΤΟΝΙΣΜΟΥ ═══ */}
+      {section === 'team' && (
+        <section className="py-16 bg-[#F5F0EB] dark:bg-gray-900">
+          <CoordinationTeamContent />
+        </section>
+      )}
+
+      {/* ═══ ΟΨΗ: ΔΙΑΦΑΝΕΙΑ — οι δύο κάρτες εγγράφων, γυάλινες ═══ */}
+      {section === 'transparency' && (
+        <section className="py-16 bg-[#F5F0EB] dark:bg-gray-900">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-6">
+            {[
+              { title: 'ΚΑΤΑΣΤΑΤΙΚΟ', label: 'ΚΑΤΑΣΤΑΤΙΚΟ', url: 'https://drive.google.com/file/d/1YGUoy8xfiIzClZlMF9PwZcN5M6ej-9Vc/view?usp=sharing' },
+              { title: 'ΟΙΚΟΝΟΜΙΚΟΣ ΑΠΟΛΟΓΙΣΜΟΣ 2024', label: 'ΑΠΟΛΟΓΙΣΜΟΣ 2024', url: 'https://cdn.prod.website-files.com/63cfcf33f1ef1a3c759687cf/687a184788aced4680af799e_%CE%9F%CE%B9%CE%BA%CE%BF%CE%BD%CE%BF%CE%BC%CE%B9%CE%BA%CE%BF%CC%81%CF%82%20%CE%91%CF%80%CE%BF%CE%BB%CE%BF%CE%B3%CE%B9%CF%83%CE%BC%CE%BF%CC%81%CF%82%20CforC%202024%20Singed.pdf' },
+            ].map(doc => (
+              <div key={doc.title} className="relative overflow-hidden menu-glass glass-rim rounded-3xl p-10 text-center">
+                <span className="logo-reveal" aria-hidden="true" />
+                <h3 className="text-2xl md:text-3xl font-bold mb-8 text-charcoal dark:text-gray-100">{doc.title}</h3>
+                <button
+                  type="button"
+                  onClick={() => window.open(doc.url, '_blank')}
+                  className={`bg-charcoal dark:bg-gray-600 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-8 py-4 rounded-full text-lg font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-all duration-300 ${focusRing}`}
+                >
+                  {doc.label}
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ═══ ΟΨΗ: ΕΠΙΚΟΙΝΩΝΙΑ ═══ */}
+      {section === 'contact' && (
+        <section className="py-16 bg-[#F5F0EB] dark:bg-gray-900">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <ContactContent />
+          </div>
+        </section>
+      )}
     </>
+  )
+}
+
+/** Πλήρης σελίδα-φορέας για τα τέσσερα routes στο Cool: ίδιο κέλυφος,
+ *  διαφορετική αρχική όψη — τα κλικ στις καρτέλες ΔΕΝ ξαναφορτώνουν τίποτα */
+export function CoolAboutRoute({ section }: { section: AboutSectionKey }) {
+  return (
+    <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
+      <Navigation />
+      <main id="main-content">
+        <AboutCoolPage initialSection={section} />
+      </main>
+      <Footer />
+      <CookieConsent />
+      <ScrollToTop />
+    </div>
   )
 }

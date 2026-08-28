@@ -7,7 +7,7 @@ import CookieConsent from '@/components/CookieConsent'
 import CombinedCtaSection from '@/components/CombinedCtaSection'
 import ScrollToTop from '@/components/ScrollToTop'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
-import CoolSubpageShell from '@/components/about-cool/CoolSubpageShell'
+import { CoolAboutRoute } from '@/components/about-cool/AboutCoolPage'
 import { useNavMode } from '@/components/nav/useNavMode'
 
 export default function TransparencyPage() {
@@ -43,45 +43,9 @@ export default function TransparencyPage() {
     window.open('https://cdn.prod.website-files.com/63cfcf33f1ef1a3c759687cf/687a184788aced4680af799e_%CE%9F%CE%B9%CE%BA%CE%BF%CE%BD%CE%BF%CE%BC%CE%B9%CE%BA%CE%BF%CC%81%CF%82%20%CE%91%CF%80%CE%BF%CE%BB%CE%BF%CE%B3%CE%B9%CF%83%CE%BC%CE%BF%CC%81%CF%82%20CforC%202024%20Singed.pdf', '_blank')
   }
 
-  // Cool: κέλυφος υποσελίδων + οι τρεις κάρτες ως γυάλινα πάνελ με το
-  // «παράθυρο» λογοτύπου — ίδιο περιεχόμενο και κουμπιά με το κλασικό
+  // Cool: η όψη «Διαφάνεια» του ενιαίου Σχετικά (χωρίς redirect)
   if (mode === 'cool') {
-    const glassCard = 'relative overflow-hidden menu-glass glass-rim rounded-3xl p-10 text-center'
-    const docButton = 'bg-charcoal dark:bg-gray-600 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-8 py-4 rounded-full text-lg font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-all duration-300'
-    return (
-      <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
-        <Navigation />
-        <main id="main-content">
-          <CoolSubpageShell
-            title="ΔΙΑΦΑΝΕΙΑ"
-            standfirst="Η διαφάνεια είναι μία από τις κύριες αξίες του CforC, την οποία εφαρμόζουμε με τον διαμοιρασμό των οικονομικών μας στοιχείων και του καταστατικού χάρτη του οργανισμού μας."
-          >
-            <section className="py-16">
-              <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-6">
-                <div className={glassCard}>
-                  <span className="logo-reveal" aria-hidden="true" />
-                  <h3 className="text-2xl md:text-3xl font-bold mb-8 text-charcoal dark:text-gray-100">ΚΑΤΑΣΤΑΤΙΚΟ</h3>
-                  <button onClick={handleOpenStatute} className={docButton}>
-                    ΚΑΤΑΣΤΑΤΙΚΟ
-                  </button>
-                </div>
-                <div className={glassCard}>
-                  <span className="logo-reveal" aria-hidden="true" />
-                  <h3 className="text-2xl md:text-3xl font-bold mb-8 text-charcoal dark:text-gray-100">ΟΙΚΟΝΟΜΙΚΟΣ ΑΠΟΛΟΓΙΣΜΟΣ 2024</h3>
-                  <button onClick={handleOpenFinancialReport} className={docButton}>
-                    ΑΠΟΛΟΓΙΣΜΟΣ 2024
-                  </button>
-                </div>
-              </div>
-            </section>
-          </CoolSubpageShell>
-          <CombinedCtaSection />
-        </main>
-        <Footer />
-        <CookieConsent />
-        <ScrollToTop />
-      </div>
-    )
+    return <CoolAboutRoute section="transparency" />
   }
 
   return (
