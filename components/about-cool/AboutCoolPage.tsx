@@ -37,7 +37,9 @@ const HEROES: Record<AboutSectionKey, { title: string; standfirst?: string; imag
   transparency: {
     title: 'ΔΙΑΦΑΝΕΙΑ',
     standfirst: 'Η διαφάνεια είναι μία από τις κύριες αξίες του CforC, την οποία εφαρμόζουμε με τον διαμοιρασμό των οικονομικών μας στοιχείων και του καταστατικού χάρτη του οργανισμού μας.',
-    image: '/about-us-what-we-offer3.jpg',
+    // Homepage_Block1: 3000×2000 — το what-we-offer3 (611×409) θόλωνε σε
+    // πλάτος hero· και θεματικά ταιριαστό: μέλη σκύβουν πάνω από έγγραφα
+    image: '/Homepage_Block1.jpg',
     alt: '',
   },
   contact: {
