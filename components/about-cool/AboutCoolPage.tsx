@@ -265,7 +265,9 @@ export default function AboutCoolPage() {
                     className={`absolute inset-0 flex items-center justify-center cursor-pointer ${focusRing}`}
                     style={{ backgroundColor: 'rgba(0,0,0,.15)' }}
                   >
-                    <span className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-charcoal text-2xl" aria-hidden="true">▶</span>
+                    <span className="w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl"
+                      style={{ backgroundColor: 'rgba(255,255,255,.22)', border: '1px solid rgba(255,255,255,.45)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}
+                      aria-hidden="true">▶</span>
                   </button>
                 )}
               </div>
@@ -392,19 +394,23 @@ export default function AboutCoolPage() {
             <p className="text-white/90 mt-4" style={{ lineHeight: 1.6 }}>
               Γίνε τώρα μέλος του πρώτου Δικτύου για την κοινωνική και πολιτιστική καινοτομία στην Ελλάδα.
             </p>
-            <div className="flex flex-wrap gap-3 mt-8">
+            <div className="flex flex-wrap items-center gap-3 mt-8">
               <Link href="/participation" className={`inline-flex items-center min-h-11 px-6 rounded-full bg-coral text-charcoal text-sm font-bold tracking-widest hover:bg-[#F07551] transition-colors duration-200 ${focusRing}`}>
                 ΓΙΝΕ ΜΕΛΟΣ ΤΩΡΑ
               </Link>
-              <Link href="/participation" className={`notranslate inline-flex items-center min-h-11 px-6 rounded-full border-2 border-white text-white text-sm font-bold tracking-widest hover:bg-white/10 transition-colors duration-200 ${focusRing}`}>
+              <Link href="/participation"
+                className={`notranslate inline-flex items-center min-h-11 px-6 rounded-full text-white text-sm font-bold tracking-widest hover:brightness-125 transition duration-200 ${focusRing}`}
+                style={{ backgroundColor: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.4)', backdropFilter: 'blur(12px) saturate(160%)', WebkitBackdropFilter: 'blur(12px) saturate(160%)' }}>
                 35 € / ΕΤΟΣ · ΤΙ ΠΕΡΙΛΑΜΒΑΝΕΙ
               </Link>
+              <span className="w-px h-6 bg-white/40" aria-hidden="true" />
               <button
                 type="button"
                 onClick={() => setNlOpen(v => !v)}
                 aria-expanded={nlOpen}
                 aria-controls="about-cool-newsletter"
-                className={`inline-flex items-center gap-2 min-h-11 px-6 rounded-full border-2 border-white text-white text-sm font-bold tracking-widest hover:bg-white/10 transition-colors duration-200 ${focusRing}`}
+                className={`inline-flex items-center gap-2 min-h-11 px-6 rounded-full text-white text-sm font-bold tracking-widest hover:brightness-125 transition duration-200 ${focusRing}`}
+                style={{ backgroundColor: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.4)', backdropFilter: 'blur(12px) saturate(160%)', WebkitBackdropFilter: 'blur(12px) saturate(160%)' }}
               >
                 ΕΓΓΡΑΦΗ ΣΤΟ NEWSLETTER
                 <span className={`transition-transform duration-200 ${nlOpen ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
@@ -413,7 +419,8 @@ export default function AboutCoolPage() {
 
             {/* Η φόρμα ξεδιπλώνει μέσα στην κάρτα — δεν φεύγεις από τη σελίδα */}
             {nlOpen && (
-              <div id="about-cool-newsletter" className="mt-6 max-w-md">
+              <div id="about-cool-newsletter" className="glass-rim rounded-2xl p-5 mt-6 max-w-md"
+                style={{ backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)' }}>
                 {nlDone ? (
                   <p className="text-white font-medium" style={{ lineHeight: 1.6 }}>
                     <span className="text-coral" aria-hidden="true">✓</span>{' '}

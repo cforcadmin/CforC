@@ -17,7 +17,9 @@ const TABS = [
 export default function AboutTabs() {
   const pathname = usePathname()
   return (
-    <nav aria-label="Σελίδες Σχετικά" className="absolute bottom-0 inset-x-0" style={{ backgroundColor: 'rgba(0,0,0,.5)' }}>
+    // Υγρό γυαλί πάνω στη φωτογραφία του hero — εδώ η θόλωση έχει τι να πιάσει
+    <nav aria-label="Σελίδες Σχετικά" className="absolute bottom-0 inset-x-0"
+      style={{ backgroundColor: 'rgba(10, 14, 24, .45)', backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.12)' }}>
       <ul role="list" className="flex overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         {TABS.map(t => {
           const active = pathname === t.href
