@@ -69,9 +69,17 @@ export default function AboutTabs({
         style={{ top: '3.4rem' }}
         aria-hidden={!docked}
       >
+        {/* ΙΔΙΑ εμφάνιση με την μπάρα του hero (σκούρο γυαλί, λευκά γράμματα,
+            κοραλί υπογράμμιση) — ΟΧΙ ανοιχτό γυαλί με pills, που διαβαζόταν
+            σαν να εμφανίστηκε το Modern header (αναφορά 28/8). Η μπάρα του
+            hero απλώς «ελλιμενίζεται» κάτω από τη φούσκα. */}
         <nav aria-label="Ενότητες Σχετικά (καρφιτσωμένες)"
-          className={`menu-glass glass-rim strip-slide flex items-center gap-1 px-2 pt-2.5 pb-1.5 rounded-b-2xl ${docked ? 'strip-shown' : 'strip-hidden'}`}
-          style={{ borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
+          className={`strip-slide flex items-center rounded-b-2xl overflow-hidden ${docked ? 'strip-shown' : 'strip-hidden'}`}
+          style={{
+            backgroundColor: 'rgba(10, 14, 24, .6)',
+            backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)',
+            boxShadow: 'inset 0 -1px 0 rgba(255,255,255,.1), 0 10px 26px rgba(0,0,0,.35)',
+          }}>
           {ABOUT_SECTIONS.map(t => {
             const on = active === t.key
             return (
@@ -81,8 +89,8 @@ export default function AboutTabs({
                 onClick={() => onSelect(t.key)}
                 tabIndex={docked ? 0 : -1}
                 aria-current={on ? 'page' : undefined}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold tracking-wide whitespace-nowrap transition-colors duration-200 ${
-                  on ? 'bg-coral text-white' : 'text-charcoal dark:text-gray-200 hover:bg-coral/15'
+                className={`inline-flex items-center min-h-10 px-4 pt-1 text-xs font-bold tracking-widest whitespace-nowrap border-b-2 transition-colors duration-200 ${
+                  on ? 'text-white border-coral' : 'text-white/70 border-transparent hover:text-white'
                 }`}
               >
                 {t.label}
