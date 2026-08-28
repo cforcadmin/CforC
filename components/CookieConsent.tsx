@@ -27,7 +27,7 @@ export default function CookieConsent() {
   if (!showConsent) return null
 
   return (
-    <div className="fixed bottom-8 right-8 max-w-md menu-glass-dense glass-rim text-charcoal dark:text-gray-100 p-6 rounded-2xl z-50 animate-slide-up">
+    <div className="fixed bottom-8 right-8 max-w-md menu-glass glass-rim text-charcoal dark:text-gray-100 p-6 rounded-2xl z-50 animate-slide-up">
       <p className="text-sm mb-4 leading-relaxed">
         Κάνοντας κλικ στο "Αποδοχή", συμφωνείτε με την αποθήκευση cookies στη συσκευή σας για τη
         βελτίωση της πλοήγησης στον ιστότοπο, την ανάλυση της χρήσης του ιστότοπου και τη
