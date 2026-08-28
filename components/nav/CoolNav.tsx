@@ -95,12 +95,25 @@ export default function CoolNav() {
 
   useEffect(() => { setManualExpand(null) }, [pathname])
 
+  // Το ανοιχτό καλωσόρισμα της αρχικής παίζει ΜΙΑ φορά ανά browser — στις
+  // επανεπισκέψεις το dock ξεκινά μαζεμένο (29/8). Προεπιλογή «το έχει δει»
+  // ώστε ο επαναλαμβανόμενος επισκέπτης να μη βλέπει αναλαμπή ανοίγματος.
+  const [showcaseSeen, setShowcaseSeen] = useState(true)
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('cforc-home-showcase-seen') !== '1') {
+        setShowcaseSeen(false)
+        localStorage.setItem('cforc-home-showcase-seen', '1')
+      }
+    } catch { /* κρατά τη μαζεμένη προεπιλογή */ }
+  }, [])
+
   const items = NAV_ITEMS.filter(item => !(item.anonOnly && isAuthenticated))
   // Το πλήρες άνοιγμα στην κορυφή είναι το «καλωσόρισμα» της ΑΡΧΙΚΗΣ μόνο
   // (η αρχική πρόθεση του 1a). Στις σελίδες εργασίας το dock μένει πάντα
   // λεπτό και ανοίγει μόνο με hover/focus — αλλιώς κάθεται πάνω στη δουλειά.
   const isHome = pathname === '/'
-  const autoExpanded = isHome && !isScrolled
+  const autoExpanded = isHome && !isScrolled && !showcaseSeen
   const expanded = partingKey !== null || railHover || (manualExpand ?? autoExpanded)
   // Σε σελίδες με κάρτα-σκηνή το dock αγκυρώνεται ΠΑΝΤΑ κάτω από τις
   // φούσκες (4.25rem): ανοιχτό φτάνει ως το κάτω χείλος της κάρτας τους
