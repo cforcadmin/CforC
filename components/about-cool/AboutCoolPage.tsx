@@ -151,11 +151,11 @@ export default function AboutCoolPage({ initialSection = 'diktyo' }: { initialSe
         {/* Το navy φόντο κρατά τίτλο/standfirst αναγνώσιμα όταν οι εικόνες
             είναι κρυμμένες (CTRL+U) */}
         {/* Ίδιο ύψος και για τις τέσσερις όψεις (28/8)· στο ΤΟ ΔΙΚΤΥΟ η
-            φωτογραφία κόβεται από ΠΑΝΩ (object-bottom) ώστε να κρατήσει
-            τους ανθρώπους στο κάτω μέρος του καρέ */}
+            φωτογραφία κόβεται από ΚΑΤΩ (object-top) — κρατιέται το πάνω
+            μέρος του καρέ */}
         <div className="relative rounded-3xl overflow-hidden flex flex-col justify-end min-h-[45vh] md:min-h-[52vh]" style={{ backgroundColor: '#1B2438' }}>
           {HEROES[section].image && (
-            <Image key={HEROES[section].image} src={HEROES[section].image!} alt={HEROES[section].alt} fill priority quality={90} className={`object-cover ${section === 'diktyo' ? 'object-bottom' : ''}`} />
+            <Image key={HEROES[section].image} src={HEROES[section].image!} alt={HEROES[section].alt} fill priority quality={90} className={`object-cover ${section === 'diktyo' ? 'object-top' : ''}`} />
           )}
           {/* Το μόνο επιτρεπτό gradient της σελίδας — σταθερό, όχι προαιρετικό */}
           <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.10) 30%, rgba(0,0,0,.75) 100%)' }} aria-hidden="true" />
