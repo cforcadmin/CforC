@@ -2,22 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AccessibilityButton } from "./AccessibilityMenu";
+import WordCycle from "./WordCycle";
 
 const rotatingTexts = ["CHANGE", "INNOVATION", "PROGRESS", "CREATION"];
 
 export default function HeroSection() {
-  const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1);
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTextIndex((prev) => (prev + 1) % rotatingTexts.length);
-    }, 2000); // Change every 2 seconds
-
-    return () => clearInterval(interval);
-  }, []);
 
   // Handle scroll to shrink/fade accessibility button
   useEffect(() => {
@@ -99,9 +91,8 @@ export default function HeroSection() {
             <div>CULTURE</div>
             <div className="flex items-center">
               <span>FOR&nbsp;</span>
-              <span className="inline-block min-w-[300px] transition-opacity duration-300">
-                {rotatingTexts[currentTextIndex]}
-              </span>
+              {/* Το πλάτος κλειδώνει στη φαρδύτερη λέξη μέσα στο WordCycle */}
+              <WordCycle words={rotatingTexts} hold={1800} dur={700} />
             </div>
           </h1>
         </div>
