@@ -17,12 +17,18 @@ export const ABOUT_SECTIONS = [
 
 export type AboutSectionKey = (typeof ABOUT_SECTIONS)[number]['key']
 
-export default function AboutTabs({
+export interface TabSection { key: string; label: string; href: string }
+
+// Γενικευμένο (29/8): το ίδιο σύστημα καρτελών + dock εξυπηρετεί και το
+// ενιαίο ΠΟΛΙΤΙΚΗ — η λίστα ενοτήτων έρχεται ως prop.
+export default function AboutTabs<T extends TabSection>({
+  sections,
   active,
   onSelect,
 }: {
-  active: AboutSectionKey
-  onSelect: (key: AboutSectionKey) => void
+  sections: ReadonlyArray<T>
+  active: T['key']
+  onSelect: (key: T['key']) => void
 }) {
   const barRef = useRef<HTMLElement>(null)
   const [docked, setDocked] = useState(false)
@@ -41,7 +47,7 @@ export default function AboutTabs({
       <nav ref={barRef} aria-label="Ενότητες Σχετικά" className="absolute bottom-0 inset-x-0"
         style={{ backgroundColor: 'rgba(10, 14, 24, .45)', backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.12)' }}>
         <ul role="list" className="flex overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          {ABOUT_SECTIONS.map(t => {
+          {sections.map(t => {
             const on = active === t.key
             return (
               <li key={t.key} className="flex-shrink-0">
@@ -80,7 +86,7 @@ export default function AboutTabs({
             backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)',
             boxShadow: 'inset 0 -1px 0 rgba(255,255,255,.1), 0 10px 26px rgba(0,0,0,.35)',
           }}>
-          {ABOUT_SECTIONS.map(t => {
+          {sections.map(t => {
             const on = active === t.key
             return (
               <button

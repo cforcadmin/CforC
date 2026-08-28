@@ -167,7 +167,7 @@ export default function AboutCoolPage({ initialSection = 'diktyo' }: { initialSe
             )}
           </div>
 
-          <AboutTabs active={section} onSelect={selectSection} />
+          <AboutTabs sections={ABOUT_SECTIONS} active={section} onSelect={selectSection} />
         </div>
       </section>
 
