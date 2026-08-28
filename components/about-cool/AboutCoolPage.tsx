@@ -51,24 +51,6 @@ const LOGOS = [
   { src: '/about-us-CAN-logo.png', alt: 'Community Arts Network', title: 'Το δίκτυο CforC είναι μέλος των: Community Arts Network' },
 ]
 
-/** Τεράστιο λογότυπο-υδατόσημο: δίνει στο γυαλί των επίπεδων ενοτήτων κάτι
- *  να θολώσει — αχνό έξω από τα πάνελ, «πιασμένο» μέσα τους */
-function LogoWatermark({ side = 'right' }: { side?: 'left' | 'right' }) {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-      <img
-        src="/cforc_logo.svg" alt="" className="dark:invert"
-        style={{
-          position: 'absolute', top: '50%',
-          [side]: '-6%',
-          transform: 'translateY(-50%) rotate(-8deg)',
-          width: 'min(75vw, 62rem)', opacity: 0.05,
-        }}
-      />
-    </div>
-  )
-}
-
 function SectionHeading({ n, text }: { n: string; text: string }) {
   return (
     <div className="mb-10">
@@ -155,7 +137,6 @@ export default function AboutCoolPage() {
 
       {/* ═══ 01 · ΠΟΙΟΙ ΕΙΜΑΣΤΕ ═══ */}
       <section className="relative py-20 bg-[#F5F0EB] dark:bg-gray-900">
-        <LogoWatermark side="right" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeading n="01" text="ΠΟΙΟΙ ΕΙΜΑΣΤΕ" />
           <h3 className="text-xl md:text-2xl font-bold leading-tight text-charcoal dark:text-gray-100 max-w-3xl">
@@ -199,7 +180,6 @@ export default function AboutCoolPage() {
 
       {/* ═══ 02 · ΤΙ ΚΑΝΟΥΜΕ — τρεις κάρτες + ψηφίδες δράσεων ═══ */}
       <section className="relative py-20 bg-white dark:bg-gray-800">
-        <LogoWatermark side="left" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeading n="02" text="ΠΩΣ ΤΟ CFORC ΠΡΟΩΘΕΙ ΤΗΝ ΑΛΛΑΓΗ" />
           <div className="grid md:grid-cols-3 gap-6">
@@ -258,7 +238,6 @@ export default function AboutCoolPage() {
 
       {/* ═══ 03 · ΠΟΥ ΕΙΜΑΣΤΕ — βίντεο + χάρτης ═══ */}
       <section className="relative py-20 bg-[#F5F0EB] dark:bg-gray-900">
-        <LogoWatermark side="right" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeading n="03" text="ΣΕ ΟΛΟΚΛΗΡΗ ΤΗΝ ΕΛΛΑΔΑ" />
           <div className="grid lg:grid-cols-[1.15fr_1fr] gap-8">
@@ -316,7 +295,6 @@ export default function AboutCoolPage() {
 
       {/* ═══ 04 · Ο ΠΥΡΗΝΑΣ ΜΑΣ — τρίπτυχο + σκοποί + διαφάνεια ═══ */}
       <section className="relative py-20 bg-white dark:bg-gray-800">
-        <LogoWatermark side="left" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-10">
             <span className="text-coral font-bold text-sm tracking-[.18em]">ΤΟ ΤΡΙΠΤΥΧΟ ΜΑΣ</span>
@@ -390,7 +368,6 @@ export default function AboutCoolPage() {
 
       {/* ═══ 05 · ΥΠΟΣΤΗΡΙΚΤΕΣ — ένα ενιαίο πλέγμα ═══ */}
       <section className="relative py-20 bg-[#F5F0EB] dark:bg-gray-900">
-        <LogoWatermark side="right" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeading n="05" text="ΟΙ ΥΠΟΣΤΗΡΙΚΤΕΣ ΚΑΙ ΟΙ ΣΥΝΕΡΓΑΤΕΣ ΜΑΣ" />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -418,11 +395,11 @@ export default function AboutCoolPage() {
               Γίνε τώρα μέλος του πρώτου Δικτύου για την κοινωνική και πολιτιστική καινοτομία στην Ελλάδα.
             </p>
             <div className="flex flex-wrap md:flex-nowrap items-center gap-3 mt-8">
-              <Link href="/participation" className={`inline-flex items-center min-h-11 px-6 rounded-full bg-coral text-charcoal text-sm font-bold tracking-widest hover:bg-[#F07551] transition-colors duration-200 ${focusRing}`}>
+              <Link href="/participation" className={`inline-flex items-center min-h-11 px-6 rounded-full bg-coral text-charcoal text-sm font-bold tracking-widest whitespace-nowrap hover:bg-[#F07551] transition-colors duration-200 ${focusRing}`}>
                 ΓΙΝΕ ΜΕΛΟΣ ΤΩΡΑ
               </Link>
               <Link href="/participation"
-                className={`notranslate inline-flex items-center min-h-11 px-6 rounded-full text-white text-sm font-bold tracking-widest hover:brightness-125 transition duration-200 ${focusRing}`}
+                className={`notranslate inline-flex items-center min-h-11 px-6 rounded-full text-white text-sm font-bold tracking-widest whitespace-nowrap hover:brightness-125 transition duration-200 ${focusRing}`}
                 style={{ backgroundColor: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.4)', backdropFilter: 'blur(12px) saturate(160%)', WebkitBackdropFilter: 'blur(12px) saturate(160%)' }}>
                 35 € / ΕΤΟΣ · ΤΙ ΠΕΡΙΛΑΜΒΑΝΕΙ
               </Link>
@@ -432,7 +409,7 @@ export default function AboutCoolPage() {
                 onClick={() => setNlOpen(v => !v)}
                 aria-expanded={nlOpen}
                 aria-controls="about-cool-newsletter"
-                className={`inline-flex items-center gap-2 min-h-11 px-6 rounded-full text-white text-sm font-bold tracking-widest hover:brightness-125 transition duration-200 ${focusRing}`}
+                className={`inline-flex items-center gap-2 min-h-11 px-6 rounded-full text-white text-sm font-bold tracking-widest whitespace-nowrap hover:brightness-125 transition duration-200 ${focusRing}`}
                 style={{ backgroundColor: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.4)', backdropFilter: 'blur(12px) saturate(160%)', WebkitBackdropFilter: 'blur(12px) saturate(160%)' }}
               >
                 ΕΓΓΡΑΦΗ ΣΤΟ NEWSLETTER
