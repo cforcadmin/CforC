@@ -203,7 +203,8 @@ export default function AboutCoolPage() {
                 bullets: [],
               },
             ].map(card => (
-              <article key={card.title} className="menu-glass glass-rim rounded-2xl overflow-hidden flex flex-col">
+              <article key={card.title} className="relative menu-glass glass-rim rounded-2xl overflow-hidden flex flex-col">
+                <span className="logo-reveal" aria-hidden="true" />
                 <div className="h-36 relative flex-shrink-0">
                   <Image src={card.img} alt="" fill className="object-cover" />
                 </div>
@@ -275,7 +276,8 @@ export default function AboutCoolPage() {
             </div>
 
             {/* Κάρτα χάρτη */}
-            <div className="menu-glass glass-rim rounded-2xl overflow-hidden flex flex-col">
+            <div className="relative menu-glass glass-rim rounded-2xl overflow-hidden flex flex-col">
+              <span className="logo-reveal" aria-hidden="true" />
               <div className="relative h-44 flex-shrink-0 bg-gray-100 dark:bg-gray-700">
                 <Image src="/map-of-greece.jpg" alt="Διαδραστικός χάρτης μελών του Culture for Change" fill className="object-cover" />
               </div>
@@ -302,19 +304,22 @@ export default function AboutCoolPage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            <div className="menu-glass glass-rim rounded-2xl p-6">
+            <div className="relative overflow-hidden menu-glass glass-rim rounded-2xl p-6">
+              <span className="logo-reveal" aria-hidden="true" />
               <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-3">ΟΡΑΜΑ</h3>
               <p className="text-sm text-gray-700 dark:text-gray-300" style={{ lineHeight: 1.6, textWrap: 'pretty' } as React.CSSProperties}>
                 <strong>Όραμα</strong> του Culture for Change είναι να συμβάλει στην ενδυνάμωση της κοινωνικό-πολιτισμικής καινοτομίας στην Ελλάδα, με απώτερο σκοπό τη βελτίωση των πρακτικών, μεθόδων και εργαλείων που χρησιμοποιούνται σύμφωνα με τις δυναμικές, και τις εκάστοτε προκλήσεις και ανάγκες της κοινωνίας.
               </p>
             </div>
-            <div className="menu-glass glass-rim rounded-2xl p-6">
+            <div className="relative overflow-hidden menu-glass glass-rim rounded-2xl p-6">
+              <span className="logo-reveal" aria-hidden="true" />
               <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-3">ΑΠΟΣΤΟΛΗ</h3>
               <p className="text-sm text-gray-700 dark:text-gray-300" style={{ lineHeight: 1.6, textWrap: 'pretty' } as React.CSSProperties}>
                 <strong>Αποστολή</strong> του Culture for Change είναι να δημιουργεί ευκαιρίες συνεργασίας και ανάπτυξης για τα μέλη του, να συνδράμει στη διασύνδεσή του έργου τους με τις κοινότητες στις οποίες απευθύνονται και να αναδεικνύει την κοινωνικό-πολιτισμική καινοτομία στα ενδιαφερόμενα μέρη (stakeholders).
               </p>
             </div>
-            <div className="menu-glass glass-rim rounded-2xl p-6">
+            <div className="relative overflow-hidden menu-glass glass-rim rounded-2xl p-6">
+              <span className="logo-reveal" aria-hidden="true" />
               <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-3">ΑΞΙΕΣ</h3>
               <div className="flex flex-wrap gap-2">
                 {(allValues ? VALUES : VALUES.slice(0, 4)).map(v => (
@@ -331,7 +336,8 @@ export default function AboutCoolPage() {
           </div>
 
           {/* Οι 7 σκοποί του καταστατικού, διπλωμένοι — δουλεύει και χωρίς JS */}
-          <details className="menu-glass glass-rim mt-8 rounded-2xl group">
+          <details className="relative overflow-hidden menu-glass glass-rim mt-8 rounded-2xl group">
+            <span className="logo-reveal" aria-hidden="true" />
             <summary className={`flex items-center justify-between gap-4 px-6 py-4 cursor-pointer list-none font-bold text-charcoal dark:text-gray-100 min-h-11 ${focusRing}`}>
               <span>ΟΙ ΣΚΟΠΟΙ ΜΑΣ — 7 σκοποί από το καταστατικό</span>
               <span className="text-coral group-open:rotate-180 transition-transform duration-200" aria-hidden="true">▾</span>
@@ -351,7 +357,8 @@ export default function AboutCoolPage() {
           </details>
 
           {/* ΔΙΑΦΑΝΕΙΑ — από τη μέση της παλιάς σελίδας, δίπλα στις Αξίες όπου ανήκει */}
-          <div className="menu-glass glass-rim mt-8 rounded-2xl p-8 md:p-10">
+          <div className="relative overflow-hidden menu-glass glass-rim mt-8 rounded-2xl p-8 md:p-10">
+            <span className="logo-reveal" aria-hidden="true" />
             <h3 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-4">ΔΙΑΦΑΝΕΙΑ</h3>
             <p className="text-gray-700 dark:text-gray-300 max-w-3xl" style={{ lineHeight: 1.6, textWrap: 'pretty' } as React.CSSProperties}>
               Η διαφάνεια αποτελεί θεμελιώδη αξία του Culture for Change. Πιστεύουμε στην ανοιχτή επικοινωνία

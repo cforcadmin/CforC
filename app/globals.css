@@ -2081,3 +2081,20 @@ html.nav-cool .cool-dim:focus-within { opacity: 1; }
   .nav-glass-cream { background-color: rgba(245, 240, 235, 0.94); }
   .dark .nav-glass-coral, .dark .nav-glass-cream { background-color: rgba(17, 24, 39, 0.94); }
 }
+
+/* Cool /about: ένα τεράστιο λογότυπο CforC «υπάρχει» πίσω από τη σελίδα
+   αλλά ΔΕΝ φαίνεται πουθενά — μόνο τα γυάλινα κουτιά το φανερώνουν: κάθε
+   πάνελ κουβαλά το ΙΔΙΟ fixed background, οπότε δείχνει το κομμάτι του
+   λογοτύπου που του αναλογεί στη θέση του στο viewport, σαν παράθυρο πάνω
+   σε ακίνητο λογότυπο. Θαμπό και αχνό — «μέσα από γυαλί». */
+.logo-reveal {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: url('/cforc_logo.svg');
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-position: center 45vh;
+  background-size: min(85vw, 70rem) auto;
+  opacity: .08;
+  filter: blur(1.5px);
+}
+.dark .logo-reveal { filter: invert(1) blur(1.5px); opacity: .1; }
