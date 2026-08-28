@@ -27,8 +27,8 @@ export default function CookieConsent() {
   if (!showConsent) return null
 
   return (
-    <div className="fixed bottom-8 right-8 max-w-md bg-coral dark:bg-gray-800 text-white p-6 rounded-lg shadow-2xl dark:shadow-gray-900 z-50 animate-slide-up">
-      <p className="text-sm mb-4 leading-relaxed dark:text-gray-200">
+    <div className="fixed bottom-8 right-8 max-w-md menu-glass-dense glass-rim text-charcoal dark:text-gray-100 p-6 rounded-2xl z-50 animate-slide-up">
+      <p className="text-sm mb-4 leading-relaxed">
         Κάνοντας κλικ στο "Αποδοχή", συμφωνείτε με την αποθήκευση cookies στη συσκευή σας για τη
         βελτίωση της πλοήγησης στον ιστότοπο, την ανάλυση της χρήσης του ιστότοπου και τη
         βοήθεια στις προσπάθειες μάρκετινγκ μας. Δείτε την Πολιτική Απορρήτου μας, για
@@ -37,13 +37,13 @@ export default function CookieConsent() {
       <div className="flex gap-3">
         <button
           onClick={acceptCookies}
-          className="flex-1 bg-white dark:bg-gray-600 text-charcoal dark:text-gray-100 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors"
+          className="flex-1 bg-coral text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-[#F07551] transition-colors"
         >
           ΑΠΟΔΟΧΗ
         </button>
         <button
           onClick={declineCookies}
-          className="flex-1 bg-transparent border-2 border-white dark:border-gray-400 px-4 py-2 rounded-full text-sm font-medium hover:bg-white hover:text-charcoal dark:hover:bg-gray-600 dark:hover:border-gray-600 transition-colors"
+          className="flex-1 bg-transparent border-2 border-charcoal/30 dark:border-white/30 text-charcoal dark:text-gray-100 px-4 py-2 rounded-full text-sm font-medium hover:bg-charcoal/10 dark:hover:bg-white/10 transition-colors"
         >
           ΑΠΟΡΡΙΨΗ
         </button>

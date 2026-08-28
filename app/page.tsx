@@ -1,34 +1,7 @@
-import { Suspense } from 'react'
-import Navigation from '@/components/Navigation'
-import HeroSection from '@/components/HeroSection'
-import AboutSection from '@/components/AboutSection'
-import ActivitiesSection from '@/components/ActivitiesSection'
-// import MapSection from '@/components/MapSection'
-import OpenCallsSection from '@/components/OpenCallsSection'
-import CombinedCtaSection from '@/components/CombinedCtaSection'
-import Footer from '@/components/Footer'
-import CookieConsent from '@/components/CookieConsent'
-import ScrollToTop from '@/components/ScrollToTop'
-import SubscriptionToast from '@/components/SubscriptionToast'
+import HomeVariantSwitch from '@/components/home-cool/HomeVariantSwitch'
 
+// Η αρχική διαφέρει ανά στυλ μενού (Cool = σκηνή Α1, Classic/Modern = η
+// υπάρχουσα) — η διακλάδωση ζει στο client switch.
 export default function Home() {
-  return (
-    <div className="min-h-screen dark:bg-gray-900">
-      <Suspense>
-        <SubscriptionToast />
-      </Suspense>
-      <Navigation />
-      <main id="main-content">
-        <HeroSection />
-        <AboutSection />
-        <ActivitiesSection />
-        {/* <MapSection /> */}
-        <OpenCallsSection />
-        <CombinedCtaSection />
-      </main>
-      <Footer />
-      <CookieConsent />
-      <ScrollToTop />
-    </div>
-  )
+  return <HomeVariantSwitch />
 }
