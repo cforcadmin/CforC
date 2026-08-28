@@ -102,10 +102,16 @@ export default function CoolNav() {
   const isHome = pathname === '/'
   const autoExpanded = isHome && !isScrolled
   const expanded = partingKey !== null || railHover || (manualExpand ?? autoExpanded)
-  // Στην ΑΡΧΙΚΗ το dock αγκυρώνεται πάντα κάτω από τις φούσκες (4.25rem) —
-  // ανοιχτό φτάνει ως το κάτω χείλος του βίντεο, μαζεμένο κονταίνει ΕΠΙ
-  // ΤΟΠΟΥ (το τηλεμεταφερόμενο κεντράρισμα στο scroll ξένιζε — 29/8).
-  // Οι άλλες σελίδες κρατούν το κάθετο κεντράρισμα.
+  // Σε σελίδες με κάρτα-σκηνή το dock αγκυρώνεται ΠΑΝΤΑ κάτω από τις
+  // φούσκες (4.25rem): ανοιχτό φτάνει ως το κάτω χείλος της κάρτας τους
+  // (βίντεο 68vh στην αρχική, εικόνα 52vh στην οικογένεια Σχετικά) και
+  // μαζεμένο κονταίνει ΕΠΙ ΤΟΠΟΥ — όχι τηλεμεταφορά στο κέντρο (29/8).
+  // Οι υπόλοιπες σελίδες κρατούν το κάθετο κεντράρισμα.
+  const HERO_CARD_VH: Record<string, string> = {
+    '/': '68vh',
+    '/about': '52vh', '/coordination-team': '52vh', '/transparency': '52vh', '/contact': '52vh',
+  }
+  const heroVh = HERO_CARD_VH[pathname || '']
 
   // Escape: αν το dock είναι ανοιχτό κλείνει, αν είναι κλειστό ανοίγει.
   // Αδρανές όσο είναι ανοιχτά αναζήτηση/modal (εκεί ο Escape είναι δικός τους).
@@ -247,9 +253,9 @@ export default function CoolNav() {
           ποτέ τις γωνίες — τα πλωτά κουμπιά (κορυφή/σχόλια) μένουν δικά τους */}
       <nav
         aria-label="Κύρια πλοήγηση"
-        className={`cool-rail fixed right-0 z-40 flex items-stretch ${isHome ? '' : 'top-1/2 -translate-y-1/2'}`}
-        style={isHome
-          ? { top: '4.25rem', height: expanded ? 'calc(68vh - 3.5rem)' : '38vh' }
+        className={`cool-rail fixed right-0 z-40 flex items-stretch ${heroVh ? '' : 'top-1/2 -translate-y-1/2'}`}
+        style={heroVh
+          ? { top: '4.25rem', height: expanded ? `calc(${heroVh} - 3.5rem)` : '38vh' }
           : { height: expanded ? '64vh' : '42vh' }}
         onMouseEnter={() => setRailHover(true)}
         onMouseLeave={() => setRailHover(false)}
