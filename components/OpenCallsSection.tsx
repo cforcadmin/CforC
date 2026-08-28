@@ -219,7 +219,7 @@ function FlipCard({ call, expired, onClick }: { call: OpenCall; expired?: boolea
   )
 }
 
-export default function OpenCallsSection() {
+export default function OpenCallsSection({ maxItems }: { maxItems?: number } = {}) {
   const { user } = useAuth()
   const [activeCalls, setActiveCalls] = useState<OpenCall[]>([])
   const [expiredCalls, setExpiredCalls] = useState<OpenCall[]>([])
@@ -427,7 +427,7 @@ export default function OpenCallsSection() {
 
           {/* Card Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displayCalls.map((call) => (
+            {(maxItems ? displayCalls.slice(0, maxItems) : displayCalls).map((call) => (
               <FlipCard
                 key={call.id}
                 call={call}

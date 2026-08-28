@@ -7,7 +7,7 @@ import NewsFlipCard from './shared/NewsFlipCard'
 import { getActivities } from '@/lib/strapi'
 import type { StrapiResponse, Activity } from '@/lib/types'
 
-export default function ActivitiesSection() {
+export default function ActivitiesSection({ maxItems }: { maxItems?: number } = {}) {
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -86,7 +86,7 @@ export default function ActivitiesSection() {
 
         {/* Card Grid */}
         <div className="grid md:grid-cols-3 gap-8">
-          {activities.map((activity) => (
+          {(maxItems ? activities.slice(0, maxItems) : activities).map((activity) => (
             <NewsFlipCard key={activity.id} activity={activity} />
           ))}
         </div>

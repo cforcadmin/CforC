@@ -38,10 +38,24 @@ export default function HomeCool() {
   const scrollToBoxes = useCallback(() => {
     const el = boxesRef.current
     if (!el) return
+    const target = window.scrollY + el.getBoundingClientRect().top - 88
     // Μόνο αν δεν είναι ήδη εκεί — αλλιώς κάθε hover ξανασκουντά τη σελίδα
-    if (Math.abs(el.getBoundingClientRect().top - 88) > 24) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (Math.abs(window.scrollY - target) < 24) return
+    // Πιο απαλή από το native smooth: 900ms με ease-in-out
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      window.scrollTo(0, target)
+      return
     }
+    const from = window.scrollY
+    const t0 = performance.now()
+    const dur = 900
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - t0) / dur)
+      const e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2
+      window.scrollTo(0, from + (target - from) * e)
+      if (p < 1) requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
   }, [])
 
   // Ίδια λογική με το κλασικό hero: το βίντεο ξεκινά μετά τη συγκατάθεση
@@ -149,11 +163,14 @@ export default function HomeCool() {
           </div>
         </section>
 
-        {/* Η αποκαλυπτόμενη ενότητα — αρχικά κρυφή, εναλλάσσεται με το hover */}
-        {reveal === 'news' && <div className="mt-6"><ActivitiesSection /></div>}
-        {reveal === 'calls' && <div className="mt-6"><OpenCallsSection /></div>}
+        {/* Η αποκαλυπτόμενη ενότητα — αρχικά κρυφή, εναλλάσσεται με το hover·
+            το πολύ 3 εγγραφές (μία σειρά) — για τα υπόλοιπα, η ίδια η σελίδα */}
+        {reveal === 'news' && <div className="mt-6"><ActivitiesSection maxItems={3} /></div>}
+        {reveal === 'calls' && <div className="mt-6"><OpenCallsSection maxItems={3} /></div>}
 
-        {/* ═══ ΠΟΙΟΙ ΕΙΜΑΣΤΕ — η πλάκα καβαλάει τη φωτογραφία ═══ */}
+        {/* ═══ ΠΟΙΟΙ ΕΙΜΑΣΤΕ — η πλάκα καβαλάει τη φωτογραφία· κρύβεται όσο
+            μια αποκάλυψη είναι ανοιχτή (εστίαση σε ένα πράγμα τη φορά) ═══ */}
+        {reveal === null && (
         <section id="poioi-eimaste" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 mb-16">
           <div className="relative rounded-3xl overflow-hidden min-h-[24rem]" style={{ backgroundColor: '#1B2438' }}>
             <Image
@@ -181,8 +198,9 @@ export default function HomeCool() {
             </Link>
           </div>
         </section>
+        )}
 
-        <CoolMemberBand />
+        {reveal === null && <CoolMemberBand />}
       </main>
       <Footer />
       <CookieConsent />
