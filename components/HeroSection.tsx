@@ -92,7 +92,7 @@ export default function HeroSection() {
             <div className="flex items-center">
               <span>FOR&nbsp;</span>
               {/* Το πλάτος κλειδώνει στη φαρδύτερη λέξη μέσα στο WordCycle */}
-              <WordCycle words={rotatingTexts} hold={1100} dur={600} />
+              <WordCycle words={rotatingTexts} hold={700} dur={600} />
             </div>
           </h1>
         </div>
