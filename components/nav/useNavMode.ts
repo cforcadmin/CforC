@@ -1,10 +1,17 @@
 'use client'
 
 // Το ενεργό στυλ μενού (modern | classic | cool) χωρίς provider στο layout:
-// localStorage + custom event, ώστε κάθε instance του Navigation (και οι
-// γυάλινες λωρίδες profile/OC) να συγχρονίζονται αμέσως στην αλλαγή.
+// localStorage + custom event, ώστε κάθε instance (headers, footer, λωρίδες,
+// σελίδες Σχετικά) να συγχρονίζεται αμέσως στην αλλαγή.
+//
+// useSyncExternalStore ΚΑΙ ΟΧΙ useState+useEffect: με το effect, κάθε νέα
+// σελίδα ξεκινούσε ως «modern» και γύριζε σε «cool» ΜΕΤΑ το mount — στο dev
+// (compile-on-demand + hydration) το κενό κρατούσε δευτερόλεπτα και οι
+// πλοηγήσεις προσγειώνονταν στο λάθος στυλ σώματος (αναφορά 28/8). Εδώ το
+// snapshot διαβάζεται σύγχρονα σε κάθε client render· στο SSR/hydration
+// ισχύει το server snapshot («modern») και ο React το διορθώνει αμέσως μετά.
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 import type { NavMode } from './navItems'
 
 const KEY = 'cforc-nav-mode'
@@ -19,21 +26,17 @@ function readStored(): NavMode {
   }
 }
 
-export function useNavMode() {
-  // SSR αποδίδει πάντα το προεπιλεγμένο (modern)· η αποθηκευμένη επιλογή
-  // εφαρμόζεται στο mount — ίδιο μοτίβο με το θέμα.
-  const [mode, setModeState] = useState<NavMode>('modern')
+function subscribe(onChange: () => void) {
+  window.addEventListener(EVT, onChange)
+  window.addEventListener('storage', onChange)
+  return () => {
+    window.removeEventListener(EVT, onChange)
+    window.removeEventListener('storage', onChange)
+  }
+}
 
-  useEffect(() => {
-    const sync = () => setModeState(readStored())
-    sync()
-    window.addEventListener(EVT, sync)
-    window.addEventListener('storage', sync)
-    return () => {
-      window.removeEventListener(EVT, sync)
-      window.removeEventListener('storage', sync)
-    }
-  }, [])
+export function useNavMode() {
+  const mode = useSyncExternalStore(subscribe, readStored, () => 'modern' as NavMode)
 
   const setMode = useCallback((m: NavMode) => {
     try { localStorage.setItem(KEY, m) } catch {}

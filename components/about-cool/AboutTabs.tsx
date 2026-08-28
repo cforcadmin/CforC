@@ -68,7 +68,7 @@ export default function AboutTabs() {
         aria-hidden={!docked}
       >
         <nav aria-label="Σελίδες Σχετικά (καρφιτσωμένες)"
-          className={`menu-glass-dense glass-rim strip-slide flex items-center gap-1 px-2 pt-2.5 pb-1.5 rounded-b-2xl ${docked ? 'strip-shown' : 'strip-hidden'}`}
+          className={`menu-glass glass-rim strip-slide flex items-center gap-1 px-2 pt-2.5 pb-1.5 rounded-b-2xl ${docked ? 'strip-shown' : 'strip-hidden'}`}
           style={{ borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
           {TABS.map(t => {
             const active = pathname === t.href
