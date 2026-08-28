@@ -28,6 +28,7 @@ import { AuthProvider } from '@/components/AuthProvider'
 import { AnnouncerProvider } from '@/components/Announcer'
 import { AccessibilityProvider } from '@/components/AccessibilityProvider'
 import TranslationProvider from '@/components/TranslationProvider'
+import { NavModeProvider } from '@/components/nav/NavModeProvider'
 import AccessibilityMenu from '@/components/AccessibilityMenu'
 import ReadingAids from '@/components/ReadingAids'
 import Sa11yDevChecker from '@/components/Sa11yDevChecker'
@@ -97,6 +98,7 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           Μετάβαση στο κύριο περιεχόμενο
         </a>
+        <NavModeProvider>
         <ThemeProvider>
           <TextSizeProvider>
             <AccessibilityProvider>
@@ -114,6 +116,7 @@ export default function RootLayout({
             </AccessibilityProvider>
           </TextSizeProvider>
         </ThemeProvider>
+        </NavModeProvider>
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-42JX4R6R4F"
           strategy="afterInteractive"

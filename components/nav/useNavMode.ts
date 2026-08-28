@@ -1,50 +1,12 @@
 'use client'
 
-// Το ενεργό στυλ μενού (modern | classic | cool) χωρίς provider στο layout:
-// localStorage + custom event, ώστε κάθε instance (headers, footer, λωρίδες,
-// σελίδες Σχετικά) να συγχρονίζεται αμέσως στην αλλαγή.
-//
-// useSyncExternalStore ΚΑΙ ΟΧΙ useState+useEffect: με το effect, κάθε νέα
-// σελίδα ξεκινούσε ως «modern» και γύριζε σε «cool» ΜΕΤΑ το mount — στο dev
-// (compile-on-demand + hydration) το κενό κρατούσε δευτερόλεπτα και οι
-// πλοηγήσεις προσγειώνονταν στο λάθος στυλ σώματος (αναφορά 28/8). Εδώ το
-// snapshot διαβάζεται σύγχρονα σε κάθε client render· στο SSR/hydration
-// ισχύει το server snapshot («modern») και ο React το διορθώνει αμέσως μετά.
+// Το ενεργό στυλ μενού — λεπτό περιτύλιγμα πάνω από το NavModeProvider του
+// root layout. ΟΛΟΙ οι καταναλωτές μοιράζονται το ίδιο state· βλ. το σχόλιο
+// του provider για το γιατί (τα ανεξάρτητα διαβάσματα localStorage ανά
+// component μπορούσαν να διαφωνούν μεταξύ τους — bug 28/8).
 
-import { useCallback, useSyncExternalStore } from 'react'
-import type { NavMode } from './navItems'
-
-const KEY = 'cforc-nav-mode'
-const EVT = 'cforc:nav-mode'
-
-// Το τελευταίο γνωστό στυλ: αν μια ανάγνωση localStorage αποτύχει παροδικά,
-// ΔΕΝ γυρνάμε σε «modern» — το στυλ δεν επιτρέπεται να αλλάξει μόνο του.
-let lastKnown: NavMode = 'modern'
-
-function readStored(): NavMode {
-  try {
-    const v = localStorage.getItem(KEY)
-    lastKnown = v === 'classic' || v === 'cool' ? v : 'modern'
-  } catch { /* κράτα το lastKnown */ }
-  return lastKnown
-}
-
-function subscribe(onChange: () => void) {
-  window.addEventListener(EVT, onChange)
-  window.addEventListener('storage', onChange)
-  return () => {
-    window.removeEventListener(EVT, onChange)
-    window.removeEventListener('storage', onChange)
-  }
-}
+import { useNavModeContext } from './NavModeProvider'
 
 export function useNavMode() {
-  const mode = useSyncExternalStore(subscribe, readStored, () => 'modern' as NavMode)
-
-  const setMode = useCallback((m: NavMode) => {
-    try { localStorage.setItem(KEY, m) } catch {}
-    window.dispatchEvent(new Event(EVT))
-  }, [])
-
-  return { mode, setMode }
+  return useNavModeContext()
 }
