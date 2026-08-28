@@ -1979,7 +1979,7 @@ html.nav-cool .hero-a11y { display: none; }
 html.nav-cool .cool-dim { opacity: .5; }
 html.nav-cool .cool-dim:hover,
 html.nav-cool .cool-dim:focus-within { opacity: 1; }
-.cool-rail { transition: height .3s ease; }
+.cool-rail { transition: height .3s ease, top .3s ease, transform .3s ease; }
 .cool-col {
   position: relative;
   display: flex; align-items: flex-end; justify-content: center;
