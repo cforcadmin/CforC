@@ -203,7 +203,8 @@ export default function HomeCool() {
         </section>
         )}
 
-        {reveal === null && <CoolMemberBand />}
+        {/* Η ζώνη μέλους μένει ΠΑΝΤΑ — κλείνει τη σελίδα σε κάθε κατάσταση */}
+        <CoolMemberBand />
       </main>
       <Footer />
       <CookieConsent />
