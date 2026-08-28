@@ -74,6 +74,29 @@ export default function AboutCoolPage() {
   const [allValues, setAllValues] = useState(false)
   const [videoPlaying, setVideoPlaying] = useState(false)
 
+  // Newsletter μέσα στην κάρτα ΓΙΝΕ ΜΕΛΟΣ (αίτημα 28/8) — ίδια ροή με το
+  // CombinedCtaSection: /api/subscribe, όροι, honeypot, μήνυμα επιβεβαίωσης
+  const [nlOpen, setNlOpen] = useState(false)
+  const [nlEmail, setNlEmail] = useState('')
+  const [nlAgreed, setNlAgreed] = useState(false)
+  const [nlBusy, setNlBusy] = useState(false)
+  const [nlDone, setNlDone] = useState(false)
+  const [nlHoneypot, setNlHoneypot] = useState('')
+  async function submitNewsletter(e: React.FormEvent) {
+    e.preventDefault()
+    if (!nlEmail || !nlAgreed || nlBusy) return
+    setNlBusy(true)
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: nlEmail, website: nlHoneypot }),
+      })
+      if (res.ok) { setNlDone(true); setNlEmail('') }
+    } catch { /* μη κρίσιμο — ο χρήστης ξαναδοκιμάζει */ } finally {
+      setNlBusy(false)
+    }
+  }
+
   return (
     <>
       {/* ═══ HERO — η φωτογραφία ΕΙΝΑΙ το hero ═══ */}
@@ -376,7 +399,61 @@ export default function AboutCoolPage() {
               <Link href="/participation" className={`notranslate inline-flex items-center min-h-11 px-6 rounded-full border-2 border-white text-white text-sm font-bold tracking-widest hover:bg-white/10 transition-colors duration-200 ${focusRing}`}>
                 35 € / ΕΤΟΣ · ΤΙ ΠΕΡΙΛΑΜΒΑΝΕΙ
               </Link>
+              <button
+                type="button"
+                onClick={() => setNlOpen(v => !v)}
+                aria-expanded={nlOpen}
+                aria-controls="about-cool-newsletter"
+                className={`inline-flex items-center gap-2 min-h-11 px-6 rounded-full border-2 border-white text-white text-sm font-bold tracking-widest hover:bg-white/10 transition-colors duration-200 ${focusRing}`}
+              >
+                ΕΓΓΡΑΦΗ ΣΤΟ NEWSLETTER
+                <span className={`transition-transform duration-200 ${nlOpen ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
+              </button>
             </div>
+
+            {/* Η φόρμα ξεδιπλώνει μέσα στην κάρτα — δεν φεύγεις από τη σελίδα */}
+            {nlOpen && (
+              <div id="about-cool-newsletter" className="mt-6 max-w-md">
+                {nlDone ? (
+                  <p className="text-white font-medium" style={{ lineHeight: 1.6 }}>
+                    <span className="text-coral" aria-hidden="true">✓</span>{' '}
+                    Έλεγξε το email σου! Σου στείλαμε ένα email επιβεβαίωσης.
+                  </p>
+                ) : (
+                  <form onSubmit={submitNewsletter} className="space-y-3">
+                    <div className="absolute -left-[9999px]" aria-hidden="true">
+                      <input type="text" name="website" value={nlHoneypot} onChange={e => setNlHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" />
+                    </div>
+                    <div className="flex gap-2">
+                      <label htmlFor="about-nl-email" className="sr-only">Το email σας</label>
+                      <input
+                        id="about-nl-email" type="email" required value={nlEmail}
+                        onChange={e => setNlEmail(e.target.value)}
+                        placeholder="Το email σας: *"
+                        className={`flex-1 min-h-11 rounded-full px-5 text-sm text-charcoal bg-white border-2 border-white ${focusRing}`}
+                      />
+                      <button
+                        type="submit"
+                        disabled={nlBusy || !nlAgreed}
+                        aria-label="Εγγραφή στο newsletter"
+                        className={`min-h-11 px-5 rounded-full bg-coral text-charcoal font-bold hover:bg-[#F07551] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${focusRing}`}
+                      >
+                        <span aria-hidden="true">→</span>
+                      </button>
+                    </div>
+                    <label className="flex items-start gap-2 text-xs text-white/85 cursor-pointer">
+                      <input type="checkbox" checked={nlAgreed} onChange={e => setNlAgreed(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#FF8B6A]" />
+                      <span>
+                        Συμφωνώ με τους{' '}
+                        <Link href="/terms" className="underline font-medium text-white hover:text-coral transition-colors duration-200">
+                          όρους και τις προϋποθέσεις
+                        </Link>
+                      </span>
+                    </label>
+                  </form>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </section>
