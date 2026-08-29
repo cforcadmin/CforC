@@ -77,8 +77,11 @@ const GOALS = [
 ]
 
 // Λογότυπα σε ΕΝΑ ενιαίο πλέγμα — οι δύο παλιές υπο-επικεφαλίδες ζουν στο title
+// Υποστηρικτής = κοραλί περίγραμμα/άλως · Συνεργάτες = πετρόλ (#2A9D8F).
+// ΚΑΝΟΝΑΣ BRANDING: λογότυπα τρίτων ΔΕΝ αλλοιώνονται ποτέ (όχι grayscale,
+// όχι invert, όχι φίλτρα) — μόνο το δικό μας επιτρέπεται να προσαρμόζεται.
 const LOGOS = [
-  { src: '/about-us-iac-berlin-logo.png', alt: 'iac Berlin', title: 'Με την υποστήριξη του: iac Berlin' },
+  { src: '/about-us-iac-berlin-logo.png', alt: 'iac Berlin', title: 'Με την υποστήριξη του: iac Berlin', supporter: true },
   { src: '/about-us-cae-logo.png', alt: 'Culture Action Europe', title: 'Το δίκτυο CforC είναι μέλος των: Culture Action Europe' },
   { src: '/about-us-BAN-logo.png', alt: 'Bosch Alumni Network', title: 'Το δίκτυο CforC είναι μέλος των: Bosch Alumni Network' },
   { src: '/about-us-ENCC-logo.png', alt: 'European Network of Cultural Centres', title: 'Το δίκτυο CforC είναι μέλος των: European Network of Cultural Centres' },
@@ -426,13 +429,27 @@ export default function AboutCoolPage({ initialSection = 'diktyo' }: { initialSe
       {/* ═══ 05 · ΥΠΟΣΤΗΡΙΚΤΕΣ — ένα ενιαίο πλέγμα ═══ */}
       <section className="relative py-20 bg-[#F5F0EB] dark:bg-gray-900">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeading n="05" text="ΟΙ ΥΠΟΣΤΗΡΙΚΤΕΣ ΚΑΙ ΟΙ ΣΥΝΕΡΓΑΤΕΣ ΜΑΣ" />
+          <div className="mb-10">
+            <span className="notranslate text-coral font-bold text-sm tracking-[.18em]">05</span>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight text-charcoal dark:text-gray-100 mt-1">
+              ΟΙ{' '}
+              <span style={{ textShadow: '0 0 16px rgba(255,139,106,.8), 0 1px 2px rgba(255,139,106,.5)' }}>ΥΠΟΣΤΗΡΙΚΤΕΣ</span>
+              {' '}ΚΑΙ ΟΙ{' '}
+              <span style={{ textShadow: '0 0 16px rgba(42,157,143,.85), 0 1px 2px rgba(42,157,143,.55)' }}>ΣΥΝΕΡΓΑΤΕΣ</span>
+              {' '}ΜΑΣ
+            </h2>
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {LOGOS.map(l => (
               <div key={l.src} title={l.title} aria-label={l.title}
-                className="bg-white dark:bg-gray-700 rounded-xl h-24 flex items-center justify-center p-4">
+                className="bg-white rounded-xl h-24 flex items-center justify-center p-4"
+                style={{ boxShadow: l.supporter
+                  ? '0 0 0 2px rgba(255,139,106,.9), 0 8px 22px rgba(255,139,106,.28)'
+                  : '0 0 0 2px rgba(42,157,143,.85), 0 8px 22px rgba(42,157,143,.22)' }}>
+                {/* Λογότυπα τρίτων: πάντα έγχρωμα, ποτέ φίλτρα — και το πλακίδιο
+                    μένει λευκό και στο σκοτεινό, το έδαφος που όρισαν οι ίδιοι */}
                 <Image src={l.src} alt={l.alt} width={176} height={76}
-                  className="max-h-12 w-auto object-contain grayscale hover:grayscale-0 transition-[filter] duration-200" />
+                  className="max-h-12 w-auto object-contain" />
               </div>
             ))}
           </div>
