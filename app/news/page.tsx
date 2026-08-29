@@ -21,6 +21,8 @@ import CategoryFilter from '@/components/shared/CategoryFilter'
 import YearFilter from '@/components/shared/YearFilter'
 import SortDropdown from '@/components/shared/SortDropdown'
 import FundingGuidelinesModal from '@/components/FundingGuidelinesModal'
+import { useNavMode } from '@/components/nav/useNavMode'
+import CoolMemberBand from '@/components/about-cool/CoolMemberBand'
 
 function extractTextFromBlocks(blocks: any): string {
   if (!blocks) return ''
@@ -55,6 +57,8 @@ function loadNewsSearch() {
 
 function ActivitiesPageContent() {
   const searchParams = useSearchParams()
+  const { mode } = useNavMode()
+  const cool = mode === 'cool'
   const [allActivities, setAllActivities] = useState<Activity[]>([])
   const [filteredActivities, setFilteredActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
@@ -69,6 +73,9 @@ function ActivitiesPageContent() {
   const [selectedYear, setSelectedYear] = useState<number | null>(null)
   const [sortMode, setSortMode] = useState('date-asc')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  // Cool presets: «τελευταίο δίμηνο/εξάμηνο» — κόβει τα προηγούμενα σε
+  // κυλιόμενο παράθυρο μηνών· null = χωρίς παράθυρο
+  const [rangeMonths, setRangeMonths] = useState<number | null>(null)
   const [fundingHovered, setFundingHovered] = useState(false)
   const [initialized, setInitialized] = useState(false)
 
@@ -117,6 +124,7 @@ function ActivitiesPageContent() {
         setSelectedYear(saved.selectedYear ?? null)
         setSortMode(saved.sortMode || 'date-asc')
         setViewMode(saved.viewMode || 'grid')
+        setRangeMonths(saved.rangeMonths ?? null)
       }
     }
     setInitialized(true)
@@ -125,8 +133,8 @@ function ActivitiesPageContent() {
   // Persist search state to sessionStorage
   useEffect(() => {
     if (!initialized) return
-    saveNewsSearch({ searchQuery, activeTab, selectedCategory, selectedTag, selectedYear, sortMode, viewMode })
-  }, [initialized, searchQuery, activeTab, selectedCategory, selectedTag, selectedYear, sortMode, viewMode])
+    saveNewsSearch({ searchQuery, activeTab, selectedCategory, selectedTag, selectedYear, sortMode, viewMode, rangeMonths })
+  }, [initialized, searchQuery, activeTab, selectedCategory, selectedTag, selectedYear, sortMode, viewMode, rangeMonths])
 
   useEffect(() => {
     async function fetchActivities() {
@@ -213,6 +221,13 @@ function ActivitiesPageContent() {
       result = result.filter(a => new Date(a.Date).getFullYear() === selectedYear)
     }
 
+    // Rolling window (Cool presets)
+    if (rangeMonths) {
+      const cutoff = new Date(today)
+      cutoff.setMonth(cutoff.getMonth() - rangeMonths)
+      result = result.filter(a => new Date(a.Date) >= cutoff)
+    }
+
     // Search filter
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
@@ -237,7 +252,7 @@ function ActivitiesPageContent() {
     }
 
     setFilteredActivities(result)
-  }, [allActivities, searchQuery, activeTab, selectedCategory, selectedTag, selectedYear, sortMode])
+  }, [allActivities, searchQuery, activeTab, selectedCategory, selectedTag, selectedYear, sortMode, rangeMonths])
 
   // Animated counter
   useEffect(() => {
@@ -257,9 +272,35 @@ function ActivitiesPageContent() {
   const handleTabChange = (tab: 'current' | 'previous') => {
     if (tab !== activeTab) {
       setSelectedYear(null)
+      setRangeMonths(null)
     }
     setActiveTab(tab)
   }
+
+  // Cool presets στο κάτω χείλος του hero — γρήγορα φίλτρα χρόνου
+  const applyPreset = (p: string) => {
+    setSelectedYear(null)
+    setRangeMonths(null)
+    if (p === 'upcoming') { setActiveTab('current'); return }
+    setActiveTab('previous')
+    if (p === 'm2') setRangeMonths(2)
+    else if (p === 'm6') setRangeMonths(6)
+    else setSelectedYear(Number(p))
+  }
+  const activePreset = activeTab === 'current'
+    ? 'upcoming'
+    : rangeMonths === 2 ? 'm2' : rangeMonths === 6 ? 'm6' : selectedYear ? String(selectedYear) : null
+  const presetYears = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const ys = new Set<number>()
+    allActivities.filter(a => new Date(a.Date) < today).forEach(a => ys.add(new Date(a.Date).getFullYear()))
+    return Array.from(ys).sort((a, b) => b - a).slice(0, 2)
+  }, [allActivities])
+  const presetCls = (selected: boolean) =>
+    `inline-flex items-center min-h-11 px-4 text-xs font-bold tracking-widest whitespace-nowrap border-b-2 transition-colors duration-200 ${
+      selected ? 'text-white border-coral' : 'text-white/70 border-transparent hover:text-white'
+    }`
 
   const totalActiveFilters = (selectedCategory ? 1 : 0) + (selectedTag ? 1 : 0) + (selectedYear ? 1 : 0) + (searchQuery ? 1 : 0)
 
@@ -268,6 +309,7 @@ function ActivitiesPageContent() {
     setSelectedCategory('')
     setSelectedTag('')
     setSelectedYear(null)
+    setRangeMonths(null)
     try { sessionStorage.removeItem(NEWS_STORAGE_KEY) } catch {}
   }
 
@@ -275,7 +317,57 @@ function ActivitiesPageContent() {
     <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
       <Navigation />
       <main id="main-content">
-        {/* Hero Section */}
+        {/* Hero Section — Cool: κάρτα-σκηνή με εικόνα, αριθμό και presets
+            χρόνου στο κάτω χείλος· Classic/Modern: το κοραλί hero ως είχε */}
+        {cool ? (
+        <section className="px-2 pt-2 md:px-3">
+          <div className="relative overflow-hidden rounded-3xl" style={{ backgroundColor: '#1B2438' }}>
+            <div className="absolute inset-0">
+              <Image
+                src="/about-us-what-we-offer.jpg"
+                alt=""
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover object-center opacity-60"
+              />
+              <div
+                className="absolute inset-0"
+                style={{ background: 'linear-gradient(180deg, rgba(27,36,56,.2) 0%, rgba(27,36,56,.5) 55%, rgba(27,36,56,.92) 100%)' }}
+                aria-hidden="true"
+              />
+            </div>
+            <div className="relative px-6 md:px-12 pt-28 md:pt-32 pb-12 md:pb-14">
+              <p className="text-[11px] font-bold tracking-[.14em] uppercase text-coral">ΝΕΑ</p>
+              <h1 className="text-white text-3xl md:text-5xl font-bold leading-tight mt-2 max-w-3xl">
+                Εκδηλώσεις, εργαστήρια, δικτυώσεις, δράσεις συνηγορίας και ενημερωτικά δελτία
+              </h1>
+              <p className="text-white/70 mt-5" aria-live="polite">
+                <span className="notranslate text-coral font-bold text-3xl align-middle">{displayCount}</span>
+                <span className="ml-2 align-middle">καταχωρίσεις</span>
+              </p>
+            </div>
+            <div className="relative" style={{ backgroundColor: 'rgba(10, 14, 24, .45)', backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.12)' }}>
+              <div className="flex overflow-x-auto" style={{ scrollbarWidth: 'none' }} role="tablist" aria-label="Γρήγορα φίλτρα χρόνου">
+                <button type="button" role="tab" aria-selected={activePreset === 'upcoming'} onClick={() => applyPreset('upcoming')} className={presetCls(activePreset === 'upcoming')}>
+                  ΕΠΕΡΧΟΜΕΝΑ
+                </button>
+                <button type="button" role="tab" aria-selected={activePreset === 'm2'} onClick={() => applyPreset('m2')} className={presetCls(activePreset === 'm2')}>
+                  ΤΕΛΕΥΤΑΙΟ ΔΙΜΗΝΟ
+                </button>
+                <button type="button" role="tab" aria-selected={activePreset === 'm6'} onClick={() => applyPreset('m6')} className={presetCls(activePreset === 'm6')}>
+                  ΤΕΛΕΥΤΑΙΟ ΕΞΑΜΗΝΟ
+                </button>
+                {presetYears.map(year => (
+                  <button key={year} type="button" role="tab" aria-selected={activePreset === String(year)} onClick={() => applyPreset(String(year))} className={`notranslate ${presetCls(activePreset === String(year))}`}>
+                    {year}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+        ) : (
         <section className="relative -bottom-20">
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -295,18 +387,17 @@ function ActivitiesPageContent() {
             </div>
           </div>
         </section>
+        )}
 
         {/* Main Content */}
-        <section className="py-24 bg-[#F5F0EB] dark:bg-gray-900">
+        <section className={cool ? 'pt-10 pb-24' : 'py-24 bg-[#F5F0EB] dark:bg-gray-900'}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {loading && <LoadingIndicator />}
 
-            {/* Info Box with count */}
+            {/* Μετρητής: στο Cool ζει μέσα στο hero */}
+            {!cool && (
             <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 mb-6 shadow-sm">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                  Παρακολούθησε τα νέα του Δικτύου Culture for Change: εκδηλώσεις, εργαστήρια, δικτυώσεις, δράσεις συνηγορίας και ενημερωτικά δελτία.
-                </p>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
                 <div className="shrink-0">
                   <div className="bg-white dark:bg-gray-700 px-6 py-3 rounded-full border-2 border-charcoal dark:border-gray-400 inline-block">
                     <p className="text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap" aria-live="polite">
@@ -316,10 +407,12 @@ function ActivitiesPageContent() {
                 </div>
               </div>
             </div>
+            )}
 
             {/* Filter Bar */}
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 mb-12 shadow-sm">
-              <div className="flex flex-wrap items-center gap-3">
+            <div className={cool ? 'relative overflow-hidden menu-glass glass-rim rounded-3xl p-6 md:p-8 mb-12' : 'bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 mb-12 shadow-sm'}>
+              {cool && <span className="logo-reveal" aria-hidden="true" />}
+              <div className={cool ? 'relative flex flex-wrap items-center gap-3' : 'flex flex-wrap items-center gap-3'}>
                 {/* Search */}
                 <input
                   type="text"
@@ -384,7 +477,7 @@ function ActivitiesPageContent() {
                   <YearFilter
                     years={availableYears}
                     selectedYear={selectedYear}
-                    onYearChange={setSelectedYear}
+                    onYearChange={(y) => { setRangeMonths(null); setSelectedYear(y) }}
                   />
                 )}
 
@@ -431,7 +524,7 @@ function ActivitiesPageContent() {
             {!loading && !error && filteredActivities.length > 0 && viewMode === 'grid' && (
               <div className="grid md:grid-cols-3 gap-8">
                 {filteredActivities.map((activity) => (
-                  <NewsFlipCard key={activity.id} activity={activity} fromTab={activeTab} />
+                  <NewsFlipCard key={activity.id} activity={activity} fromTab={activeTab} cool={cool} />
                 ))}
               </div>
             )}
@@ -443,7 +536,9 @@ function ActivitiesPageContent() {
                   <Link
                     key={activity.id}
                     href={`/news/${activity.Slug || activity.documentId || activity.id}?from=${activeTab}`}
-                    className="flex items-center gap-4 md:gap-6 bg-white dark:bg-gray-800 rounded-2xl p-4 hover:shadow-lg dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light"
+                    className={cool
+                      ? 'flex items-center gap-4 md:gap-6 menu-glass rounded-2xl p-4 hover:shadow-lg transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light'
+                      : 'flex items-center gap-4 md:gap-6 bg-white dark:bg-gray-800 rounded-2xl p-4 hover:shadow-lg dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light'}
                   >
                     {/* Thumbnail */}
                     {activity.Visuals && activity.Visuals.length > 0 ? (
@@ -505,7 +600,7 @@ function ActivitiesPageContent() {
           </div>
         </section>
 
-        <CombinedCtaSection />
+        {cool ? <CoolMemberBand /> : <CombinedCtaSection />}
       </main>
       <Footer variant="members" />
       <CookieConsent />

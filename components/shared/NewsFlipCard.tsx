@@ -24,7 +24,7 @@ function extractTextFromBlocks(blocks: any): string {
   return ''
 }
 
-export default function NewsFlipCard({ activity, fromTab }: { activity: Activity; fromTab?: string }) {
+export default function NewsFlipCard({ activity, fromTab, cool }: { activity: Activity; fromTab?: string; cool?: boolean }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const flipTimeout = useRef<NodeJS.Timeout | null>(null)
   const router = useRouter()
@@ -69,7 +69,9 @@ export default function NewsFlipCard({ activity, fromTab }: { activity: Activity
         <div className="[backface-visibility:hidden] w-full h-full">
           <Link
             href={href}
-            className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-gray-700/50 transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full"
+            className={cool
+              ? 'menu-glass rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full'
+              : 'bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-gray-700/50 transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full'}
           >
             {imageUrl ? (
               <BlurredImage
@@ -119,7 +121,9 @@ export default function NewsFlipCard({ activity, fromTab }: { activity: Activity
         <div className="absolute top-0 left-0 w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)]">
           <Link
             href={href}
-            className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-700/50 border-l-4 border-coral dark:border-coral-light flex flex-col h-full"
+            className={cool
+              ? 'menu-glass rounded-3xl overflow-hidden shadow-xl border-l-4 border-coral dark:border-coral-light flex flex-col h-full'
+              : 'bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-700/50 border-l-4 border-coral dark:border-coral-light flex flex-col h-full'}
           >
             <div className="p-6 flex flex-col h-full overflow-hidden">
               <div className="flex items-center gap-2 mb-3 flex-wrap">
