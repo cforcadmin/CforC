@@ -79,6 +79,14 @@ export default function ProfilePage() {
   const [heroCompact, setHeroCompactState] = useState(false)
   const heroRef = useRef<HTMLElement>(null)
   const coolImageInputRef = useRef<HTMLInputElement>(null)
+  // Flow αλλαγής φωτογραφίας στη σκηνή (29/8): κλικ → δύο επιλογές →
+  // (προαιρετικά) επιλογή αρχείου → modal alt-text → Υποβολή = staging +
+  // αποθήκευση. Το pending effect τρέχει ΜΕΤΑ το commit των states, ώστε
+  // το handleSave να δει φρέσκα formData/imageFile.
+  const [photoMenuOpen, setPhotoMenuOpen] = useState(false)
+  const [photoAltModal, setPhotoAltModal] = useState<null | { file: File | null }>(null)
+  const [photoAltDraft, setPhotoAltDraft] = useState('')
+  const [photoSubmitPending, setPhotoSubmitPending] = useState(false)
   const setHeroCompact = (v: boolean) => {
     setHeroCompactState(v)
     try { localStorage.setItem('cforc-hero-compact', v ? '1' : '0') } catch {}
@@ -447,6 +455,14 @@ export default function ProfilePage() {
   }
 
   // Handle image change
+  useEffect(() => {
+    if (photoSubmitPending) {
+      setPhotoSubmitPending(false)
+      handleSave()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photoSubmitPending])
+
   const handleImageChange = (file: File) => {
     setImageFile(file)
     setSaveMessage(null)
@@ -875,15 +891,43 @@ export default function ProfilePage() {
             {/* Η αλλαγή φωτογραφίας γίνεται ΠΑΝΩ στη σκηνή — εκεί που ζει η
                 εικόνα (διόρθωση 29/8: όχι ξεχωριστό πεδίο στη φόρμα) */}
             {activeSection === 'profile' && (
-              <>
-                <button type="button" onClick={() => coolImageInputRef.current?.click()}
-                  className="absolute right-4 md:right-6 bottom-14 text-sm font-bold rounded-full px-5 py-2 text-white hover:brightness-125 transition duration-200 z-10"
+              <div className="absolute right-4 md:right-6 bottom-14 z-10 group/photo">
+                <button type="button" onClick={() => setPhotoMenuOpen(v => !v)}
+                  aria-expanded={photoMenuOpen} aria-haspopup="true"
+                  className="text-sm font-bold rounded-full px-5 py-2 text-white hover:brightness-125 transition duration-200"
                   style={{ backgroundColor: 'rgba(255,255,255,.16)', border: '1px solid rgba(255,255,255,.45)', backdropFilter: 'blur(12px) saturate(160%)', WebkitBackdropFilter: 'blur(12px) saturate(160%)' }}>
                   Αλλαγή φωτογραφίας
                 </button>
+                {/* Tooltip προδιαγραφών στο hover */}
+                {!photoMenuOpen && (
+                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover/photo:block w-64 pointer-events-none">
+                    <div className="menu-glass-dense glass-rim rounded-xl px-3 py-2 text-xs text-charcoal dark:text-gray-200">
+                      Ιδανικές διαστάσεις: 500×600px (5:6). Μέγιστο 5MB. Μορφές: JPG, PNG, GIF, WebP.
+                    </div>
+                  </div>
+                )}
+                {/* Δύο επιλογές στο κλικ */}
+                {photoMenuOpen && (
+                  <div className="absolute bottom-full right-0 mb-2 w-52 menu-glass-dense glass-rim rounded-2xl py-1.5">
+                    <button type="button"
+                      onClick={() => { setPhotoMenuOpen(false); coolImageInputRef.current?.click() }}
+                      className="block w-full text-left px-4 py-2.5 text-sm text-charcoal dark:text-gray-200 hover:bg-coral/15 transition-colors">
+                      Αλλαγή φωτό
+                    </button>
+                    <button type="button"
+                      onClick={() => { setPhotoMenuOpen(false); setPhotoAltDraft(formData.ProfileImageAltText || ''); setPhotoAltModal({ file: null }) }}
+                      className="block w-full text-left px-4 py-2.5 text-sm text-charcoal dark:text-gray-200 hover:bg-coral/15 transition-colors">
+                      Μόνο alt-text
+                    </button>
+                  </div>
+                )}
                 <input ref={coolImageInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="hidden"
-                  onChange={e => { const f = e.target.files?.[0]; if (f) handleImageChange(f) }} />
-              </>
+                  onChange={e => {
+                    const f = e.target.files?.[0]
+                    if (f) { setPhotoAltDraft(formData.ProfileImageAltText || ''); setPhotoAltModal({ file: f }) }
+                    e.target.value = ''
+                  }} />
+              </div>
             )}
             {/* Οι ενότητες ως καρτέλες στην κάτω ακμή — ίδια γλώσσα με τα Σχετικά */}
             <nav aria-label="Ενότητες του χώρου μου" className="absolute bottom-0 inset-x-0"
@@ -1299,9 +1343,10 @@ export default function ProfilePage() {
         {/* Ρ2 (29/8, Cool): αφήγηση αριστερά-φαρδιά (Βασικές/Βιογραφικό
             πρώτα), η κάρτα φωτογραφίας/εναλλακτικού λεπτή δεξιά — μόνο
             διάταξη, πεδία και αποθήκευση ανέγγιχτα */}
-        <div className={coolMode ? 'grid lg:grid-cols-[1.7fr_1fr] gap-6 items-start' : 'grid md:grid-cols-3 gap-8'}>
+        <div className={coolMode ? '' : 'grid md:grid-cols-3 gap-8'}>
           {/* Left Column - Profile Image */}
-          <div className={coolMode ? 'lg:order-2' : 'md:col-span-1'}>
+          {!coolMode && (
+          <div className="md:col-span-1">
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-6">
               <div className="group relative mb-4 w-fit">
                 <h2 className="text-lg font-bold text-charcoal dark:text-gray-100">
@@ -1339,9 +1384,10 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
+          )}
 
           {/* Right Column - Profile Fields */}
-          <div className={coolMode ? 'lg:order-1 space-y-6' : 'md:col-span-2 space-y-6'}>
+          <div className={coolMode ? 'space-y-6' : 'md:col-span-2 space-y-6'}>
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 space-y-6">
               <h2 className="text-lg font-bold text-charcoal dark:text-gray-100 mb-4">
                 Βασικές Πληροφορίες
@@ -1890,6 +1936,48 @@ export default function ProfilePage() {
         onClose={() => setShowPreviewModal(false)}
         user={user}
       />
+
+      {/* Alt-text modal του flow φωτογραφίας (Cool) — υγρό γυαλί */}
+      {photoAltModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setPhotoAltModal(null)} aria-hidden="true" />
+          <div role="dialog" aria-modal="true" aria-labelledby="photo-alt-title" className="relative menu-glass-dense glass-rim rounded-3xl max-w-md w-full p-7">
+            <h3 id="photo-alt-title" className="text-xl font-bold text-charcoal dark:text-gray-100 mb-1">
+              {photoAltModal.file ? 'Νέα φωτογραφία' : 'Εναλλακτικό κείμενο'}
+            </h3>
+            {photoAltModal.file && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 notranslate">{photoAltModal.file.name}</p>
+            )}
+            <label htmlFor="photo-alt-input" className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-1">
+              Εναλλακτικό κείμενο φωτογραφίας <span className="text-coral">*</span>
+            </label>
+            <input id="photo-alt-input" value={photoAltDraft} maxLength={200}
+              onChange={e => setPhotoAltDraft(e.target.value)}
+              placeholder="π.χ. Γυναίκα με καστανά μαλλιά χαμογελάει"
+              className="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-base text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral" />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2" style={{ lineHeight: 1.5 }}>
+              Περίγραψε τι απεικονίζει η φωτογραφία — για άτομα με προβλήματα όρασης. Μη γράψεις απλώς το όνομά σου. Μέγιστο 200 χαρακτήρες.
+            </p>
+            <div className="flex gap-3 mt-5">
+              <button type="button"
+                onClick={() => {
+                  if (photoAltModal.file) handleImageChange(photoAltModal.file)
+                  handleFieldChange('ProfileImageAltText', photoAltDraft)
+                  setPhotoAltModal(null)
+                  setPhotoSubmitPending(true)
+                }}
+                className="px-6 py-2.5 rounded-full bg-coral text-white text-sm font-bold hover:bg-[#F07551] transition-colors disabled:opacity-40"
+                disabled={!photoAltDraft.trim()}>
+                Υποβολή
+              </button>
+              <button type="button" onClick={() => setPhotoAltModal(null)}
+                className="px-5 py-2.5 rounded-full border border-gray-300 dark:border-gray-600 text-sm text-charcoal dark:text-gray-200">
+                Ακύρωση
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* TEMPORARY: seat chooser for multi-seat board members entering the OC */}
       {showOcSeatModal && (
