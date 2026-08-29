@@ -33,6 +33,9 @@ import { useTranslation } from '../TranslationProvider'
 // στο φωτεινό θέμα, ανοιχτές στο σκοτεινό, πάντα ορατές πάνω στο πορτοκαλί
 const EDGE_GRAYS_LIGHT = ['#0f0f0f', '#1f1f1f', '#333333', '#474747', '#5b5b5b', '#6f6f6f', '#838383']
 const EDGE_GRAYS_DARK = ['#ffffff', '#f5f5f5', '#dedede', '#c7c7c7', '#b0b0b0', '#999999', '#828282']
+/* Δ3: οι γραμμές του flyout περνούν από τους τόνους της ράγας — όχι ένα
+   επίπεδο χρώμα αλλά η ίδια πορτοκαλί κλίμακα της παλέτας */
+const FLY_TONES = ['#FFB199', '#FF9E80', '#FF8B6A', '#F07551']
 
 function hexToRgba(hex: string, alpha: number): string {
   const n = parseInt(hex.slice(1), 16)
@@ -368,12 +371,22 @@ export default function CoolNav() {
                   είναι padding ΜΕΣΑ στη ζώνη hover, δεν «χάνεται» το μενού */}
               {expanded && subs.length > 0 && (
                 <div className="cool-fly">
-                  <div
-                    className="cool-fly-panel"
-                    style={{ backgroundColor: hexToRgba(item.hue, theme === 'dark' ? 0.9 : 0.85) }}
-                  >
-                    {subs.map(sub => (
-                      <Link key={sub.href} href={sub.href}>{sub.label}</Link>
+                  {/* Κάθε γραμμή με δικό της τόνο της παλέτας + γκρι
+                      διαχωριστικό, όπως οι κολόνες της ράγας */}
+                  <div className="cool-fly-panel">
+                    {subs.map((sub, si) => (
+                      <Link
+                        key={sub.href}
+                        href={sub.href}
+                        style={{
+                          backgroundColor: hexToRgba(FLY_TONES[si % FLY_TONES.length], theme === 'dark' ? 0.9 : 0.85),
+                          borderTop: si > 0
+                            ? `3px solid ${(theme === 'dark' ? EDGE_GRAYS_DARK : EDGE_GRAYS_LIGHT)[si % EDGE_GRAYS_LIGHT.length]}`
+                            : undefined,
+                        }}
+                      >
+                        {sub.label}
+                      </Link>
                     ))}
                   </div>
                 </div>
