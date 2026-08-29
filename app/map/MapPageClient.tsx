@@ -13,12 +13,16 @@ import MembersWithoutCity from '@/components/map/MembersWithoutCity'
 import { aggregateMembersByLocation, type MapMember, type CityCluster } from '@/lib/mapUtils'
 import { CITY_COORDINATES, PROVINCE_CENTROIDS } from '@/lib/mapData'
 import { useTheme } from '@/components/ThemeProvider'
+import { useNavMode } from '@/components/nav/useNavMode'
+import CoolMemberBand from '@/components/about-cool/CoolMemberBand'
 
 interface MapPageClientProps {
   members: MapMember[]
 }
 
 export default function MapPageClient({ members }: MapPageClientProps) {
+  const { mode } = useNavMode()
+  const cool = mode === 'cool'
   const { theme } = useTheme()
   const isDarkMode = theme === 'dark'
   const searchParams = useSearchParams()
@@ -69,7 +73,24 @@ export default function MapPageClient({ members }: MapPageClientProps) {
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <Navigation />
 
-      {/* Mini Hero */}
+      {/* Mini Hero — Cool: συμπαγής navy κάρτα-σκηνή με τα στατιστικά ως
+          τίτλο· ο χάρτης είναι ο πρωταγωνιστής, όχι το hero */}
+      {cool ? (
+      <section className="px-2 pt-2 md:px-3">
+        <div className="relative overflow-hidden rounded-3xl" style={{ backgroundColor: '#1B2438' }}>
+          <div className="relative px-6 md:px-12 pt-24 pb-8 md:pb-10">
+            <p className="text-[11px] font-bold tracking-[.14em] uppercase text-coral">ΧΑΡΤΗΣ ΜΕΛΩΝ</p>
+            <h1 className="text-white text-2xl md:text-4xl font-bold leading-tight mt-2 max-w-3xl">
+              <span className="notranslate text-coral">{mappedMembers}</span> μέλη σε{' '}
+              <span className="notranslate text-coral">{Object.values(mapData.provinceMap).filter(p => p.count > 0).length}</span> περιφέρειες
+              {mapData.foreignMembers.length > 0 && (
+                <> + <span className="notranslate text-coral">{mapData.foreignMembers.reduce((s, c) => s + c.members.length, 0)}</span> στο εξωτερικό</>
+              )}
+            </h1>
+          </div>
+        </div>
+      </section>
+      ) : (
       <section className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 pt-24 pb-6 rounded-b-3xl relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl md:text-4xl font-bold text-charcoal dark:text-gray-100">
@@ -81,10 +102,13 @@ export default function MapPageClient({ members }: MapPageClientProps) {
           </span>
         </div>
       </section>
+      )}
 
       {/* Map Container */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2">
-        <div className="relative">
+        <div className={cool ? 'relative overflow-hidden menu-glass glass-rim rounded-3xl p-2 md:p-3' : 'relative'}>
+          {cool && <span className="logo-reveal" aria-hidden="true" />}
+          <div className={cool ? 'relative rounded-2xl overflow-hidden' : undefined}>
           <GreeceMap
             provinceMap={mapData.provinceMap}
             foreignMembers={mapData.foreignMembers}
@@ -93,6 +117,7 @@ export default function MapPageClient({ members }: MapPageClientProps) {
             initialProvince={initialProvince}
             isCityPanelOpen={selectedCity !== null}
           />
+          </div>
         </div>
       </section>
 
@@ -115,7 +140,7 @@ export default function MapPageClient({ members }: MapPageClientProps) {
         />
       )}
 
-      <CombinedCtaSection />
+      {cool ? <CoolMemberBand /> : <CombinedCtaSection />}
       <Footer />
       <CookieConsent />
       <ScrollToTop />
