@@ -807,8 +807,11 @@ export default function ProfilePage() {
                   backgroundImage: `url(${currentImageUrl})`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center 30%',
-                  filter: 'blur(2.5px) saturate(115%)',
-                  opacity: 0.9,
+                  // Όχι θόλωση: η εικόνα μένει καθαρή και ΔΕΝΕΙ με την κάρτα
+                  // μέσω luminosity blend — η δομή/φως της φωτογραφίας, οι
+                  // αποχρώσεις της σκηνής
+                  mixBlendMode: 'luminosity',
+                  opacity: 0.8,
                   WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.88) 45%, rgba(0,0,0,.88) 100%)',
                   maskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.88) 45%, rgba(0,0,0,.88) 100%)',
                 }}
