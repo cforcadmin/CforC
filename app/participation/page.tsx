@@ -11,12 +11,16 @@ import MembershipRegistrationModal from '@/components/MembershipRegistrationModa
 import ThankYouModal from '@/components/ThankYouModal'
 import Link from 'next/link'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
+import Image from 'next/image'
+import { useNavMode } from '@/components/nav/useNavMode'
 
 // Google Form configuration
 const GOOGLE_FORM_BASE_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfZt1bKl2vOOnztzSozcd1C0SCLEifXlvzUQgsG6gnQESbgMw/viewform'
 const TRACKING_ID_ENTRY = 'entry.2144891364'
 
 function ParticipationContent() {
+  const { mode } = useNavMode()
+  const cool = mode === 'cool'
   const [showRegistrationModal, setShowRegistrationModal] = useState(false)
   const [showThankYouModal, setShowThankYouModal] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
@@ -140,7 +144,37 @@ function ParticipationContent() {
     <div className="min-h-screen">
       <Navigation />
       <main id="main-content">
-        {/* Hero Section */}
+        {/* Hero Section — Cool: κάρτα-σκηνή με την εικόνα του become-a-member */}
+        {cool ? (
+        <section className="px-2 pt-2 md:px-3">
+          <div className="relative overflow-hidden rounded-3xl flex flex-col justify-end min-h-[45vh] md:min-h-[52vh]" style={{ backgroundColor: '#1B2438' }}>
+            <div className="absolute inset-0">
+              <Image
+                src="/becomeamember.webp"
+                alt=""
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover object-center opacity-60"
+              />
+              <div
+                className="absolute inset-0"
+                style={{ background: 'linear-gradient(180deg, rgba(27,36,56,.2) 0%, rgba(27,36,56,.5) 55%, rgba(27,36,56,.92) 100%)' }}
+                aria-hidden="true"
+              />
+            </div>
+            <div className="relative px-6 md:px-12 pt-24 pb-12 md:pb-14">
+              <p className="text-[11px] font-bold tracking-[.14em] uppercase text-coral">ΣΥΜΜΕΤΟΧΗ</p>
+              <h1 className="text-white text-3xl md:text-5xl font-bold leading-tight mt-2 max-w-3xl">
+                Θέλεις να συμμετέχεις στο πιο ενεργό δίκτυο με στόχο την πολιτιστική αλλαγή;
+              </h1>
+              <p className="text-white/70 mt-5">
+                Γίνε μέλος στο Σωματείο Culture for Change
+              </p>
+            </div>
+          </div>
+        </section>
+        ) : (
         <section className="relative -bottom-20">
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -162,9 +196,10 @@ function ParticipationContent() {
             </div>
           </div>
         </section>
+        )}
 
       {/* Main Content Section */}
-      <section className="pt-32 pb-24 bg-white dark:bg-gray-900">
+      <section className={cool ? 'pt-10 pb-24' : 'pt-32 pb-24 bg-white dark:bg-gray-900'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section 1: Two-column layout with text */}
           <div className="mb-20">
@@ -173,11 +208,14 @@ function ParticipationContent() {
             <div className="grid md:grid-cols-2 gap-12">
               {/* Left Column */}
               <div className="space-y-6">
+                {/* Στο Cool η ερώτηση ζει στο hero */}
+                {!cool && (
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                   Θέλεις να συμμετέχεις στο πιο ενεργό δίκτυο με στόχο την πολιτιστική αλλαγή; Γίνε μέλος στο Σωματείο Culture for Change!
                 </p>
+                )}
                 {/* Οικονομικές υποχρεώσεις */}
-                <div className="bg-orange-50 dark:bg-gray-700 rounded-xl p-4 mb-4">
+                <div className={cool ? 'menu-glass rounded-xl p-4 mb-4' : 'bg-orange-50 dark:bg-gray-700 rounded-xl p-4 mb-4'}>
                   <h3 className="font-bold text-coral dark:text-coral-light mb-2">Οικονομικές υποχρεώσεις μελών</h3>
                   <ul className="text-gray-700 dark:text-gray-300 text-sm space-y-1">
                     <li>• Κόστος εγγραφής (άπαξ): <span className="font-semibold">10€</span></li>
@@ -186,7 +224,7 @@ function ParticipationContent() {
                 </div>
 
                 {/* Λειτουργία Δικτύου */}
-                <div className="bg-orange-50 dark:bg-gray-700 rounded-xl p-4 mb-4">
+                <div className={cool ? 'menu-glass rounded-xl p-4 mb-4' : 'bg-orange-50 dark:bg-gray-700 rounded-xl p-4 mb-4'}>
                   <h3 className="font-bold text-coral dark:text-coral-light mb-2">Λειτουργία Δικτύου</h3>
                   <ul className="text-gray-700 dark:text-gray-300 text-sm space-y-1">
                     <li>• Το Δίκτυο διοικείται από 5μελές ΔΣ με υποστήριξη από ομάδες εργασίας στις οποίες έχουν την ευκαιρία να συμμετέχουν όλα τα μέλη</li>
@@ -196,7 +234,7 @@ function ParticipationContent() {
                 </div>
 
                 {/* Προνόμια μελών */}
-                <div className="bg-orange-50 dark:bg-gray-700 rounded-xl p-4">
+                <div className={cool ? 'menu-glass rounded-xl p-4' : 'bg-orange-50 dark:bg-gray-700 rounded-xl p-4'}>
                   <h3 className="font-bold text-coral dark:text-coral-light mb-2">Προνόμια μελών</h3>
                   <div className="flex flex-wrap gap-2">
                     <span className="bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm">Συμμετοχή</span>
@@ -217,7 +255,7 @@ function ParticipationContent() {
               </div>
 
               {/* Right Column */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-2xl p-8">
+              <div className={cool ? 'relative menu-glass glass-rim rounded-2xl p-8' : 'bg-gray-50 dark:bg-gray-700 rounded-2xl p-8'}>
                 <h3 className="text-2xl font-bold mb-6 dark:text-gray-100">
                   Γιατί να εγγραφώ στο CforC;
                 </h3>
@@ -232,7 +270,7 @@ function ParticipationContent() {
           <div className="mb-20">
             <h2 className="sr-only">Ποιος μπορεί να γίνει μέλος</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-orange-50 dark:bg-gray-700 rounded-2xl p-6">
+              <div className={cool ? 'menu-glass rounded-2xl p-6' : 'bg-orange-50 dark:bg-gray-700 rounded-2xl p-6'}>
                 <div className="w-12 h-12 bg-coral dark:bg-coral-light rounded-full flex items-center justify-center mb-4">
                   <svg className="w-6 h-6 text-white dark:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -244,7 +282,7 @@ function ParticipationContent() {
                 </p>
               </div>
 
-              <div className="bg-orange-50 dark:bg-gray-700 rounded-2xl p-6">
+              <div className={cool ? 'menu-glass rounded-2xl p-6' : 'bg-orange-50 dark:bg-gray-700 rounded-2xl p-6'}>
                 <div className="w-12 h-12 bg-coral dark:bg-coral-light rounded-full flex items-center justify-center mb-4">
                   <svg className="w-6 h-6 text-white dark:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -256,7 +294,7 @@ function ParticipationContent() {
                 </p>
               </div>
 
-              <div className="bg-orange-50 dark:bg-gray-700 rounded-2xl p-6">
+              <div className={cool ? 'menu-glass rounded-2xl p-6' : 'bg-orange-50 dark:bg-gray-700 rounded-2xl p-6'}>
                 <div className="w-12 h-12 bg-coral dark:bg-coral-light rounded-full flex items-center justify-center mb-4">
                   <svg className="w-6 h-6 text-white dark:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -268,7 +306,7 @@ function ParticipationContent() {
                 </p>
               </div>
 
-              <div className="bg-orange-50 dark:bg-gray-700 rounded-2xl p-6">
+              <div className={cool ? 'menu-glass rounded-2xl p-6' : 'bg-orange-50 dark:bg-gray-700 rounded-2xl p-6'}>
                 <div className="w-12 h-12 bg-coral dark:bg-coral-light rounded-full flex items-center justify-center mb-4">
                   <svg className="w-6 h-6 text-white dark:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -320,7 +358,7 @@ function ParticipationContent() {
         </div>
       </section>
 
-      <CombinedCtaSection />
+      {!cool && <CombinedCtaSection />}
       </main>
       <Footer />
       <CookieConsent />

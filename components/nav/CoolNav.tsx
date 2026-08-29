@@ -129,6 +129,7 @@ export default function CoolNav() {
     '/news': '52vh',
     '/projects': '52vh',
     '/members': '52vh',
+    '/participation': '52vh',
     '/profile': '40vh',
   }
   const heroVh = HERO_CARD_VH[pathname || '']
