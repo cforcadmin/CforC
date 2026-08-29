@@ -10,6 +10,7 @@ import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import { useNavMode } from '@/components/nav/useNavMode'
 import OcRouteChoiceModal from '@/components/oc/OcRouteChoiceModal'
 import { clearOcAccessCache } from '@/components/useOcAccess'
+import { getMembers } from '@/lib/strapi'
 
 export default function LoginPage() {
   return (
@@ -20,7 +21,11 @@ export default function LoginPage() {
 }
 
 function LoginPageContent() {
-  const { login, requestMagicLink } = useAuth()
+  const { login, requestMagicLink, user } = useAuth()
+  // Πορτρέτο για τη σκηνή: αν ξέρουμε ποιο μέλος είναι (session ή τοπική
+  // μνήμη από προηγούμενη σύνδεση) δείχνουμε εκείνο· αλλιώς τυχαίο μέλος
+  const [heroImage, setHeroImage] = useState<string | null>(null)
+
   const router = useRouter()
   const searchParams = useSearchParams()
   const returnTo = searchParams.get('returnTo')
@@ -50,6 +55,26 @@ function LoginPageContent() {
   // Password login state
   const { mode } = useNavMode()
   const cool = mode === 'cool'
+
+  useEffect(() => {
+    if (!cool) return
+    const sessionImage = user && Array.isArray((user as any).Image) && (user as any).Image[0]?.url
+      ? (user as any).Image[0].url : null
+    if (sessionImage) { setHeroImage(sessionImage); return }
+    try {
+      const raw = localStorage.getItem('cforc-last-member')
+      if (raw) {
+        const saved = JSON.parse(raw)
+        if (saved?.image) { setHeroImage(saved.image); return }
+      }
+    } catch { /* συνέχισε στο τυχαίο */ }
+    getMembers()
+      .then((res: any) => {
+        const withImg = (res.data || []).filter((m: any) => !m.HideProfile && m.Image?.[0]?.url)
+        if (withImg.length) setHeroImage(withImg[Math.floor(Math.random() * withImg.length)].Image[0].url)
+      })
+      .catch(() => { /* το navy στέκει μόνο του */ })
+  }, [cool, user])
   const [loginEmail, setLoginEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoginLoading, setIsLoginLoading] = useState(false)
@@ -180,6 +205,19 @@ function LoginPageContent() {
                   'radial-gradient(50% 80% at 70% 85%, rgba(255,139,106,.35) 0%, rgba(27,36,56,0) 70%)',
               }}
             />
+            {heroImage && (
+              <div className="absolute inset-y-0 right-0 w-1/3 pointer-events-none" aria-hidden="true"
+                style={{
+                  backgroundImage: `url(${heroImage})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center 22%',
+                  filter: 'grayscale(1)',
+                  mixBlendMode: 'soft-light',
+                  WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.9) 45%, rgba(0,0,0,.9) 100%)',
+                  maskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.9) 45%, rgba(0,0,0,.9) 100%)',
+                }}
+              />
+            )}
             <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.08) 30%, rgba(0,0,0,.45) 100%)' }} aria-hidden="true" />
             <div className="relative px-6 md:px-12 pt-24 pb-12 md:pb-14">
               <p className="text-[11px] font-bold tracking-[.14em] uppercase text-coral">ΠΕΡΙΟΧΗ ΜΕΛΩΝ</p>

@@ -75,6 +75,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkSession()
   }, [])
 
+  // Θυμήσου τοπικά τον τελευταίο συνδεδεμένο (εικόνα+όνομα) — το login hero
+  // στο Cool δείχνει «γνώριμο» πορτρέτο και σε αποσυνδεδεμένη επίσκεψη
+  useEffect(() => {
+    if (!user) return
+    try {
+      const image = Array.isArray(user.Image) && user.Image[0]?.url ? user.Image[0].url : null
+      if (image) localStorage.setItem('cforc-last-member', JSON.stringify({ image, name: user.Name }))
+    } catch { /* ιδιωτική περιήγηση */ }
+  }, [user])
+
   const checkSession = async () => {
     try {
       setIsLoading(true)
