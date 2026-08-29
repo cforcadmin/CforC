@@ -2151,3 +2151,13 @@ html.nav-cool .cool-dim:focus-within { opacity: 1; }
   filter: blur(1.5px);
 }
 .dark .cool-contact .bg-white.rounded-3xl::before { filter: invert(1) blur(1.5px); opacity: .1; }
+
+/* Υποστηρικτές/Συνεργάτες (Cool Το Δίκτυο): διακριτικές άλω/περιγράμματα
+   ΜΟΝΟ από την παλέτα της μάρκας — κοραλί για τον υποστηρικτή, charcoal
+   (κρεμ στο σκοτεινό, όπως οι γραμμές του dock) για τους συνεργάτες. */
+.brand-halo-coral { text-shadow: 0 0 16px rgba(255, 139, 106, .8), 0 1px 2px rgba(255, 139, 106, .5); }
+.brand-halo-ink { text-shadow: 0 0 16px rgba(45, 45, 45, .5), 0 1px 2px rgba(45, 45, 45, .35); }
+.dark .brand-halo-ink { text-shadow: 0 0 16px rgba(245, 240, 235, .7), 0 1px 2px rgba(245, 240, 235, .5); }
+.tile-ring-coral { box-shadow: 0 0 0 2px rgba(255, 139, 106, .9), 0 8px 22px rgba(255, 139, 106, .28); }
+.tile-ring-ink { box-shadow: 0 0 0 2px rgba(45, 45, 45, .7), 0 8px 22px rgba(45, 45, 45, .18); }
+.dark .tile-ring-ink { box-shadow: 0 0 0 2px rgba(245, 240, 235, .8), 0 8px 22px rgba(0, 0, 0, .35); }

@@ -77,7 +77,7 @@ const GOALS = [
 ]
 
 // Λογότυπα σε ΕΝΑ ενιαίο πλέγμα — οι δύο παλιές υπο-επικεφαλίδες ζουν στο title
-// Υποστηρικτής = κοραλί περίγραμμα/άλως · Συνεργάτες = πετρόλ (#2A9D8F).
+// Υποστηρικτής = κοραλί · Συνεργάτες = charcoal/κρεμ ανά θέμα (παλέτα μάρκας).
 // ΚΑΝΟΝΑΣ BRANDING: λογότυπα τρίτων ΔΕΝ αλλοιώνονται ποτέ (όχι grayscale,
 // όχι invert, όχι φίλτρα) — μόνο το δικό μας επιτρέπεται να προσαρμόζεται.
 const LOGOS = [
@@ -433,19 +433,16 @@ export default function AboutCoolPage({ initialSection = 'diktyo' }: { initialSe
             <span className="notranslate text-coral font-bold text-sm tracking-[.18em]">05</span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight text-charcoal dark:text-gray-100 mt-1">
               ΟΙ{' '}
-              <span style={{ textShadow: '0 0 16px rgba(255,139,106,.8), 0 1px 2px rgba(255,139,106,.5)' }}>ΥΠΟΣΤΗΡΙΚΤΕΣ</span>
+              <span className="brand-halo-coral">ΥΠΟΣΤΗΡΙΚΤΕΣ</span>
               {' '}ΚΑΙ ΟΙ{' '}
-              <span style={{ textShadow: '0 0 16px rgba(42,157,143,.85), 0 1px 2px rgba(42,157,143,.55)' }}>ΣΥΝΕΡΓΑΤΕΣ</span>
+              <span className="brand-halo-ink">ΣΥΝΕΡΓΑΤΕΣ</span>
               {' '}ΜΑΣ
             </h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {LOGOS.map(l => (
               <div key={l.src} title={l.title} aria-label={l.title}
-                className="bg-white rounded-xl h-24 flex items-center justify-center p-4"
-                style={{ boxShadow: l.supporter
-                  ? '0 0 0 2px rgba(255,139,106,.9), 0 8px 22px rgba(255,139,106,.28)'
-                  : '0 0 0 2px rgba(42,157,143,.85), 0 8px 22px rgba(42,157,143,.22)' }}>
+                className={`bg-white rounded-xl h-24 flex items-center justify-center p-4 ${l.supporter ? 'tile-ring-coral' : 'tile-ring-ink'}`}>
                 {/* Λογότυπα τρίτων: πάντα έγχρωμα, ποτέ φίλτρα — και το πλακίδιο
                     μένει λευκό και στο σκοτεινό, το έδαφος που όρισαν οι ίδιοι */}
                 <Image src={l.src} alt={l.alt} width={176} height={76}
