@@ -796,6 +796,24 @@ export default function ProfilePage() {
         {coolMode && (
         <section className="px-2 pt-2 md:px-3 md:pt-3" ref={heroRef}>
           <div className="relative rounded-3xl overflow-hidden min-h-[38vh] md:min-h-[44vh] flex flex-col justify-end" style={{ backgroundColor: '#1B2438' }}>
+            {/* Ε3 (29/8): η φωτογραφία του μέλους ΚΑΤΟΙΚΕΙ στη δεξιά πλευρά —
+                αόρατη ως τα 2/3 του πλάτους, ολοκληρώνει το ξεθώριασμα στην
+                άκρη, αλλά ακόμη κι εκεί μένει θολή και μισοφωτισμένη: υπάρχει
+                στη σκηνή, δεν αποκαλύπτεται ποτέ 100%. Χωρίς φωτογραφία, το
+                navy στέκει μόνο του. */}
+            {currentImageUrl && (
+              <div className="absolute inset-0 pointer-events-none" aria-hidden="true"
+                style={{
+                  backgroundImage: `url(${currentImageUrl})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center right',
+                  filter: 'blur(5px) saturate(115%)',
+                  opacity: 0.6,
+                  WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, transparent 66%, rgba(0,0,0,1) 100%)',
+                  maskImage: 'linear-gradient(90deg, transparent 0%, transparent 66%, rgba(0,0,0,1) 100%)',
+                }}
+              />
+            )}
             <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.08) 30%, rgba(0,0,0,.45) 100%)' }} aria-hidden="true" />
             <div className="relative px-6 md:px-12 pb-16 md:pb-[4.5rem] pt-24">
               <p className="text-coral font-bold text-sm tracking-[.18em] mb-2">{currentSection.heroTitle}</p>
