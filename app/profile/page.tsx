@@ -124,7 +124,7 @@ export default function ProfilePage() {
   // Εξαρτάται από το heroCompact: όταν το hero ξαναεμφανιστεί (restore),
   // το στοιχείο ΞΑΝΑμπαίνει στο DOM και ο observer πρέπει να ξαναδεθεί.
   useEffect(() => {
-    if (heroCompact || coolMode) { setHeroOut(false); return }
+    if (heroCompact) { setHeroOut(false); return }
     const el = heroRef.current
     if (!el) return
     const obs = new IntersectionObserver(([e]) => setHeroOut(!e.isIntersecting), { threshold: 0 })
@@ -789,7 +789,74 @@ export default function ProfilePage() {
       <Navigation />
       <main id="main-content">
         {/* Dashboard Hero Section */}
-        {(heroCompact || coolMode) && <div className="h-28" aria-hidden="true" />}
+        {heroCompact && !coolMode && <div className="h-28" aria-hidden="true" />}
+        {/* Π1 (29/8): στο Cool το hero είναι navy κάρτα-σκηνή με τον
+            χαιρετισμό, τα chips κατάστασης και τις ενότητες ως καρτέλες
+            στην κάτω ακμή — η γραμματική των Σχετικά/Πολιτικών. */}
+        {coolMode && (
+        <section className="px-2 pt-2 md:px-3 md:pt-3" ref={heroRef}>
+          <div className="relative rounded-3xl overflow-hidden min-h-[38vh] md:min-h-[44vh] flex flex-col justify-end" style={{ backgroundColor: '#1B2438' }}>
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.08) 30%, rgba(0,0,0,.45) 100%)' }} aria-hidden="true" />
+            <div className="relative px-6 md:px-12 pb-16 md:pb-[4.5rem] pt-24">
+              <p className="text-coral font-bold text-sm tracking-[.18em] mb-2">{currentSection.heroTitle}</p>
+              <h1 className="text-white font-bold" style={{ fontSize: 'clamp(1.8rem, 3.6vw, 3rem)', lineHeight: 0.98 }}>
+                {heroContext().title}
+              </h1>
+              <div className="flex flex-wrap items-center gap-2 mt-4">
+                {(() => {
+                  const year = new Date().getFullYear()
+                  const paid = user?.Payments?.[String(year)] === 1
+                  return paid ? (
+                    <span className="text-sm font-bold rounded-full px-4 py-1.5 bg-white/15 text-green-300">✓ Συνδρομή {year} εντάξει</span>
+                  ) : (
+                    <span className="text-sm font-bold rounded-full px-4 py-1.5 bg-white/15 text-amber-300">Συνδρομή {year} σε εκκρεμότητα</span>
+                  )
+                })()}
+                {activeSection === 'profile' && typeof indicatorFor('profile') === 'number' && (
+                  <span className="text-sm font-bold rounded-full px-4 py-1.5 bg-white/15 text-amber-300">
+                    {indicatorFor('profile')} πεδία προφίλ κενά
+                  </span>
+                )}
+                {heroContext().cta && (
+                  <button type="button" onClick={heroContext().onCta}
+                    className="text-sm font-bold rounded-full px-4 py-1.5 bg-coral text-charcoal hover:bg-[#F07551] transition-colors">
+                    {heroContext().cta}
+                  </button>
+                )}
+                {ocAccess.isBoard && (
+                  <Link href="/oc"
+                    onClick={(e) => { if (ocAccess.seats.length > 1) { e.preventDefault(); setShowOcSeatModal(true) } }}
+                    className="notranslate text-sm font-bold rounded-full px-4 py-1.5 border border-white/40 text-white hover:bg-white/10 transition-colors">
+                    OC →
+                  </Link>
+                )}
+              </div>
+            </div>
+            {/* Οι ενότητες ως καρτέλες στην κάτω ακμή — ίδια γλώσσα με τα Σχετικά */}
+            <nav aria-label="Ενότητες του χώρου μου" className="absolute bottom-0 inset-x-0"
+              style={{ backgroundColor: 'rgba(10, 14, 24, .45)', backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.12)' }}>
+              <div className="flex overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                {DASHBOARD_SECTIONS.map(section => (
+                  <button key={section.key} type="button"
+                    onClick={() => { setActiveSection(section.key); window.scrollTo({ top: 0 }) }}
+                    aria-current={activeSection === section.key ? 'page' : undefined}
+                    className={`inline-flex items-center min-h-11 px-4 text-xs font-bold tracking-widest whitespace-nowrap border-b-2 transition-colors duration-200 ${
+                      activeSection === section.key ? 'text-white border-coral' : 'text-white/70 border-transparent hover:text-white'
+                    }`}>
+                    {section.label}
+                    {(() => {
+                      const ind = indicatorFor(section.key)
+                      if (ind === null) return null
+                      if (ind === 'dot') return <span className="inline-block w-1.5 h-1.5 rounded-full bg-coral ml-1.5" aria-label="νέο περιεχόμενο" />
+                      return <span className="notranslate inline-flex items-center justify-center min-w-[1rem] h-4 px-1 ml-1.5 rounded-full text-[9px] font-bold bg-coral text-white">{ind}</span>
+                    })()}
+                  </button>
+                ))}
+              </div>
+            </nav>
+          </div>
+        </section>
+        )}
         {!heroCompact && !coolMode && (
         <section className="relative -bottom-20" ref={heroRef}>
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 min-h-[25vh] flex items-center rounded-b-3xl relative z-10 py-8">
@@ -945,7 +1012,7 @@ export default function ProfilePage() {
             pill 90% όταν κυλήσει, ~25vh — ίδιο κατώφλι με το heroOut), οπότε
             η λωρίδα ακολουθεί: πλήρες πλάτος ή (100%−2rem)×0.9 αντίστοιχα. */}
         {(() => {
-          const visible = heroOut || heroCompact || coolMode
+          const visible = heroOut || heroCompact
           return (
         // Η κίνηση εμφάνισης ζει στο ΕΣΩΤΕΡΙΚΟ στοιχείο: το εξωτερικό
         // κεντράρεται με inline transform (translateX), που θα πατούσε
@@ -954,15 +1021,15 @@ export default function ProfilePage() {
         <div
           className={`fixed z-40 transition-all duration-300 ${visible ? '' : 'pointer-events-none'}`}
           style={navMode === 'cool'
-            ? { top: '0.75rem', left: '50%', transform: 'translateX(-50%)', maxWidth: '46vw' }
+            ? { top: '3.4rem', left: '1rem' }
             : navScrolled
               ? { top: '5.1rem', left: '50%', transform: 'translateX(-50%)', width: 'calc((100% - 2rem) * 0.9)' }
               : { top: '4.5rem', left: 0, right: 0, width: '100%' }}
           aria-hidden={!visible}
         >
-          <div className={`flex items-center gap-2 overflow-x-auto menu-glass glass-rim strip-slide ${navMode === 'cool' ? 'rounded-full px-4 py-2' : 'rounded-b-2xl px-3 pt-3 pb-2'} ${coolMode && navScrolled ? 'cool-dim' : ''} ${visible ? 'strip-shown' : 'strip-hidden'}`}
-            style={{ scrollbarWidth: 'none', ...(navMode === 'cool' ? { borderRadius: '9999px' } : { borderTopLeftRadius: 0, borderTopRightRadius: 0 }) }}>
-            <span className="text-sm font-bold text-charcoal dark:text-gray-100 whitespace-nowrap pl-1">CforC</span>
+          <div className={`flex items-center gap-2 overflow-x-auto menu-glass glass-rim strip-slide ${navMode === 'cool' ? 'rounded-b-2xl px-2 pt-2.5 pb-1.5' : 'rounded-b-2xl px-3 pt-3 pb-2'} ${visible ? 'strip-shown' : 'strip-hidden'}`}
+            style={{ scrollbarWidth: 'none', borderTopLeftRadius: 0, borderTopRightRadius: 0, ...(navMode === 'cool' ? { backgroundColor: 'rgba(10, 14, 24, .72)' } : {}) }}>
+            <span className={`text-sm font-bold whitespace-nowrap pl-1 ${navMode === "cool" ? "text-white" : "text-charcoal dark:text-gray-100"}`}>CforC</span>
             {heroCompact && (
               <button
                 type="button"
@@ -984,7 +1051,7 @@ export default function ProfilePage() {
                 className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                   activeSection === section.key
                     ? 'bg-coral text-white'
-                    : 'text-charcoal dark:text-gray-200 hover:bg-coral/15'
+                    : navMode === 'cool' ? 'text-white/75 hover:text-white' : 'text-charcoal dark:text-gray-200 hover:bg-coral/15'
                 }`}
               >
                 {section.label}

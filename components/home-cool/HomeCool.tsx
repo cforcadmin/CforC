@@ -166,10 +166,11 @@ export default function HomeCool() {
           </div>
         </section>
 
-        {/* Η αποκαλυπτόμενη ενότητα — αρχικά κρυφή, εναλλάσσεται με το hover·
-            το πολύ 3 εγγραφές (μία σειρά) — για τα υπόλοιπα, η ίδια η σελίδα */}
-        {reveal === 'news' && <div className="mt-6"><ActivitiesSection maxItems={3} /></div>}
-        {reveal === 'calls' && <div className="mt-6"><OpenCallsSection maxItems={3} /></div>}
+        {/* Και οι δύο ενότητες ΠΡΟΦΟΡΤΩΝΟΥΝ (μένουν στο DOM, κρυμμένες με
+            CSS) ώστε το hover να τις εμφανίζει ακαριαία — τα δεδομένα τους
+            έχουν ήδη έρθει με το φόρτωμα της σελίδας. Το πολύ 3 εγγραφές. */}
+        <div className={`mt-6 ${reveal === 'news' ? '' : 'hidden'}`}><ActivitiesSection maxItems={3} /></div>
+        <div className={`mt-6 ${reveal === 'calls' ? '' : 'hidden'}`}><OpenCallsSection maxItems={3} /></div>
 
         {/* ═══ ΠΟΙΟΙ ΕΙΜΑΣΤΕ — η πλάκα καβαλάει τη φωτογραφία· κρύβεται όσο
             μια αποκάλυψη είναι ανοιχτή (εστίαση σε ένα πράγμα τη φορά) ═══ */}
