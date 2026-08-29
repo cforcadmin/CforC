@@ -1862,13 +1862,13 @@ export default function ProfilePage() {
                 {/* Ρ2: βιογραφικό φαρδύ αριστερά, συμπυκνωμένες κάψουλες
                     δεξιά που ανοίγουν με κλικ· τα έργα δικές τους σειρές */}
                 <div className="grid lg:grid-cols-[1.7fr_1fr] gap-6 items-start">
-                  <div className="relative overflow-hidden menu-glass glass-rim rounded-3xl p-8">
+                  <div className="relative overflow-hidden menu-glass glass-rim rounded-3xl p-8 min-w-0">
                     <span className="logo-reveal" aria-hidden="true" />
                     <div className="relative">
                       {bioEditor}
                     </div>
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-4 min-w-0">
                     <CoolSpot label="Όνομα" summary={formData.Name}>{nameEditor}</CoolSpot>
                     <CoolSpot label="Email" summary={formData.Email}>{emailEditor}</CoolSpot>
                     <CoolSpot label="Τοποθεσία" summary={[formData.City, formData.Province].filter((v) => v && v !== '-').join(', ')}>{locationEditor}</CoolSpot>
