@@ -81,7 +81,7 @@ export default function MapPageClient({ members }: MapPageClientProps) {
           <div className="relative px-6 md:px-12 pt-24 pb-8 md:pb-10">
             <p className="text-[11px] font-bold tracking-[.14em] uppercase text-coral">ΧΑΡΤΗΣ ΜΕΛΩΝ</p>
             <h1 className="text-white text-2xl md:text-4xl font-bold leading-tight mt-2 max-w-3xl">
-              <span className="notranslate text-coral">{mappedMembers}</span> καταγεγραμμένα μέλη σε{' '}
+              <span className="notranslate text-coral">{mappedMembers}</span> επίσημα καταγεγραμμένα μέλη σε{' '}
               <span className="notranslate text-coral">{Object.values(mapData.provinceMap).filter(p => p.count > 0).length}</span> περιφέρειες
               {mapData.foreignMembers.length > 0 && (
                 <> + <span className="notranslate text-coral">{mapData.foreignMembers.reduce((s, c) => s + c.members.length, 0)}</span> στο εξωτερικό</>
