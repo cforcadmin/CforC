@@ -2020,6 +2020,34 @@ html.nav-cool .cool-flush > section > div > .pt-24 { padding-top: 0; }
   width: 8px; height: 8px; border-radius: 999px; background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
+/* Δύο επίπεδα στο dock (30/8): η κολόνα έγινε div και το κλικ ζει σε
+   αόρατο κουμπί που τη γεμίζει· τα υπο-στοιχεία (Σχετικά/Έργα) κάθονται
+   ΔΙΑΓΩΝΙΑ πάνω από την κάθετη ετικέτα, μόνο στην ανοιχτή λωρίδα. */
+.cool-col-hit {
+  position: absolute; inset: 0;
+  display: flex; align-items: flex-end; justify-content: center;
+  padding: 1.5rem 0; min-width: 0;
+  background: none; border: 0; cursor: pointer;
+}
+.cool-col-hit:focus-visible { outline: 2px solid #FF8B6A; outline-offset: -3px; }
+.cool-subs {
+  position: absolute; left: 0; right: 0; top: 2.6rem; bottom: 38%;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  gap: 1.6rem; z-index: 1;
+  animation: coolSubsIn .25s ease;
+}
+@keyframes coolSubsIn { from { opacity: 0; } to { opacity: 1; } }
+.cool-sub {
+  transform: rotate(-55deg);
+  white-space: nowrap; max-width: 11rem; overflow: hidden; text-overflow: ellipsis;
+  font-size: .72rem; font-weight: 700; letter-spacing: .1em;
+  color: rgba(255, 255, 255, 0.85); text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  text-decoration: none;
+  transition: transform .18s ease, color .18s ease;
+}
+.cool-sub:hover,
+.cool-sub:focus-visible { color: #fff; transform: rotate(-55deg) scale(1.1); text-decoration: underline; }
+@media (prefers-reduced-motion: reduce) { .cool-subs { animation: none; } }
 
 /* Οι φούσκες του Modern header (κάψουλα + εργαλεία) ως σκούρο υγρό γυαλί.
    Στην κορυφή πατούν σε συμπαγές κρεμ (η θόλωση αδρανής)· στο scroll το
