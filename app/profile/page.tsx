@@ -1697,7 +1697,7 @@ export default function ProfilePage() {
 
         {/* Profile Content */}
         {activeSection === 'profile' && (
-        <div className={coolMode ? 'pt-32 pb-24 max-w-6xl mx-auto px-4' : 'pt-32 pb-24 max-w-4xl mx-auto px-4'}>
+        <div className={coolMode ? 'pt-10 pb-24 max-w-6xl mx-auto px-4' : 'pt-32 pb-24 max-w-4xl mx-auto px-4'}>
           {/* Header with Guidelines Button — στο Cool ζει ως chip στη σκηνή */}
           {!coolMode && (
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
