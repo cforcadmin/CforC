@@ -237,12 +237,24 @@ function ParticipationContent() {
                 <div className={cool ? 'menu-glass rounded-xl p-4' : 'bg-orange-50 dark:bg-gray-700 rounded-xl p-4'}>
                   <h3 className="font-bold text-coral dark:text-coral-light mb-2">Προνόμια μελών</h3>
                   <div className="flex flex-wrap gap-2">
-                    <span className="bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm">Συμμετοχή</span>
-                    <span className="bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm">Δικτύωση</span>
-                    <span className="bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm">Ανάπτυξη Ικανοτήτων</span>
-                    <span className="bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm">Συνηγορία</span>
-                    <span className="bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm">Υποστήριξη</span>
-                    <span className="bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm">Ευκαιρίες</span>
+                    <span className={cool
+                      ? 'bg-white/50 dark:bg-white/10 border border-charcoal/15 dark:border-white/15 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
+                      : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'}>Συμμετοχή</span>
+                    <span className={cool
+                      ? 'bg-white/50 dark:bg-white/10 border border-charcoal/15 dark:border-white/15 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
+                      : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'}>Δικτύωση</span>
+                    <span className={cool
+                      ? 'bg-white/50 dark:bg-white/10 border border-charcoal/15 dark:border-white/15 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
+                      : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'}>Ανάπτυξη Ικανοτήτων</span>
+                    <span className={cool
+                      ? 'bg-white/50 dark:bg-white/10 border border-charcoal/15 dark:border-white/15 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
+                      : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'}>Συνηγορία</span>
+                    <span className={cool
+                      ? 'bg-white/50 dark:bg-white/10 border border-charcoal/15 dark:border-white/15 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
+                      : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'}>Υποστήριξη</span>
+                    <span className={cool
+                      ? 'bg-white/50 dark:bg-white/10 border border-charcoal/15 dark:border-white/15 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
+                      : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'}>Ευκαιρίες</span>
                   </div>
                 </div>
                 <Link
@@ -321,7 +333,9 @@ function ParticipationContent() {
           </div>
 
           {/* Section 3: Call-to-action with button */}
-          <div className="bg-gradient-to-br from-coral to-orange-400 dark:from-gray-700 dark:to-gray-800 rounded-3xl p-12 text-white text-center">
+          <div className={cool
+            ? 'relative menu-glass glass-rim rounded-3xl p-12 text-charcoal dark:text-gray-100 text-center'
+            : 'bg-gradient-to-br from-coral to-orange-400 dark:from-gray-700 dark:to-gray-800 rounded-3xl p-12 text-white text-center'}>
             <h2 className="text-3xl md:text-4xl font-bold mb-6 dark:text-gray-100">
               Θες να γίνεις μέλος;
             </h2>
