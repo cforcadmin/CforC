@@ -13,6 +13,7 @@ import CategoryFilter from '@/components/shared/CategoryFilter'
 import YearFilter from '@/components/shared/YearFilter'
 import SortDropdown from '@/components/shared/SortDropdown'
 import FundingGuidelinesModal from '@/components/FundingGuidelinesModal'
+import { useNavMode } from '@/components/nav/useNavMode'
 
 function extractTextFromBlocks(blocks: any): string {
   if (!blocks) return ''
@@ -36,7 +37,7 @@ const SORT_OPTIONS = [
   { value: 'deadline-desc', label: 'Πιο μακρινή προθεσμία' },
 ]
 
-function FlipCard({ call, getImageUrl }: { call: OpenCall; getImageUrl: (call: OpenCall) => string | null }) {
+function FlipCard({ call, getImageUrl, cool }: { call: OpenCall; getImageUrl: (call: OpenCall) => string | null; cool?: boolean }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const backRef = useRef<HTMLDivElement>(null)
@@ -84,7 +85,9 @@ function FlipCard({ call, getImageUrl }: { call: OpenCall; getImageUrl: (call: O
             href={call.Link}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-gray-700/50 transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full"
+            className={cool
+              ? 'menu-glass rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full'
+              : 'bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-gray-700/50 transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full'}
             aria-label={`${call.Title} (ανοίγει σε νέα καρτέλα)`}
           >
             {imageUrl && (
@@ -145,7 +148,9 @@ function FlipCard({ call, getImageUrl }: { call: OpenCall; getImageUrl: (call: O
             href={call.Link}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-700/50 border-l-4 border-coral dark:border-coral-light flex flex-col"
+            className={cool
+              ? 'menu-glass rounded-3xl overflow-hidden shadow-xl border-l-4 border-coral dark:border-coral-light flex flex-col'
+              : 'bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-700/50 border-l-4 border-coral dark:border-coral-light flex flex-col'}
             aria-label={`${call.Title} — πλήρης περιγραφή (ανοίγει σε νέα καρτέλα)`}
           >
             <div className="p-6 flex flex-col">
@@ -210,6 +215,8 @@ function loadOCSearch() {
 }
 
 export default function OpenCallsContent() {
+  const { mode } = useNavMode()
+  const cool = mode === 'cool'
   const [allOpenCalls, setAllOpenCalls] = useState<OpenCall[]>([])
   const [filteredCalls, setFilteredCalls] = useState<OpenCall[]>([])
   const [loading, setLoading] = useState(true)
@@ -379,13 +386,14 @@ export default function OpenCallsContent() {
         {loading && <LoadingIndicator />}
 
         {/* Info Box with count */}
-        <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 mb-6 shadow-sm">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className={cool ? 'relative overflow-hidden menu-glass glass-rim rounded-3xl p-8 mb-6' : 'bg-white dark:bg-gray-800 rounded-3xl p-8 mb-6 shadow-sm'}>
+          {cool && <span className="logo-reveal" aria-hidden="true" />}
+          <div className={cool ? 'relative flex flex-col md:flex-row md:items-center md:justify-between gap-4' : 'flex flex-col md:flex-row md:items-center md:justify-between gap-4'}>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
               Εδώ θα βρεις τις τρέχουσες ευκαιρίες χρηματοδότησης, συνεργασίας και συμμετοχής σε πολιτιστικά προγράμματα. Φιλτράρισε ανά κατηγορία ή αναζήτησε αυτό που σε ενδιαφέρει.
             </p>
             <div className="shrink-0">
-              <div className="bg-white dark:bg-gray-700 px-6 py-3 rounded-full border-2 border-charcoal dark:border-gray-400 inline-block">
+              <div className={cool ? 'bubble-glass glass-rim px-6 py-3 rounded-full inline-block' : 'bg-white dark:bg-gray-700 px-6 py-3 rounded-full border-2 border-charcoal dark:border-gray-400 inline-block'}>
                 <p className="text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap" aria-live="polite">
                   Αποτελέσματα: <span className="text-coral dark:text-coral-light">{displayCount}</span>
                 </p>
@@ -395,8 +403,9 @@ export default function OpenCallsContent() {
         </div>
 
         {/* Filter Bar */}
-        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 mb-12 shadow-sm">
-          <div className="flex flex-wrap items-center gap-3">
+        <div className={cool ? 'relative overflow-hidden menu-glass glass-rim rounded-3xl p-6 md:p-8 mb-12' : 'bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 mb-12 shadow-sm'}>
+          {cool && <span className="logo-reveal" aria-hidden="true" />}
+          <div className={cool ? 'relative flex flex-wrap items-center gap-3' : 'flex flex-wrap items-center gap-3'}>
             {/* Search */}
             <input
               type="text"
@@ -496,7 +505,7 @@ export default function OpenCallsContent() {
         {!loading && !error && filteredCalls.length > 0 && viewMode === 'grid' && (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCalls.map((call) => (
-              <FlipCard key={call.id} call={call} getImageUrl={getImageUrl} />
+              <FlipCard key={call.id} call={call} getImageUrl={getImageUrl} cool={cool} />
             ))}
           </div>
         )}
@@ -514,7 +523,9 @@ export default function OpenCallsContent() {
                   href={call.Link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-4 md:gap-6 bg-white dark:bg-gray-800 rounded-2xl p-4 hover:shadow-lg dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light"
+                  className={cool
+                    ? 'flex items-center gap-4 md:gap-6 menu-glass rounded-2xl p-4 hover:shadow-lg transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light'
+                    : 'flex items-center gap-4 md:gap-6 bg-white dark:bg-gray-800 rounded-2xl p-4 hover:shadow-lg dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light'}
                   aria-label={`${call.Title} (ανοίγει σε νέα καρτέλα)`}
                 >
                   {/* Date + Category badges */}
