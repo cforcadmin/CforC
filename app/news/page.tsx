@@ -321,7 +321,7 @@ function ActivitiesPageContent() {
             χρόνου στο κάτω χείλος· Classic/Modern: το κοραλί hero ως είχε */}
         {cool ? (
         <section className="px-2 pt-2 md:px-3">
-          <div className="relative overflow-hidden rounded-3xl" style={{ backgroundColor: '#1B2438' }}>
+          <div className="relative overflow-hidden rounded-3xl flex flex-col justify-end min-h-[45vh] md:min-h-[52vh]" style={{ backgroundColor: '#1B2438' }}>
             <div className="absolute inset-0">
               <Image
                 src="/about-us-what-we-offer.jpg"
@@ -337,7 +337,7 @@ function ActivitiesPageContent() {
                 aria-hidden="true"
               />
             </div>
-            <div className="relative px-6 md:px-12 pt-28 md:pt-32 pb-12 md:pb-14">
+            <div className="relative px-6 md:px-12 pt-24 pb-10 md:pb-12">
               <p className="text-[11px] font-bold tracking-[.14em] uppercase text-coral">ΝΕΑ</p>
               <h1 className="text-white text-3xl md:text-5xl font-bold leading-tight mt-2 max-w-3xl">
                 Εκδηλώσεις, εργαστήρια, δικτυώσεις, δράσεις συνηγορίας και ενημερωτικά δελτία
