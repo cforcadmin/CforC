@@ -1979,6 +1979,13 @@ html.nav-cool .hero-a11y { display: none; }
 html.nav-cool .cool-dim { opacity: .5; }
 html.nav-cool .cool-dim:hover,
 html.nav-cool .cool-dim:focus-within { opacity: 1; }
+/* Cool: οι υποσελίδες του προφίλ ξεκινούν στην ίδια απόσταση με το Προφίλ.
+   Τα components κουβαλούν δικό τους πάνω κενό (pt-20/py-24/pt-24)· εδώ
+   μηδενίζεται ώστε να μετρά μόνο το pt-10 του wrapper. Μόνο στο Cool. */
+html.nav-cool .cool-flush > .pt-20 { padding-top: 0; }
+html.nav-cool .cool-flush > .py-24,
+html.nav-cool .cool-flush > div > .py-24 { padding-top: 0; }
+html.nav-cool .cool-flush > section > div > .pt-24 { padding-top: 0; }
 .cool-rail { transition: height .3s ease, top .3s ease, transform .3s ease; }
 .cool-col {
   position: relative;

@@ -1634,19 +1634,19 @@ export default function ProfilePage() {
 
         {/* Section Content */}
         {activeSection === 'open-calls' && (
-          <div className={coolMode ? 'pt-10' : 'pt-20'}>
+          <div className={coolMode ? 'pt-10 cool-flush' : 'pt-20'}>
             <OpenCallsContent />
           </div>
         )}
 
         {activeSection === 'newsletters' && (
-          <div className={coolMode ? 'pt-10' : 'pt-20'}>
+          <div className={coolMode ? 'pt-10 cool-flush' : 'pt-20'}>
             <NewslettersContent />
           </div>
         )}
 
         {activeSection === 'library' && (
-          <div className={coolMode ? 'pt-10' : 'pt-20'}>
+          <div className={coolMode ? 'pt-10 cool-flush' : 'pt-20'}>
             {/* Ο τίτλος, το σήμα δοκιμαστικής λειτουργίας και οι οδηγίες ζουν
                 μέσα στο LibraryContent — οι οδηγίες ανοίγουν το δικό του modal. */}
             <LibraryContent />
@@ -1654,25 +1654,25 @@ export default function ProfilePage() {
         )}
 
         {activeSection === 'educational' && (
-          <div className={coolMode ? 'pt-10' : 'pt-20'}>
+          <div className={coolMode ? 'pt-10 cool-flush' : 'pt-20'}>
             <EducationalMaterialContent />
           </div>
         )}
 
         {activeSection === 'networks' && (
-          <div className={coolMode ? 'pt-10' : 'pt-20'}>
+          <div className={coolMode ? 'pt-10 cool-flush' : 'pt-20'}>
             <NetworksContent />
           </div>
         )}
 
         {activeSection === 'working-groups' && (
-          <div className={coolMode ? 'pt-10' : 'pt-20'}>
+          <div className={coolMode ? 'pt-10 cool-flush' : 'pt-20'}>
             <WorkingGroupsContent />
           </div>
         )}
 
         {activeSection === 'pocket-guide' && (
-          <div className={coolMode ? 'pt-10' : 'pt-20'}>
+          <div className={coolMode ? 'pt-10 cool-flush' : 'pt-20'}>
             <PocketGuideContent />
           </div>
         )}
