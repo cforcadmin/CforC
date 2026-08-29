@@ -130,6 +130,7 @@ export default function CoolNav() {
     '/projects': '52vh',
     '/members': '52vh',
     '/participation': '52vh',
+    '/login': '52vh',
     '/profile': '40vh',
   }
   const heroVh = HERO_CARD_VH[pathname || '']

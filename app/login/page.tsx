@@ -7,6 +7,7 @@ import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
+import { useNavMode } from '@/components/nav/useNavMode'
 import OcRouteChoiceModal from '@/components/oc/OcRouteChoiceModal'
 import { clearOcAccessCache } from '@/components/useOcAccess'
 
@@ -47,6 +48,8 @@ function LoginPageContent() {
   }, [])
 
   // Password login state
+  const { mode } = useNavMode()
+  const cool = mode === 'cool'
   const [loginEmail, setLoginEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoginLoading, setIsLoginLoading] = useState(false)
@@ -166,7 +169,27 @@ function LoginPageContent() {
     <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
       <Navigation />
       <main id="main-content">
-        {/* Hero Section */}
+        {/* Hero Section — Cool: navy σκηνή με το χρωματιστό λούσιμο του προφίλ */}
+        {cool ? (
+        <section className="px-2 pt-2 md:px-3">
+          <div className="relative overflow-hidden rounded-3xl flex flex-col justify-end min-h-[45vh] md:min-h-[52vh]" style={{ backgroundColor: '#1B2438' }}>
+            <div className="absolute inset-0 pointer-events-none" aria-hidden="true"
+              style={{
+                background:
+                  'radial-gradient(90% 130% at 86% 40%, rgba(214,142,114,.8) 0%, rgba(171,104,86,.5) 38%, rgba(27,36,56,0) 68%), ' +
+                  'radial-gradient(50% 80% at 70% 85%, rgba(255,139,106,.35) 0%, rgba(27,36,56,0) 70%)',
+              }}
+            />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.08) 30%, rgba(0,0,0,.45) 100%)' }} aria-hidden="true" />
+            <div className="relative px-6 md:px-12 pt-24 pb-12 md:pb-14">
+              <p className="text-[11px] font-bold tracking-[.14em] uppercase text-coral">ΠΕΡΙΟΧΗ ΜΕΛΩΝ</p>
+              <h1 className="text-white text-3xl md:text-5xl font-bold leading-tight mt-2 max-w-3xl">
+                Σύνδεση στο δίκτυο
+              </h1>
+            </div>
+          </div>
+        </section>
+        ) : (
         <section className="relative -bottom-20">
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -188,14 +211,15 @@ function LoginPageContent() {
             </div>
           </div>
         </section>
+        )}
 
         {/* Main Content */}
-        <div className="pt-32 pb-24 px-4">
+        <div className={cool ? 'pt-10 pb-24 px-4' : 'pt-32 pb-24 px-4'}>
           <div className="w-full max-w-5xl mx-auto">
             {/* Cards Container - Side by Side on Desktop */}
             <div className="grid md:grid-cols-2 gap-6 mb-6">
             {/* Password Login Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div className={cool ? 'relative menu-glass glass-rim rounded-2xl p-6' : 'bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6'}>
               {/* Header */}
               <div className="text-center mb-5">
                 <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-1">
@@ -279,7 +303,9 @@ function LoginPageContent() {
                 <button
                   type="submit"
                   disabled={isLoginLoading}
-                  className="w-full bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light py-2.5 rounded-full text-sm font-medium transition-all hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={cool
+                    ? 'w-full bg-white/50 dark:bg-white/10 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light py-2.5 rounded-full text-sm font-medium transition-all hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed'
+                    : 'w-full bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light py-2.5 rounded-full text-sm font-medium transition-all hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed'}
                 >
                   {isLoginLoading ? (
                     <span className="flex items-center justify-center">
@@ -297,7 +323,7 @@ function LoginPageContent() {
             </div>
 
             {/* Magic Link Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div className={cool ? 'relative menu-glass glass-rim rounded-2xl p-6' : 'bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6'}>
               {/* Header */}
               <div className="text-center mb-5">
                 <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-1">
@@ -354,7 +380,9 @@ function LoginPageContent() {
                 <button
                   type="submit"
                   disabled={isMagicLoading}
-                  className="w-full bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light py-2.5 rounded-full text-sm font-medium transition-all hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={cool
+                    ? 'w-full bg-white/50 dark:bg-white/10 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light py-2.5 rounded-full text-sm font-medium transition-all hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed'
+                    : 'w-full bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light py-2.5 rounded-full text-sm font-medium transition-all hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed'}
                 >
                   {isMagicLoading ? (
                     <span className="flex items-center justify-center">
@@ -370,7 +398,7 @@ function LoginPageContent() {
                 </button>
 
                 {/* Info */}
-                <div className="p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                <div className={cool ? 'p-2.5 bg-white/40 dark:bg-white/5 border border-charcoal/10 dark:border-white/10 rounded-xl' : 'p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl'}>
                   <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
                     Ο σύνδεσμος θα σου επιτρέψει να ορίσεις κωδικό πρόσβασης. Λήγει σε 6 ώρες.
                   </p>
@@ -474,7 +502,9 @@ function LoginPageContent() {
               <button
                 type="submit"
                 disabled={isResetLoading}
-                className="w-full bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light py-2.5 rounded-full text-sm font-medium transition-all hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={cool
+                    ? 'w-full bg-white/50 dark:bg-white/10 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light py-2.5 rounded-full text-sm font-medium transition-all hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed'
+                    : 'w-full bg-charcoal dark:bg-gray-700 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light py-2.5 rounded-full text-sm font-medium transition-all hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed'}
               >
                 {isResetLoading ? (
                   <span className="flex items-center justify-center">
@@ -489,7 +519,7 @@ function LoginPageContent() {
                 )}
               </button>
 
-              <div className="p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+              <div className={cool ? 'p-2.5 bg-white/40 dark:bg-white/5 border border-charcoal/10 dark:border-white/10 rounded-xl' : 'p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl'}>
                 <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
                   Ο σύνδεσμος θα σου επιτρέψει να ορίσεις νέο κωδικό πρόσβασης. Λήγει σε 6 ώρες.
                 </p>
