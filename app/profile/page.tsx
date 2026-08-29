@@ -230,6 +230,8 @@ export default function ProfilePage() {
         return { title: 'Τα δίκτυά μας', cta: null, onCta: toContent }
       case 'working-groups':
         return { title: 'Η κρυφή μας δύναμη!', cta: null, onCta: toContent }
+      case 'pocket-guide':
+        return { title: 'Πρακτικές συμβουλές', cta: null, onCta: toContent }
       case 'profile':
         return { title: greeting(), cta: 'Επεξεργασία προφίλ', onCta: toContent }
       default:
