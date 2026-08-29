@@ -891,7 +891,7 @@ export default function ProfilePage() {
             {/* Η αλλαγή φωτογραφίας γίνεται ΠΑΝΩ στη σκηνή — εκεί που ζει η
                 εικόνα (διόρθωση 29/8: όχι ξεχωριστό πεδίο στη φόρμα) */}
             {activeSection === 'profile' && (
-              <div className="absolute right-4 md:right-6 bottom-14 z-10 group/photo">
+              <div className="absolute left-4 md:left-6 bottom-14 z-10 group/photo">
                 <button type="button" onClick={() => setPhotoMenuOpen(v => !v)}
                   aria-expanded={photoMenuOpen} aria-haspopup="true"
                   className="text-sm font-bold rounded-full px-5 py-2 text-white hover:brightness-125 transition duration-200"
@@ -900,7 +900,7 @@ export default function ProfilePage() {
                 </button>
                 {/* Tooltip προδιαγραφών στο hover */}
                 {!photoMenuOpen && (
-                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover/photo:block w-64 pointer-events-none">
+                  <div className="absolute bottom-full left-0 mb-2 hidden group-hover/photo:block w-64 pointer-events-none">
                     <div className="menu-glass-dense glass-rim rounded-xl px-3 py-2 text-xs text-charcoal dark:text-gray-200">
                       Ιδανικές διαστάσεις: 500×600px (5:6). Μέγιστο 5MB. Μορφές: JPG, PNG, GIF, WebP.
                     </div>
@@ -908,7 +908,7 @@ export default function ProfilePage() {
                 )}
                 {/* Δύο επιλογές στο κλικ */}
                 {photoMenuOpen && (
-                  <div className="absolute bottom-full right-0 mb-2 w-52 menu-glass-dense glass-rim rounded-2xl py-1.5">
+                  <div className="absolute bottom-full left-0 mb-2 w-52 menu-glass-dense glass-rim rounded-2xl py-1.5">
                     <button type="button"
                       onClick={() => { setPhotoMenuOpen(false); coolImageInputRef.current?.click() }}
                       className="block w-full text-left px-4 py-2.5 text-sm text-charcoal dark:text-gray-200 hover:bg-coral/15 transition-colors">
