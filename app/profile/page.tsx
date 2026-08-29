@@ -872,6 +872,19 @@ export default function ProfilePage() {
                 )}
               </div>
             </div>
+            {/* Η αλλαγή φωτογραφίας γίνεται ΠΑΝΩ στη σκηνή — εκεί που ζει η
+                εικόνα (διόρθωση 29/8: όχι ξεχωριστό πεδίο στη φόρμα) */}
+            {activeSection === 'profile' && (
+              <>
+                <button type="button" onClick={() => coolImageInputRef.current?.click()}
+                  className="absolute right-4 md:right-6 bottom-14 text-sm font-bold rounded-full px-5 py-2 text-white hover:brightness-125 transition duration-200 z-10"
+                  style={{ backgroundColor: 'rgba(255,255,255,.16)', border: '1px solid rgba(255,255,255,.45)', backdropFilter: 'blur(12px) saturate(160%)', WebkitBackdropFilter: 'blur(12px) saturate(160%)' }}>
+                  Αλλαγή φωτογραφίας
+                </button>
+                <input ref={coolImageInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleImageChange(f) }} />
+              </>
+            )}
             {/* Οι ενότητες ως καρτέλες στην κάτω ακμή — ίδια γλώσσα με τα Σχετικά */}
             <nav aria-label="Ενότητες του χώρου μου" className="absolute bottom-0 inset-x-0"
               style={{ backgroundColor: 'rgba(10, 14, 24, .45)', backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.12)' }}>
@@ -1299,32 +1312,9 @@ export default function ProfilePage() {
                 </div>
               </div>
               {coolMode ? (
-                /* Χ3 (29/8): επεξεργάζεσαι ΤΗ σκηνή — μικρογραφία του hero
-                   (λούσιμο + ασπρόμαυρο soft-light πορτρέτο), WYSIWYG. Μόνο
-                   «Αλλαγή», σε υγρό γυαλί, κάτω δεξιά — μακριά από το πάνω
-                   δεξιά όπου ζει το μενού του Cool. */
-                <div className="relative rounded-2xl overflow-hidden h-44" style={{ backgroundColor: '#1B2438' }}>
-                  <div className="absolute inset-0 pointer-events-none" aria-hidden="true"
-                    style={{ background: 'radial-gradient(90% 130% at 86% 40%, rgba(214,142,114,.8) 0%, rgba(171,104,86,.5) 38%, rgba(27,36,56,0) 68%)' }} />
-                  {currentImageUrl && (
-                    <div className="absolute inset-y-0 right-0 w-1/3 pointer-events-none" aria-hidden="true"
-                      style={{
-                        backgroundImage: `url(${currentImageUrl})`,
-                        backgroundSize: 'cover', backgroundPosition: 'center 22%',
-                        filter: 'grayscale(1)', mixBlendMode: 'soft-light',
-                        WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.9) 45%)',
-                        maskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.9) 45%)',
-                      }} />
-                  )}
-                  <span className="absolute left-4 bottom-3 text-white font-bold text-sm">Η σκηνή σου</span>
-                  <button type="button" onClick={() => coolImageInputRef.current?.click()}
-                    className="absolute right-3 bottom-3 text-sm font-bold rounded-full px-4 py-1.5 text-white hover:brightness-125 transition duration-200"
-                    style={{ backgroundColor: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.4)', backdropFilter: 'blur(12px) saturate(160%)', WebkitBackdropFilter: 'blur(12px) saturate(160%)' }}>
-                    Αλλαγή
-                  </button>
-                  <input ref={coolImageInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="hidden"
-                    onChange={e => { const f = e.target.files?.[0]; if (f) handleImageChange(f) }} />
-                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Η φωτογραφία σου ζει στη σκηνή επάνω — άλλαξέ την από το κουμπί «Αλλαγή φωτογραφίας» εκεί.
+                </p>
               ) : (
               <EditableImage
                 currentImageUrl={currentImageUrl}
