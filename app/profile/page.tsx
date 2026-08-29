@@ -78,6 +78,7 @@ export default function ProfilePage() {
   // — προτίμηση χρήστη, επιμένει στον browser.
   const [heroCompact, setHeroCompactState] = useState(false)
   const heroRef = useRef<HTMLElement>(null)
+  const coolImageInputRef = useRef<HTMLInputElement>(null)
   const setHeroCompact = (v: boolean) => {
     setHeroCompactState(v)
     try { localStorage.setItem('cforc-hero-compact', v ? '1' : '0') } catch {}
@@ -846,7 +847,10 @@ export default function ProfilePage() {
                     {indicatorFor('profile')} πεδία προφίλ κενά
                   </span>
                 )}
-                {heroContext().cta && (
+                {/* Χωρίς «Επεξεργασία προφίλ» (29/8): η επεξεργασία είναι
+                    πλέον διαισθητική — κλικ σε οποιοδήποτε στοιχείο. Στις
+                    άλλες όψεις το CTA τους μένει. */}
+                {activeSection !== 'profile' && heroContext().cta && (
                   <button type="button" onClick={heroContext().onCta}
                     className="text-sm font-bold rounded-full px-4 py-1.5 bg-coral text-charcoal hover:bg-[#F07551] transition-colors">
                     {heroContext().cta}
@@ -858,6 +862,13 @@ export default function ProfilePage() {
                     className="notranslate text-sm font-bold rounded-full px-4 py-1.5 border border-white/40 text-white hover:bg-white/10 transition-colors">
                     OC →
                   </Link>
+                )}
+                {activeSection === 'profile' && (
+                  <button type="button" onClick={() => setShowGuidelinesModal(true)}
+                    className="text-sm font-bold rounded-full px-4 py-1.5 text-white hover:brightness-125 transition duration-200"
+                    style={{ backgroundColor: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.4)', backdropFilter: 'blur(12px) saturate(160%)', WebkitBackdropFilter: 'blur(12px) saturate(160%)' }}>
+                    Οδηγίες συμπλήρωσης
+                  </button>
                 )}
               </div>
             </div>
@@ -1287,11 +1298,40 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
+              {coolMode ? (
+                /* Χ3 (29/8): επεξεργάζεσαι ΤΗ σκηνή — μικρογραφία του hero
+                   (λούσιμο + ασπρόμαυρο soft-light πορτρέτο), WYSIWYG. Μόνο
+                   «Αλλαγή», σε υγρό γυαλί, κάτω δεξιά — μακριά από το πάνω
+                   δεξιά όπου ζει το μενού του Cool. */
+                <div className="relative rounded-2xl overflow-hidden h-44" style={{ backgroundColor: '#1B2438' }}>
+                  <div className="absolute inset-0 pointer-events-none" aria-hidden="true"
+                    style={{ background: 'radial-gradient(90% 130% at 86% 40%, rgba(214,142,114,.8) 0%, rgba(171,104,86,.5) 38%, rgba(27,36,56,0) 68%)' }} />
+                  {currentImageUrl && (
+                    <div className="absolute inset-y-0 right-0 w-1/3 pointer-events-none" aria-hidden="true"
+                      style={{
+                        backgroundImage: `url(${currentImageUrl})`,
+                        backgroundSize: 'cover', backgroundPosition: 'center 22%',
+                        filter: 'grayscale(1)', mixBlendMode: 'soft-light',
+                        WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.9) 45%)',
+                        maskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.9) 45%)',
+                      }} />
+                  )}
+                  <span className="absolute left-4 bottom-3 text-white font-bold text-sm">Η σκηνή σου</span>
+                  <button type="button" onClick={() => coolImageInputRef.current?.click()}
+                    className="absolute right-3 bottom-3 text-sm font-bold rounded-full px-4 py-1.5 text-white hover:brightness-125 transition duration-200"
+                    style={{ backgroundColor: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.4)', backdropFilter: 'blur(12px) saturate(160%)', WebkitBackdropFilter: 'blur(12px) saturate(160%)' }}>
+                    Αλλαγή
+                  </button>
+                  <input ref={coolImageInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="hidden"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) handleImageChange(f) }} />
+                </div>
+              ) : (
               <EditableImage
                 currentImageUrl={currentImageUrl}
                 alt={user.Name}
                 onChange={handleImageChange}
               />
+              )}
               <div className="mt-4">
                 <EditableField
                   label="Εναλλακτικό κείμενο φωτογραφίας"
