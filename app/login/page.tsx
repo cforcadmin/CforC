@@ -25,6 +25,7 @@ function LoginPageContent() {
   // Πορτρέτο για τη σκηνή: αν ξέρουμε ποιο μέλος είναι (session ή τοπική
   // μνήμη από προηγούμενη σύνδεση) δείχνουμε εκείνο· αλλιώς τυχαίο μέλος
   const [heroImage, setHeroImage] = useState<string | null>(null)
+  const [heroKnown, setHeroKnown] = useState(false)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -60,12 +61,12 @@ function LoginPageContent() {
     if (!cool) return
     const sessionImage = user && Array.isArray((user as any).Image) && (user as any).Image[0]?.url
       ? (user as any).Image[0].url : null
-    if (sessionImage) { setHeroImage(sessionImage); return }
+    if (sessionImage) { setHeroImage(sessionImage); setHeroKnown(true); return }
     try {
       const raw = localStorage.getItem('cforc-last-member')
       if (raw) {
         const saved = JSON.parse(raw)
-        if (saved?.image) { setHeroImage(saved.image); return }
+        if (saved?.image) { setHeroImage(saved.image); setHeroKnown(true); return }
       }
     } catch { /* συνέχισε στο τυχαίο */ }
     getMembers()
@@ -217,6 +218,11 @@ function LoginPageContent() {
                   maskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.9) 45%, rgba(0,0,0,.9) 100%)',
                 }}
               />
+            )}
+            {heroImage && !heroKnown && (
+              <div className="absolute inset-y-0 right-0 w-1/3 pointer-events-none flex items-center justify-center" aria-hidden="true" title="Δεν ξέρουμε ακόμη ποιος είσαι">
+                <span className="text-white/25 font-bold select-none" style={{ fontSize: 'clamp(4rem, 8vw, 7rem)', textShadow: '0 2px 24px rgba(0,0,0,.35)' }}>?</span>
+              </div>
             )}
             <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.08) 30%, rgba(0,0,0,.45) 100%)' }} aria-hidden="true" />
             <div className="relative px-6 md:px-12 pt-24 pb-12 md:pb-14">
