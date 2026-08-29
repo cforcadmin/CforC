@@ -5,6 +5,13 @@ import { test, expect } from '@playwright/test'
 // λεξικό του ΧΑΡΤΗ. ΔΕΝ ελέγχουν την ίδια τη μετάφραση της Google:
 // εξωτερική υπηρεσία, αναξιόπιστη σε CI.
 test.describe('Αλλαγή γλώσσας', () => {
+  // Ερμητικότητα: μπλοκάρουμε τελείως τα hosts της Google — το δικό μας
+  // συμβόλαιο (cookie, badge-fallback, λεξικό) δουλεύει χωρίς αυτά, και
+  // το εξωτερικό script έκανε το τεστ flaky υπό παράλληλο φορτίο.
+  test.beforeEach(async ({ page }) => {
+    await page.route(/translate\.google|translate-pa\.googleapis|translate\.googleapis/, r => r.abort())
+  })
+
   test('η επιλογή Español γράφει το googtrans cookie και το badge δείχνει ES', async ({ page, viewport }) => {
     test.skip(!!viewport && viewport.width < 768, 'Το globe ζει στο desktop header')
 
