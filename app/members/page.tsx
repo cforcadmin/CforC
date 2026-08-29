@@ -478,7 +478,7 @@ function MembersPageContent() {
           {/* Filters */}
           {/* Χωρίς overflow-hidden: έκοβε τα ανοιχτά dropdowns των φίλτρων —
               το logo-reveal κόβεται με δικό του rounded αντί για clipping */}
-          <div className={cool ? 'relative menu-glass glass-rim rounded-3xl p-8 mb-12' : 'bg-white dark:bg-gray-800 rounded-3xl p-8 mb-12'}>
+          <div className={cool ? 'relative z-30 menu-glass glass-rim rounded-3xl p-8 mb-12' : 'relative z-30 bg-white dark:bg-gray-800 rounded-3xl p-8 mb-12'}>
             {cool && <span className="logo-reveal rounded-3xl overflow-hidden" aria-hidden="true" />}
             <div className={cool ? 'relative flex flex-wrap items-center gap-3' : 'flex flex-wrap items-center gap-3'}>
               <input
