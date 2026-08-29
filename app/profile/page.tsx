@@ -802,15 +802,15 @@ export default function ProfilePage() {
                 στη σκηνή, δεν αποκαλύπτεται ποτέ 100%. Χωρίς φωτογραφία, το
                 navy στέκει μόνο του. */}
             {currentImageUrl && (
-              <div className="absolute inset-0 pointer-events-none" aria-hidden="true"
+              <div className="absolute inset-y-0 right-0 w-1/3 pointer-events-none" aria-hidden="true"
                 style={{
                   backgroundImage: `url(${currentImageUrl})`,
                   backgroundSize: 'cover',
-                  backgroundPosition: 'center right',
+                  backgroundPosition: 'center 30%',
                   filter: 'blur(2.5px) saturate(115%)',
                   opacity: 0.9,
-                  WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, transparent 55%, rgba(0,0,0,.88) 100%)',
-                  maskImage: 'linear-gradient(90deg, transparent 0%, transparent 55%, rgba(0,0,0,.88) 100%)',
+                  WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.88) 45%, rgba(0,0,0,.88) 100%)',
+                  maskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.88) 45%, rgba(0,0,0,.88) 100%)',
                 }}
               />
             )}
