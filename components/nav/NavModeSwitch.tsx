@@ -23,7 +23,7 @@ export default function NavModeSwitch({
     <div className="hover-reveal">
       <button
         type="button"
-        aria-label="Στυλ μενού"
+        aria-label="Στυλ σελίδας"
         aria-haspopup="true"
         className={buttonClassName}
       >
@@ -34,7 +34,7 @@ export default function NavModeSwitch({
       </button>
       <div className={`reveal-panel absolute top-full ${align === 'right' ? 'right-0' : 'left-0'} mt-3 w-44 menu-glass-dense glass-rim rounded-2xl py-1.5 z-50`}>
         <p className="px-4 pt-1 pb-1.5 text-[10px] font-bold tracking-widest text-gray-500 dark:text-gray-400">
-          ΣΤΥΛ ΜΕΝΟΥ
+          ΣΤΥΛ ΣΕΛΙΔΑΣ
         </p>
         {NAV_MODES.map(m => (
           <button
