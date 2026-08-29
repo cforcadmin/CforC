@@ -124,6 +124,7 @@ export default function CoolNav() {
     '/': '68vh',
     '/about': '52vh', '/coordination-team': '52vh', '/transparency': '52vh', '/contact': '52vh',
     '/terms': '52vh', '/privacy': '52vh', '/cookies': '52vh', '/accessibility': '52vh',
+    '/profile': '44vh',
   }
   const heroVh = HERO_CARD_VH[pathname || '']
 

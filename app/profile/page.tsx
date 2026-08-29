@@ -807,10 +807,10 @@ export default function ProfilePage() {
                   backgroundImage: `url(${currentImageUrl})`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center right',
-                  filter: 'blur(5px) saturate(115%)',
-                  opacity: 0.6,
-                  WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, transparent 66%, rgba(0,0,0,1) 100%)',
-                  maskImage: 'linear-gradient(90deg, transparent 0%, transparent 66%, rgba(0,0,0,1) 100%)',
+                  filter: 'blur(2.5px) saturate(115%)',
+                  opacity: 0.9,
+                  WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, transparent 55%, rgba(0,0,0,.88) 100%)',
+                  maskImage: 'linear-gradient(90deg, transparent 0%, transparent 55%, rgba(0,0,0,.88) 100%)',
                 }}
               />
             )}
