@@ -223,7 +223,7 @@ export default function ProfilePage() {
         }
       }
       case 'newsletters':
-        return { title: isNewSince(heroStats?.newsletterLatest ?? null, 'newsletters') ? 'Νέο τεύχος σε περιμένει' : greeting(), cta: null, onCta: toContent }
+        return { title: isNewSince(heroStats?.newsletterLatest ?? null, 'newsletters') ? 'Νέο τεύχος σε περιμένει' : 'Τα μηνιαία νέα μας', cta: null, onCta: toContent }
       case 'educational':
         return { title: 'Επιλογή Υλικού για τα μέλη μας', cta: null, onCta: toContent }
       case 'networks':
