@@ -1634,19 +1634,19 @@ export default function ProfilePage() {
 
         {/* Section Content */}
         {activeSection === 'open-calls' && (
-          <div className="pt-20">
+          <div className={coolMode ? 'pt-10' : 'pt-20'}>
             <OpenCallsContent />
           </div>
         )}
 
         {activeSection === 'newsletters' && (
-          <div className="pt-20">
+          <div className={coolMode ? 'pt-10' : 'pt-20'}>
             <NewslettersContent />
           </div>
         )}
 
         {activeSection === 'library' && (
-          <div className="pt-20">
+          <div className={coolMode ? 'pt-10' : 'pt-20'}>
             {/* Ο τίτλος, το σήμα δοκιμαστικής λειτουργίας και οι οδηγίες ζουν
                 μέσα στο LibraryContent — οι οδηγίες ανοίγουν το δικό του modal. */}
             <LibraryContent />
@@ -1654,31 +1654,31 @@ export default function ProfilePage() {
         )}
 
         {activeSection === 'educational' && (
-          <div className="pt-20">
+          <div className={coolMode ? 'pt-10' : 'pt-20'}>
             <EducationalMaterialContent />
           </div>
         )}
 
         {activeSection === 'networks' && (
-          <div className="pt-20">
+          <div className={coolMode ? 'pt-10' : 'pt-20'}>
             <NetworksContent />
           </div>
         )}
 
         {activeSection === 'working-groups' && (
-          <div className="pt-20">
+          <div className={coolMode ? 'pt-10' : 'pt-20'}>
             <WorkingGroupsContent />
           </div>
         )}
 
         {activeSection === 'pocket-guide' && (
-          <div className="pt-20">
+          <div className={coolMode ? 'pt-10' : 'pt-20'}>
             <PocketGuideContent />
           </div>
         )}
 
         {!IMPLEMENTED_SECTIONS.has(activeSection) && (
-          <div className="pt-32 pb-24 max-w-4xl mx-auto px-4">
+          <div className={coolMode ? 'pt-10 pb-24 max-w-4xl mx-auto px-4' : 'pt-32 pb-24 max-w-4xl mx-auto px-4'}>
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-12 text-center">
               <div className="w-20 h-20 rounded-full bg-coral/10 dark:bg-coral/20 flex items-center justify-center mx-auto mb-6">
                 <svg className="w-10 h-10 text-coral dark:text-coral-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
