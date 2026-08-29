@@ -8,6 +8,7 @@
 // παλιού CombinedCtaSection.
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
@@ -64,10 +65,21 @@ export default function PolicyCoolPage({ initialSection = 'terms' }: { initialSe
 
   return (
     <>
-      {/* Hero — navy, χωρίς εικόνα: οι πολιτικές δεν έχουν φωτογραφία */}
+      {/* Hero — navy με τη φωτογραφία του δικτύου χαμηλωμένη (30/8): οι
+          πολιτικές μένουν επίσημες, η εικόνα απλώς αναπνέει από πίσω */}
       <section className="px-2 pt-2 md:px-3 md:pt-3">
         <div className="relative rounded-3xl overflow-hidden min-h-[45vh] md:min-h-[52vh] flex flex-col justify-end" style={{ backgroundColor: '#1B2438' }}>
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.10) 30%, rgba(0,0,0,.5) 100%)' }} aria-hidden="true" />
+          <div className="absolute inset-0">
+            <Image
+              src="/about-us.jpg"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover object-center opacity-40"
+            />
+          </div>
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(27,36,56,.45) 0%, rgba(27,36,56,.65) 55%, rgba(27,36,56,.95) 100%)' }} aria-hidden="true" />
           <div className="relative px-6 md:px-12 pb-20 md:pb-24 pt-28">
             <p className="text-coral font-bold text-sm tracking-[.18em] mb-3">ΠΟΛΙΤΙΚΗ</p>
             <h1 className="text-white font-bold" style={{ fontSize: 'clamp(2rem, 4vw, 3.4rem)', lineHeight: 0.95 }}>
