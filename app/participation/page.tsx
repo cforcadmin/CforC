@@ -215,7 +215,7 @@ function ParticipationContent() {
                 </p>
                 )}
                 {/* Οικονομικές υποχρεώσεις */}
-                <div className={cool ? 'menu-glass rounded-xl p-4 mb-4' : 'bg-orange-50 dark:bg-gray-700 rounded-xl p-4 mb-4'}>
+                <div className={cool ? 'relative menu-glass glass-rim rounded-xl p-4 mb-4' : 'bg-orange-50 dark:bg-gray-700 rounded-xl p-4 mb-4'}>
                   <h3 className="font-bold text-coral dark:text-coral-light mb-2">Οικονομικές υποχρεώσεις μελών</h3>
                   <ul className="text-gray-700 dark:text-gray-300 text-sm space-y-1">
                     <li>• Κόστος εγγραφής (άπαξ): <span className="font-semibold">10€</span></li>
@@ -224,7 +224,7 @@ function ParticipationContent() {
                 </div>
 
                 {/* Λειτουργία Δικτύου */}
-                <div className={cool ? 'menu-glass rounded-xl p-4 mb-4' : 'bg-orange-50 dark:bg-gray-700 rounded-xl p-4 mb-4'}>
+                <div className={cool ? 'relative menu-glass glass-rim rounded-xl p-4 mb-4' : 'bg-orange-50 dark:bg-gray-700 rounded-xl p-4 mb-4'}>
                   <h3 className="font-bold text-coral dark:text-coral-light mb-2">Λειτουργία Δικτύου</h3>
                   <ul className="text-gray-700 dark:text-gray-300 text-sm space-y-1">
                     <li>• Το Δίκτυο διοικείται από 5μελές ΔΣ με υποστήριξη από ομάδες εργασίας στις οποίες έχουν την ευκαιρία να συμμετέχουν όλα τα μέλη</li>
@@ -234,26 +234,26 @@ function ParticipationContent() {
                 </div>
 
                 {/* Προνόμια μελών */}
-                <div className={cool ? 'menu-glass rounded-xl p-4' : 'bg-orange-50 dark:bg-gray-700 rounded-xl p-4'}>
+                <div className={cool ? 'relative menu-glass glass-rim rounded-xl p-4' : 'bg-orange-50 dark:bg-gray-700 rounded-xl p-4'}>
                   <h3 className="font-bold text-coral dark:text-coral-light mb-2">Προνόμια μελών</h3>
                   <div className="flex flex-wrap gap-2">
                     <span className={cool
-                      ? 'bg-white/50 dark:bg-white/10 border border-charcoal/15 dark:border-white/15 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
+                      ? 'cool-count-pill text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
                       : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'}>Συμμετοχή</span>
                     <span className={cool
-                      ? 'bg-white/50 dark:bg-white/10 border border-charcoal/15 dark:border-white/15 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
+                      ? 'cool-count-pill text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
                       : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'}>Δικτύωση</span>
                     <span className={cool
-                      ? 'bg-white/50 dark:bg-white/10 border border-charcoal/15 dark:border-white/15 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
+                      ? 'cool-count-pill text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
                       : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'}>Ανάπτυξη Ικανοτήτων</span>
                     <span className={cool
-                      ? 'bg-white/50 dark:bg-white/10 border border-charcoal/15 dark:border-white/15 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
+                      ? 'cool-count-pill text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
                       : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'}>Συνηγορία</span>
                     <span className={cool
-                      ? 'bg-white/50 dark:bg-white/10 border border-charcoal/15 dark:border-white/15 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
+                      ? 'cool-count-pill text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
                       : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'}>Υποστήριξη</span>
                     <span className={cool
-                      ? 'bg-white/50 dark:bg-white/10 border border-charcoal/15 dark:border-white/15 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
+                      ? 'cool-count-pill text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'
                       : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm'}>Ευκαιρίες</span>
                   </div>
                 </div>
@@ -282,7 +282,7 @@ function ParticipationContent() {
           <div className="mb-20">
             <h2 className="sr-only">Ποιος μπορεί να γίνει μέλος</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className={cool ? 'menu-glass rounded-2xl p-6' : 'bg-orange-50 dark:bg-gray-700 rounded-2xl p-6'}>
+              <div className={cool ? 'relative menu-glass glass-rim rounded-2xl p-6' : 'bg-orange-50 dark:bg-gray-700 rounded-2xl p-6'}>
                 <div className="w-12 h-12 bg-coral dark:bg-coral-light rounded-full flex items-center justify-center mb-4">
                   <svg className="w-6 h-6 text-white dark:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -294,7 +294,7 @@ function ParticipationContent() {
                 </p>
               </div>
 
-              <div className={cool ? 'menu-glass rounded-2xl p-6' : 'bg-orange-50 dark:bg-gray-700 rounded-2xl p-6'}>
+              <div className={cool ? 'relative menu-glass glass-rim rounded-2xl p-6' : 'bg-orange-50 dark:bg-gray-700 rounded-2xl p-6'}>
                 <div className="w-12 h-12 bg-coral dark:bg-coral-light rounded-full flex items-center justify-center mb-4">
                   <svg className="w-6 h-6 text-white dark:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -306,7 +306,7 @@ function ParticipationContent() {
                 </p>
               </div>
 
-              <div className={cool ? 'menu-glass rounded-2xl p-6' : 'bg-orange-50 dark:bg-gray-700 rounded-2xl p-6'}>
+              <div className={cool ? 'relative menu-glass glass-rim rounded-2xl p-6' : 'bg-orange-50 dark:bg-gray-700 rounded-2xl p-6'}>
                 <div className="w-12 h-12 bg-coral dark:bg-coral-light rounded-full flex items-center justify-center mb-4">
                   <svg className="w-6 h-6 text-white dark:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -318,7 +318,7 @@ function ParticipationContent() {
                 </p>
               </div>
 
-              <div className={cool ? 'menu-glass rounded-2xl p-6' : 'bg-orange-50 dark:bg-gray-700 rounded-2xl p-6'}>
+              <div className={cool ? 'relative menu-glass glass-rim rounded-2xl p-6' : 'bg-orange-50 dark:bg-gray-700 rounded-2xl p-6'}>
                 <div className="w-12 h-12 bg-coral dark:bg-coral-light rounded-full flex items-center justify-center mb-4">
                   <svg className="w-6 h-6 text-white dark:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -364,7 +364,9 @@ function ParticipationContent() {
             <button
               onClick={() => setShowRegistrationModal(true)}
               disabled={!agreedToTerms}
-              className="bg-charcoal dark:bg-gray-600 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-8 py-4 rounded-full text-lg font-bold hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className={cool
+                ? 'bg-white/50 dark:bg-white/10 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-8 py-4 rounded-full text-lg font-bold hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none'
+                : 'bg-charcoal dark:bg-gray-600 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-8 py-4 rounded-full text-lg font-bold hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none'}
             >
               ΘΕΛΩ ΝΑ ΕΓΓΡΑΦΩ!
             </button>
