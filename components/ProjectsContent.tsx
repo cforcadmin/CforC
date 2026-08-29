@@ -13,6 +13,8 @@ import { getProjects } from '@/lib/strapi'
 import type { StrapiResponse, Project } from '@/lib/types'
 import ViewToggle from '@/components/shared/ViewToggle'
 import ProjectFlipCard from '@/components/shared/ProjectFlipCard'
+import { useNavMode } from '@/components/nav/useNavMode'
+import CoolMemberBand from '@/components/about-cool/CoolMemberBand'
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   active: { label: 'Ενεργό', className: 'bg-white text-green-700 dark:bg-gray-900 dark:text-green-400' },
@@ -21,10 +23,14 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
 }
 
 export default function ProjectsContent() {
+  const { mode } = useNavMode()
+  const cool = mode === 'cool'
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  // Cool presets στο κάτω χείλος του hero — φίλτρο κατάστασης έργου
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'in_progress' | 'completed'>('all')
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
 
   useEffect(() => {
@@ -69,11 +75,63 @@ export default function ProjectsContent() {
     return null
   }
 
+  const visibleProjects = statusFilter === 'all' ? projects : projects.filter(p => p.project_status === statusFilter)
+  const presetCls = (selected: boolean) =>
+    `inline-flex items-center min-h-11 px-4 text-xs font-bold tracking-widest whitespace-nowrap border-b-2 transition-colors duration-200 ${
+      selected ? 'text-white border-coral' : 'text-white/70 border-transparent hover:text-white'
+    }`
+  const STATUS_PRESETS: Array<{ key: typeof statusFilter; label: string }> = [
+    { key: 'all', label: 'ΟΛΑ' },
+    { key: 'active', label: 'ΕΝΕΡΓΑ' },
+    { key: 'in_progress', label: 'ΣΕ ΕΞΕΛΙΞΗ' },
+    { key: 'completed', label: 'ΟΛΟΚΛΗΡΩΜΕΝΑ' },
+  ]
+
   return (
     <div className="min-h-screen dark:bg-gray-900">
       <Navigation />
       <main id="main-content">
-        {/* Hero Section */}
+        {/* Hero Section — Cool: κάρτα-σκηνή όπως στα ΝΕΑ */}
+        {cool ? (
+        <section className="px-2 pt-2 md:px-3">
+          <div className="relative overflow-hidden rounded-3xl flex flex-col justify-end min-h-[45vh] md:min-h-[52vh]" style={{ backgroundColor: '#1B2438' }}>
+            <div className="absolute inset-0">
+              <Image
+                src="/about-us-what-we-offer2.jpg"
+                alt=""
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover object-center opacity-60"
+              />
+              <div
+                className="absolute inset-0"
+                style={{ background: 'linear-gradient(180deg, rgba(27,36,56,.2) 0%, rgba(27,36,56,.5) 55%, rgba(27,36,56,.92) 100%)' }}
+                aria-hidden="true"
+              />
+            </div>
+            <div className="relative px-6 md:px-12 pt-24 pb-10 md:pb-12">
+              <p className="text-[11px] font-bold tracking-[.14em] uppercase text-coral">ΕΡΓΑ</p>
+              <h1 className="text-white text-3xl md:text-5xl font-bold leading-tight mt-2 max-w-3xl">
+                Τα έργα και οι πρωτοβουλίες του Culture for Change
+              </h1>
+              <p className="text-white/70 mt-5" aria-live="polite">
+                <span className="notranslate text-coral font-bold text-3xl align-middle">{visibleProjects.length}</span>
+                <span className="ml-2 align-middle">έργα</span>
+              </p>
+            </div>
+            <div className="relative" style={{ backgroundColor: 'rgba(10, 14, 24, .45)', backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.12)' }}>
+              <div className="flex overflow-x-auto" style={{ scrollbarWidth: 'none' }} role="tablist" aria-label="Φίλτρο κατάστασης έργου">
+                {STATUS_PRESETS.map(p => (
+                  <button key={p.key} type="button" role="tab" aria-selected={statusFilter === p.key} onClick={() => setStatusFilter(p.key)} className={presetCls(statusFilter === p.key)}>
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+        ) : (
         <section className="relative -bottom-20">
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -93,9 +151,10 @@ export default function ProjectsContent() {
             </div>
           </div>
         </section>
+        )}
 
         {/* Projects Grid */}
-        <section className="py-24 bg-orange-50 dark:bg-gray-800">
+        <section className={cool ? 'pt-10 pb-24' : 'py-24 bg-orange-50 dark:bg-gray-800'}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {loading && <LoadingIndicator />}
 
@@ -121,13 +180,13 @@ export default function ProjectsContent() {
 
                 {viewMode === 'grid' ? (
                   <div className="grid md:grid-cols-3 gap-8">
-                    {projects.map((project) => (
-                      <ProjectFlipCard key={project.id} project={project} />
+                    {visibleProjects.map((project) => (
+                      <ProjectFlipCard key={project.id} project={project} cool={cool} />
                     ))}
                   </div>
                 ) : (
                   <div className="flex flex-col gap-4">
-                    {projects.map((project) => {
+                    {visibleProjects.map((project) => {
                       const imageUrl = getImageUrl(project.cover_image)
                       const statusInfo = project.project_status ? STATUS_LABELS[project.project_status] : null
                       const partners = project.project_partners
@@ -138,7 +197,9 @@ export default function ProjectsContent() {
                         <Link
                           key={project.id}
                           href={`/projects/${project.slug}`}
-                          className="bg-orange-50 dark:bg-gray-700 rounded-2xl overflow-hidden border border-black dark:border-white hover:shadow-lg transition-all duration-300 flex items-center gap-5 p-4 group border-l-4 border-l-transparent hover:border-l-coral dark:hover:border-l-coral-light"
+                          className={cool
+                            ? 'menu-glass rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 flex items-center gap-5 p-4 group border-l-4 border-l-transparent hover:border-l-coral dark:hover:border-l-coral-light'
+                            : 'bg-orange-50 dark:bg-gray-700 rounded-2xl overflow-hidden border border-black dark:border-white hover:shadow-lg transition-all duration-300 flex items-center gap-5 p-4 group border-l-4 border-l-transparent hover:border-l-coral dark:hover:border-l-coral-light'}
                         >
                           {imageUrl ? (
                             <div className="w-24 h-16 relative rounded-xl overflow-hidden flex-shrink-0">
@@ -176,6 +237,8 @@ export default function ProjectsContent() {
             )}
           </div>
         </section>
+
+        {cool && <CoolMemberBand />}
       </main>
       <Footer />
       <CookieConsent />
