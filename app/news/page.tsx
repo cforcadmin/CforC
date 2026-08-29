@@ -324,7 +324,7 @@ function ActivitiesPageContent() {
           <div className="relative overflow-hidden rounded-3xl flex flex-col justify-end min-h-[45vh] md:min-h-[52vh]" style={{ backgroundColor: '#1B2438' }}>
             <div className="absolute inset-0">
               <Image
-                src="/about-us-what-we-offer.jpg"
+                src="/news-hero.png"
                 alt=""
                 fill
                 priority
