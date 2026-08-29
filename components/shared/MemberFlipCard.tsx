@@ -24,6 +24,7 @@ interface MemberFlipCardProps {
     ProfileImageAltText?: string
   }
   role?: string
+  cool?: boolean
 }
 
 function extractBioText(bio: any): string {
@@ -86,7 +87,7 @@ function LocationPill({ label, filterHref, mapHref }: { label: string; filterHre
   )
 }
 
-export default function MemberFlipCard({ member, role }: MemberFlipCardProps) {
+export default function MemberFlipCard({ member, role, cool }: MemberFlipCardProps) {
   const router = useRouter()
   const [isFlipped, setIsFlipped] = useState(false)
   const flipTimeout = useRef<NodeJS.Timeout | null>(null)
@@ -131,7 +132,9 @@ export default function MemberFlipCard({ member, role }: MemberFlipCardProps) {
         <div className="[backface-visibility:hidden] w-full h-full">
           <Link
             href={href}
-            className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-gray-700/50 transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full group"
+            className={cool
+              ? 'menu-glass rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full group'
+              : 'bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-gray-700/50 transition-shadow duration-300 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex flex-col h-full group'}
           >
             {imageUrl ? (
               <div className="aspect-[10/12] relative bg-gray-200 dark:bg-gray-700 overflow-hidden">
@@ -172,7 +175,9 @@ export default function MemberFlipCard({ member, role }: MemberFlipCardProps) {
         <div className="absolute top-0 left-0 w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)]">
           <div
             onClick={() => router.push(href)}
-            className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-700/50 border-l-4 border-coral dark:border-coral-light flex flex-col h-full cursor-pointer"
+            className={cool
+              ? 'menu-glass rounded-3xl overflow-hidden shadow-xl border-l-4 border-coral dark:border-coral-light flex flex-col h-full cursor-pointer'
+              : 'bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-700/50 border-l-4 border-coral dark:border-coral-light flex flex-col h-full cursor-pointer'}
           >
             <div className="p-5 flex flex-col h-full overflow-hidden">
               <h3 className={`text-lg font-bold text-coral dark:text-coral-light mb-2 line-clamp-2 ${useEng ? 'notranslate' : ''}`}>{displayName}</h3>

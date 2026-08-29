@@ -21,6 +21,9 @@ import ViewToggle from '@/components/shared/ViewToggle'
 import MemberFlipCard from '@/components/shared/MemberFlipCard'
 import { doesFieldMatchFilter } from '@/lib/memberTaxonomy'
 import { matchesName } from '@/lib/transliterate'
+import { useNavMode } from '@/components/nav/useNavMode'
+import CoolMemberBand from '@/components/about-cool/CoolMemberBand'
+import { CITY_TO_PROVINCE } from '@/lib/greekCities'
 
 interface Member {
   id: number
@@ -58,7 +61,10 @@ interface Member {
   Project2PicturesAltText?: string  // Accessibility alt text for project 2 images
   Project2Tags?: string
   HideProfile?: boolean
+  createdAt?: string
 }
+
+type MembersPreset = 'all' | 'new' | 'thessaloniki' | 'athens' | 'rest' | 'abroad'
 
 export default function MembersPage() {
   return (
@@ -94,6 +100,12 @@ function loadMembersSearch() {
 }
 
 function MembersPageContent() {
+  const { mode } = useNavMode()
+  const cool = mode === 'cool'
+  // Cool presets στο κάτω χείλος του hero — προεπιλογή «Όλα» (τυχαία σειρά)
+  const [preset, setPreset] = useState<MembersPreset>('all')
+  // Τυχαίο πορτρέτο μέλους στη σκηνή — αλλάζει σε κάθε φόρτωση
+  const [heroSeed] = useState(() => Math.random())
   const [allMembers, setAllMembers] = useState<Member[]>([])
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -224,6 +236,29 @@ function MembersPageContent() {
   useEffect(() => {
     let result = [...allMembers]
 
+    // Cool preset (γρήγορο φίλτρο από τη λωρίδα του hero)
+    if (preset !== 'all') {
+      const memberCities = (m: Member) => m.City?.split(',').map(c => c.trim()).filter(c => c && c !== '-') || []
+      const hasCity = (m: Member, city: string) => memberCities(m).some(c => c.toLowerCase() === city)
+      const isAbroad = (m: Member) => {
+        const cities = memberCities(m)
+        return cities.length > 0 && !cities.some(c => CITY_TO_PROVINCE[c])
+      }
+      if (preset === 'new') {
+        const cutoff = new Date()
+        cutoff.setMonth(cutoff.getMonth() - 3)
+        result = result.filter(m => m.createdAt && new Date(m.createdAt) >= cutoff)
+      } else if (preset === 'thessaloniki') {
+        result = result.filter(m => hasCity(m, 'θεσσαλονίκη'))
+      } else if (preset === 'athens') {
+        result = result.filter(m => hasCity(m, 'αθήνα'))
+      } else if (preset === 'rest') {
+        result = result.filter(m => !hasCity(m, 'αθήνα') && !hasCity(m, 'θεσσαλονίκη') && !isAbroad(m))
+      } else if (preset === 'abroad') {
+        result = result.filter(m => isAbroad(m))
+      }
+    }
+
     if (searchQuery) {
       result = result.filter((member) =>
         matchesName(searchQuery, member.Name, member.EngName)
@@ -269,7 +304,7 @@ function MembersPageContent() {
     }
 
     setFilteredMembers(result)
-  }, [allMembers, searchQuery, selectedFields, selectedCities, selectedProvinces, sortMode, filterLogic])
+  }, [allMembers, searchQuery, selectedFields, selectedCities, selectedProvinces, sortMode, filterLogic, preset])
 
   // Animated counter
   useEffect(() => {
@@ -322,11 +357,79 @@ function MembersPageContent() {
     try { sessionStorage.removeItem(STORAGE_KEY) } catch {}
   }
 
+  const membersWithImage = allMembers.filter(m => m.Image && m.Image.length > 0 && m.Image[0].url)
+  const heroMember = membersWithImage.length > 0
+    ? membersWithImage[Math.floor(heroSeed * membersWithImage.length)]
+    : null
+
+  const presetCls = (selected: boolean) =>
+    `inline-flex items-center min-h-11 px-4 text-xs font-bold tracking-widest whitespace-nowrap border-b-2 transition-colors duration-200 ${
+      selected ? 'text-white border-coral' : 'text-white/70 border-transparent hover:text-white'
+    }`
+  const MEMBER_PRESETS: Array<{ key: MembersPreset; label: string }> = [
+    { key: 'new', label: 'ΝΕΑ ΜΕΛΗ' },
+    { key: 'thessaloniki', label: 'ΘΕΣΣΑΛΟΝΙΚΗ' },
+    { key: 'athens', label: 'ΑΘΗΝΑ' },
+    { key: 'rest', label: 'ΕΚΤΟΣ ΘΕΣΣΑΛΟΝΙΚΗΣ/ΑΘΗΝΑΣ' },
+    { key: 'abroad', label: 'ΕΞΩΤΕΡΙΚΟ' },
+    { key: 'all', label: 'ΟΛΑ' },
+  ]
+
   return (
     <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
       <Navigation />
       <main id="main-content">
-        {/* Hero Section */}
+        {/* Hero Section — Cool: σκηνή με το λούσιμο/πορτρέτο του προφίλ,
+            με τυχαίο μέλος σε κάθε φόρτωση, και presets στο κάτω χείλος */}
+        {cool ? (
+        <section className="px-2 pt-2 md:px-3">
+          <div className="relative overflow-hidden rounded-3xl flex flex-col justify-end min-h-[45vh] md:min-h-[52vh]" style={{ backgroundColor: '#1B2438' }}>
+            {/* Το σταθερό χρωματιστό λούσιμο — ίδια συνταγή με το hero του προφίλ */}
+            <div className="absolute inset-0 pointer-events-none" aria-hidden="true"
+              style={{
+                background:
+                  'radial-gradient(90% 130% at 86% 40%, rgba(214,142,114,.8) 0%, rgba(171,104,86,.5) 38%, rgba(27,36,56,0) 68%), ' +
+                  'radial-gradient(50% 80% at 70% 85%, rgba(255,139,106,.35) 0%, rgba(27,36,56,0) 70%)',
+              }}
+            />
+            {/* Τυχαίο πορτρέτο μέλους: ασπρόμαυρο + soft-light στο δεξί 1/3,
+                ξεθωριάζει από τα 2/3 — ποτέ πλήρης αποκάλυψη */}
+            {heroMember && (
+              <div className="absolute inset-y-0 right-0 w-1/3 pointer-events-none" aria-hidden="true"
+                style={{
+                  backgroundImage: `url(${heroMember.Image![0].url})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center 22%',
+                  filter: 'grayscale(1)',
+                  mixBlendMode: 'soft-light',
+                  WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.9) 45%, rgba(0,0,0,.9) 100%)',
+                  maskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.9) 45%, rgba(0,0,0,.9) 100%)',
+                }}
+              />
+            )}
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.08) 30%, rgba(0,0,0,.45) 100%)' }} aria-hidden="true" />
+            <div className="relative px-6 md:px-12 pt-24 pb-10 md:pb-12">
+              <p className="text-[11px] font-bold tracking-[.14em] uppercase text-coral">ΑΝΑΖΗΤΗΣΗ ΜΕΛΩΝ</p>
+              <h1 className="text-white text-3xl md:text-5xl font-bold leading-tight mt-2 max-w-3xl">
+                Οι δημιουργικοί επαγγελματίες του δικτύου
+              </h1>
+              <p className="text-white/70 mt-5" aria-live="polite">
+                <span className="notranslate text-coral font-bold text-3xl align-middle">{displayCount}</span>
+                <span className="ml-2 align-middle">μέλη</span>
+              </p>
+            </div>
+            <div className="relative" style={{ backgroundColor: 'rgba(10, 14, 24, .45)', backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.12)' }}>
+              <div className="flex overflow-x-auto" style={{ scrollbarWidth: 'none' }} role="tablist" aria-label="Γρήγορα φίλτρα μελών">
+                {MEMBER_PRESETS.map(p => (
+                  <button key={p.key} type="button" role="tab" aria-selected={preset === p.key} onClick={() => setPreset(p.key)} className={presetCls(preset === p.key)}>
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+        ) : (
         <section className="relative -bottom-20">
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 h-[25vh] flex items-center rounded-b-3xl relative z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -348,14 +451,16 @@ function MembersPageContent() {
             </div>
           </div>
         </section>
+        )}
 
       {/* Main Content */}
-      <section className="pt-32 pb-24">
+      <section className={cool ? 'pt-10 pb-24' : 'pt-32 pb-24'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Loading Indicator */}
           {isLoading && <LoadingIndicator />}
 
-          {/* Info Box */}
+          {/* Info Box — στο Cool ο μετρητής ζει μέσα στο hero */}
+          {!cool && (
           <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 mb-12">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -368,10 +473,12 @@ function MembersPageContent() {
               </div>
             </div>
           </div>
+          )}
 
           {/* Filters */}
-          <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 mb-12">
-            <div className="flex flex-wrap items-center gap-3">
+          <div className={cool ? 'relative overflow-hidden menu-glass glass-rim rounded-3xl p-8 mb-12' : 'bg-white dark:bg-gray-800 rounded-3xl p-8 mb-12'}>
+            {cool && <span className="logo-reveal" aria-hidden="true" />}
+            <div className={cool ? 'relative flex flex-wrap items-center gap-3' : 'flex flex-wrap items-center gap-3'}>
               <input
                 type="text"
                 placeholder="Αναζήτηση / Search name"
@@ -447,7 +554,7 @@ function MembersPageContent() {
           {viewMode === 'grid' ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredMembers.map((member) => (
-                <MemberFlipCard key={member.id} member={member} role={memberRoles[member.id]?.join(' · ')} />
+                <MemberFlipCard key={member.id} member={member} role={memberRoles[member.id]?.join(' · ')} cool={cool} />
               ))}
             </div>
           ) : (
@@ -456,7 +563,9 @@ function MembersPageContent() {
                 <Link
                   key={member.id}
                   href={`/members/${member.Slug}`}
-                  className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden hover:shadow-xl dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex items-center gap-5 p-4"
+                  className={cool
+                    ? 'menu-glass rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex items-center gap-5 p-4'
+                    : 'bg-white dark:bg-gray-800 rounded-3xl overflow-hidden hover:shadow-xl dark:hover:shadow-gray-700/50 transition-all duration-300 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light flex items-center gap-5 p-4'}
                 >
                   {member.Image && member.Image.length > 0 && member.Image[0].url ? (
                     <div className="w-16 h-16 relative bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
@@ -502,7 +611,7 @@ function MembersPageContent() {
           )}
         </div>
       </section>
-      <CombinedCtaSection />
+      {cool ? <CoolMemberBand /> : <CombinedCtaSection />}
       </main>
       <Footer variant="members" />
       <CookieConsent />
