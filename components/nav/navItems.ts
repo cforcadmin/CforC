@@ -49,4 +49,5 @@ export const NAV_ITEMS: NavItem[] = [
   { key: 'map', label: 'ΧΑΡΤΗΣ', href: '/map', hue: '#F07551', edge: '#8E7CC3' },
   { key: 'participation', label: 'ΣΥΜΜΕΤΟΧΗ', href: '/participation', anonOnly: true, hue: '#E05A3A', edge: '#D96AA7' },
   { key: 'members', label: 'ΕΥΡΕΣΗ ΜΕΛΩΝ', href: '/members', hue: '#C74E2F', edge: '#1F6F78' },
+  { key: 'policies', label: 'ΠΟΛΙΤΙΚΕΣ - ΟΡΟΙ & ΠΡΟΫΠΟΘΕΣΕΙΣ', href: '/terms', hue: '#B34426', edge: '#8E7CC3', coolOnly: true },
 ]

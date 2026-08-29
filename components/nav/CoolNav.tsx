@@ -71,12 +71,20 @@ export default function CoolNav() {
     { label: 'Διαφάνεια', href: '/transparency' },
     { label: 'Επικοινωνία', href: '/contact' },
   ]
+  const SUBS_POLICIES = [
+    { label: 'Όροι & Προϋποθέσεις', href: '/terms' },
+    { label: 'Πολιτική Απορρήτου', href: '/privacy' },
+    { label: 'Πολιτική Cookies', href: '/cookies' },
+    { label: 'Προσβασιμότητα', href: '/accessibility' },
+  ]
   const subsFor = (key: string): Array<{ label: string; href: string }> =>
     key === 'about'
       ? SUBS_ABOUT
       : key === 'projects'
         ? featuredProjects.map(p => ({ label: p.title, href: `/projects/${p.slug}` }))
-        : []
+        : key === 'policies'
+          ? SUBS_POLICIES
+          : []
 
   // UI-gating μόνο — το πραγματικό φράγμα του /oc το επιβάλλει ο server
   const ocAccess = useOcAccess(isAuthenticated)
@@ -328,7 +336,9 @@ export default function CoolNav() {
             ? pathname === '/'
             : item.key === 'about'
               ? ['/about', '/coordination-team', '/transparency', '/contact'].includes(pathname || '')
-              : pathname?.startsWith(item.href)
+              : item.key === 'policies'
+                ? ['/terms', '/privacy', '/cookies', '/accessibility'].includes(pathname || '')
+                : pathname?.startsWith(item.href)
           let transform = 'translateX(0)'
           if (partIdx >= 0) {
             if (i < partIdx) transform = 'translateX(-45vw)'
@@ -345,7 +355,7 @@ export default function CoolNav() {
                 backgroundColor: hexToRgba(item.hue, theme === 'dark' ? 0.8 : 0.6),
                 borderRadius: i === 0 ? '1.25rem 0 0 1.25rem' : undefined,
                 borderLeftColor: (theme === 'dark' ? EDGE_GRAYS_DARK : EDGE_GRAYS_LIGHT)[i % EDGE_GRAYS_LIGHT.length],
-                width: expanded ? 'clamp(4.5rem, 7vw, 7rem)' : '1.1rem',
+                width: expanded ? 'clamp(4rem, 6vw, 6rem)' : '1.1rem',
                 opacity: partIdx >= 0 ? (i === partIdx ? 1 : 0) : expanded ? 1 : 0.5,
                 transform,
               }}
