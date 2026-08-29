@@ -801,19 +801,27 @@ export default function ProfilePage() {
                 άκρη, αλλά ακόμη κι εκεί μένει θολή και μισοφωτισμένη: υπάρχει
                 στη σκηνή, δεν αποκαλύπτεται ποτέ 100%. Χωρίς φωτογραφία, το
                 navy στέκει μόνο του. */}
+            {/* Το ΣΤΑΘΕΡΟ χρωματιστό λούσιμο — ίδιο για κάθε μέλος, με ή
+                χωρίς φωτογραφία (επιλογή 29/8, εργαστήρι μίξης) */}
+            <div className="absolute inset-0 pointer-events-none" aria-hidden="true"
+              style={{
+                background:
+                  'radial-gradient(90% 130% at 86% 40%, rgba(214,142,114,.8) 0%, rgba(171,104,86,.5) 38%, rgba(27,36,56,0) 68%), ' +
+                  'radial-gradient(50% 80% at 70% 85%, rgba(255,139,106,.35) 0%, rgba(27,36,56,0) 70%)',
+              }}
+            />
+            {/* Σ1: ασπρόμαυρη πηγή + soft-light — το λούσιμο βάφει το πρόσωπο,
+                ενιαίο duotone για όλα τα προφίλ· ποτέ πλήρης αποκάλυψη */}
             {currentImageUrl && (
               <div className="absolute inset-y-0 right-0 w-1/3 pointer-events-none" aria-hidden="true"
                 style={{
                   backgroundImage: `url(${currentImageUrl})`,
                   backgroundSize: 'cover',
-                  backgroundPosition: 'center 30%',
-                  // Όχι θόλωση: η εικόνα μένει καθαρή και ΔΕΝΕΙ με την κάρτα
-                  // μέσω luminosity blend — η δομή/φως της φωτογραφίας, οι
-                  // αποχρώσεις της σκηνής
-                  mixBlendMode: 'luminosity',
-                  opacity: 0.8,
-                  WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.88) 45%, rgba(0,0,0,.88) 100%)',
-                  maskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.88) 45%, rgba(0,0,0,.88) 100%)',
+                  backgroundPosition: 'center 22%',
+                  filter: 'grayscale(1)',
+                  mixBlendMode: 'soft-light',
+                  WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.9) 45%, rgba(0,0,0,.9) 100%)',
+                  maskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.9) 45%, rgba(0,0,0,.9) 100%)',
                 }}
               />
             )}
