@@ -178,14 +178,20 @@ export default function NetworksContent() {
             </div>
           </div>
 
-          {/* Το περιεχόμενο της επιλεγμένης ομάδας */}
-          {activeGroup === 'all' ? (
-            allNetworksCard
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {activeData?.networks.map(networkCard)}
+          {/* Το περιεχόμενο της επιλεγμένης ομάδας, σε γυάλινο πάνελ όπως
+              στο Εκπαιδευτικό Υλικό */}
+          <div className="relative overflow-hidden menu-glass glass-rim rounded-3xl p-6 md:p-8">
+            <span className="logo-reveal" aria-hidden="true" />
+            <div className="relative">
+              {activeGroup === 'all' ? (
+                allNetworksCard
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {activeData?.networks.map(networkCard)}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     )
