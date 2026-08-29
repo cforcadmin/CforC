@@ -393,7 +393,7 @@ export default function OpenCallsContent() {
               Εδώ θα βρεις τις τρέχουσες ευκαιρίες χρηματοδότησης, συνεργασίας και συμμετοχής σε πολιτιστικά προγράμματα. Φιλτράρισε ανά κατηγορία ή αναζήτησε αυτό που σε ενδιαφέρει.
             </p>
             <div className="shrink-0">
-              <div className={cool ? 'bubble-glass glass-rim px-6 py-3 rounded-full inline-block' : 'bg-white dark:bg-gray-700 px-6 py-3 rounded-full border-2 border-charcoal dark:border-gray-400 inline-block'}>
+              <div className={cool ? 'cool-count-pill px-6 py-3 rounded-full inline-block' : 'bg-white dark:bg-gray-700 px-6 py-3 rounded-full border-2 border-charcoal dark:border-gray-400 inline-block'}>
                 <p className="text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap" aria-live="polite">
                   Αποτελέσματα: <span className="text-coral dark:text-coral-light">{displayCount}</span>
                 </p>
