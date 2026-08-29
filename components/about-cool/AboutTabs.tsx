@@ -17,18 +17,22 @@ export const ABOUT_SECTIONS = [
 
 export type AboutSectionKey = (typeof ABOUT_SECTIONS)[number]['key']
 
-export interface TabSection { key: string; label: string; href: string }
+export interface TabSection { key: string; label: string; href?: string }
 
 // Γενικευμένο (29/8): το ίδιο σύστημα καρτελών + dock εξυπηρετεί και το
-// ενιαίο ΠΟΛΙΤΙΚΗ — η λίστα ενοτήτων έρχεται ως prop.
+// ενιαίο ΠΟΛΙΤΙΚΗ — η λίστα ενοτήτων έρχεται ως prop. (30/8) Και τα
+// preset strips των ΝΕΑ/ΕΡΓΑ/ΜΕΛΗ: το href έγινε προαιρετικό και το
+// aria-label παραμετρικό.
 export default function AboutTabs<T extends TabSection>({
   sections,
   active,
   onSelect,
+  ariaLabel = 'Ενότητες Σχετικά',
 }: {
   sections: ReadonlyArray<T>
   active: T['key']
   onSelect: (key: T['key']) => void
+  ariaLabel?: string
 }) {
   const barRef = useRef<HTMLElement>(null)
   const [docked, setDocked] = useState(false)
@@ -44,7 +48,7 @@ export default function AboutTabs<T extends TabSection>({
   return (
     <>
       {/* Η μπάρα μέσα στο hero — υγρό γυαλί πάνω στο φόντο του */}
-      <nav ref={barRef} aria-label="Ενότητες Σχετικά" className="absolute bottom-0 inset-x-0"
+      <nav ref={barRef} aria-label={ariaLabel} className="absolute bottom-0 inset-x-0"
         style={{ backgroundColor: 'rgba(10, 14, 24, .45)', backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.12)' }}>
         <ul role="list" className="flex overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           {sections.map(t => {
@@ -79,7 +83,7 @@ export default function AboutTabs<T extends TabSection>({
             κοραλί υπογράμμιση) — ΟΧΙ ανοιχτό γυαλί με pills, που διαβαζόταν
             σαν να εμφανίστηκε το Modern header (αναφορά 28/8). Η μπάρα του
             hero απλώς «ελλιμενίζεται» κάτω από τη φούσκα. */}
-        <nav aria-label="Ενότητες Σχετικά (καρφιτσωμένες)"
+        <nav aria-label={`${ariaLabel} (καρφιτσωμένες)`}
           className={`strip-slide flex items-center rounded-b-2xl overflow-hidden ${docked ? 'strip-shown' : 'strip-hidden'}`}
           style={{
             backgroundColor: 'rgba(10, 14, 24, .6)',

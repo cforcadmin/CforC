@@ -22,6 +22,7 @@ import MemberFlipCard from '@/components/shared/MemberFlipCard'
 import { doesFieldMatchFilter } from '@/lib/memberTaxonomy'
 import { matchesName } from '@/lib/transliterate'
 import { useNavMode } from '@/components/nav/useNavMode'
+import AboutTabs from '@/components/about-cool/AboutTabs'
 import CoolMemberBand from '@/components/about-cool/CoolMemberBand'
 import { CITY_TO_PROVINCE } from '@/lib/greekCities'
 
@@ -362,10 +363,6 @@ function MembersPageContent() {
     ? membersWithImage[Math.floor(heroSeed * membersWithImage.length)]
     : null
 
-  const presetCls = (selected: boolean) =>
-    `inline-flex items-center min-h-11 px-4 text-xs font-bold tracking-widest whitespace-nowrap border-b-2 transition-colors duration-200 ${
-      selected ? 'text-white border-coral' : 'text-white/70 border-transparent hover:text-white'
-    }`
   const MEMBER_PRESETS: Array<{ key: MembersPreset; label: string }> = [
     { key: 'new', label: 'ΝΕΑ ΜΕΛΗ' },
     { key: 'thessaloniki', label: 'ΘΕΣΣΑΛΟΝΙΚΗ' },
@@ -408,7 +405,7 @@ function MembersPageContent() {
               />
             )}
             <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.08) 30%, rgba(0,0,0,.45) 100%)' }} aria-hidden="true" />
-            <div className="relative px-6 md:px-12 pt-24 pb-10 md:pb-12">
+            <div className="relative px-6 md:px-12 pt-24 pb-16 md:pb-[4.5rem]">
               <p className="text-[11px] font-bold tracking-[.14em] uppercase text-coral">ΑΝΑΖΗΤΗΣΗ ΜΕΛΩΝ</p>
               <h1 className="text-white text-3xl md:text-5xl font-bold leading-tight mt-2 max-w-3xl">
                 Οι δημιουργικοί επαγγελματίες του δικτύου
@@ -418,15 +415,8 @@ function MembersPageContent() {
                 <span className="ml-2 align-middle">μέλη με προφίλ</span>
               </p>
             </div>
-            <div className="relative" style={{ backgroundColor: 'rgba(10, 14, 24, .45)', backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.12)' }}>
-              <div className="flex overflow-x-auto" style={{ scrollbarWidth: 'none' }} role="tablist" aria-label="Γρήγορα φίλτρα μελών">
-                {MEMBER_PRESETS.map(p => (
-                  <button key={p.key} type="button" role="tab" aria-selected={preset === p.key} onClick={() => setPreset(p.key)} className={presetCls(preset === p.key)}>
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Presets μελών — ελλιμενίζονται στο scroll όπως στα Σχετικά */}
+            <AboutTabs sections={MEMBER_PRESETS} active={preset} onSelect={setPreset} ariaLabel="Γρήγορα φίλτρα μελών" />
           </div>
         </section>
         ) : (

@@ -14,6 +14,7 @@ import type { StrapiResponse, Project } from '@/lib/types'
 import ViewToggle from '@/components/shared/ViewToggle'
 import ProjectFlipCard from '@/components/shared/ProjectFlipCard'
 import { useNavMode } from '@/components/nav/useNavMode'
+import AboutTabs from '@/components/about-cool/AboutTabs'
 import CoolMemberBand from '@/components/about-cool/CoolMemberBand'
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
@@ -76,10 +77,6 @@ export default function ProjectsContent() {
   }
 
   const visibleProjects = statusFilter === 'all' ? projects : projects.filter(p => p.project_status === statusFilter)
-  const presetCls = (selected: boolean) =>
-    `inline-flex items-center min-h-11 px-4 text-xs font-bold tracking-widest whitespace-nowrap border-b-2 transition-colors duration-200 ${
-      selected ? 'text-white border-coral' : 'text-white/70 border-transparent hover:text-white'
-    }`
   const STATUS_PRESETS: Array<{ key: typeof statusFilter; label: string }> = [
     { key: 'all', label: 'ΟΛΑ' },
     { key: 'active', label: 'ΕΝΕΡΓΑ' },
@@ -110,7 +107,7 @@ export default function ProjectsContent() {
                 aria-hidden="true"
               />
             </div>
-            <div className="relative px-6 md:px-12 pt-24 pb-10 md:pb-12">
+            <div className="relative px-6 md:px-12 pt-24 pb-16 md:pb-[4.5rem]">
               <p className="text-[11px] font-bold tracking-[.14em] uppercase text-coral">ΕΡΓΑ</p>
               <h1 className="text-white text-3xl md:text-5xl font-bold leading-tight mt-2 max-w-3xl">
                 Τα έργα και οι πρωτοβουλίες του Culture for Change
@@ -120,15 +117,8 @@ export default function ProjectsContent() {
                 <span className="ml-2 align-middle">έργα</span>
               </p>
             </div>
-            <div className="relative" style={{ backgroundColor: 'rgba(10, 14, 24, .45)', backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.12)' }}>
-              <div className="flex overflow-x-auto" style={{ scrollbarWidth: 'none' }} role="tablist" aria-label="Φίλτρο κατάστασης έργου">
-                {STATUS_PRESETS.map(p => (
-                  <button key={p.key} type="button" role="tab" aria-selected={statusFilter === p.key} onClick={() => setStatusFilter(p.key)} className={presetCls(statusFilter === p.key)}>
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Presets κατάστασης — ελλιμενίζονται στο scroll όπως στα Σχετικά */}
+            <AboutTabs sections={STATUS_PRESETS} active={statusFilter} onSelect={setStatusFilter} ariaLabel="Φίλτρο κατάστασης έργου" />
           </div>
         </section>
         ) : (

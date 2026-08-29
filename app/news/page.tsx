@@ -22,6 +22,7 @@ import YearFilter from '@/components/shared/YearFilter'
 import SortDropdown from '@/components/shared/SortDropdown'
 import FundingGuidelinesModal from '@/components/FundingGuidelinesModal'
 import { useNavMode } from '@/components/nav/useNavMode'
+import AboutTabs from '@/components/about-cool/AboutTabs'
 import CoolMemberBand from '@/components/about-cool/CoolMemberBand'
 
 function extractTextFromBlocks(blocks: any): string {
@@ -297,10 +298,6 @@ function ActivitiesPageContent() {
     allActivities.filter(a => new Date(a.Date) < today).forEach(a => ys.add(new Date(a.Date).getFullYear()))
     return Array.from(ys).sort((a, b) => b - a).slice(0, 2)
   }, [allActivities])
-  const presetCls = (selected: boolean) =>
-    `inline-flex items-center min-h-11 px-4 text-xs font-bold tracking-widest whitespace-nowrap border-b-2 transition-colors duration-200 ${
-      selected ? 'text-white border-coral' : 'text-white/70 border-transparent hover:text-white'
-    }`
 
   const totalActiveFilters = (selectedCategory ? 1 : 0) + (selectedTag ? 1 : 0) + (selectedYear ? 1 : 0) + (searchQuery ? 1 : 0)
 
@@ -337,7 +334,7 @@ function ActivitiesPageContent() {
                 aria-hidden="true"
               />
             </div>
-            <div className="relative px-6 md:px-12 pt-24 pb-10 md:pb-12">
+            <div className="relative px-6 md:px-12 pt-24 pb-16 md:pb-[4.5rem]">
               <p className="text-[11px] font-bold tracking-[.14em] uppercase text-coral">ΝΕΑ</p>
               <h1 className="text-white text-3xl md:text-5xl font-bold leading-tight mt-2 max-w-3xl">
                 Εκδηλώσεις, εργαστήρια, δικτυώσεις, δράσεις συνηγορίας και ενημερωτικά δελτία
@@ -347,24 +344,19 @@ function ActivitiesPageContent() {
                 <span className="ml-2 align-middle">καταχωρίσεις</span>
               </p>
             </div>
-            <div className="relative" style={{ backgroundColor: 'rgba(10, 14, 24, .45)', backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.12)' }}>
-              <div className="flex overflow-x-auto" style={{ scrollbarWidth: 'none' }} role="tablist" aria-label="Γρήγορα φίλτρα χρόνου">
-                <button type="button" role="tab" aria-selected={activePreset === 'upcoming'} onClick={() => applyPreset('upcoming')} className={presetCls(activePreset === 'upcoming')}>
-                  ΕΠΕΡΧΟΜΕΝΑ
-                </button>
-                <button type="button" role="tab" aria-selected={activePreset === 'm2'} onClick={() => applyPreset('m2')} className={presetCls(activePreset === 'm2')}>
-                  ΤΕΛΕΥΤΑΙΟ ΔΙΜΗΝΟ
-                </button>
-                <button type="button" role="tab" aria-selected={activePreset === 'm6'} onClick={() => applyPreset('m6')} className={presetCls(activePreset === 'm6')}>
-                  ΤΕΛΕΥΤΑΙΟ ΕΞΑΜΗΝΟ
-                </button>
-                {presetYears.map(year => (
-                  <button key={year} type="button" role="tab" aria-selected={activePreset === String(year)} onClick={() => applyPreset(String(year))} className={`notranslate ${presetCls(activePreset === String(year))}`}>
-                    {year}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Presets: μπάρα στο κάτω χείλος που «ελλιμενίζεται» κάτω από
+                την αριστερή φούσκα στο scroll — ίδιο σύστημα με τα Σχετικά */}
+            <AboutTabs
+              sections={[
+                { key: 'upcoming', label: 'ΕΠΕΡΧΟΜΕΝΑ' },
+                { key: 'm2', label: 'ΤΕΛΕΥΤΑΙΟ ΔΙΜΗΝΟ' },
+                { key: 'm6', label: 'ΤΕΛΕΥΤΑΙΟ ΕΞΑΜΗΝΟ' },
+                ...presetYears.map(y => ({ key: String(y), label: String(y) })),
+              ]}
+              active={activePreset ?? ''}
+              onSelect={applyPreset}
+              ariaLabel="Γρήγορα φίλτρα χρόνου"
+            />
           </div>
         </section>
         ) : (
