@@ -13,6 +13,7 @@ export default function EducationalMaterialContent() {
   const { mode } = useNavMode()
   const cool = mode === 'cool'
   const [view, setView] = useState<View>({ type: 'categories' })
+  const [activeCatKey, setActiveCatKey] = useState<string>(educationalCategories[0]?.key ?? '')
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -113,7 +114,73 @@ export default function EducationalMaterialContent() {
     )
   }
 
-  // Categories view (default)
+  // Categories view (default) — στο Cool: κουτί-επιλογέας με τη γλώσσα της
+  // κάρτας-σκηνής (όπως στα Δίκτυα) και οι υποκατηγορίες της ενεργής
+  // κατηγορίας από κάτω· το classic κρατά τις 3 κάρτες με hover
+  if (cool) {
+    const activeCategory = educationalCategories.find(c => c.key === activeCatKey) ?? educationalCategories[0]
+    return (
+      <div className="pt-20">
+        <div className="max-w-5xl mx-auto px-4 pb-24">
+          <div className="relative overflow-hidden rounded-3xl mb-8" style={{ backgroundColor: '#1B2438' }}>
+            <div className="px-6 pt-6 pb-5 md:px-8">
+              <p className="text-[11px] font-bold tracking-[.14em] uppercase text-coral">
+                <LocalizedText text="Εκπαιδευτικό Υλικό" engText="Educational material" />
+              </p>
+              <h2 className="text-white text-2xl font-bold mt-1 flex items-center gap-2.5">
+                <span aria-hidden="true">{activeCategory.icon}</span>
+                <LocalizedText text={activeCategory.name} engText={activeCategory.engName} />
+              </h2>
+              <p className="text-white/60 text-sm mt-1 max-w-2xl">
+                <LocalizedText text={activeCategory.description} engText={activeCategory.engDescription} />
+              </p>
+            </div>
+            <div style={{ backgroundColor: 'rgba(10, 14, 24, .45)', backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.12)' }}>
+              <div className="flex overflow-x-auto" style={{ scrollbarWidth: 'none' }} role="tablist" aria-label="Κατηγορίες υλικού">
+                {educationalCategories.map(category => (
+                  <button
+                    key={category.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeCatKey === category.key}
+                    onClick={() => setActiveCatKey(category.key)}
+                    className={`inline-flex items-center gap-1.5 min-h-11 px-4 text-xs font-bold tracking-widest whitespace-nowrap border-b-2 transition-colors duration-200 ${
+                      activeCatKey === category.key ? 'text-white border-coral' : 'text-white/70 border-transparent hover:text-white'
+                    }`}
+                  >
+                    <span aria-hidden="true">{category.icon}</span>
+                    <LocalizedText text={category.name} engText={category.engName} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Υποκατηγορίες της ενεργής κατηγορίας */}
+          <div className="relative overflow-hidden menu-glass glass-rim rounded-3xl p-6 md:p-8">
+            <span className="logo-reveal" aria-hidden="true" />
+            <div className="relative">
+              <p className="text-xs font-semibold text-charcoal dark:text-gray-300 mb-4 uppercase tracking-wide">
+                <LocalizedText text="Υποκατηγορίες" engText="Subcategories" />{' '}
+                <span className="notranslate">({activeCategory.subcategories.length})</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {activeCategory.subcategories.map((sub) => (
+                  <SubcategoryBubble
+                    key={sub.key}
+                    subcategory={sub}
+                    onClick={() => handleBubbleClick(activeCategory, sub)}
+                    isExternal={!!sub.externalUrl}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="pt-20">
       <div className="max-w-5xl mx-auto px-4 pb-24">
