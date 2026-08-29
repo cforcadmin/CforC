@@ -1186,7 +1186,7 @@ export default function ProfilePage() {
 
         {/* Profile Content */}
         {activeSection === 'profile' && (
-        <div className="pt-32 pb-24 max-w-4xl mx-auto px-4">
+        <div className={coolMode ? 'pt-32 pb-24 max-w-6xl mx-auto px-4' : 'pt-32 pb-24 max-w-4xl mx-auto px-4'}>
           {/* Header with Guidelines Button */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
             <div className="text-center md:text-left">
@@ -1296,9 +1296,12 @@ export default function ProfilePage() {
           </div>
         )}
 
-        <div className="grid md:grid-cols-3 gap-8">
+        {/* Ρ2 (29/8, Cool): αφήγηση αριστερά-φαρδιά (Βασικές/Βιογραφικό
+            πρώτα), η κάρτα φωτογραφίας/εναλλακτικού λεπτή δεξιά — μόνο
+            διάταξη, πεδία και αποθήκευση ανέγγιχτα */}
+        <div className={coolMode ? 'grid lg:grid-cols-[1.7fr_1fr] gap-6 items-start' : 'grid md:grid-cols-3 gap-8'}>
           {/* Left Column - Profile Image */}
-          <div className="md:col-span-1">
+          <div className={coolMode ? 'lg:order-2' : 'md:col-span-1'}>
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-6">
               <div className="group relative mb-4 w-fit">
                 <h2 className="text-lg font-bold text-charcoal dark:text-gray-100">
@@ -1338,7 +1341,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Right Column - Profile Fields */}
-          <div className="md:col-span-2 space-y-6">
+          <div className={coolMode ? 'lg:order-1 space-y-6' : 'md:col-span-2 space-y-6'}>
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 space-y-6">
               <h2 className="text-lg font-bold text-charcoal dark:text-gray-100 mb-4">
                 Βασικές Πληροφορίες
