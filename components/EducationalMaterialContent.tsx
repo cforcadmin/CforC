@@ -3,12 +3,15 @@
 import { useState, useRef, useEffect } from 'react'
 import LocalizedText from '@/components/LocalizedText'
 import { educationalCategories, Category, Subcategory } from '@/lib/educationalData'
+import { useNavMode } from '@/components/nav/useNavMode'
 
 type View =
   | { type: 'categories' }
   | { type: 'resources'; categoryKey: string; subcategoryKey: string }
 
 export default function EducationalMaterialContent() {
+  const { mode } = useNavMode()
+  const cool = mode === 'cool'
   const [view, setView] = useState<View>({ type: 'categories' })
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(false)
@@ -44,22 +47,32 @@ export default function EducationalMaterialContent() {
       <div className="pt-20">
         <div className="max-w-5xl mx-auto px-4 pb-24">
           {/* Back button + header */}
-          <div className="mb-8">
-            <button
-              onClick={handleBack}
-              className="flex items-center gap-2 text-coral dark:text-coral-light hover:underline mb-4 text-sm font-medium"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <LocalizedText text="Πίσω στις κατηγορίες" engText="Back to categories" />
-            </button>
-            <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">
-              <LocalizedText text={subcategory.fullName} engText={subcategory.engDescription} />
-            </h2>
-            <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-              <LocalizedText text={category.name} engText={category.engName} />
-            </p>
+          <div className={cool ? 'relative overflow-hidden menu-glass glass-rim rounded-3xl p-6 md:p-8 mb-8' : 'mb-8'}>
+            {cool && <span className="logo-reveal" aria-hidden="true" />}
+            <div className={cool ? 'relative' : undefined}>
+              <button
+                onClick={handleBack}
+                className="flex items-center gap-2 text-coral dark:text-coral-light hover:underline mb-4 text-sm font-medium"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <LocalizedText text="Πίσω στις κατηγορίες" engText="Back to categories" />
+              </button>
+              {cool && (
+                <p className="text-xs font-bold tracking-[.14em] uppercase text-coral dark:text-coral-light mb-1">
+                  <LocalizedText text={category.name} engText={category.engName} />
+                </p>
+              )}
+              <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">
+                <LocalizedText text={subcategory.fullName} engText={subcategory.engDescription} />
+              </h2>
+              {!cool && (
+                <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+                  <LocalizedText text={category.name} engText={category.engName} />
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Resource cards grid */}
@@ -70,7 +83,9 @@ export default function EducationalMaterialContent() {
                 href={resource.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] p-6 flex flex-col border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light"
+                className={cool
+                  ? 'group menu-glass rounded-3xl shadow-sm hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] p-6 flex flex-col border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light'
+                  : 'group bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] p-6 flex flex-col border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light'}
               >
                 {/* Title + external link icon */}
                 <div className="flex items-start gap-3 mb-3">
@@ -102,16 +117,6 @@ export default function EducationalMaterialContent() {
   return (
     <div className="pt-20">
       <div className="max-w-5xl mx-auto px-4 pb-24">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <p className="text-gray-600 dark:text-gray-300 text-sm">
-            <LocalizedText
-              text="Μια επιμελημένη συλλογή πόρων για τα μέλη του δικτύου Culture for Change."
-              engText="A curated collection of resources for Culture for Change network members."
-            />
-          </p>
-        </div>
-
         {/* Category cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
           {educationalCategories.map((category) => {
@@ -125,7 +130,7 @@ export default function EducationalMaterialContent() {
                 onMouseEnter={() => setHoveredCategory(category.key)}
                 onMouseLeave={() => setHoveredCategory(null)}
               >
-                <div className={`bg-white dark:bg-gray-800 rounded-3xl transition-all duration-200 p-6 flex flex-col border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light ${
+                <div className={`${cool ? 'menu-glass' : 'bg-white dark:bg-gray-800'} rounded-3xl transition-all duration-200 p-6 flex flex-col border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light ${
                   showSubcategories ? 'shadow-lg border-coral dark:border-coral-light' : 'shadow-sm hover:shadow-lg'
                 }`}>
                   {/* Fixed-height top section so all cards start the same size */}
@@ -143,7 +148,9 @@ export default function EducationalMaterialContent() {
                     {/* Subcategory count badge — hidden on mobile since subcategories are always shown */}
                     {!isMobile && (
                       <div className="mt-4">
-                        <span className="inline-block bg-gray-100 dark:bg-gray-600 px-3 py-1 rounded-full text-xs font-medium text-charcoal dark:text-gray-200 shadow-sm">
+                        <span className={cool
+                          ? 'inline-block bg-white/50 dark:bg-white/10 border border-charcoal/15 dark:border-white/15 px-3 py-1 rounded-full text-xs font-medium text-charcoal dark:text-gray-200'
+                          : 'inline-block bg-gray-100 dark:bg-gray-600 px-3 py-1 rounded-full text-xs font-medium text-charcoal dark:text-gray-200 shadow-sm'}>
                           {category.subcategories.length}{' '}
                           <LocalizedText text="υποκατηγορίες" engText="subcategories" />
                         </span>
