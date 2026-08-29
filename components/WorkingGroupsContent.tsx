@@ -9,6 +9,7 @@ import type { StrapiResponse, WorkingGroup, WorkingGroupMemberRef } from '@/lib/
 import LocalizedText from '@/components/LocalizedText'
 import LoadingIndicator from '@/components/LoadingIndicator'
 import ViewToggle from '@/components/shared/ViewToggle'
+import { useNavMode } from '@/components/nav/useNavMode'
 
 const PROPOSE_GROUP_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSe6vrAA7jPT4n6NH4FUIoKrYOs38drzBNR80paQz_gqLObWQg/viewform?usp=share_link&ouid=104930524495740710113'
 
@@ -40,6 +41,14 @@ export default function WorkingGroupsContent() {
   // Join modal state
   const [joinModalGroup, setJoinModalGroup] = useState<WorkingGroup | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const { mode } = useNavMode()
+  const cool = mode === 'cool'
+  const [activeWG, setActiveWG] = useState<string>('all')
+
+  const tabCls = (selected: boolean) =>
+    `inline-flex items-center gap-1.5 min-h-11 px-4 text-xs font-bold tracking-widest whitespace-nowrap border-b-2 transition-colors duration-200 ${
+      selected ? 'text-white border-coral' : 'text-white/70 border-transparent hover:text-white'
+    }`
 
   useEffect(() => {
     async function fetchGroups() {
@@ -57,53 +66,24 @@ export default function WorkingGroupsContent() {
     fetchGroups()
   }, [])
 
-  return (
-    <div className="pt-20">
-      <div className="max-w-5xl mx-auto px-4 pb-24">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <p className="text-gray-600 dark:text-gray-300 text-sm">
-            <LocalizedText
-              text="Οι Ομάδες Εργασίας του Culture for Change. Μπορείς να δηλώσεις ενδιαφέρον ή να προτείνεις νέα ομάδα."
-              engText="Culture for Change Working Groups. You can express interest to join or propose a new group."
-            />
-          </p>
-        </div>
 
-        {loading && <LoadingIndicator />}
-
-        {error && !loading && (
-          <div className="bg-orange-50 dark:bg-gray-700 border border-orange-200 dark:border-gray-600 rounded-lg p-6 text-center">
-            <p className="text-orange-600 dark:text-orange-400 font-medium">{error}</p>
-          </div>
-        )}
-
-        {!loading && !error && groups.length === 0 && (
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-6 text-center">
-            <p className="text-gray-600 dark:text-gray-400 font-medium">
-              Δεν βρέθηκαν ομάδες εργασίας
-            </p>
-          </div>
-        )}
-
-        {/* Groups Grid/List */}
-        {!loading && !error && groups.length > 0 && (
-          <>
-            <div className="flex justify-end mb-4">
-              <ViewToggle view={viewMode} onViewChange={setViewMode} />
-            </div>
-
-            {viewMode === 'grid' ? (
+  const groupsGridView = (
+    <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {groups.map((group) => (
                   <WorkingGroupCard
                     key={group.id}
                     group={group}
+                    cool={cool}
                     onJoinClick={() => setJoinModalGroup(group)}
                   />
                 ))}
               </div>
-            ) : (
+    </>
+  )
+
+  const groupsListView = (
+    <>
               <div className="flex flex-col gap-4">
                 {groups.map((group) => {
                   const groupImageUrl = getImageUrl(group.Image)
@@ -113,7 +93,9 @@ export default function WorkingGroupsContent() {
                   return (
                     <div
                       key={group.id}
-                      className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-lg transition-all duration-300 flex items-center gap-5 p-4 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light"
+                      className={cool
+                        ? 'menu-glass rounded-3xl shadow-sm hover:shadow-lg transition-all duration-300 flex items-center gap-5 p-4 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light'
+                        : 'bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-lg transition-all duration-300 flex items-center gap-5 p-4 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light'}
                     >
                       {groupImageUrl ? (
                         <div className="w-20 h-14 relative rounded-xl overflow-hidden flex-shrink-0">
@@ -166,17 +148,20 @@ export default function WorkingGroupsContent() {
                   )
                 })}
               </div>
-            )}
-          </>
-        )}
+    </>
+  )
 
+  const proposeCta = (
+    <>
         {/* Propose New Group CTA */}
         <div className="mt-10">
           <a
             href={PROPOSE_GROUP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-4 bg-coral/10 dark:bg-coral/20 rounded-2xl border-2 border-coral dark:border-coral-light hover:shadow-lg transition-all duration-200 p-6"
+            className={cool
+              ? 'group flex items-center gap-4 menu-glass rounded-2xl border-2 border-coral dark:border-coral-light hover:shadow-lg transition-all duration-200 p-6'
+              : 'group flex items-center gap-4 bg-coral/10 dark:bg-coral/20 rounded-2xl border-2 border-coral dark:border-coral-light hover:shadow-lg transition-all duration-200 p-6'}
           >
             <div className="w-12 h-12 rounded-xl bg-coral dark:bg-coral-light flex items-center justify-center flex-shrink-0">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -208,8 +193,11 @@ export default function WorkingGroupsContent() {
             </svg>
           </a>
         </div>
-      </div>
+    </>
+  )
 
+  const joinModal = (
+    <>
       {/* Join Modal */}
       {joinModalGroup && user && (
         <JoinGroupModal
@@ -220,6 +208,133 @@ export default function WorkingGroupsContent() {
           onClose={() => setJoinModalGroup(null)}
         />
       )}
+    </>
+  )
+
+  // Cool: κουτί-επιλογέας με τη γλώσσα της κάρτας-σκηνής — tab ανά ομάδα
+  // συν «Όλες» (με το grid/list toggle)· το classic μένει ως είχε
+  if (cool) {
+    const selectedGroup = activeWG === 'all' ? null : groups.find(g => String(g.id) === activeWG) ?? null
+    return (
+      <div className="pt-20">
+        <div className="max-w-5xl mx-auto px-4 pb-24">
+          <div className="relative overflow-hidden rounded-3xl mb-8" style={{ backgroundColor: '#1B2438' }}>
+            <div className="px-6 pt-6 pb-5 md:px-8">
+              <p className="text-[11px] font-bold tracking-[.14em] uppercase text-coral">
+                <LocalizedText text="Ομάδες Εργασίας" engText="Working groups" />
+              </p>
+              <h2 className="text-white text-2xl font-bold mt-1">
+                {selectedGroup
+                  ? <LocalizedText text={selectedGroup.Name} engText={selectedGroup.EngName} />
+                  : <LocalizedText text="Όλες οι ομάδες" engText="All groups" />}
+              </h2>
+              <p className="text-white/60 text-sm mt-1">
+                {selectedGroup ? (
+                  <>
+                    {selectedGroup.Coordinator && !selectedGroup.Coordinator.HideProfile && (
+                      <>Συντ.: {selectedGroup.Coordinator.Name} · </>
+                    )}
+                    <span className="notranslate">{visibleMembers(selectedGroup.Members).length}</span>{' '}
+                    <LocalizedText text="μέλη" engText="members" />
+                  </>
+                ) : (
+                  <>
+                    <span className="notranslate">{groups.length}</span>{' '}
+                    <LocalizedText text="ενεργές ομάδες" engText="active groups" />
+                  </>
+                )}
+              </p>
+            </div>
+            <div style={{ backgroundColor: 'rgba(10, 14, 24, .45)', backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.12)' }}>
+              <div className="flex overflow-x-auto" style={{ scrollbarWidth: 'none' }} role="tablist" aria-label="Ομάδες εργασίας">
+                <button type="button" role="tab" aria-selected={activeWG === 'all'} onClick={() => setActiveWG('all')} className={tabCls(activeWG === 'all')}>
+                  <LocalizedText text="Όλες" engText="All" />
+                </button>
+                {groups.map(group => (
+                  <button
+                    key={group.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeWG === String(group.id)}
+                    onClick={() => setActiveWG(String(group.id))}
+                    className={tabCls(activeWG === String(group.id))}
+                  >
+                    <LocalizedText text={group.Name} engText={group.EngName} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Περιεχόμενο επιλογής σε γυάλινο πάνελ */}
+          <div className="relative overflow-hidden menu-glass glass-rim rounded-3xl p-6 md:p-8">
+            <span className="logo-reveal" aria-hidden="true" />
+            <div className="relative">
+              {loading && <LoadingIndicator />}
+              {error && !loading && (
+                <p className="text-center text-orange-600 dark:text-orange-400 font-medium">{error}</p>
+              )}
+              {!loading && !error && groups.length === 0 && (
+                <p className="text-center text-gray-600 dark:text-gray-300 font-medium">Δεν βρέθηκαν ομάδες εργασίας</p>
+              )}
+              {!loading && !error && groups.length > 0 && (
+                selectedGroup ? (
+                  <div className="max-w-2xl mx-auto">
+                    <WorkingGroupCard group={selectedGroup} cool onJoinClick={() => setJoinModalGroup(selectedGroup)} />
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-end mb-4">
+                      <ViewToggle view={viewMode} onViewChange={setViewMode} />
+                    </div>
+                    {viewMode === 'grid' ? groupsGridView : groupsListView}
+                  </>
+                )
+              )}
+            </div>
+          </div>
+
+          {proposeCta}
+        </div>
+        {joinModal}
+      </div>
+    )
+  }
+
+  return (
+    <div className="pt-20">
+      <div className="max-w-5xl mx-auto px-4 pb-24">
+        {loading && <LoadingIndicator />}
+
+        {error && !loading && (
+          <div className="bg-orange-50 dark:bg-gray-700 border border-orange-200 dark:border-gray-600 rounded-lg p-6 text-center">
+            <p className="text-orange-600 dark:text-orange-400 font-medium">{error}</p>
+          </div>
+        )}
+
+        {!loading && !error && groups.length === 0 && (
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-6 text-center">
+            <p className="text-gray-600 dark:text-gray-400 font-medium">
+              Δεν βρέθηκαν ομάδες εργασίας
+            </p>
+          </div>
+        )}
+
+        {/* Groups Grid/List */}
+        {!loading && !error && groups.length > 0 && (
+          <>
+            <div className="flex justify-end mb-4">
+              <ViewToggle view={viewMode} onViewChange={setViewMode} />
+            </div>
+
+            {viewMode === 'grid' ? groupsGridView : groupsListView}
+          </>
+        )}
+
+        {proposeCta}
+      </div>
+
+      {joinModal}
     </div>
   )
 }
@@ -229,9 +344,11 @@ export default function WorkingGroupsContent() {
 function WorkingGroupCard({
   group,
   onJoinClick,
+  cool,
 }: {
   group: WorkingGroup
   onJoinClick: () => void
+  cool?: boolean
 }) {
   const [expanded, setExpanded] = useState(false)
   const groupImageUrl = getImageUrl(group.Image)
@@ -243,7 +360,9 @@ function WorkingGroupCard({
   const displayedMembers = expanded ? members : members.slice(0, VISIBLE_LIMIT)
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light">
+    <div className={cool
+      ? 'menu-glass rounded-3xl shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light'
+      : 'bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light'}>
       {/* Group Image */}
       {groupImageUrl && (
         <div className="aspect-video relative overflow-hidden">
