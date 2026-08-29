@@ -71,7 +71,7 @@ export default function SortFilter({ sortMode, onSortChange }: SortFilterProps) 
       {/* Popover panel */}
       {isOpen && (
         <div className="absolute top-full left-0 mt-2 z-50">
-          <div className="menu-glass rounded-xl py-1.5 w-52">
+          <div className="menu-glass-dense rounded-xl py-1.5 w-52">
             {/* Header */}
             <div className="px-3 py-2 border-b menu-divider">
               <p className="text-xs font-semibold text-charcoal dark:text-gray-100 uppercase tracking-wider">Ταξινόμηση</p>

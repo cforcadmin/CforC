@@ -109,7 +109,7 @@ export default function ProvinceFilter({ provinces, selectedProvinces, onSelecti
       {/* Popover panel */}
       {isOpen && (
         <div className="absolute top-full left-0 mt-2 z-50">
-          <div className="menu-glass rounded-xl py-1.5 w-64 max-h-80 flex flex-col">
+          <div className="menu-glass-dense rounded-xl py-1.5 w-64 max-h-80 flex flex-col">
             {/* Header */}
             <div className="px-3 py-2 border-b menu-divider flex items-center justify-between">
               <p className="text-xs font-semibold text-charcoal dark:text-gray-100 uppercase tracking-wider">Επαρχίες</p>

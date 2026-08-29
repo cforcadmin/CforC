@@ -162,7 +162,7 @@ export default function FieldsFilter({
    *  — το μοβ της δεύτερης εικόνας είναι το χρώμα του λειτουργικού, όχι δικό μας. */
   // Το γυαλί παντού — η σελίδα μελών ήταν το πρωτότυπο αυτού του φίλτρου
   // και έμεινε τελευταία χωρίς τη γλώσσα που γέννησε.
-  const panelCls = 'menu-glass rounded-xl py-1.5 w-72 max-h-96 overflow-y-auto'
+  const panelCls = 'menu-glass-dense rounded-xl py-1.5 w-72 max-h-96 overflow-y-auto'
   const rowBase = 'w-full text-left pl-8 pr-3 py-1.5 text-sm flex items-center justify-between transition-colors cursor-pointer relative'
   const rowOn = 'menu-row-on'
   const rowHover = 'menu-row-hover text-charcoal dark:text-white'
@@ -274,7 +274,7 @@ export default function FieldsFilter({
           {/* Subcategories panel */}
           {hoveredCategory !== null && (
             <div
-              className="menu-glass rounded-xl py-1.5 w-80 max-h-96 overflow-y-auto ml-1"
+              className="menu-glass-dense rounded-xl py-1.5 w-80 max-h-96 overflow-y-auto ml-1"
               onMouseEnter={handleSubcategoryMouseEnter}
               onMouseLeave={handleSubcategoryMouseLeave}
             >
