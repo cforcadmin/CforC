@@ -415,7 +415,7 @@ function MembersPageContent() {
               </h1>
               <p className="text-white/70 mt-5" aria-live="polite">
                 <span className="notranslate text-coral font-bold text-3xl align-middle">{displayCount}</span>
-                <span className="ml-2 align-middle">μέλη</span>
+                <span className="ml-2 align-middle">μέλη με προφίλ</span>
               </p>
             </div>
             <div className="relative" style={{ backgroundColor: 'rgba(10, 14, 24, .45)', backdropFilter: 'blur(16px) saturate(170%)', WebkitBackdropFilter: 'blur(16px) saturate(170%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.12)' }}>
