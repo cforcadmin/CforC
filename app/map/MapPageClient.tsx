@@ -107,7 +107,6 @@ export default function MapPageClient({ members }: MapPageClientProps) {
       {/* Map Container */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2">
         <div className={cool ? 'relative overflow-hidden menu-glass glass-rim rounded-3xl p-2 md:p-3' : 'relative'}>
-          {cool && <span className="logo-reveal" aria-hidden="true" />}
           <div className={cool ? 'relative rounded-2xl overflow-hidden' : undefined}>
           <GreeceMap
             provinceMap={mapData.provinceMap}
