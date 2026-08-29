@@ -410,8 +410,8 @@ function ActivitiesPageContent() {
             )}
 
             {/* Filter Bar */}
-            <div className={cool ? 'relative overflow-hidden menu-glass glass-rim rounded-3xl p-6 md:p-8 mb-12' : 'bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 mb-12 shadow-sm'}>
-              {cool && <span className="logo-reveal" aria-hidden="true" />}
+            <div className={cool ? 'relative menu-glass glass-rim rounded-3xl p-6 md:p-8 mb-12' : 'bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 mb-12 shadow-sm'}>
+              {cool && <span className="logo-reveal rounded-3xl overflow-hidden" aria-hidden="true" />}
               <div className={cool ? 'relative flex flex-wrap items-center gap-3' : 'flex flex-wrap items-center gap-3'}>
                 {/* Search */}
                 <input
