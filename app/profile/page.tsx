@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import Navigation from '@/components/Navigation'
@@ -54,6 +54,39 @@ const IMPLEMENTED_SECTIONS = new Set<SectionKey>([
   'profile', 'open-calls', 'newsletters', 'educational',
   'networks', 'working-groups', 'pocket-guide', 'library',
 ])
+
+
+// Ρ2: συμπυκνωμένη γυάλινη κάψουλα πεδίου — δείχνει ετικέτα + σύνοψη
+// και ανοίγει σε πλήρη επεξεργασία με κλικ (μόνο στο στυλ Cool)
+function CoolSpot({ label, summary, children }: { label: string; summary?: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="relative overflow-hidden menu-glass glass-rim rounded-3xl">
+      <span className="logo-reveal" aria-hidden="true" />
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="relative w-full text-left px-6 py-4"
+      >
+        <span className="flex items-center justify-between gap-3">
+          <span className="text-xs font-bold tracking-[.14em] uppercase text-gray-500 dark:text-gray-400">{label}</span>
+          <svg className={`w-4 h-4 flex-shrink-0 text-coral transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </span>
+        {!open && (
+          summary ? (
+            <span className="block mt-1 text-charcoal dark:text-gray-100 truncate">{summary}</span>
+          ) : (
+            <span className="block mt-1 text-gray-400 dark:text-gray-500 italic">Κλικ για συμπλήρωση…</span>
+          )
+        )}
+      </button>
+      {open && <div className="relative px-6 pb-6 space-y-4">{children}</div>}
+    </div>
+  )
+}
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -801,6 +834,440 @@ export default function ProfilePage() {
 
   const currentImageUrl = user.Image && user.Image.length > 0 ? user.Image[0].url : undefined
 
+  // Ρ2: τα μπλοκ πεδίων ορίζονται μία φορά και μπαίνουν σε διαφορετική
+  // διάταξη ανά στυλ — classic κάρτες ή cool συμπυκνωμένες κάψουλες
+  const nameEditor = (
+    <>
+              {/* Name with GR/EN toggle */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-charcoal dark:text-gray-200">Όνομα <span className="text-coral">*</span></span>
+                  <div className="inline-flex rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setNameLang('gr')}
+                      className={`px-3 py-1 font-medium transition-colors ${nameLang === 'gr' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      GR
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNameLang('en')}
+                      className={`px-3 py-1 font-medium transition-colors ${nameLang === 'en' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      EN
+                    </button>
+                  </div>
+                </div>
+                {nameLang === 'gr' ? (
+                  <EditableField
+                    label=""
+                    value={formData.Name}
+                    placeholder="Το όνομά σας (ελληνικά)"
+                    onChange={(value) => handleFieldChange('Name', value)}
+                    tooltip="Μη χρησιμοποιείς κεφαλαία (ALL CAPS). Χρησιμοποίησε σημεία στίξης όπου χρειάζεται."
+                  />
+                ) : (
+                  <>
+                    <EditableField
+                      label=""
+                      value={formData.EngName}
+                      placeholder="Your name in English (optional)"
+                      onChange={(value) => handleFieldChange('EngName', value)}
+                      tooltip="Προαιρετικό. Αν το συμπληρώσεις, θα εμφανίζεται ως αγγλική μετάφραση του ονόματός σου αντί της αυτόματης μετάφρασης Google."
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Προαιρετικό — Αν δεν το συμπληρώσεις, η αυτόματη μετάφραση (Google Translate) θα μεταφράσει το ελληνικό όνομα.
+                    </p>
+                  </>
+                )}
+              </div>
+    </>
+  )
+  const emailEditor = (
+    <>
+              <EditableField
+                label="Email"
+                value={formData.Email}
+                placeholder="email@example.com"
+                type="email"
+                onChange={(value) => handleFieldChange('Email', value)}
+                required
+                disabled
+                helperText="Επικοινώνησε με τον διαχειριστή για να αλλάξεις το email σου"
+                tooltip="Το email δεν μπορεί να αλλάξει. Για αλλαγή, επικοινώνησε με τον διαχειριστή IT."
+              />
+    </>
+  )
+  const bioEditor = (
+    <>
+              {/* Bio with GR/EN toggle */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-charcoal dark:text-gray-200">Βιογραφικό <span className="text-coral">*</span></span>
+                  <div className="inline-flex rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setBioLang('gr')}
+                      className={`px-3 py-1 font-medium transition-colors ${bioLang === 'gr' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      GR
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBioLang('en')}
+                      className={`px-3 py-1 font-medium transition-colors ${bioLang === 'en' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      EN
+                    </button>
+                  </div>
+                </div>
+                {bioLang === 'gr' ? (
+                  <RichTextEditor
+                    key={`bio-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
+                    label=""
+                    content={formData.Bio}
+                    placeholder="Γράψε μια σύντομη περιγραφή για εσένα..."
+                    onChange={(blocks) => handleFieldChange('Bio', blocks)}
+                    maxWords={160}
+                    maxCharacters={1200}
+                    tooltip="Όριο: 160 λέξεις ή 1200 χαρακτήρες. Υποστηρίζεται μορφοποίηση: έντονα, πλάγια, λίστες, σύνδεσμοι κ.ά."
+                  />
+                ) : (
+                  <>
+                    <RichTextEditor
+                      key={`engbio-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
+                      label=""
+                      content={formData.EngBio}
+                      placeholder="Write a short bio in English (optional)..."
+                      onChange={(blocks) => handleFieldChange('EngBio', blocks)}
+                      maxWords={160}
+                      maxCharacters={1200}
+                      tooltip="Optional. Same limits as Greek bio: 160 words / 1200 characters."
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Προαιρετικό — Αν δεν το συμπληρώσεις, η αυτόματη μετάφραση (Google Translate) θα μεταφράσει το ελληνικό βιογραφικό. Αν το συμπληρώσεις, θα χρησιμοποιηθεί ως η αγγλική μετάφραση αντί της αυτόματης.
+                    </p>
+                  </>
+                )}
+              </div>
+    </>
+  )
+  const fieldsEditor = (
+    <>
+              <FieldsOfWorkSelector
+                value={formData.FieldsOfWork}
+                onChange={(value) => handleFieldChange('FieldsOfWork', value)}
+              />
+    </>
+  )
+  const phoneEditor = (
+    <>
+              <EditableField
+                label="Τηλέφωνο"
+                value={formData.Phone}
+                placeholder="+30 123 456 7890"
+                type="tel"
+                onChange={(value) => handleFieldChange('Phone', value)}
+                tooltip="Μόνο αριθμοί, κενά και +. Απαγορεύονται παύλες, παρενθέσεις κλπ."
+              />
+    </>
+  )
+  const locationEditor = (
+    <>
+              <CityAutocomplete
+                value={formData.City}
+                onChange={(value) => handleFieldChange('City', value)}
+                onProvinceChange={(value) => handleFieldChange('Province', value)}
+                required
+              />
+
+              {/* Province - read-only, auto-derived from city */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-charcoal dark:text-gray-200">
+                  Περιφέρεια
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <div
+                  className="group relative flex items-start gap-2 px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                  aria-disabled="true"
+                >
+                  <div className="flex-1 opacity-60">
+                    {formData.Province && formData.Province !== '-' ? (
+                      <p className="text-charcoal dark:text-gray-200">{formData.Province}</p>
+                    ) : (
+                      <p className="text-gray-400 dark:text-gray-500 italic">Συμπληρώνεται αυτόματα</p>
+                    )}
+                  </div>
+                  <svg
+                    className="w-5 h-5 text-gray-400 flex-shrink-0 opacity-60"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
+                  </svg>
+                  {/* Hover tooltip */}
+                  <div className="absolute bottom-full left-4 mb-2 hidden group-hover:block z-10">
+                    <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-xs rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white whitespace-nowrap">
+                      Συμπληρώνεται αυτόματα από την πόλη. Επικοινώνησε μαζί μας για αλλαγές.
+                      <div className="absolute top-full left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black dark:border-t-white"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+    </>
+  )
+  const websitesEditor = (
+    <>
+              <EditableField
+                label="Ιστοσελίδες και Κοινωνικά Δίκτυα"
+                value={formData.Websites}
+                placeholder="https://example.com"
+                type="url"
+                onChange={(value) => handleFieldChange('Websites', value)}
+                helperText="Διαχώρισε με κόμμα (,)"
+                tooltip="Χώρισε πολλαπλές ιστοσελίδες και κοινωνικά δίκτυα με κόμμα."
+              />
+    </>
+  )
+  const project1Editor = (
+    <>
+                <div className="flex items-center gap-3">
+                  <h3 className="text-lg font-semibold text-charcoal dark:text-gray-100">
+                    Έργο 1
+                  </h3>
+                  <div className="inline-flex rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setProject1Lang('gr')}
+                      className={`px-3 py-1 font-medium transition-colors ${project1Lang === 'gr' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      GR
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProject1Lang('en')}
+                      className={`px-3 py-1 font-medium transition-colors ${project1Lang === 'en' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      EN
+                    </button>
+                  </div>
+                </div>
+
+                {project1Lang === 'gr' ? (
+                  <>
+                    <EditableField
+                      label="Τίτλος Έργου"
+                      value={formData.Project1Title}
+                      placeholder="Τίτλος του πρώτου έργου σας"
+                      onChange={(value) => handleFieldChange('Project1Title', value)}
+                    />
+
+                    <EditableField
+                      label="Tags/Κατηγορίες"
+                      value={formData.Project1Tags}
+                      placeholder="Design, Development, Art"
+                      onChange={(value) => handleFieldChange('Project1Tags', value)}
+                      helperText="Διαχώρισε με κόμμα (,) - μέγιστο 5 tags"
+                      maxItems={5}
+                      tooltip="Μέγιστο 5 tags ανά έργο, χωρισμένα με κόμμα."
+                    />
+
+                    <RichTextEditor
+                      key={`p1desc-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
+                      label="Περιγραφή"
+                      content={formData.Project1Description}
+                      placeholder="Περίγραψε το έργο σου..."
+                      onChange={(blocks) => handleFieldChange('Project1Description', blocks)}
+                      tooltip="Υποστηρίζεται μορφοποίηση. Ενσωμάτωση εικόνας: [IMAGE: url | alt text]"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <EditableField
+                      label="Project Title (EN)"
+                      value={formData.EngProject1Title}
+                      placeholder="Project title in English (optional)"
+                      onChange={(value) => handleFieldChange('EngProject1Title', value)}
+                    />
+
+                    <EditableField
+                      label="Tags/Categories (EN)"
+                      value={formData.EngProject1Tags}
+                      placeholder="Design, Development, Art"
+                      onChange={(value) => handleFieldChange('EngProject1Tags', value)}
+                      helperText="Comma-separated (,) - max 5 tags"
+                      maxItems={5}
+                      tooltip="Max 5 tags per project, comma-separated."
+                    />
+
+                    <RichTextEditor
+                      key={`engp1desc-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
+                      label="Description (EN)"
+                      content={formData.EngProject1Description}
+                      placeholder="Describe your project in English (optional)..."
+                      onChange={(blocks) => handleFieldChange('EngProject1Description', blocks)}
+                      tooltip="Optional. Same formatting supported. Embedded image: [IMAGE: url | alt text]"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Προαιρετικό — Αν δεν το συμπληρώσεις, η αυτόματη μετάφραση (Google Translate) θα μεταφράσει την ελληνική περιγραφή.
+                    </p>
+                  </>
+                )}
+
+                <EditableField
+                  label="Links Έργου"
+                  value={formData.Project1Links}
+                  placeholder="https://example.com, https://instagram.com/project"
+                  onChange={(value) => handleFieldChange('Project1Links', value)}
+                  helperText="URLs χωρισμένα με κόμμα — αναγνωρίζονται αυτόματα social media, ιστοσελίδες κλπ."
+                />
+
+                <EditableMultipleImages
+                  label="Εικόνες Έργου"
+                  existingImages={user?.Project1Pictures}
+                  keptImageIds={project1KeptImageIds}
+                  onImagesChange={(files, keptIds) => {
+                    setProject1Images(files)
+                    setProject1KeptImageIds(keptIds)
+                  }}
+                />
+
+                <EditableField
+                  label="Εναλλακτικό κείμενο φωτο έργου 1"
+                  value={formData.Project1PicturesAltText}
+                  placeholder="π.χ. Παιδιά ζωγραφίζουν τοιχογραφία σε δημόσιο χώρο"
+                  onChange={(value) => handleFieldChange('Project1PicturesAltText', value)}
+                  helperText="Υποχρεωτικό όταν υπάρχουν εικόνες - Περιγραφή για προσβασιμότητα (μέγιστο 200 χαρακτήρες)"
+                  maxCharacters={200}
+                  required={(project1KeptImageIds.length > 0) || (project1Images.length > 0)}
+                  tooltip="Περίγραψε τι δείχνουν οι εικόνες του έργου. Μην επαναλάβεις τον τίτλο. Μέγιστο 200 χαρακτήρες."
+                />
+    </>
+  )
+  const project2Editor = (
+    <>
+                <div className="flex items-center gap-3">
+                  <h3 className="text-lg font-semibold text-charcoal dark:text-gray-100">
+                    Έργο 2
+                  </h3>
+                  <div className="inline-flex rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setProject2Lang('gr')}
+                      className={`px-3 py-1 font-medium transition-colors ${project2Lang === 'gr' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      GR
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProject2Lang('en')}
+                      className={`px-3 py-1 font-medium transition-colors ${project2Lang === 'en' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      EN
+                    </button>
+                  </div>
+                </div>
+
+                {project2Lang === 'gr' ? (
+                  <>
+                    <EditableField
+                      label="Τίτλος Έργου"
+                      value={formData.Project2Title}
+                      placeholder="Τίτλος του δεύτερου έργου σας"
+                      onChange={(value) => handleFieldChange('Project2Title', value)}
+                    />
+
+                    <EditableField
+                      label="Tags/Κατηγορίες"
+                      value={formData.Project2Tags}
+                      placeholder="Design, Development, Art"
+                      onChange={(value) => handleFieldChange('Project2Tags', value)}
+                      helperText="Διαχώρισε με κόμμα (,) - μέγιστο 5 tags"
+                      maxItems={5}
+                      tooltip="Μέγιστο 5 tags ανά έργο, χωρισμένα με κόμμα."
+                    />
+
+                    <RichTextEditor
+                      key={`p2desc-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
+                      label="Περιγραφή"
+                      content={formData.Project2Description}
+                      placeholder="Περίγραψε το έργο σου..."
+                      onChange={(blocks) => handleFieldChange('Project2Description', blocks)}
+                      tooltip="Υποστηρίζεται μορφοποίηση. Ενσωμάτωση εικόνας: [IMAGE: url | alt text]"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <EditableField
+                      label="Project Title (EN)"
+                      value={formData.EngProject2Title}
+                      placeholder="Project title in English (optional)"
+                      onChange={(value) => handleFieldChange('EngProject2Title', value)}
+                    />
+
+                    <EditableField
+                      label="Tags/Categories (EN)"
+                      value={formData.EngProject2Tags}
+                      placeholder="Design, Development, Art"
+                      onChange={(value) => handleFieldChange('EngProject2Tags', value)}
+                      helperText="Comma-separated (,) - max 5 tags"
+                      maxItems={5}
+                      tooltip="Max 5 tags per project, comma-separated."
+                    />
+
+                    <RichTextEditor
+                      key={`engp2desc-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
+                      label="Description (EN)"
+                      content={formData.EngProject2Description}
+                      placeholder="Describe your project in English (optional)..."
+                      onChange={(blocks) => handleFieldChange('EngProject2Description', blocks)}
+                      tooltip="Optional. Same formatting supported. Embedded image: [IMAGE: url | alt text]"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Προαιρετικό — Αν δεν το συμπληρώσεις, η αυτόματη μετάφραση (Google Translate) θα μεταφράσει την ελληνική περιγραφή.
+                    </p>
+                  </>
+                )}
+
+                <EditableField
+                  label="Links Έργου"
+                  value={formData.Project2Links}
+                  placeholder="https://example.com, https://instagram.com/project"
+                  onChange={(value) => handleFieldChange('Project2Links', value)}
+                  helperText="URLs χωρισμένα με κόμμα — αναγνωρίζονται αυτόματα social media, ιστοσελίδες κλπ."
+                />
+
+                <EditableMultipleImages
+                  label="Εικόνες Έργου"
+                  existingImages={user?.Project2Pictures}
+                  keptImageIds={project2KeptImageIds}
+                  onImagesChange={(files, keptIds) => {
+                    setProject2Images(files)
+                    setProject2KeptImageIds(keptIds)
+                  }}
+                />
+
+                <EditableField
+                  label="Εναλλακτικό κείμενο φωτο έργου 2"
+                  value={formData.Project2PicturesAltText}
+                  placeholder="π.χ. Θεατρική παράσταση με 10 ηθοποιούς σε σκηνή"
+                  onChange={(value) => handleFieldChange('Project2PicturesAltText', value)}
+                  helperText="Υποχρεωτικό όταν υπάρχουν εικόνες - Περιγραφή για προσβασιμότητα (μέγιστο 200 χαρακτήρες)"
+                  maxCharacters={200}
+                  required={(project2KeptImageIds.length > 0) || (project2Images.length > 0)}
+                  tooltip="Περίγραψε τι δείχνουν οι εικόνες του έργου. Μην επαναλάβεις τον τίτλο. Μέγιστο 200 χαρακτήρες."
+                />
+    </>
+  )
+
   return (
     <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
       <Navigation />
@@ -1231,7 +1698,8 @@ export default function ProfilePage() {
         {/* Profile Content */}
         {activeSection === 'profile' && (
         <div className={coolMode ? 'pt-32 pb-24 max-w-6xl mx-auto px-4' : 'pt-32 pb-24 max-w-4xl mx-auto px-4'}>
-          {/* Header with Guidelines Button */}
+          {/* Header with Guidelines Button — στο Cool ζει ως chip στη σκηνή */}
+          {!coolMode && (
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
             <div className="text-center md:text-left">
               <p className="text-gray-600 dark:text-gray-300">
@@ -1248,6 +1716,7 @@ export default function ProfilePage() {
               Οδηγίες συμπλήρωσης
             </button>
           </div>
+          )}
 
         {/* Validation Errors - Show at top */}
         {validationErrors.length > 0 && (
@@ -1388,123 +1857,40 @@ export default function ProfilePage() {
 
           {/* Right Column - Profile Fields */}
           <div className={coolMode ? 'space-y-6' : 'md:col-span-2 space-y-6'}>
+            {coolMode ? (
+              <>
+                {/* Ρ2: βιογραφικό φαρδύ αριστερά, συμπυκνωμένες κάψουλες
+                    δεξιά που ανοίγουν με κλικ· τα έργα δικές τους σειρές */}
+                <div className="grid lg:grid-cols-[1.7fr_1fr] gap-6 items-start">
+                  <div className="relative overflow-hidden menu-glass glass-rim rounded-3xl p-8">
+                    <span className="logo-reveal" aria-hidden="true" />
+                    <div className="relative">
+                      {bioEditor}
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <CoolSpot label="Όνομα" summary={formData.Name}>{nameEditor}</CoolSpot>
+                    <CoolSpot label="Email" summary={formData.Email}>{emailEditor}</CoolSpot>
+                    <CoolSpot label="Τοποθεσία" summary={[formData.City, formData.Province].filter((v) => v && v !== '-').join(', ')}>{locationEditor}</CoolSpot>
+                    <CoolSpot label="Πεδία" summary={formData.FieldsOfWork !== 'Προς Συμπλήρωση' ? formData.FieldsOfWork : ''}>{fieldsEditor}</CoolSpot>
+                    <CoolSpot label="Τηλέφωνο" summary={formData.Phone}>{phoneEditor}</CoolSpot>
+                    <CoolSpot label="Σύνδεσμοι" summary={formData.Websites}>{websitesEditor}</CoolSpot>
+                  </div>
+                </div>
+                <CoolSpot label="Έργο 1" summary={formData.Project1Title}>{project1Editor}</CoolSpot>
+                <CoolSpot label="Έργο 2" summary={formData.Project2Title}>{project2Editor}</CoolSpot>
+              </>
+            ) : (
+              <>
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 space-y-6">
               <h2 className="text-lg font-bold text-charcoal dark:text-gray-100 mb-4">
                 Βασικές Πληροφορίες
               </h2>
 
-              {/* Name with GR/EN toggle */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-charcoal dark:text-gray-200">Όνομα <span className="text-coral">*</span></span>
-                  <div className="inline-flex rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setNameLang('gr')}
-                      className={`px-3 py-1 font-medium transition-colors ${nameLang === 'gr' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                    >
-                      GR
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setNameLang('en')}
-                      className={`px-3 py-1 font-medium transition-colors ${nameLang === 'en' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                    >
-                      EN
-                    </button>
-                  </div>
-                </div>
-                {nameLang === 'gr' ? (
-                  <EditableField
-                    label=""
-                    value={formData.Name}
-                    placeholder="Το όνομά σας (ελληνικά)"
-                    onChange={(value) => handleFieldChange('Name', value)}
-                    tooltip="Μη χρησιμοποιείς κεφαλαία (ALL CAPS). Χρησιμοποίησε σημεία στίξης όπου χρειάζεται."
-                  />
-                ) : (
-                  <>
-                    <EditableField
-                      label=""
-                      value={formData.EngName}
-                      placeholder="Your name in English (optional)"
-                      onChange={(value) => handleFieldChange('EngName', value)}
-                      tooltip="Προαιρετικό. Αν το συμπληρώσεις, θα εμφανίζεται ως αγγλική μετάφραση του ονόματός σου αντί της αυτόματης μετάφρασης Google."
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Προαιρετικό — Αν δεν το συμπληρώσεις, η αυτόματη μετάφραση (Google Translate) θα μεταφράσει το ελληνικό όνομα.
-                    </p>
-                  </>
-                )}
-              </div>
-
-              <EditableField
-                label="Email"
-                value={formData.Email}
-                placeholder="email@example.com"
-                type="email"
-                onChange={(value) => handleFieldChange('Email', value)}
-                required
-                disabled
-                helperText="Επικοινώνησε με τον διαχειριστή για να αλλάξεις το email σου"
-                tooltip="Το email δεν μπορεί να αλλάξει. Για αλλαγή, επικοινώνησε με τον διαχειριστή IT."
-              />
-
-              {/* Bio with GR/EN toggle */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-charcoal dark:text-gray-200">Βιογραφικό <span className="text-coral">*</span></span>
-                  <div className="inline-flex rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setBioLang('gr')}
-                      className={`px-3 py-1 font-medium transition-colors ${bioLang === 'gr' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                    >
-                      GR
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setBioLang('en')}
-                      className={`px-3 py-1 font-medium transition-colors ${bioLang === 'en' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                    >
-                      EN
-                    </button>
-                  </div>
-                </div>
-                {bioLang === 'gr' ? (
-                  <RichTextEditor
-                    key={`bio-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
-                    label=""
-                    content={formData.Bio}
-                    placeholder="Γράψε μια σύντομη περιγραφή για εσένα..."
-                    onChange={(blocks) => handleFieldChange('Bio', blocks)}
-                    maxWords={160}
-                    maxCharacters={1200}
-                    tooltip="Όριο: 160 λέξεις ή 1200 χαρακτήρες. Υποστηρίζεται μορφοποίηση: έντονα, πλάγια, λίστες, σύνδεσμοι κ.ά."
-                  />
-                ) : (
-                  <>
-                    <RichTextEditor
-                      key={`engbio-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
-                      label=""
-                      content={formData.EngBio}
-                      placeholder="Write a short bio in English (optional)..."
-                      onChange={(blocks) => handleFieldChange('EngBio', blocks)}
-                      maxWords={160}
-                      maxCharacters={1200}
-                      tooltip="Optional. Same limits as Greek bio: 160 words / 1200 characters."
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Προαιρετικό — Αν δεν το συμπληρώσεις, η αυτόματη μετάφραση (Google Translate) θα μεταφράσει το ελληνικό βιογραφικό. Αν το συμπληρώσεις, θα χρησιμοποιηθεί ως η αγγλική μετάφραση αντί της αυτόματης.
-                    </p>
-                  </>
-                )}
-              </div>
-
-              <FieldsOfWorkSelector
-                value={formData.FieldsOfWork}
-                onChange={(value) => handleFieldChange('FieldsOfWork', value)}
-              />
+              {nameEditor}
+              {emailEditor}
+              {bioEditor}
+              {fieldsEditor}
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 space-y-6">
@@ -1512,72 +1898,9 @@ export default function ProfilePage() {
                 Στοιχεία Επικοινωνίας
               </h2>
 
-              <EditableField
-                label="Τηλέφωνο"
-                value={formData.Phone}
-                placeholder="+30 123 456 7890"
-                type="tel"
-                onChange={(value) => handleFieldChange('Phone', value)}
-                tooltip="Μόνο αριθμοί, κενά και +. Απαγορεύονται παύλες, παρενθέσεις κλπ."
-              />
-
-              <CityAutocomplete
-                value={formData.City}
-                onChange={(value) => handleFieldChange('City', value)}
-                onProvinceChange={(value) => handleFieldChange('Province', value)}
-                required
-              />
-
-              {/* Province - read-only, auto-derived from city */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-charcoal dark:text-gray-200">
-                  Περιφέρεια
-                  <span className="text-red-500 ml-1">*</span>
-                </label>
-                <div
-                  className="group relative flex items-start gap-2 px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
-                  aria-disabled="true"
-                >
-                  <div className="flex-1 opacity-60">
-                    {formData.Province && formData.Province !== '-' ? (
-                      <p className="text-charcoal dark:text-gray-200">{formData.Province}</p>
-                    ) : (
-                      <p className="text-gray-400 dark:text-gray-500 italic">Συμπληρώνεται αυτόματα</p>
-                    )}
-                  </div>
-                  <svg
-                    className="w-5 h-5 text-gray-400 flex-shrink-0 opacity-60"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    />
-                  </svg>
-                  {/* Hover tooltip */}
-                  <div className="absolute bottom-full left-4 mb-2 hidden group-hover:block z-10">
-                    <div className="bg-white dark:bg-gray-900 text-charcoal dark:text-gray-200 text-xs rounded-lg px-3 py-2 shadow-lg border border-black dark:border-white whitespace-nowrap">
-                      Συμπληρώνεται αυτόματα από την πόλη. Επικοινώνησε μαζί μας για αλλαγές.
-                      <div className="absolute top-full left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black dark:border-t-white"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <EditableField
-                label="Ιστοσελίδες και Κοινωνικά Δίκτυα"
-                value={formData.Websites}
-                placeholder="https://example.com"
-                type="url"
-                onChange={(value) => handleFieldChange('Websites', value)}
-                helperText="Διαχώρισε με κόμμα (,)"
-                tooltip="Χώρισε πολλαπλές ιστοσελίδες και κοινωνικά δίκτυα με κόμμα."
-              />
+              {phoneEditor}
+              {locationEditor}
+              {websitesEditor}
             </div>
 
             {/* Projects Section */}
@@ -1588,234 +1911,17 @@ export default function ProfilePage() {
 
               {/* Project 1 */}
               <div className="space-y-4 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
-                <div className="flex items-center gap-3">
-                  <h3 className="text-lg font-semibold text-charcoal dark:text-gray-100">
-                    Έργο 1
-                  </h3>
-                  <div className="inline-flex rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setProject1Lang('gr')}
-                      className={`px-3 py-1 font-medium transition-colors ${project1Lang === 'gr' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                    >
-                      GR
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setProject1Lang('en')}
-                      className={`px-3 py-1 font-medium transition-colors ${project1Lang === 'en' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                    >
-                      EN
-                    </button>
-                  </div>
-                </div>
-
-                {project1Lang === 'gr' ? (
-                  <>
-                    <EditableField
-                      label="Τίτλος Έργου"
-                      value={formData.Project1Title}
-                      placeholder="Τίτλος του πρώτου έργου σας"
-                      onChange={(value) => handleFieldChange('Project1Title', value)}
-                    />
-
-                    <EditableField
-                      label="Tags/Κατηγορίες"
-                      value={formData.Project1Tags}
-                      placeholder="Design, Development, Art"
-                      onChange={(value) => handleFieldChange('Project1Tags', value)}
-                      helperText="Διαχώρισε με κόμμα (,) - μέγιστο 5 tags"
-                      maxItems={5}
-                      tooltip="Μέγιστο 5 tags ανά έργο, χωρισμένα με κόμμα."
-                    />
-
-                    <RichTextEditor
-                      key={`p1desc-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
-                      label="Περιγραφή"
-                      content={formData.Project1Description}
-                      placeholder="Περίγραψε το έργο σου..."
-                      onChange={(blocks) => handleFieldChange('Project1Description', blocks)}
-                      tooltip="Υποστηρίζεται μορφοποίηση. Ενσωμάτωση εικόνας: [IMAGE: url | alt text]"
-                    />
-                  </>
-                ) : (
-                  <>
-                    <EditableField
-                      label="Project Title (EN)"
-                      value={formData.EngProject1Title}
-                      placeholder="Project title in English (optional)"
-                      onChange={(value) => handleFieldChange('EngProject1Title', value)}
-                    />
-
-                    <EditableField
-                      label="Tags/Categories (EN)"
-                      value={formData.EngProject1Tags}
-                      placeholder="Design, Development, Art"
-                      onChange={(value) => handleFieldChange('EngProject1Tags', value)}
-                      helperText="Comma-separated (,) - max 5 tags"
-                      maxItems={5}
-                      tooltip="Max 5 tags per project, comma-separated."
-                    />
-
-                    <RichTextEditor
-                      key={`engp1desc-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
-                      label="Description (EN)"
-                      content={formData.EngProject1Description}
-                      placeholder="Describe your project in English (optional)..."
-                      onChange={(blocks) => handleFieldChange('EngProject1Description', blocks)}
-                      tooltip="Optional. Same formatting supported. Embedded image: [IMAGE: url | alt text]"
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Προαιρετικό — Αν δεν το συμπληρώσεις, η αυτόματη μετάφραση (Google Translate) θα μεταφράσει την ελληνική περιγραφή.
-                    </p>
-                  </>
-                )}
-
-                <EditableField
-                  label="Links Έργου"
-                  value={formData.Project1Links}
-                  placeholder="https://example.com, https://instagram.com/project"
-                  onChange={(value) => handleFieldChange('Project1Links', value)}
-                  helperText="URLs χωρισμένα με κόμμα — αναγνωρίζονται αυτόματα social media, ιστοσελίδες κλπ."
-                />
-
-                <EditableMultipleImages
-                  label="Εικόνες Έργου"
-                  existingImages={user?.Project1Pictures}
-                  keptImageIds={project1KeptImageIds}
-                  onImagesChange={(files, keptIds) => {
-                    setProject1Images(files)
-                    setProject1KeptImageIds(keptIds)
-                  }}
-                />
-
-                <EditableField
-                  label="Εναλλακτικό κείμενο φωτο έργου 1"
-                  value={formData.Project1PicturesAltText}
-                  placeholder="π.χ. Παιδιά ζωγραφίζουν τοιχογραφία σε δημόσιο χώρο"
-                  onChange={(value) => handleFieldChange('Project1PicturesAltText', value)}
-                  helperText="Υποχρεωτικό όταν υπάρχουν εικόνες - Περιγραφή για προσβασιμότητα (μέγιστο 200 χαρακτήρες)"
-                  maxCharacters={200}
-                  required={(project1KeptImageIds.length > 0) || (project1Images.length > 0)}
-                  tooltip="Περίγραψε τι δείχνουν οι εικόνες του έργου. Μην επαναλάβεις τον τίτλο. Μέγιστο 200 χαρακτήρες."
-                />
+              {project1Editor}
               </div>
 
               {/* Project 2 */}
               <div className="space-y-4 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
-                <div className="flex items-center gap-3">
-                  <h3 className="text-lg font-semibold text-charcoal dark:text-gray-100">
-                    Έργο 2
-                  </h3>
-                  <div className="inline-flex rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setProject2Lang('gr')}
-                      className={`px-3 py-1 font-medium transition-colors ${project2Lang === 'gr' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                    >
-                      GR
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setProject2Lang('en')}
-                      className={`px-3 py-1 font-medium transition-colors ${project2Lang === 'en' ? 'bg-coral text-white dark:bg-coral-light dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                    >
-                      EN
-                    </button>
-                  </div>
-                </div>
-
-                {project2Lang === 'gr' ? (
-                  <>
-                    <EditableField
-                      label="Τίτλος Έργου"
-                      value={formData.Project2Title}
-                      placeholder="Τίτλος του δεύτερου έργου σας"
-                      onChange={(value) => handleFieldChange('Project2Title', value)}
-                    />
-
-                    <EditableField
-                      label="Tags/Κατηγορίες"
-                      value={formData.Project2Tags}
-                      placeholder="Design, Development, Art"
-                      onChange={(value) => handleFieldChange('Project2Tags', value)}
-                      helperText="Διαχώρισε με κόμμα (,) - μέγιστο 5 tags"
-                      maxItems={5}
-                      tooltip="Μέγιστο 5 tags ανά έργο, χωρισμένα με κόμμα."
-                    />
-
-                    <RichTextEditor
-                      key={`p2desc-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
-                      label="Περιγραφή"
-                      content={formData.Project2Description}
-                      placeholder="Περίγραψε το έργο σου..."
-                      onChange={(blocks) => handleFieldChange('Project2Description', blocks)}
-                      tooltip="Υποστηρίζεται μορφοποίηση. Ενσωμάτωση εικόνας: [IMAGE: url | alt text]"
-                    />
-                  </>
-                ) : (
-                  <>
-                    <EditableField
-                      label="Project Title (EN)"
-                      value={formData.EngProject2Title}
-                      placeholder="Project title in English (optional)"
-                      onChange={(value) => handleFieldChange('EngProject2Title', value)}
-                    />
-
-                    <EditableField
-                      label="Tags/Categories (EN)"
-                      value={formData.EngProject2Tags}
-                      placeholder="Design, Development, Art"
-                      onChange={(value) => handleFieldChange('EngProject2Tags', value)}
-                      helperText="Comma-separated (,) - max 5 tags"
-                      maxItems={5}
-                      tooltip="Max 5 tags per project, comma-separated."
-                    />
-
-                    <RichTextEditor
-                      key={`engp2desc-${isInitialDataLoaded ? 'loaded' : 'loading'}`}
-                      label="Description (EN)"
-                      content={formData.EngProject2Description}
-                      placeholder="Describe your project in English (optional)..."
-                      onChange={(blocks) => handleFieldChange('EngProject2Description', blocks)}
-                      tooltip="Optional. Same formatting supported. Embedded image: [IMAGE: url | alt text]"
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Προαιρετικό — Αν δεν το συμπληρώσεις, η αυτόματη μετάφραση (Google Translate) θα μεταφράσει την ελληνική περιγραφή.
-                    </p>
-                  </>
-                )}
-
-                <EditableField
-                  label="Links Έργου"
-                  value={formData.Project2Links}
-                  placeholder="https://example.com, https://instagram.com/project"
-                  onChange={(value) => handleFieldChange('Project2Links', value)}
-                  helperText="URLs χωρισμένα με κόμμα — αναγνωρίζονται αυτόματα social media, ιστοσελίδες κλπ."
-                />
-
-                <EditableMultipleImages
-                  label="Εικόνες Έργου"
-                  existingImages={user?.Project2Pictures}
-                  keptImageIds={project2KeptImageIds}
-                  onImagesChange={(files, keptIds) => {
-                    setProject2Images(files)
-                    setProject2KeptImageIds(keptIds)
-                  }}
-                />
-
-                <EditableField
-                  label="Εναλλακτικό κείμενο φωτο έργου 2"
-                  value={formData.Project2PicturesAltText}
-                  placeholder="π.χ. Θεατρική παράσταση με 10 ηθοποιούς σε σκηνή"
-                  onChange={(value) => handleFieldChange('Project2PicturesAltText', value)}
-                  helperText="Υποχρεωτικό όταν υπάρχουν εικόνες - Περιγραφή για προσβασιμότητα (μέγιστο 200 χαρακτήρες)"
-                  maxCharacters={200}
-                  required={(project2KeptImageIds.length > 0) || (project2Images.length > 0)}
-                  tooltip="Περίγραψε τι δείχνουν οι εικόνες του έργου. Μην επαναλάβεις τον τίτλο. Μέγιστο 200 χαρακτήρες."
-                />
+              {project2Editor}
               </div>
             </div>
+
+              </>
+            )}
 
             {/* Save Button - Only show when there are unsaved changes */}
             {hasUnsavedChanges() && (
