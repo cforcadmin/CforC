@@ -22,7 +22,7 @@ import GlobalSearch from '../GlobalSearch'
 import { useOcAccess } from '../useOcAccess'
 import OcSeatChoiceModal from '../oc/OcSeatChoiceModal'
 import NavModeSwitch from './NavModeSwitch'
-import { NAV_ITEMS, type NavItem } from './navItems'
+import { NAV_ITEMS, mapLabel, type NavItem } from './navItems'
 import { getFeaturedProjects } from '@/lib/strapi'
 import type { Project, StrapiResponse } from '@/lib/types'
 
@@ -48,7 +48,7 @@ export default function CapsuleHeader(_props: CapsuleHeaderProps) {
   const { theme, toggleTheme } = useTheme()
   const { textSize, setTextSize } = useTextSize()
   const { isAuthenticated, logout } = useAuth()
-  const { isTranslated } = useTranslation()
+  const { lang } = useTranslation()
   const ocAccess = useOcAccess(isAuthenticated)
 
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -116,7 +116,7 @@ export default function CapsuleHeader(_props: CapsuleHeaderProps) {
 
   const itemLabel = (item: NavItem): string => {
     if (item.key === 'members' && isAuthenticated) return 'ΜΕΛΗ'
-    if (item.key === 'map' && isTranslated) return 'MAP'
+    if (item.key === 'map') return mapLabel(lang)
     return item.label
   }
 
@@ -244,7 +244,11 @@ export default function CapsuleHeader(_props: CapsuleHeaderProps) {
 
           {/* Δεξιά: κάψουλα πλοήγησης + ΣΥΝΔΕΣΗ + γη + προσβασιμότητα */}
           <div className="hidden lg:flex items-center gap-2.5 ml-auto">
-            <nav aria-label="Κύρια πλοήγηση" className="flex items-center gap-1 bubble-glass glass-rim rounded-full p-1.5">
+            {/* Το key κάνει remount το nav όταν φτάσουν auth/projects: το
+                Google Translate μαυρίζει subtrees που ξαναγράφει το React
+                και ΔΕΝ μεταφράζει ό,τι μπει αργότερα μέσα τους — ένα φρέσκο
+                nav μεταφράζεται ολόκληρο (επαληθευμένο με probes 29/8) */}
+            <nav key={`nav-${isAuthenticated ? 'in' : 'out'}-${featuredProjects.length}`} aria-label="Κύρια πλοήγηση" className="flex items-center gap-1 bubble-glass glass-rim rounded-full p-1.5">
               {visibleItems.map(item => {
                 const active = isItemActive(item)
                 const pillCls = `${PILL} ${active ? PILL_ACTIVE : PILL_IDLE}`
@@ -395,7 +399,7 @@ export default function CapsuleHeader(_props: CapsuleHeaderProps) {
                 isItemActive(item) ? 'text-coral' : 'text-white/85 hover:text-white'
               }`}
             >
-              {itemLabel(item)}
+              <span className={item.key === 'map' ? 'notranslate' : undefined}>{itemLabel(item)}</span>
             </Link>
           ))}
           {isAuthenticated && (

@@ -52,21 +52,24 @@ export default function LanguageSwitcher() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Detect current language from Google Translate
+  // Detect current language from Google Translate. Πρωτεύουσα πηγή το
+  // <html lang> που το GT κρατά συγχρονισμένο με την ΠΡΑΓΜΑΤΙΚΗ μετάφραση
+  // της σελίδας — το cookie μπορεί να έχει πολλαπλές/μπαγιάτικες εκδοχές
+  // ανά domain και έδειχνε λάθος κωδικό στο badge (π.χ. EN ενώ έπαιζε ES).
   useEffect(() => {
     const checkLanguage = () => {
-      const langCookie = document.cookie
+      const htmlLang = document.documentElement.lang
+      const cookieLang = (document.cookie
         .split('; ')
-        .find(row => row.startsWith('googtrans='))
-
-      if (langCookie) {
-        const lang = langCookie.split('/')[2]
-        if (lang && lang !== currentLang) {
-          setCurrentLang(lang)
-        }
+        .find(row => row.startsWith('googtrans=')) || '')
+        .split('/')[2]
+      const lang = htmlLang && htmlLang !== 'el' ? htmlLang : (cookieLang || 'el')
+      if (lang !== currentLang) {
+        setCurrentLang(lang)
       }
     }
 
+    checkLanguage()
     // Check periodically
     const interval = setInterval(checkLanguage, 1000)
     return () => clearInterval(interval)
@@ -148,7 +151,7 @@ export default function LanguageSwitcher() {
         </svg>
 
         {/* Language Code Overlay - Top Right */}
-        <span className="absolute -top-1 -right-1 text-[11px] font-bold bg-charcoal dark:bg-gray-600 text-white px-1.5 py-0.5 rounded">
+        <span className="notranslate absolute -top-1 -right-1 text-[11px] font-bold bg-charcoal dark:bg-gray-600 text-white px-1.5 py-0.5 rounded">
           {getCurrentLanguageCode()}
         </span>
 

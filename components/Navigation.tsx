@@ -19,6 +19,7 @@ import { useOcAccess } from './useOcAccess'
 import OcSeatChoiceModal from './oc/OcSeatChoiceModal'
 import CapsuleHeader from './nav/CapsuleHeader'
 import NavModeSwitch from './nav/NavModeSwitch'
+import { mapLabel } from './nav/navItems'
 import CoolNav from './nav/CoolNav'
 import { useNavMode } from './nav/useNavMode'
 
@@ -64,7 +65,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
   const aboutDropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const showProjects = true
-  const { isTranslated } = useTranslation()
+  const { lang } = useTranslation()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -315,7 +316,9 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
             {/* Στυλ μενού — παρών και στο Classic ώστε να υπάρχει έξοδος */}
             <NavModeSwitch align="left" buttonClassName="p-2 rounded-full hover:bg-white/20 transition-colors flex items-center justify-center" />
             {/* Navigation links wrapped in nav element */}
-            <nav aria-label="Κύρια πλοήγηση" className="flex items-center space-x-4">
+            {/* key: remount όταν φτάσουν auth/projects ώστε το Google
+                Translate να μεταφράσει και τα αργοπορημένα στοιχεία */}
+            <nav key={`nav-${isAuthenticated ? 'in' : 'out'}-${featuredProjects.length}`} aria-label="Κύρια πλοήγηση" className="flex items-center space-x-4">
               {/* About Dropdown */}
               <div
                 ref={aboutDropdownRef}
@@ -425,7 +428,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
               )}
               {!isAuthenticated && (
                 <Link href="/map" className={`text-sm transition-colors ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
-                  <span className="notranslate">{isTranslated ? 'MAP' : 'ΧΑΡΤΗΣ'}</span>
+                  <span className="notranslate">{mapLabel(lang)}</span>
                 </Link>
               )}
               {!isAuthenticated && (
@@ -435,7 +438,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
               )}
               {isAuthenticated && (
                 <Link href="/map" className={`text-sm transition-colors ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`}>
-                  <span className="notranslate">{isTranslated ? 'MAP' : 'ΧΑΡΤΗΣ'}</span>
+                  <span className="notranslate">{mapLabel(lang)}</span>
                 </Link>
               )}
               <Link href="/members" className={`bg-white dark:bg-gray-700 text-charcoal dark:text-gray-200 ${isAuthenticated ? 'px-4' : 'px-6'} py-2 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors`}>
@@ -616,13 +619,13 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 </div>
               )}
               {!isAuthenticated && (
-                <Link href="/map" className={`block text-sm py-2 transition-colors ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`} onClick={() => setIsOpen(false)}><span className="notranslate">{isTranslated ? 'MAP' : 'ΧΑΡΤΗΣ'}</span></Link>
+                <Link href="/map" className={`block text-sm py-2 transition-colors ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`} onClick={() => setIsOpen(false)}><span className="notranslate">{mapLabel(lang)}</span></Link>
               )}
               {!isAuthenticated && (
                 <Link href="/participation" className={`block text-sm py-2 transition-colors ${pathname === '/participation' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`} onClick={() => setIsOpen(false)}>ΣΥΜΜΕΤΟΧΗ</Link>
               )}
               {isAuthenticated && (
-                <Link href="/map" className={`block text-sm py-2 transition-colors ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`} onClick={() => setIsOpen(false)}><span className="notranslate">{isTranslated ? 'MAP' : 'ΧΑΡΤΗΣ'}</span></Link>
+                <Link href="/map" className={`block text-sm py-2 transition-colors ${pathname === '/map' ? 'text-white dark:text-coral-light font-bold' : 'font-medium hover:text-white dark:text-gray-200 dark:hover:text-coral-light'}`} onClick={() => setIsOpen(false)}><span className="notranslate">{mapLabel(lang)}</span></Link>
               )}
               <Link href="/members" className="block w-full bg-white dark:bg-gray-700 text-charcoal dark:text-gray-200 px-6 py-2 rounded-full text-sm font-medium text-center">
                 {isAuthenticated ? 'ΜΕΛΗ' : 'ΕΥΡΕΣΗ ΜΕΛΩΝ'}

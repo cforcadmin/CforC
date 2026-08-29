@@ -24,7 +24,8 @@ import GlobalSearch from '../GlobalSearch'
 import { useOcAccess } from '../useOcAccess'
 import OcSeatChoiceModal from '../oc/OcSeatChoiceModal'
 import NavModeSwitch from './NavModeSwitch'
-import { NAV_ITEMS } from './navItems'
+import { NAV_ITEMS, mapLabel } from './navItems'
+import { useTranslation } from '../TranslationProvider'
 
 // Διαχωριστικές γραμμές: διαφορετική απόχρωση γκρι ανά κολόνα — σκούρες
 // στο φωτεινό θέμα, ανοιχτές στο σκοτεινό, πάντα ορατές πάνω στο πορτοκαλί
@@ -42,6 +43,7 @@ export default function CoolNav() {
   const { theme, toggleTheme } = useTheme()
   const { textSize, setTextSize } = useTextSize()
   const { isAuthenticated, logout } = useAuth()
+  const { lang } = useTranslation()
   // UI-gating μόνο — το πραγματικό φράγμα του /oc το επιβάλλει ο server
   const ocAccess = useOcAccess(isAuthenticated)
   const [showOcSeatModal, setShowOcSeatModal] = useState(false)
@@ -223,6 +225,10 @@ export default function CoolNav() {
           className={`menu-glass glass-rim rounded-full flex items-center gap-1.5 px-2.5 py-1.5 pointer-events-auto transition-all duration-300 ${isScrolled ? 'scale-90' : ''}`}
           style={{ transformOrigin: 'right top' }}
         >
+          {/* key: remount των auth στοιχείων όταν λυθεί το session, ώστε το
+              Google Translate να τα μεταφράσει (φρέσκο subtree)· ΕΚΤΟΣ του
+              LanguageSwitcher — φιλοξενεί το gadget του GT */}
+          <div key={`auth-${isAuthenticated ? 'in' : 'out'}-${ocAccess.isBoard ? 'oc' : ''}`} className="contents">
           {!isAuthenticated ? (
             <Link href="/login" className="inline-flex items-center min-h-9 px-4 rounded-full bg-coral text-white text-[13px] font-bold tracking-widest whitespace-nowrap hover:bg-[#F07551] transition-colors">
               ΣΥΝΔΕΣΗ
@@ -258,6 +264,7 @@ export default function CoolNav() {
               </button>
             </>
           )}
+          </div>
           <LanguageSwitcher />
           <AccessibilityButton size="small" />
         </div>
@@ -310,7 +317,11 @@ export default function CoolNav() {
                 className="cool-col-label"
                 style={{ opacity: expanded ? 1 : 0 }}
               >
-                {item.key === 'members' && isAuthenticated ? 'ΜΕΛΗ' : item.label}
+                {item.key === 'members' && isAuthenticated
+                  ? 'ΜΕΛΗ'
+                  : item.key === 'map'
+                    ? <span className="notranslate">{mapLabel(lang)}</span>
+                    : item.label}
               </span>
               {active && <span className="cool-col-dot" aria-hidden="true" />}
             </button>

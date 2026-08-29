@@ -27,6 +27,20 @@ export interface NavItem {
   coolOnly?: boolean
 }
 
+/** Το Google Translate μεταφράζει λάθος τη σκέτη λέξη «Χάρτης» ως «Paper/
+ *  Papel/Papier» (επαληθευμένο σε en/es/de, 29/8/26) — χωρίς πρόταση-
+ *  συμφραζόμενα διαβάζει «χαρτί». Χειροκίνητη μετάφραση ανά γλώσσα του
+ *  switcher, με notranslate στο σημείο χρήσης ώστε να μην το ξαναπειράξει. */
+export const MAP_LABELS: Record<string, string> = {
+  en: 'MAP', de: 'KARTE', es: 'MAPA', pt: 'MAPA', fr: 'CARTE', it: 'MAPPA',
+  ru: 'КАРТА', 'zh-CN': '地图', ja: '地図', ar: 'خريطة', tr: 'HARİTA',
+  nl: 'KAART', pl: 'MAPA', sv: 'KARTA', no: 'KART', da: 'KORT', fi: 'KARTTA',
+  cs: 'MAPA', ro: 'HARTĂ', hu: 'TÉRKÉP',
+}
+
+export const mapLabel = (lang: string): string =>
+  lang && lang !== 'el' ? (MAP_LABELS[lang] || 'MAP') : 'ΧΑΡΤΗΣ'
+
 export const NAV_ITEMS: NavItem[] = [
   { key: 'home', label: 'ΑΡΧΙΚΗ', href: '/', hue: '#FFC9B8', edge: '#2D2D2D', coolOnly: true },
   { key: 'about', label: 'ΣΧΕΤΙΚΑ ΜΕ ΕΜΑΣ', href: '/about', dropdown: 'about', hue: '#FFB199', edge: '#2A9D8F' },
