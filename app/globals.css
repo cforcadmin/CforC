@@ -2020,6 +2020,45 @@ html.nav-cool .cool-flush > section > div > .pt-24 { padding-top: 0; }
   width: 8px; height: 8px; border-radius: 999px; background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
+/* Δ3 (30/8): δεύτερο επίπεδο στο dock. Η κολόνα έγινε div και το κλικ
+   ζει σε αόρατο κουμπί που τη γεμίζει· το flyout βγαίνει αριστερά στο
+   hover/focus. Το ορατό «κενό» ως το πάνελ είναι padding ΜΕΣΑ στο
+   .cool-fly — η ζώνη hover είναι συνεχής, το μενού δεν κλείνει ποτέ
+   όσο ο δείκτης ταξιδεύει προς αυτό. */
+.cool-col-hit {
+  position: absolute; inset: 0;
+  display: flex; align-items: flex-end; justify-content: center;
+  padding: 1.5rem 0; min-width: 0;
+  background: none; border: 0; cursor: pointer;
+}
+.cool-col-hit:focus-visible { outline: 2px solid #FF8B6A; outline-offset: -3px; }
+.cool-fly {
+  position: absolute; right: 100%; bottom: 1.2rem;
+  padding-right: .9rem; /* η γέφυρα hover */
+  opacity: 0; transform: translateX(8px); pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+  z-index: 2;
+}
+.cool-col:hover > .cool-fly,
+.cool-col:focus-within > .cool-fly { opacity: 1; transform: translateX(0); pointer-events: auto; }
+/* Ίδια γλώσσα με τις κολόνες: το χρώμα (hue) έρχεται inline, το γυαλί
+   από τις inset σκιές του rim — το backdrop-filter δεν δουλεύει μέσα σε
+   ήδη θολωμένη κολόνα, γι' αυτό η απόχρωση είναι σχεδόν αδιαφανής. */
+.cool-fly-panel {
+  border-radius: 1rem; padding: .4rem 0; min-width: 13rem; max-width: 19rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.10),
+    0 10px 30px rgba(0, 0, 0, 0.35);
+}
+.cool-fly-panel a {
+  display: block; padding: .6rem 1.2rem;
+  color: #fff; font-weight: 700; font-size: .82rem; letter-spacing: .06em;
+  text-decoration: none; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cool-fly-panel a:hover,
+.cool-fly-panel a:focus-visible { background: rgba(255, 255, 255, 0.16); }
 
 /* Οι φούσκες του Modern header (κάψουλα + εργαλεία) ως σκούρο υγρό γυαλί.
    Στην κορυφή πατούν σε συμπαγές κρεμ (η θόλωση αδρανής)· στο scroll το

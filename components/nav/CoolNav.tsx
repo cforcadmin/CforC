@@ -25,6 +25,8 @@ import { useOcAccess } from '../useOcAccess'
 import OcSeatChoiceModal from '../oc/OcSeatChoiceModal'
 import NavModeSwitch from './NavModeSwitch'
 import { NAV_ITEMS, mapLabel } from './navItems'
+import { getFeaturedProjects } from '@/lib/strapi'
+import type { Project, StrapiResponse } from '@/lib/types'
 import { useTranslation } from '../TranslationProvider'
 
 // Διαχωριστικές γραμμές: διαφορετική απόχρωση γκρι ανά κολόνα — σκούρες
@@ -44,6 +46,35 @@ export default function CoolNav() {
   const { textSize, setTextSize } = useTextSize()
   const { isAuthenticated, logout } = useAuth()
   const { lang } = useTranslation()
+  const [featuredProjects, setFeaturedProjects] = useState<Project[]>([])
+
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const response: StrapiResponse<Project[]> = await getFeaturedProjects()
+        setFeaturedProjects(response.data)
+      } catch (err) {
+        console.error('Error fetching featured projects:', err)
+      }
+    }
+    fetchProjects()
+  }, [])
+
+  // Δ3 (30/8): δεύτερο επίπεδο στο dock — γυάλινο flyout αριστερά της
+  // κολόνας, ίδια υπο-στοιχεία με τα dropdowns των άλλων στυλ
+  const SUBS_ABOUT = [
+    { label: 'Το δίκτυο', href: '/about' },
+    { label: 'Ομάδα Συντονισμού', href: '/coordination-team' },
+    { label: 'Διαφάνεια', href: '/transparency' },
+    { label: 'Επικοινωνία', href: '/contact' },
+  ]
+  const subsFor = (key: string): Array<{ label: string; href: string }> =>
+    key === 'about'
+      ? SUBS_ABOUT
+      : key === 'projects'
+        ? featuredProjects.map(p => ({ label: p.title, href: `/projects/${p.slug}` }))
+        : []
+
   // UI-gating μόνο — το πραγματικό φράγμα του /oc το επιβάλλει ο server
   const ocAccess = useOcAccess(isAuthenticated)
   const [showOcSeatModal, setShowOcSeatModal] = useState(false)
@@ -300,12 +331,10 @@ export default function CoolNav() {
             if (i < partIdx) transform = 'translateX(-45vw)'
             else if (i > partIdx) transform = 'translateX(45vw)'
           }
+          const subs = subsFor(item.key)
           return (
-            <button
+            <div
               key={item.key}
-              type="button"
-              onClick={() => handleColumnClick(item.key, item.href)}
-              aria-current={active ? 'page' : undefined}
               className="cool-col"
               style={{
                 // Στο σκοτεινό το 0.4 πάνω σε σχεδόν μαύρο έδινε λασπωμένο καφέ —
@@ -318,18 +347,39 @@ export default function CoolNav() {
                 transform,
               }}
             >
-              <span
-                className="cool-col-label"
-                style={{ opacity: expanded ? 1 : 0 }}
+              <button
+                type="button"
+                onClick={() => handleColumnClick(item.key, item.href)}
+                aria-current={active ? 'page' : undefined}
+                className="cool-col-hit"
               >
-                {item.key === 'members' && isAuthenticated
-                  ? 'ΜΕΛΗ'
-                  : item.key === 'map'
-                    ? <span className="notranslate">{mapLabel(lang)}</span>
-                    : item.label}
-              </span>
+                <span
+                  className="cool-col-label"
+                  style={{ opacity: expanded ? 1 : 0 }}
+                >
+                  {item.key === 'members' && isAuthenticated
+                    ? 'ΜΕΛΗ'
+                    : item.key === 'map'
+                      ? <span className="notranslate">{mapLabel(lang)}</span>
+                      : item.label}
+                </span>
+              </button>
+              {/* Δ3: flyout στο hover/focus της κολόνας — το κενό ως το πάνελ
+                  είναι padding ΜΕΣΑ στη ζώνη hover, δεν «χάνεται» το μενού */}
+              {expanded && subs.length > 0 && (
+                <div className="cool-fly">
+                  <div
+                    className="cool-fly-panel"
+                    style={{ backgroundColor: hexToRgba(item.hue, theme === 'dark' ? 0.9 : 0.85) }}
+                  >
+                    {subs.map(sub => (
+                      <Link key={sub.href} href={sub.href}>{sub.label}</Link>
+                    ))}
+                  </div>
+                </div>
+              )}
               {active && <span className="cool-col-dot" aria-hidden="true" />}
-            </button>
+            </div>
           )
         })}
       </nav>
