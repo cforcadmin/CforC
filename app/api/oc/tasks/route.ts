@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
-import { resolveOcAccess, getSeatHoldersWithEmail } from '@/lib/ocRoles'
+import { resolveOcAccess, getSeatHoldersWithEmail, type OcSeat } from '@/lib/ocRoles'
 import { strapiAll } from '@/lib/strapiPaged'
 
 export const maxDuration = 60
@@ -45,14 +45,40 @@ async function authorize() {
   }
   const access = await resolveOcAccess(decoded.memberId)
   if (!access.isBoard) return { error: NextResponse.json({ error: 'Δεν επιτρέπεται' }, { status: 403 }) }
-  return { memberId: decoded.memberId }
+  const seatCookie = cookieStore.get('oc-last-seat')?.value as OcSeat | undefined
+  const activeSeat: OcSeat | null =
+    seatCookie && access.seats.includes(seatCookie) ? seatCookie
+      : access.seats.length === 1 ? access.seats[0] : null
+  return { memberId: decoded.memberId, activeSeat }
+}
+
+/**
+ * Πίνακες «Διορθώσεις / Προτάσεις» (ένας ανά σελίδα του OC): μόνο η θέση IT
+ * τους βλέπει και τους αγγίζει. Ξεχωρίζουν από το slug — καμία αλλαγή
+ * σχήματος στο Strapi. Κρύβονται ΠΑΝΤΑ από τη γενική λίστα (Διαχείριση →
+ * Εκκρεμότητες), ακόμη και για το IT· ζητούνται ρητά με ?board= ή ?prefix=.
+ */
+export const IT_BOARD_PREFIX = 'it-corrections-'
+function isItBoard(slug: string | null | undefined): boolean {
+  return String(slug || '').startsWith(IT_BOARD_PREFIX)
+}
+function forbiddenIt() {
+  return NextResponse.json({ error: 'Οι πίνακες Διορθώσεων/Προτάσεων ανήκουν μόνο στο IT' }, { status: 403 })
+}
+async function boardSlugOf(boardId: string): Promise<string | null> {
+  const r = await strapi(`/oc-task-boards/${boardId}?fields[0]=Slug`)
+  return r.json?.data?.Slug || null
+}
+async function taskBoardSlugOf(taskId: string): Promise<string | null> {
+  const r = await strapi(`/oc-tasks/${taskId}?fields[0]=Title&populate[board][fields][0]=Slug`)
+  return r.json?.data?.board?.Slug || null
 }
 
 const TASK_FIELDS = 'fields[0]=Title&fields[1]=Completed&fields[2]=Status&fields[3]=Categories'
   + '&fields[4]=Description&fields[5]=Links&fields[6]=DueDate&fields[7]=Priority'
   + '&fields[8]=CompletedAt&fields[9]=SortIndex&fields[10]=CreatedBy'
   + '&populate[assignees][fields][0]=Name&populate[assignees][fields][1]=Email'
-  + '&populate[board][fields][0]=Title'
+  + '&populate[board][fields][0]=Title&populate[board][fields][1]=Slug'
 
 function shape(t: any) {
   return {
@@ -68,6 +94,7 @@ function shape(t: any) {
     completedAt: t.CompletedAt || null,
     sortIndex: t.SortIndex ?? 0,
     boardId: t.board?.documentId || null,
+    boardSlug: t.board?.Slug || null,
     assignees: (t.assignees || []).map((a: any) => ({
       documentId: a.documentId, name: a.Name, email: a.Email || null,
     })),
@@ -132,15 +159,25 @@ export async function GET(request: NextRequest) {
       // Η συλλογή μπορεί να μην έχει φτάσει ακόμη στο Strapi Cloud
       return NextResponse.json({ boards: [], tasks: [], seatHolders, unconfigured: true })
     }
+    const isIt = auth.activeSeat === 'it'
+    const want = String(request.nextUrl.searchParams.get('board') || '').trim()
+    const prefix = String(request.nextUrl.searchParams.get('prefix') || '').trim()
+    const scoped = !!(want || prefix)
     const boards = (boardsRes.json?.data || [])
       .filter((b: any) => !b.Archived)
+      .filter((b: any) => isItBoard(b.Slug) ? (scoped && isIt) : true)
+      .filter((b: any) => !want || b.Slug === want || b.documentId === want)
+      .filter((b: any) => !prefix || String(b.Slug || '').startsWith(prefix))
       .map((b: any) => ({
         documentId: b.documentId, title: b.Title, slug: b.Slug,
         scope: b.Scope || 'coordination', description: b.Description || null,
       }))
+    const allowed = new Set(boards.map((b: any) => b.documentId))
+    const tasks = (tasksRes.json?.data || []).map(shape)
+      .filter((t: any) => scoped ? (t.boardId && allowed.has(t.boardId)) : !isItBoard(t.boardSlug))
     return NextResponse.json({
       boards,
-      tasks: (tasksRes.json?.data || []).map(shape),
+      tasks,
       seatHolders,
       members: (membersRes.data || []).map((m: any) => ({
         documentId: m.documentId, name: m.Name, am: m.AM ?? null,
@@ -159,6 +196,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null)
   const boardId = String(body?.boardId || '').replace(/[^a-z0-9]/gi, '')
   if (!boardId) return NextResponse.json({ error: 'Λείπει ο πίνακας' }, { status: 400 })
+  if (isItBoard(await boardSlugOf(boardId)) && auth.activeSeat !== 'it') return forbiddenIt()
   const parsed = readInput(body, true)
   if ('error' in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 })
   const r = await strapi('/oc-tasks', 'POST', {
@@ -179,6 +217,7 @@ export async function PATCH(request: NextRequest) {
   const body = await request.json().catch(() => null)
   const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
   if (!id) return NextResponse.json({ error: 'Λείπει η εκκρεμότητα' }, { status: 400 })
+  if (isItBoard(await taskBoardSlugOf(id)) && auth.activeSeat !== 'it') return forbiddenIt()
   const parsed = readInput(body, false)
   if ('error' in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 })
   const r = await strapi(`/oc-tasks/${id}`, 'PUT', parsed.data)
@@ -194,6 +233,7 @@ export async function DELETE(request: NextRequest) {
   if ('error' in auth) return auth.error
   const id = String(request.nextUrl.searchParams.get('id') || '').replace(/[^a-z0-9]/gi, '')
   if (!id) return NextResponse.json({ error: 'Λείπει η εκκρεμότητα' }, { status: 400 })
+  if (isItBoard(await taskBoardSlugOf(id)) && auth.activeSeat !== 'it') return forbiddenIt()
   const r = await strapi(`/oc-tasks/${id}`, 'DELETE')
   if (!r.ok && r.status !== 204) return NextResponse.json({ error: 'Αποτυχία διαγραφής' }, { status: 502 })
   return NextResponse.json({ ok: true })

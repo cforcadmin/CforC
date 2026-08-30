@@ -12,6 +12,7 @@ import OcMonthlyView from '@/components/oc/OcMonthlyView'
 import OcComms from '@/components/oc/OcComms'
 import OcAdmin from '@/components/oc/OcAdmin'
 import OcIndicators from '@/components/oc/OcIndicators'
+import OcCorrections from '@/components/oc/OcCorrections'
 import type { OcOverviewData } from '@/lib/ocOverview'
 import { useNavMode } from '@/components/nav/useNavMode'
 
@@ -26,6 +27,8 @@ const SECTIONS = [
   { key: 'comms', letter: 'Ε', rest: 'ΠΙΚΟΙΝΩΝΙΑ', hue: '#D96AA7', title: 'Επικοινωνία' },
   { key: 'reports', letter: 'Α', rest: 'ΝΑΦΟΡΕΣ', hue: '#E9A13B', title: 'Αναφορές' },
   { key: 'settings', letter: 'Ρ', rest: 'ΥΘΜΙΣΕΙΣ', hue: '#8A8FA3', title: 'Ρυθμίσεις' },
+  // Μόνο για τη θέση IT — ένα κουτί ανά σελίδα, με δικό του πίνακα εκκρεμοτήτων
+  { key: 'corrections', letter: 'Π', rest: 'ΡΟΤΑΣΕΙΣ', hue: '#B34426', title: 'Διορθώσεις / Προτάσεις', itOnly: true },
 ] as const
 
 type SectionKey = (typeof SECTIONS)[number]['key']
@@ -111,6 +114,11 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
   )
   // Direct entry without a stored seat and several seats held — ask in place
   const [showSeatModal, setShowSeatModal] = useState(!initialSeat && seats.length > 1)
+  // Οι ενότητες που βλέπει η τρέχουσα θέση (η «Διορθώσεις / Προτάσεις» μόνο το IT)
+  const visibleSections = SECTIONS.filter(s => !('itOnly' in s && s.itOnly) || activeSeat === 'it')
+  useEffect(() => {
+    if (activeSection === 'corrections' && activeSeat !== 'it') setActiveSection('admin')
+  }, [activeSection, activeSeat])
   // Same threshold as Navigation (scrollY > 150): the glass strip below the
   // header copies the pill's geometry, and the hero's accessibility button
   // yields to the header's own
@@ -243,7 +251,7 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
 
                 {/* Category chips */}
                 <nav aria-label="Ενότητες OC" className="flex-1 flex flex-wrap gap-2.5 items-center justify-center pr-4 lg:pr-10">
-                  {SECTIONS.map(section => {
+                  {visibleSections.map(section => {
                     const active = section.key === activeSection
                     return (
                       <button
@@ -324,7 +332,7 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
                 </svg>
               </button>
             )}
-            {SECTIONS.map(section => {
+            {visibleSections.map(section => {
               const active = section.key === activeSection
               return (
                 <button
@@ -545,6 +553,8 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
           {activeSection === 'comms' && <OcComms />}
 
           {activeSection === 'reports' && <OcIndicators />}
+
+          {activeSection === 'corrections' && activeSeat === 'it' && <OcCorrections />}
 
           {activeSection !== 'overview' && activeSection !== 'settings' && activeSection !== 'members' && activeSection !== 'finances' && activeSection !== 'admin' && activeSection !== 'comms' && activeSection !== 'reports' && (
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-12 text-center">

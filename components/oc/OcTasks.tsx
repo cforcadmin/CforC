@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 /**
  * ΠΙΝΑΚΑΣ ΕΚΚΡΕΜΟΤΗΤΩΝ — η λίστα του Slack, μέσα στο OC.
@@ -111,7 +111,22 @@ function firstUrl(...parts: Array<string | null>): string | null {
   return null
 }
 
-export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
+export interface LockedBoard {
+  slug: string
+  title: string
+  description?: string
+}
+
+export default function OcTasks({ canEdit = true, lockedBoard, embedded = false, onLoaded }: {
+  canEdit?: boolean
+  /** Καρφωμένος πίνακας (π.χ. Διορθώσεις/Προτάσεις ανά σελίδα): χωρίς επιλογέα,
+   *  χωρίς «+ Πίνακας»· δημιουργείται μόνος του την πρώτη φορά */
+  lockedBoard?: LockedBoard
+  /** Μέσα σε άλλη κάρτα: χωρίς δικό του φόντο/τίτλο */
+  embedded?: boolean
+  /** Ενημέρωση γονέα μετά από κάθε φόρτωση (π.χ. μετρητές) */
+  onLoaded?: (tasks: Task[]) => void
+}) {
   const [boards, setBoards] = useState<Board[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
   const [holders, setHolders] = useState<Holder[]>([])
@@ -147,10 +162,23 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
   const load = useCallback(async () => {
     setLoading(true); setError(null)
     try {
-      const res = await fetch('/api/oc/tasks')
-      const d = await res.json()
+      const res = await fetch(lockedBoard ? `/api/oc/tasks?board=${encodeURIComponent(lockedBoard.slug)}` : '/api/oc/tasks')
+      let d = await res.json()
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
+      // Καρφωμένος πίνακας που δεν υπάρχει ακόμη → δημιουργία μία φορά, ξαναφόρτωμα
+      if (lockedBoard && !d.unconfigured && !(d.boards || []).length && !ensuredRef.current) {
+        ensuredRef.current = true
+        const c = await fetch('/api/oc/tasks/boards', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: lockedBoard.title, scope: 'coordination', description: lockedBoard.description || '', slug: lockedBoard.slug }),
+        })
+        if (!c.ok) throw new Error((await c.json())?.error || 'Αποτυχία δημιουργίας πίνακα')
+        const again = await fetch(`/api/oc/tasks?board=${encodeURIComponent(lockedBoard.slug)}`)
+        d = await again.json()
+        if (!again.ok) throw new Error(d?.error || 'Αποτυχία')
+      }
       setBoards(d.boards || []); setTasks(d.tasks || []); setHolders(d.seatHolders || [])
+      onLoaded?.(d.tasks || [])
       setMembers(d.members || [])
       setUnconfigured(!!d.unconfigured)
       setMeDocId(d.me || null)
@@ -158,7 +186,9 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
     } catch (err: any) {
       setError(err?.message || 'Αποτυχία φόρτωσης')
     } finally { setLoading(false) }
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lockedBoard?.slug])
+  const ensuredRef = useRef(false)
   useEffect(() => { load() }, [load])
 
   async function patch(id: string, body: Record<string, any>) {
@@ -342,19 +372,20 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
     )
   }
 
-  if (loading) return <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8 text-gray-400">Φόρτωση…</div>
+  const shell = embedded ? '' : 'bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8'
+  if (loading) return <div className={`${shell} text-gray-400`}>Φόρτωση…</div>
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
+    <div className={shell}>
       <div className="flex flex-wrap items-baseline justify-between gap-4 mb-1">
-        <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">{board?.title || 'Εκκρεμότητες'}</h2>
+        {!embedded && <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">{board?.title || 'Εκκρεμότητες'}</h2>}
         {counts.overdue > 0 && (
           <span className="px-3 py-1 rounded-full bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200 text-sm font-bold">
             {counts.overdue} εκπρόθεσμα
           </span>
         )}
       </div>
-      {board?.description && <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">{board.description}</p>}
+      {!embedded && board?.description && <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">{board.description}</p>}
 
       {unconfigured && (
         <p className="text-base rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-800 dark:text-orange-200 px-4 py-3 mb-5">
@@ -396,10 +427,12 @@ export default function OcTasks({ canEdit = true }: { canEdit?: boolean }) {
 
         {canEdit && (
           <span className="ml-auto flex items-center gap-2">
-            <button type="button" onClick={() => setNewBoard(true)}
-              className="px-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 text-sm text-charcoal dark:text-gray-200 hover:border-coral">
-              + Πίνακας
-            </button>
+            {!lockedBoard && (
+              <button type="button" onClick={() => setNewBoard(true)}
+                className="px-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 text-sm text-charcoal dark:text-gray-200 hover:border-coral">
+                + Πίνακας
+              </button>
+            )}
             {boardId && (
               <button type="button" onClick={() => setCreating(true)}
                 className="px-5 py-2 rounded-full bg-coral text-white text-sm font-bold hover:bg-coral/90">
