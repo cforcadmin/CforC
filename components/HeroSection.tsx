@@ -1,5 +1,6 @@
 "use client";
 
+import { readFlag } from "@/lib/clientFlags";
 import { useState, useEffect, useRef } from "react";
 import { AccessibilityButton } from "./AccessibilityMenu";
 import WordCycle from "./WordCycle";
@@ -39,7 +40,7 @@ export default function HeroSection() {
     if (isPlaying) return;
 
     // If consent was already given in a previous visit, autoplay on first click anywhere
-    const consent = localStorage.getItem('cookieConsent');
+    const consent = readFlag('cookieConsent');
     if (consent) {
       const handleFirstClick = () => {
         if (videoRef.current) {

@@ -12,6 +12,7 @@
 //   καβαλάει τη φωτογραφία
 // - Πάνω από το footer, η ζώνη ΓΙΝΕ ΜΕΛΟΣ όπως σε όλες τις Cool σελίδες
 
+import { readFlag } from '@/lib/clientFlags'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -65,7 +66,7 @@ export default function HomeCool() {
     const tryPlay = () => {
       videoRef.current?.play().then(() => setIsPlaying(true)).catch(() => {})
     }
-    const consent = localStorage.getItem('cookieConsent')
+    const consent = readFlag('cookieConsent')
     if (consent) {
       window.addEventListener('click', tryPlay, { once: true })
       return () => window.removeEventListener('click', tryPlay)

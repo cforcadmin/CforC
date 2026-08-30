@@ -1,28 +1,38 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { readFlag, writeFlag } from '@/lib/clientFlags'
+
+/* Το banner ζει μέσα σε κάθε σελίδα (15 σελίδες το καλούν), όχι στο layout:
+   κάθε πλοήγηση το ξαναστήνει. Όταν ο browser δεν κρατά site data, η
+   απάντηση δεν θυμόταν και το ερώτημα επανερχόταν σε κάθε κλικ του μενού.
+   Η σημαία του module κόβει την επανάληψη μέσα στην ίδια περιήγηση· η
+   απάντηση («accepted»/«declined») μένει η μόνη πηγή αλήθειας για το τι
+   επιτρέπεται. */
+const CONSENT_KEY = 'cookieConsent'
+/* Σημειώνεται ΜΟΝΟ όταν υπάρχει απάντηση — ποτέ επειδή «το δείξαμε».
+   Αλλιώς ένα mount που η React πετά (StrictMode στο dev, Suspense) θα
+   έσβηνε οριστικά το ερώτημα χωρίς ο χρήστης να απαντήσει ποτέ. */
+let answeredThisVisit = false
 
 export default function CookieConsent() {
   const [showConsent, setShowConsent] = useState(false)
 
   useEffect(() => {
-    const consent = localStorage.getItem('cookieConsent')
-    if (!consent) {
-      setShowConsent(true)
-    }
+    if (answeredThisVisit) return
+    if (readFlag(CONSENT_KEY)) answeredThisVisit = true
+    else setShowConsent(true)
   }, [])
 
-  const acceptCookies = () => {
-    localStorage.setItem('cookieConsent', 'accepted')
+  const answer = (value: 'accepted' | 'declined') => {
+    answeredThisVisit = true
+    writeFlag(CONSENT_KEY, value)
     setShowConsent(false)
     window.dispatchEvent(new Event('cookie-consent-dismissed'))
   }
 
-  const declineCookies = () => {
-    localStorage.setItem('cookieConsent', 'declined')
-    setShowConsent(false)
-    window.dispatchEvent(new Event('cookie-consent-dismissed'))
-  }
+  const acceptCookies = () => answer('accepted')
+  const declineCookies = () => answer('declined')
 
   if (!showConsent) return null
 

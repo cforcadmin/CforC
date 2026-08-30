@@ -11,6 +11,7 @@
 //   στυλ, Σύνδεση, μετάφραση, προσβασιμότητα) που μικραίνει στο scroll
 // Desktop μόνο — στο κινητό ο dispatcher δείχνει το Modern header.
 
+import { readFlag, writeFlag } from '@/lib/clientFlags'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
@@ -52,17 +53,16 @@ function hexToRgba(hex: string, alpha: number): string {
    σε κάθε κλικ του μενού (επιβεβαιωμένο σε δοκιμή, 31/8). */
 const INTRO_KEY = 'cforc-cool-intro-seen'
 let introShownThisVisit = false
+const SHOWCASE_KEY = 'cforc-home-showcase-seen'
+let showcaseShownThisVisit = false
 
 function introSeen(): boolean {
-  try { if (localStorage.getItem(INTRO_KEY) === '1') return true } catch { /* αποκλεισμένο */ }
-  try { if (sessionStorage.getItem(INTRO_KEY) === '1') return true } catch { /* αποκλεισμένο */ }
-  return false
+  return readFlag(INTRO_KEY) === '1'
 }
 
 function markIntroSeen(): void {
   introShownThisVisit = true
-  try { localStorage.setItem(INTRO_KEY, '1') } catch { /* αποκλεισμένο */ }
-  try { sessionStorage.setItem(INTRO_KEY, '1') } catch { /* αποκλεισμένο */ }
+  writeFlag(INTRO_KEY, '1')
 }
 
 export default function CoolNav() {
@@ -124,9 +124,11 @@ export default function CoolNav() {
   // Πρώτη επαφή με το Cool: μια φορά ανά browser, εξήγηση του dock + Escape
   const [showIntro, setShowIntro] = useState(false)
   useEffect(() => {
+    // Η σημαία μπαίνει στο κλείσιμο (markIntroSeen), όχι εδώ: ένα mount που
+    // η React πετά δεν πρέπει να «καταναλώνει» την καλωσόρισση.
     if (introShownThisVisit) return
-    introShownThisVisit = true
-    if (!introSeen()) setShowIntro(true)
+    if (introSeen()) introShownThisVisit = true
+    else setShowIntro(true)
   }, [])
   const dismissIntro = () => {
     setShowIntro(false)
@@ -167,12 +169,14 @@ export default function CoolNav() {
   // ώστε ο επαναλαμβανόμενος επισκέπτης να μη βλέπει αναλαμπή ανοίγματος.
   const [showcaseSeen, setShowcaseSeen] = useState(true)
   useEffect(() => {
-    try {
-      if (localStorage.getItem('cforc-home-showcase-seen') !== '1') {
-        setShowcaseSeen(false)
-        localStorage.setItem('cforc-home-showcase-seen', '1')
-      }
-    } catch { /* κρατά τη μαζεμένη προεπιλογή */ }
+    // Ίδια τριπλή φύλαξη με την καλωσόρισση: χωρίς τη σημαία του module, ένας
+    // browser που δεν κρατά site data θα «καλωσόριζε» ξανά σε κάθε πλοήγηση.
+    if (showcaseShownThisVisit) return
+    showcaseShownThisVisit = true
+    if (readFlag(SHOWCASE_KEY) !== '1') {
+      setShowcaseSeen(false)
+      writeFlag(SHOWCASE_KEY, '1')
+    }
   }, [])
 
   const items = NAV_ITEMS.filter(item => !(item.anonOnly && isAuthenticated))
