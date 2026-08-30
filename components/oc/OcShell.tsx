@@ -319,6 +319,30 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
           <div className={`flex items-center gap-2.5 overflow-x-auto menu-glass glass-rim strip-slide ${navMode === 'cool' ? 'rounded-full px-4 py-2' : 'rounded-b-2xl px-3 pt-3 pb-2'} ${coolMode && isScrolled ? 'cool-dim' : ''} ${(heroOut || heroCompact || coolMode) ? 'strip-shown' : 'strip-hidden'}`}
             style={{ scrollbarWidth: 'none', ...(navMode === 'cool' ? { borderRadius: '9999px' } : { borderTopLeftRadius: 0, borderTopRightRadius: 0 }) }}>
             <span className="text-sm font-bold text-charcoal dark:text-gray-100 whitespace-nowrap pl-1 notranslate">OC</span>
+            {/* Cool: το hero δεν υπάρχει, άρα η φυσαλίδα ρόλου (και η εναλλαγή
+                IT ⇄ F) ζει εδώ — ανάμεσα στο «OC» και τις ενότητες */}
+            {coolMode && activeSeat && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (seats.length > 1) {
+                    const i = seats.indexOf(activeSeat)
+                    applySeat(seats[(i + 1) % seats.length])
+                  }
+                }}
+                title={seats.length > 1
+                  ? `${OC_SEAT_LABELS[activeSeat] || activeSeat} — πάτησε για εναλλαγή ρόλου`
+                  : OC_SEAT_LABELS[activeSeat] || activeSeat}
+                aria-label={seats.length > 1
+                  ? `Ενεργός ρόλος: ${OC_SEAT_LABELS[activeSeat] || activeSeat}. Πάτησε για εναλλαγή ρόλου.`
+                  : `Ενεργός ρόλος: ${OC_SEAT_LABELS[activeSeat] || activeSeat}`}
+                className={`notranslate flex-shrink-0 min-w-[2.25rem] px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap text-center border border-black/15 dark:border-white/25 bg-black/5 dark:bg-white/10 text-charcoal dark:text-gray-100 ${
+                  seats.length > 1 ? 'hover:bg-coral/20 hover:border-coral/50 cursor-pointer' : 'cursor-default'
+                }`}
+              >
+                {OC_SEAT_SHORT[activeSeat] || activeSeat}
+              </button>
+            )}
             {heroCompact && (
               <button
                 type="button"
