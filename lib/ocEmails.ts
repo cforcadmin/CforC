@@ -1993,7 +1993,7 @@ export function paymentClaimNoticeHtml(name: string, email: string, applicationI
  *  υπόλοιπα email του OC. */
 export function financeMonthlyReminderEmailHtml(monthLabel: string, adminName?: string | null, signerName = 'Culture for Change — Finance'): { subject: string; html: string } {
   const code = (t: string) => `<code style="font-family:Menlo,Consolas,monospace;font-size:13px;background:#FFFFFF;border:1px solid #E5E7EB;border-radius:6px;padding:2px 6px;white-space:nowrap;">${t}</code>`
-  const shot = (file: string, alt: string) => `<img src="https://cultureforchange.net/email/${file}" alt="${alt}" width="100%" style="display:block;width:100%;max-width:100%;height:auto;border-radius:12px;border:1px solid #E5E7EB;margin:10px 0 4px 0;">`
+  const shot = (file: string, alt: string) => `<img src="https://www.cultureforchange.net/email/${file}" alt="${alt}" width="100%" style="display:block;width:100%;max-width:100%;height:auto;border-radius:12px;border:1px solid #E5E7EB;margin:10px 0 4px 0;">`
   const step = (n: string, title: string, body: string) => `
         <tr>
           <td style="padding:0 0 18px 0;">
