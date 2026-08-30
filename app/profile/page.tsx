@@ -1936,7 +1936,9 @@ export default function ProfilePage() {
 
             {/* Save Button - Only show when there are unsaved changes */}
             {hasUnsavedChanges() && (
-              <div className="sticky bottom-8 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-4 border-2 border-coral dark:border-coral-light">
+              <div className={coolMode
+                ? 'sticky bottom-8 z-30 menu-glass rounded-2xl shadow-2xl p-4 border-2 border-coral dark:border-coral-light'
+                : 'sticky bottom-8 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-4 border-2 border-coral dark:border-coral-light'}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-coral dark:bg-coral-light animate-pulse"></div>
