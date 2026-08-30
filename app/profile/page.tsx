@@ -1877,7 +1877,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
                   <div className="space-y-4 min-w-0">
-                    <CoolSpot label="Όνομα" summary={formData.Name}>{nameEditor}</CoolSpot>
+                    <CoolSpot label="Όνομα" summary={formData.Name || formData.EngName}>{nameEditor}</CoolSpot>
                     <CoolSpot label="Email" summary={formData.Email}>{emailEditor}</CoolSpot>
                     <CoolSpot label="Τοποθεσία" summary={[formData.City, formData.Province].filter((v) => v && v !== '-').join(', ')}>{locationEditor}</CoolSpot>
                     <CoolSpot label="Πεδία" summary={formData.FieldsOfWork !== 'Προς Συμπλήρωση' ? formData.FieldsOfWork : ''}>{fieldsEditor}</CoolSpot>
@@ -1885,8 +1885,8 @@ export default function ProfilePage() {
                     <CoolSpot label="Σύνδεσμοι" summary={formData.Websites}>{websitesEditor}</CoolSpot>
                   </div>
                 </div>
-                <CoolSpot label="Έργο 1" summary={formData.Project1Title}>{project1Editor}</CoolSpot>
-                <CoolSpot label="Έργο 2" summary={formData.Project2Title}>{project2Editor}</CoolSpot>
+                <CoolSpot label="Έργο 1" summary={formData.Project1Title || formData.EngProject1Title}>{project1Editor}</CoolSpot>
+                <CoolSpot label="Έργο 2" summary={formData.Project2Title || formData.EngProject2Title}>{project2Editor}</CoolSpot>
               </>
             ) : (
               <>
