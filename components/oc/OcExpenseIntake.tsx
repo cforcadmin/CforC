@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { notifyFinanceChanged } from '@/lib/ocFinanceEvents'
+import { detectStatementMonths, formatMonthEl } from '@/lib/bankStatement'
 
 /**
  * Β. ΕΞΟΔΑ — παραστατικά του μήνα από το Drive → λίστα ελέγχου.
@@ -89,7 +90,18 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
   const [confirming, setConfirming] = useState(false)
   const [results, setResults] = useState<Record<string, { ok: boolean; aa?: string; newName?: string; error?: string }>>({})
 
-  async function analyze() {
+  // Ίδιος έλεγχος με την Ανάλυση: μήνας αναφοράς ≠ μήνας επικόλλησης → προειδοποίηση
+  const [monthWarn, setMonthWarn] = useState<string[] | null>(null)
+  function analyze(force = false) {
+    if (!force) {
+      const months = detectStatementMonths(kiniseis)
+      if (months.length > 0 && months[0] !== month) { setMonthWarn(months); return }
+    }
+    setMonthWarn(null)
+    return runAnalyze()
+  }
+
+  async function runAnalyze() {
     setAnalyzing(true); setError(null); setRows([]); setWarnings([])
     try {
       const res = await fetch('/api/oc/expense-intake', {
@@ -334,10 +346,32 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
         </div>
       )}
 
-      <button type="button" onClick={analyze} disabled={!canIssue || analyzing}
+      <button type="button" onClick={() => analyze()} disabled={!canIssue || analyzing}
         className="px-6 py-2.5 rounded-full bg-coral text-white text-sm font-bold hover:bg-coral/90 disabled:opacity-40">
         {analyzing ? 'Έλεγχος…' : 'Έλεγχος τιμολογίων'}
       </button>
+
+      {monthWarn && (
+            <div className="mt-4 rounded-2xl border-2 border-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-950/60 p-4 text-sm text-fuchsia-950 dark:text-fuchsia-50">
+              <p className="font-bold mb-1">⚠ Ο μήνας αναφοράς δεν ταιριάζει με τα δεδομένα</p>
+              <p className="mb-3">
+                Διάλεξες <strong className="notranslate">{formatMonthEl(month)}</strong>, αλλά οι κινήσεις που επικόλλησες είναι του{' '}
+                <strong className="notranslate">{formatMonthEl(monthWarn[0])}</strong>
+                {monthWarn.length > 1 && <> (και {monthWarn.slice(1).map(formatMonthEl).join(', ')})</>}.
+                Αν συνεχίσεις, οι εγγραφές θα γραφτούν στον λάθος μήνα.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => analyze(true)}
+                  className="px-4 py-1.5 rounded-full border border-fuchsia-400 text-xs font-bold text-fuchsia-900 dark:text-fuchsia-50 hover:bg-fuchsia-500/15">
+                  Συνέχεια παρ' όλα αυτά
+                </button>
+                <button type="button" onClick={() => setMonthWarn(null)}
+                  className="px-4 py-1.5 rounded-full bg-fuchsia-600 text-white text-xs font-bold hover:opacity-90">
+                  Άκυρο
+                </button>
+              </div>
+            </div>
+          )}
       {!canIssue && <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Μόνο ο ενεργός ρόλος Financer.</p>}
 
       {error && <div className="mt-4 rounded-2xl bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-5 py-3 text-sm">{error}</div>}

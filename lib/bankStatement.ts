@@ -295,3 +295,30 @@ export function joinStatement(kiniseis: KiniseisParse, incoming: IncomingParse):
 
   return { credits, debits, warnings }
 }
+
+/**
+ * Σε ποιον μήνα ανήκουν τα δεδομένα που επικολλήθηκαν; Κυρίαρχος μήνας
+ * (yyyy-MM) από τις ημερομηνίες κινήσεων + εισερχόμενων εντολών, με τους
+ * υπόλοιπους δεύτερους. Χρησιμεύει στον έλεγχο «ο μήνας αναφοράς που
+ * διάλεξες δεν είναι ο μήνας που επικόλλησες» — πριν από Ανάλυση/Έλεγχο.
+ */
+export function detectStatementMonths(kiniseis: string, incoming = ''): string[] {
+  const counts = new Map<string, number>()
+  const add = (d: string | null | undefined) => {
+    if (!d || d.length < 7) return
+    const ym = d.slice(0, 7)
+    counts.set(ym, (counts.get(ym) || 0) + 1)
+  }
+  if (kiniseis.trim()) parseKiniseis(kiniseis).movements.forEach(m => add(m.date))
+  if (incoming.trim()) parseIncoming(incoming).orders.forEach(o => add(o.date))
+  return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).map(([ym]) => ym)
+}
+
+/** «2026-08» → «Αύγουστος 2026» */
+export function formatMonthEl(ym: string): string {
+  const [y, m] = ym.split('-')
+  const names = ['Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος',
+    'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος']
+  const name = names[Number(m) - 1]
+  return name ? `${name} ${y}` : ym
+}
