@@ -386,8 +386,8 @@ export default function OpenCallsContent() {
         {loading && <LoadingIndicator />}
 
         {/* Info Box with count */}
-        <div className={cool ? 'relative overflow-hidden menu-glass glass-rim rounded-3xl p-8 mb-6' : 'bg-white dark:bg-gray-800 rounded-3xl p-8 mb-6 shadow-sm'}>
-          {cool && <span className="logo-reveal" aria-hidden="true" />}
+        <div className={cool ? 'relative menu-glass glass-rim rounded-3xl p-8 mb-6' : 'bg-white dark:bg-gray-800 rounded-3xl p-8 mb-6 shadow-sm'}>
+          {cool && <span className="logo-reveal rounded-3xl overflow-hidden" aria-hidden="true" />}
           <div className={cool ? 'relative flex flex-col md:flex-row md:items-center md:justify-between gap-4' : 'flex flex-col md:flex-row md:items-center md:justify-between gap-4'}>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
               Εδώ θα βρεις τις τρέχουσες ευκαιρίες χρηματοδότησης, συνεργασίας και συμμετοχής σε πολιτιστικά προγράμματα. Φιλτράρισε ανά κατηγορία ή αναζήτησε αυτό που σε ενδιαφέρει.

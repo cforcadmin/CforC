@@ -48,8 +48,8 @@ export default function EducationalMaterialContent() {
       <div className="pt-20">
         <div className="max-w-5xl mx-auto px-4 pb-24">
           {/* Back button + header */}
-          <div className={cool ? 'relative overflow-hidden menu-glass glass-rim rounded-3xl p-6 md:p-8 mb-8' : 'mb-8'}>
-            {cool && <span className="logo-reveal" aria-hidden="true" />}
+          <div className={cool ? 'relative menu-glass glass-rim rounded-3xl p-6 md:p-8 mb-8' : 'mb-8'}>
+            {cool && <span className="logo-reveal rounded-3xl overflow-hidden" aria-hidden="true" />}
             <div className={cool ? 'relative' : undefined}>
               <button
                 onClick={handleBack}
@@ -157,8 +157,8 @@ export default function EducationalMaterialContent() {
           </div>
 
           {/* Υποκατηγορίες της ενεργής κατηγορίας */}
-          <div className="relative overflow-hidden menu-glass glass-rim rounded-3xl p-6 md:p-8">
-            <span className="logo-reveal" aria-hidden="true" />
+          <div className="relative menu-glass glass-rim rounded-3xl p-6 md:p-8">
+            <span className="logo-reveal rounded-3xl overflow-hidden" aria-hidden="true" />
             <div className="relative">
               <p className="text-xs font-semibold text-charcoal dark:text-gray-300 mb-4 uppercase tracking-wide">
                 <LocalizedText text="Υποκατηγορίες" engText="Subcategories" />{' '}

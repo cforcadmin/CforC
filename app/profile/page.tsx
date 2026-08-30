@@ -61,8 +61,11 @@ const IMPLEMENTED_SECTIONS = new Set<SectionKey>([
 function CoolSpot({ label, summary, children }: { label: string; summary?: string; children: ReactNode }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="relative overflow-hidden menu-glass glass-rim rounded-3xl">
-      <span className="logo-reveal" aria-hidden="true" />
+    // Ανοιχτή κάψουλα σε z-30: τα dropdowns της (πεδία, πόλη) πρέπει να
+    // περνούν ΠΑΝΩ από τις επόμενες κάψουλες (κάθε menu-glass = stacking
+    // context, αλλιώς ο επόμενος αδελφός ζωγραφίζεται από πάνω)
+    <div className={`relative menu-glass glass-rim rounded-3xl ${open ? 'z-30' : ''}`}>
+      <span className="logo-reveal rounded-3xl overflow-hidden" aria-hidden="true" />
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -1870,8 +1873,8 @@ export default function ProfilePage() {
                 {/* Ρ2: βιογραφικό φαρδύ αριστερά, συμπυκνωμένες κάψουλες
                     δεξιά που ανοίγουν με κλικ· τα έργα δικές τους σειρές */}
                 <div className="grid lg:grid-cols-[1.7fr_1fr] gap-6 items-start">
-                  <div className="relative overflow-hidden menu-glass glass-rim rounded-3xl p-8 min-w-0">
-                    <span className="logo-reveal" aria-hidden="true" />
+                  <div className="relative menu-glass glass-rim rounded-3xl p-8 min-w-0">
+                    <span className="logo-reveal rounded-3xl overflow-hidden" aria-hidden="true" />
                     <div className="relative">
                       {bioEditor}
                     </div>

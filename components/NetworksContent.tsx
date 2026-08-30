@@ -180,8 +180,8 @@ export default function NetworksContent() {
 
           {/* Το περιεχόμενο της επιλεγμένης ομάδας, σε γυάλινο πάνελ όπως
               στο Εκπαιδευτικό Υλικό */}
-          <div className="relative overflow-hidden menu-glass glass-rim rounded-3xl p-6 md:p-8">
-            <span className="logo-reveal" aria-hidden="true" />
+          <div className="relative menu-glass glass-rim rounded-3xl p-6 md:p-8">
+            <span className="logo-reveal rounded-3xl overflow-hidden" aria-hidden="true" />
             <div className="relative">
               {activeGroup === 'all' ? (
                 allNetworksCard
