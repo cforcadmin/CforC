@@ -67,6 +67,11 @@ interface MonthData {
   expenseCount: number
   unpaidCount: number
   uncategorised: number
+  late: Array<{
+    documentId: string; month: string; aa: string | null; supplierName: string | null; docNumber: string | null
+    issueDate: string | null; amount: number; kind: 'settlement' | 'addition'; paymentMethod: string; paymentDate: string | null
+    fileName: string | null; fileId: string | null
+  }>
   deltaCount: number
   close: { readyAt: string | null; readyBy: string | null; sentAt: string | null; sentBy: string | null } | null
   status: 'pending' | 'ready' | 'sent'
@@ -403,6 +408,31 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
                   </p>
                 )}
               </div>
+
+              {/* ---- Γ. ΕΚ ΤΩΝ ΥΣΤΕΡΩΝ (μήνες που έχουν ήδη σταλεί) ---- */}
+              {(data.late || []).length > 0 && (
+                <div className="rounded-2xl border border-coral/40 bg-coral/5 dark:bg-coral/10 p-4">
+                  <p className="text-xs font-bold tracking-widest text-coral mb-1">Γ. ΕΚ ΤΩΝ ΥΣΤΕΡΩΝ — ΓΙΑ ΜΗΝΕΣ ΠΟΥ ΕΧΟΥΝ ΗΔΗ ΣΤΑΛΕΙ</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
+                    Μένουν καταχωρημένα στον μήνα έκδοσής τους (τελευταία γραμμή του) — φεύγουν προς το λογιστήριο με την αποστολή ΑΥΤΟΥ του μήνα, μία φορά.
+                  </p>
+                  <ul className="space-y-1.5 text-sm">
+                    {data.late.map(l => (
+                      <li key={l.documentId} className="flex flex-wrap items-baseline gap-x-2 text-charcoal dark:text-gray-100">
+                        <span className="font-bold notranslate">{monthLabel(l.month)} · {l.aa || '—'}</span>
+                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-coral/15 text-coral">
+                          {l.kind === 'addition' ? 'νέα καταχώρηση' : 'εξόφληση'}
+                        </span>
+                        <span>{l.supplierName}{l.docNumber ? ` · ${l.docNumber}` : ''}</span>
+                        <span className="text-gray-500 dark:text-gray-400">
+                          {l.paymentDate ? `πληρωμή ${new Date(l.paymentDate).toLocaleDateString('el-GR')}` : 'ανεξόφλητο'}
+                        </span>
+                        <span className="ml-auto font-bold notranslate">{eur(l.amount)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {data.deltaCount > 0 && (
                 <p className="text-xs text-red-700 dark:text-red-300 rounded-xl bg-red-50 dark:bg-red-900/20 px-4 py-2.5">

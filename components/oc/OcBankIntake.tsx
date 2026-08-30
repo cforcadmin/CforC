@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { notifyFinanceChanged } from '@/lib/ocFinanceEvents'
 import OcExpenseIntake from '@/components/oc/OcExpenseIntake'
 import { detectStatementMonths, formatMonthEl } from '@/lib/bankStatement'
@@ -95,6 +95,24 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
   // Έλεγχος που γίνεται ΠΑΝΤΑ: ο μήνας αναφοράς πρέπει να είναι ο μήνας
   // των δεδομένων που επικολλήθηκαν (κυρίαρχος μήνας των ημερομηνιών)
   const [monthWarn, setMonthWarn] = useState<string[] | null>(null)
+
+  // Ανεξόφλητα παλαιότερων μηνών — τι να ψάξει ο/η Financer στις κινήσεις
+  // ΠΡΙΝ επικολλήσει· μετά την Ανάλυση εξόδων, όσα βρέθηκαν παίρνουν ✓.
+  const [unpaidPrev, setUnpaidPrev] = useState<Array<{
+    documentId: string; aa: string | null; month: string; supplierName: string | null
+    docNumber: string | null; issueDate: string | null; amount: number; hasFile: boolean
+  }>>([])
+  const [matchedPrev, setMatchedPrev] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    if (!open || !/^\d{4}-\d{2}$/.test(month)) return
+    let alive = true
+    setMatchedPrev(new Set())
+    fetch(`/api/oc/expense-intake?month=${month}`)
+      .then(r => r.ok ? r.json() : { unpaid: [] })
+      .then(d => { if (alive) setUnpaidPrev(d.unpaid || []) })
+      .catch(() => { if (alive) setUnpaidPrev([]) })
+    return () => { alive = false }
+  }, [open, month])
   function analyze(force = false) {
     if (!force) {
       const months = detectStatementMonths(kiniseis, incoming)
@@ -252,6 +270,31 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
               (η επικόλληση αφορά και τις δύο ενότητες — έσοδα και έξοδα)
             </span>
           </div>
+
+          {unpaidPrev.length > 0 && (
+            <div className="rounded-2xl border border-amber-300/60 dark:border-amber-500/40 bg-amber-50/70 dark:bg-amber-900/15 px-4 py-3">
+              <p className="text-xs font-bold tracking-widest text-amber-800 dark:text-amber-200 mb-1">
+                ΑΝΕΞΟΦΛΗΤΑ ΑΠΟ ΠΡΟΗΓΟΥΜΕΝΟΥΣ ΜΗΝΕΣ ({unpaidPrev.length})
+              </p>
+              <p className="text-xs text-gray-600 dark:text-gray-300 mb-2">
+                Ψάξε τα στις κινήσεις του μήνα πριν επικολλήσεις. Όσα βρεθούν, η Ανάλυση εξόδων τα ταιριάζει μόνη της ως «Εξοφλήσεις παλαιότερων» (✓ εδώ) και τα βάζει στην αποστολή αυτού του μήνα.
+              </p>
+              <ul className="space-y-1 text-sm">
+                {unpaidPrev.map(u => {
+                  const found = matchedPrev.has(u.documentId)
+                  return (
+                    <li key={u.documentId} className={`flex flex-wrap items-baseline gap-x-2 ${found ? 'text-emerald-700 dark:text-emerald-300' : 'text-charcoal dark:text-gray-100'}`}>
+                      <span className="w-4 font-bold" aria-label={found ? 'βρέθηκε στις κινήσεις' : 'δεν έχει βρεθεί ακόμη'}>{found ? '✓' : '•'}</span>
+                      <span className="font-bold notranslate">{formatMonthEl(u.month)} · {u.aa || '—'}</span>
+                      <span>{u.supplierName || '—'}{u.docNumber ? ` · ${u.docNumber}` : ''}</span>
+                      {u.issueDate && <span className="text-gray-500 dark:text-gray-400 notranslate">έκδοση {new Date(u.issueDate).toLocaleDateString('el-GR')}</span>}
+                      <span className="ml-auto font-bold notranslate">{u.amount.toFixed(2).replace('.', ',')} €</span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
 
           <div className="grid lg:grid-cols-2 gap-4">
             <div>
@@ -541,7 +584,8 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
           )}
 
           {/* Β. ΕΞΟΔΑ — παραστατικά Drive + χρεώσεις της ίδιας επικόλλησης */}
-          <OcExpenseIntake canIssue={canIssue} canManual={canManual} month={month} kiniseis={kiniseis} />
+          <OcExpenseIntake canIssue={canIssue} canManual={canManual} month={month} kiniseis={kiniseis}
+            onCarriedMatched={ids => setMatchedPrev(new Set(ids))} />
         </div>
       )}
     </div>

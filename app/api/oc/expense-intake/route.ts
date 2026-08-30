@@ -55,6 +55,39 @@ async function webApp(action: string, payload: Record<string, any>) {
   try { return JSON.parse(text) } catch { return { ok: false, error: text.slice(0, 120) } }
 }
 
+/**
+ * GET ?month=YYYY-MM — τα εγκεκριμένα ΑΝΕΞΟΦΛΗΤΑ παραστατικά παλαιότερων
+ * μηνών. Εμφανίζονται πριν την επικόλληση, ώστε ο/η Financer να ξέρει τι να
+ * ψάξει στις κινήσεις (η ίδια λίστα που η Ανάλυση ταιριάζει αυτόματα ως
+ * «Εξοφλήσεις παλαιότερων»). Μόνο ανάγνωση — κάθε θέση του ΔΣ.
+ */
+export async function GET(request: NextRequest) {
+  const cookieStore = await cookies()
+  const sessionCookie = cookieStore.get('session')
+  const decoded = sessionCookie ? verifyToken(sessionCookie.value) : null
+  if (!decoded || decoded.type !== 'session') {
+    return NextResponse.json({ error: 'Απαιτείται σύνδεση' }, { status: 401 })
+  }
+  const access = await resolveOcAccess(decoded.memberId)
+  if (!access.isBoard) return NextResponse.json({ error: 'Δεν επιτρέπεται' }, { status: 403 })
+  const month = request.nextUrl.searchParams.get('month') || ''
+  if (!/^\d{4}-\d{2}$/.test(month)) {
+    return NextResponse.json({ error: 'Μη έγκυρος μήνας' }, { status: 400 })
+  }
+  const res = await strapi(
+    `/expenses?filters[State][$eq]=approved&filters[PaymentMethod][$eq]=unpaid&filters[Month][$lt]=${month}`
+    + '&sort[0]=Month:asc&pagination[limit]=200'
+    + '&fields[0]=Aa&fields[1]=Month&fields[2]=SupplierName&fields[3]=DocNumber&fields[4]=DocRef&fields[5]=IssueDate&fields[6]=PayableAmount&fields[7]=FileId',
+  )
+  if (!res.ok) return NextResponse.json({ error: 'Αποτυχία ανάγνωσης' }, { status: 502 })
+  const unpaid = (res.json?.data || []).map((e: any) => ({
+    documentId: e.documentId, aa: e.Aa || null, month: e.Month,
+    supplierName: e.SupplierName || null, docNumber: e.DocNumber || e.DocRef || null,
+    issueDate: e.IssueDate || null, amount: Number(e.PayableAmount) || 0, hasFile: !!e.FileId,
+  }))
+  return NextResponse.json({ unpaid })
+}
+
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies()
   const sessionCookie = cookieStore.get('session')

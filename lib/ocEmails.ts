@@ -1517,6 +1517,14 @@ export interface MonthlyDispatchInput {
   balance: string              // έσοδα − έξοδα, με πρόσημο
   signerName?: string
   viaFallback?: boolean
+  /** Block Γ: εκ των υστέρων στοιχεία για μήνες που έχουν ήδη σταλεί */
+  lateItems?: Array<{
+    monthLabel: string; aa: string | null; kind: 'settlement' | 'addition'
+    supplierName: string | null; docNumber: string | null; issueDate: string | null
+    amount: string; paymentLabel: string; paymentDate: string | null; fileUrl: string | null
+  }>
+  expenseFolderUrl?: string | null
+  incomeFolderUrl?: string | null
 }
 
 export function monthlyDispatchEmailHtml(
@@ -1526,6 +1534,7 @@ export function monthlyDispatchEmailHtml(
   const {
     incomeLines, incomeCount, incomeTotal,
     expenseLines, expenseCount, expenseTotal, balance,
+    lateItems = [], expenseFolderUrl = null, incomeFolderUrl = null,
     signerName = 'Culture for Change — Διαχείριση', viaFallback = false,
   } = input
   const count = incomeCount + expenseCount
@@ -1631,9 +1640,36 @@ export function monthlyDispatchEmailHtml(
     </td>
   </tr>
 
+  ${lateItems.length > 0 ? `
+  <!-- Γ. Εκ των υστέρων -->
+  <tr>
+    <td class="px" style="padding:8px 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background-color:#FFF4EF;border-radius:16px;border:1px solid #F3C9B8;">
+        <tr>
+          <td style="padding:20px 24px 16px 24px;">
+            <p style="margin:0 0 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:18px;letter-spacing:1.2px;color:#C9552F;font-weight:bold;">Γ. ΕΚ ΤΩΝ ΥΣΤΕΡΩΝ — ΓΙΑ ΜΗΝΕΣ ΠΟΥ ΕΧΕΤΕ ΗΔΗ ΛΑΒΕΙ</p>
+            <p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:21px;color:#5A5A5A;">Καταχωρούνται στον μήνα έκδοσής τους (τελευταία γραμμή του μήνα) — σας τα στέλνουμε τώρα γιατί προέκυψαν μετά την αποστολή εκείνου του μήνα.</p>
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${lateItems.map(l => `
+              <tr>
+                <td style="padding:6px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:21px;color:#2D2D2D;border-top:1px solid #F3C9B8;">
+                  <strong>${l.monthLabel}</strong> · ${l.aa || '—'} · ${l.kind === 'addition' ? 'νέα καταχώρηση' : 'εξόφληση'}<br>
+                  ${l.supplierName || ''}${l.docNumber ? ` · ${l.docNumber}` : ''}${l.issueDate ? ` · έκδοση ${l.issueDate}` : ''}<br>
+                  <span style="color:#5A5A5A;">${l.paymentLabel}${l.paymentDate ? ` · ${l.paymentDate}` : ''}</span>${l.fileUrl ? ` · <a href="${l.fileUrl}" style="color:#C9552F;">αρχείο</a>` : ''}
+                </td>
+                <td align="right" valign="top" style="padding:6px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:21px;color:#2D2D2D;font-weight:bold;border-top:1px solid #F3C9B8;white-space:nowrap;">${l.amount} €</td>
+              </tr>`).join('')}
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>` : ''}
+
   <tr>
     <td class="px" style="padding:16px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#5A5A5A;mso-line-height-rule:exactly;">
-      <p style="margin:0 0 12px 0;">Το πλήρες αρχείο ΕΣΟΔΑ-ΕΞΟΔΑ και όλα τα παραστατικά βρίσκονται, ως συνήθως, στο κοινόχρηστο Excel και στους φακέλους Drive στους οποίους έχετε πρόσβαση.</p>
+      ${expenseFolderUrl || incomeFolderUrl
+        ? `<p style="margin:0 0 12px 0;">Τα παραστατικά του μήνα στο Drive:${expenseFolderUrl ? ` <a href="${expenseFolderUrl}" style="color:#C9552F;">φάκελος Εξόδων</a>` : ''}${expenseFolderUrl && incomeFolderUrl ? ' ·' : ''}${incomeFolderUrl ? ` <a href="${incomeFolderUrl}" style="color:#C9552F;">φάκελος Εσόδων</a>` : ''}. Το πλήρες αρχείο ΕΣΟΔΑ-ΕΞΟΔΑ βρίσκεται, ως συνήθως, στο κοινόχρηστο Excel.</p>`
+        : `<p style="margin:0 0 12px 0;">Το πλήρες αρχείο ΕΣΟΔΑ-ΕΞΟΔΑ και όλα τα παραστατικά βρίσκονται, ως συνήθως, στο κοινόχρηστο Excel και στους φακέλους Drive στους οποίους έχετε πρόσβαση.</p>`}
       <p style="margin:0;">Για οποιαδήποτε διευκρίνιση, απαντήστε σε αυτό το email.</p>
       ${viaFallback ? '<p style="margin:12px 0 0 0;color:#a05a2c;">⚠ Δοκιμαστική αποστολή: δεν έχει οριστεί email λογιστηρίου — το μήνυμα ήρθε στο finance@ για έλεγχο/προώθηση.</p>' : ''}
     </td>

@@ -125,6 +125,90 @@ function monthRange(month: string): { from: string; to: string } {
   return { from: `${month}-01`, to: `${month}-${String(last).padStart(2, '0')}` }
 }
 
+/**
+ * Block Γ — «εκ των υστέρων» για μήνες που έχουν ΗΔΗ σταλεί, ορισμένο
+ * μόνο από δεδομένα (χωρίς stamp), ώστε κάθε στοιχείο να φεύγει ακριβώς μία
+ * φορά:
+ *  - εξόφληση:  έξοδο παλαιότερου μήνα που ΠΛΗΡΩΘΗΚΕ μέσα στον μήνα M →
+ *               αναφέρεται στην αποστολή του M (μήνας πληρωμής)
+ *  - προσθήκη:  έξοδο παλαιότερου μήνα που ΕΓΚΡΙΘΗΚΕ αφού στάλθηκε ο μήνας
+ *               του, και μετά την τελευταία αποστολή → αναφέρεται στην πρώτη
+ *               αποστολή που ακολουθεί
+ * Κανόνας Financer (30/8): η εκ των υστέρων γραμμή είναι η ΤΕΛΕΥΤΑΙΑ του
+ * μήνα της (Α/Α συνέχεια), όποια κι αν είναι η ημερομηνία έκδοσης.
+ */
+export interface LateItem {
+  documentId: string
+  month: string
+  aa: string | null
+  supplierName: string | null
+  docNumber: string | null
+  mark: string | null
+  issueDate: string | null
+  amount: number
+  kind: 'settlement' | 'addition'
+  paymentMethod: string
+  paymentDate: string | null
+  fileName: string | null
+  fileId: string | null
+}
+
+async function computeLateItems(
+  month: string,
+  closes: Array<{ Month: string; SentAt?: string | null }>,
+): Promise<LateItem[]> {
+  const { from, to } = monthRange(month)
+  const sentAtOf = new Map<string, number>()
+  for (const c of closes) if (c.SentAt) sentAtOf.set(c.Month, Date.parse(c.SentAt))
+  // η τελευταία αποστολή ΠΡΙΝ από αυτή (οποιουδήποτε μήνα εκτός του M)
+  const lastDispatch = Math.max(0, ...closes.filter(c => c.Month !== month && c.SentAt).map(c => Date.parse(c.SentAt as string)))
+  const fields = '&fields[0]=Aa&fields[1]=Month&fields[2]=SupplierName&fields[3]=DocNumber&fields[4]=DocRef&fields[5]=Mark'
+    + '&fields[6]=IssueDate&fields[7]=PayableAmount&fields[8]=PaymentMethod&fields[9]=PaymentDate&fields[10]=FileName&fields[11]=FileId&fields[12]=ApprovedAt'
+  const [settledRes, addedRes] = await Promise.all([
+    strapi(`/expenses?filters[State][$eq]=approved&filters[Month][$lt]=${month}&filters[PaymentMethod][$ne]=unpaid`
+      + `&filters[PaymentDate][$gte]=${from}&filters[PaymentDate][$lte]=${to}&pagination[limit]=200${fields}`),
+    lastDispatch > 0
+      ? strapi(`/expenses?filters[State][$eq]=approved&filters[Month][$lt]=${month}`
+        + `&filters[ApprovedAt][$gt]=${new Date(lastDispatch).toISOString()}&pagination[limit]=200${fields}`)
+      : Promise.resolve({ ok: true, status: 200, json: { data: [] } }),
+  ])
+  const toItem = (e: any, kind: LateItem['kind']): LateItem => ({
+    documentId: e.documentId, month: e.Month, aa: e.Aa || null,
+    supplierName: e.SupplierName || null, docNumber: e.DocNumber || e.DocRef || null, mark: e.Mark || null,
+    issueDate: e.IssueDate || null, amount: Number(e.PayableAmount) || 0, kind,
+    paymentMethod: e.PaymentMethod || 'unpaid', paymentDate: e.PaymentDate || null,
+    fileName: e.FileName || null, fileId: e.FileId || null,
+  })
+  const items = new Map<string, LateItem>()
+  // προσθήκες: μόνο όσες εγκρίθηκαν ΜΕΤΑ την αποστολή του δικού τους μήνα
+  for (const e of addedRes.json?.data || []) {
+    const ownSent = sentAtOf.get(e.Month)
+    if (!ownSent || !e.ApprovedAt || Date.parse(e.ApprovedAt) <= ownSent) continue
+    items.set(e.documentId, toItem(e, 'addition'))
+  }
+  for (const e of settledRes.json?.data || []) {
+    if (!sentAtOf.get(e.Month)) continue          // ο μήνας του δεν έχει σταλεί → θα πάει με τον ίδιο
+    if (!items.has(e.documentId)) items.set(e.documentId, toItem(e, 'settlement'))
+  }
+  return Array.from(items.values()).sort((a, b) => a.month.localeCompare(b.month) || aaOrder(a.aa) - aaOrder(b.aa))
+}
+
+/** Οι φάκελοι Drive του μήνα (σύνδεσμοι για το λογιστήριο) — μέσω του web app του φύλλου */
+async function monthFolderUrls(month: string): Promise<{ expenses: string | null; income: string | null }> {
+  const url = process.env.FINANCE_SHEET_WEBAPP_URL, secret = process.env.FINANCE_SHEET_WEBAPP_SECRET
+  if (!url || !secret) return { expenses: null, income: null }
+  const call = async (action: string) => {
+    try {
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret, action, month }), redirect: 'follow', cache: 'no-store' })
+      const j = JSON.parse(await res.text())
+      return (j?.folderUrl as string) || null
+    } catch { return null }
+  }
+  const [expenses, income] = await Promise.all([call('listMonthInvoices'), call('listMonthIncomeDocs')])
+  return { expenses, income }
+}
+
 export async function GET(request: NextRequest) {
   const auth = await authorize('board')
   if ('error' in auth) return auth.error
@@ -251,6 +335,7 @@ export async function GET(request: NextRequest) {
     // Ανεξόφλητα: μπαίνουν στο αρχείο του μήνα αλλά δεν έχουν φύγει από το ταμείο
     const unpaidCount = expenses.filter((e: any) => e.method === 'unpaid' || !e.paymentDate).length
     const uncategorised = expenses.filter((e: any) => !e.category).length
+    const late = await computeLateItems(month, allClosesRes.json?.data || [])
 
     return NextResponse.json({
       month,
@@ -266,6 +351,7 @@ export async function GET(request: NextRequest) {
       expenseCount: expenses.length,
       unpaidCount,
       uncategorised,
+      late,
       deltaCount: receipts.filter((r: any) => r.delta).length,
       close: close ? {
         readyAt: close.ReadyAt || null,
@@ -374,6 +460,24 @@ export async function POST(request: NextRequest) {
     lines.push([esc('ΣΥΝΟΛΟ ΕΞΟΔΩΝ'), '', '', '', '', '', '', '', esc(money(expenseTotal))].join(';'))
     lines.push('')
     lines.push([esc('ΙΣΟΖΥΓΙΟ ΜΗΝΑ (έσοδα − έξοδα)'), esc(money(total - expenseTotal))].join(';'))
+
+    // Γ. Εκ των υστέρων για μήνες που έχουν ήδη σταλεί
+    const allClosesForLate = (await strapi('/monthly-closes?sort=Month:desc&pagination[limit]=36&fields[0]=Month&fields[1]=SentAt')).json?.data || []
+    const late = await computeLateItems(month, allClosesForLate)
+    if (late.length > 0) {
+      lines.push('')
+      lines.push('Γ. ΕΚ ΤΩΝ ΥΣΤΕΡΩΝ / ΔΙΟΡΘΩΣΕΙΣ ΓΙΑ ΜΗΝΕΣ ΠΟΥ ΕΧΟΥΝ ΗΔΗ ΣΤΑΛΕΙ')
+      lines.push(['Μήνας', 'Α/Α', 'Είδος', 'Ημ. έκδοσης', 'Παραστατικό', 'ΜΑΡΚ', 'Επωνυμία', 'Πληρωτέο (€)', 'Τρόπος', 'Ημ. πληρωμής', 'Αρχείο'].map(esc).join(';'))
+      for (const l of late) {
+        lines.push([
+          monthLabelOf(l.month), l.aa || '', l.kind === 'addition' ? 'Νέα καταχώρηση (εκ των υστέρων)' : 'Εξόφληση',
+          l.issueDate || '', l.docNumber || '', l.mark || '', l.supplierName || '', money(l.amount),
+          METHOD_LABELS[l.paymentMethod] || 'Ανεξόφλητο', l.paymentDate || '',
+          l.fileId ? `https://drive.google.com/file/d/${l.fileId}/view` : (l.fileName || ''),
+        ].map(esc).join(';'))
+      }
+    }
+    const folders = await monthFolderUrls(month)
     const csv = '\ufeff' + lines.join('\r\n')
 
     const to_ = process.env.ACCOUNTANT_EMAIL || FINANCE_EMAIL
@@ -406,6 +510,13 @@ export async function POST(request: NextRequest) {
     // Υπογραφή: ο/η τρέχων κάτοχος της θέσης Διαχείρισης (admin)
     const adminSigner = await getSeatHolder('admin')
     const tpl = monthlyDispatchEmailHtml(monthLabel, {
+      lateItems: late.map(l => ({
+        monthLabel: monthLabelOf(l.month), aa: l.aa, kind: l.kind, supplierName: l.supplierName, docNumber: l.docNumber,
+        issueDate: l.issueDate, amount: fmt(l.amount), paymentLabel: METHOD_LABELS[l.paymentMethod] || 'Ανεξόφλητο',
+        paymentDate: l.paymentDate, fileUrl: l.fileId ? `https://drive.google.com/file/d/${l.fileId}/view` : null,
+      })),
+      expenseFolderUrl: folders.expenses,
+      incomeFolderUrl: folders.income,
       incomeLines: sortLines(catTotals),
       incomeCount: receipts.length + incomeRecords.length,
       incomeTotal: fmt(total),

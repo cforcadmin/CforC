@@ -66,12 +66,14 @@ const inputCls = 'w-full rounded-lg border border-gray-300 dark:border-gray-600 
 const lockedCls = 'w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-2.5 py-1.5 text-xs text-gray-500 dark:text-gray-400 cursor-not-allowed'
 const labelCls = 'block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5'
 
-export default function OcExpenseIntake({ canIssue, canManual = false, month, kiniseis }: {
+export default function OcExpenseIntake({ canIssue, canManual = false, month, kiniseis, onCarriedMatched }: {
   canIssue: boolean
   /** IT: προσθήκη + έγκριση ΜΟΝΟ χειροκίνητων γραμμών */
   canManual?: boolean
   month: string
   kiniseis: string
+  /** documentIds παλαιότερων ανεξόφλητων που βρέθηκαν στις κινήσεις (✓ στη λίστα του γονέα) */
+  onCarriedMatched?: (ids: string[]) => void
 }) {
   const [analyzing, setAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -119,6 +121,7 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
       setMismatches(data.mismatches || [])
       setCarried(data.carriedOver || [])
       setCarriedPick(Object.fromEntries((data.carriedOver || []).map((c: any) => [c.documentId, true])))
+      onCarriedMatched?.((data.carriedOver || []).map((c: any) => c.documentId))
       setRecon(data.reconciliation || null)
       setFolderUrl(data.folderUrl)
       if (data.folderMissing) {
