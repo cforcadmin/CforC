@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import OcBankIntake from '@/components/oc/OcBankIntake'
 import OcSubscriptions, { type SubMemberRow } from '@/components/oc/OcSubscriptions'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
+import OcFinanceGuideModal from './OcFinanceGuideModal'
 
 /**
  * OC → Οικονομικά: έκδοση αποδείξεων από την ενιαία σειρά «ΑΠ. ΕΙΣ.».
@@ -84,6 +85,7 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
   const [notice, setNotice] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
   // Αποτυχία χειροκίνητης έκδοσης → ΟΡΑΤΟ popup (το top notice χάνεται
   // εκτός οθόνης όταν η φόρμα είναι χαμηλά στη σελίδα)
+  const [showGuide, setShowGuide] = useState(false)
   const [issueError, setIssueError] = useState<string | null>(null)
   // «Καλή Χρονιά» banner: Ιανουάριο/Φεβρουάριο, αν λείπει η δομή φακέλων
   // Παραστατικών του νέου έτους — δημιουργία ΜΟΝΟ με το ΟΚ του Financer
@@ -306,6 +308,15 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
 
   return (
     <div className="space-y-8">
+      {/* Οδηγίες μηνιαίου κύκλου — ίδιο περιεχόμενο με το email υπενθύμισης */}
+      <div className="flex justify-end">
+        <button type="button" onClick={() => setShowGuide(true)}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full menu-glass glass-rim text-sm font-bold text-charcoal dark:text-gray-100 hover:bg-white/20 transition-colors">
+          <span aria-hidden="true">🏦</span> Οδηγίες μηνιαίου κύκλου
+        </button>
+      </div>
+      <OcFinanceGuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
+
       {/* Popup αποτυχίας χειροκίνητης έκδοσης — πάντα ορατό */}
       {issueError && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
