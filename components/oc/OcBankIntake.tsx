@@ -249,7 +249,7 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5" htmlFor="bi-inc">
-                2. Εισερχόμενες εντολές (ίδια περίοδος)
+                2. myAlpha Web → Εισερχόμενες εντολές (ίδια περίοδος) → CSV → επικόλληση
               </label>
               <textarea id="bi-inc" rows={5} className={`${inputCls} font-mono`} value={incoming}
                 onChange={e => setIncoming(e.target.value)} placeholder="Τίτλος ; Εισερχόμενες εντολές: GR71…" disabled={!canIssue || analyzing || issuing} />
