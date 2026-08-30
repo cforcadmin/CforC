@@ -14,15 +14,16 @@ interface OcFinanceGuideModalProps {
   adminName?: string | null
 }
 
-/** (i) με tooltip: hover, focus ΚΑΙ κλικ (για αφή) — με state, όχι CSS
- *  group-hover που δεν εφαρμόστηκε (30/8) */
-function TipInfo({ id, html }: { id: string; html: string }) {
-  const [show, setShow] = useState(false)
+/** (i) με tooltip: hover, focus ΚΑΙ κλικ (για αφή). Ελεγχόμενο από τον
+ *  γονέα ώστε η κάρτα-βήμα που το φιλοξενεί να ανέβει πάνω από τις
+ *  επόμενες (κάθε menu-glass = stacking context). Μεγέθη inline — τα
+ *  arbitrary utilities (w-[22rem]) δεν εφαρμόστηκαν (30/8). */
+function TipInfo({ id, html, show, setShow }: { id: string; html: string; show: boolean; setShow: (v: boolean) => void }) {
   return (
     <span className="relative inline-flex"
       onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
       <button type="button"
-        onClick={() => setShow(v => !v)}
+        onClick={() => setShow(!show)}
         onFocus={() => setShow(true)} onBlur={() => setShow(false)}
         aria-label="Προσωπική σημείωση" aria-expanded={show} aria-describedby={id}
         className={`w-5 h-5 rounded-full border border-coral text-[11px] font-bold leading-none flex items-center justify-center transition-colors ${
@@ -31,9 +32,10 @@ function TipInfo({ id, html }: { id: string; html: string }) {
         i
       </button>
       <span id={id} role="tooltip"
-        className={`absolute left-0 top-full mt-2 z-30 w-[22rem] max-w-[80vw] menu-glass-dense glass-rim rounded-2xl p-4 text-xs font-normal leading-relaxed text-charcoal dark:text-gray-100 transition-opacity [&_a]:text-coral [&_a]:underline ${
+        className={`absolute left-0 top-full mt-2 menu-glass-dense glass-rim rounded-2xl text-sm font-normal leading-relaxed text-charcoal dark:text-gray-100 transition-opacity [&_a]:text-coral [&_a]:underline ${
           show ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
         }`}
+        style={{ width: '32rem', maxWidth: '80vw', height: '16rem', overflowY: 'auto', padding: '1rem 1.25rem', zIndex: 40 }}
         dangerouslySetInnerHTML={{ __html: html }} />
     </span>
   )
@@ -41,6 +43,7 @@ function TipInfo({ id, html }: { id: string; html: string }) {
 
 export default function OcFinanceGuideModal({ isOpen, onClose, adminName }: OcFinanceGuideModalProps) {
   const modalRef = useFocusTrap<HTMLDivElement>(isOpen)
+  const [openTip, setOpenTip] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isOpen) return
@@ -85,13 +88,14 @@ export default function OcFinanceGuideModal({ isOpen, onClose, adminName }: OcFi
         {/* Βήματα — ίδια κάρτα-βήμα με το email, σε γυαλί */}
         <div className="p-6 space-y-4">
           {FINANCE_MONTHLY_STEPS.map(st => (
-            <div key={st.n} className="relative menu-glass rounded-2xl p-5 flex gap-4">
+            <div key={st.n} className={`relative menu-glass rounded-2xl p-5 flex gap-4 ${openTip === st.n ? 'z-30' : ''}`}>
               <span className="text-2xl font-bold text-coral leading-none pt-0.5 w-8 flex-shrink-0" aria-hidden="true">{st.n}</span>
               <div className="min-w-0 flex-1">
                 <h3 className="font-bold text-charcoal dark:text-gray-100 mb-1 flex items-center gap-2">
                   {st.title}
                   {st.tip && (
-                    <TipInfo id={`guide-tip-${st.n}`} html={`<strong>💡 Προσωπική σημείωση:</strong> ${st.tip}`} />
+                    <TipInfo id={`guide-tip-${st.n}`} html={`<strong>💡 Προσωπική σημείωση:</strong> ${st.tip}`}
+                      show={openTip === st.n} setShow={v => setOpenTip(v ? st.n : null)} />
                   )}
                 </h3>
                 <div
