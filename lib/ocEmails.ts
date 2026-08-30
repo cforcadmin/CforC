@@ -1991,8 +1991,9 @@ export function paymentClaimNoticeHtml(name: string, email: string, applicationI
  *  αύριο κλείνει ο μήνας — προετοιμασία των παραστατικών με την ενιαία
  *  ονοματολογία και τα τρία βήματα του κύκλου στο OC. Ίδιο πρότυπο με τα
  *  υπόλοιπα email του OC. */
-export function financeMonthlyReminderEmailHtml(monthLabel: string, signerName = 'Culture for Change — Finance'): { subject: string; html: string } {
+export function financeMonthlyReminderEmailHtml(monthLabel: string, adminName?: string | null, signerName = 'Culture for Change — Finance'): { subject: string; html: string } {
   const code = (t: string) => `<code style="font-family:Menlo,Consolas,monospace;font-size:13px;background:#FFFFFF;border:1px solid #E5E7EB;border-radius:6px;padding:2px 6px;white-space:nowrap;">${t}</code>`
+  const shot = (file: string, alt: string) => `<img src="https://cultureforchange.net/email/${file}" alt="${alt}" width="100%" style="display:block;width:100%;max-width:100%;height:auto;border-radius:12px;border:1px solid #E5E7EB;margin:10px 0 4px 0;">`
   const step = (n: string, title: string, body: string) => `
         <tr>
           <td style="padding:0 0 18px 0;">
@@ -2066,7 +2067,7 @@ export function financeMonthlyReminderEmailHtml(monthLabel: string, signerName =
     <td class="px" style="padding:8px 48px 8px 48px;">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
         ${step('0', 'Προετοιμασία — τα παραστατικά στη θέση τους', `Αποθήκευσε όλα τα τιμολόγια που έλαβες μέσω email στον υπολογιστή σου.<br>
-                  <strong>Τραπεζικά έξοδα:</strong> μπες στο e-banking της Alpha Bank, διάλεξε <strong>Έγγραφα</strong> από το πάνω μενού και <strong>Τιμολόγια</strong> από το υπομενού, και κατέβασε όλα τα τιμολόγια του προηγούμενου μήνα — είναι οι προμήθειες για μεταφορές σε λογαριασμούς εκτός Alpha.<br>
+                  <strong>Τραπεζικά έξοδα:</strong> μπες στο e-banking της Alpha Bank, διάλεξε <strong>Έγγραφα</strong> από το πάνω μενού και <strong>Τιμολόγια</strong> από το υπομενού, και κατέβασε όλα τα τιμολόγια του προηγούμενου μήνα — είναι οι προμήθειες για μεταφορές σε λογαριασμούς εκτός Alpha.${shot('oc-alpha-invoices.png', 'Alpha Bank: Έγγραφα → Τιμολόγια')}
                   Μετάφερέ τα όλα στο Drive, στα <strong>Παραστατικά → Έξοδα</strong> του τρέχοντος μήνα. Εκεί μετονόμασέ τα με την ενιαία ονοματολογία:
                   <div style="margin:10px 0 6px 0;">${code('{σε ποιον}_{αριθμός}_{ΜΑΡΚ}_{ΗΗ-ΜΜ-ΕΕΕΕ}_{ποσό}.pdf')}</div>
                   <div style="margin:0 0 10px 0;">π.χ. ${code('ΑΒ Βασιλόπουλος_4471-88012_400014700880013_28-08-2026_62,50.pdf')}</div>
@@ -2074,9 +2075,10 @@ export function financeMonthlyReminderEmailHtml(monthLabel: string, signerName =
                   <strong>Κρατήσεις;</strong> Όταν το τιμολόγιο έχει άλλο σύνολο κι άλλο πληρωτέο, γράψε το ποσό ως <strong>σύνολο→πληρωτέο</strong>:
                   <div style="margin:6px 0 0 0;">${code('Παπαδοπούλου_112_18-08-2026_120,00→96,00.pdf')}</div>
                   Το OC διαβάζει 120,00 σύνολο, 96,00 πληρωτέο και συμπληρώνει μόνο του κρατήσεις 24,00 — στη βάση και στο φύλλο ΕΞΟΔΑ. (Δεκτά και τα «->» ή «>» αν το βέλος δυσκολεύει.)`)}
-        ${step('1', 'Κινήσεις τράπεζας', 'Κατέβασε από το e-banking τις κινήσεις του μήνα και επικόλλησέ τις στο πλαίσιο «Κινήσεις τράπεζας» της καρτέλας <em>Οικονομικά</em>. Το OC τις ταιριάζει με τα παραστατικά του φακέλου — και με τα ποσά πληρωτέα, όχι τα σύνολα.')}
-        ${step('2', 'Ταμείο', 'Στην <em>Επισκόπηση</em>, άνοιξε το πλακίδιο «Ταμείο» και καταχώρησε το υπόλοιπο της τράπεζας όπως φαίνεται σήμερα — μία μέτρηση ανά μήνα.')}
-        ${step('3', 'Μηνιαία εικόνα', 'Έλεγξε τη «Μηνιαία εικόνα» στην καρτέλα <em>Οικονομικά</em> και, όταν όλα δείχνουν σωστά, πάτησε την έγκριση του μήνα. Την αποστολή προς το ΔΣ την αναλαμβάνει η Διαχείριση.')}
+        ${step('1', 'Κινήσεις τράπεζας', `Κατέβασε από το e-banking τις κινήσεις του μήνα και επικόλλησέ τις στο πλαίσιο «Κινήσεις τράπεζας» της καρτέλας <em>Οικονομικά</em>. Το OC τις ταιριάζει με τα παραστατικά του φακέλου — και με τα ποσά πληρωτέα, όχι τα σύνολα.<br>
+                  <strong>Πώς:</strong> Στην <strong>Επισκόπηση</strong> (η πρώτη οθόνη μετά το login) επίλεξε τον λογαριασμό (ένας υπάρχει). Στις <strong>Κινήσεις</strong>, όρισε το διάστημα από την πρώτη ως την τελευταία μέρα του μήνα που ετοιμάζεις και πάτησε τον μεγεθυντικό φακό (αναζήτηση) — έτσι επιλέγονται όλες οι συναλλαγές του μήνα. Μετά πάτησε δεξιά το <strong>CSV</strong>: ανοίγει νέο παράθυρο με κείμενο. Αντίγραψέ το όλο και επικόλλησέ το στο πλαίσιο «Κινήσεις τράπεζας» του OC.${shot('oc-alpha-kiniseis.png', 'Alpha Bank: Κινήσεις — διάστημα μήνα, αναζήτηση, CSV')}`)}
+        ${step('2', 'Ταμείο', `Παρομοίως, πήγαινε στο υπομενού <strong>Εισερχόμενες εντολές</strong>, όρισε ξανά το διάστημα από την πρώτη ως την τελευταία μέρα του μήνα, πάτησε τον μεγεθυντικό φακό (αναζήτηση) και μετά <strong>CSV</strong>. Αντίγραψε το κείμενο και επικόλλησέ το στο πλαίσιο «Ταμείο» του OC.${shot('oc-alpha-eiserxomenes.png', 'Alpha Bank: Εισερχόμενες εντολές — διάστημα μήνα, αναζήτηση, CSV')}`)}
+        ${step('3', 'Μηνιαία εικόνα', `Έλεγξε τη «Μηνιαία εικόνα» στην καρτέλα <em>Οικονομικά</em> και, όταν όλα δείχνουν σωστά, πάτησε την έγκριση του μήνα. Την αποστολή προς το Λογιστήριο την αναλαμβάνει ${adminName ? `η/ο ${adminName} (Διαχείριση)` : 'η Διαχείριση'}.`)}
       </table>
     </td>
   </tr>

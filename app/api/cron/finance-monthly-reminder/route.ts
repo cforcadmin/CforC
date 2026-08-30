@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendOcEmail, financeMonthlyReminderEmailHtml } from '@/lib/ocEmails'
+import { getSeatHolder } from '@/lib/ocRoles'
 
 // Η θυρίδα του/της Financer (ίδια με το SEAT_MAILBOX του ocRoles —
 // επιβιώνει των εκλογών, δεν δείχνει σε πρόσωπο)
@@ -47,7 +48,11 @@ export async function GET(request: NextRequest) {
 
   const today = athensParts(0)
   const monthLabel = `${MONTH_LABELS[today.month - 1]} ${today.year}`
-  const { subject, html } = financeMonthlyReminderEmailHtml(monthLabel)
+  // Ποιος/ποια κρατά τη θέση Admin σήμερα — για τη φράση «την αποστολή
+  // προς το Λογιστήριο την αναλαμβάνει η/ο …»
+  let adminName: string | null = null
+  try { adminName = (await getSeatHolder('admin'))?.name?.split(/\s+/)[0] || null } catch { /* πέφτει στο «η Διαχείριση» */ }
+  const { subject, html } = financeMonthlyReminderEmailHtml(monthLabel, adminName)
   const to = FINANCE_EMAIL
 
   const ok = await sendOcEmail(to, force ? `[ΔΟΚΙΜΗ] ${subject}` : subject, html)
