@@ -146,7 +146,7 @@ export async function getBoardRoster(): Promise<OcBoardMember[]> {
  * επαναλαμβανόμενο γεγονός. Το προσωπικό email μένει ως εφεδρεία, για την
  * περίπτωση που μια θυρίδα δεν υπάρχει.
  */
-const SEAT_MAILBOX: Record<OcSeat, string> = {
+export const SEAT_MAILBOX: Record<OcSeat, string> = {
   coordinator: 'coordination@cultureforchange.net',
   admin: 'hello@cultureforchange.net',
   comms: 'communication@cultureforchange.net',

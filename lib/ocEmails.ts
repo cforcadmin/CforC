@@ -1804,6 +1804,104 @@ export function treasuryReminderEmailHtml(
 }
 
 /**
+ * «Ο μήνας είναι έτοιμος» — προς τη Διαχείριση (hello@), μόλις ο/η Ταμίας
+ * πατήσει «Έτοιμο προς αποστολή». Η δεύτερη υπογραφή του κλεισίματος
+ * πρέπει να ΚΑΛΕΙΤΑΙ, όχι να το ανακαλύπτει τυχαία ανοίγοντας το OC.
+ */
+export function monthReadyEmailHtml(
+  adminFirstName: string | null,
+  monthLabel: string,
+  financerName: string | null,
+  ocUrl: string,
+  summary: { incomeTotal: string; incomeCount: number; expenseTotal: string; expenseCount: number; balance: string; lateCount: number },
+): { subject: string; html: string } {
+  const who = financerName ? `${financerName} (Ταμίας)` : 'Ο/η Ταμίας'
+  const html = `<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Ο ${monthLabel} είναι έτοιμος — Culture for Change</title>
+<style>
+  @media only screen and (max-width:620px){
+    .px{padding-left:24px !important;padding-right:24px !important;}
+    .h1{font-size:26px !important;line-height:32px !important;}
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F0EB;">
+<span style="display:none;font-size:1px;color:#F5F0EB;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Ο ${monthLabel} εγκρίθηκε από το Ταμείο — περιμένει την Αποστολή στο λογιστήριο.</span>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;">
+<tr><td align="center" style="padding:32px 12px 48px 12px;">
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #E5E7EB;">
+
+  <tr>
+    <td class="px" style="background-color:#FF8B6A;padding:36px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:16px;letter-spacing:1.6px;color:#FFFFFF;font-weight:bold;">CULTURE FOR CHANGE — OPERATIONAL CENTER</td></tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr><td class="h1" style="font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:36px;color:#2D2D2D;font-weight:bold;">Ο ${monthLabel.toUpperCase()} ΕΙΝΑΙ ΕΤΟΙΜΟΣ</td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:40px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;">
+      <p style="margin:0 0 20px 0;">${adminFirstName ? adminFirstName + ',' : 'Καλημέρα,'}</p>
+      <p style="margin:0 0 20px 0;">${who} έλεγξε τη μηνιαία εικόνα του <strong>${monthLabel}</strong> και πάτησε «Έτοιμο προς αποστολή». Η δεύτερη υπογραφή είναι δική σου: μπες στο OC → Οικονομικά → Μηνιαία εικόνα και πάτησε <strong>«Αποστολή στο λογιστήριο»</strong>.</p>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:0 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;border-radius:16px;">
+        <tr><td style="padding:18px 24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">
+          <strong>Έσοδα</strong> ${summary.incomeTotal} € (${summary.incomeCount} γραμμές)<br>
+          <strong>Έξοδα</strong> ${summary.expenseTotal} € (${summary.expenseCount} γραμμές)<br>
+          <strong>Ισοζύγιο</strong> ${summary.balance} €${summary.lateCount > 0 ? `<br><span style="color:#C9552F;">+ ${summary.lateCount} εκ των υστέρων για μήνες που έχουν ήδη σταλεί (τμήμα Γ)</span>` : ''}
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:16px 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="background-color:#FF8B6A;border-radius:999px;">
+          <a href="${ocUrl}" style="display:inline-block;padding:14px 32px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;color:#FFFFFF;text-decoration:none;font-weight:bold;">Άνοιγμα Οικονομικών στο OC</a>
+        </td>
+      </tr></table>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:24px 48px 40px 48px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#5A5A5A;">
+      <p style="margin:0;">Αυτόματη ειδοποίηση του OC. Το αρχείο φεύγει προς το λογιστήριο μόνο όταν το πατήσεις εσύ — μία φορά ανά μήνα.</p>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" align="center" style="background-color:#2D2D2D;padding:32px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#A0A0A0;">Σωματείο Κοινωνικής και Πολιτισμικής Καινοτομίας — Culture for Change</td></tr>
+      </table>
+    </td>
+  </tr>
+
+</table>
+
+</td></tr>
+</table>
+</body>
+</html>
+`
+  return { subject: `Ο ${monthLabel} είναι έτοιμος για αποστολή στο λογιστήριο`, html }
+}
+
+/**
  * Departure email — στέλνεται όταν διαγράφεται μέλος (OC ή Sheet).
  * Design shell, υπογραφή Community. ⟨TODO⟩: πραγματικό URL ερωτηματολογίου.
  */

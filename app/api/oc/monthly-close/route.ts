@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server'
 export const maxDuration = 60
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
-import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
+import { resolveOcAccess, getSeatHolder, SEAT_MAILBOX, type OcSeat } from '@/lib/ocRoles'
 import { type ReceiptType } from '@/lib/receipts'
-import { sendOcEmail, monthlyDispatchEmailHtml, ADMIN_FROM, ADMIN_EMAIL, FINANCE_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, monthlyDispatchEmailHtml, monthReadyEmailHtml, ADMIN_FROM, ADMIN_EMAIL, FINANCE_EMAIL, FINANCE_FROM } from '@/lib/ocEmails'
 
 /**
  * Μηνιαία εικόνα ΕΣΟΔΩΝ + ΕΞΟΔΩΝ και κλείσιμο μήνα («εστάλη στο λογιστήριο»).
@@ -209,6 +209,29 @@ async function monthFolderUrls(month: string): Promise<{ expenses: string | null
   return { expenses, income }
 }
 
+/** Σύνοψη μήνα για την ειδοποίηση «έτοιμος» — ίδιες πηγές με τη μηνιαία εικόνα */
+async function monthSummary(month: string) {
+  const { from, to } = monthRange(month)
+  const fmt = (n: number) => n.toFixed(2).replace('.', ',')
+  const sum = (rows: any[], f: string) => rows.reduce((a, r) => a + (Number(r[f]) || 0), 0)
+  const [recRes, incRes, expRes, closesRes] = await Promise.all([
+    strapi(`/receipts?filters[PaymentDate][$gte]=${from}&filters[PaymentDate][$lte]=${to}&pagination[limit]=500&fields[0]=Amount`),
+    strapi(`/income-records?filters[Month][$eq]=${month}&pagination[limit]=500&fields[0]=Amount`),
+    strapi(`/expenses?filters[Month][$eq]=${month}&filters[State][$eq]=approved&pagination[limit]=500&fields[0]=PayableAmount`),
+    strapi('/monthly-closes?sort=Month:desc&pagination[limit]=36&fields[0]=Month&fields[1]=SentAt'),
+  ])
+  const receipts = recRes.json?.data || [], incomes = incRes.json?.data || [], expenses = expRes.json?.data || []
+  const incomeTotal = sum(receipts, 'Amount') + sum(incomes, 'Amount')
+  const expenseTotal = sum(expenses, 'PayableAmount')
+  const late = await computeLateItems(month, closesRes.json?.data || [])
+  const bal = incomeTotal - expenseTotal
+  return {
+    incomeTotal: fmt(incomeTotal), incomeCount: receipts.length + incomes.length,
+    expenseTotal: fmt(expenseTotal), expenseCount: expenses.length,
+    balance: (bal >= 0 ? '+' : '−') + fmt(Math.abs(bal)), lateCount: late.length,
+  }
+}
+
 export async function GET(request: NextRequest) {
   const auth = await authorize('board')
   if ('error' in auth) return auth.error
@@ -393,7 +416,21 @@ export async function POST(request: NextRequest) {
         ? await strapi(`/monthly-closes/${existing.documentId}`, 'PUT', payload)
         : await strapi('/monthly-closes', 'POST', payload)
       if (!r.ok) return NextResponse.json({ error: 'Αποτυχία σήμανσης' }, { status: 502 })
-      return NextResponse.json({ ok: true, month, status: 'ready' })
+
+      // Η δεύτερη υπογραφή καλείται: email στη θυρίδα της Διαχείρισης (hello@)
+      // με τη σύνοψη του μήνα. Awaited — un-awaited αποστολές πεθαίνουν με το lambda.
+      let notified = false
+      try {
+        const summary = await monthSummary(month)
+        const [adminSeat, financerSeat] = await Promise.all([getSeatHolder('admin'), getSeatHolder('financer')])
+        const adminFirst = adminSeat?.name?.split(/\s+/)[0] || null
+        const tpl = monthReadyEmailHtml(adminFirst, monthLabelOf(month), financerSeat?.name || null,
+          `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cultureforchange.net'}/oc`, summary)
+        notified = await sendOcEmail(SEAT_MAILBOX.admin, tpl.subject, tpl.html, { from: FINANCE_FROM, replyTo: FINANCE_EMAIL })
+      } catch (e) {
+        console.error('monthly-close: ready notice failed', e)
+      }
+      return NextResponse.json({ ok: true, month, status: 'ready', notified })
     }
 
     // ---- dispatch: αρχείο μήνα → λογιστήριο ----
