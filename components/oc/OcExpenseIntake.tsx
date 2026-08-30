@@ -380,8 +380,8 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
                 <span className="notranslate"> — σύνολο {Number(recon.debitsWithoutInvoiceTotal).toFixed(2).replace('.', ',')} €</span>
               </p>
               <ul className="mt-1 space-y-0.5 text-xs text-gray-600 dark:text-gray-300">
-                {recon.debitsWithoutInvoice.map((d: any) => (
-                  <li key={d.txnId} className="notranslate">
+                {recon.debitsWithoutInvoice.map((d: any, i: number) => (
+                  <li key={`${d.txnId}-${i}`} className="notranslate">
                     {new Date(d.date).toLocaleDateString('el-GR')} · {Number(d.amount).toFixed(2).replace('.', ',')} € · {d.reason}
                   </li>
                 ))}

@@ -239,6 +239,21 @@ describe('κρατήσεις — «σύνολο→πληρωτέο» στο όν
     expect(parseInvoiceFilename('x_50€>40€.pdf').withholding).toBe(10)
   })
 
+  it('στο ζεύγος δέχεται ακέραιο σύνολο (πραγματικό αρχείο Ντόβα 30/8)', () => {
+    const p = parseInvoiceFilename('Ντόβα_ΤΠΥ30_400015006291093_26-08-2026_2200->1845,16.pdf')
+    expect(p.grossAmount).toBe(2200)
+    expect(p.amount).toBe(1845.16)
+    expect(p.withholding).toBe(354.84)
+    expect(p.docNumber).toBe('ΤΠΥ30')
+    expect(p.mark).toBe('400015006291093')
+    expect(p.issueDate).toBe('2026-08-26')
+    expect(p.supplierHint).toBe('Ντόβα')
+  })
+
+  it('στο ζεύγος δέχεται και χιλιάδες με τελεία', () => {
+    expect(parseInvoiceFilename('x_2.200->1.845,16.pdf').withholding).toBe(354.84)
+  })
+
   it('σκέτο ποσό = πληρωτέο, χωρίς κρατήσεις', () => {
     const p = parseInvoiceFilename('Strapi_91204_03-08-2026_16,20.pdf')
     expect(p.amount).toBe(16.2)

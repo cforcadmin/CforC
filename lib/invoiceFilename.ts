@@ -116,6 +116,18 @@ function parseAmountToken(token: string): number | null {
   return Number.isFinite(n) ? n : null
 }
 
+/**
+ * Χαλαρό ποσό ΜΟΝΟ για τα δύο σκέλη ενός ζεύγους «σύνολο→πληρωτέο»: το
+ * βέλος κάνει την πρόθεση σαφή, οπότε δεκτοί και ακέραιοι («2200»),
+ * χιλιάδες με τελεία («2.200»), κόμμα με 1-2 δεκαδικά, με ή χωρίς €.
+ */
+function parseAmountLoose(token: string): number | null {
+  const t = token.replace(/€/g, '').replace(/EUR$/i, '').trim()
+  if (!/^\d{1,3}(\.\d{3})*(,\d{1,2})?$|^\d+(,\d{1,2})?$/.test(t)) return null
+  const n = parseFloat(t.replace(/\./g, '').replace(',', '.'))
+  return Number.isFinite(n) ? n : null
+}
+
 /** Κανονικοποίηση κειμένου προμηθευτή για το μητρώο */
 export function supplierAliasKey(hint: string): string {
   return hint
@@ -181,7 +193,7 @@ export function parseInvoiceFilename(filename: string): ParsedInvoiceName {
     // 2α) ζεύγος «σύνολο→πληρωτέο» (κρατήσεις): δεκτά →, -> και >
     const pair = /^(.+?)(?:→|->|>)(.+)$/.exec(token)
     if (pair) {
-      const g = parseAmountToken(pair[1]), p = parseAmountToken(pair[2])
+      const g = parseAmountLoose(pair[1]), p = parseAmountLoose(pair[2])
       if (g !== null && p !== null) {
         if (grossAmount === null) grossAmount = g
         if (amount === null) amount = p
