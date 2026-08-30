@@ -42,6 +42,29 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
 }
 
+/* Η καλωσόρισση του Cool πρέπει να εμφανιστεί ΜΙΑ φορά — και το `<Navigation />`
+   ζει μέσα σε κάθε σελίδα, όχι στο layout: κάθε πλοήγηση ξαναστήνει το CoolNav.
+   Γι' αυτό τρία επίπεδα φύλαξης, από το πιο ανθεκτικό στο πιο ταπεινό:
+     localStorage   → μια φορά ανά browser (κανονική περίπτωση)
+     sessionStorage → μια φορά ανά καρτέλα, αν το πρώτο δεν γράφεται
+     module flag    → μια φορά ανά περιήγηση, ακόμη κι αν ΚΑΝΕΝΑ δεν γράφεται
+   Χωρίς το τρίτο, ένας browser που δεν κρατά site data ξαναδείχνει το μήνυμα
+   σε κάθε κλικ του μενού (επιβεβαιωμένο σε δοκιμή, 31/8). */
+const INTRO_KEY = 'cforc-cool-intro-seen'
+let introShownThisVisit = false
+
+function introSeen(): boolean {
+  try { if (localStorage.getItem(INTRO_KEY) === '1') return true } catch { /* αποκλεισμένο */ }
+  try { if (sessionStorage.getItem(INTRO_KEY) === '1') return true } catch { /* αποκλεισμένο */ }
+  return false
+}
+
+function markIntroSeen(): void {
+  introShownThisVisit = true
+  try { localStorage.setItem(INTRO_KEY, '1') } catch { /* αποκλεισμένο */ }
+  try { sessionStorage.setItem(INTRO_KEY, '1') } catch { /* αποκλεισμένο */ }
+}
+
 export default function CoolNav() {
   const router = useRouter()
   const pathname = usePathname()
@@ -101,13 +124,13 @@ export default function CoolNav() {
   // Πρώτη επαφή με το Cool: μια φορά ανά browser, εξήγηση του dock + Escape
   const [showIntro, setShowIntro] = useState(false)
   useEffect(() => {
-    try {
-      if (localStorage.getItem('cforc-cool-intro-seen') !== '1') setShowIntro(true)
-    } catch {}
+    if (introShownThisVisit) return
+    introShownThisVisit = true
+    if (!introSeen()) setShowIntro(true)
   }, [])
   const dismissIntro = () => {
     setShowIntro(false)
-    try { localStorage.setItem('cforc-cool-intro-seen', '1') } catch {}
+    markIntroSeen()
   }
 
   // Όσο το Cool είναι ενεργό, το <html> φέρει τη σημαία nav-cool: το CSS
