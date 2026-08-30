@@ -364,8 +364,8 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
                         </tr>
                       </thead>
                       <tbody>
-                        {data.expenses.map(e => (
-                          <tr key={`x-${e.aa}`} className="border-b border-gray-100 dark:border-gray-700">
+                        {data.expenses.map((e, i) => (
+                          <tr key={`x-${e.aa}-${i}`} className="border-b border-gray-100 dark:border-gray-700">
                             <td className="py-2.5 pr-4 font-bold text-charcoal dark:text-gray-100 notranslate">{e.aa}</td>
                             <td className="py-2.5 pr-4 text-gray-700 dark:text-gray-300">
                               {e.supplierName || '—'}

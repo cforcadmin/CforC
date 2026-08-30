@@ -119,15 +119,26 @@ export async function POST(request: NextRequest) {
 
     // 5) ήδη καταχωρημένα (ανά όνομα αρχείου ή ΜΑΡΚ/αριθμό)
     const existingRes = await strapi(
-      `/expenses?filters[Month][$eq]=${month}&pagination[limit]=200` +
-      '&fields[0]=Aa&fields[1]=FileName&fields[2]=Mark&fields[3]=DocNumber&fields[4]=State&fields[5]=PayableAmount'
+      `/expenses?filters[Month][$eq]=${month}&filters[State][$eq]=approved&pagination[limit]=200` +
+      '&fields[0]=Aa&fields[1]=FileName&fields[2]=Mark&fields[3]=DocNumber&fields[4]=State&fields[5]=PayableAmount&fields[6]=IssueDate'
     )
     const existing: any[] = existingRes.json?.data || []
     const existingByFile = new Map<string, any>()
     const existingByMark = new Map<string, any>()
+    // (30/8) Και ανά αριθμό παραστατικού: οι backfilled γραμμές δεν έχουν
+    // ούτε αρχείο ούτε ΜΑΡΚ (ξένοι προμηθευτές), κι έτσι ξαναγράφονταν
+    const normDoc = (v: any) => String(v || '').toUpperCase().replace(/[^A-ZΑ-Ω0-9]/g, '')
+    const digitsDoc = (v: any) => String(v || '').replace(/\D/g, '')
+    const existingByDoc = new Map<string, any[]>()
     for (const e of existing) {
       if (e.FileName) existingByFile.set(e.FileName, e)
       if (e.Mark) existingByMark.set(e.Mark, e)
+      for (const k of new Set([normDoc(e.DocNumber), digitsDoc(e.DocNumber)])) {
+        if (k.length < 3) continue
+        const arr = existingByDoc.get(k) || []
+        arr.push(e)
+        existingByDoc.set(k, arr)
+      }
     }
 
     // 4) χρεώσεις τράπεζας (προαιρετικά)
@@ -157,7 +168,19 @@ export async function POST(request: NextRequest) {
     const rows = files.map((f) => {
       const parsed: ParsedInvoiceName = parseInvoiceFilename(f.name)
       const alias = parsed.supplierHint ? lookupAlias(parsed.supplierHint, aliases) : null
-      const already = existingByFile.get(f.name) || (parsed.mark ? existingByMark.get(parsed.mark) : null)
+      let already = existingByFile.get(f.name) || (parsed.mark ? existingByMark.get(parsed.mark) : null)
+      if (!already && parsed.docNumber) {
+        const cands = existingByDoc.get(normDoc(parsed.docNumber)) || existingByDoc.get(digitsDoc(parsed.docNumber)) || []
+        if (cands.length === 1) already = cands[0]
+        else if (cands.length > 1) {
+          // ίδιος αριθμός σε πολλές γραμμές (π.χ. μηνιαίο ενοίκιο «758»): προτίμησε
+          // τη γραμμή χωρίς αρχείο που συμφωνεί σε ποσό, μετά σε ημερομηνία
+          already = cands.find(c => !c.FileName && parsed.amount !== null && Math.abs(Number(c.PayableAmount) - (parsed.amount as number)) < 0.005)
+            || cands.find(c => !c.FileName && parsed.issueDate && c.IssueDate === parsed.issueDate)
+            || cands.find(c => !c.FileName)
+            || cands[0]
+        }
+      }
 
       const docPrefix = alias?.docPrefix || '2.1'
       const docRef = [docPrefix, parsed.docNumber, parsed.mark].filter(Boolean).join('/')
@@ -184,7 +207,11 @@ export async function POST(request: NextRequest) {
           fromRegistry: !!alias,
           confirmations: alias?.confirmations || 0,
         },
-        existing: already ? { aa: already.Aa, state: already.State, amount: already.PayableAmount } : null,
+        // hasFile=false → «σύνδεση»: το αρχείο δένεται στην υπάρχουσα γραμμή
+        // αντί να δημιουργηθεί δεύτερη
+        existing: already
+          ? { documentId: already.documentId, aa: already.Aa, state: already.State, amount: already.PayableAmount, hasFile: !!already.FileName }
+          : null,
       }
     })
 
@@ -352,6 +379,28 @@ async function approveExpenses(month: string, body: any, memberId: string, seat:
       ? `Χειροκίνητη καταχώρηση από IT (χωρίς αρχείο)${it.notes ? ` — ${it.notes}` : ''}`
       : (it.notes || null)
     try {
+      // Σύνδεση αρχείου με ΥΠΑΡΧΟΥΣΑ γραμμή (χωρίς αρχείο, π.χ. backfill):
+      // μετονομασία με τα δεδομένα της γραμμής + FileId/FileName — τίποτα
+      // άλλο δεν γράφεται (ούτε ΕΞΟΔΑ, ούτε νέα εγγραφή)
+      if (it?.linkTo) {
+        const ex = (await strapi(`/expenses/${it.linkTo}?fields[0]=Aa&fields[1]=SupplierName&fields[2]=DocNumber&fields[3]=Mark&fields[4]=IssueDate&fields[5]=PayableAmount&fields[6]=Withholding`)).json?.data
+        if (!ex?.Aa || !ex?.IssueDate) throw new Error('Η υπάρχουσα γραμμή δεν βρέθηκε')
+        const parsedName = parseInvoiceFilename(String(it.fileName || ''))
+        const pay = Number(ex.PayableAmount) || 0
+        const wh = Number(ex.Withholding) || 0
+        const linkedName = buildApprovedFilename({
+          aa: ex.Aa, subject: ex.SupplierName || null, docNumber: ex.DocNumber || null, mark: ex.Mark || null,
+          date: String(ex.IssueDate), amount: pay, grossAmount: wh > 0 ? Math.round((pay + wh) * 100) / 100 : null, ext: parsedName.ext,
+        })
+        if (fileId) {
+          const ren = await webApp('renameFile', { fileId, newName: linkedName })
+          if (!ren.ok) console.error('expense link: rename failed', ren.error)
+        }
+        const upd = await strapi(`/expenses/${it.linkTo}`, 'PUT', { FileId: fileId || null, FileName: linkedName })
+        if (!upd.ok) throw new Error('Αποτυχία σύνδεσης με την υπάρχουσα γραμμή')
+        results.push({ fileId, ok: true, aa: ex.Aa, newName: linkedName })
+        continue
+      }
       if (!it?.issueDate) throw new Error('Λείπει ημερομηνία έκδοσης — μετονόμασε το αρχείο και ξανατρέξε την ανάλυση')
       const payable = Number(it?.payable)
       if (!(payable > 0)) throw new Error('Λείπει ποσό')

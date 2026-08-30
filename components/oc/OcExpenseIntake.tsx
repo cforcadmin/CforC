@@ -37,7 +37,7 @@ interface IntakeRow {
     fromRegistry: boolean
     confirmations: number
   }
-  existing: { aa: string; state: string; amount: number | null } | null
+  existing: { documentId?: string; aa: string; state: string; amount: number | null; hasFile?: boolean } | null
   /** Χειροκίνητη καταχώρηση χωρίς αρχείο (ακραία περίπτωση — βλ. Προσθήκη) */
   manual?: boolean
 }
@@ -135,7 +135,7 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
         // πληρωμή την ίδια μέρα με την έκδοση, ακόμη κι αν δεν βρέθηκε κίνηση
         const auto = !!r.suggestion.autoPaid
         init[r.fileId] = {
-          include: !r.existing,
+          include: !r.existing || r.existing.hasFile === false,
           aa: r.existing?.aa || `${monthIdx}.${r.existing ? '' : seq++}`,
           issueDate: r.parsed.issueDate || '',
           docRef: r.suggestion.docRef,
@@ -192,7 +192,9 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
   }
 
   const selected = rows.filter(r => state[r.fileId]?.include && !results[r.fileId]?.ok)
+  const isLink = (r: IntakeRow) => !!r.existing && r.existing.hasFile === false
   const ready = selected.filter(r => {
+    if (isLink(r)) return true
     const st = state[r.fileId]
     return st.issueDate && Number(st.payable) > 0
   })
@@ -205,6 +207,7 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
         return {
           fileId: r.fileId,
           fileName: r.fileName,
+          linkTo: isLink(r) ? r.existing!.documentId : undefined,
           issueDate: st.issueDate,
           docRef: st.docRef,
           docNumber: r.parsed.docNumber,
@@ -263,7 +266,7 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
         body: JSON.stringify({
           action: 'approve', month,
           items: [{
-            fileId, fileName: r.fileName, issueDate: st.issueDate, docRef: st.docRef,
+            fileId, fileName: r.fileName, linkTo: isLink(r) ? r.existing!.documentId : undefined, issueDate: st.issueDate, docRef: st.docRef,
             docNumber: r.parsed.docNumber, mark: r.parsed.mark, supplierHint: r.parsed.supplierHint,
             supplierName: st.supplierName, supplierTaxId: st.supplierTaxId, category: st.category,
             netAmount: st.netAmount, vatAmount: st.vatAmount, withholding: st.withholding,
@@ -481,7 +484,8 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
           {rows.map(r => {
             const st = state[r.fileId]
             if (!st) return null
-            const locked = !!r.existing
+            const locked = !!r.existing && r.existing.hasFile !== false
+            const link = isLink(r)
             return (
               <div key={r.fileId}
                 className={`rounded-2xl border p-4 ${
@@ -511,6 +515,12 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
                   {locked && (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 notranslate">
                       ✓ καταχωρημένο ({r.existing!.aa})
+                    </span>
+                  )}
+                  {link && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200 notranslate"
+                      title="Η γραμμή υπάρχει ήδη στο ΕΞΟΔΑ/βάση χωρίς αρχείο — το αρχείο θα δεθεί σε αυτήν, χωρίς νέα εγγραφή">
+                      ↳ υπάρχει ως {r.existing!.aa} χωρίς αρχείο — θα συνδεθεί
                     </span>
                   )}
                   {r.suggestion.fromRegistry && !locked && (
@@ -544,10 +554,10 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
                   )}
                   {!locked && !results[r.fileId]?.ok && (r.manual ? canManual : canIssue) && (
                     <button type="button" onClick={() => approveOne(r.fileId)}
-                      disabled={approving || !st.issueDate || !(Number(st.payable) > 0)}
-                      title={!st.issueDate ? 'Λείπει ημερομηνία έκδοσης' : !(Number(st.payable) > 0) ? 'Λείπει ποσό' : undefined}
+                      disabled={approving || (!link && (!st.issueDate || !(Number(st.payable) > 0)))}
+                      title={link ? 'Δένει το αρχείο στην υπάρχουσα γραμμή' : !st.issueDate ? 'Λείπει ημερομηνία έκδοσης' : !(Number(st.payable) > 0) ? 'Λείπει ποσό' : undefined}
                       className="ml-auto px-3 py-1 rounded-full bg-[#6A994E] text-white text-xs font-bold hover:opacity-90 disabled:opacity-40">
-                      Έγκριση
+                      {link ? 'Σύνδεση' : 'Έγκριση'}
                     </button>
                   )}
                 </div>
