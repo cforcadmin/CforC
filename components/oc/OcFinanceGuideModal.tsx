@@ -14,30 +14,22 @@ interface OcFinanceGuideModalProps {
   adminName?: string | null
 }
 
-/** (i) με tooltip: hover, focus ΚΑΙ κλικ (για αφή). Ελεγχόμενο από τον
- *  γονέα ώστε η κάρτα-βήμα που το φιλοξενεί να ανέβει πάνω από τις
- *  επόμενες (κάθε menu-glass = stacking context). Μεγέθη inline — τα
- *  arbitrary utilities (w-[22rem]) δεν εφαρμόστηκαν (30/8). */
-function TipInfo({ id, html, show, setShow }: { id: string; html: string; show: boolean; setShow: (v: boolean) => void }) {
+/** Το (i): hover, focus ΚΑΙ κλικ (για αφή). Το ίδιο το σημείωμα
+ *  αποδίδεται από την κάρτα-βήμα ΜΕΣΑ στη ροή της (πλήρες πλάτος, σταθερό
+ *  ύψος με κύλιση) — όχι ως αιωρούμενο tooltip που το έκοβαν τα όρια του
+ *  pop-up (30/8). */
+function TipInfo({ id, show, setShow }: { id: string; show: boolean; setShow: (v: boolean) => void }) {
   return (
-    <span className="relative inline-flex"
-      onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
-      <button type="button"
-        onClick={() => setShow(!show)}
-        onFocus={() => setShow(true)} onBlur={() => setShow(false)}
-        aria-label="Προσωπική σημείωση" aria-expanded={show} aria-describedby={id}
-        className={`w-5 h-5 rounded-full border border-coral text-[11px] font-bold leading-none flex items-center justify-center transition-colors ${
-          show ? 'bg-coral text-white' : 'text-coral hover:bg-coral hover:text-white'
-        }`}>
-        i
-      </button>
-      <span id={id} role="tooltip"
-        className={`absolute left-0 top-full mt-2 menu-glass-dense glass-rim rounded-2xl text-sm font-normal leading-relaxed text-charcoal dark:text-gray-100 transition-opacity [&_a]:text-coral [&_a]:underline ${
-          show ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
-        }`}
-        style={{ width: '32rem', maxWidth: '80vw', height: '16rem', overflowY: 'auto', padding: '1rem 1.25rem', zIndex: 40 }}
-        dangerouslySetInnerHTML={{ __html: html }} />
-    </span>
+    <button type="button"
+      onClick={() => setShow(!show)}
+      onMouseEnter={() => setShow(true)}
+      onFocus={() => setShow(true)}
+      aria-label="Προσωπική σημείωση" aria-expanded={show} aria-controls={id}
+      className={`w-5 h-5 rounded-full border border-coral text-[11px] font-bold leading-none flex items-center justify-center transition-colors ${
+        show ? 'bg-coral text-white' : 'text-coral hover:bg-coral hover:text-white'
+      }`}>
+      i
+    </button>
   )
 }
 
@@ -88,16 +80,24 @@ export default function OcFinanceGuideModal({ isOpen, onClose, adminName }: OcFi
         {/* Βήματα — ίδια κάρτα-βήμα με το email, σε γυαλί */}
         <div className="p-6 space-y-4">
           {FINANCE_MONTHLY_STEPS.map(st => (
-            <div key={st.n} className={`relative menu-glass rounded-2xl p-5 flex gap-4 ${openTip === st.n ? 'z-30' : ''}`}>
+            <div key={st.n} className="relative menu-glass rounded-2xl p-5 flex gap-4">
               <span className="text-2xl font-bold text-coral leading-none pt-0.5 w-8 flex-shrink-0" aria-hidden="true">{st.n}</span>
               <div className="min-w-0 flex-1">
                 <h3 className="font-bold text-charcoal dark:text-gray-100 mb-1 flex items-center gap-2">
                   {st.title}
                   {st.tip && (
-                    <TipInfo id={`guide-tip-${st.n}`} html={`<strong>💡 Προσωπική σημείωση:</strong> ${st.tip}`}
-                      show={openTip === st.n} setShow={v => setOpenTip(v ? st.n : null)} />
+                    <TipInfo id={`guide-tip-${st.n}`} show={openTip === st.n} setShow={v => setOpenTip(v ? st.n : null)} />
                   )}
                 </h3>
+                {st.tip && openTip === st.n && (
+                  <div id={`guide-tip-${st.n}`} role="note"
+                    className="relative menu-glass-dense glass-rim rounded-2xl text-sm leading-relaxed text-charcoal dark:text-gray-100 mb-3 [&_a]:text-coral [&_a]:underline"
+                    style={{ height: '14rem', overflowY: 'auto', padding: '1rem 1.25rem' }}>
+                    <button type="button" onClick={() => setOpenTip(null)} aria-label="Κλείσιμο σημείωσης"
+                      className="absolute top-2 right-2 w-6 h-6 rounded-full text-gray-500 hover:bg-black/10 dark:hover:bg-white/10 text-sm leading-none">×</button>
+                    <div dangerouslySetInnerHTML={{ __html: `<strong>💡 Προσωπική σημείωση:</strong> ${st.tip}` }} />
+                  </div>
+                )}
                 <div
                   className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 [&_img]:block [&_img]:w-full [&_img]:rounded-xl [&_img]:border [&_img]:border-black/10 dark:[&_img]:border-white/10 [&_img]:my-3 [&_.guide-code]:my-1.5 [&_code]:font-mono [&_code]:text-xs [&_code]:bg-white/60 dark:[&_code]:bg-black/30 [&_code]:border [&_code]:border-black/10 dark:[&_code]:border-white/15 [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:whitespace-nowrap"
                   dangerouslySetInnerHTML={{

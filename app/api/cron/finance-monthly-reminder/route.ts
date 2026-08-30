@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
   const { subject, html } = financeMonthlyReminderEmailHtml(monthLabel, adminName)
   const to = FINANCE_EMAIL
 
-  const ok = await sendOcEmail(to, force ? `[ΔΟΚΙΜΗ] ${subject}` : subject, html)
+  const ok = await sendOcEmail(to, subject, html)
   if (!ok) {
     return NextResponse.json({ sent: false, error: 'email send failed' }, { status: 500 })
   }
