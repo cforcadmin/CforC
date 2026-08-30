@@ -452,7 +452,7 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
                   locked
                     ? 'border-green-300 bg-green-50/60 dark:border-green-700 dark:bg-green-900/20'
                     : r.manual
-                      ? 'border-amber-300 bg-amber-50/40 dark:border-amber-700 dark:bg-amber-900/10'
+                      ? 'border-fuchsia-300 bg-fuchsia-50/40 dark:border-fuchsia-700 dark:bg-fuchsia-900/10'
                       : 'border-gray-200 dark:border-gray-600'
                 }`}>
                 <div className="flex flex-wrap items-center gap-3 mb-3">
@@ -462,7 +462,7 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
                       aria-label={`Επιλογή ${r.manual ? 'χειροκίνητης καταχώρησης' : r.fileName}`} />
                   )}
                   {r.manual ? (
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-900/50 dark:text-amber-200"
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-fuchsia-100 text-fuchsia-900 dark:bg-fuchsia-900/50 dark:text-fuchsia-200"
                       title="Καταχώρηση χωρίς αρχείο — μόνο σε ακραίες περιπτώσεις, με ενημέρωση του IT">
                       ✍️ χειροκίνητη καταχώρηση
                     </span>
@@ -649,13 +649,13 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
             )}
             {canIssue && !confirming && !addingManual && (
               <button type="button" onClick={() => setAddingManual(true)} disabled={approving}
-                className="px-5 py-2.5 rounded-full border-2 border-amber-500 text-amber-800 dark:text-amber-200 text-sm font-bold hover:bg-amber-500/10 disabled:opacity-40"
+                className="px-5 py-2.5 rounded-full border-2 border-fuchsia-500 text-fuchsia-800 dark:text-fuchsia-100 text-sm font-bold hover:bg-fuchsia-500/15 disabled:opacity-40"
                 title="Γραμμή χωρίς αρχείο — μόνο σε ακραίες περιπτώσεις">
                 + Προσθήκη
               </button>
             )}
             {addingManual && (
-              <div className="w-full rounded-2xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-900/20 p-4 text-sm text-amber-900 dark:text-amber-100">
+              <div className="w-full rounded-2xl border-2 border-fuchsia-400 bg-fuchsia-50 dark:bg-fuchsia-950/60 p-4 text-sm text-fuchsia-950 dark:text-fuchsia-50">
                 <p className="font-bold mb-1">⚠ Χειροκίνητη καταχώρηση — μόνο σε ακραίες περιπτώσεις</p>
                 <p className="mb-3">
                   Η κανονική ροή είναι: αρχείο στον φάκελο του μήνα → Ανάλυση. Αν φτάνεις εδώ επειδή κάτι δεν
@@ -665,11 +665,11 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={addManualRow}
-                    className="px-4 py-1.5 rounded-full bg-amber-600 text-white text-xs font-bold hover:opacity-90">
+                    className="px-4 py-1.5 rounded-full bg-fuchsia-600 text-white text-xs font-bold hover:opacity-90">
                     Κατάλαβα — προσθήκη γραμμής
                   </button>
                   <button type="button" onClick={() => setAddingManual(false)}
-                    className="px-4 py-1.5 rounded-full border border-amber-500 text-xs font-bold text-amber-900 dark:text-amber-100">
+                    className="px-4 py-1.5 rounded-full border border-fuchsia-400 text-xs font-bold text-fuchsia-900 dark:text-fuchsia-50">
                     Άκυρο
                   </button>
                 </div>
