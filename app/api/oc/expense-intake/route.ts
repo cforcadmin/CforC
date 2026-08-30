@@ -329,6 +329,12 @@ async function approveExpenses(month: string, body: any, memberId: string) {
 
   for (const it of items) {
     const fileId = String(it?.fileId || '')
+    // Χειροκίνητη γραμμή (χωρίς αρχείο, από το «Προσθήκη» του intake):
+    // ίδια ροή, αλλά χωρίς αρχείο και ΜΕ σήμανση στις Σημειώσεις — βάση και ΕΞΟΔΑ
+    const isManual = fileId.startsWith('manual-')
+    const notes = isManual
+      ? `Χειροκίνητη καταχώρηση (χωρίς αρχείο)${it.notes ? ` — ${it.notes}` : ''}`
+      : (it.notes || null)
     try {
       if (!it?.issueDate) throw new Error('Λείπει ημερομηνία έκδοσης — μετονόμασε το αρχείο και ξανατρέξε την ανάλυση')
       const payable = Number(it?.payable)
@@ -346,14 +352,14 @@ async function approveExpenses(month: string, body: any, memberId: string) {
         withholding: Number(it.withholding) || 0,
         paymentMethod: it.paymentMethod || 'unpaid',
         paymentDate: it.paymentDate || null,
-        notes: it.notes || null,
+        notes,
       })
       if (!sheetRes.ok) throw new Error(sheetRes.error || 'Αποτυχία εγγραφής στο ΕΞΟΔΑ')
       const aa: string = sheetRes.aa
 
       // 2) μετονομασία αρχείου: {Α/Α}_{όνομα που έδωσες}_{ΗΗ-ΜΜ-ΕΕΕΕ}
       let newName: string | undefined
-      if (fileId && it.fileName) {
+      if (fileId && it.fileName && !isManual) {
         const parsed = parseInvoiceFilename(String(it.fileName))
         newName = buildApprovedFilename({
           aa,
@@ -388,9 +394,9 @@ async function approveExpenses(month: string, body: any, memberId: string) {
         PaymentMethod: it.paymentMethod || 'unpaid',
         PaymentDate: it.paymentDate || null,
         TransactionId: it.txnId || null,
-        Notes: it.notes || null,
-        FileName: newName || it.fileName || null,
-        FileId: fileId || null,
+        Notes: notes,
+        FileName: isManual ? null : (newName || it.fileName || null),
+        FileId: isManual ? null : (fileId || null),
         State: 'approved',
         SheetSynced: true,
         ApprovedAt: new Date().toISOString(),

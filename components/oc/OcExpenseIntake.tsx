@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { notifyFinanceChanged } from '@/lib/ocFinanceEvents'
 
 /**
@@ -37,6 +37,8 @@ interface IntakeRow {
     confirmations: number
   }
   existing: { aa: string; state: string; amount: number | null } | null
+  /** Χειροκίνητη καταχώρηση χωρίς αρχείο (ακραία περίπτωση — βλ. Προσθήκη) */
+  manual?: boolean
 }
 
 interface RowState {
@@ -71,6 +73,9 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
   const [analyzing, setAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [warnings, setWarnings] = useState<string[]>([])
+  // Χειροκίνητη προσθήκη γραμμής: προειδοποίηση πρώτα, μετά η γραμμή
+  const [addingManual, setAddingManual] = useState(false)
+  const manualSeq = useRef(0)
   const [rows, setRows] = useState<IntakeRow[]>([])
   const [state, setState] = useState<Record<string, RowState>>({})
   const [stats, setStats] = useState<any>(null)
@@ -146,6 +151,30 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
 
   function patch(id: string, p: Partial<RowState>) {
     setState(s => ({ ...s, [id]: { ...s[id], ...p } }))
+  }
+
+  /** Γραμμή χωρίς αρχείο: ίδια πεδία, ίδιος έλεγχος, ίδια έγκριση — μόνο
+   *  σημαδεμένη «χειροκίνητη» στις Σημειώσεις (βάση + ΕΞΟΔΑ, από τον server) */
+  function addManualRow() {
+    manualSeq.current += 1
+    const id = `manual-${manualSeq.current}`
+    const monthIdx = Number(month.split('-')[1]) || 0
+    const row: IntakeRow = {
+      fileId: id, fileName: '', fileUrl: '', manual: true,
+      parsed: { mark: null, docNumber: null, issueDate: null, amount: null, supplierHint: '' },
+      suggestion: { docRef: '2.1/', supplierName: null, supplierTaxId: null, category: null, fromRegistry: false, confirmations: 0 },
+      existing: null,
+    }
+    setRows(prev => [...prev, row])
+    setState(prev => ({
+      ...prev,
+      [id]: {
+        include: true, aa: `${monthIdx}.${rows.length + 1}`, issueDate: '', docRef: '2.1/',
+        supplierName: '', supplierTaxId: '', category: '', netAmount: '', vatAmount: '', withholding: '',
+        payable: '', paymentMethod: 'unpaid', paymentDate: '', txnId: '', notes: '', autoPaid: false, showAll: true,
+      },
+    }))
+    setAddingManual(false)
   }
 
   const selected = rows.filter(r => state[r.fileId]?.include && !results[r.fileId]?.ok)
@@ -411,7 +440,7 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
         </div>
       )}
 
-      {rows.length > 0 && (
+      {(rows.length > 0 || recon) && (
         <div className="mt-4 space-y-3">
           {rows.map(r => {
             const st = state[r.fileId]
@@ -422,18 +451,27 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
                 className={`rounded-2xl border p-4 ${
                   locked
                     ? 'border-green-300 bg-green-50/60 dark:border-green-700 dark:bg-green-900/20'
-                    : 'border-gray-200 dark:border-gray-600'
+                    : r.manual
+                      ? 'border-amber-300 bg-amber-50/40 dark:border-amber-700 dark:bg-amber-900/10'
+                      : 'border-gray-200 dark:border-gray-600'
                 }`}>
                 <div className="flex flex-wrap items-center gap-3 mb-3">
                   {!locked && (
                     <input type="checkbox" className="w-4 h-4 accent-coral" checked={st.include}
                       onChange={e => patch(r.fileId, { include: e.target.checked })}
-                      aria-label={`Επιλογή ${r.fileName}`} />
+                      aria-label={`Επιλογή ${r.manual ? 'χειροκίνητης καταχώρησης' : r.fileName}`} />
                   )}
+                  {r.manual ? (
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-900/50 dark:text-amber-200"
+                      title="Καταχώρηση χωρίς αρχείο — μόνο σε ακραίες περιπτώσεις, με ενημέρωση του IT">
+                      ✍️ χειροκίνητη καταχώρηση
+                    </span>
+                  ) : (
                   <a href={r.fileUrl} target="_blank" rel="noopener noreferrer"
                     className="text-sm font-medium text-charcoal dark:text-gray-100 hover:text-coral notranslate truncate max-w-md">
                     📄 {r.fileName}
                   </a>
+                  )}
                   {locked && (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 notranslate">
                       ✓ καταχωρημένο ({r.existing!.aa})
@@ -608,6 +646,34 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
                   Άκυρο
                 </button>
               </>
+            )}
+            {canIssue && !confirming && !addingManual && (
+              <button type="button" onClick={() => setAddingManual(true)} disabled={approving}
+                className="px-5 py-2.5 rounded-full border-2 border-amber-500 text-amber-800 dark:text-amber-200 text-sm font-bold hover:bg-amber-500/10 disabled:opacity-40"
+                title="Γραμμή χωρίς αρχείο — μόνο σε ακραίες περιπτώσεις">
+                + Προσθήκη
+              </button>
+            )}
+            {addingManual && (
+              <div className="w-full rounded-2xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-900/20 p-4 text-sm text-amber-900 dark:text-amber-100">
+                <p className="font-bold mb-1">⚠ Χειροκίνητη καταχώρηση — μόνο σε ακραίες περιπτώσεις</p>
+                <p className="mb-3">
+                  Η κανονική ροή είναι: αρχείο στον φάκελο του μήνα → Ανάλυση. Αν φτάνεις εδώ επειδή κάτι δεν
+                  δούλεψε (π.χ. αρχείο που δεν διαβάζεται), <strong>ενημέρωσε πάντα το IT</strong> για να
+                  διορθωθεί η προβληματική συμπεριφορά. Η γραμμή θα σημανθεί «χειροκίνητη καταχώρηση» στη βάση
+                  και στο ΕΞΟΔΑ και περνά από τον ίδιο έλεγχο υποχρεωτικών πεδίων πριν την έγκριση.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={addManualRow}
+                    className="px-4 py-1.5 rounded-full bg-amber-600 text-white text-xs font-bold hover:opacity-90">
+                    Κατάλαβα — προσθήκη γραμμής
+                  </button>
+                  <button type="button" onClick={() => setAddingManual(false)}
+                    className="px-4 py-1.5 rounded-full border border-amber-500 text-xs font-bold text-amber-900 dark:text-amber-100">
+                    Άκυρο
+                  </button>
+                </div>
+              </div>
             )}
             {selected.length !== ready.length && (
               <span className="text-xs text-orange-700 dark:text-orange-300">
