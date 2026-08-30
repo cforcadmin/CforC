@@ -1986,3 +1986,39 @@ export function paymentClaimNoticeHtml(name: string, email: string, applicationI
 `
   return { subject: `Δήλωση πληρωμής: ${name}`, html }
 }
+
+/** Μηνιαία υπενθύμιση προς τον/την Financer (τελευταία μέρα του μήνα):
+ *  αύριο κλείνει ο μήνας — τα τρία βήματα του μηνιαίου οικονομικού
+ *  κύκλου στο OC, με τη σειρά που τα δείχνει η καρτέλα Οικονομικά. */
+export function financeMonthlyReminderEmailHtml(monthLabel: string): { subject: string; html: string } {
+  return {
+    subject: `Υπενθύμιση: αύριο ο μηνιαίος οικονομικός απολογισμός (${monthLabel})`,
+    html: wrap(`
+      <p>Γεια σου!</p>
+      <p>Αύριο κλείνει ο <strong>${monthLabel}</strong> — ώρα για τον μηνιαίο οικονομικό κύκλο στο Operational Center.</p>
+      ${sectionTitle('ΤΙ ΧΡΕΙΑΖΕΤΑΙ ΝΑ ΓΙΝΕΙ')}
+      <ol style="padding-left:20px;">
+        <li style="margin-bottom:12px;">
+          <strong>Κινήσεις τράπεζας:</strong> κατέβασε από το e-banking τις κινήσεις του μήνα
+          και επικόλλησέ τις στο πλαίσιο «Κινήσεις τράπεζας» της καρτέλας
+          <em>Οικονομικά</em>. Το σύστημα τις αναγνωρίζει και προτείνει αποδείξεις όπου ταιριάζει.
+        </li>
+        <li style="margin-bottom:12px;">
+          <strong>Ταμείο:</strong> στην <em>Επισκόπηση</em>, άνοιξε το πλακίδιο «Ταμείο» και
+          καταχώρησε το υπόλοιπο της τράπεζας όπως φαίνεται σήμερα — μία μέτρηση ανά μήνα.
+        </li>
+        <li style="margin-bottom:12px;">
+          <strong>Μηνιαία εικόνα:</strong> έλεγξε τη «Μηνιαία εικόνα» στην καρτέλα
+          <em>Οικονομικά</em> και, όταν όλα δείχνουν σωστά, πάτησε την έγκριση του μήνα.
+          Την αποστολή προς το ΔΣ την αναλαμβάνει η Διαχείριση.
+        </li>
+      </ol>
+      <p style="margin:24px 0;">
+        <a href="https://cultureforchange.net/oc" style="display:inline-block;background:#FF8B6A;color:#fff;font-weight:bold;padding:12px 28px;border-radius:999px;text-decoration:none;">
+          Άνοιξε το Operational Center
+        </a>
+      </p>
+      <p style="font-size:13px;color:#888;">Αυτή η υπενθύμιση στέλνεται αυτόματα την τελευταία μέρα κάθε μήνα.</p>
+    `),
+  }
+}
