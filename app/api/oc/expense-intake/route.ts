@@ -68,7 +68,10 @@ export async function POST(request: NextRequest) {
   const activeSeat: OcSeat | null =
     seatCookie && access.seats.includes(seatCookie) ? seatCookie
       : access.seats.length === 1 ? access.seats[0] : null
-  if (activeSeat !== 'financer') {
+  // Financer: όλη η ροή. IT: ΜΟΝΟ έγκριση χειροκίνητων γραμμών (χωρίς
+  // αρχείο) — αφού ελέγξει τι έχει ήδη καταχωρηθεί και συνεννοηθεί με
+  // τον/την Financer. Ο έλεγχος γίνεται εδώ, όχι μόνο στην οθόνη.
+  if (activeSeat !== 'financer' && activeSeat !== 'it') {
     return NextResponse.json({ error: 'Μόνο ο/η Financer' }, { status: 403 })
   }
   if (!WEBAPP_URL || !WEBAPP_SECRET) {
@@ -87,7 +90,20 @@ export async function POST(request: NextRequest) {
   }
 
   if (body?.action === 'approve') {
-    return approveExpenses(month, body, decoded.memberId)
+    const items: any[] = Array.isArray(body?.items) ? body.items : []
+    const settlements: any[] = Array.isArray(body?.settlements) ? body.settlements : []
+    const manualCount = items.filter(it => String(it?.fileId || '').startsWith('manual-')).length
+    if (activeSeat === 'it') {
+      if (manualCount !== items.length || settlements.length > 0) {
+        return NextResponse.json({ error: 'Το IT εγκρίνει μόνο χειροκίνητες καταχωρήσεις' }, { status: 403 })
+      }
+    } else if (manualCount > 0) {
+      return NextResponse.json({ error: 'Οι χειροκίνητες καταχωρήσεις γίνονται μόνο από το IT — επικοινώνησε με το it@' }, { status: 403 })
+    }
+    return approveExpenses(month, body, decoded.memberId, activeSeat)
+  }
+  if (activeSeat !== 'financer') {
+    return NextResponse.json({ error: 'Μόνο ο/η Financer' }, { status: 403 })
   }
 
   try {
@@ -295,7 +311,7 @@ export async function POST(request: NextRequest) {
  * εκμάθηση προμηθευτή. Best-effort ανά γραμμή: μια αποτυχία δεν ρίχνει
  * τις υπόλοιπες, επιστρέφεται αναλυτικό αποτέλεσμα.
  */
-async function approveExpenses(month: string, body: any, memberId: string) {
+async function approveExpenses(month: string, body: any, memberId: string, seat: OcSeat) {
   const items: any[] = Array.isArray(body?.items) ? body.items : []
   const settlements: any[] = Array.isArray(body?.settlements) ? body.settlements : []
   if (items.length === 0 && settlements.length === 0) {
@@ -333,7 +349,7 @@ async function approveExpenses(month: string, body: any, memberId: string) {
     // ίδια ροή, αλλά χωρίς αρχείο και ΜΕ σήμανση στις Σημειώσεις — βάση και ΕΞΟΔΑ
     const isManual = fileId.startsWith('manual-')
     const notes = isManual
-      ? `Χειροκίνητη καταχώρηση (χωρίς αρχείο)${it.notes ? ` — ${it.notes}` : ''}`
+      ? `Χειροκίνητη καταχώρηση από IT (χωρίς αρχείο)${it.notes ? ` — ${it.notes}` : ''}`
       : (it.notes || null)
     try {
       if (!it?.issueDate) throw new Error('Λείπει ημερομηνία έκδοσης — μετονόμασε το αρχείο και ξανατρέξε την ανάλυση')
@@ -400,7 +416,7 @@ async function approveExpenses(month: string, body: any, memberId: string) {
         State: 'approved',
         SheetSynced: true,
         ApprovedAt: new Date().toISOString(),
-        ApprovedBy: `financer:${memberId}`,
+        ApprovedBy: `${seat}:${memberId}`,
       })
       if (!created.ok) console.error('expense approve: strapi create failed', created.status)
 

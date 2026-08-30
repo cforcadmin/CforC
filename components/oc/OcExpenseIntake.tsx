@@ -66,8 +66,10 @@ const inputCls = 'w-full rounded-lg border border-gray-300 dark:border-gray-600 
 const lockedCls = 'w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-2.5 py-1.5 text-xs text-gray-500 dark:text-gray-400 cursor-not-allowed'
 const labelCls = 'block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5'
 
-export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
+export default function OcExpenseIntake({ canIssue, canManual = false, month, kiniseis }: {
   canIssue: boolean
+  /** IT: προσθήκη + έγκριση ΜΟΝΟ χειροκίνητων γραμμών */
+  canManual?: boolean
   month: string
   kiniseis: string
 }) {
@@ -474,7 +476,7 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
         </div>
       )}
 
-      {(rows.length > 0 || recon) && (
+      {(rows.length > 0 || recon || canManual) && (
         <div className="mt-4 space-y-3">
           {rows.map(r => {
             const st = state[r.fileId]
@@ -540,7 +542,7 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
                   {results[r.fileId] && !results[r.fileId].ok && (
                     <span className="ml-auto text-xs text-red-600 dark:text-red-400">{results[r.fileId].error}</span>
                   )}
-                  {!locked && !results[r.fileId]?.ok && canIssue && (
+                  {!locked && !results[r.fileId]?.ok && (r.manual ? canManual : canIssue) && (
                     <button type="button" onClick={() => approveOne(r.fileId)}
                       disabled={approving || !st.issueDate || !(Number(st.payable) > 0)}
                       title={!st.issueDate ? 'Λείπει ημερομηνία έκδοσης' : !(Number(st.payable) > 0) ? 'Λείπει ποσό' : undefined}
@@ -659,7 +661,7 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
           <div className="flex flex-wrap items-center gap-4 pt-2">
             {!confirming ? (
               <button type="button" onClick={() => setConfirming(true)}
-                disabled={!canIssue || approving || (ready.length === 0 && carried.filter(c => carriedPick[c.documentId]).length === 0)}
+                disabled={!(canIssue || canManual) || approving || (ready.length === 0 && carried.filter(c => carriedPick[c.documentId]).length === 0)}
                 className="px-6 py-2.5 rounded-full bg-[#6A994E] text-white text-sm font-bold hover:opacity-90 disabled:opacity-40">
                 {approving ? 'Καταχώρηση…' : (() => {
                   const stl = carried.filter(c => carriedPick[c.documentId]).length
@@ -681,7 +683,12 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
                 </button>
               </>
             )}
-            {canIssue && !confirming && !addingManual && (
+            {canIssue && !canManual && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                Χρειάζεται χειροκίνητη καταχώρηση (π.χ. αρχείο που δεν διαβάζεται); Επικοινώνησε με το IT (<a href="mailto:it@cultureforchange.net" className="text-coral underline">it@</a>) — γίνεται μόνο από εκεί.
+              </span>
+            )}
+            {canManual && !confirming && !addingManual && (
               <button type="button" onClick={() => setAddingManual(true)} disabled={approving}
                 className="px-5 py-2.5 rounded-full border-2 border-fuchsia-500 text-fuchsia-800 dark:text-fuchsia-100 text-sm font-bold hover:bg-fuchsia-500/15 disabled:opacity-40"
                 title="Γραμμή χωρίς αρχείο — μόνο σε ακραίες περιπτώσεις">
@@ -690,12 +697,14 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
             )}
             {addingManual && (
               <div className="w-full rounded-2xl border-2 border-fuchsia-400 bg-fuchsia-50 dark:bg-fuchsia-950/60 p-4 text-sm text-fuchsia-950 dark:text-fuchsia-50">
-                <p className="font-bold mb-1">⚠ Χειροκίνητη καταχώρηση — μόνο σε ακραίες περιπτώσεις</p>
+                <p className="font-bold mb-1">⚠ Χειροκίνητη καταχώρηση (IT) — μόνο σε ακραίες περιπτώσεις</p>
                 <p className="mb-3">
-                  Η κανονική ροή είναι: αρχείο στον φάκελο του μήνα → Ανάλυση. Αν φτάνεις εδώ επειδή κάτι δεν
-                  δούλεψε (π.χ. αρχείο που δεν διαβάζεται), <strong>ενημέρωσε πάντα το IT</strong> για να
-                  διορθωθεί η προβληματική συμπεριφορά. Η γραμμή θα σημανθεί «χειροκίνητη καταχώρηση» στη βάση
-                  και στο ΕΞΟΔΑ και περνά από τον ίδιο έλεγχο υποχρεωτικών πεδίων πριν την έγκριση.
+                  Πριν προχωρήσεις: ο/η <strong>Financer</strong> έχει κάνει τον οικονομικό έλεγχο (τράπεζα,
+                  παραστατικό, ποσά) και σου έχει εξηγήσει γιατί δεν πέρασε από την κανονική ροή. Εσύ έλεγξε
+                  <strong> τι έχει ήδη καταχωρηθεί</strong> (βάση και ΕΞΟΔΑ — να μη διπλογραφεί), κατάλαβε τι
+                  δεν δούλεψε στον κώδικα και διόρθωσέ το, και μόνο τότε πρόσθεσε τη γραμμή. Θα σημανθεί
+                  «Χειροκίνητη καταχώρηση από IT» στη βάση και στο ΕΞΟΔΑ και περνά από τον ίδιο έλεγχο
+                  υποχρεωτικών πεδίων πριν την έγκριση.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={addManualRow}

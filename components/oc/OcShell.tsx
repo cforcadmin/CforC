@@ -523,6 +523,7 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
           {activeSection === 'finances' && (
             <OcFinances
               canIssue={activeSeat === 'financer'}
+              canManual={activeSeat === 'it'}
               canRemind={activeSeat === 'financer' || activeSeat === 'community'}
               members={(overview?.members || []).map(m => ({
                 docId: m.docId, name: m.name, am: m.am, email: m.email,

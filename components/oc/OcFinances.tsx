@@ -69,8 +69,10 @@ const CONNECTION_MESSAGES: Record<string, { title: string; detail: string }> = {
   },
 }
 
-export default function OcFinances({ canIssue, canRemind, members, subMembers }: {
+export default function OcFinances({ canIssue, canManual = false, canRemind, members, subMembers }: {
   canIssue: boolean
+  /** IT: μόνο χειροκίνητες καταχωρήσεις εξόδων */
+  canManual?: boolean
   canRemind: boolean
   members: MemberOption[]
   subMembers: SubMemberRow[]
@@ -636,7 +638,7 @@ export default function OcFinances({ canIssue, canRemind, members, subMembers }:
 
       {/* Μηνιαία επικόλληση κινήσεων τράπεζας */}
       {series?.seeded && (
-        <OcBankIntake canIssue={canIssue} members={members} onIssued={() => load()} />
+        <OcBankIntake canIssue={canIssue} canManual={canManual} members={members} onIssued={() => load()} />
       )}
 
       {/* Μηνιαία εικόνα: έγκριση μήνα από Financer (η αποστολή: Διαχείριση) */}

@@ -67,8 +67,9 @@ const KIND_LABEL: Record<IntakeRow['kind'], string> = {
 
 const inputCls = 'w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2.5 py-1.5 text-xs text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral'
 
-export default function OcBankIntake({ canIssue, members, onIssued }: {
+export default function OcBankIntake({ canIssue, canManual = false, members, onIssued }: {
   canIssue: boolean
+  canManual?: boolean
   members: MemberOption[]
   onIssued: () => void
 }) {
@@ -540,7 +541,7 @@ export default function OcBankIntake({ canIssue, members, onIssued }: {
           )}
 
           {/* Β. ΕΞΟΔΑ — παραστατικά Drive + χρεώσεις της ίδιας επικόλλησης */}
-          <OcExpenseIntake canIssue={canIssue} month={month} kiniseis={kiniseis} />
+          <OcExpenseIntake canIssue={canIssue} canManual={canManual} month={month} kiniseis={kiniseis} />
         </div>
       )}
     </div>
