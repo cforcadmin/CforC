@@ -283,6 +283,16 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
             Όταν υπάρχει και στο όνομα και στην τράπεζα, τα <strong>συγκρίνουμε</strong> και σου δείχνουμε τυχόν διαφορά.
           </p>
           <p>
+            <strong>Κρατήσεις (άλλο σύνολο, άλλο πληρωτέο):</strong> γράψε το ποσό ως ζεύγος{' '}
+            <strong>σύνολο→πληρωτέο</strong> — π.χ.{' '}
+            <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">Παπαδοπούλου_112_18-08-2026_120,00→96,00.pdf</code>.
+            Διαβάζουμε 120,00 σύνολο και 96,00 πληρωτέο, συμπληρώνουμε μόνοι μας κρατήσεις 24,00 (στη βάση και στο ΕΞΟΔΑ)
+            και με την τράπεζα συγκρίνουμε το <strong>πληρωτέο</strong> — αυτό φεύγει από τον λογαριασμό.
+            Δεκτά και τα <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">-&gt;</code> ή{' '}
+            <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">&gt;</code> αν το βέλος δυσκολεύει.
+            Σκέτο ποσό σημαίνει «πληρωτέο, χωρίς κρατήσεις». Μετά την έγκριση το όνομα κρατά το ζεύγος.
+          </p>
+          <p>
             Μετά την έγκριση όλα τα αρχεία —τιμολόγια, έσοδα, αποδείξεις— <strong>μετονομάζονται στην ίδια μορφή</strong>:{' '}
             <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">Α/Α_σε ποιον αφορά_αριθμός παραστατικού_ΜΑΡΚ_ΗΗ-ΜΜ-ΕΕΕΕ_ποσό.pdf</code>{' '}
             — π.χ. <code className="bg-white dark:bg-gray-800 px-1 rounded notranslate">9.4_ΑΒ Βασιλόπουλος_4471-88012_400014700880013_28-08-2026_62,50.pdf</code>.
