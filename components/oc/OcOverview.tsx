@@ -9,6 +9,7 @@ import { OC_TABLE_COLUMNS, OC_TABLE_DEFAULT_COLS } from '@/components/oc/ocPrefs
 import OcRenewalsPopup from '@/components/oc/OcRenewalsPopup'
 import OcTreasuryPopup from '@/components/oc/OcTreasuryPopup'
 import OcMyTasks from '@/components/oc/OcMyTasks'
+import OcExportModal from '@/components/oc/OcExportModal'
 
 const STATUS_META: Record<OcMemberStatus, { label: string; cls: string }> = {
   paid: { label: 'Τακτοποιημένο', cls: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' },
@@ -280,6 +281,7 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
   const [cols, setCols] = useState<string[]>(initialPrefs.cols)
   const [density, setDensity] = useState<'comfortable' | 'compact'>(initialPrefs.density)
   const [showCols, setShowCols] = useState(false)
+  const [showExport, setShowExport] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -515,8 +517,31 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
               </>
             )}
           </div>
+
+          {/* Εξαγωγή: ο χρήστης διαλέγει στήλες και κατεβάζει CSV μόνο με αυτές */}
+          <button
+            type="button"
+            onClick={() => setShowExport(true)}
+            title="Εξαγωγή μελών σε αρχείο"
+            aria-label="Εξαγωγή μελών σε αρχείο"
+            className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:border-coral hover:text-coral dark:hover:border-coral-light dark:hover:text-coral-light transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+            </svg>
+          </button>
         </div>
       </div>
+
+      <OcExportModal
+        isOpen={showExport}
+        onClose={() => setShowExport(false)}
+        rows={rows}
+        currentYear={currentYear}
+        years={YEARS_SHOWN}
+        visibleCols={cols}
+      />
+
       {deleteWarn && (
         <p className="text-xs text-orange-600 dark:text-orange-400 mb-3">{deleteWarn}</p>
       )}
