@@ -39,6 +39,10 @@ export default function TransparencyPage() {
     window.open('https://drive.google.com/file/d/1YGUoy8xfiIzClZlMF9PwZcN5M6ej-9Vc/view?usp=sharing', '_blank')
   }
 
+  const handleOpenFinancialReport2025 = () => {
+    window.open('https://drive.google.com/file/d/1h6QUPIi5be5aQ3-Cep8CslWzvmcl_H0w/view?usp=drivesdk', '_blank')
+  }
+
   const handleOpenFinancialReport = () => {
     window.open('https://cdn.prod.website-files.com/63cfcf33f1ef1a3c759687cf/687a184788aced4680af799e_%CE%9F%CE%B9%CE%BA%CE%BF%CE%BD%CE%BF%CE%BC%CE%B9%CE%BA%CE%BF%CC%81%CF%82%20%CE%91%CF%80%CE%BF%CE%BB%CE%BF%CE%B3%CE%B9%CF%83%CE%BC%CE%BF%CC%81%CF%82%20CforC%202024%20Singed.pdf', '_blank')
   }
@@ -93,6 +97,19 @@ export default function TransparencyPage() {
               className="bg-charcoal dark:bg-gray-600 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-8 py-4 rounded-full text-lg font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-all duration-300"
             >
               ΚΑΤΑΣΤΑΤΙΚΟ
+            </button>
+          </div>
+
+          {/* Financial Report 2025 Section */}
+          <div className="bg-white dark:bg-gray-700 rounded-3xl p-12 text-center">
+            <h3 className="text-2xl md:text-3xl font-bold mb-8 dark:text-gray-100">
+              ΟΙΚΟΝΟΜΙΚΟΣ ΑΠΟΛΟΓΙΣΜΟΣ 2025
+            </h3>
+            <button
+              onClick={handleOpenFinancialReport2025}
+              className="bg-charcoal dark:bg-gray-600 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-8 py-4 rounded-full text-lg font-medium hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-all duration-300"
+            >
+              ΑΠΟΛΟΓΙΣΜΟΣ 2025
             </button>
           </div>
 

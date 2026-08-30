@@ -468,6 +468,7 @@ export default function AboutCoolPage({ initialSection = 'diktyo' }: { initialSe
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-6">
             {[
               { title: 'ΚΑΤΑΣΤΑΤΙΚΟ', label: 'ΚΑΤΑΣΤΑΤΙΚΟ', url: 'https://drive.google.com/file/d/1YGUoy8xfiIzClZlMF9PwZcN5M6ej-9Vc/view?usp=sharing' },
+              { title: 'ΟΙΚΟΝΟΜΙΚΟΣ ΑΠΟΛΟΓΙΣΜΟΣ 2025', label: 'ΑΠΟΛΟΓΙΣΜΟΣ 2025', url: 'https://drive.google.com/file/d/1h6QUPIi5be5aQ3-Cep8CslWzvmcl_H0w/view?usp=drivesdk' },
               { title: 'ΟΙΚΟΝΟΜΙΚΟΣ ΑΠΟΛΟΓΙΣΜΟΣ 2024', label: 'ΑΠΟΛΟΓΙΣΜΟΣ 2024', url: 'https://cdn.prod.website-files.com/63cfcf33f1ef1a3c759687cf/687a184788aced4680af799e_%CE%9F%CE%B9%CE%BA%CE%BF%CE%BD%CE%BF%CE%BC%CE%B9%CE%BA%CE%BF%CC%81%CF%82%20%CE%91%CF%80%CE%BF%CE%BB%CE%BF%CE%B3%CE%B9%CF%83%CE%BC%CE%BF%CC%81%CF%82%20CforC%202024%20Singed.pdf' },
             ].map(doc => (
               <div key={doc.title} className="relative overflow-hidden menu-glass glass-rim rounded-3xl p-10 text-center">
