@@ -3,7 +3,7 @@
 // Οδηγίες μηνιαίου οικονομικού κύκλου — το ίδιο περιεχόμενο με το email
 // υπενθύμισης (lib/financeMonthlyGuide), σε γυάλινο pop-up μέσα στο OC.
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { FINANCE_MONTHLY_STEPS, renderGuideHtml, adminPhrase } from '@/lib/financeMonthlyGuide'
 
@@ -12,6 +12,31 @@ interface OcFinanceGuideModalProps {
   onClose: () => void
   /** Όνομα του/της Admin αν είναι γνωστό — για τη φράση του βήματος 3 */
   adminName?: string | null
+}
+
+/** (i) με tooltip: hover, focus ΚΑΙ κλικ (για αφή) — με state, όχι CSS
+ *  group-hover που δεν εφαρμόστηκε (30/8) */
+function TipInfo({ id, html }: { id: string; html: string }) {
+  const [show, setShow] = useState(false)
+  return (
+    <span className="relative inline-flex"
+      onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
+      <button type="button"
+        onClick={() => setShow(v => !v)}
+        onFocus={() => setShow(true)} onBlur={() => setShow(false)}
+        aria-label="Προσωπική σημείωση" aria-expanded={show} aria-describedby={id}
+        className={`w-5 h-5 rounded-full border border-coral text-[11px] font-bold leading-none flex items-center justify-center transition-colors ${
+          show ? 'bg-coral text-white' : 'text-coral hover:bg-coral hover:text-white'
+        }`}>
+        i
+      </button>
+      <span id={id} role="tooltip"
+        className={`absolute left-0 top-full mt-2 z-30 w-[22rem] max-w-[80vw] menu-glass-dense glass-rim rounded-2xl p-4 text-xs font-normal leading-relaxed text-charcoal dark:text-gray-100 transition-opacity [&_a]:text-coral [&_a]:underline ${
+          show ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
+        }`}
+        dangerouslySetInnerHTML={{ __html: html }} />
+    </span>
+  )
 }
 
 export default function OcFinanceGuideModal({ isOpen, onClose, adminName }: OcFinanceGuideModalProps) {
@@ -66,17 +91,7 @@ export default function OcFinanceGuideModal({ isOpen, onClose, adminName }: OcFi
                 <h3 className="font-bold text-charcoal dark:text-gray-100 mb-1 flex items-center gap-2">
                   {st.title}
                   {st.tip && (
-                    <span className="relative group inline-flex">
-                      <button type="button"
-                        className="w-5 h-5 rounded-full border border-coral text-coral text-[11px] font-bold leading-none flex items-center justify-center hover:bg-coral hover:text-white focus-visible:bg-coral focus-visible:text-white transition-colors"
-                        aria-label="Προσωπική σημείωση" aria-describedby={`guide-tip-${st.n}`}>
-                        i
-                      </button>
-                      {/* Tooltip: hover ή focus — γυάλινο, κάτω από το (i), ΔΕΝ κόβεται (το modal δεν έχει overflow-hidden στον άξονα Χ) */}
-                      <span id={`guide-tip-${st.n}`} role="tooltip"
-                        className="pointer-events-none group-hover:pointer-events-auto absolute left-0 top-full mt-2 z-20 w-[22rem] max-w-[80vw] menu-glass-dense glass-rim rounded-2xl p-4 text-xs font-normal leading-relaxed text-charcoal dark:text-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-opacity [&_a]:text-coral [&_a]:underline"
-                        dangerouslySetInnerHTML={{ __html: `<strong>💡 Προσωπική σημείωση:</strong> ${st.tip}` }} />
-                    </span>
+                    <TipInfo id={`guide-tip-${st.n}`} html={`<strong>💡 Προσωπική σημείωση:</strong> ${st.tip}`} />
                   )}
                 </h3>
                 <div
