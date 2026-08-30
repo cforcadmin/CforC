@@ -61,10 +61,11 @@ const IMPLEMENTED_SECTIONS = new Set<SectionKey>([
 function CoolSpot({ label, summary, children }: { label: string; summary?: string; children: ReactNode }) {
   const [open, setOpen] = useState(false)
   return (
-    // Ανοιχτή κάψουλα σε z-30: τα dropdowns της (πεδία, πόλη) πρέπει να
-    // περνούν ΠΑΝΩ από τις επόμενες κάψουλες (κάθε menu-glass = stacking
-    // context, αλλιώς ο επόμενος αδελφός ζωγραφίζεται από πάνω)
-    <div className={`relative menu-glass glass-rim rounded-3xl ${open ? 'z-30' : ''}`}>
+    // Τα dropdowns της κάψουλας πρέπει να περνούν ΠΑΝΩ από τις επόμενες
+    // (κάθε menu-glass = stacking context). Με ΔΥΟ ανοιχτές το σκέτο z-30
+    // ισοπαλία → κερδίζει η επόμενη· γι' αυτό αυτή που ΧΡΗΣΙΜΟΠΟΙΕΙΣ
+    // (hover/focus μέσα της — και το dropdown ζει μέσα της) πάει z-40.
+    <div className={`relative menu-glass glass-rim rounded-3xl hover:z-40 focus-within:z-40 ${open ? 'z-30' : ''}`}>
       <span className="logo-reveal rounded-3xl overflow-hidden" aria-hidden="true" />
       <button
         type="button"
