@@ -23,6 +23,8 @@ interface IntakeRow {
     docNumber: string | null
     issueDate: string | null
     amount: number | null
+    grossAmount?: number | null
+    withholding?: number | null
     supplierHint: string
   }
   suggestion: {
@@ -123,7 +125,8 @@ export default function OcExpenseIntake({ canIssue, month, kiniseis }: {
           category: r.suggestion.category || '',
           netAmount: '',
           vatAmount: '',
-          withholding: '',
+          // «σύνολο→πληρωτέο» στο όνομα → οι κρατήσεις έρχονται έτοιμες
+          withholding: r.parsed.withholding != null && r.parsed.withholding > 0 ? String(r.parsed.withholding) : '',
           payable: amount !== null ? String(amount) : '',
           paymentMethod: bank || auto ? 'bank' : 'unpaid',
           paymentDate: bank?.date || (auto ? (r.parsed.issueDate || '') : ''),

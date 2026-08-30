@@ -1988,37 +1988,133 @@ export function paymentClaimNoticeHtml(name: string, email: string, applicationI
 }
 
 /** Μηνιαία υπενθύμιση προς τον/την Financer (τελευταία μέρα του μήνα):
- *  αύριο κλείνει ο μήνας — τα τρία βήματα του μηνιαίου οικονομικού
- *  κύκλου στο OC, με τη σειρά που τα δείχνει η καρτέλα Οικονομικά. */
-export function financeMonthlyReminderEmailHtml(monthLabel: string): { subject: string; html: string } {
-  return {
-    subject: `Υπενθύμιση: αύριο ο μηνιαίος οικονομικός απολογισμός (${monthLabel})`,
-    html: wrap(`
-      <p>Γεια σου!</p>
-      <p>Αύριο κλείνει ο <strong>${monthLabel}</strong> — ώρα για τον μηνιαίο οικονομικό κύκλο στο Operational Center.</p>
-      ${sectionTitle('ΤΙ ΧΡΕΙΑΖΕΤΑΙ ΝΑ ΓΙΝΕΙ')}
-      <ol style="padding-left:20px;">
-        <li style="margin-bottom:12px;">
-          <strong>Κινήσεις τράπεζας:</strong> κατέβασε από το e-banking τις κινήσεις του μήνα
-          και επικόλλησέ τις στο πλαίσιο «Κινήσεις τράπεζας» της καρτέλας
-          <em>Οικονομικά</em>. Το σύστημα τις αναγνωρίζει και προτείνει αποδείξεις όπου ταιριάζει.
-        </li>
-        <li style="margin-bottom:12px;">
-          <strong>Ταμείο:</strong> στην <em>Επισκόπηση</em>, άνοιξε το πλακίδιο «Ταμείο» και
-          καταχώρησε το υπόλοιπο της τράπεζας όπως φαίνεται σήμερα — μία μέτρηση ανά μήνα.
-        </li>
-        <li style="margin-bottom:12px;">
-          <strong>Μηνιαία εικόνα:</strong> έλεγξε τη «Μηνιαία εικόνα» στην καρτέλα
-          <em>Οικονομικά</em> και, όταν όλα δείχνουν σωστά, πάτησε την έγκριση του μήνα.
-          Την αποστολή προς το ΔΣ την αναλαμβάνει η Διαχείριση.
-        </li>
-      </ol>
-      <p style="margin:24px 0;">
-        <a href="https://cultureforchange.net/oc" style="display:inline-block;background:#FF8B6A;color:#fff;font-weight:bold;padding:12px 28px;border-radius:999px;text-decoration:none;">
-          Άνοιξε το Operational Center
-        </a>
-      </p>
-      <p style="font-size:13px;color:#888;">Αυτή η υπενθύμιση στέλνεται αυτόματα την τελευταία μέρα κάθε μήνα.</p>
-    `),
+ *  αύριο κλείνει ο μήνας — προετοιμασία των παραστατικών με την ενιαία
+ *  ονοματολογία και τα τρία βήματα του κύκλου στο OC. Ίδιο πρότυπο με τα
+ *  υπόλοιπα email του OC. */
+export function financeMonthlyReminderEmailHtml(monthLabel: string, signerName = 'Culture for Change — Finance'): { subject: string; html: string } {
+  const code = (t: string) => `<code style="font-family:Menlo,Consolas,monospace;font-size:13px;background:#FFFFFF;border:1px solid #E5E7EB;border-radius:6px;padding:2px 6px;white-space:nowrap;">${t}</code>`
+  const step = (n: string, title: string, body: string) => `
+        <tr>
+          <td style="padding:0 0 18px 0;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;border-radius:16px;">
+              <tr>
+                <td width="56" valign="top" style="padding:18px 0 18px 20px;font-family:Arial,Helvetica,sans-serif;font-size:26px;line-height:30px;font-weight:bold;color:#FF8B6A;mso-line-height-rule:exactly;">${n}</td>
+                <td valign="top" style="padding:18px 20px 18px 8px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#2D2D2D;mso-line-height-rule:exactly;">
+                  <strong style="display:block;font-size:16px;margin-bottom:4px;">${title}</strong>
+                  ${body}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>`
+  const html = `<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>Μηνιαίος οικονομικός απολογισμός — Culture for Change</title>
+<!--[if mso]>
+<style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
+<![endif]-->
+<style>
+  @media only screen and (max-width:620px){
+    .px{padding-left:24px !important;padding-right:24px !important;}
+    .btn a{display:block !important;}
+    .h1{font-size:26px !important;line-height:32px !important;}
   }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F0EB;">
+<span style="display:none;font-size:1px;color:#F5F0EB;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Αύριο κλείνει ο ${monthLabel} — τα βήματα του μηνιαίου κύκλου στο OC.</span>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;">
+<tr><td align="center" style="padding:32px 12px 48px 12px;">
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #E5E7EB;">
+
+  <!-- Header -->
+  <tr>
+    <td class="px" style="background-color:#FF8B6A;padding:36px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:16px;letter-spacing:1.6px;color:#FFFFFF;font-weight:bold;mso-line-height-rule:exactly;">CULTURE FOR CHANGE · OPERATIONAL CENTER</td>
+        </tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr>
+          <td class="h1" style="font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:36px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">ΑΥΡΙΟ ΚΛΕΙΝΕΙ Ο ΜΗΝΑΣ</td>
+        </tr>
+        <tr><td height="8" style="height:8px;line-height:8px;font-size:0;">&nbsp;</td></tr>
+        <tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#2D2D2D;mso-line-height-rule:exactly;">Μηνιαίος οικονομικός απολογισμός · ${monthLabel}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Intro -->
+  <tr>
+    <td class="px" style="padding:40px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 20px 0;">Γεια σου!</p>
+      <p style="margin:0 0 20px 0;">Αύριο είναι η 1η του μήνα — ώρα για τον μηνιαίο οικονομικό κύκλο του <strong>${monthLabel}</strong>. Τέσσερα βήματα, με τη σειρά:</p>
+    </td>
+  </tr>
+
+  <!-- Steps -->
+  <tr>
+    <td class="px" style="padding:8px 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        ${step('0', 'Προετοιμασία — τα παραστατικά στη θέση τους', `Αποθήκευσε όλα τα τιμολόγια που έλαβες μέσω email στον υπολογιστή σου και μετάφερέ τα στο Drive, στα <strong>Παραστατικά → Έξοδα</strong> του τρέχοντος μήνα. Εκεί μετονόμασέ τα με την ενιαία ονοματολογία:
+                  <div style="margin:10px 0 6px 0;">${code('{σε ποιον}_{αριθμός}_{ΜΑΡΚ}_{ΗΗ-ΜΜ-ΕΕΕΕ}_{ποσό}.pdf')}</div>
+                  <div style="margin:0 0 10px 0;">π.χ. ${code('ΑΒ Βασιλόπουλος_4471-88012_400014700880013_28-08-2026_62,50.pdf')}</div>
+                  Ό,τι λείπει (π.χ. ΜΑΡΚ) απλώς παραλείπεται· το Α/Α το βάζει το OC στην έγκριση.<br>
+                  <strong>Κρατήσεις;</strong> Όταν το τιμολόγιο έχει άλλο σύνολο κι άλλο πληρωτέο, γράψε το ποσό ως <strong>σύνολο→πληρωτέο</strong>:
+                  <div style="margin:6px 0 0 0;">${code('Παπαδοπούλου_112_18-08-2026_120,00→96,00.pdf')}</div>
+                  Το OC διαβάζει 120,00 σύνολο, 96,00 πληρωτέο και συμπληρώνει μόνο του κρατήσεις 24,00 — στη βάση και στο φύλλο ΕΞΟΔΑ. (Δεκτά και τα «->» ή «>» αν το βέλος δυσκολεύει.)`)}
+        ${step('1', 'Κινήσεις τράπεζας', 'Κατέβασε από το e-banking τις κινήσεις του μήνα και επικόλλησέ τις στο πλαίσιο «Κινήσεις τράπεζας» της καρτέλας <em>Οικονομικά</em>. Το OC τις ταιριάζει με τα παραστατικά του φακέλου — και με τα ποσά πληρωτέα, όχι τα σύνολα.')}
+        ${step('2', 'Ταμείο', 'Στην <em>Επισκόπηση</em>, άνοιξε το πλακίδιο «Ταμείο» και καταχώρησε το υπόλοιπο της τράπεζας όπως φαίνεται σήμερα — μία μέτρηση ανά μήνα.')}
+        ${step('3', 'Μηνιαία εικόνα', 'Έλεγξε τη «Μηνιαία εικόνα» στην καρτέλα <em>Οικονομικά</em> και, όταν όλα δείχνουν σωστά, πάτησε την έγκριση του μήνα. Την αποστολή προς το ΔΣ την αναλαμβάνει η Διαχείριση.')}
+      </table>
+    </td>
+  </tr>
+
+  <!-- CTA -->
+  <tr>
+    <td class="px" align="center" style="padding:16px 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="btn">
+        <tr>
+          <td align="center" style="background-color:#FF8B6A;border-radius:999px;">
+            <a href="https://cultureforchange.net/oc" style="display:inline-block;padding:14px 32px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:bold;color:#FFFFFF;text-decoration:none;">Άνοιξε το Operational Center</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Signature -->
+  <tr>
+    <td class="px" style="padding:32px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0;">Καλή δουλειά,</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" style="padding:16px 48px 40px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:#E5E7EB;">&nbsp;</td></tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:24px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">${signerName}</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">Αυτόματη υπενθύμιση · στέλνεται την τελευταία μέρα κάθε μήνα</td></tr>
+        <tr><td height="6" style="height:6px;line-height:6px;font-size:0;">&nbsp;</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;mso-line-height-rule:exactly;"><a href="mailto:finance@cultureforchange.net" style="color:#C9552F;text-decoration:underline;">finance@cultureforchange.net</a></td></tr>
+      </table>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`
+  return { subject: `Υπενθύμιση: αύριο ο μηνιαίος οικονομικός απολογισμός (${monthLabel})`, html }
 }

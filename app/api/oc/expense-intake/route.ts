@@ -155,6 +155,8 @@ export async function POST(request: NextRequest) {
           docNumber: parsed.docNumber,
           issueDate: parsed.issueDate,
           amount: parsed.amount,
+          grossAmount: parsed.grossAmount,
+          withholding: parsed.withholding,
           supplierHint: parsed.supplierHint,
         },
         suggestion: {
@@ -360,6 +362,8 @@ async function approveExpenses(month: string, body: any, memberId: string) {
           mark: it.mark || parsed.mark || null,
           date: String(it.issueDate),
           amount: payable,
+          // κρατήσεις → το όνομα κρατά και το σύνολο: «σύνολο→πληρωτέο»
+          grossAmount: Number(it.withholding) > 0 ? Math.round((payable + Number(it.withholding)) * 100) / 100 : null,
           ext: parsed.ext,
         })
         const ren = await webApp('renameFile', { fileId, newName })

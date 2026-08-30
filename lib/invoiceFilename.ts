@@ -28,8 +28,13 @@ export interface ParsedInvoiceName {
   docNumber: string | null
   /** Ημερομηνία έκδοσης, ISO yyyy-MM-dd */
   issueDate: string | null
-  /** Ποσό αν γράφτηκε στο όνομα */
+  /** Ποσό ΠΛΗΡΩΤΕΟ αν γράφτηκε στο όνομα (αυτό ταιριάζει με την τράπεζα) */
   amount: number | null
+  /** Σύνολο τιμολογίου όταν διαφέρει από το πληρωτέο (κρατήσεις):
+   *  γράφεται ως «σύνολο→πληρωτέο», π.χ. «120,00→96,00» */
+  grossAmount: number | null
+  /** Κρατήσεις = σύνολο − πληρωτέο (παράγωγο, όταν υπάρχουν και τα δύο) */
+  withholding: number | null
   /** Ελεύθερο κείμενο → υποψήφιος προμηθευτής */
   supplierHint: string
   /** Κλειδί αναζήτησης στο μητρώο (κανονικοποιημένο) */
@@ -155,6 +160,7 @@ export function parseInvoiceFilename(filename: string): ParsedInvoiceName {
 
   const rawTokens = rest.split(/[_\s]+/).filter(Boolean)
   let amount: number | null = null
+  let grossAmount: number | null = null
   const docCandidates: string[] = []
   const words: string[] = []
 
@@ -172,7 +178,17 @@ export function parseInvoiceFilename(filename: string): ParsedInvoiceName {
       if (!issueDate) issueDate = asDate
       continue
     }
-    // 2) ποσό
+    // 2α) ζεύγος «σύνολο→πληρωτέο» (κρατήσεις): δεκτά →, -> και >
+    const pair = /^(.+?)(?:→|->|>)(.+)$/.exec(token)
+    if (pair) {
+      const g = parseAmountToken(pair[1]), p = parseAmountToken(pair[2])
+      if (g !== null && p !== null) {
+        if (grossAmount === null) grossAmount = g
+        if (amount === null) amount = p
+        continue
+      }
+    }
+    // 2) ποσό (σκέτο = πληρωτέο)
     const asAmount = parseAmountToken(token)
     if (asAmount !== null) {
       if (amount === null) amount = asAmount
@@ -218,6 +234,10 @@ export function parseInvoiceFilename(filename: string): ParsedInvoiceName {
     docNumber,
     issueDate,
     amount,
+    grossAmount,
+    withholding: grossAmount !== null && amount !== null
+      ? Math.round((grossAmount - amount) * 100) / 100
+      : null,
     supplierHint,
     aliasKey: supplierAliasKey(supplierHint),
     ext,
@@ -250,8 +270,10 @@ export interface ApprovedNameParts {
   mark?: string | null
   /** yyyy-MM-dd */
   date: string
-  /** Ποσό */
+  /** Ποσό πληρωτέο */
   amount?: number | null
+  /** Σύνολο τιμολογίου όταν υπάρχουν κρατήσεις — βγαίνει ως «σύνολο→πληρωτέο» */
+  grossAmount?: number | null
   /** Επέκταση χωρίς τελεία (pdf/png…) */
   ext?: string | null
 }
@@ -273,7 +295,11 @@ export function buildApprovedFilename(parts: ApprovedNameParts): string {
     parts.docNumber ? sanitizePart(parts.docNumber) : null,
     parts.mark || null,
     `${d}-${m}-${y}`,
-    parts.amount != null ? formatAmountForName(parts.amount) : null,
+    parts.amount != null
+      ? (parts.grossAmount != null && parts.grossAmount - parts.amount > 0.004
+          ? `${formatAmountForName(parts.grossAmount)}→${formatAmountForName(parts.amount)}`
+          : formatAmountForName(parts.amount))
+      : null,
   ].filter(Boolean)
   const ext = (parts.ext || 'pdf').replace(/^\./, '').toLowerCase()
   return `${pieces.join('_')}.${ext}`

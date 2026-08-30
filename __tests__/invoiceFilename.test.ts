@@ -224,3 +224,38 @@ describe('ποσό στο όνομα αρχείου — αποδεκτές μο�
     expect(amountOf('Προμηθευτής_16.20_03-08-2026.pdf')).toBeNull()
   })
 })
+
+describe('κρατήσεις — «σύνολο→πληρωτέο» στο όνομα', () => {
+  it('διαβάζει σύνολο, πληρωτέο και παράγει τις κρατήσεις', () => {
+    const p = parseInvoiceFilename('Παπαδοπούλου_112_400014601880012_18-08-2026_120,00→96,00.pdf')
+    expect(p.grossAmount).toBe(120)
+    expect(p.amount).toBe(96)
+    expect(p.withholding).toBe(24)
+    expect(p.docNumber).toBe('112')
+  })
+
+  it('δέχεται και -> / > ως βέλος', () => {
+    expect(parseInvoiceFilename('x_1.000,00->800,00.pdf').withholding).toBe(200)
+    expect(parseInvoiceFilename('x_50€>40€.pdf').withholding).toBe(10)
+  })
+
+  it('σκέτο ποσό = πληρωτέο, χωρίς κρατήσεις', () => {
+    const p = parseInvoiceFilename('Strapi_91204_03-08-2026_16,20.pdf')
+    expect(p.amount).toBe(16.2)
+    expect(p.grossAmount).toBeNull()
+    expect(p.withholding).toBeNull()
+  })
+
+  it('το εγκεκριμένο όνομα κρατά το ζεύγος όταν υπάρχουν κρατήσεις', () => {
+    expect(buildApprovedFilename({
+      aa: '9.5', subject: 'Παπαδοπούλου', docNumber: '112',
+      date: '2026-08-18', amount: 96, grossAmount: 120, ext: 'pdf',
+    })).toBe('9.5_Παπαδοπούλου_112_18-08-2026_120,00→96,00.pdf')
+  })
+
+  it('ίδιο σύνολο και πληρωτέο → σκέτο ποσό', () => {
+    expect(buildApprovedFilename({
+      aa: '9.6', subject: 'Strapi', date: '2026-08-03', amount: 16.2, grossAmount: 16.2, ext: 'pdf',
+    })).toBe('9.6_Strapi_03-08-2026_16,20.pdf')
+  })
+})
