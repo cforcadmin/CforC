@@ -63,7 +63,22 @@ export default function OcFinanceGuideModal({ isOpen, onClose, adminName }: OcFi
             <div key={st.n} className="relative menu-glass rounded-2xl p-5 flex gap-4">
               <span className="text-2xl font-bold text-coral leading-none pt-0.5 w-8 flex-shrink-0" aria-hidden="true">{st.n}</span>
               <div className="min-w-0 flex-1">
-                <h3 className="font-bold text-charcoal dark:text-gray-100 mb-1">{st.title}</h3>
+                <h3 className="font-bold text-charcoal dark:text-gray-100 mb-1 flex items-center gap-2">
+                  {st.title}
+                  {st.tip && (
+                    <span className="relative group inline-flex">
+                      <button type="button"
+                        className="w-5 h-5 rounded-full border border-coral text-coral text-[11px] font-bold leading-none flex items-center justify-center hover:bg-coral hover:text-white focus-visible:bg-coral focus-visible:text-white transition-colors"
+                        aria-label="Προσωπική σημείωση" aria-describedby={`guide-tip-${st.n}`}>
+                        i
+                      </button>
+                      {/* Tooltip: hover ή focus — γυάλινο, κάτω από το (i), ΔΕΝ κόβεται (το modal δεν έχει overflow-hidden στον άξονα Χ) */}
+                      <span id={`guide-tip-${st.n}`} role="tooltip"
+                        className="pointer-events-none group-hover:pointer-events-auto absolute left-0 top-full mt-2 z-20 w-[22rem] max-w-[80vw] menu-glass-dense glass-rim rounded-2xl p-4 text-xs font-normal leading-relaxed text-charcoal dark:text-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-opacity [&_a]:text-coral [&_a]:underline"
+                        dangerouslySetInnerHTML={{ __html: `<strong>💡 Προσωπική σημείωση:</strong> ${st.tip}` }} />
+                    </span>
+                  )}
+                </h3>
                 <div
                   className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 [&_img]:block [&_img]:w-full [&_img]:rounded-xl [&_img]:border [&_img]:border-black/10 dark:[&_img]:border-white/10 [&_img]:my-3 [&_.guide-code]:my-1.5 [&_code]:font-mono [&_code]:text-xs [&_code]:bg-white/60 dark:[&_code]:bg-black/30 [&_code]:border [&_code]:border-black/10 dark:[&_code]:border-white/15 [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:whitespace-nowrap"
                   dangerouslySetInnerHTML={{

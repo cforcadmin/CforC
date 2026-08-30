@@ -2058,7 +2058,7 @@ export function financeMonthlyReminderEmailHtml(monthLabel: string, adminName?: 
   <tr>
     <td class="px" style="padding:40px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
       <p style="margin:0 0 20px 0;">Γεια σου!</p>
-      <p style="margin:0 0 20px 0;">Αύριο είναι η 1η του μήνα — ώρα για τον μηνιαίο οικονομικό κύκλο του <strong>${monthLabel}</strong>. Τέσσερα βήματα, με τη σειρά:</p>
+      <p style="margin:0 0 20px 0;">Αύριο είναι η 1η του μήνα — ώρα για τον μηνιαίο οικονομικό κύκλο του <strong>${monthLabel}</strong>. Πέντε βήματα, με τη σειρά:</p>
     </td>
   </tr>
 
@@ -2066,7 +2066,9 @@ export function financeMonthlyReminderEmailHtml(monthLabel: string, adminName?: 
   <tr>
     <td class="px" style="padding:8px 48px 8px 48px;">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-        ${FINANCE_MONTHLY_STEPS.map(st => step(st.n, st.title, renderGuideHtml(st.html, {
+        ${FINANCE_MONTHLY_STEPS.map(st => step(st.n, st.title, (st.tip
+          ? `<div style="margin:0 0 10px 0;padding:10px 12px;background:#FFFFFF;border-left:3px solid #FF8B6A;border-radius:8px;font-size:14px;line-height:21px;color:#5A5A5A;"><strong style="color:#2D2D2D;">💡 Προσωπική σημείωση:</strong> ${st.tip}</div>`
+          : '') + renderGuideHtml(st.html, {
           imageUrl: file => `https://www.cultureforchange.net/email/${file}`,
           imgAttrs: 'width="100%" style="display:block;width:100%;max-width:100%;height:auto;border-radius:12px;border:1px solid #E5E7EB;margin:10px 0 4px 0;"',
           codeAttrs: 'style="font-family:Menlo,Consolas,monospace;font-size:13px;background:#FFFFFF;border:1px solid #E5E7EB;border-radius:6px;padding:2px 6px;white-space:nowrap;"',
