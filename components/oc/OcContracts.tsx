@@ -249,9 +249,10 @@ export default function OcContracts({ canEdit }: { canEdit: boolean }) {
             <span className="text-sm text-gray-500 dark:text-gray-400 notranslate">{list.length} από {rows.length}</span>
 
             <span className="ml-auto flex items-center gap-2">
-              <label className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 cursor-pointer">
+              <label className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 cursor-pointer"
+                title="Οι συμβάσεις δεν διαγράφονται ποτέ — αρχειοθετούνται. Δείξε τες για να τις δεις ή να τις επαναφέρεις.">
                 <input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} className="accent-[#FF8B6A]" />
-                Με αρχειοθετημένες
+                Εμφάνιση αρχειοθετημένων
               </label>
 
               <div className="relative">
