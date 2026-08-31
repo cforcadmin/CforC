@@ -2053,7 +2053,7 @@ export function contractUrgentEmailHtml(
   ocUrl: string,
 ): { subject: string; html: string } {
   const expiring = kind === 'expiry'
-  const heading = expiring ? 'ΣΥΜΒΑΣΗ ΠΟΥ ΛΗΓΕΙ' : 'ΠΛΗΡΩΜΗ ΠΟΥ ΠΕΡΙΜΕΝΕΙ'
+  const heading = expiring ? 'ΣΥΜΒΑΣΗ ΠΟΥ ΛΗΓΕΙ' : 'ΠΛΗΡΩΜΗ ΠΟΥ ΕΚΚΡΕΜΕΙ'
   const sentence = expiring
     ? `Η σύμβαση με τον/την <strong>${line.name}</strong>${line.project ? ` (${line.project})` : ''} λήγει <strong>${whenLabel(line.days)}</strong>${line.date ? `, στις ${line.date}` : ''}. Αν πρόκειται να ανανεωθεί, η απόφαση χρειάζεται χρόνο.`
     : `Η πληρωμή προς <strong>${line.name}</strong>${line.project ? ` (${line.project})` : ''}${line.amount ? `, ${line.amount} €,` : ''} είναι σημειωμένη ως <strong>«Έτοιμο για eBanking»</strong> και δεν έχει σταλεί ακόμη.`
