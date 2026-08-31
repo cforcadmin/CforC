@@ -11,6 +11,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { buildCsv, downloadCsv, datedFilename } from '@/lib/csv'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useColumnWidths } from '@/components/oc/useColumnWidths'
 
 export interface Contract {
   documentId: string
@@ -138,6 +139,7 @@ export default function OcContracts({ canEdit }: { canEdit: boolean }) {
   const [editing, setEditing] = useState<Contract | null>(null)
   const [creating, setCreating] = useState(false)
   const [showArchived, setShowArchived] = useState(false)
+  const { width, ResizeHandle, resetWidths, hasCustom } = useColumnWidths('contracts')
 
   useEffect(() => {
     try {
@@ -267,8 +269,14 @@ export default function OcContracts({ canEdit }: { canEdit: boolean }) {
                     <div className="absolute right-0 top-full mt-2 z-40 w-72 menu-glass rounded-2xl border border-gray-200 dark:border-gray-600 p-4 max-h-[60vh] overflow-y-auto">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Ορατές στήλες</p>
-                        <button type="button" onClick={() => { setCols(DEFAULT_COLS); try { localStorage.setItem(COLS_KEY, JSON.stringify(DEFAULT_COLS)) } catch { /* ok */ } }}
-                          className="text-[11px] text-coral hover:underline">Προεπιλογή</button>
+                        <span className="flex gap-3">
+                          <button type="button" onClick={() => { setCols(DEFAULT_COLS); try { localStorage.setItem(COLS_KEY, JSON.stringify(DEFAULT_COLS)) } catch { /* ok */ } }}
+                            className="text-[11px] text-coral hover:underline">Προεπιλογή</button>
+                          {hasCustom && (
+                            <button type="button" onClick={resetWidths} className="text-[11px] text-coral hover:underline"
+                              title="Επαναφορά των πλατών που έχεις σύρει">Πλάτη</button>
+                          )}
+                        </span>
                       </div>
                       <div className="space-y-1.5">
                         {COLUMNS.map(c => (
@@ -306,15 +314,20 @@ export default function OcContracts({ canEdit }: { canEdit: boolean }) {
             <p className="text-gray-500 dark:text-gray-400 py-6">Καμία σύμβαση.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm" style={{ tableLayout: hasCustom ? 'fixed' : 'auto', minWidth: '100%' }}>
+                <colgroup>
+                  {shown.map(c => <col key={c.key} style={width(c.key) ? { width: `${width(c.key)}px` } : undefined} />)}
+                  <col style={{ width: '2.5rem' }} />
+                </colgroup>
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-gray-700 text-left">
                     {shown.map(c => (
-                      <th key={c.key} className="py-2 pr-3 font-bold text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                        <button type="button" onClick={() => toggleSort(c.key)} className="hover:text-coral">
+                      <th key={c.key} className="relative py-2 pr-3 font-bold text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                        <button type="button" onClick={() => toggleSort(c.key)} className="hover:text-coral max-w-full truncate">
                           {c.label}
                           {sort.key === c.key && <span className="ml-1 text-[9px]" aria-hidden="true">{sort.dir === 'asc' ? '▲' : '▼'}</span>}
                         </button>
+                        <ResizeHandle colKey={c.key} />
                       </th>
                     ))}
                     <th className="py-2" />
@@ -331,7 +344,7 @@ export default function OcContracts({ canEdit }: { canEdit: boolean }) {
                         <tr onClick={toggle}
                           className={`border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/40 ${c.Archived ? 'opacity-50' : ''}`}>
                           {shown.map(col => (
-                            <td key={col.key} className="py-3 pr-3 text-charcoal dark:text-gray-200 align-top">
+                            <td key={col.key} className="py-3 pr-3 text-charcoal dark:text-gray-200 align-top break-words">
                               {col.secret ? <Secret value={col.value(c)} />
                                 : col.key === 'cstatus' && c.ContractStatus
                                   ? <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ${statusCls(c.ContractStatus)}`}>{c.ContractStatus}</span>

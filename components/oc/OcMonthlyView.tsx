@@ -1,5 +1,6 @@
 'use client'
 
+import { useColumnWidths } from '@/components/oc/useColumnWidths'
 import { useCallback, useEffect, useState } from 'react'
 import { FINANCE_CHANGED } from '@/lib/ocFinanceEvents'
 
@@ -101,6 +102,8 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
   canReady?: boolean
   canDispatch?: boolean
 }) {
+  const cwIn = useColumnWidths('monthly-income')
+  const cwEx = useColumnWidths('monthly-expenses')
   const [open, setOpen] = useState(false)
   const [month, setMonth] = useState(defaultMonth())
   const [data, setData] = useState<MonthData | null>(null)
@@ -285,16 +288,17 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
                   <p className="text-sm text-gray-400 dark:text-gray-500">Καμία είσπραξη τον {monthLabel(month).split(' ')[0]}.</p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-sm" style={{ tableLayout: cwIn.hasCustom ? 'fixed' : 'auto', minWidth: '100%' }}>
+                      <colgroup>{['aa', 'doc', 'to', 'type', 'paid', 'issued', 'amount'].map(k => <col key={k} style={cwIn.width(k) ? { width: `${cwIn.width(k)}px` } : undefined} />)}</colgroup>
                       <thead>
                         <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
-                          <th className="py-2 pr-4 font-medium">Α/Α</th>
-                          <th className="py-2 pr-4 font-medium">Παραστατικό</th>
-                          <th className="py-2 pr-4 font-medium">Προς</th>
-                          <th className="py-2 pr-4 font-medium">Τύπος</th>
-                          <th className="py-2 pr-4 font-medium">Ημ. πληρωμής</th>
-                          <th className="py-2 pr-4 font-medium">Ημ. έκδοσης</th>
-                          <th className="py-2 font-medium text-right">Ποσό</th>
+                          <th className="relative py-2 pr-4 font-medium">Α/Α<cwIn.ResizeHandle colKey="aa" /></th>
+                          <th className="relative py-2 pr-4 font-medium">Παραστατικό<cwIn.ResizeHandle colKey="doc" /></th>
+                          <th className="relative py-2 pr-4 font-medium">Προς<cwIn.ResizeHandle colKey="to" /></th>
+                          <th className="relative py-2 pr-4 font-medium">Τύπος<cwIn.ResizeHandle colKey="type" /></th>
+                          <th className="relative py-2 pr-4 font-medium">Ημ. πληρωμής<cwIn.ResizeHandle colKey="paid" /></th>
+                          <th className="relative py-2 pr-4 font-medium">Ημ. έκδοσης<cwIn.ResizeHandle colKey="issued" /></th>
+                          <th className="relative py-2 font-medium text-right">Ποσό<cwIn.ResizeHandle colKey="amount" /></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -356,16 +360,17 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
                   </p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-sm" style={{ tableLayout: cwEx.hasCustom ? 'fixed' : 'auto', minWidth: '100%' }}>
+                      <colgroup>{['aa', 'supplier', 'category', 'doc', 'issued', 'withholding', 'amount', 'method', 'file'].map(k => <col key={k} style={cwEx.width(k) ? { width: `${cwEx.width(k)}px` } : undefined} />)}</colgroup>
                       <thead>
                         <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
-                          <th className="py-2 pr-4 font-medium">Α/Α</th>
-                          <th className="py-2 pr-4 font-medium">Προμηθευτής</th>
-                          <th className="py-2 pr-4 font-medium">Κατηγορία</th>
-                          <th className="py-2 pr-4 font-medium">Παραστατικό</th>
-                          <th className="py-2 pr-4 font-medium">Ημ. έκδοσης</th>
-                          <th className="py-2 pr-4 font-medium">Πληρωμή</th>
-                          <th className="py-2 font-medium text-right">Ποσό</th>
+                          <th className="relative py-2 pr-4 font-medium">Α/Α<cwEx.ResizeHandle colKey="aa" /></th>
+                          <th className="relative py-2 pr-4 font-medium">Προμηθευτής<cwEx.ResizeHandle colKey="supplier" /></th>
+                          <th className="relative py-2 pr-4 font-medium">Κατηγορία<cwEx.ResizeHandle colKey="category" /></th>
+                          <th className="relative py-2 pr-4 font-medium">Παραστατικό<cwEx.ResizeHandle colKey="doc" /></th>
+                          <th className="relative py-2 pr-4 font-medium">Ημ. έκδοσης<cwEx.ResizeHandle colKey="issued" /></th>
+                          <th className="relative py-2 pr-4 font-medium">Πληρωμή<cwEx.ResizeHandle colKey="withholding" /></th>
+                          <th className="relative py-2 font-medium text-right">Ποσό<cwEx.ResizeHandle colKey="amount" /></th>
                         </tr>
                       </thead>
                       <tbody>

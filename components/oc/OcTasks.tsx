@@ -1,5 +1,6 @@
 'use client'
 
+import { useColumnWidths } from '@/components/oc/useColumnWidths'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 /**
@@ -189,6 +190,7 @@ export default function OcTasks({ canEdit = true, lockedBoard, embedded = false,
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lockedBoard?.slug])
   const ensuredRef = useRef(false)
+  const cw = useColumnWidths(lockedBoard ? `tasks-${lockedBoard.slug}` : 'tasks')
   useEffect(() => { load() }, [load])
 
   async function patch(id: string, body: Record<string, any>) {
@@ -494,16 +496,21 @@ export default function OcTasks({ canEdit = true, lockedBoard, embedded = false,
                 </p>
               )}
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm" style={{ tableLayout: cw.hasCustom ? 'fixed' : 'auto', minWidth: '100%' }}>
+                  <colgroup>
+                    {['tick', 'title', 'status', 'cat', 'assignee', 'due', 'prio'].map(k => (
+                      <col key={k} style={cw.width(k) ? { width: `${cw.width(k)}px` } : (k === 'tick' ? { width: '2rem' } : undefined)} />
+                    ))}
+                  </colgroup>
                   <thead>
                     <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
                       <th className="py-2 pr-3 w-8"></th>
-                      <th className="py-2 pr-4 font-medium">Εκκρεμότητα</th>
-                      <th className="py-2 pr-4 font-medium">Κατάσταση</th>
-                      <th className="py-2 pr-4 font-medium">δράση/κατηγορία</th>
-                      <th className="py-2 pr-4 font-medium">Ανάδοχος</th>
-                      <th className="py-2 pr-4 font-medium">Προθεσμία</th>
-                      <th className="py-2 font-medium">Προτεραιότητα</th>
+                      <th className="relative py-2 pr-4 font-medium">Εκκρεμότητα<cw.ResizeHandle colKey="title" /></th>
+                      <th className="relative py-2 pr-4 font-medium">Κατάσταση<cw.ResizeHandle colKey="status" /></th>
+                      <th className="relative py-2 pr-4 font-medium">δράση/κατηγορία<cw.ResizeHandle colKey="cat" /></th>
+                      <th className="relative py-2 pr-4 font-medium">Ανάδοχος<cw.ResizeHandle colKey="assignee" /></th>
+                      <th className="relative py-2 pr-4 font-medium">Προθεσμία<cw.ResizeHandle colKey="due" /></th>
+                      <th className="relative py-2 font-medium">Προτεραιότητα<cw.ResizeHandle colKey="prio" /></th>
                     </tr>
                   </thead>
                   <tbody>{g.items.map(t => <Row key={t.documentId + g.key} t={t} />)}</tbody>

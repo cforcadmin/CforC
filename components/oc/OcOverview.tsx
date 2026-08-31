@@ -10,6 +10,7 @@ import OcRenewalsPopup from '@/components/oc/OcRenewalsPopup'
 import OcTreasuryPopup from '@/components/oc/OcTreasuryPopup'
 import OcMyTasks from '@/components/oc/OcMyTasks'
 import OcExportModal from '@/components/oc/OcExportModal'
+import { useColumnWidths } from '@/components/oc/useColumnWidths'
 
 const STATUS_META: Record<OcMemberStatus, { label: string; cls: string }> = {
   paid: { label: 'Τακτοποιημένο', cls: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' },
@@ -223,18 +224,20 @@ function compareRows(a: OcMemberRow, b: OcMemberRow, sort: SortState, currentYea
 }
 
 /** Κεφαλίδα με ταξινόμηση: 1ο κλικ φθίνουσα (▼), 2ο αύξουσα (▲) */
-function SortTh({ label, sortKey, sort, onSort, py, className = '' }: {
+function SortTh({ label, sortKey, sort, onSort, py, className = '', handle }: {
   label: React.ReactNode
   sortKey: SortKey
   sort: SortState
   onSort: (key: SortKey) => void
   py: string
   className?: string
+  /** Χειριστήριο αλλαγής πλάτους — ίδιο σε όλους τους πίνακες του OC */
+  handle?: React.ReactNode
 }) {
   const active = sort.key === sortKey
   return (
     <th
-      className={`${py} pr-3 font-medium ${className}`}
+      className={`relative ${py} pr-3 font-medium ${className}`}
       aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
     >
       <button
@@ -257,6 +260,7 @@ function SortTh({ label, sortKey, sort, onSort, py, className = '' }: {
             : ' — ταξινόμηση'}
         </span>
       </button>
+      {handle}
     </th>
   )
 }
@@ -282,6 +286,7 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
   const [density, setDensity] = useState<'comfortable' | 'compact'>(initialPrefs.density)
   const [showCols, setShowCols] = useState(false)
   const [showExport, setShowExport] = useState(false)
+  const { width, ResizeHandle, resetWidths, hasCustom } = useColumnWidths('members')
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -481,6 +486,11 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
                           })
                         }}
                         className="text-[11px] text-coral dark:text-coral-light hover:underline">Προεπιλογή</button>
+                      {hasCustom && (
+                        <button type="button" onClick={resetWidths}
+                          title="Επαναφορά των πλατών που έχεις σύρει"
+                          className="text-[11px] text-coral dark:text-coral-light hover:underline">Πλάτη</button>
+                      )}
                     </span>
                   </div>
                   <div className="space-y-1.5 mb-4">
@@ -546,18 +556,24 @@ function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
         <p className="text-xs text-orange-600 dark:text-orange-400 mb-3">{deleteWarn}</p>
       )}
       <div className="overflow-x-auto">
-        <table className={`w-full ${txt}`}>
+        <table className={`w-full ${txt}`} style={{ tableLayout: hasCustom ? 'fixed' : 'auto', minWidth: '100%' }}>
+          <colgroup>
+            {['am', 'name', ...OC_TABLE_COLUMNS.filter(c => show(c.key)).map(c => c.key)].map(k => (
+              <col key={k} style={width(k) ? { width: `${width(k)}px` } : undefined} />
+            ))}
+            <col style={{ width: '2.5rem' }} />
+          </colgroup>
           <thead>
             <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
-              <SortTh label="ΑΜ" sortKey="am" sort={sort} onSort={toggleSort} py={py} />
-              <SortTh label="Ονοματεπώνυμο" sortKey="name" sort={sort} onSort={toggleSort} py={py} />
-              {show('city') && <SortTh label="Πόλη" sortKey="city" sort={sort} onSort={toggleSort} py={py} className="hidden md:table-cell" />}
-              {show('email') && <SortTh label="Email" sortKey="email" sort={sort} onSort={toggleSort} py={py} />}
-              {show('phone') && <SortTh label="Τηλέφωνο" sortKey="phone" sort={sort} onSort={toggleSort} py={py} />}
-              {show('regYear') && <SortTh label="Εγγραφή" sortKey="regYear" sort={sort} onSort={toggleSort} py={py} />}
-              {show('year') && <SortTh label={currentYear} sortKey="year" sort={sort} onSort={toggleSort} py={py} />}
-              {show('status') && <SortTh label="Κατάσταση" sortKey="status" sort={sort} onSort={toggleSort} py={py} />}
-              {show('payments') && <SortTh label="Πληρωμές" sortKey="payments" sort={sort} onSort={toggleSort} py={py} />}
+              <SortTh label="ΑΜ" sortKey="am" sort={sort} onSort={toggleSort} py={py} handle={<ResizeHandle colKey="am" />} />
+              <SortTh label="Ονοματεπώνυμο" sortKey="name" sort={sort} onSort={toggleSort} py={py} handle={<ResizeHandle colKey="name" />} />
+              {show('city') && <SortTh label="Πόλη" sortKey="city" sort={sort} onSort={toggleSort} py={py} handle={<ResizeHandle colKey="city" />} className="hidden md:table-cell" />}
+              {show('email') && <SortTh label="Email" sortKey="email" sort={sort} onSort={toggleSort} py={py} handle={<ResizeHandle colKey="email" />} />}
+              {show('phone') && <SortTh label="Τηλέφωνο" sortKey="phone" sort={sort} onSort={toggleSort} py={py} handle={<ResizeHandle colKey="phone" />} />}
+              {show('regYear') && <SortTh label="Εγγραφή" sortKey="regYear" sort={sort} onSort={toggleSort} py={py} handle={<ResizeHandle colKey="regYear" />} />}
+              {show('year') && <SortTh label={currentYear} sortKey="year" sort={sort} onSort={toggleSort} py={py} handle={<ResizeHandle colKey="year" />} />}
+              {show('status') && <SortTh label="Κατάσταση" sortKey="status" sort={sort} onSort={toggleSort} py={py} handle={<ResizeHandle colKey="status" />} />}
+              {show('payments') && <SortTh label="Πληρωμές" sortKey="payments" sort={sort} onSort={toggleSort} py={py} handle={<ResizeHandle colKey="payments" />} />}
               <th className={`${py} font-medium sr-only`}>Λεπτομέρειες</th>
             </tr>
           </thead>
