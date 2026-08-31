@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import OcBankIntake from '@/components/oc/OcBankIntake'
 import OcSubscriptions, { type SubMemberRow } from '@/components/oc/OcSubscriptions'
+import OcContracts from '@/components/oc/OcContracts'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
 import OcFinanceGuideModal from './OcFinanceGuideModal'
 
@@ -69,13 +70,15 @@ const CONNECTION_MESSAGES: Record<string, { title: string; detail: string }> = {
   },
 }
 
-export default function OcFinances({ canIssue, canManual = false, canRemind, members, subMembers }: {
+export default function OcFinances({ canIssue, canManual = false, canRemind, members, subMembers, canContracts = false }: {
   canIssue: boolean
   /** IT: μόνο χειροκίνητες καταχωρήσεις εξόδων */
   canManual?: boolean
   canRemind: boolean
   members: MemberOption[]
   subMembers: SubMemberRow[]
+  /** Μητρώο συμβάσεων: Financer, Διαχείριση και IT (ίδιο με το API) */
+  canContracts?: boolean
 }) {
   const [series, setSeries] = useState<SeriesState | null>(null)
   const [listScope, setListScope] = useState<'recent' | 'all'>('recent')
@@ -643,6 +646,9 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
 
       {/* Μηνιαία εικόνα: έγκριση μήνα από Financer (η αποστολή: Διαχείριση) */}
       <OcMonthlyView mode="financer" canReady={canIssue} />
+
+      {/* Μητρώο συμβάσεων — ίδια κάρτα και στη Διαχείριση, μία υλοποίηση */}
+      {canContracts && <OcContracts canEdit={canContracts} />}
 
       {/* Λίστα αποδείξεων: πρόσφατες / όλες */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">

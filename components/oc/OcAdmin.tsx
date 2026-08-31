@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import OcCalendar, { daysUntil, untilLabel, type CalEvent } from '@/components/oc/OcCalendar'
 import OcEventForm, { type SeatHolder } from '@/components/oc/OcEventForm'
+import OcContracts from '@/components/oc/OcContracts'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
 import OcTasks from '@/components/oc/OcTasks'
 import OcAgenda from '@/components/oc/OcAgenda'
@@ -38,7 +39,7 @@ function Tile({ value, label, sub, accent }: { value: string; label: string; sub
   )
 }
 
-export default function OcAdmin({ canEdit, canDispatch }: { canEdit: boolean; canDispatch: boolean }) {
+export default function OcAdmin({ canEdit, canDispatch, canContracts = false }: { canEdit: boolean; canDispatch: boolean; canContracts?: boolean }) {
   const [events, setEvents] = useState<CalEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -141,6 +142,9 @@ export default function OcAdmin({ canEdit, canDispatch }: { canEdit: boolean; ca
 
       {/* Μηνιαία οικονομική εικόνα */}
       <OcMonthlyView mode="admin" canDispatch={canDispatch} />
+
+      {/* Μητρώο συμβάσεων — η ίδια κάρτα με τα Οικονομικά */}
+      {canContracts && <OcContracts canEdit={canContracts} />}
 
       {/* Σύνδεσμοι */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
