@@ -41,6 +41,7 @@ export interface Contract {
   ExpenseDocsLink: string | null
   ExpenseListLink: string | null
   Archived?: boolean | null
+  NoReminders?: boolean | null
   SortIndex?: number | null
   CreatedByName?: string | null
   UpdatedByName?: string | null
@@ -381,6 +382,7 @@ export default function OcContracts({ canEdit }: { canEdit: boolean }) {
                                 <Detail label="Αρχείο σύμβασης" value={c.ContractFile} />
                                 <Detail label="Σημειώσεις σύμβασης" value={c.ContractNotes} pre />
                                 <Detail label="Σχόλια πληρωμών" value={c.PaymentNotes} pre />
+                                <Detail label="Υπενθυμίσεις" value={c.NoReminders ? 'σε σίγαση' : null} />
                                 <Detail label="Καταχώριση" value={[c.CreatedByName, c.UpdatedByName && `· ενημέρωση: ${c.UpdatedByName}`].filter(Boolean).join(' ')} />
                               </div>
                               {canEdit && (
@@ -491,6 +493,7 @@ function ContractForm({ contract, options, onClose, onSave }: {
     NextPaymentStatus: contract?.NextPaymentStatus || '', PaymentHistory: contract?.PaymentHistory || '',
     BankIban: contract?.BankIban || '', PaymentStatus: contract?.PaymentStatus || '', PaymentNotes: contract?.PaymentNotes || '',
     ExpenseDocsLink: contract?.ExpenseDocsLink || '', ExpenseListLink: contract?.ExpenseListLink || '',
+    NoReminders: !!contract?.NoReminders,
   }))
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -554,6 +557,18 @@ function ContractForm({ contract, options, onClose, onSave }: {
             <Field k="PaymentHistory" value={String(f.PaymentHistory ?? '')} onChange={v => setF(p => ({ ...p, PaymentHistory: v }))} label="Ιστορικό πληρωμών" area />
             <Field k="PaymentNotes" value={String(f.PaymentNotes ?? '')} onChange={v => setF(p => ({ ...p, PaymentNotes: v }))} label="Σχόλια πληρωμών" area />
           </div>
+
+          <label className="flex items-start gap-2.5 text-sm text-charcoal dark:text-gray-100 cursor-pointer pt-1">
+            <input type="checkbox" className="accent-[#FF8B6A] w-4 h-4 mt-0.5"
+              checked={!!f.NoReminders} onChange={e => setF(p => ({ ...p, NoReminders: e.target.checked }))} />
+            <span>
+              Χωρίς υπενθυμίσεις
+              <span className="block text-xs text-gray-500 dark:text-gray-400">
+                Η σύμβαση δεν εμφανίζεται στην εβδομαδιαία σύνοψη ούτε στις άμεσες ειδοποιήσεις — για όσες
+                η κατάστασή τους είναι γνωστή και δεν χρειάζεται ενέργεια.
+              </span>
+            </span>
+          </label>
 
           {err && <p className="text-sm text-red-600 dark:text-red-400">{err}</p>}
           <div className="flex items-center gap-3 pt-2">

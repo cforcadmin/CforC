@@ -1901,6 +1901,180 @@ export function monthReadyEmailHtml(
   return { subject: `Ο ${monthLabel} είναι έτοιμος για αποστολή στο λογιστήριο`, html }
 }
 
+/* ── Υπενθυμίσεις συμβάσεων: εβδομαδιαία σύνοψη + άμεση ειδοποίηση ───────── */
+
+export interface DigestLine {
+  name: string
+  project: string | null
+  amount: string | null
+  date: string | null
+  days: number | null
+  note?: string
+}
+export interface DigestBlock {
+  title: string
+  hint: string
+  lines: DigestLine[]
+  /** Κόκκινο πλαίσιο για ό,τι ζητά ενέργεια σήμερα */
+  urgent?: boolean
+}
+
+/** «σε 7 ημέρες» · «πριν από 3 ημέρες» · «σήμερα» */
+function whenLabel(days: number | null): string {
+  if (days === null) return ''
+  if (days === 0) return 'σήμερα'
+  return days > 0 ? `σε ${days} ${days === 1 ? 'ημέρα' : 'ημέρες'}` : `πριν από ${Math.abs(days)} ${Math.abs(days) === 1 ? 'ημέρα' : 'ημέρες'}`
+}
+
+function blockHtml(b: DigestBlock): string {
+  if (!b.lines.length) return ''
+  const bg = b.urgent ? '#FFF1EC' : '#F5F0EB'
+  const bar = b.urgent ? '#C9552F' : '#8A8A8A'
+  return `
+  <tr>
+    <td class="px" style="padding:8px 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background-color:${bg};border-radius:16px;">
+        <tr><td style="padding:18px 24px;border-left:4px solid ${bar};border-radius:16px;">
+          <p style="margin:0 0 2px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:18px;letter-spacing:1.2px;color:${bar};font-weight:bold;">${b.title}</p>
+          <p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#5A5A5A;">${b.hint}</p>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${b.lines.map(l => `
+            <tr>
+              <td style="padding:5px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:21px;color:#2D2D2D;border-top:1px solid rgba(0,0,0,0.08);">
+                <strong>${l.name}</strong>${l.project ? ` · ${l.project}` : ''}<br>
+                <span style="color:#5A5A5A;">${[l.date, whenLabel(l.days)].filter(Boolean).join(' — ')}${l.note ? ` · ${l.note}` : ''}</span>
+              </td>
+              <td align="right" valign="top" style="padding:5px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:21px;color:#2D2D2D;font-weight:bold;white-space:nowrap;border-top:1px solid rgba(0,0,0,0.08);">${l.amount ? l.amount + ' €' : ''}</td>
+            </tr>`).join('')}
+          </table>
+        </td></tr>
+      </table>
+    </td>
+  </tr>`
+}
+
+function shell(title: string, heading: string, preheader: string, body: string, ocUrl: string, buttonLabel: string, footerNote: string, signerName?: string): string {
+  return `<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>${title}</title>
+<style>
+  @media only screen and (max-width:620px){
+    .px{padding-left:24px !important;padding-right:24px !important;}
+    .h1{font-size:26px !important;line-height:32px !important;}
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F0EB;">
+<span style="display:none;font-size:1px;color:#F5F0EB;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${preheader}</span>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;">
+<tr><td align="center" style="padding:32px 12px 48px 12px;">
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #E5E7EB;">
+
+  <tr>
+    <td class="px" style="background-color:#FF8B6A;padding:36px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:16px;letter-spacing:1.6px;color:#FFFFFF;font-weight:bold;">CULTURE FOR CHANGE — ΣΥΜΒΑΣΕΙΣ</td></tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr><td class="h1" style="font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:36px;color:#2D2D2D;font-weight:bold;">${heading}</td></tr>
+      </table>
+    </td>
+  </tr>
+${body}
+  <tr>
+    <td class="px" style="padding:20px 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="background-color:#FF8B6A;border-radius:999px;">
+          <a href="${ocUrl}" style="display:inline-block;padding:14px 32px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;color:#FFFFFF;text-decoration:none;font-weight:bold;">${buttonLabel}</a>
+        </td>
+      </tr></table>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:24px 48px 40px 48px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#5A5A5A;">
+      <p style="margin:0;">${footerNote}</p>
+      ${signerName ? `<p style="margin:12px 0 0 0;">${signerName}</p>` : ''}
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" align="center" style="background-color:#2D2D2D;padding:32px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#A0A0A0;">Σωματείο Κοινωνικής και Πολιτισμικής Καινοτομίας — Culture for Change</td></tr>
+      </table>
+    </td>
+  </tr>
+
+</table>
+
+</td></tr>
+</table>
+</body>
+</html>
+`
+}
+
+/** Εβδομαδιαία σύνοψη συμβάσεων — Δευτέρα πρωί, προς finance@, hello@, coordination@ */
+export function contractsDigestEmailHtml(
+  dateLabel: string,
+  blocks: DigestBlock[],
+  totals: { contracts: number; needsAttention: number },
+  ocUrl: string,
+): { subject: string; html: string } {
+  const filled = blocks.filter(b => b.lines.length)
+  const intro = filled.length === 0
+    ? `<p style="margin:0 0 20px 0;">Καμία εκκρεμότητα αυτή την εβδομάδα — και οι <strong>${totals.contracts}</strong> ενεργές συμβάσεις είναι σε τάξη.</p>`
+    : `<p style="margin:0 0 20px 0;"><strong>${totals.needsAttention}</strong> ${totals.needsAttention === 1 ? 'σημείο θέλει' : 'σημεία θέλουν'} προσοχή, από <strong>${totals.contracts}</strong> ενεργές συμβάσεις.</p>`
+  const body = `
+  <tr>
+    <td class="px" style="padding:36px 48px 4px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;">
+      ${intro}
+    </td>
+  </tr>
+${filled.map(blockHtml).join('')}`
+  return {
+    subject: `Συμβάσεις — εβδομαδιαία σύνοψη ${dateLabel}`,
+    html: shell('Συμβάσεις — εβδομαδιαία σύνοψη', 'ΕΒΔΟΜΑΔΙΑΙΑ ΣΥΝΟΨΗ',
+      `${totals.needsAttention} σημεία θέλουν προσοχή στις συμβάσεις.`,
+      body, ocUrl, 'Άνοιγμα μητρώου συμβάσεων',
+      'Αυτόματη σύνοψη κάθε Δευτέρα. Ό,τι δεν χρειάζεται πια υπενθύμιση, σημείωσέ το «Χωρίς υπενθυμίσεις» στη σύμβαση.'),
+  }
+}
+
+/** Άμεση ειδοποίηση — μόνο δύο περιπτώσεις, μία φορά ανά αφορμή */
+export function contractUrgentEmailHtml(
+  kind: 'expiry' | 'ready-to-pay',
+  line: DigestLine,
+  ocUrl: string,
+): { subject: string; html: string } {
+  const expiring = kind === 'expiry'
+  const heading = expiring ? 'ΣΥΜΒΑΣΗ ΠΟΥ ΛΗΓΕΙ' : 'ΠΛΗΡΩΜΗ ΠΟΥ ΠΕΡΙΜΕΝΕΙ'
+  const sentence = expiring
+    ? `Η σύμβαση με τον/την <strong>${line.name}</strong>${line.project ? ` (${line.project})` : ''} λήγει <strong>${whenLabel(line.days)}</strong>${line.date ? `, στις ${line.date}` : ''}. Αν πρόκειται να ανανεωθεί, η απόφαση χρειάζεται χρόνο.`
+    : `Η πληρωμή προς <strong>${line.name}</strong>${line.project ? ` (${line.project})` : ''}${line.amount ? `, ${line.amount} €,` : ''} είναι σημειωμένη ως <strong>«Έτοιμο για eBanking»</strong> και δεν έχει σταλεί ακόμη.`
+  const body = `
+  <tr>
+    <td class="px" style="padding:36px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;">
+      <p style="margin:0 0 16px 0;">${sentence}</p>
+    </td>
+  </tr>
+${blockHtml({ title: expiring ? 'Η ΣΥΜΒΑΣΗ' : 'Η ΠΛΗΡΩΜΗ', hint: expiring ? 'Λήξη σύμβασης' : 'Εγκεκριμένη, σε αναμονή αποστολής', lines: [line], urgent: true })}`
+  return {
+    subject: expiring
+      ? `Λήγει η σύμβαση: ${line.name}${line.date ? ` (${line.date})` : ''}`
+      : `Εκκρεμεί αποστολή πληρωμής: ${line.name}`,
+    html: shell(heading, heading,
+      expiring ? 'Μια σύμβαση λήγει μέσα στην εβδομάδα.' : 'Μια εγκεκριμένη πληρωμή δεν έχει σταλεί.',
+      body, ocUrl, 'Άνοιγμα μητρώου συμβάσεων',
+      'Στέλνεται μία φορά για κάθε αφορμή — δεν θα επαναληφθεί αύριο.'),
+  }
+}
+
 /**
  * Departure email — στέλνεται όταν διαγράφεται μέλος (OC ή Sheet).
  * Design shell, υπογραφή Community. ⟨TODO⟩: πραγματικό URL ερωτηματολογίου.

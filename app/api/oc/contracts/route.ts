@@ -75,7 +75,7 @@ const FIELDS =
   + '&fields[17]=NextPaymentDate&fields[18]=NextPaymentStatus&fields[19]=PaymentHistory'
   + '&fields[20]=BankIban&fields[21]=PaymentStatus&fields[22]=PaymentNotes'
   + '&fields[23]=ExpenseDocsLink&fields[24]=ExpenseListLink&fields[25]=Archived'
-  + '&fields[26]=SortIndex&fields[27]=CreatedByName&fields[28]=UpdatedByName&fields[29]=updatedAt'
+  + '&fields[26]=SortIndex&fields[27]=CreatedByName&fields[28]=UpdatedByName&fields[29]=updatedAt&fields[30]=NoReminders'
 
 /** Το όνομα του μέλους για τη σφραγίδα «ποιος καταχώρησε» */
 async function memberName(memberId: string): Promise<string> {
@@ -116,6 +116,7 @@ function readInput(body: any, requireName: boolean): { data: Record<string, any>
     out[f] = Number.isFinite(n) ? n : null
   }
   if (body?.Archived !== undefined) out.Archived = !!body.Archived
+  if (body?.NoReminders !== undefined) out.NoReminders = !!body.NoReminders
   if (requireName && !out.Name) return { error: 'Λείπει το ονοματεπώνυμο' }
   if (Object.keys(out).length === 0) return { error: 'Καμία αλλαγή' }
   return { data: out }
