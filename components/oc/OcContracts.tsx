@@ -139,6 +139,7 @@ export default function OcContracts({ canEdit }: { canEdit: boolean }) {
   const [editing, setEditing] = useState<Contract | null>(null)
   const [creating, setCreating] = useState(false)
   const [showArchived, setShowArchived] = useState(false)
+  const [options, setOptions] = useState<Record<string, string[]>>(SUGGEST)
   const { width, ResizeHandle, resetWidths, hasCustom } = useColumnWidths('contracts')
 
   useEffect(() => {
@@ -158,6 +159,7 @@ export default function OcContracts({ canEdit }: { canEdit: boolean }) {
       const d = await res.json()
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία φόρτωσης')
       setRows(d.contracts || [])
+      if (d.options) setOptions({ ...SUGGEST, ...d.options })
     } catch (err: any) {
       setError(err?.message || 'Αποτυχία φόρτωσης')
     } finally { setLoading(false) }
@@ -406,6 +408,7 @@ export default function OcContracts({ canEdit }: { canEdit: boolean }) {
 
       {(creating || editing) && (
         <ContractForm
+          options={options}
           contract={editing}
           onClose={() => { setCreating(false); setEditing(null) }}
           onSave={async payload => { await save(payload, editing?.documentId); setCreating(false); setEditing(null) }}
@@ -459,18 +462,21 @@ function Field({ k, label, value, onChange, type = 'text', list, area }: {
 const inputCls = 'w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral'
 const labelCls = 'block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1'
 
-/** Γνωστές τιμές — προτείνονται, δεν επιβάλλονται (datalist, όχι select) */
-const SUGGEST = {
+/** Εφεδρεία· οι πραγματικές λίστες έρχονται από το φύλλο μαζί με τα δεδομένα */
+const SUGGEST: Record<string, string[]> = {
   ContractType: ['Σύμβαση Έργου', 'Τίτλος Κτήσης', 'Μίσθωση'],
   ContractStatus: ['ΕΝΕΡΓΗ', 'ΛΗΓΕΙ ΣΥΝΤΟΜΑ', 'ΛΗΞΗ'],
-  PaymentMethod: ['Τιμολόγιο', 'Τίτλος Κτήσης'],
-  PaymentFrequency: ['Εφάπαξ', 'Σε Δόσεις (Milestones)'],
+  Project: ['CforC', 'Σ.Η.μα'],
+  PaymentMethod: ['Τιμολόγιο', 'Τίτλος Κτήσης', 'Μισθοδοσία'],
+  PaymentFrequency: ['Μηνιαία', 'Εφάπαξ', 'Σε Δόσεις (Milestones)'],
   NextPaymentStatus: ['ΜΕΛΛΟΝΤΙΚΗ', 'ΕΧΕΙ ΚΑΘΥΣΤΕΡΗΣΕΙ'],
-  PaymentStatus: ['Εκκρεμεί Τιμολόγιο', 'Σε αναμονή έγκρισης', 'Έτοιμο για eBanking', 'Πληρώθηκε'],
+  PaymentStatus: ['Εκκρεμεί Τιμολόγιο', 'Έτοιμο για eBanking', 'Πληρώθηκε', 'Σε αναμονή έγκρισης'],
 }
 
-function ContractForm({ contract, onClose, onSave }: {
+function ContractForm({ contract, options, onClose, onSave }: {
   contract: Contract | null
+  /** Λίστες επιλογών ανά πεδίο, όπως ορίζονται στο φύλλο */
+  options: Record<string, string[]>
   onClose: () => void
   onSave: (payload: Record<string, any>) => Promise<void>
 }) {
@@ -526,9 +532,9 @@ function ContractForm({ contract, onClose, onSave }: {
             <Field k="Email" value={String(f.Email ?? '')} onChange={v => setF(p => ({ ...p, Email: v }))} label="Email" type="email" />
             <Field k="Phone" value={String(f.Phone ?? '')} onChange={v => setF(p => ({ ...p, Phone: v }))} label="Τηλέφωνο" />
             <Field k="TaxId" value={String(f.TaxId ?? '')} onChange={v => setF(p => ({ ...p, TaxId: v }))} label="ΑΦΜ" />
-            <Field k="ContractType" value={String(f.ContractType ?? '')} onChange={v => setF(p => ({ ...p, ContractType: v }))} label="Τύπος σύμβασης" list={SUGGEST.ContractType} />
-            <Field k="Project" value={String(f.Project ?? '')} onChange={v => setF(p => ({ ...p, Project: v }))} label="Έργο" />
-            <Field k="ContractStatus" value={String(f.ContractStatus ?? '')} onChange={v => setF(p => ({ ...p, ContractStatus: v }))} label="Κατάσταση" list={SUGGEST.ContractStatus} />
+            <Field k="ContractType" value={String(f.ContractType ?? '')} onChange={v => setF(p => ({ ...p, ContractType: v }))} label="Τύπος σύμβασης" list={options.ContractType} />
+            <Field k="Project" value={String(f.Project ?? '')} onChange={v => setF(p => ({ ...p, Project: v }))} label="Έργο" list={options.Project} />
+            <Field k="ContractStatus" value={String(f.ContractStatus ?? '')} onChange={v => setF(p => ({ ...p, ContractStatus: v }))} label="Κατάσταση" list={options.ContractStatus} />
             <Field k="StartDate" value={String(f.StartDate ?? '')} onChange={v => setF(p => ({ ...p, StartDate: v }))} label="Ημερομηνία έναρξης" type="date" />
             <Field k="EndDate" value={String(f.EndDate ?? '')} onChange={v => setF(p => ({ ...p, EndDate: v }))} label="Ημερομηνία λήξης" type="date" />
             <Field k="ContractFile" value={String(f.ContractFile ?? '')} onChange={v => setF(p => ({ ...p, ContractFile: v }))} label="Αρχείο / σύνδεσμος σύμβασης" />
@@ -538,11 +544,11 @@ function ContractForm({ contract, onClose, onSave }: {
           <p className="text-xs font-bold tracking-widest text-coral pt-2">ΠΛΗΡΩΜΕΣ</p>
           <div className="grid md:grid-cols-2 gap-4">
             <Field k="Amount" value={String(f.Amount ?? '')} onChange={v => setF(p => ({ ...p, Amount: v }))} label="Αμοιβή (€)" />
-            <Field k="PaymentMethod" value={String(f.PaymentMethod ?? '')} onChange={v => setF(p => ({ ...p, PaymentMethod: v }))} label="Τρόπος πληρωμής" list={SUGGEST.PaymentMethod} />
-            <Field k="PaymentFrequency" value={String(f.PaymentFrequency ?? '')} onChange={v => setF(p => ({ ...p, PaymentFrequency: v }))} label="Συχνότητα" list={SUGGEST.PaymentFrequency} />
+            <Field k="PaymentMethod" value={String(f.PaymentMethod ?? '')} onChange={v => setF(p => ({ ...p, PaymentMethod: v }))} label="Τρόπος πληρωμής" list={options.PaymentMethod} />
+            <Field k="PaymentFrequency" value={String(f.PaymentFrequency ?? '')} onChange={v => setF(p => ({ ...p, PaymentFrequency: v }))} label="Συχνότητα" list={options.PaymentFrequency} />
             <Field k="NextPaymentDate" value={String(f.NextPaymentDate ?? '')} onChange={v => setF(p => ({ ...p, NextPaymentDate: v }))} label="Επόμενη πληρωμή" type="date" />
-            <Field k="NextPaymentStatus" value={String(f.NextPaymentStatus ?? '')} onChange={v => setF(p => ({ ...p, NextPaymentStatus: v }))} label="Status επόμενης πληρωμής" list={SUGGEST.NextPaymentStatus} />
-            <Field k="PaymentStatus" value={String(f.PaymentStatus ?? '')} onChange={v => setF(p => ({ ...p, PaymentStatus: v }))} label="Status πληρωμής" list={SUGGEST.PaymentStatus} />
+            <Field k="NextPaymentStatus" value={String(f.NextPaymentStatus ?? '')} onChange={v => setF(p => ({ ...p, NextPaymentStatus: v }))} label="Status επόμενης πληρωμής" list={options.NextPaymentStatus} />
+            <Field k="PaymentStatus" value={String(f.PaymentStatus ?? '')} onChange={v => setF(p => ({ ...p, PaymentStatus: v }))} label="Status πληρωμής" list={options.PaymentStatus} />
             <Field k="BankIban" value={String(f.BankIban ?? '')} onChange={v => setF(p => ({ ...p, BankIban: v }))} label="Τράπεζα & IBAN" />
             <Field k="PaymentSchedule" value={String(f.PaymentSchedule ?? '')} onChange={v => setF(p => ({ ...p, PaymentSchedule: v }))} label="Πρόγραμμα / ημερομηνίες πληρωμών" area />
             <Field k="PaymentHistory" value={String(f.PaymentHistory ?? '')} onChange={v => setF(p => ({ ...p, PaymentHistory: v }))} label="Ιστορικό πληρωμών" area />

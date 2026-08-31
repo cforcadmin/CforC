@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import OcBankIntake from '@/components/oc/OcBankIntake'
 import OcSubscriptions, { type SubMemberRow } from '@/components/oc/OcSubscriptions'
 import OcContracts from '@/components/oc/OcContracts'
+import OcArrangeable from '@/components/oc/OcArrangeable'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
 import OcFinanceGuideModal from './OcFinanceGuideModal'
 
@@ -70,7 +71,7 @@ const CONNECTION_MESSAGES: Record<string, { title: string; detail: string }> = {
   },
 }
 
-export default function OcFinances({ canIssue, canManual = false, canRemind, members, subMembers, canContracts = false }: {
+export default function OcFinances({ canIssue, canManual = false, canRemind, members, subMembers, canContracts = false, seat = null }: {
   canIssue: boolean
   /** IT: μόνο χειροκίνητες καταχωρήσεις εξόδων */
   canManual?: boolean
@@ -79,6 +80,8 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
   subMembers: SubMemberRow[]
   /** Μητρώο συμβάσεων: Financer, Διαχείριση και IT (ίδιο με το API) */
   canContracts?: boolean
+  /** Ενεργή θέση — κάθε ρόλος έχει τη δική του σειρά καρτών */
+  seat?: string | null
 }) {
   const [series, setSeries] = useState<SeriesState | null>(null)
   const [listScope, setListScope] = useState<'recent' | 'all'>('recent')
@@ -402,8 +405,9 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
         </div>
       )}
 
+      <OcArrangeable section="finances" seat={seat}>
       {/* Συνδρομές: μετρητές + υπενθυμίσεις, πάντα πρώτο */}
-      <OcSubscriptions members={subMembers} canRemind={canRemind} canIssue={canIssue} onIssued={() => load()} />
+      <OcSubscriptions key="subscriptions" members={subMembers} canRemind={canRemind} canIssue={canIssue} onIssued={() => load()} />
 
       {notice && (
         <div role="status" className={`rounded-2xl px-5 py-4 text-sm font-medium ${
@@ -416,7 +420,7 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
       )}
 
       {/* Έκδοση απόδειξης — με τον επόμενο αριθμό της σειράς στην κεφαλίδα */}
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
+      <div key="issue" className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
         <button type="button" onClick={() => setOpenIssue(!openIssue)} className="w-full flex items-center gap-3 text-left"
           aria-expanded={openIssue}>
           <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Έκδοση απόδειξης</h2>
@@ -640,18 +644,18 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
       </div>
 
       {/* Μηνιαία επικόλληση κινήσεων τράπεζας */}
-      {series?.seeded && (
-        <OcBankIntake canIssue={canIssue} canManual={canManual} members={members} onIssued={() => load()} />
-      )}
+      {series?.seeded ? (
+        <OcBankIntake key="intake" canIssue={canIssue} canManual={canManual} members={members} onIssued={() => load()} />
+      ) : null}
 
       {/* Μηνιαία εικόνα: έγκριση μήνα από Financer (η αποστολή: Διαχείριση) */}
-      <OcMonthlyView mode="financer" canReady={canIssue} />
+      <OcMonthlyView key="monthly" mode="financer" canReady={canIssue} />
 
       {/* Μητρώο συμβάσεων — ίδια κάρτα και στη Διαχείριση, μία υλοποίηση */}
-      {canContracts && <OcContracts canEdit={canContracts} />}
+      {canContracts ? <OcContracts key="contracts" canEdit={canContracts} /> : null}
 
       {/* Λίστα αποδείξεων: πρόσφατες / όλες */}
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
+      <div key="receipts" className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
         <button type="button" onClick={() => setOpenList(!openList)} className="w-full flex items-center gap-3 text-left"
           aria-expanded={openList}>
           <h2 className="text-xl font-bold text-charcoal dark:text-gray-100">
@@ -764,6 +768,7 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
         </div>
         )}
       </div>
+      </OcArrangeable>
     </div>
   )
 }

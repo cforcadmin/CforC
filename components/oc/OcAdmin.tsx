@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import OcCalendar, { daysUntil, untilLabel, type CalEvent } from '@/components/oc/OcCalendar'
 import OcEventForm, { type SeatHolder } from '@/components/oc/OcEventForm'
 import OcContracts from '@/components/oc/OcContracts'
+import OcArrangeable from '@/components/oc/OcArrangeable'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
 import OcTasks from '@/components/oc/OcTasks'
 import OcAgenda from '@/components/oc/OcAgenda'
@@ -39,7 +40,7 @@ function Tile({ value, label, sub, accent }: { value: string; label: string; sub
   )
 }
 
-export default function OcAdmin({ canEdit, canDispatch, canContracts = false }: { canEdit: boolean; canDispatch: boolean; canContracts?: boolean }) {
+export default function OcAdmin({ canEdit, canDispatch, canContracts = false, seat = null }: { canEdit: boolean; canDispatch: boolean; canContracts?: boolean; seat?: string | null }) {
   const [events, setEvents] = useState<CalEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -89,8 +90,9 @@ export default function OcAdmin({ canEdit, canDispatch, canContracts = false }: 
 
   return (
     <div className="space-y-6">
+      <OcArrangeable section="admin" seat={seat}>
       {/* Τι έρχεται */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div key="upcoming" className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Tile
           value={nextBoard ? new Date(nextBoard.start).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' }) : '—'}
           label="Επόμενο ΔΣ"
@@ -113,13 +115,13 @@ export default function OcAdmin({ canEdit, canDispatch, canContracts = false }: 
       </div>
 
       {/* Ημερήσια διάταξη */}
-      <OcAgenda />
+      <OcAgenda key="agenda" />
 
       {/* Εκκρεμότητες */}
-      <OcTasks />
+      <OcTasks key="tasks" />
 
       {/* Ημερολόγιο */}
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
+      <div key="calendar" className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
         <div className="flex flex-wrap items-baseline justify-between gap-4 mb-5">
           <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Ημερολόγιο δράσεων</h2>
           <span className="text-base text-gray-500 dark:text-gray-400">όλα τα γεγονότα του δικτύου</span>
@@ -141,13 +143,13 @@ export default function OcAdmin({ canEdit, canDispatch, canContracts = false }: 
       </div>
 
       {/* Μηνιαία οικονομική εικόνα */}
-      <OcMonthlyView mode="admin" canDispatch={canDispatch} />
+      <OcMonthlyView key="monthly" mode="admin" canDispatch={canDispatch} />
 
       {/* Μητρώο συμβάσεων — η ίδια κάρτα με τα Οικονομικά */}
-      {canContracts && <OcContracts canEdit={canContracts} />}
+      {canContracts ? <OcContracts key="contracts" canEdit={canContracts} /> : null}
 
       {/* Σύνδεσμοι */}
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
+      <div key="links" className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
         <h2 className="text-xl font-bold text-charcoal dark:text-gray-100 mb-4">Έγγραφα &amp; εργαλεία</h2>
         <ul className="space-y-2.5">
           {LINKS.map(l => (
@@ -162,6 +164,7 @@ export default function OcAdmin({ canEdit, canDispatch, canContracts = false }: 
           ))}
         </ul>
       </div>
+      </OcArrangeable>
 
       {attendanceFor && (
         <OcAttendance

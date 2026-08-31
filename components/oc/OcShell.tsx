@@ -114,6 +114,8 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
   )
   // Direct entry without a stored seat and several seats held — ask in place
   const [showSeatModal, setShowSeatModal] = useState(!initialSeat && seats.length > 1)
+  // Καθολική επαναφορά διάταξης (Ρυθμίσεις): null → 'ask' → 'busy' → 'done'
+  const [layoutReset, setLayoutReset] = useState<null | 'ask' | 'busy' | 'done'>(null)
   // Οι ενότητες που βλέπει η τρέχουσα θέση (η «Διορθώσεις / Προτάσεις» μόνο το IT)
   const visibleSections = SECTIONS.filter(s => !('itOnly' in s && s.itOnly) || activeSeat === 'it')
   useEffect(() => {
@@ -516,6 +518,45 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
               <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-6">
                 Ρυθμίσεις
               </h2>
+              {/* Καθολική επαναφορά — η ΑΛΛΑΓΗ της διάταξης γίνεται επιτόπου,
+                  σε κάθε ενότητα· εδώ μένει μόνο το «σβήσ' τα όλα», που είναι
+                  σπάνιο και θέλει να το ψάξεις. */}
+              <div className="max-w-xl mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="font-bold text-charcoal dark:text-gray-100 mb-1">Διάταξη καρτών</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                  Τη σειρά των καρτών τη ρυθμίζεις μέσα σε κάθε ενότητα, με το κουμπί «Διάταξη».
+                  Εδώ μπορείς να τα επαναφέρεις όλα μαζί — σε κάθε ενότητα και για κάθε ρόλο σου,
+                  μαζί με τα πλάτη των στηλών.
+                </p>
+                {layoutReset === 'ask' ? (
+                  <span className="flex items-center gap-2">
+                    <span className="text-sm text-charcoal dark:text-gray-200">Σίγουρα;</span>
+                    <button type="button"
+                      onClick={async () => {
+                        setLayoutReset('busy')
+                        try {
+                          await fetch('/api/oc/ui-prefs', {
+                            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ reset: 'all' }),
+                          })
+                          setLayoutReset('done')
+                        } catch { setLayoutReset(null) }
+                      }}
+                      className="px-4 py-1.5 rounded-full bg-coral text-white text-sm font-bold">Ναι, επαναφορά</button>
+                    <button type="button" onClick={() => setLayoutReset(null)}
+                      className="px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-sm text-charcoal dark:text-gray-200">Άκυρο</button>
+                  </span>
+                ) : layoutReset === 'done' ? (
+                  <p className="text-sm text-green-700 dark:text-green-300">
+                    Έγινε ✓ — ανανέωσε τη σελίδα για να δεις τις προεπιλογές.
+                  </p>
+                ) : (
+                  <button type="button" onClick={() => setLayoutReset('ask')} disabled={layoutReset === 'busy'}
+                    className="px-5 py-2 rounded-full border border-gray-300 dark:border-gray-600 text-sm text-charcoal dark:text-gray-200 hover:border-coral disabled:opacity-40">
+                    {layoutReset === 'busy' ? 'Επαναφορά…' : 'Επαναφορά διάταξης παντού'}
+                  </button>
+                )}
+              </div>
               <div className="max-w-xl">
                 <h3 className="font-bold text-charcoal dark:text-gray-100 mb-1">
                   Προεπιλογή κατά τη σύνδεση
@@ -558,6 +599,7 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
               canManual={activeSeat === 'it'}
               canRemind={activeSeat === 'financer' || activeSeat === 'community'}
               canContracts={activeSeat === 'financer' || activeSeat === 'admin' || activeSeat === 'it'}
+              seat={activeSeat}
               members={(overview?.members || []).map(m => ({
                 docId: m.docId, name: m.name, am: m.am, email: m.email,
               }))}
@@ -573,6 +615,7 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
               canEdit={activeSeat === 'admin' || activeSeat === 'it'}
               canDispatch={activeSeat === 'admin' || activeSeat === 'it'}
               canContracts={activeSeat === 'financer' || activeSeat === 'admin' || activeSeat === 'it'}
+              seat={activeSeat}
             />
           )}
 

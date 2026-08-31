@@ -162,3 +162,67 @@ export async function mirrorContractsToSheet(list: ContractRecord[]): Promise<Mi
     return { ok: false, error: err instanceof Error ? err.message.slice(0, 120) : 'άγνωστο σφάλμα' }
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Οι λίστες επιλογών των πεδίων.
+
+   Δεν τις γράφουμε στον κώδικα: ζουν ως «επικύρωση δεδομένων» στο φύλλο και
+   τις διαβάζουμε από εκεί, ώστε μια νέα επιλογή να μη χρειάζεται αλλαγή
+   κώδικα. Αν το Google δεν απαντήσει, πέφτουμε στις τιμές που ξέρουμε ότι
+   χρησιμοποιούνται — η φόρμα δέχεται ούτως ή άλλως και ελεύθερο κείμενο.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/** Στήλη φύλλου → πεδίο της φόρμας */
+const OPTION_COLUMNS: Record<number, string> = {
+  6: 'ContractType',      // G
+  7: 'Project',           // H
+  15: 'PaymentMethod',    // P
+  16: 'PaymentFrequency', // Q
+  22: 'PaymentStatus',    // W
+}
+
+export const FALLBACK_OPTIONS: Record<string, string[]> = {
+  ContractType: ['Σύμβαση Έργου', 'Τίτλος Κτήσης', 'Μίσθωση'],
+  Project: ['CforC', 'Σ.Η.μα'],
+  PaymentMethod: ['Τιμολόγιο', 'Τίτλος Κτήσης', 'Μισθοδοσία'],
+  PaymentFrequency: ['Μηνιαία', 'Εφάπαξ', 'Σε Δόσεις (Milestones)'],
+  PaymentStatus: ['Εκκρεμεί Τιμολόγιο', 'Έτοιμο για eBanking', 'Πληρώθηκε', 'Σε αναμονή έγκρισης'],
+  // Χωρίς επικύρωση στο φύλλο — από τις τιμές που χρησιμοποιούνται
+  ContractStatus: ['ΕΝΕΡΓΗ', 'ΛΗΓΕΙ ΣΥΝΤΟΜΑ', 'ΛΗΞΗ'],
+  NextPaymentStatus: ['ΜΕΛΛΟΝΤΙΚΗ', 'ΕΧΕΙ ΚΑΘΥΣΤΕΡΗΣΕΙ'],
+}
+
+let optionsCache: { at: number; value: Record<string, string[]> } | null = null
+const OPTIONS_TTL_MS = 10 * 60 * 1000
+
+export async function fetchFieldOptions(): Promise<Record<string, string[]>> {
+  if (optionsCache && Date.now() - optionsCache.at < OPTIONS_TTL_MS) return optionsCache.value
+  const out: Record<string, string[]> = { ...FALLBACK_OPTIONS }
+  try {
+    const token = await getAccessToken(SCOPES.sheets)
+    if (token) {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONTRACTS_SHEET_ID}`
+        + `?includeGridData=true&ranges=${TAB}!A2:Z12&fields=sheets.data.rowData.values.dataValidation`
+      const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+      if (r.ok) {
+        const j = await r.json()
+        const rows = j?.sheets?.[0]?.data?.[0]?.rowData || []
+        for (const row of rows) {
+          const cells = row?.values || []
+          for (const [idx, field] of Object.entries(OPTION_COLUMNS)) {
+            const cond = cells[Number(idx)]?.dataValidation?.condition
+            if (cond?.type !== 'ONE_OF_LIST') continue
+            const vals = (cond.values || [])
+              .map((v: any) => String(v?.userEnteredValue || '').trim())
+              .filter(Boolean)
+            if (vals.length) out[field] = vals
+          }
+        }
+      }
+    }
+  } catch {
+    // Σιωπηλά: μένουν οι γνωστές τιμές
+  }
+  optionsCache = { at: Date.now(), value: out }
+  return out
+}

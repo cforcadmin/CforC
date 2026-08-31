@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
-import { mirrorContractsToSheet, type ContractRecord } from '@/lib/contractsSheet'
+import { mirrorContractsToSheet, fetchFieldOptions, type ContractRecord } from '@/lib/contractsSheet'
 
 export const maxDuration = 60
 
@@ -126,10 +126,12 @@ export async function GET(request: NextRequest) {
   if ('error' in auth) return auth.error
   try {
     const withArchived = request.nextUrl.searchParams.get('archived') === '1'
-    const all = await allContracts()
+    const [all, options] = await Promise.all([allContracts(), fetchFieldOptions()])
     return NextResponse.json({
       contracts: withArchived ? all : all.filter(c => !c.Archived),
       archivedCount: all.filter(c => c.Archived).length,
+      // Οι λίστες των πεδίων, όπως ορίζονται στο φύλλο (με cache 10 λεπτών)
+      options,
       seat: auth.activeSeat,
     })
   } catch {
