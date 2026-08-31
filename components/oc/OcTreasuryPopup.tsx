@@ -36,7 +36,12 @@ export default function OcTreasuryPopup({ canEdit, onClose, onSaved }: {
   const [unconfigured, setUnconfigured] = useState(false)
   const [adding, setAdding] = useState(false)
 
-  const today = new Date().toISOString().slice(0, 10)
+  // Ημερολόγιο Αθήνας, όχι UTC ούτε του υπολογιστή: ο έλεγχος «ενημερώθηκε
+  // αυτόν τον μήνα» γίνεται σε ώρα Αθήνας, και μια μέτρηση από άλλη ζώνη
+  // έπαιρνε ημερομηνία προηγούμενης ημέρας (31/8 ενώ στην Αθήνα ήταν 1/9).
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Athens', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date())
   const [bank, setBank] = useState('')
   const [cash, setCash] = useState('')
   const [asOf, setAsOf] = useState(today)

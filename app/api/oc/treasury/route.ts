@@ -52,9 +52,22 @@ async function authorize(needFinancer: boolean) {
 }
 
 /** Λείπει μέτρηση για τον τρέχοντα μήνα; */
-export function isStale(asOf: string | null | undefined): boolean {
+/**
+ * «Παλιά» μέτρηση = προηγούμενου μήνα ΚΑΙ πάνω από 7 ημερών.
+ *
+ * Η δεύτερη προϋπόθεση προστέθηκε στις 31/8/2026: μέτρηση καταχωρημένη
+ * λίγο πριν τα μεσάνυχτα εμφανιζόταν αμέσως ως εκπρόθεσμη, επειδή στην
+ * Αθήνα είχε ήδη αλλάξει ο μήνας. Ζητούμενο είναι να υπάρχει ΠΡΟΣΦΑΤΟΣ
+ * αριθμός, όχι αριθμός με τη σφραγίδα του τρέχοντος ημερολογιακού μήνα.
+ */
+export const STALE_GRACE_DAYS = 7
+
+export function isStale(asOf: string | null | undefined, today: string = athensToday()): boolean {
   if (!asOf) return true
-  return String(asOf).slice(0, 7) < athensToday().slice(0, 7)
+  const measured = String(asOf).slice(0, 10)
+  if (measured.slice(0, 7) >= today.slice(0, 7)) return false
+  const days = Math.floor((Date.parse(today) - Date.parse(measured)) / 86400000)
+  return !Number.isFinite(days) || days > STALE_GRACE_DAYS
 }
 
 export async function GET() {
