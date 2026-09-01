@@ -20,6 +20,10 @@ export interface SupplierAlias {
   category: ExpenseCategory | null
   /** Χρεώνεται αυτόματα (τραπεζικά έξοδα, κάρτα): ημ. πληρωμής = ημ. έκδοσης */
   autoPaid: boolean
+  /** Ένα τιμολόγιο τον μήνα για πολλές χρεώσεις (π.χ. προμήθειες τράπεζας) */
+  monthlyConsolidated: boolean
+  /** Πώς φαίνονται οι χρεώσεις του στην αιτιολογία της τράπεζας */
+  chargePattern: string | null
   docPrefix: string
   confirmations: number
 }
@@ -47,6 +51,8 @@ function toAlias(e: any): SupplierAlias {
     supplierTaxId: e.SupplierTaxId || null,
     category: (e.Category as ExpenseCategory) || null,
     autoPaid: !!e.AutoPaid,
+    monthlyConsolidated: !!e.MonthlyConsolidated,
+    chargePattern: e.ChargePattern || null,
     docPrefix: e.DefaultDocPrefix || '2.1',
     confirmations: e.Confirmations ?? 1,
   }

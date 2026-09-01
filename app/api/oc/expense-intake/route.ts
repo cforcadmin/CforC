@@ -276,6 +276,53 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    /* Πέρασμα 1β: ΕΝΙΑΙΟ ΜΗΝΙΑΙΟ ΤΙΜΟΛΟΓΙΟ.
+
+       Η Alpha σταμάτησε να εκδίδει τιμολόγιο ανά μεταφορά: βγάζει ένα στο
+       τέλος του μήνα για όλες τις προμήθειες, ενώ οι χρεώσεις παραμένουν
+       ξεχωριστές στις κινήσεις. Έτσι το ποσό του τιμολογίου δεν ταιριάζει με
+       καμία μεμονωμένη χρέωση και έμενε «τιμολόγιο χωρίς πληρωμή», με τις
+       χρεώσεις «χωρίς παραστατικό».
+
+       Εδώ αθροίζονται ΟΛΕΣ οι χρεώσεις του μήνα που ταιριάζουν με το μοτίβο
+       του προμηθευτή και συγκρίνονται με το τιμολόγιο. Στο φύλλο γράφεται ΜΙΑ
+       γραμμή — το παραστατικό είναι ένα, με έναν αριθμό και ένα ΜΑΡΚ. */
+    const consolidated: Record<string, {
+      supplierName: string
+      pattern: string
+      charges: Array<{ txnId: string; date: string; amount: number; reason: string }>
+      chargesTotal: number
+      invoiceAmount: number | null
+      difference: number | null
+      exact: boolean
+    }> = {}
+    for (const r of rows) {
+      if (r.existing || matched[r.fileId]) continue
+      const hint = r.parsed.supplierHint || r.suggestion.supplierName || ''
+      const al = hint ? lookupAlias(hint, aliases) : null
+      if (!al?.monthlyConsolidated) continue
+      const pattern = String(al.chargePattern || al.supplierName || '').trim()
+      if (!pattern) continue
+      const rx = new RegExp(pattern.split(/\s+/).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*'), 'i')
+      const hits = debits.filter(d => !d.used && rx.test(d.reason))
+      if (!hits.length) continue
+      const total = Math.round(hits.reduce((s2, d) => s2 + d.amount, 0) * 100) / 100
+      const inv = r.parsed.amount
+      const exact = inv !== null && Math.abs(total - inv) < 0.005
+      if (exact) {
+        for (const h of hits) h.used = true
+        const last = hits.reduce((a, b) => (a.date > b.date ? a : b))
+        matched[r.fileId] = { txnId: last.txnId, date: last.date, amount: total, reason: `${hits.length} χρεώσεις`, via: 'amount' }
+      }
+      consolidated[r.fileId] = {
+        supplierName: al.supplierName, pattern,
+        charges: hits.map(h => ({ txnId: h.txnId, date: h.date, amount: h.amount, reason: h.reason })),
+        chargesTotal: total, invoiceAmount: inv,
+        difference: inv === null ? null : Math.round((total - inv) * 100) / 100,
+        exact,
+      }
+    }
+
     // Πέρασμα 2: ΟΝΟΜΑ ΠΡΟΜΗΘΕΥΤΗ στην αιτιολογία, για όσα δεν έχουν ποσό
     // στο όνομα αρχείου («SΤRΑΡΙ», «ΖΟΟΜ.CΟΜ», «ΤΠΥ 110 ΚΛΗΡΟΝ…»).
     // Μοναδικό ταίριασμα μόνο — αν δύο χρεώσεις ταιριάζουν, αφήνεται στον
@@ -387,6 +434,7 @@ export async function POST(request: NextRequest) {
       matched,
       mismatches,
       carriedOver,
+      consolidated,
       reconciliation: {
         settledEarlier,
         debitsWithoutInvoice: leftoverDebits.map(d => ({
