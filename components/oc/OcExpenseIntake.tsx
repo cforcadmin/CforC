@@ -221,10 +221,16 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
 
   const selected = rows.filter(r => state[r.fileId]?.include && !results[r.fileId]?.ok)
   const isLink = (r: IntakeRow) => !!r.existing && r.existing.hasFile === false
+  /** Πληρωμή πριν από την έκδοση δεν υπάρχει — ούτε ως πρόταση, ούτε ως έγκριση */
+  const paidBeforeIssued = (fileId: string) => {
+    const st = state[fileId]
+    return !!st?.paymentDate && !!st?.issueDate && st.paymentDate < st.issueDate
+  }
+
   const ready = selected.filter(r => {
     if (isLink(r)) return true
     const st = state[r.fileId]
-    return st.issueDate && Number(st.payable) > 0
+    return st.issueDate && Number(st.payable) > 0 && !paidBeforeIssued(r.fileId)
   })
 
   async function approve() {
@@ -769,8 +775,14 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
                     </div>
                     <div>
                       <label className={labelCls}>Ημ. πληρωμής</label>
-                      <input type="date" className={inputCls} value={st.paymentDate}
+                      <input type="date" className={`${inputCls} ${paidBeforeIssued(r.fileId) ? 'border-red-500 ring-1 ring-red-500' : ''}`}
+                        value={st.paymentDate} min={st.issueDate || undefined}
                         onChange={e => patch(r.fileId, { paymentDate: e.target.value })} />
+                      {paidBeforeIssued(r.fileId) && (
+                        <p className="text-[11px] text-red-600 dark:text-red-400 mt-1">
+                          ⚠ Πληρωμή πριν από την έκδοση — αδύνατο. Διόρθωσέ το ή άφησέ το ανεξόφλητο.
+                        </p>
+                      )}
                       <label className="flex items-center gap-1.5 mt-1 text-[10px] text-gray-500 dark:text-gray-400">
                         <input type="checkbox" className="w-3 h-3 accent-coral" checked={st.autoPaid}
                           onChange={e => {

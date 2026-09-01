@@ -295,14 +295,60 @@ export async function POST(request: NextRequest) {
       return da.localeCompare(db) || a.fileName.localeCompare(b.fileName, 'el')
     })
 
+    /* Πέρασμα 3β: χρεώσεις που εξοφλούν παραστατικό προηγούμενου μήνα το
+       οποίο ΕΧΕΙ ΗΔΗ καταχωρηθεί ως πληρωμένο, με ημερομηνία πληρωμής μέσα
+       σε αυτόν τον μήνα.
+
+       Χωρίς αυτό, η χρέωση έπεφτε στα «χωρίς παραστατικό»: το αρχείο ζει στον
+       φάκελο του μήνα ΕΚΔΟΣΗΣ (σωστά) και το πέρασμα 3 κοιτά μόνο απλήρωτα.
+       Συνέβαινε κάθε μήνα στο μηνιαίο τιμολόγιο που εκδίδεται στο τέλος του
+       μήνα και πληρώνεται στις πρώτες μέρες του επόμενου (1/9/2026).
+
+       Δεν κρύβεται: μένει ως ΕΝΗΜΕΡΩΣΗ ώστε να ελεγχθούν οι ημερομηνίες
+       έκδοσης και πληρωμής — και κλείνει οριστικά με το ✕ (ReconAcked). */
+    const settledRes = await strapi(
+      `/expenses?filters[State][$eq]=approved&filters[Month][$lt]=${month}` +
+      `&filters[PaymentMethod][$ne]=unpaid&filters[PaymentDate][$gte]=${month}-01&filters[PaymentDate][$lte]=${month}-31` +
+      '&pagination[limit]=200&sort=PaymentDate:asc'
+      // Επίτηδες ΧΩΡΙΣ λίστα fields: το ReconAcked μπορεί να μην έχει φτάσει
+      // ακόμη στο Strapi Cloud, και ένα άγνωστο κλειδί ρίχνει ΟΛΟ το ερώτημα
+      // με 400 «Invalid key» — η ενημέρωση θα χανόταν σιωπηλά (1/9/2026).
+    )
+    const settledEarlier: Array<{
+      documentId: string; aa: string; month: string; supplierName: string | null
+      docRef: string | null; amount: number; issueDate: string | null; paymentDate: string | null
+      txnId: string | null; reason: string | null; hasFile: boolean
+    }> = []
+    for (const e of settledRes.json?.data || []) {
+      const amt = Number(e.PayableAmount) || 0
+      if (!(amt > 0)) continue
+      const hit = debits.find(d => !d.used && Math.abs(d.amount - amt) < 0.005)
+      if (hit) hit.used = true      // η χρέωση εξηγείται — δεν είναι «χωρίς παραστατικό»
+      if (e.ReconAcked) continue    // έχει ήδη ελεγχθεί από άνθρωπο
+      settledEarlier.push({
+        documentId: e.documentId, aa: e.Aa, month: e.Month, supplierName: e.SupplierName || null,
+        docRef: e.DocNumber || e.DocRef || null, amount: amt,
+        issueDate: e.IssueDate || null, paymentDate: e.PaymentDate || null,
+        txnId: hit?.txnId || null, reason: hit?.reason || null, hasFile: !!e.FileName,
+      })
+    }
+
     // ── Αντιστοίχιση με χρεώσεις ──
+    /* ΚΑΝΟΝΑΣ ΠΟΥ ΔΕΝ ΣΠΑΕΙ ΠΟΤΕ: μια χρέωση δεν μπορεί να πληρώνει
+       παραστατικό που δεν είχε ακόμη εκδοθεί. Χωρίς αυτό, ένα νέο τιμολόγιο
+       ίδιου ποσού «κληρονομούσε» την πληρωμή του προηγούμενου (1/9/2026: το
+       8.9 της 29/8 πήρε την πληρωμή 10/8 που ανήκε στο 7.9 του Ιουλίου). */
+    const payable = (d: { date: string }, issueDate: string | null) =>
+      !issueDate || String(d.date).slice(0, 10) >= String(issueDate).slice(0, 10)
+
     // Πέρασμα 1: ΠΟΣΟ (απόφαση Financer), oldest-first σε ισοπαλίες
     const matched: Record<string, { txnId: string; date: string; amount: number; reason: string; via: 'amount' | 'supplier' }> = {}
     const rowsWithAmount = rows
       .filter(r => !r.existing && r.parsed.amount !== null)
       .sort((a, b) => String(a.parsed.issueDate || '').localeCompare(String(b.parsed.issueDate || '')))
     for (const r of rowsWithAmount) {
-      const hit = debits.find(d => !d.used && Math.abs(d.amount - (r.parsed.amount as number)) < 0.005)
+      const hit = debits.find(d => !d.used && payable(d, r.parsed.issueDate)
+        && Math.abs(d.amount - (r.parsed.amount as number)) < 0.005)
       if (hit) {
         hit.used = true
         matched[r.fileId] = { txnId: hit.txnId, date: hit.date, amount: hit.amount, reason: hit.reason, via: 'amount' }
@@ -366,7 +412,8 @@ export async function POST(request: NextRequest) {
         const pattern = String(al.chargePattern || al.supplierName || '').trim()
         if (pattern) {
           const rx = new RegExp(pattern.split(/\s+/).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*'), 'i')
-          const hits = debits.filter(d => !d.used && !reservedTxn.has(d.txnId) && rx.test(d.reason))
+          const hits = debits.filter(d => !d.used && !reservedTxn.has(d.txnId)
+            && payable(d, r.parsed.issueDate) && rx.test(d.reason))
           if (hits.length) { makePairing(r, hits, 'rule', pattern, al.supplierName); continue }
         }
       }
@@ -375,7 +422,7 @@ export async function POST(request: NextRequest) {
       if (r.parsed.amount === null) continue
       const groups = new Map<string, typeof debits>()
       for (const d of debits) {
-        if (d.used || reservedTxn.has(d.txnId)) continue
+        if (d.used || reservedTxn.has(d.txnId) || !payable(d, r.parsed.issueDate)) continue
         const k = reasonKey(d.reason)
         if (!k) continue
         if (!groups.has(k)) groups.set(k, [])
@@ -403,7 +450,7 @@ export async function POST(request: NextRequest) {
       const hint = norm(r.suggestion.supplierName || r.parsed.supplierHint || '')
       if (hint.length < 4) continue
       const cands = debits.filter(d => {
-        if (d.used) return false
+        if (d.used || !payable(d, r.parsed.issueDate)) return false
         const reason = norm(d.reason || '')
         return reason.includes(hint.slice(0, 8)) || hint.includes(reason.slice(0, 8))
       })
@@ -439,44 +486,6 @@ export async function POST(request: NextRequest) {
         documentId: e.documentId, aa: e.Aa, month: e.Month, docRef: e.DocRef || null,
         supplierName: e.SupplierName || null, amount: amt, issueDate: e.IssueDate || null,
         txnId: hit.txnId, paymentDate: hit.date, reason: hit.reason,
-      })
-    }
-
-    /* Πέρασμα 3β: χρεώσεις που εξοφλούν παραστατικό προηγούμενου μήνα το
-       οποίο ΕΧΕΙ ΗΔΗ καταχωρηθεί ως πληρωμένο, με ημερομηνία πληρωμής μέσα
-       σε αυτόν τον μήνα.
-
-       Χωρίς αυτό, η χρέωση έπεφτε στα «χωρίς παραστατικό»: το αρχείο ζει στον
-       φάκελο του μήνα ΕΚΔΟΣΗΣ (σωστά) και το πέρασμα 3 κοιτά μόνο απλήρωτα.
-       Συνέβαινε κάθε μήνα στο μηνιαίο τιμολόγιο που εκδίδεται στο τέλος του
-       μήνα και πληρώνεται στις πρώτες μέρες του επόμενου (1/9/2026).
-
-       Δεν κρύβεται: μένει ως ΕΝΗΜΕΡΩΣΗ ώστε να ελεγχθούν οι ημερομηνίες
-       έκδοσης και πληρωμής — και κλείνει οριστικά με το ✕ (ReconAcked). */
-    const settledRes = await strapi(
-      `/expenses?filters[State][$eq]=approved&filters[Month][$lt]=${month}` +
-      `&filters[PaymentMethod][$ne]=unpaid&filters[PaymentDate][$gte]=${month}-01&filters[PaymentDate][$lte]=${month}-31` +
-      '&pagination[limit]=200&sort=PaymentDate:asc'
-      // Επίτηδες ΧΩΡΙΣ λίστα fields: το ReconAcked μπορεί να μην έχει φτάσει
-      // ακόμη στο Strapi Cloud, και ένα άγνωστο κλειδί ρίχνει ΟΛΟ το ερώτημα
-      // με 400 «Invalid key» — η ενημέρωση θα χανόταν σιωπηλά (1/9/2026).
-    )
-    const settledEarlier: Array<{
-      documentId: string; aa: string; month: string; supplierName: string | null
-      docRef: string | null; amount: number; issueDate: string | null; paymentDate: string | null
-      txnId: string | null; reason: string | null; hasFile: boolean
-    }> = []
-    for (const e of settledRes.json?.data || []) {
-      const amt = Number(e.PayableAmount) || 0
-      if (!(amt > 0)) continue
-      const hit = debits.find(d => !d.used && Math.abs(d.amount - amt) < 0.005)
-      if (hit) hit.used = true      // η χρέωση εξηγείται — δεν είναι «χωρίς παραστατικό»
-      if (e.ReconAcked) continue    // έχει ήδη ελεγχθεί από άνθρωπο
-      settledEarlier.push({
-        documentId: e.documentId, aa: e.Aa, month: e.Month, supplierName: e.SupplierName || null,
-        docRef: e.DocNumber || e.DocRef || null, amount: amt,
-        issueDate: e.IssueDate || null, paymentDate: e.PaymentDate || null,
-        txnId: hit?.txnId || null, reason: hit?.reason || null, hasFile: !!e.FileName,
       })
     }
 
@@ -623,6 +632,13 @@ async function approveExpenses(month: string, body: any, memberId: string, seat:
       if (!(payable > 0)) throw new Error('Λείπει ποσό')
 
       // 1) γραμμή στο ΕΞΟΔΑ — δίνει το επίσημο Α/Α
+      /* Ο ίδιος κανόνας και στην εγγραφή: ό,τι κι αν έστειλε η οθόνη, πληρωμή
+         πριν από την έκδοση δεν καταχωρείται ποτέ. */
+      if (it.paymentDate && it.issueDate && String(it.paymentDate) < String(it.issueDate)) {
+        results.push({ fileId: it.fileId, ok: false, error: `Η ημερομηνία πληρωμής (${it.paymentDate}) είναι πριν από την έκδοση (${it.issueDate})` })
+        continue
+      }
+
       const sheetRes = await webApp('appendExpense', {
         month,
         category: it.category || null,
