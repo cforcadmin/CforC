@@ -30,17 +30,25 @@ export interface CalendarEvent {
  * «Νewsletter» του ημερολογίου ξεκινά με ελληνικό Ν (U+039D). Χωρίς αυτή
  * τη μετατροπή το γεγονός θα έπεφτε σιωπηλά στην κατηγορία «συνάντηση».
  */
+/* Ελληνικά που μοιάζουν με λατινικά — πιάνει τίτλους γραμμένους ανάμεικτα.
+   Μόνο πεζά: η αντικατάσταση γίνεται ΜΕΤΑ το toLowerCase. */
 const LOOKALIKES: Record<string, string> = {
-  'Α': 'A', 'Β': 'B', 'Ε': 'E', 'Ζ': 'Z', 'Η': 'H', 'Ι': 'I', 'Κ': 'K',
-  'Μ': 'M', 'Ν': 'N', 'Ο': 'O', 'Ρ': 'P', 'Τ': 'T', 'Υ': 'Y', 'Χ': 'X',
-  'α': 'a', 'ε': 'e', 'ι': 'i', 'ο': 'o', 'ν': 'v', 'ρ': 'p', 'τ': 't', 'υ': 'u', 'χ': 'x',
+  'α': 'a', 'β': 'b', 'ε': 'e', 'ζ': 'z', 'η': 'h', 'ι': 'i', 'κ': 'k',
+  'μ': 'm', 'ν': 'v', 'ο': 'o', 'ρ': 'p', 'τ': 't', 'υ': 'u', 'χ': 'x',
 }
 
 function normalise(s: string): string {
+  /* Η ΣΕΙΡΑ έχει σημασία και κόστισε δύο σφάλματα (1/9/2026):
+     1) πεζά ΠΡΩΤΑ, γιατί το toLowerCase κάνει το τελικό «Σ» → «ς» (U+03C2)·
+        χωρίς μετατροπή σε «σ», κανένα «ΔΣ …» δεν αναγνωριζόταν ως Διοικητικά.
+     2) τόνοι ΠΡΙΝ από τα λατινικά ομοιώματα: αλλιώς το «έ» δεν γινόταν «e»
+        (δεν είναι στον πίνακα) ενώ το «ε» γινόταν — και το «Γενική Συνέλευση»
+        δεν ταίριαζε ποτέ με το literal «γενικη συνελευση». */
   return String(s || '')
-    .replace(/[ΑΒΕΖΗΙΚΜΝΟΡΤΥΧαειονρτυχ]/g, c => LOOKALIKES[c] ?? c)
     .toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')   // τόνοι
+    .replace(/\u03c2/g, 'σ')                                  // τελικό σίγμα
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')          // τόνοι
+    .replace(/[αβεζηικμνορτυχ]/g, c => LOOKALIKES[c] ?? c)     // ομοιώματα
     .trim()
 }
 
@@ -49,15 +57,20 @@ export function categorise(title: string, allDay: boolean): EventCategory {
   const t = normalise(title)
   if (t.includes('meet up cafe') || t.includes('meetup cafe')) return 'cafe'
   if (t.includes('ewsletter')) {
-    if (t.includes('εσωτερικ') || normalise('εσωτερικ') && t.includes('esoterik')) return 'newsletter-internal'
-    if (t.includes('εξωτερικ') || t.includes('eksoterik')) return 'newsletter-external'
+    // Τα λεκτικά περνούν ΚΑΙ αυτά από το normalise: το LOOKALIKES λατινίζει
+    // ε→e, ρ→p, τ→t κ.λπ., οπότε ένα ελληνικό literal δεν ταίριαζε ποτέ με το
+    // κανονικοποιημένο κείμενο — κάθε «εξωτερική» newsletter χαρακτηριζόταν
+    // εσωτερική (1/9/2026).
+    if (t.includes(normalise('εσωτερικ')) || t.includes('esoterik')) return 'newsletter-internal'
+    if (t.includes(normalise('εξωτερικ')) || t.includes('eksoterik')) return 'newsletter-external'
     // «Newsletter ENCC-Συλλογή υλικού» κ.λπ. → εσωτερική προετοιμασία
     return 'newsletter-internal'
   }
   if (t.includes('share my experience')) return 'share'
-  if (/(^|\s)(δσ|γσ)(\s|$)/.test(t) || t.includes('εκλογ') || t.includes('γενικη συνελευση')) return 'governance'
-  if (t.includes('deadline') || t.includes('dealine') || t.includes('προθεσμ')
-    || t.includes('παραδοτεο') || t.includes('λήγει') || t.includes('ληγει')) return 'deadline'
+  // Δέχεται «ΔΣ», «Δ.Σ.», «ΓΣ», «Γ.Σ.» — με ή χωρίς τελείες
+  if (/(^|\s)[δγ]\.?σ\.?(\s|$)/.test(t) || t.includes(normalise('εκλογ')) || t.includes(normalise('γενικη συνελευση'))) return 'governance'
+  if (t.includes('deadline') || t.includes('dealine') || t.includes(normalise('προθεσμ'))
+    || t.includes(normalise('παραδοτεο')) || t.includes(normalise('λήγει')) || t.includes(normalise('ληγει'))) return 'deadline'
   // Ολοήμερο χωρίς άλλη ένδειξη: συνήθως ορόσημο, όχι ραντεβού
   if (allDay) return 'deadline'
   return 'meeting'
