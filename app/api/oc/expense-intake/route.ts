@@ -276,50 +276,85 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    /* Πέρασμα 1β: ΕΝΙΑΙΟ ΜΗΝΙΑΙΟ ΤΙΜΟΛΟΓΙΟ.
+    /* Πέρασμα 1β: ΕΝΑ ΤΙΜΟΛΟΓΙΟ ↔ ΠΟΛΛΕΣ ΧΡΕΩΣΕΙΣ.
 
        Η Alpha σταμάτησε να εκδίδει τιμολόγιο ανά μεταφορά: βγάζει ένα στο
-       τέλος του μήνα για όλες τις προμήθειες, ενώ οι χρεώσεις παραμένουν
-       ξεχωριστές στις κινήσεις. Έτσι το ποσό του τιμολογίου δεν ταιριάζει με
-       καμία μεμονωμένη χρέωση και έμενε «τιμολόγιο χωρίς πληρωμή», με τις
-       χρεώσεις «χωρίς παραστατικό».
+       τέλος του μήνα, ενώ οι χρεώσεις μένουν ξεχωριστές στις κινήσεις. Το
+       ποσό δεν ταιριάζει με καμία μεμονωμένη χρέωση, οπότε η οθόνη ανέφερε
+       ΔΥΟ φορές το ίδιο πράγμα: «χρεώσεις χωρίς παραστατικό 14,00» και
+       «παραστατικό χωρίς πληρωμή 14,00», χωρίς να τα συνδέει (1/9/2026).
 
-       Εδώ αθροίζονται ΟΛΕΣ οι χρεώσεις του μήνα που ταιριάζουν με το μοτίβο
-       του προμηθευτή και συγκρίνονται με το τιμολόγιο. Στο φύλλο γράφεται ΜΙΑ
-       γραμμή — το παραστατικό είναι ένα, με έναν αριθμό και ένα ΜΑΡΚ. */
-    const consolidated: Record<string, {
-      supplierName: string
-      pattern: string
+       Εδώ γίνεται ΠΡΟΤΑΣΗ, όχι σιωπηλή αντιστοίχιση: το τελευταίο βήμα το
+       κάνει άνθρωπος. Δύο πηγές:
+         rule → ο προμηθευτής έχει σημανθεί «ενιαίο μηνιαίο τιμολόγιο»
+         auto → χωρίς καμία ρύθμιση: χρεώσεις με ΤΗΝ ΙΔΙΑ αιτιολογία που
+                αθροίζουν ακριβώς στο ποσό του τιμολογίου */
+    const reasonKey = (t: string) => String(t || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLocaleUpperCase('el').replace(/[^A-ZΑ-Ω0-9]/g, '')
+
+    interface Pairing {
+      fileId: string
+      fileName: string
+      invoiceAmount: number | null
+      supplierName: string | null
+      source: 'rule' | 'auto'
+      pattern: string | null
       charges: Array<{ txnId: string; date: string; amount: number; reason: string }>
       chargesTotal: number
-      invoiceAmount: number | null
       difference: number | null
       exact: boolean
-    }> = {}
-    for (const r of rows) {
-      if (r.existing || matched[r.fileId]) continue
-      const hint = r.parsed.supplierHint || r.suggestion.supplierName || ''
-      const al = hint ? lookupAlias(hint, aliases) : null
-      if (!al?.monthlyConsolidated) continue
-      const pattern = String(al.chargePattern || al.supplierName || '').trim()
-      if (!pattern) continue
-      const rx = new RegExp(pattern.split(/\s+/).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*'), 'i')
-      const hits = debits.filter(d => !d.used && rx.test(d.reason))
-      if (!hits.length) continue
-      const total = Math.round(hits.reduce((s2, d) => s2 + d.amount, 0) * 100) / 100
+    }
+    const pairings: Pairing[] = []
+    const reservedTxn = new Set<string>()
+    const reservedFile = new Set<string>()
+
+    const makePairing = (r: typeof rows[number], hits: typeof debits, source: 'rule' | 'auto', pattern: string | null, supplierName: string | null) => {
+      const total = Math.round(hits.reduce((a, d) => a + d.amount, 0) * 100) / 100
       const inv = r.parsed.amount
       const exact = inv !== null && Math.abs(total - inv) < 0.005
-      if (exact) {
-        for (const h of hits) h.used = true
-        const last = hits.reduce((a, b) => (a.date > b.date ? a : b))
-        matched[r.fileId] = { txnId: last.txnId, date: last.date, amount: total, reason: `${hits.length} χρεώσεις`, via: 'amount' }
-      }
-      consolidated[r.fileId] = {
-        supplierName: al.supplierName, pattern,
+      pairings.push({
+        fileId: r.fileId, fileName: r.fileName, invoiceAmount: inv, supplierName, source, pattern,
         charges: hits.map(h => ({ txnId: h.txnId, date: h.date, amount: h.amount, reason: h.reason })),
-        chargesTotal: total, invoiceAmount: inv,
-        difference: inv === null ? null : Math.round((total - inv) * 100) / 100,
-        exact,
+        chargesTotal: total, difference: inv === null ? null : Math.round((total - inv) * 100) / 100, exact,
+      })
+      // Δεσμεύονται ώστε να μη διπλοεμφανίζονται ως «πρόβλημα» παρακάτω
+      reservedFile.add(r.fileId)
+      for (const h of hits) reservedTxn.add(h.txnId)
+    }
+
+    for (const r of rows) {
+      if (r.existing || matched[r.fileId] || reservedFile.has(r.fileId)) continue
+      const hint = r.parsed.supplierHint || r.suggestion.supplierName || ''
+      const al = hint ? lookupAlias(hint, aliases) : null
+
+      // (α) Ρυθμισμένος προμηθευτής: μοτίβο στην αιτιολογία
+      if (al?.monthlyConsolidated) {
+        const pattern = String(al.chargePattern || al.supplierName || '').trim()
+        if (pattern) {
+          const rx = new RegExp(pattern.split(/\s+/).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*'), 'i')
+          const hits = debits.filter(d => !d.used && !reservedTxn.has(d.txnId) && rx.test(d.reason))
+          if (hits.length) { makePairing(r, hits, 'rule', pattern, al.supplierName); continue }
+        }
+      }
+
+      // (β) Χωρίς ρύθμιση: χρεώσεις με την ΙΔΙΑ αιτιολογία που αθροίζουν ακριβώς
+      if (r.parsed.amount === null) continue
+      const groups = new Map<string, typeof debits>()
+      for (const d of debits) {
+        if (d.used || reservedTxn.has(d.txnId)) continue
+        const k = reasonKey(d.reason)
+        if (!k) continue
+        if (!groups.has(k)) groups.set(k, [])
+        groups.get(k)!.push(d)
+      }
+      for (const [, g] of groups) {
+        if (g.length < 2) continue     // μία χρέωση την πιάνει ήδη το πέρασμα 1
+        const total = Math.round(g.reduce((a, d) => a + d.amount, 0) * 100) / 100
+        if (Math.abs(total - (r.parsed.amount as number)) < 0.005) {
+          makePairing(r, g, 'auto', g[0].reason, al?.supplierName || r.parsed.supplierHint || null)
+          break
+        }
       }
     }
 
@@ -425,8 +460,22 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const leftoverDebits = debits.filter(d => !d.used)
-    const unpaidInvoices = rows.filter(r => !r.existing && !matched[r.fileId])
+    const leftoverDebits = debits.filter(d => !d.used && !reservedTxn.has(d.txnId))
+    const unpaidInvoices = rows.filter(r => !r.existing && !matched[r.fileId] && !reservedFile.has(r.fileId))
+
+    /* Πανομοιότυπες χρεώσεις σε μία γραμμή: «4 × 3,50 € · ΕΞΟΔΑ INSTANT
+       TRANSF» αντί για τέσσερις ίδιες σειρές που κρύβουν το νόημα. */
+    const groupedLeftovers = Object.values(
+      leftoverDebits.reduce((acc: Record<string, { reason: string; amount: number; count: number; total: number; dates: string[]; txnIds: string[] }>, d) => {
+        const k = `${reasonKey(d.reason)}|${d.amount}`
+        if (!acc[k]) acc[k] = { reason: d.reason, amount: d.amount, count: 0, total: 0, dates: [], txnIds: [] }
+        acc[k].count += 1
+        acc[k].total = Math.round((acc[k].total + d.amount) * 100) / 100
+        acc[k].dates.push(d.date)
+        acc[k].txnIds.push(d.txnId)
+        return acc
+      }, {}),
+    )
 
     return NextResponse.json({
       month,
@@ -434,9 +483,10 @@ export async function POST(request: NextRequest) {
       matched,
       mismatches,
       carriedOver,
-      consolidated,
+      pairings,
       reconciliation: {
         settledEarlier,
+        groupedLeftovers,
         debitsWithoutInvoice: leftoverDebits.map(d => ({
           txnId: d.txnId, date: d.date, amount: d.amount, reason: d.reason,
         })),

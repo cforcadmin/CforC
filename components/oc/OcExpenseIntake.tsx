@@ -89,9 +89,10 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
   const [mismatches, setMismatches] = useState<Array<{ fileId: string; fileName: string; fromName: number; fromBank: number }>>([])
   const [recon, setRecon] = useState<any>(null)
   const [acking, setAcking] = useState<string | null>(null)
-  /** Ενιαίο μηνιαίο τιμολόγιο: ποιες χρεώσεις καλύπτει (ανά αρχείο) */
-  const [consolidated, setConsolidated] = useState<Record<string, any>>({})
+  /** Ένα τιμολόγιο ↔ πολλές χρεώσεις: προτάσεις προς επιβεβαίωση */
+  const [pairings, setPairings] = useState<any[]>([])
   const [groupPick, setGroupPick] = useState<Record<string, Record<string, boolean>>>({})
+  const [openCharges, setOpenCharges] = useState<Record<string, boolean>>({})
 
   /** «Το έλεγξα»: η ενημέρωση κλείνει στη βάση, για όλους */
   async function ackRecon(documentId: string) {
@@ -142,10 +143,11 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
       setCarriedPick(Object.fromEntries((data.carriedOver || []).map((c: any) => [c.documentId, true])))
       onCarriedMatched?.((data.carriedOver || []).map((c: any) => c.documentId))
       setRecon(data.reconciliation || null)
-      setConsolidated(data.consolidated || {})
-      // Προεπιλογή: όλες οι χρεώσεις του μοτίβου· ο άνθρωπος ξεδιαλέγει αν χρειαστεί
-      setGroupPick(Object.fromEntries(Object.entries(data.consolidated || {}).map(
-        ([fid, c]: [string, any]) => [fid, Object.fromEntries((c.charges || []).map((x: any) => [x.txnId, true]))])))
+      setPairings(data.pairings || [])
+      setOpenCharges({})
+      // Προεπιλογή: όλες οι προτεινόμενες χρεώσεις· ο άνθρωπος ξεδιαλέγει αν χρειαστεί
+      setGroupPick(Object.fromEntries((data.pairings || []).map(
+        (c: any) => [c.fileId, Object.fromEntries((c.charges || []).map((x: any) => [x.txnId, true]))])))
       setFolderUrl(data.folderUrl)
       if (data.folderMissing) {
         setWarnings(w => [...w, `Δεν βρέθηκε φάκελος εξόδων για τον μήνα ${month} στο Drive.`])
@@ -420,65 +422,78 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
         </p>
       )}
 
-      {/* Ενιαίο μηνιαίο τιμολόγιο: άθροισμα χρεώσεων έναντι ενός παραστατικού.
-          Αν το άθροισμα δεν βγαίνει (π.χ. χρέωση της 31ης που φάνηκε την 1η),
-          ξεδιαλέγεις χειροκίνητα ποιες καλύπτει. */}
-      {Object.entries(consolidated).map(([fileId, c]: [string, any]) => {
-        const picks = groupPick[fileId] || {}
+      {/* Προτάσεις αντιστοίχισης: ένα τιμολόγιο ↔ πολλές χρεώσεις.
+          Πρώτα ό,τι λύνεται με ένα κλικ — μετά τα υπόλοιπα. */}
+      {pairings.map((c: any) => {
+        const picks = groupPick[c.fileId] || {}
         const chosen = (c.charges || []).filter((x: any) => picks[x.txnId])
         const sum = Math.round(chosen.reduce((a: number, x: any) => a + x.amount, 0) * 100) / 100
         const inv = c.invoiceAmount
         const diff = inv === null ? null : Math.round((sum - inv) * 100) / 100
         const ok = diff !== null && Math.abs(diff) < 0.005
-        const row = rows.find(r => r.fileId === fileId)
+        const first = (c.charges || [])[0]
+        const sameAmount = (c.charges || []).every((x: any) => Math.abs(x.amount - (first?.amount || 0)) < 0.005)
+        const used = !!state[c.fileId]?.txnId && !!state[c.fileId]?.paymentDate
         return (
-          <div key={fileId} className={`mt-4 rounded-2xl px-5 py-4 text-sm border ${
+          <div key={c.fileId} className={`mt-4 rounded-2xl px-5 py-4 text-sm border ${
             ok ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
                : 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700'}`}>
             <p className="font-bold text-charcoal dark:text-gray-100">
-              Ενιαίο μηνιαίο τιμολόγιο — {c.supplierName}
+              {ok ? '💡 ΠΡΟΤΕΙΝΟΜΕΝΗ ΑΝΤΙΣΤΟΙΧΙΣΗ' : '⚠ ΤΑ ΠΟΣΑ ΔΕΝ ΣΥΜΦΩΝΟΥΝ'}
             </p>
-            <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5 mb-2">
-              {(c.charges || []).length} χρεώσεις με το μοτίβο «{c.pattern}».
-              {ok
-                ? ' Το άθροισμα συμφωνεί με το τιμολόγιο — καταχωρείται ΜΙΑ γραμμή, όπως και το παραστατικό.'
-                : ' Ξεδιάλεξε ποιες καλύπτει το τιμολόγιο, ή κράτησε τη διαφορά με σημείωση.'}
+            <p className="mt-1 notranslate text-charcoal dark:text-gray-200 break-all">
+              {c.fileName} · <strong>{inv !== null ? Number(inv).toFixed(2).replace('.', ',') : '—'} €</strong>
             </p>
-            <ul className="space-y-0.5">
-              {(c.charges || []).map((x: any) => (
-                <li key={x.txnId} className="flex items-center gap-2 text-xs">
-                  <input type="checkbox" className="accent-[#FF8B6A]" checked={!!picks[x.txnId]}
-                    onChange={e => setGroupPick(g => ({ ...g, [fileId]: { ...(g[fileId] || {}), [x.txnId]: e.target.checked } }))} />
-                  <span className="notranslate text-gray-700 dark:text-gray-300">
-                    {new Date(x.date).toLocaleDateString('el-GR')} · {x.amount.toFixed(2).replace('.', ',')} € · {x.reason}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-2 text-xs notranslate">
-              <strong>Επιλογή: {sum.toFixed(2).replace('.', ',')} €</strong>
-              {inv !== null && <> · τιμολόγιο {Number(inv).toFixed(2).replace('.', ',')} €</>}
-              {diff !== null && !ok && (
-                <span className="text-amber-800 dark:text-amber-200"> · διαφορά {diff > 0 ? '+' : ''}{diff.toFixed(2).replace('.', ',')} €</span>
-              )}
+            <p className="notranslate text-charcoal dark:text-gray-200">
+              ↔ {sameAmount && first
+                  ? `${(c.charges || []).length} × ${Number(first.amount).toFixed(2).replace('.', ',')} €`
+                  : `${(c.charges || []).length} χρεώσεις`}
+              {first?.reason ? ` · ${first.reason}` : ''}
+              {first?.date ? ` · ${new Date(first.date).toLocaleDateString('el-GR')}` : ''}
             </p>
-            {row && (
+            <p className={`text-xs mt-1 ${ok ? 'text-green-800 dark:text-green-200' : 'text-amber-800 dark:text-amber-200'}`}>
+              {ok ? 'Τα ποσά συμφωνούν ακριβώς.'
+                  : `Επιλογή ${sum.toFixed(2).replace('.', ',')} € έναντι τιμολογίου ${inv !== null ? Number(inv).toFixed(2).replace('.', ',') : '—'} € · διαφορά ${diff !== null ? (diff > 0 ? '+' : '') + diff.toFixed(2).replace('.', ',') : '—'} €`}
+              {c.source === 'rule' && ' · κανόνας προμηθευτή'}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2 mt-3">
               <button type="button"
                 onClick={() => {
                   const last = chosen.reduce((a: any, b: any) => (a && a.date > b.date ? a : b), null)
-                  patch(fileId, {
-                    include: true,
-                    paymentMethod: 'bank',
-                    paymentDate: last ? String(last.date).slice(0, 10) : state[fileId]?.paymentDate || '',
+                  patch(c.fileId, {
+                    include: true, paymentMethod: 'bank',
+                    paymentDate: last ? String(last.date).slice(0, 10) : '',
                     txnId: last?.txnId || '',
+                    payable: inv !== null ? String(inv) : state[c.fileId]?.payable || '',
                     notes: [`Καλύπτει ${chosen.length} χρεώσεις (${sum.toFixed(2).replace('.', ',')} €)`,
-                            ok ? '' : `διαφορά ${diff?.toFixed(2).replace('.', ',')} € έναντι τιμολογίου`,
-                            state[fileId]?.notes || ''].filter(Boolean).join(' · '),
+                            ok ? '' : `διαφορά ${diff?.toFixed(2).replace('.', ',')} €`,
+                            state[c.fileId]?.notes || ''].filter(Boolean).join(' · '),
                   })
                 }}
-                className="mt-3 px-4 py-1.5 rounded-full bg-coral text-white text-xs font-bold hover:bg-coral/90">
-                {ok ? 'Χρήση — μία γραμμή για όλες' : 'Χρήση με τη διαφορά (σημειώνεται)'}
+                disabled={chosen.length === 0}
+                className="px-4 py-1.5 rounded-full bg-coral text-white text-xs font-bold hover:bg-coral/90 disabled:opacity-40">
+                {used ? 'Ενημέρωση' : 'Χρήση'}
               </button>
+              <button type="button" onClick={() => setOpenCharges(o => ({ ...o, [c.fileId]: !o[c.fileId] }))}
+                className="px-4 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-xs font-bold text-charcoal dark:text-gray-200 hover:border-coral">
+                {openCharges[c.fileId] ? 'Απόκρυψη χρεώσεων' : 'Δείξε τις χρεώσεις'}
+              </button>
+              {used && <span className="text-xs text-green-700 dark:text-green-300">καταχωρήθηκε στη γραμμή ✓</span>}
+            </div>
+
+            {openCharges[c.fileId] && (
+              <ul className="mt-3 space-y-0.5 border-t border-black/10 dark:border-white/10 pt-2">
+                {(c.charges || []).map((x: any) => (
+                  <li key={x.txnId} className="flex items-center gap-2 text-xs">
+                    <input type="checkbox" className="accent-[#FF8B6A]" checked={!!picks[x.txnId]}
+                      onChange={e => setGroupPick(g => ({ ...g, [c.fileId]: { ...(g[c.fileId] || {}), [x.txnId]: e.target.checked } }))} />
+                    <span className="notranslate text-gray-700 dark:text-gray-300">
+                      {new Date(x.date).toLocaleDateString('el-GR')} · {x.amount.toFixed(2).replace('.', ',')} € · {x.reason}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         )
@@ -528,7 +543,7 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
         </div>
       )}
 
-      {recon && (recon.debitsWithoutInvoice?.length > 0 || recon.invoicesWithoutPayment?.length > 0 || recon.settledEarlier?.length > 0) && (
+      {recon && (
         <div className="mt-4 rounded-2xl bg-gray-50 dark:bg-gray-700/50 px-5 py-4 text-sm space-y-3">
           <p className="font-bold text-charcoal dark:text-gray-100">Συμφωνία μήνα</p>
           {recon.debitsWithoutInvoice?.length > 0 && (
@@ -538,9 +553,11 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
                 <span className="notranslate"> — σύνολο {Number(recon.debitsWithoutInvoiceTotal).toFixed(2).replace('.', ',')} €</span>
               </p>
               <ul className="mt-1 space-y-0.5 text-xs text-gray-600 dark:text-gray-300">
-                {recon.debitsWithoutInvoice.map((d: any, i: number) => (
-                  <li key={`${d.txnId}-${i}`} className="notranslate">
-                    {new Date(d.date).toLocaleDateString('el-GR')} · {Number(d.amount).toFixed(2).replace('.', ',')} € · {d.reason}
+                {(recon.groupedLeftovers || []).map((g: any, i: number) => (
+                  <li key={`${g.reason}-${g.amount}-${i}`} className="notranslate">
+                    {g.count > 1
+                      ? `${g.count} × ${Number(g.amount).toFixed(2).replace('.', ',')} € · ${g.reason} · ${[...new Set(g.dates.map((d: string) => new Date(d).toLocaleDateString('el-GR')))].join(', ')}`
+                      : `${new Date(g.dates[0]).toLocaleDateString('el-GR')} · ${Number(g.amount).toFixed(2).replace('.', ',')} € · ${g.reason}`}
                   </li>
                 ))}
               </ul>
@@ -600,6 +617,14 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
                 Φυσιολογικό αν είναι όντως απλήρωτα — θα πάρουν ημ. πληρωμής όταν εμφανιστούν σε επόμενη επικόλληση.
               </p>
             </div>
+          )}
+
+          {/* Όταν όλα δένουν, ο έλεγχος πρέπει να ΤΟ ΛΕΕΙ — αλλιώς δεν ξέρεις
+              αν έτρεξε ή αν απλώς δεν εμφανίστηκε τίποτα. */}
+          {!recon.debitsWithoutInvoice?.length && !recon.invoicesWithoutPayment?.length && (
+            <p className="text-green-800 dark:text-green-200 font-medium">
+              ✓ Καμία ανεξήγητη χρέωση · κανένα απλήρωτο παραστατικό
+            </p>
           )}
         </div>
       )}
