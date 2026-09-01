@@ -36,7 +36,7 @@ const PRESETS: Preset[] = [
 const inputCls = 'w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-base text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral'
 const labelCls = 'block text-sm font-bold text-gray-600 dark:text-gray-300 mb-1'
 
-export interface SeatHolder { name: string; email: string; personalEmail?: string; labels: string }
+export interface SeatHolder { name: string; email: string; personalEmail?: string; memberDocId?: string; labels: string }
 
 export default function OcEventForm({ event, date, seatHolders = [], onClose, onSaved }: {
   event?: CalEvent | null

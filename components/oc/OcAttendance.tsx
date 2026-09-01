@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { isBoardMeetingTitle } from '@/lib/greekText'
 
 /**
  * Καταγραφή παρουσιών σε δράση.
@@ -28,9 +29,11 @@ interface Record {
 const inputCls = 'w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-base text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral'
 const labelCls = 'block text-sm font-bold text-gray-600 dark:text-gray-300 mb-1'
 
-export default function OcAttendance({ event, members, onClose, onSaved }: {
+export default function OcAttendance({ event, members, boardMemberIds = [], onClose, onSaved }: {
   event: { id: string; title: string; start: string; category: string }
   members: MemberLite[]
+  /** Η σημερινή Συντονιστική Ομάδα — προσυμπληρώνεται στα ΔΣ */
+  boardMemberIds?: string[]
   onClose: () => void
   onSaved?: () => void
 }) {
@@ -43,6 +46,13 @@ export default function OcAttendance({ event, members, onClose, onSaved }: {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [recordedAt, setRecordedAt] = useState<string | null>(null)
+  /* Συνεδρίαση ΔΣ: παρόντες είναι κατά κανόνα όλη η Συντονιστική, και η
+     εξαίρεση είναι η απουσία. Προσυμπληρώνεται λοιπόν η ομάδα και αφαιρεί
+     όποιον έλειπε — αντί να τους διαλέγει έναν-έναν κάθε φορά.
+     ΜΟΝΟ σε νέα καταγραφή: αποθηκευμένη λίστα δεν πειράζεται ποτέ. */
+  const [prefilled, setPrefilled] = useState(false)
+  const isBoard = isBoardMeetingTitle(event.title)
+  const boardPresent = boardMemberIds.filter(id => members.some(m => m.documentId === id))
 
   useEffect(() => {
     fetch(`/api/oc/attendance?eventId=${encodeURIComponent(event.id)}`)
@@ -55,6 +65,9 @@ export default function OcAttendance({ event, members, onClose, onSaved }: {
           setGuestNames(rec.guestNames || '')
           setNotes(rec.notes || '')
           setRecordedAt(rec.recordedAt)
+        } else if (isBoard && boardPresent.length) {
+          setPicked(boardPresent)
+          setPrefilled(true)
         }
       })
       .catch(() => { /* νέα καταγραφή */ })
@@ -134,6 +147,20 @@ export default function OcAttendance({ event, members, onClose, onSaved }: {
                   ))}
                   {chosen.length === 0 && <span className="text-sm text-gray-400">Κανένα ακόμη</span>}
                 </div>
+                {isBoard && boardPresent.length > 0 && (
+                  <p className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    {prefilled
+                      ? <span>Προσυμπληρώθηκε η Συντονιστική Ομάδα ({boardPresent.length}) — αφαίρεσε όσους δεν ήταν παρόντες.</span>
+                      : <span>Συνεδρίαση ΔΣ.</span>}
+                    {boardPresent.some(id => !picked.includes(id)) && (
+                      <button type="button"
+                        onClick={() => setPicked(p => [...new Set([...p, ...boardPresent])])}
+                        className="px-2.5 py-0.5 rounded-full border border-gray-300 dark:border-gray-600 text-[11px] font-bold text-charcoal dark:text-gray-200 hover:border-coral">
+                        + Όλη η Συντονιστική
+                      </button>
+                    )}
+                  </p>
+                )}
                 <input className={inputCls} value={query} onChange={e => setQuery(e.target.value)}
                   placeholder="Αναζήτηση μέλους…" />
                 {hits.length > 0 && (

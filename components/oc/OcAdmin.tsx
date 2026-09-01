@@ -162,6 +162,7 @@ export default function OcAdmin({ canEdit, canDispatch, canContracts = false, se
         <OcAttendance
           event={{ id: attendanceFor.id, title: attendanceFor.title, start: attendanceFor.start, category: attendanceFor.category }}
           members={members}
+          boardMemberIds={[...new Set(seatHolders.map(h => h.memberDocId).filter(Boolean) as string[])]}
           onClose={() => setAttendanceFor(null)}
           onSaved={loadAttendance}
         />

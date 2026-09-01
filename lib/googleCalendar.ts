@@ -1,4 +1,5 @@
 import { getAccessToken, googleConfigured, SCOPES } from '@/lib/googleAuth'
+import { normaliseGreek } from '@/lib/greekText'
 
 /**
  * Ημερολόγιο δράσεων CforC — ανάγνωση από το κοινό Google Calendar.
@@ -25,52 +26,25 @@ export interface CalendarEvent {
   attendees: Array<{ email: string; name: string | null; status: string }>
 }
 
-/**
- * Ελληνικά κεφαλαία που μοιάζουν με λατινικά ΔΕΝ είναι λατινικά: το
- * «Νewsletter» του ημερολογίου ξεκινά με ελληνικό Ν (U+039D). Χωρίς αυτή
- * τη μετατροπή το γεγονός θα έπεφτε σιωπηλά στην κατηγορία «συνάντηση».
- */
-/* Ελληνικά που μοιάζουν με λατινικά — πιάνει τίτλους γραμμένους ανάμεικτα.
-   Μόνο πεζά: η αντικατάσταση γίνεται ΜΕΤΑ το toLowerCase. */
-const LOOKALIKES: Record<string, string> = {
-  'α': 'a', 'β': 'b', 'ε': 'e', 'ζ': 'z', 'η': 'h', 'ι': 'i', 'κ': 'k',
-  'μ': 'm', 'ν': 'v', 'ο': 'o', 'ρ': 'p', 'τ': 't', 'υ': 'u', 'χ': 'x',
-}
-
-function normalise(s: string): string {
-  /* Η ΣΕΙΡΑ έχει σημασία και κόστισε δύο σφάλματα (1/9/2026):
-     1) πεζά ΠΡΩΤΑ, γιατί το toLowerCase κάνει το τελικό «Σ» → «ς» (U+03C2)·
-        χωρίς μετατροπή σε «σ», κανένα «ΔΣ …» δεν αναγνωριζόταν ως Διοικητικά.
-     2) τόνοι ΠΡΙΝ από τα λατινικά ομοιώματα: αλλιώς το «έ» δεν γινόταν «e»
-        (δεν είναι στον πίνακα) ενώ το «ε» γινόταν — και το «Γενική Συνέλευση»
-        δεν ταίριαζε ποτέ με το literal «γενικη συνελευση». */
-  return String(s || '')
-    .toLowerCase()
-    .replace(/\u03c2/g, 'σ')                                  // τελικό σίγμα
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')          // τόνοι
-    .replace(/[αβεζηικμνορτυχ]/g, c => LOOKALIKES[c] ?? c)     // ομοιώματα
-    .trim()
-}
-
 /** Κατηγορία από τον τίτλο — καμία ρύθμιση, μόνο ό,τι ήδη γράφετε */
 export function categorise(title: string, allDay: boolean): EventCategory {
-  const t = normalise(title)
+  const t = normaliseGreek(title)
   if (t.includes('meet up cafe') || t.includes('meetup cafe')) return 'cafe'
   if (t.includes('ewsletter')) {
     // Τα λεκτικά περνούν ΚΑΙ αυτά από το normalise: το LOOKALIKES λατινίζει
     // ε→e, ρ→p, τ→t κ.λπ., οπότε ένα ελληνικό literal δεν ταίριαζε ποτέ με το
     // κανονικοποιημένο κείμενο — κάθε «εξωτερική» newsletter χαρακτηριζόταν
     // εσωτερική (1/9/2026).
-    if (t.includes(normalise('εσωτερικ')) || t.includes('esoterik')) return 'newsletter-internal'
-    if (t.includes(normalise('εξωτερικ')) || t.includes('eksoterik')) return 'newsletter-external'
+    if (t.includes(normaliseGreek('εσωτερικ')) || t.includes('esoterik')) return 'newsletter-internal'
+    if (t.includes(normaliseGreek('εξωτερικ')) || t.includes('eksoterik')) return 'newsletter-external'
     // «Newsletter ENCC-Συλλογή υλικού» κ.λπ. → εσωτερική προετοιμασία
     return 'newsletter-internal'
   }
   if (t.includes('share my experience')) return 'share'
   // Δέχεται «ΔΣ», «Δ.Σ.», «ΓΣ», «Γ.Σ.» — με ή χωρίς τελείες
-  if (/(^|\s)[δγ]\.?σ\.?(\s|$)/.test(t) || t.includes(normalise('εκλογ')) || t.includes(normalise('γενικη συνελευση'))) return 'governance'
-  if (t.includes('deadline') || t.includes('dealine') || t.includes(normalise('προθεσμ'))
-    || t.includes(normalise('παραδοτεο')) || t.includes(normalise('λήγει')) || t.includes(normalise('ληγει'))) return 'deadline'
+  if (/(^|\s)[δγ]\.?σ\.?(\s|$)/.test(t) || t.includes(normaliseGreek('εκλογ')) || t.includes(normaliseGreek('γενικη συνελευση'))) return 'governance'
+  if (t.includes('deadline') || t.includes('dealine') || t.includes(normaliseGreek('προθεσμ'))
+    || t.includes(normaliseGreek('παραδοτεο')) || t.includes(normaliseGreek('λήγει')) || t.includes(normaliseGreek('ληγει'))) return 'deadline'
   // Ολοήμερο χωρίς άλλη ένδειξη: συνήθως ορόσημο, όχι ραντεβού
   if (allDay) return 'deadline'
   return 'meeting'
