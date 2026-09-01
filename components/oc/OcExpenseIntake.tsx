@@ -466,9 +466,14 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
                     paymentDate: last ? String(last.date).slice(0, 10) : '',
                     txnId: last?.txnId || '',
                     payable: inv !== null ? String(inv) : state[c.fileId]?.payable || '',
+                    // Η προηγούμενη σημείωση κάλυψης αντικαθίσταται, δεν προστίθεται:
+                    // δεύτερο πάτημα έγραφε «Καλύπτει… · Καλύπτει…»
                     notes: [`Καλύπτει ${chosen.length} χρεώσεις (${sum.toFixed(2).replace('.', ',')} €)`,
                             ok ? '' : `διαφορά ${diff?.toFixed(2).replace('.', ',')} €`,
-                            state[c.fileId]?.notes || ''].filter(Boolean).join(' · '),
+                            String(state[c.fileId]?.notes || '')
+                              .split(' · ')
+                              .filter(part => !/^Καλύπτει \d+ χρεώσεις|^διαφορά /.test(part.trim()))
+                              .join(' · ')].filter(Boolean).join(' · '),
                   })
                 }}
                 disabled={chosen.length === 0}

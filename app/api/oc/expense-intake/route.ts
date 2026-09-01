@@ -262,6 +262,17 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    /* Η σειρά των γραμμών ΕΙΝΑΙ η σειρά του Α/Α: ο πελάτης αριθμεί όπως τις
+       λαμβάνει. Το Drive τις επιστρέφει αλφαβητικά, οπότε το «Alpha bank…»
+       της 31/8 έπαιρνε 8.7 και το «Zoom…» της 28/8 το 8.8 — αντίθετα από τη
+       σύμβαση του φύλλου, όπου το Α/Α ακολουθεί την ημερομηνία έκδοσης
+       (1/9/2026). Όσα δεν έχουν αναγνωρίσιμη ημερομηνία πάνε στο τέλος. */
+    rows.sort((a, b) => {
+      const da = a.parsed.issueDate || '9999-12-31'
+      const db = b.parsed.issueDate || '9999-12-31'
+      return da.localeCompare(db) || a.fileName.localeCompare(b.fileName, 'el')
+    })
+
     // ── Αντιστοίχιση με χρεώσεις ──
     // Πέρασμα 1: ΠΟΣΟ (απόφαση Financer), oldest-first σε ισοπαλίες
     const matched: Record<string, { txnId: string; date: string; amount: number; reason: string; via: 'amount' | 'supplier' }> = {}
