@@ -297,6 +297,7 @@ export async function GET(request: NextRequest) {
     // Έξοδα του μπλοκ του μήνα — μόνο εγκεκριμένα
     const expenses = (expRes.json?.data || []).map((e: any) => ({
       aa: e.Aa,
+      documentId: e.documentId,
       issueDate: e.IssueDate,
       docNumber: e.DocNumber || e.DocRef || null,
       mark: e.Mark || null,

@@ -39,12 +39,14 @@ interface MonthIncomeRecord {
 }
 
 interface MonthExpense {
+  documentId: string
   aa: string
   issueDate: string | null
   docNumber: string | null
   mark: string | null
   supplierName: string | null
   supplierTaxId: string | null
+  category: string | null
   categoryLabel: string | null
   withholding: number
   amount: number
@@ -96,6 +98,14 @@ function defaultMonth(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
+/** Οι κατηγορίες του ΕΞΟΔΑ, όπως τις ονομάζει το φύλλο */
+const CATEGORY_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'Office Expenses', label: 'Λειτουργικά' },
+  { value: 'Services', label: 'Υπηρεσίες' },
+  { value: 'Travel and Accommodation', label: 'Μετακινήσεις & διαμονή' },
+  { value: 'Others', label: 'Λοιπά' },
+]
+
 export default function OcMonthlyView({ mode, canReady = false, canDispatch = false }: {
   /** financer: Οικονομικά (έγκριση) · admin: Διαχείριση (αποστολή) */
   mode: 'financer' | 'admin'
@@ -110,6 +120,23 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const [savingCat, setSavingCat] = useState<string | null>(null)
+  /** Η κατηγορία διορθώνεται επιτόπου από όποιον μπορεί να κλείσει ή να στείλει τον μήνα */
+  const canEdit = canReady || canDispatch
+
+  async function setCategory(documentId: string, category: string) {
+    setSavingCat(documentId)
+    try {
+      const res = await fetch('/api/oc/expense-intake', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ month, action: 'setCategory', id: documentId, category }),
+      })
+      if (!res.ok) throw new Error((await res.json())?.error || 'Αποτυχία')
+      await load(month)
+    } catch (err: any) {
+      setError(err?.message || 'Αποτυχία αποθήκευσης κατηγορίας')
+    } finally { setSavingCat(null) }
+  }
   /** άλλαξε ΑΛΛΟΣ μήνας από άλλη κάρτα — το λέμε αντί να αλλάξουμε επιλογή */
   const [staleMonth, setStaleMonth] = useState<string | null>(null)
   const [closing, setClosing] = useState(false)
@@ -382,7 +409,22 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
                               {e.supplierTaxId && <span className="block text-xs text-gray-400 dark:text-gray-500 notranslate">ΑΦΜ {e.supplierTaxId}</span>}
                             </td>
                             <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400">
-                              {e.categoryLabel || <span className="text-orange-600 dark:text-orange-400">λείπει ⚠</span>}
+                              {canEdit ? (
+                                <select
+                                  value={e.category || ''}
+                                  disabled={savingCat === e.documentId}
+                                  onChange={ev => setCategory(e.documentId, ev.target.value)}
+                                  aria-label={`Κατηγορία για ${e.aa}`}
+                                  className={`rounded-lg border px-2 py-1 text-xs bg-white dark:bg-gray-700 ${
+                                    e.category
+                                      ? 'border-gray-300 dark:border-gray-600 text-charcoal dark:text-gray-100'
+                                      : 'border-orange-400 text-orange-700 dark:text-orange-300'}`}>
+                                  <option value="">λείπει ⚠</option>
+                                  {CATEGORY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                </select>
+                              ) : (
+                                e.categoryLabel || <span className="text-orange-600 dark:text-orange-400">λείπει ⚠</span>
+                              )}
                             </td>
                             <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400 notranslate">{e.docNumber || '—'}</td>
                             <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400 notranslate">{e.issueDate ? new Date(e.issueDate).toLocaleDateString('el-GR') : '—'}</td>
@@ -409,7 +451,9 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
                 {(data.unpaidCount > 0 || data.uncategorised > 0) && (
                   <p className="text-xs text-orange-700 dark:text-orange-300 rounded-xl bg-orange-50 dark:bg-orange-900/20 px-4 py-2.5">
                     {data.unpaidCount > 0 && `${data.unpaidCount} δαπάνη/ες χωρίς εξόφληση — μπαίνουν στο αρχείο του μήνα αλλά δεν έχουν φύγει από το ταμείο. `}
-                    {data.uncategorised > 0 && `${data.uncategorised} χωρίς κατηγορία — συμπλήρωσέ την στα Οικονομικά → Έξοδα ώστε να μπει σωστά στο ΕΞΟΔΑ.`}
+                    {data.uncategorised > 0 && (canEdit
+                      ? `${data.uncategorised} χωρίς κατηγορία — διάλεξέ την στη στήλη ΚΑΤΗΓΟΡΙΑ, εδώ πάνω. Αποθηκεύεται αμέσως.`
+                      : `${data.uncategorised} χωρίς κατηγορία — ο/η Financer μπορεί να τη συμπληρώσει από εδώ.`)}
                   </p>
                 )}
               </div>
@@ -463,7 +507,17 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
                   ) : (
                     <>
                       <span className="text-sm font-medium text-charcoal dark:text-gray-200">
-                        Έγκριση του {monthLabel(month)}; Η Διαχείριση θα μπορεί μετά να τον αποστείλει στο λογιστήριο.
+                        {data.uncategorised > 0 ? (
+                          <>
+                            <strong className="text-orange-700 dark:text-orange-300">
+                              {data.uncategorised} {data.uncategorised === 1 ? 'έξοδο' : 'έξοδα'} χωρίς κατηγορία.
+                            </strong>{' '}
+                            Η στήλη ΚΑΤΗΓΟΡΙΑ θα φτάσει κενή στο λογιστήριο — συμπλήρωσέ την πιο πάνω, στον πίνακα.
+                            Έγκριση του {monthLabel(month)} έτσι κι αλλιώς;
+                          </>
+                        ) : (
+                          <>Έγκριση του {monthLabel(month)}; Η Διαχείριση θα μπορεί μετά να τον αποστείλει στο λογιστήριο.</>
+                        )}
                       </span>
                       <button type="button" onClick={() => act('ready')} disabled={closing}
                         className="px-5 py-2 rounded-full bg-[#6A994E] text-white text-sm font-bold hover:opacity-90 disabled:opacity-40">

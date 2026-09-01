@@ -122,6 +122,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Μη έγκυρος μήνας' }, { status: 400 })
   }
 
+  /* Διόρθωση κατηγορίας σε ΕΓΚΕΚΡΙΜΕΝΟ έξοδο.
+
+     Η μηνιαία εικόνα έλεγε «συμπλήρωσέ την στα Οικονομικά → Έξοδα», αλλά εκεί
+     το πεδίο υπάρχει μόνο ΠΡΙΝ την έγκριση — μετά δεν υπήρχε πουθενά τρόπος
+     (1/9/2026). Το αρχείο προς το λογιστήριο παράγεται από το Strapi, οπότε η
+     διόρθωση εδώ φτάνει στον λογιστή· η στήλη του φύλλου ενημερώνεται χωριστά. */
+  if (body?.action === 'setCategory') {
+    const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
+    const category = String(body?.category || '').trim()
+    const ALLOWED = ['Office Expenses', 'Services', 'Travel and Accommodation', 'Others']
+    if (!id) return NextResponse.json({ error: 'Λείπει η εγγραφή' }, { status: 400 })
+    if (category && !ALLOWED.includes(category)) {
+      return NextResponse.json({ error: 'Άγνωστη κατηγορία' }, { status: 400 })
+    }
+    const r = await strapi(`/expenses/${id}`, 'PUT', { Category: category || null })
+    if (!r.ok) {
+      console.error('setCategory failed', r.status, id)
+      return NextResponse.json({ error: 'Αποτυχία αποθήκευσης' }, { status: 502 })
+    }
+    return NextResponse.json({ ok: true })
+  }
+
   if (body?.action === 'ackRecon') {
     const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
     if (!id) return NextResponse.json({ error: 'Λείπει η εγγραφή' }, { status: 400 })
