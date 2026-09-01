@@ -126,7 +126,13 @@ export async function POST(request: NextRequest) {
     const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
     if (!id) return NextResponse.json({ error: 'Λείπει η εγγραφή' }, { status: 400 })
     const r = await strapi(`/expenses/${id}`, 'PUT', { ReconAcked: true })
-    if (!r.ok) return NextResponse.json({ error: 'Αποτυχία σήμανσης' }, { status: 502 })
+    if (!r.ok) {
+      const msg = String(r.json?.error?.message || '')
+      if (/invalid key|ReconAcked/i.test(msg)) {
+        return NextResponse.json({ error: 'Η σήμανση θα δουλέψει μόλις ανέβει το πεδίο στη βάση — ενημέρωσε το IT' }, { status: 409 })
+      }
+      return NextResponse.json({ error: 'Αποτυχία σήμανσης' }, { status: 502 })
+    }
     return NextResponse.json({ ok: true })
   }
 
@@ -335,9 +341,10 @@ export async function POST(request: NextRequest) {
     const settledRes = await strapi(
       `/expenses?filters[State][$eq]=approved&filters[Month][$lt]=${month}` +
       `&filters[PaymentMethod][$ne]=unpaid&filters[PaymentDate][$gte]=${month}-01&filters[PaymentDate][$lte]=${month}-31` +
-      '&pagination[limit]=200&sort=PaymentDate:asc' +
-      '&fields[0]=Aa&fields[1]=Month&fields[2]=DocRef&fields[3]=DocNumber&fields[4]=SupplierName' +
-      '&fields[5]=PayableAmount&fields[6]=IssueDate&fields[7]=PaymentDate&fields[8]=ReconAcked&fields[9]=FileName'
+      '&pagination[limit]=200&sort=PaymentDate:asc'
+      // Επίτηδες ΧΩΡΙΣ λίστα fields: το ReconAcked μπορεί να μην έχει φτάσει
+      // ακόμη στο Strapi Cloud, και ένα άγνωστο κλειδί ρίχνει ΟΛΟ το ερώτημα
+      // με 400 «Invalid key» — η ενημέρωση θα χανόταν σιωπηλά (1/9/2026).
     )
     const settledEarlier: Array<{
       documentId: string; aa: string; month: string; supplierName: string | null
