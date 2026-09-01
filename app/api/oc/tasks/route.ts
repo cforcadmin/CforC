@@ -153,7 +153,13 @@ export async function GET(request: NextRequest) {
       getSeatHoldersWithEmail().catch(() => []),
       // Για πίνακες με εμβέλεια «μέλη»: ανάδοχος μπορεί να είναι οποιοδήποτε
       // μέλος, όχι μόνο οι επτά θέσεις
-      strapiAll('/members?sort=Name:asc&fields[0]=Name&fields[1]=AM&filters[HideProfile][$ne]=true'),
+      /* ΠΡΟΣΟΧΗ στο φίλτρο: το «$ne=true» ΔΕΝ πιάνει τα null — στη λογική της
+         βάσης το «NULL ≠ true» δεν είναι αληθές, οπότε η γραμμή πέφτει έξω.
+         Από τα 116 μέλη επέστρεφε 22: κρύβονταν σιωπηλά 69 μέλη που απλώς δεν
+         είχαν ποτέ οριστεί (1/9/2026 — δεν εμφανιζόταν μέλος στις Παρουσίες
+         ούτε ως ανάδοχος εκκρεμότητας). Ρητά λοιπόν: false Ή κενό. */
+      strapiAll('/members?sort=Name:asc&fields[0]=Name&fields[1]=AM'
+        + '&filters[$or][0][HideProfile][$eq]=false&filters[$or][1][HideProfile][$null]=true'),
     ])
     if (!boardsRes.ok) {
       // Η συλλογή μπορεί να μην έχει φτάσει ακόμη στο Strapi Cloud
