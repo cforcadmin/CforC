@@ -88,6 +88,22 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
   const [folderUrl, setFolderUrl] = useState<string | null>(null)
   const [mismatches, setMismatches] = useState<Array<{ fileId: string; fileName: string; fromName: number; fromBank: number }>>([])
   const [recon, setRecon] = useState<any>(null)
+  const [acking, setAcking] = useState<string | null>(null)
+
+  /** «Το έλεγξα»: η ενημέρωση κλείνει στη βάση, για όλους */
+  async function ackRecon(documentId: string) {
+    setAcking(documentId)
+    try {
+      const res = await fetch('/api/oc/expense-intake', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ month, action: 'ackRecon', id: documentId }),
+      })
+      if (!res.ok) throw new Error((await res.json())?.error || 'Αποτυχία')
+      setRecon((r: any) => (r ? { ...r, settledEarlier: (r.settledEarlier || []).filter((x: any) => x.documentId !== documentId) } : r))
+    } catch (err: any) {
+      setError(err?.message || 'Αποτυχία σήμανσης')
+    } finally { setAcking(null) }
+  }
   const [carried, setCarried] = useState<any[]>([])
   const [carriedPick, setCarriedPick] = useState<Record<string, boolean>>({})
   const [approving, setApproving] = useState(false)
@@ -441,7 +457,7 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
         </div>
       )}
 
-      {recon && (recon.debitsWithoutInvoice?.length > 0 || recon.invoicesWithoutPayment?.length > 0) && (
+      {recon && (recon.debitsWithoutInvoice?.length > 0 || recon.invoicesWithoutPayment?.length > 0 || recon.settledEarlier?.length > 0) && (
         <div className="mt-4 rounded-2xl bg-gray-50 dark:bg-gray-700/50 px-5 py-4 text-sm space-y-3">
           <p className="font-bold text-charcoal dark:text-gray-100">Συμφωνία μήνα</p>
           {recon.debitsWithoutInvoice?.length > 0 && (
@@ -462,6 +478,41 @@ export default function OcExpenseIntake({ canIssue, canManual = false, month, ki
               </p>
             </div>
           )}
+          {/* Εξοφλήσεις παραστατικών προηγούμενου μήνα: ενημέρωση, όχι σφάλμα.
+              Το (i) εξηγεί τι να ελεγχθεί· το ✕ την κλείνει για όλους. */}
+          {recon.settledEarlier?.length > 0 && (
+            <div>
+              <p className="text-charcoal dark:text-gray-200 font-medium flex items-center gap-1.5">
+                {recon.settledEarlier.length} {recon.settledEarlier.length === 1 ? 'χρέωση εξοφλεί' : 'χρεώσεις εξοφλούν'} παραστατικό προηγούμενου μήνα
+                <span className="relative inline-flex group">
+                  <span tabIndex={0} role="note" aria-label="Τι να ελέγξεις"
+                    className="w-4 h-4 rounded-full border border-gray-400 dark:border-gray-500 text-[10px] font-bold leading-none flex items-center justify-center text-gray-500 dark:text-gray-400 cursor-help">i</span>
+                  <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-72 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity z-40
+                    rounded-xl bg-charcoal text-white text-xs leading-relaxed px-3 py-2 shadow-lg">
+                    Δεν είναι λάθος: το παραστατικό ανήκει στον μήνα έκδοσής του και πληρώθηκε τώρα.
+                    Αξίζει όμως μια ματιά ότι είναι σωστές και οι δύο ημερομηνίες — έκδοσης και πληρωμής.
+                    Με το ✕ η ενημέρωση κλείνει οριστικά, για όλους.
+                  </span>
+                </span>
+              </p>
+              <ul className="mt-1 space-y-0.5 text-xs text-gray-600 dark:text-gray-300">
+                {recon.settledEarlier.map((x: any) => (
+                  <li key={x.documentId} className="flex items-baseline gap-2">
+                    <span className="notranslate">
+                      {x.aa} · {x.supplierName || '—'}{x.docRef ? ` · ${x.docRef}` : ''} · {Number(x.amount).toFixed(2).replace('.', ',')} €
+                      {' · '}έκδοση {x.issueDate ? new Date(x.issueDate).toLocaleDateString('el-GR') : '—'}
+                      {' · '}πληρωμή {x.paymentDate ? new Date(x.paymentDate).toLocaleDateString('el-GR') : '—'}
+                    </span>
+                    {!x.hasFile && <span className="text-amber-700 dark:text-amber-300">χωρίς αρχείο</span>}
+                    <button type="button" onClick={() => ackRecon(x.documentId)} disabled={acking === x.documentId}
+                      title="Το έλεγξα — να μην ξαναεμφανιστεί" aria-label="Το έλεγξα — να μην ξαναεμφανιστεί"
+                      className="ml-auto px-1.5 rounded-full text-gray-400 hover:text-coral hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-40">✕</button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {recon.invoicesWithoutPayment?.length > 0 && (
             <div>
               <p className="text-charcoal dark:text-gray-200 font-medium">

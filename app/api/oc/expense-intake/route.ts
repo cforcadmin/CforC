@@ -122,6 +122,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Μη έγκυρος μήνας' }, { status: 400 })
   }
 
+  if (body?.action === 'ackRecon') {
+    const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
+    if (!id) return NextResponse.json({ error: 'Λείπει η εγγραφή' }, { status: 400 })
+    const r = await strapi(`/expenses/${id}`, 'PUT', { ReconAcked: true })
+    if (!r.ok) return NextResponse.json({ error: 'Αποτυχία σήμανσης' }, { status: 502 })
+    return NextResponse.json({ ok: true })
+  }
+
   if (body?.action === 'approve') {
     const items: any[] = Array.isArray(body?.items) ? body.items : []
     const settlements: any[] = Array.isArray(body?.settlements) ? body.settlements : []
@@ -313,6 +321,43 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    /* Πέρασμα 3β: χρεώσεις που εξοφλούν παραστατικό προηγούμενου μήνα το
+       οποίο ΕΧΕΙ ΗΔΗ καταχωρηθεί ως πληρωμένο, με ημερομηνία πληρωμής μέσα
+       σε αυτόν τον μήνα.
+
+       Χωρίς αυτό, η χρέωση έπεφτε στα «χωρίς παραστατικό»: το αρχείο ζει στον
+       φάκελο του μήνα ΕΚΔΟΣΗΣ (σωστά) και το πέρασμα 3 κοιτά μόνο απλήρωτα.
+       Συνέβαινε κάθε μήνα στο μηνιαίο τιμολόγιο που εκδίδεται στο τέλος του
+       μήνα και πληρώνεται στις πρώτες μέρες του επόμενου (1/9/2026).
+
+       Δεν κρύβεται: μένει ως ΕΝΗΜΕΡΩΣΗ ώστε να ελεγχθούν οι ημερομηνίες
+       έκδοσης και πληρωμής — και κλείνει οριστικά με το ✕ (ReconAcked). */
+    const settledRes = await strapi(
+      `/expenses?filters[State][$eq]=approved&filters[Month][$lt]=${month}` +
+      `&filters[PaymentMethod][$ne]=unpaid&filters[PaymentDate][$gte]=${month}-01&filters[PaymentDate][$lte]=${month}-31` +
+      '&pagination[limit]=200&sort=PaymentDate:asc' +
+      '&fields[0]=Aa&fields[1]=Month&fields[2]=DocRef&fields[3]=DocNumber&fields[4]=SupplierName' +
+      '&fields[5]=PayableAmount&fields[6]=IssueDate&fields[7]=PaymentDate&fields[8]=ReconAcked&fields[9]=FileName'
+    )
+    const settledEarlier: Array<{
+      documentId: string; aa: string; month: string; supplierName: string | null
+      docRef: string | null; amount: number; issueDate: string | null; paymentDate: string | null
+      txnId: string | null; reason: string | null; hasFile: boolean
+    }> = []
+    for (const e of settledRes.json?.data || []) {
+      const amt = Number(e.PayableAmount) || 0
+      if (!(amt > 0)) continue
+      const hit = debits.find(d => !d.used && Math.abs(d.amount - amt) < 0.005)
+      if (hit) hit.used = true      // η χρέωση εξηγείται — δεν είναι «χωρίς παραστατικό»
+      if (e.ReconAcked) continue    // έχει ήδη ελεγχθεί από άνθρωπο
+      settledEarlier.push({
+        documentId: e.documentId, aa: e.Aa, month: e.Month, supplierName: e.SupplierName || null,
+        docRef: e.DocNumber || e.DocRef || null, amount: amt,
+        issueDate: e.IssueDate || null, paymentDate: e.PaymentDate || null,
+        txnId: hit?.txnId || null, reason: hit?.reason || null, hasFile: !!e.FileName,
+      })
+    }
+
     // Ασυμφωνία ποσού: όνομα αρχείου vs τράπεζα (εκεί πιάνονται τα λάθη
     // τύπου «Zoom 14,99 αντί 15,99»)
     const mismatches: Array<{ fileId: string; fileName: string; fromName: number; fromBank: number }> = []
@@ -336,6 +381,7 @@ export async function POST(request: NextRequest) {
       mismatches,
       carriedOver,
       reconciliation: {
+        settledEarlier,
         debitsWithoutInvoice: leftoverDebits.map(d => ({
           txnId: d.txnId, date: d.date, amount: d.amount, reason: d.reason,
         })),
