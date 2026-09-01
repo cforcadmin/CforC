@@ -11,6 +11,8 @@ import OcTreasuryPopup from '@/components/oc/OcTreasuryPopup'
 import OcMyTasks from '@/components/oc/OcMyTasks'
 import OcExportModal from '@/components/oc/OcExportModal'
 import { useColumnWidths } from '@/components/oc/useColumnWidths'
+import OcTile from '@/components/oc/OcTile'
+import { daysUntil as calDaysUntil, untilLabel, type CalEvent } from '@/components/oc/OcCalendar'
 
 const STATUS_META: Record<OcMemberStatus, { label: string; cls: string }> = {
   paid: { label: 'Τακτοποιημένο', cls: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' },
@@ -743,6 +745,18 @@ export default function OcOverview({
     m.renewalClaimedAt && (m.status === 'owes-1' || m.status === 'owes-2' || m.status === 'new-unpaid')
   ).length
 
+  // Επόμενο ΔΣ: το ίδιο πλακίδιο με τη Διαχείριση, ίδια πηγή (ημερολόγιο)
+  const [nextBoard, setNextBoard] = useState<CalEvent | null>(null)
+  useEffect(() => {
+    fetch('/api/oc/calendar?past=0&future=210')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        const ev = (d?.events || []).find((e: CalEvent) => e.category === 'governance' && calDaysUntil(e.start) >= 0)
+        setNextBoard(ev || null)
+      })
+      .catch(() => { /* σιωπηλά — το πλακίδιο δείχνει «—» */ })
+  }, [])
+
   // Ταμείο: τελευταία μέτρηση για το πλακίδιο (όλο το ΔΣ βλέπει)
   useEffect(() => {
     fetch('/api/oc/treasury')
@@ -1067,17 +1081,41 @@ export default function OcOverview({
         </div>
       )}
 
-      {/* Εκκρεμείς αιτήσεις — πρώτο μεγάλο block */}
+      {/* Επόμενο ΔΣ + εκκρεμείς αιτήσεις. Όταν δεν υπάρχει αίτηση, το κουτί
+          δεν χρειάζεται ύψος σελίδας για μία γραμμή: γίνεται λωρίδα δίπλα
+          στο πλακίδιο του ΔΣ. */}
+      {pending.length === 0 ? (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <OcTile
+            value={nextBoard ? new Date(nextBoard.start).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' }) : '—'}
+            label="Επόμενο ΔΣ"
+            sub={nextBoard ? untilLabel(nextBoard.start) : 'δεν έχει οριστεί στο ημερολόγιο'}
+            accent="#8E7CC3"
+            href={nextBoard?.meetLink || nextBoard?.htmlLink || null}
+            linkLabel={nextBoard?.meetLink ? 'Meet' : 'Στο ημερολόγιο'}
+          />
+          <div className="sm:col-span-1 lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl shadow-sm px-5 py-4 flex items-center gap-3">
+            <span className="font-bold text-charcoal dark:text-gray-100">Εκκρεμείς αιτήσεις μελών</span>
+            <span className="text-sm text-gray-400 dark:text-gray-500">καμία αυτή τη στιγμή 🎉</span>
+          </div>
+        </div>
+      ) : (
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <OcTile
+            value={nextBoard ? new Date(nextBoard.start).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' }) : '—'}
+            label="Επόμενο ΔΣ"
+            sub={nextBoard ? untilLabel(nextBoard.start) : 'δεν έχει οριστεί στο ημερολόγιο'}
+            accent="#8E7CC3"
+            href={nextBoard?.meetLink || nextBoard?.htmlLink || null}
+            linkLabel={nextBoard?.meetLink ? 'Meet' : 'Στο ημερολόγιο'}
+          />
+        </div>
         <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-4">
           Εκκρεμείς αιτήσεις μελών
-          {pending.length > 0 && (
-            <span className="ml-2 bg-coral text-white text-xs px-2 py-0.5 rounded-full align-middle">{pending.length}</span>
-          )}
+          <span className="ml-2 bg-coral text-white text-xs px-2 py-0.5 rounded-full align-middle">{pending.length}</span>
         </h3>
-        {pending.length === 0 ? (
-          <p className="text-gray-400 dark:text-gray-500 text-sm">Καμία εκκρεμής αίτηση αυτή τη στιγμή. 🎉</p>
-        ) : (
+        {(
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {pending.map(app => (
               <Link
@@ -1099,6 +1137,7 @@ export default function OcOverview({
           </div>
         )}
       </div>
+      )}
 
       {/* Οικονομικά + Προφίλ/Σύνδεσμοι δίπλα-δίπλα */}
       <div className="grid lg:grid-cols-2 gap-6">

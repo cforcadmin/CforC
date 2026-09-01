@@ -5,6 +5,7 @@ import OcCalendar, { daysUntil, untilLabel, type CalEvent } from '@/components/o
 import OcEventForm, { type SeatHolder } from '@/components/oc/OcEventForm'
 import OcContracts from '@/components/oc/OcContracts'
 import OcArrangeable from '@/components/oc/OcArrangeable'
+import OcTile from '@/components/oc/OcTile'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
 import OcTasks from '@/components/oc/OcTasks'
 import OcAgenda from '@/components/oc/OcAgenda'
@@ -28,17 +29,6 @@ const LINKS = [
   { label: 'Προϋπολογισμοί', href: 'https://drive.google.com/drive/folders/1IP8B8DBDYRU5r-R2LlzMT_294FI7yh62' },
 ]
 
-function Tile({ value, label, sub, accent }: { value: string; label: string; sub?: string; accent?: string }) {
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 flex flex-col">
-      <span className="text-3xl font-bold notranslate" style={accent ? { color: accent } : undefined}>
-        <span className={accent ? '' : 'text-charcoal dark:text-gray-100'}>{value}</span>
-      </span>
-      <span className="text-base text-gray-700 dark:text-gray-200 mt-1 leading-snug">{label}</span>
-      {sub && <span className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-snug">{sub}</span>}
-    </div>
-  )
-}
 
 export default function OcAdmin({ canEdit, canDispatch, canContracts = false, seat = null }: { canEdit: boolean; canDispatch: boolean; canContracts?: boolean; seat?: string | null }) {
   const [events, setEvents] = useState<CalEvent[]>([])
@@ -93,25 +83,27 @@ export default function OcAdmin({ canEdit, canDispatch, canContracts = false, se
       <OcArrangeable section="admin" seat={seat}>
       {/* Τι έρχεται */}
       <div key="upcoming" className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Tile
+        <OcTile
           value={nextBoard ? new Date(nextBoard.start).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' }) : '—'}
           label="Επόμενο ΔΣ"
           sub={nextBoard ? untilLabel(nextBoard.start) : 'δεν έχει οριστεί στο ημερολόγιο'}
           accent="#8E7CC3"
+          href={nextBoard?.meetLink || nextBoard?.htmlLink || null}
+          linkLabel={nextBoard?.meetLink ? 'Meet' : 'Στο ημερολόγιο'}
         />
-        <Tile
+        <OcTile
           value={String(deadlines30.length)}
           label="Προθεσμίες 30 ημερών"
           sub={nextDeadline ? `επόμενη: ${nextDeadline.title.slice(0, 34)}` : 'καμία σε εκκρεμότητα'}
           accent={deadlines30.length > 0 ? '#E9A13B' : undefined}
         />
-        <Tile
+        <OcTile
           value={nextCafe ? new Date(nextCafe.start).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' }) : '—'}
           label="Επόμενο Meet Up Cafe"
           sub={nextCafe ? untilLabel(nextCafe.start) : undefined}
           accent="#2A9D8F"
         />
-        <Tile value={String(upcoming.length)} label="Γεγονότα στο ημερολόγιο" sub="επόμενοι 7 μήνες" />
+        <OcTile value={String(upcoming.length)} label="Γεγονότα στο ημερολόγιο" sub="επόμενοι 7 μήνες" />
       </div>
 
       {/* Ημερήσια διάταξη */}
