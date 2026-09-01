@@ -426,7 +426,11 @@ export async function POST(request: NextRequest) {
         const adminFirst = adminSeat?.name?.split(/\s+/)[0] || null
         const tpl = monthReadyEmailHtml(adminFirst, monthLabelOf(month), financerSeat?.name || null,
           `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cultureforchange.net'}/oc`, summary)
-        notified = await sendOcEmail(SEAT_MAILBOX.admin, tpl.subject, tpl.html, { from: FINANCE_FROM, replyTo: FINANCE_EMAIL })
+        // Κοινοποίηση στο finance@: το μήνυμα φεύγει ΑΠΟ εκεί, και ο/η Financer
+        // πρέπει να έχει αντίγραφο του τι ζητήθηκε από τη Διαχείριση και πότε.
+        notified = await sendOcEmail(SEAT_MAILBOX.admin, tpl.subject, tpl.html, {
+          from: FINANCE_FROM, replyTo: FINANCE_EMAIL, cc: [FINANCE_EMAIL],
+        })
       } catch (e) {
         console.error('monthly-close: ready notice failed', e)
       }
