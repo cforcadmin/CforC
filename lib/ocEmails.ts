@@ -20,7 +20,10 @@ export const FINANCE_FROM = 'Culture for Change <finance@cultureforchange.net>'
 export const IT_FROM = 'Culture for Change <it@cultureforchange.net>'
 export const IT_EMAIL = 'it@cultureforchange.net'
 /** Διαχείριση/Γραμματεία: επίσημη αλληλογραφία (λογιστήριο κ.λπ.) */
-export const ADMIN_FROM = 'Culture for Change <admin@cultureforchange.net>'
+/* Και ως αποστολέας: το admin@ ανήκει στο IT και δεν το διαβάζει η Διαχείριση.
+   Όποιος απαντήσει αγνοώντας το reply-to, ή γράψει εξαρχής στη διεύθυνση που
+   βλέπει, πρέπει να φτάνει στο hello@ (2/9/2026). */
+export const ADMIN_FROM = 'Culture for Change <hello@cultureforchange.net>'
 /**
  * Πού ΔΙΑΒΑΖΕΙ η Διαχείριση: hello@, όχι admin@.
  *

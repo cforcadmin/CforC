@@ -16,7 +16,8 @@ describe('η Διαχείριση παραλαμβάνει στο hello@', () =>
     }
   })
 
-  it('το admin@ μένει μόνο ως ταυτότητα αποστολής', () => {
-    expect(ADMIN_FROM).toContain('admin@cultureforchange.net')
+  it('ούτε ως αποστολέας δεν εμφανίζεται το admin@', () => {
+    expect(ADMIN_FROM).toContain('hello@cultureforchange.net')
+    expect(ADMIN_FROM).not.toContain('admin@cultureforchange.net')
   })
 })
