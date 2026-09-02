@@ -51,13 +51,28 @@ export const PAYMENT_DETAILS = {
   paidNoticeAddress: 'finance@cultureforchange.net',
 }
 
-export async function sendOcEmail(
+export interface SendResult { ok: boolean; error?: string }
+
+/**
+ * Ίδια αποστολή, αλλά επιστρέφει ΚΑΙ τον λόγο αποτυχίας.
+ *
+ * Το σκέτο boolean έκρυβε το «γιατί»: στην αποστολή του Αυγούστου η οθόνη
+ * έλεγε μόνο «Αποτυχία αποστολής email» και κανείς δεν μπορούσε να μάθει αν
+ * έφταιγε ο παραλήπτης, το συνημμένο ή το δίκτυο (2/9/2026).
+ * Καταγράφεται μόνο κατάσταση και μήνυμα — ποτέ το περιεχόμενο.
+ */
+export async function sendOcEmailResult(
   to: string,
   subject: string,
   html: string,
   opts?: { from?: string; replyTo?: string; cc?: string[]; attachments?: Array<{ filename: string; content: string }> }
-): Promise<boolean> {
-  if (!RESEND_API_KEY) return false
+): Promise<SendResult> {
+  if (!RESEND_API_KEY) return { ok: false, error: 'Λείπει το RESEND_API_KEY' }
+  const clean = (a?: string) => String(a || '').trim().replace(/^["']|["']$/g, '')
+  const toClean = clean(to)
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(toClean)) {
+    return { ok: false, error: `Μη έγκυρος παραλήπτης: «${toClean}»` }
+  }
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -67,18 +82,37 @@ export async function sendOcEmail(
       },
       body: JSON.stringify({
         from: opts?.from || FROM,
-        to,
+        to: toClean,
         subject,
         html,
-        ...(opts?.replyTo && { reply_to: opts.replyTo }),
-        ...(opts?.cc?.length && { cc: opts.cc }),
+        ...(opts?.replyTo && { reply_to: clean(opts.replyTo) }),
+        ...(opts?.cc?.length && { cc: opts.cc.map(clean).filter(Boolean) }),
         ...(opts?.attachments?.length && { attachments: opts.attachments }),
       }),
     })
-    return res.ok
-  } catch {
-    return false
+    if (res.ok) return { ok: true }
+    let detail = ''
+    try {
+      const j = await res.json()
+      detail = String(j?.message || j?.error?.message || j?.name || '').slice(0, 200)
+    } catch { /* χωρίς σώμα */ }
+    console.error('resend: send failed', res.status, detail)
+    return { ok: false, error: `Το Resend απέρριψε την αποστολή (${res.status})${detail ? `: ${detail}` : ''}` }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message.slice(0, 160) : 'άγνωστο σφάλμα'
+    console.error('resend: request failed', msg)
+    return { ok: false, error: `Δεν ολοκληρώθηκε η κλήση προς το Resend: ${msg}` }
   }
+}
+
+/** Συμβατή μορφή για όσους δεν χρειάζονται τον λόγο */
+export async function sendOcEmail(
+  to: string,
+  subject: string,
+  html: string,
+  opts?: { from?: string; replyTo?: string; cc?: string[]; attachments?: Array<{ filename: string; content: string }> }
+): Promise<boolean> {
+  return (await sendOcEmailResult(to, subject, html, opts)).ok
 }
 
 const wrap = (inner: string) => `

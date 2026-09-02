@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, SEAT_MAILBOX, type OcSeat } from '@/lib/ocRoles'
 import { type ReceiptType } from '@/lib/receipts'
-import { sendOcEmail, monthlyDispatchEmailHtml, monthReadyEmailHtml, ADMIN_FROM, ADMIN_EMAIL, FINANCE_EMAIL, FINANCE_FROM } from '@/lib/ocEmails'
+import { sendOcEmail, sendOcEmailResult, monthlyDispatchEmailHtml, monthReadyEmailHtml, ADMIN_FROM, ADMIN_EMAIL, FINANCE_EMAIL, FINANCE_FROM } from '@/lib/ocEmails'
 
 /**
  * Μηνιαία εικόνα ΕΣΟΔΩΝ + ΕΞΟΔΩΝ και κλείσιμο μήνα («εστάλη στο λογιστήριο»).
@@ -199,8 +199,11 @@ async function monthFolderUrls(month: string): Promise<{ expenses: string | null
   if (!url || !secret) return { expenses: null, income: null }
   const call = async (action: string) => {
     try {
+      // Το Apps Script μπορεί να αργήσει πολύ· ένας σύνδεσμος-διευκόλυνση δεν
+      // επιτρέπεται να ρίξει ολόκληρη την αποστολή σε timeout της συνάρτησης.
       const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ secret, action, month }), redirect: 'follow', cache: 'no-store' })
+        body: JSON.stringify({ secret, action, month }), redirect: 'follow', cache: 'no-store',
+        signal: AbortSignal.timeout(10_000) })
       const j = JSON.parse(await res.text())
       return (j?.folderUrl as string) || null
     } catch { return null }
@@ -569,13 +572,19 @@ export async function POST(request: NextRequest) {
       signerName: adminSigner?.name || adminSigner?.engName || 'Culture for Change — Διαχείριση',
       viaFallback,
     })
-    const sent = await sendOcEmail(to_, tpl.subject, tpl.html, {
+    const sent = await sendOcEmailResult(to_, tpl.subject, tpl.html, {
       from: ADMIN_FROM,
       replyTo: ADMIN_EMAIL,
       cc: [FINANCE_EMAIL, ADMIN_EMAIL],
       attachments: [{ filename: `CforC-μηνιαία-εικόνα-${month}.csv`, content: Buffer.from(csv, 'utf8').toString('base64') }],
     })
-    if (!sent) return NextResponse.json({ error: 'Αποτυχία αποστολής email' }, { status: 502 })
+    if (!sent.ok) {
+      // Ο παραλήπτης στο μήνυμα: συνήθως εκεί κρύβεται το λάθος (κενή ή
+      // λάθος γραμμένη μεταβλητή περιβάλλοντος)
+      return NextResponse.json({
+        error: `Αποτυχία αποστολής προς ${to_}: ${sent.error || 'άγνωστο σφάλμα'}`,
+      }, { status: 502 })
+    }
 
     const upd = await strapi(`/monthly-closes/${existing.documentId}`, 'PUT', {
       SentAt: new Date().toISOString(),
