@@ -21,11 +21,19 @@ export const IT_FROM = 'Culture for Change <it@cultureforchange.net>'
 export const IT_EMAIL = 'it@cultureforchange.net'
 /** Διαχείριση/Γραμματεία: επίσημη αλληλογραφία (λογιστήριο κ.λπ.) */
 export const ADMIN_FROM = 'Culture for Change <admin@cultureforchange.net>'
-export const ADMIN_EMAIL = 'admin@cultureforchange.net'
+/**
+ * Πού ΔΙΑΒΑΖΕΙ η Διαχείριση: hello@, όχι admin@.
+ *
+ * Το admin@ είναι θυρίδα του IT και μένει μόνο ως ταυτότητα αποστολής
+ * (ADMIN_FROM). Κάθε κοινοποίηση, απάντηση και διεύθυνση επικοινωνίας προς τη
+ * Διαχείριση πηγαίνει στο hello@ — αλλιώς τα μηνύματα καταλήγουν σε γραμματοκιβώτιο
+ * που δεν παρακολουθεί κανείς (2/9/2026).
+ */
+export const ADMIN_EMAIL = 'hello@cultureforchange.net'
 /** Κοινοποίηση welcome email σε όλες τις εμπλεκόμενες θέσεις */
-export const WELCOME_CC = ['admin@cultureforchange.net', 'media@cultureforchange.net', 'communication@cultureforchange.net', 'it@cultureforchange.net']
+export const WELCOME_CC = ['hello@cultureforchange.net', 'media@cultureforchange.net', 'communication@cultureforchange.net', 'it@cultureforchange.net']
 /** Κοινοποίηση αποχαιρετιστήριου email στις εμπλεκόμενες θέσεις */
-export const DEPARTURE_CC = ['admin@cultureforchange.net', 'finance@cultureforchange.net', 'community@cultureforchange.net']
+export const DEPARTURE_CC = ['hello@cultureforchange.net', 'finance@cultureforchange.net', 'community@cultureforchange.net']
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https')
   ? process.env.NEXT_PUBLIC_SITE_URL
   : 'https://www.cultureforchange.net'
@@ -1723,7 +1731,7 @@ export function monthlyDispatchEmailHtml(
         <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:24px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">${signerName}</td></tr>
         <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">Διαχείριση - Culture for Change</td></tr>
         <tr><td height="6" style="height:6px;line-height:6px;font-size:0;">&nbsp;</td></tr>
-        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;mso-line-height-rule:exactly;"><a href="mailto:admin@cultureforchange.net" style="color:#C9552F;text-decoration:underline;">admin@cultureforchange.net</a></td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;mso-line-height-rule:exactly;"><a href="mailto:hello@cultureforchange.net" style="color:#C9552F;text-decoration:underline;">hello@cultureforchange.net</a></td></tr>
       </table>
     </td>
   </tr>
