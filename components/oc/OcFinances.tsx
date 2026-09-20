@@ -6,6 +6,7 @@ import OcSubscriptions, { type SubMemberRow } from '@/components/oc/OcSubscripti
 import OcContracts from '@/components/oc/OcContracts'
 import OcArrangeable from '@/components/oc/OcArrangeable'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
+import OcTreasuryPopup from '@/components/oc/OcTreasuryPopup'
 import OcFinanceGuideModal from './OcFinanceGuideModal'
 
 /**
@@ -104,8 +105,10 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
   // φαίνεται ΕΔΩ και όχι στη μέση μιας έγκρισης
   const [connection, setConnection] = useState<'ok' | 'unconfigured' | 'unauthorized' | 'unreachable' | null>(null)
   const [connChecking, setConnChecking] = useState(false)
-  /** Ταμείο: λείπει μέτρηση τρέχοντος μήνα — υπενθύμιση ΜΟΝΟ στον/στην Financer */
-  const [treasuryStale, setTreasuryStale] = useState<{ asOf: string | null } | null>(null)
+  /** Ταμείο: η τελευταία μέτρηση — για το πλακίδιο και την υπενθύμιση,
+   *  και τα δύο ΜΟΝΟ για τον/την Financer */
+  const [treasury, setTreasury] = useState<{ bank: number; asOf: string | null; stale: boolean } | null>(null)
+  const [showTreasury, setShowTreasury] = useState(false)
 
   // ---- φόρμα έκδοσης ----
   const [type, setType] = useState<TypeKey>('subscription')
@@ -168,13 +171,17 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
   }, [canIssue])
   useEffect(() => { checkStructure() }, [checkStructure])
 
-  useEffect(() => {
+  const loadTreasury = useCallback(() => {
     if (!canIssue) return
     fetch('/api/oc/treasury')
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d && d.stale && !d.unconfigured) setTreasuryStale({ asOf: d.latest?.asOf || null }) })
-      .catch(() => { /* σιωπηλά */ })
+      .then(d => {
+        if (!d || d.unconfigured) return
+        setTreasury({ bank: Number(d.latest?.bank ?? 0), asOf: d.latest?.asOf || null, stale: !!d.stale })
+      })
+      .catch(() => { /* σιωπηλά — το πλακίδιο μένει «—» */ })
   }, [canIssue])
+  useEffect(() => { loadTreasury() }, [loadTreasury])
 
   async function createYearStructure() {
     setYearBusy(true)
@@ -316,14 +323,52 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
 
   return (
     <div className="space-y-8">
-      {/* Οδηγίες μηνιαίου κύκλου — ίδιο περιεχόμενο με το email υπενθύμισης */}
-      <div className="flex justify-end">
+      {/* Ταμείο + Οδηγίες μηνιαίου κύκλου. Το πλακίδιο είναι το ΙΔΙΟ με της
+          Επισκόπησης — ίδια πηγή, ίδια όψη, ίδιο popup — ώστε ο/η Financer
+          να μη χρειάζεται να αλλάζει καρτέλα για μια μέτρηση. */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        {canIssue ? (
+          <button
+            type="button"
+            onClick={() => setShowTreasury(true)}
+            className="text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-coral rounded-2xl w-full sm:w-60"
+            aria-haspopup="dialog"
+          >
+            <div className={`relative rounded-2xl shadow-sm p-5 flex flex-col h-full hover:shadow-md transition-shadow border ${
+              treasury?.stale
+                ? 'bg-amber-50 dark:bg-amber-900/25 border-amber-300 dark:border-amber-700'
+                : 'bg-white dark:bg-gray-800 border-transparent hover:border-coral/40'
+            }`}>
+              {treasury?.stale && (
+                <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center shadow"
+                  title="Το ταμείο δεν έχει ενημερωθεί αυτόν τον μήνα">!</span>
+              )}
+              <span className="text-3xl font-bold text-charcoal dark:text-gray-100 notranslate">
+                {treasury ? `${Math.round(treasury.bank).toLocaleString('el-GR')} €` : '—'}
+              </span>
+              <span className="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-snug">Ταμείο</span>
+              <span className={`text-xs mt-0.5 ${treasury?.stale ? 'text-amber-700 dark:text-amber-300 font-medium' : 'text-coral dark:text-coral-light'}`}>
+                {treasury?.asOf
+                  ? `${treasury.stale ? '⚠ ' : ''}μέτρηση ${new Date(treasury.asOf).toLocaleDateString('el-GR')} →`
+                  : 'καταχώρηση μέτρησης →'}
+              </span>
+            </div>
+          </button>
+        ) : <span />}
         <button type="button" onClick={() => setShowGuide(true)}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full menu-glass glass-rim text-sm font-bold text-charcoal dark:text-gray-100 hover:bg-white/20 transition-colors">
           <span aria-hidden="true">🏦</span> Οδηγίες μηνιαίου κύκλου
         </button>
       </div>
       <OcFinanceGuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
+
+      {showTreasury && (
+        <OcTreasuryPopup
+          canEdit={canIssue}
+          onClose={() => setShowTreasury(false)}
+          onSaved={loadTreasury}
+        />
+      )}
 
       {/* Popup αποτυχίας χειροκίνητης έκδοσης — πάντα ορατό */}
       {issueError && (
@@ -345,21 +390,28 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
         </div>
       )}
 
-      {/* 🎉 Νέο έτος: πρόταση δημιουργίας δομής φακέλων Παραστατικών */}
-      {treasuryStale && (
-        <div className="rounded-3xl border-2 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-6">
+      {/* 🏦 Ταμείο: λείπει η μέτρηση του μήνα — η ίδια η υπενθύμιση ανοίγει
+          τη φόρμα καταχώρισης, χωρίς πέρασμα από την Επισκόπηση */}
+      {treasury?.stale && (
+        <button
+          type="button"
+          onClick={() => setShowTreasury(true)}
+          aria-haspopup="dialog"
+          className="w-full text-left rounded-3xl border-2 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-6 hover:bg-amber-100 dark:hover:bg-amber-900/35 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+        >
           <div className="flex flex-wrap items-center gap-4">
             <span className="text-2xl leading-none" aria-hidden="true">🏦</span>
             <div className="flex-1 min-w-[15rem]">
               <p className="font-bold text-charcoal dark:text-gray-100">Το ταμείο δεν έχει ενημερωθεί αυτόν τον μήνα</p>
               <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                {treasuryStale.asOf
-                  ? <>Τελευταία μέτρηση: <span className="notranslate">{new Date(treasuryStale.asOf).toLocaleDateString('el-GR')}</span>. Άνοιξε το πλακίδιο «Ταμείο» στην Επισκόπηση και καταχώρησε το υπόλοιπο της τράπεζας.</>
-                  : <>Δεν έχει καταχωρηθεί ποτέ μέτρηση. Άνοιξε το πλακίδιο «Ταμείο» στην Επισκόπηση.</>}
+                {treasury.asOf
+                  ? <>Τελευταία μέτρηση: <span className="notranslate">{new Date(treasury.asOf).toLocaleDateString('el-GR')}</span>. Πάτησε εδώ για να καταχωρήσεις το υπόλοιπο της τράπεζας.</>
+                  : <>Δεν έχει καταχωρηθεί ποτέ μέτρηση. Πάτησε εδώ για να καταχωρήσεις το υπόλοιπο της τράπεζας.</>}
               </p>
             </div>
+            <span className="text-sm font-bold text-amber-700 dark:text-amber-300 whitespace-nowrap">Καταχώρηση →</span>
           </div>
-        </div>
+        </button>
       )}
 
       {connection && connection !== 'ok' && CONNECTION_MESSAGES[connection] && (
