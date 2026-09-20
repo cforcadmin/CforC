@@ -51,3 +51,6 @@ docs/Subscribers-export-*.csv
 # Playwright: αποθηκευμένη συνεδρία των e2e tests
 playwright/.auth/
 .next-verify/
+
+# Τοπικά πειράματα σχεδιασμού — δεν ανήκουν στο repo
+Word animation loop design/
