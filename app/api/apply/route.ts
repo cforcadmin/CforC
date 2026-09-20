@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { applyLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 import { checkCsrf } from '@/lib/csrf'
 import { appendApplicantToSheet, sheetsConfigured } from '@/lib/googleSheets'
-import { sendOcEmail, applicationReceivedEmailHtml, COMMUNITY_FROM, COMMUNITY_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, applicationReceivedEmailHtml, COMMUNITY_FROM, COMMUNITY_EMAIL, APPLICATION_RECEIVED_CC } from '@/lib/ocEmails'
 import { getSeatHolder } from '@/lib/ocRoles'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://cultureforchange.net'
@@ -195,7 +195,9 @@ export async function POST(request: NextRequest) {
       const signer = await getSeatHolder('community')
       const signerName = signer?.engName || signer?.name || 'Culture for Change — Community'
       const tpl = applicationReceivedEmailHtml(data.FirstName.trim(), signerName)
-      await sendOcEmail(data.Email.trim(), tpl.subject, tpl.html, { from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL })
+      await sendOcEmail(data.Email.trim(), tpl.subject, tpl.html, {
+        from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL, cc: APPLICATION_RECEIVED_CC,
+      })
     } catch (emailErr) {
       console.error('Apply: confirmation email failed', emailErr)
     }

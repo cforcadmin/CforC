@@ -35,6 +35,14 @@ export const ADMIN_FROM = 'Culture for Change <hello@cultureforchange.net>'
 export const ADMIN_EMAIL = 'hello@cultureforchange.net'
 /** Κοινοποίηση welcome email σε όλες τις εμπλεκόμενες θέσεις */
 export const WELCOME_CC = ['hello@cultureforchange.net', 'media@cultureforchange.net', 'communication@cultureforchange.net', 'it@cultureforchange.net']
+
+/** Αντίγραφα της «ΛΑΒΑΜΕ ΤΗΝ ΑΙΤΗΣΗ ΣΟΥ»: Διαχείριση, Community, Οικονομικά —
+ *  ώστε να ξέρουν και οι τρεις ότι μπήκε νέα αίτηση, χωρίς να μπει κανείς στο OC. */
+export const APPLICATION_RECEIVED_CC = [
+  'hello@cultureforchange.net',
+  'community@cultureforchange.net',
+  'finance@cultureforchange.net',
+]
 /** Κοινοποίηση αποχαιρετιστήριου email στις εμπλεκόμενες θέσεις */
 export const DEPARTURE_CC = ['hello@cultureforchange.net', 'finance@cultureforchange.net', 'community@cultureforchange.net']
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https')
@@ -482,6 +490,80 @@ export function approvedEmailHtml(firstName: string, claimUrl: string, signerNam
 </html>
 `
   return { subject: 'Έγκριση αιτήματος εγγραφής — Culture for Change', html }
+}
+
+/**
+ * Έγκριση για αίτηση που ήρθε από την ΠΑΛΙΑ φόρμα Google.
+ *
+ * Ίδιο email με το κανονικό — χτίζεται πάνω του, ώστε να μην αποκλίνουν
+ * ποτέ τα δύο κείμενα — με μία επιπλέον ενότητα: η παλιά φόρμα δεν ζητούσε
+ * φωτογραφία προφίλ ούτε τα στοιχεία τιμολόγησης, και χωρίς αυτά δεν
+ * μπορούμε να φτιάξουμε το προφίλ ούτε να εκδώσουμε την απόδειξη.
+ *
+ * Ποιος το παίρνει: όποια αίτηση δεν έχει φωτογραφία — αυτό ακριβώς
+ * ξεχωρίζει τις μεταφερμένες αιτήσεις από όσες ήρθαν μέσω /apply.
+ */
+export function approvedLegacyEmailHtml(
+  firstName: string,
+  claimUrl: string,
+  signerName = 'Culture for Change — Community',
+): { subject: string; html: string } {
+  const base = approvedEmailHtml(firstName, claimUrl, signerName)
+  const extra = `
+  <!-- Συμπληρωματικά στοιχεία (αίτηση από την παλιά φόρμα) -->
+  <tr>
+    <td class="px" style="padding:8px 48px 0 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background-color:#F5F0EB;border-radius:16px;">
+        <tr>
+          <td style="padding:24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;mso-line-height-rule:exactly;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;letter-spacing:1.2px;color:#C9552F;font-weight:bold;mso-line-height-rule:exactly;">ΧΡΕΙΑΖΟΜΑΣΤΕ ΑΚΟΜΗ ΤΡΙΑ ΠΡΑΓΜΑΤΑ</td></tr>
+              <tr><td height="12" style="height:12px;line-height:12px;font-size:0;">&nbsp;</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;mso-line-height-rule:exactly;">
+                Η αίτησή σου υποβλήθηκε με την προηγούμενη φόρμα μας, η οποία δεν ζητούσε δύο στοιχεία που
+                χρειαζόμαστε για να ετοιμάσουμε το προφίλ σου και την απόδειξη είσπραξης. Απάντησε απλώς
+                σε αυτό το email με τα παρακάτω:
+              </td></tr>
+              <tr><td height="14" style="height:14px;line-height:14px;font-size:0;">&nbsp;</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;mso-line-height-rule:exactly;">
+                <strong>1. Φωτογραφία προφίλ</strong><br>
+                Μια καθαρή φωτογραφία σου (JPG ή PNG, έως 5MB) — αυτή θα συνοδεύει το προφίλ σου στην ιστοσελίδα.
+              </td></tr>
+              <tr><td height="8" style="height:8px;line-height:8px;font-size:0;">&nbsp;</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">
+                Ιδανικά <strong>τετράγωνη (αναλογία 1:1)</strong>, τουλάχιστον 1000×1000 pixels — 1200×1200 είναι η
+                καλύτερη επιλογή. Στη λίστα μελών η φωτογραφία εμφανίζεται σε κύκλο, οπότε κράτησε το πρόσωπο
+                κεντραρισμένο και άφησε λίγο χώρο γύρω του. Αν έχεις μόνο κατακόρυφη φωτογραφία, στείλ' την
+                όπως είναι και την προσαρμόζουμε εμείς.
+              </td></tr>
+              <tr><td height="14" style="height:14px;line-height:14px;font-size:0;">&nbsp;</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;mso-line-height-rule:exactly;">
+                <strong>2. Βιογραφικό για το προφίλ σου</strong><br>
+                Ένα σύντομο βιογραφικό στα <em>ελληνικά</em> (έως 200 λέξεις) και, αν θέλεις να εμφανίζεσαι και
+                στα αγγλικά, το αντίστοιχο κείμενο στα <em>αγγλικά</em>. Αυτό είναι το κείμενο που θα διαβάζουν
+                τα υπόλοιπα μέλη και οι επισκέπτες στη σελίδα σου.
+              </td></tr>
+              <tr><td height="14" style="height:14px;line-height:14px;font-size:0;">&nbsp;</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;mso-line-height-rule:exactly;">
+                <strong>3. Στοιχεία για την απόδειξη</strong><br>
+                Αν την θέλεις <em>στο όνομά σου</em>: πατρώνυμο και ΑΦΜ.<br>
+                Αν την θέλεις <em>σε εταιρεία</em>: επωνυμία, διεύθυνση έδρας και ΑΦΜ εταιρείας.
+              </td></tr>
+              <tr><td height="14" style="height:14px;line-height:14px;font-size:0;">&nbsp;</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">
+                Προαιρετικά: το ονοματεπώνυμό σου με λατινικούς χαρακτήρες, όπως θα ήθελες να εμφανίζεται
+                στην αγγλική εκδοχή της σελίδας σου.
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr><td height="8" style="height:8px;line-height:8px;font-size:0;">&nbsp;</td></tr>
+
+  <!-- Signature -->`
+  return { subject: base.subject, html: base.html.replace('  <!-- Signature -->', extra) }
 }
 
 /**

@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { verifyToken, generatePaymentClaimToken } from '@/lib/auth'
 import { resolveOcAccess, getBoardRoster, getSeatHolder, SEAT_LABELS, type OcSeat } from '@/lib/ocRoles'
 import { sendDecisionToSheet, sheetsConfigured } from '@/lib/googleSheets'
-import { sendOcEmail, approvedEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, approvedEmailHtml, approvedLegacyEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL } from '@/lib/ocEmails'
 import { OC_LAST_SEAT_COOKIE } from '@/components/oc/ocPrefs'
 
 /**
@@ -74,7 +74,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Μη έγκυρο αίτημα' }, { status: 400 })
   }
 
-  const appRes = await strapi(`/membership-applications/${applicationId}`)
+  // populate=Photo: στο Strapi v5 τα media ΔΕΝ έρχονται χωρίς ρητό populate,
+  // και η ύπαρξη φωτογραφίας είναι αυτή που ξεχωρίζει τις μεταφερμένες αιτήσεις
+  const appRes = await strapi(`/membership-applications/${applicationId}?populate=Photo`)
   const app = appRes.json?.data
   if (!app) {
     return NextResponse.json({ error: 'Η αίτηση δεν βρέθηκε' }, { status: 404 })
@@ -162,7 +164,10 @@ export async function POST(request: NextRequest) {
     // Υπογραφή: ο/η τρέχων κάτοχος της θέσης Community — όχι hardcoded όνομα
     const signer = await getSeatHolder('community')
     const signerName = signer?.engName || signer?.name || 'Culture for Change — Community'
-    const tpl = approvedEmailHtml(String(app.FirstName || '').trim() || 'μέλος', claim, signerName)
+    // Αίτηση χωρίς φωτογραφία = μεταφερμένη από την παλιά φόρμα Google: το
+    // email ζητά επιπλέον φωτογραφία προφίλ και στοιχεία τιμολόγησης
+    const template = app.Photo ? approvedEmailHtml : approvedLegacyEmailHtml
+    const tpl = template(String(app.FirstName || '').trim() || 'μέλος', claim, signerName)
     await sendOcEmail(String(app.Email).trim(), tpl.subject, tpl.html, { from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL })
   }
 
