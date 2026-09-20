@@ -6,6 +6,7 @@ import {
 import { generateReceiptPdf } from '@/lib/receiptPdf'
 import { createReceipt, markReceiptSent, syncReceiptToSheet, athensToday } from '@/lib/receipts'
 import { formatAmountForName } from '@/lib/invoiceFilename'
+import { enrolMemberInNewsletter } from '@/lib/newsletterMembers'
 
 /**
  * Ολοκλήρωση πληρωμής μέλους — ΚΟΙΝΗ λογική για τα δύο σημεία εκκίνησης:
@@ -77,15 +78,22 @@ function profileFromApplication(app: any): Record<string, any> {
   const fields = Array.isArray(app.FieldsOfActivity)
     ? app.FieldsOfActivity.join(', ')
     : String(app.FieldsOfActivity || '').trim()
+  // Το rich text του Strapi θέλει ΜΙΑ παράγραφο ανά κενή γραμμή — αλλιώς
+  // ολόκληρο το βιογραφικό προσγειώνεται ως ένα μπλοκ κειμένου
+  const blocks = (text: string) => String(text || '').trim().split(/\n\s*\n/)
+    .map(par => ({ type: 'paragraph', children: [{ type: 'text', text: par.replace(/\s*\n\s*/g, ' ').trim() }] }))
   const bioText = String(app.Bio || '').trim()
+  const engBio = String(app.BioEn || '').trim()
   const out: Record<string, any> = {
-    Bio: [{ type: 'paragraph', children: [{ type: 'text', text: bioText || ' ' }] }],
+    Bio: bioText ? blocks(bioText) : [{ type: 'paragraph', children: [{ type: 'text', text: ' ' }] }],
     FieldsOfWork: fields || ' ',
     City: String(app.ResidenceCity || '').trim() || ' ',
     Province: String(app.ResidenceRegion || '').trim() || ' ',
     Websites: links.join(', ') || undefined,
     Phone: has('phone') && app.Phone ? String(app.Phone).trim() : undefined,
   }
+  if (engBio) out.EngBio = blocks(engBio)
+  if (String(app.NameLatin || '').trim()) out.EngName = String(app.NameLatin).trim()
   if (app.Photo?.id) {
     out.Image = [app.Photo.id]
     out.ProfileImageAltText = `Φωτογραφία: ${app.FirstName || ''} ${app.LastName || ''}`.trim()
@@ -193,7 +201,29 @@ export async function processPaymentCompletion(input: PaymentCompletionInput): P
     application = r.ok ? 'completed' : `strapi ${r.status}`
   }
 
-  // 3) Emails ολοκλήρωσης: (α) welcome/πρώτη σύνδεση από IT (+cc),
+  // 3) Newsletter: πληρωμένο μέλος = μέλος στο newsletter. Γίνεται ΕΔΩ και
+  //    όχι στην πρώτη ενημέρωση προφίλ (παλιά συμπεριφορά) — πλέον η αίτηση
+  //    φέρνει φωτογραφία και βιογραφικό, οπότε το προφίλ είναι ήδη πλήρες.
+  //    Best-effort: αν πέσει ο Sender, η πληρωμή έχει ήδη ολοκληρωθεί.
+  let newsletter: Awaited<ReturnType<typeof enrolMemberInNewsletter>> | null = null
+  try {
+    newsletter = await enrolMemberInNewsletter({
+      email,
+      firstName: app?.FirstName || input.firstName,
+      lastName: app?.LastName || input.lastName,
+    })
+    if (newsletter.strapi === 'failed' || newsletter.sender === 'failed') {
+      console.error('payment completion: newsletter enrolment incomplete', newsletter)
+    }
+    if (memberDocId && newsletter.sender !== 'failed') {
+      const num = existing?.id ?? null
+      if (num) await strapi(`/members/${num}`, 'PUT', { AddedToPaidGroup: true })
+    }
+  } catch (e) {
+    console.error('payment completion: newsletter enrolment failed (non-fatal):', e)
+  }
+
+  // 4) Emails ολοκλήρωσης: (α) welcome/πρώτη σύνδεση από IT (+cc),
   //    (β) απόδειξη είσπραξης από finance@ — πάντα awaited (serverless)
   const firstName = String(app?.FirstName || input.firstName || '').trim() || 'μέλος'
   const fullName = `${String(app?.FirstName || input.firstName || '').trim()} ${String(app?.LastName || input.lastName || '').trim()}`.trim() || email
