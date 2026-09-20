@@ -362,7 +362,12 @@ function ParticipationContent() {
               </label>
             </div>
             <button
-              onClick={() => setShowRegistrationModal(true)}
+              /* Η αίτηση γίνεται πλέον στη σελίδα /apply. Ο μηχανισμός της
+                 παλιάς φόρμας Google (modal, tracking id, polling, ευχαριστήριο)
+                 μένει σκόπιμα στη θέση του, απενεργοποιημένος: δεν τον καλεί
+                 κανείς, αλλά η επιστροφή «?submitted=true» εξακολουθεί να
+                 δουλεύει για όποιον είχε ήδη ανοίξει τη φόρμα. */
+              onClick={() => router.push('/apply')}
               disabled={!agreedToTerms}
               className={cool
                 ? 'bg-white/50 dark:bg-white/10 text-coral dark:text-coral-light border-2 border-coral dark:border-coral-light px-8 py-4 rounded-full text-lg font-bold hover:bg-coral hover:text-white dark:hover:bg-coral-light dark:hover:text-gray-900 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none'
