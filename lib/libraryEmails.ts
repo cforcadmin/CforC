@@ -28,46 +28,67 @@ function shell(opts: {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
+<!-- «light only»: δηλώναμε ότι υποστηρίζουμε σκούρο θέμα ενώ στέλναμε μόνο
+     ανοιχτά χρώματα. Το Apple Mail γύριζε τότε το λευκό χαρτί σε σχεδόν μαύρο
+     και ΑΦΗΝΕ το κείμενο σκούρο — γκρι πάνω σε μαύρο, αδιάβαστο. -->
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>${esc(opts.heading)} — Culture for Change</title>
 <!--[if mso]>
 <style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
 <![endif]-->
 <style>
+  :root{color-scheme:light only;supported-color-schemes:light only;}
   @media only screen and (max-width:620px){
     .px{padding-left:24px !important;padding-right:24px !important;}
     .btn a{display:block !important;}
     .h1{font-size:26px !important;line-height:32px !important;}
   }
+  /* Και για όσους πελάτες αντιστρέφουν έτσι κι αλλιώς (Gmail app, Outlook.com):
+     επιβάλλουμε τα δικά μας χρώματα αντί να τους αφήσουμε να μαντέψουν. */
+  @media (prefers-color-scheme: dark){
+    .paper{background-color:#FFFFFF !important;}
+    .ground{background-color:#F5F0EB !important;}
+    .ink, .ink *{color:#2D2D2D !important;}
+    .ink-soft, .ink-soft *{color:#5A5A5A !important;}
+    .ink-faint{color:#8A8A8A !important;}
+    .panel{background-color:#F5F0EB !important;}
+    .on-coral{color:#2D2D2D !important;}
+    .on-coral-eyebrow{color:#FFFFFF !important;}
+    .footer-ink{color:#F5F0EB !important;}
+    a.brand-link{color:#C9552F !important;}
+  }
+  [data-ogsc] .paper{background-color:#FFFFFF !important;}
+  [data-ogsc] .ink, [data-ogsc] .ink *{color:#2D2D2D !important;}
+  [data-ogsc] .ink-soft, [data-ogsc] .ink-soft *{color:#5A5A5A !important;}
 </style>
 </head>
-<body style="margin:0;padding:0;background-color:#F5F0EB;">
+<body class="ground" style="margin:0;padding:0;background-color:#F5F0EB;">
 <span style="display:none;font-size:1px;color:#F5F0EB;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${esc(opts.preheader)}</span>
 
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="ground" style="background-color:#F5F0EB;">
 <tr><td align="center" style="padding:32px 12px 48px 12px;">
 
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #E5E7EB;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="paper" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #E5E7EB;">
 
   <tr>
     <td class="px" style="background-color:#FF8B6A;padding:36px 48px 32px 48px;">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:16px;letter-spacing:1.6px;color:#FFFFFF;font-weight:bold;mso-line-height-rule:exactly;">CULTURE FOR CHANGE</td></tr>
+        <tr><td class="on-coral-eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:16px;letter-spacing:1.6px;color:#FFFFFF;font-weight:bold;mso-line-height-rule:exactly;">CULTURE FOR CHANGE</td></tr>
         <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
-        <tr><td class="h1" style="font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:36px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">${esc(opts.heading)}</td></tr>
+        <tr><td class="h1 on-coral" style="font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:36px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">${esc(opts.heading)}</td></tr>
       </table>
     </td>
   </tr>
 
   <tr>
-    <td class="px" style="padding:40px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+    <td class="px ink" style="padding:40px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
       ${opts.body}
     </td>
   </tr>
 
   <tr>
-    <td class="px" style="padding:32px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+    <td class="px ink" style="padding:32px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
       <p style="margin:0;">Φιλικά,</p>
     </td>
   </tr>
@@ -76,10 +97,10 @@ function shell(opts: {
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:#E5E7EB;">&nbsp;</td></tr>
         <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
-        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:24px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">${esc(opts.signer)}</td></tr>
-        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">${esc(opts.signerRole)}</td></tr>
+        <tr><td class="ink" style="font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:24px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">${esc(opts.signer)}</td></tr>
+        <tr><td class="ink-soft" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">${esc(opts.signerRole)}</td></tr>
         <tr><td height="6" style="height:6px;line-height:6px;font-size:0;">&nbsp;</td></tr>
-        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;mso-line-height-rule:exactly;"><a href="mailto:${esc(opts.signerEmail)}" style="color:#C9552F;text-decoration:underline;">${esc(opts.signerEmail)}</a></td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;mso-line-height-rule:exactly;"><a class="brand-link" href="mailto:${esc(opts.signerEmail)}" style="color:#C9552F;text-decoration:underline;">${esc(opts.signerEmail)}</a></td></tr>
       </table>
     </td>
   </tr>
@@ -116,7 +137,7 @@ function button(href: string, label: string): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td class="btn" align="center" bgcolor="#FF8B6A" style="background-color:#FF8B6A;border-radius:999px;">
-            <a href="${href}" style="display:block;padding:16px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:bold;color:#2D2D2D;text-decoration:none;border-radius:999px;mso-line-height-rule:exactly;">${esc(label)}&nbsp;→</a>
+            <a class="on-coral" href="${href}" style="display:block;padding:16px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:bold;color:#2D2D2D;text-decoration:none;border-radius:999px;mso-line-height-rule:exactly;">${esc(label)}&nbsp;→</a>
           </td>
         </tr>
       </table>`
@@ -125,12 +146,12 @@ function button(href: string, label: string): string {
 /** Καρτέλα τεκμηρίου μέσα στο email */
 function itemCard(title: string, meta: string[]): string {
   const rows = meta.filter(Boolean)
-    .map(m => `<tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">${esc(m)}</td></tr>`)
+    .map(m => `<tr><td class="ink-soft" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">${esc(m)}</td></tr>`)
     .join('')
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;border-radius:16px;margin:0 0 20px 0;">
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="panel" style="background-color:#F5F0EB;border-radius:16px;margin:0 0 20px 0;">
         <tr><td style="padding:18px 22px;">
           <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-            <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">${esc(title)}</td></tr>
+            <tr><td class="ink" style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">${esc(title)}</td></tr>
             <tr><td height="6" style="height:6px;line-height:6px;font-size:0;">&nbsp;</td></tr>
             ${rows}
           </table>
@@ -188,10 +209,10 @@ export function libraryDuplicateReviewHtml(opts: {
       <p style="margin:0 0 20px 0;">Μια νέα καταχώρηση μοιάζει με τεκμήριο που υπάρχει ήδη στη βιβλιοθήκη${
         opts.sharedWords ? ` — <strong>${opts.sharedWords} κοινές λέξεις</strong> στον τίτλο` : ''
       } (ομοιότητα <strong>${pct}%</strong>). Δεν δημοσιεύτηκε — περιμένει την απόφασή σου.</p>
-      <p style="margin:0 0 20px 0;font-size:14px;color:#5A5A5A;">Η σήμανση είναι σκόπιμα ευαίσθητη: προτιμούμε έναν περιττό έλεγχο από μια χαμένη διπλοεγγραφή. Αν δεν είναι το ίδιο τεκμήριο, ένα κλικ στην έγκριση το δημοσιεύει.</p>
-      <p style="margin:0 0 8px 0;font-size:13px;letter-spacing:1px;color:#8A8A8A;font-weight:bold;">ΝΕΑ ΚΑΤΑΧΩΡΗΣΗ</p>
+      <p class="ink-soft" style="margin:0 0 20px 0;font-size:14px;color:#5A5A5A;">Η σήμανση είναι σκόπιμα ευαίσθητη: προτιμούμε έναν περιττό έλεγχο από μια χαμένη διπλοεγγραφή. Αν δεν είναι το ίδιο τεκμήριο, ένα κλικ στην έγκριση το δημοσιεύει.</p>
+      <p class="ink-faint" style="margin:0 0 8px 0;font-size:13px;letter-spacing:1px;color:#5A5A5A;font-weight:bold;">ΝΕΑ ΚΑΤΑΧΩΡΗΣΗ</p>
       ${itemCard(opts.newTitle, [`Από: ${opts.submitter}`])}
-      <p style="margin:0 0 8px 0;font-size:13px;letter-spacing:1px;color:#8A8A8A;font-weight:bold;">ΥΠΑΡΧΕΙ ΗΔΗ</p>
+      <p class="ink-faint" style="margin:0 0 8px 0;font-size:13px;letter-spacing:1px;color:#5A5A5A;font-weight:bold;">ΥΠΑΡΧΕΙ ΗΔΗ</p>
       ${itemCard(opts.existingTitle, [])}
       <p style="margin:0 0 24px 0;">Άνοιξε τη σύγκριση για να δεις και τα δύο δίπλα-δίπλα και να εγκρίνεις ή να απορρίψεις.</p>
       ${button(opts.reviewUrl, 'Έλεγχος διπλοεγγραφής')}`
@@ -219,9 +240,9 @@ export function libraryRejectedHtml(opts: {
   const body = `
       <p style="margin:0 0 20px 0;">Αγαπητή/αγαπητέ ${esc(opts.firstName)},</p>
       <p style="margin:0 0 20px 0;">Ευχαριστούμε που πρόσθεσες τεκμήριο στην Ανοιχτή Βιβλιοθήκη. Μετά από έλεγχο, η καταχώρηση δεν δημοσιεύτηκε γιατί το υλικό υπάρχει ήδη στη βιβλιοθήκη.</p>
-      <p style="margin:0 0 8px 0;font-size:13px;letter-spacing:1px;color:#8A8A8A;font-weight:bold;">Η ΚΑΤΑΧΩΡΗΣΗ ΣΟΥ</p>
+      <p class="ink-faint" style="margin:0 0 8px 0;font-size:13px;letter-spacing:1px;color:#5A5A5A;font-weight:bold;">Η ΚΑΤΑΧΩΡΗΣΗ ΣΟΥ</p>
       ${itemCard(opts.title, [])}
-      <p style="margin:0 0 8px 0;font-size:13px;letter-spacing:1px;color:#8A8A8A;font-weight:bold;">ΥΠΑΡΧΕΙ ΗΔΗ ΩΣ</p>
+      <p class="ink-faint" style="margin:0 0 8px 0;font-size:13px;letter-spacing:1px;color:#5A5A5A;font-weight:bold;">ΥΠΑΡΧΕΙ ΗΔΗ ΩΣ</p>
       ${itemCard(opts.existingTitle, [])}
       ${opts.reason ? `<p style="margin:0 0 20px 0;">${esc(opts.reason)}</p>` : ''}
       <p style="margin:0 0 24px 0;">Δεν χάθηκε τίποτα — το τεκμήριο είναι ήδη διαθέσιμο σε όλα τα μέλη. Αν πιστεύεις ότι πρόκειται για διαφορετικό υλικό (π.χ. άλλη έκδοση ή άλλη χρονιά), γράψε μας και θα το ξανακοιτάξουμε.</p>
