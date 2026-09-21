@@ -32,7 +32,7 @@ const PATHS: Array<{ d: string; delay: string }> = [
   { d: 'M1.10519 8.79912C1.56598 8.7286 1.87889 8.31924 1.80409 7.88478C1.72929 7.45033 1.29512 7.1553 0.834331 7.22582C0.373543 7.29635 0.0606346 7.70571 0.135431 8.14016C0.210227 8.57462 0.644405 8.86964 1.10519 8.79912Z', delay: '-0.33s' },
 ]
 
-export default function CforcLoader({ label = 'Φόρτωση' }: { label?: string }) {
+export default function CforcLoader({ label = 'Φόρτωση', note }: { label?: string; note?: React.ReactNode }) {
   return (
     <div className="cforc-loader" role="status" aria-live="polite" aria-label={label}>
       <div className="cforc-loader__card">
@@ -42,6 +42,11 @@ export default function CforcLoader({ label = 'Φόρτωση' }: { label?: stri
           ))}
         </svg>
         <span className="cforc-loader__label">{label}</span>
+        {/* Προαιρετική εξήγηση κάτω από την ετικέτα: όταν η αναμονή είναι
+            μεγάλη, ο κύκλος από μόνος του δεν λέει «μην κλείσεις τη σελίδα» */}
+        {note && (
+          <p className="max-w-xs mt-1 text-center text-sm leading-relaxed text-charcoal dark:text-gray-200">{note}</p>
+        )}
       </div>
     </div>
   )
