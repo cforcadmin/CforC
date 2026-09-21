@@ -2552,3 +2552,326 @@ export function financeMonthlyReminderEmailHtml(monthLabel: string, adminName?: 
 </html>`
   return { subject: `Υπενθύμιση: αύριο ο μηνιαίος οικονομικός απολογισμός (${monthLabel})`, html }
 }
+
+/** Διαφυγή HTML για τιμές που έρχονται από τη φόρμα (ονόματα, σχόλια) */
+function escapeHtml(v: string): string {
+  return String(v ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string))
+}
+
+/**
+ * Νέο εξοδολόγιο → Οικονομικά.
+ *
+ * Πάει στο finance@ με κοινοποίηση στη Διαχείριση (hello@) και στο ίδιο το
+ * μέλος, ώστε να έχει γραπτή απόδειξη ότι υποβλήθηκε. Το reply-to είναι το
+ * μέλος: ο/η Financer απαντά κατευθείαν αν λείπει κάτι.
+ *
+ * Περιέχει ό,τι χρειάζεται για να γίνει η κατάθεση ΧΩΡΙΣ να ανοίξει κανείς
+ * το OC: ποσό, δικαιούχος, IBAN. Το PDF πάει συνημμένο.
+ *
+ * Το «light only» εδώ είναι η διόρθωση που έγινε και στα email της
+ * Βιβλιοθήκης: χωρίς αυτό, το Apple Mail γυρίζει το λευκό χαρτί σε μαύρο
+ * και αφήνει το κείμενο σκούρο. Τα υπόλοιπα πρότυπα αυτού του αρχείου
+ * περιμένουν ακόμη το ίδιο πέρασμα.
+ */
+export function expenseClaimSubmittedEmailHtml(opts: {
+  claimNumber: string
+  memberName: string
+  eventLabel: string
+  eventDates: string
+  route: string
+  payable: string
+  total: string
+  advance: string | null
+  accountHolder: string
+  bankName: string | null
+  iban: string
+  lines: Array<{ date: string; type: string; amount: string }>
+  ocUrl: string
+}): { subject: string; html: string } {
+  const rows = opts.lines.map(l => `
+    <tr>
+      <td style="padding:6px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#5A5A5A;">${escapeHtml(l.date)}</td>
+      <td style="padding:6px 8px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#2D2D2D;">${escapeHtml(l.type)}</td>
+      <td align="right" style="padding:6px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#2D2D2D;">${escapeHtml(l.amount)}</td>
+    </tr>`).join('')
+
+  const html = `<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>Νέο εξοδολόγιο — ${escapeHtml(opts.claimNumber)}</title>
+<style>
+  :root{color-scheme:light only;supported-color-schemes:light only;}
+  @media only screen and (max-width:620px){ .px{padding-left:24px !important;padding-right:24px !important;} }
+  @media (prefers-color-scheme: dark){
+    .paper{background-color:#FFFFFF !important;}
+    .ground{background-color:#F5F0EB !important;}
+    .ink, .ink *{color:#2D2D2D !important;}
+    .ink-soft, .ink-soft *{color:#5A5A5A !important;}
+  }
+</style>
+</head>
+<body class="ground" style="margin:0;padding:0;background-color:#F5F0EB;">
+<span style="display:none;font-size:1px;color:#F5F0EB;max-height:0;overflow:hidden;">${escapeHtml(opts.memberName)} — πληρωτέο ${escapeHtml(opts.payable)}</span>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="ground" style="background-color:#F5F0EB;">
+<tr><td align="center" style="padding:32px 12px 48px 12px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="paper" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #E5E7EB;">
+  <tr>
+    <td class="px" style="background-color:#FF8B6A;padding:36px 48px 32px 48px;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;letter-spacing:1.6px;color:#FFFFFF;font-weight:bold;">CULTURE FOR CHANGE</div>
+      <div style="height:20px;line-height:20px;font-size:0;">&nbsp;</div>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:34px;color:#2D2D2D;font-weight:bold;">ΝΕΟ ΕΞΟΔΟΛΟΓΙΟ</div>
+    </td>
+  </tr>
+  <tr>
+    <td class="px ink" style="padding:36px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;">
+      <p style="margin:0 0 20px 0;">Το μέλος <strong>${escapeHtml(opts.memberName)}</strong> υπέβαλε εξοδολόγιο
+      (<span style="color:#C9552F;font-weight:bold;">${escapeHtml(opts.claimNumber)}</span>) για ${escapeHtml(opts.eventLabel)}, ${escapeHtml(opts.eventDates)}.</p>
+      ${opts.route ? `<p style="margin:0 0 20px 0;" class="ink-soft">Διαδρομή: ${escapeHtml(opts.route)}</p>` : ''}
+    </td>
+  </tr>
+  <tr>
+    <td class="px" style="padding:8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;border-radius:16px;">
+        <tr><td style="padding:22px 24px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${rows}</table>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:12px;border-top:1px solid #E0D8D0;">
+            ${opts.advance ? `<tr>
+              <td style="padding-top:10px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#5A5A5A;">Σύνολο ${escapeHtml(opts.total)} · προκαταβολή −${escapeHtml(opts.advance)}</td>
+            </tr>` : ''}
+            <tr>
+              <td style="padding-top:10px;font-family:Arial,Helvetica,sans-serif;font-size:18px;color:#2D2D2D;font-weight:bold;">Πληρωτέο</td>
+              <td align="right" style="padding-top:10px;font-family:Arial,Helvetica,sans-serif;font-size:18px;color:#2D2D2D;font-weight:bold;">${escapeHtml(opts.payable)}</td>
+            </tr>
+          </table>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" style="padding:16px 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #E5E7EB;border-radius:16px;">
+        <tr><td style="padding:22px 24px;">
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:1.2px;color:#FF8B6A;font-weight:bold;">ΓΙΑ ΤΗΝ ΚΑΤΑΘΕΣΗ</div>
+          <div style="height:10px;font-size:0;">&nbsp;</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">${escapeHtml(opts.accountHolder)}${opts.bankName ? ` · ${escapeHtml(opts.bankName)}` : ''}</div>
+          <div style="font-family:'Courier New',Courier,monospace;font-size:16px;line-height:26px;color:#2D2D2D;font-weight:bold;word-break:break-all;">${escapeHtml(opts.iban)}</div>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td class="px ink" style="padding:24px 48px 32px 48px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">
+      <p style="margin:0 0 18px 0;" class="ink-soft">Το εξοδολόγιο είναι συνημμένο σε PDF. Μόλις γίνει η κατάθεση, σημείωσέ το στα Οικονομικά του OC ώστε να σταματήσουν οι υπενθυμίσεις.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td align="center" bgcolor="#FF8B6A" style="background-color:#FF8B6A;border-radius:999px;">
+          <a href="${opts.ocUrl}" style="display:block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#2D2D2D;text-decoration:none;border-radius:999px;">Άνοιγμα στα Οικονομικά&nbsp;→</a>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" align="center" style="background-color:#2D2D2D;padding:24px 48px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#A0A0A0;">
+      Δίκτυο Culture for Change — Αθήνα, Ελλάδα<br>Αυτόματη ειδοποίηση από το Operational Center.
+    </td>
+  </tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`
+  return { subject: `Νέο εξοδολόγιο ${opts.claimNumber} — ${opts.memberName}, ${opts.payable}`, html }
+}
+
+/**
+ * Υπενθύμιση: εξοδολόγιο που περιμένει πληρωμή.
+ *
+ * Φεύγει κάθε 5 ημέρες στο finance@ με κοινοποίηση στη Διαχείριση, μέχρι να
+ * σημειωθεί η πληρωμή στο OC. Ο τόνος είναι ήπιος αλλά σαφής: το μέλος έβαλε
+ * δικά του χρήματα και περιμένει.
+ */
+export function expenseClaimReminderEmailHtml(opts: {
+  claimNumber: string
+  memberName: string
+  payable: string
+  waiting: string
+  remindersSent: number
+  folderUrl: string | null
+  ocUrl: string
+}): { subject: string; html: string } {
+  const nth = opts.remindersSent > 0
+    ? `<p style="margin:0 0 20px 0;font-size:14px;color:#5A5A5A;">Είναι η ${opts.remindersSent + 1}η υπενθύμιση για αυτό το εξοδολόγιο.</p>`
+    : ''
+  const html = `<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>Εκκρεμεί πληρωμή εξοδολογίου</title>
+<style>
+  :root{color-scheme:light only;supported-color-schemes:light only;}
+  @media only screen and (max-width:620px){ .px{padding-left:24px !important;padding-right:24px !important;} }
+  @media (prefers-color-scheme: dark){
+    .paper{background-color:#FFFFFF !important;}
+    .ground{background-color:#F5F0EB !important;}
+    .ink, .ink *{color:#2D2D2D !important;}
+  }
+</style>
+</head>
+<body class="ground" style="margin:0;padding:0;background-color:#F5F0EB;">
+<span style="display:none;font-size:1px;color:#F5F0EB;max-height:0;overflow:hidden;">${escapeHtml(opts.memberName)} · ${escapeHtml(opts.payable)} · ${escapeHtml(opts.waiting)}</span>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="ground" style="background-color:#F5F0EB;">
+<tr><td align="center" style="padding:32px 12px 48px 12px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="paper" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #E5E7EB;">
+  <tr>
+    <td class="px" style="background-color:#FF8B6A;padding:32px 48px 28px 48px;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;letter-spacing:1.6px;color:#FFFFFF;font-weight:bold;">CULTURE FOR CHANGE</div>
+      <div style="height:18px;line-height:18px;font-size:0;">&nbsp;</div>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:26px;line-height:32px;color:#2D2D2D;font-weight:bold;">ΕΚΚΡΕΜΕΙ ΠΛΗΡΩΜΗ</div>
+    </td>
+  </tr>
+  <tr>
+    <td class="px ink" style="padding:32px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;">
+      <p style="margin:0 0 20px 0;">Το εξοδολόγιο <span style="color:#C9552F;font-weight:bold;">${escapeHtml(opts.claimNumber)}</span>
+      του μέλους <strong>${escapeHtml(opts.memberName)}</strong>, ύψους <strong>${escapeHtml(opts.payable)}</strong>,
+      περιμένει ${escapeHtml(opts.waiting)}.</p>
+      ${nth}
+      <p style="margin:0 0 24px 0;">Μόλις γίνει η κατάθεση, σημείωσέ το στα Οικονομικά — τότε σταματούν οι υπενθυμίσεις.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td align="center" bgcolor="#FF8B6A" style="background-color:#FF8B6A;border-radius:999px;">
+          <a href="${opts.ocUrl}" style="display:block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#2D2D2D;text-decoration:none;border-radius:999px;">Άνοιγμα στα Οικονομικά&nbsp;→</a>
+        </td></tr>
+      </table>
+      ${opts.folderUrl ? `<p style="margin:20px 0 0 0;font-size:14px;"><a href="${opts.folderUrl}" style="color:#C9552F;text-decoration:underline;">Τα παραστατικά στο Drive</a></p>` : ''}
+    </td>
+  </tr>
+  <tr><td class="px" style="padding:24px 48px 32px 48px;">&nbsp;</td></tr>
+  <tr>
+    <td class="px" align="center" style="background-color:#2D2D2D;padding:24px 48px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#A0A0A0;">
+      Δίκτυο Culture for Change — Αθήνα, Ελλάδα<br>Αυτόματη υπενθύμιση κάθε 5 ημέρες, όσο το εξοδολόγιο μένει απλήρωτο.
+    </td>
+  </tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`
+  return {
+    subject: `Εκκρεμεί πληρωμή ${opts.claimNumber} — ${opts.memberName}, ${opts.payable}`,
+    html,
+  }
+}
+
+/**
+ * Η κατάθεση έγινε → ειδοποίηση στο μέλος.
+ *
+ * Ο ρόλος αυτού του email είναι ένας: να ξέρει το μέλος ΤΙ να περιμένει και
+ * ΠΟΤΕ να ανησυχήσει. Συνήθως τα χρήματα φαίνονται αμέσως· Σαββατοκύριακο
+ * σημαίνει Δευτέρα ή Τρίτη· πάνω από δύο εργάσιμες σημαίνει «ρώτα».
+ *
+ * Δεν αυτοματοποιούμε τίποτα περισσότερο: αν κάτι δεν πήγε καλά, μιλούν
+ * δύο άνθρωποι μεταξύ τους.
+ */
+export function expenseClaimPaidEmailHtml(opts: {
+  firstName: string
+  claimNumber: string
+  payable: string
+  accountHolder: string
+  bankName: string | null
+  ibanTail: string
+  financerName: string
+  financerPhone?: string | null
+}): { subject: string; html: string } {
+  const phone = opts.financerPhone
+    ? ` ή τηλεφωνικά στο <span style="white-space:nowrap;">${escapeHtml(opts.financerPhone)}</span>`
+    : ''
+  const html = `<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>Η πληρωμή του εξοδολογίου σου στάλθηκε</title>
+<style>
+  :root{color-scheme:light only;supported-color-schemes:light only;}
+  @media only screen and (max-width:620px){ .px{padding-left:24px !important;padding-right:24px !important;} }
+  @media (prefers-color-scheme: dark){
+    .paper{background-color:#FFFFFF !important;}
+    .ground{background-color:#F5F0EB !important;}
+    .ink, .ink *{color:#2D2D2D !important;}
+    .panel{background-color:#F5F0EB !important;}
+  }
+</style>
+</head>
+<body class="ground" style="margin:0;padding:0;background-color:#F5F0EB;">
+<span style="display:none;font-size:1px;color:#F5F0EB;max-height:0;overflow:hidden;">${escapeHtml(opts.payable)} — έλεγξε τον λογαριασμό σου.</span>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="ground" style="background-color:#F5F0EB;">
+<tr><td align="center" style="padding:32px 12px 48px 12px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="paper" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #E5E7EB;">
+  <tr>
+    <td class="px" style="background-color:#FF8B6A;padding:36px 48px 32px 48px;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;letter-spacing:1.6px;color:#FFFFFF;font-weight:bold;">CULTURE FOR CHANGE</div>
+      <div style="height:20px;line-height:20px;font-size:0;">&nbsp;</div>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:34px;color:#2D2D2D;font-weight:bold;">Η ΠΛΗΡΩΜΗ ΣΟΥ ΣΤΑΛΘΗΚΕ</div>
+    </td>
+  </tr>
+  <tr>
+    <td class="px ink" style="padding:36px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;">
+      <p style="margin:0 0 20px 0;">Αγαπητή/αγαπητέ ${escapeHtml(opts.firstName)},</p>
+      <p style="margin:0 0 20px 0;">Η κατάθεση για το εξοδολόγιο
+      <span style="color:#C9552F;font-weight:bold;">${escapeHtml(opts.claimNumber)}</span> έγινε.</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" style="padding:8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="panel" style="background-color:#F5F0EB;border-radius:16px;">
+        <tr><td style="padding:22px 24px;font-family:Arial,Helvetica,sans-serif;">
+          <div style="font-size:12px;letter-spacing:1.2px;color:#FF8B6A;font-weight:bold;">ΠΟΣΟ</div>
+          <div style="font-size:26px;line-height:34px;color:#2D2D2D;font-weight:bold;">${escapeHtml(opts.payable)}</div>
+          <div style="font-size:14px;line-height:22px;color:#5A5A5A;margin-top:6px;">
+            προς ${escapeHtml(opts.accountHolder)}${opts.bankName ? ` · ${escapeHtml(opts.bankName)}` : ''} · λογαριασμός που λήγει σε ${escapeHtml(opts.ibanTail)}
+          </div>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td class="px ink" style="padding:24px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;">
+      <p style="margin:0 0 14px 0;font-weight:bold;">Τι να περιμένεις</p>
+      <p style="margin:0 0 14px 0;">Συνήθως τα χρήματα φαίνονται στον λογαριασμό σου <strong>σχεδόν αμέσως</strong>.</p>
+      <p style="margin:0 0 14px 0;">Αν η κατάθεση έγινε <strong>Σαββατοκύριακο ή αργία</strong>, οι τράπεζες την επεξεργάζονται την επόμενη εργάσιμη — περίμενε ως τη Δευτέρα ή την Τρίτη.</p>
+      <p style="margin:0 0 20px 0;">Σε κάθε περίπτωση, <strong>δύο εργάσιμες ημέρες είναι το ανώτατο</strong>.</p>
+      <p style="margin:0 0 20px 0;">Παρακαλούμε τσέκαρε τον λογαριασμό σου και, αν το ποσό δεν έχει φτάσει μέσα σε αυτό το διάστημα, επικοινώνησε με
+      ${escapeHtml(opts.financerName)} στο <a href="mailto:finance@cultureforchange.net" style="color:#C9552F;text-decoration:underline;">finance@cultureforchange.net</a>${phone}, για να δούμε τι συμβαίνει.</p>
+      <p style="margin:0 0 20px 0;">Ευχαριστούμε που κάλυψες αυτά τα έξοδα για το δίκτυο.</p>
+      <p style="margin:0;">Φιλικά,</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" style="padding:16px 48px 36px 48px;font-family:Arial,Helvetica,sans-serif;">
+      <div style="height:1px;background-color:#E5E7EB;">&nbsp;</div>
+      <div style="height:18px;font-size:0;">&nbsp;</div>
+      <div style="font-size:17px;line-height:24px;color:#2D2D2D;font-weight:bold;">${escapeHtml(opts.financerName)}</div>
+      <div style="font-size:15px;line-height:22px;color:#5A5A5A;">Οικονομικά — Culture for Change</div>
+      <div style="font-size:15px;line-height:22px;"><a href="mailto:finance@cultureforchange.net" style="color:#C9552F;text-decoration:underline;">finance@cultureforchange.net</a></div>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" align="center" style="background-color:#2D2D2D;padding:24px 48px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#A0A0A0;">
+      Δίκτυο Culture for Change — Αθήνα, Ελλάδα<br>Λαμβάνεις αυτό το email επειδή υπέβαλες εξοδολόγιο.
+    </td>
+  </tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`
+  return { subject: `Η πληρωμή του εξοδολογίου ${opts.claimNumber} στάλθηκε — ${opts.payable}`, html }
+}

@@ -7,6 +7,7 @@ import OcContracts from '@/components/oc/OcContracts'
 import OcArrangeable from '@/components/oc/OcArrangeable'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
 import OcTreasuryPopup from '@/components/oc/OcTreasuryPopup'
+import OcExpenseClaims from '@/components/oc/OcExpenseClaims'
 import OcFinanceGuideModal from './OcFinanceGuideModal'
 
 /**
@@ -326,7 +327,7 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
       {/* Ταμείο + Οδηγίες μηνιαίου κύκλου. Το πλακίδιο είναι το ΙΔΙΟ με της
           Επισκόπησης — ίδια πηγή, ίδια όψη, ίδιο popup — ώστε ο/η Financer
           να μη χρειάζεται να αλλάζει καρτέλα για μια μέτρηση. */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start gap-4">
         {canIssue ? (
           <button
             type="button"
@@ -355,8 +356,10 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
             </div>
           </button>
         ) : <span />}
+        {/* Εξοδολόγια σε αναμονή — εμφανίζεται μόνο όταν υπάρχουν */}
+        <OcExpenseClaims />
         <button type="button" onClick={() => setShowGuide(true)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full menu-glass glass-rim text-sm font-bold text-charcoal dark:text-gray-100 hover:bg-white/20 transition-colors">
+          className="sm:ml-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-full menu-glass glass-rim text-sm font-bold text-charcoal dark:text-gray-100 hover:bg-white/20 transition-colors">
           <span aria-hidden="true">🏦</span> Οδηγίες μηνιαίου κύκλου
         </button>
       </div>

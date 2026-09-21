@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sendOcEmail, contractsDigestEmailHtml, contractUrgentEmailHtml, FINANCE_FROM, FINANCE_EMAIL, ADMIN_EMAIL, type DigestBlock, type DigestLine } from '@/lib/ocEmails'
 import { SEAT_MAILBOX } from '@/lib/ocRoles'
 import { buildBuckets, findUrgent, isDigestDay, totalCount, active, type ReminderContract, type ReminderItem } from '@/lib/contractReminders'
+import { claimsNeedingReminder, daysSince, ageLabel, type ClaimForReminder } from '@/lib/expenseClaimReminders'
+import { expenseClaimReminderEmailHtml } from '@/lib/ocEmails'
 
 export const maxDuration = 60
 
@@ -18,7 +20,11 @@ export const maxDuration = 60
  *
  *   ?force=1  παρακάμπτει τον έλεγχο ημέρας (στέλνει και τη σύνοψη)
  *   ?test=1   στέλνει ΜΟΝΟ στο it@ με ετικέτα [ΔΟΚΙΜΗ] και δεν γράφει ReminderLog
- *   ?only=digest|expiry|ready  περιορίζει τι θα σταλεί (για δοκιμές)
+ *   ?only=digest|expiry|ready|claims  περιορίζει τι θα σταλεί (για δοκιμές)
+ *
+ * ΚΑΘΕ ΜΕΡΑ επίσης: τα εξοδολόγια που περιμένουν πληρωμή πάνω από 5 ημέρες.
+ * Μπήκαν εδώ και όχι σε δικό τους cron — το Vercel τα μετράει, και αυτό
+ * τρέχει ήδη κάθε πρωί για τα οικονομικά.
  */
 
 const CRON_SECRET = process.env.CRON_SECRET
@@ -124,8 +130,48 @@ export async function GET(request: NextRequest) {
     if (ok) sent.push('digest')
   }
 
+  // ── Γ. Εξοδολόγια που περιμένουν πληρωμή (κάθε 5 ημέρες, ανά εξοδολόγιο)
+  let claims: { checked: number; reminded: number } | null = null
+  if (!only || only === 'claims') {
+    const cRes = await strapi('/expense-claims?filters[State][$eq]=submitted&pagination[limit]=100&sort=SubmittedAt:asc')
+    const list: ClaimForReminder[] = (cRes.json?.data || []).map((c: any) => ({
+      ...c, Payable: Number(c.Payable) || 0,
+    }))
+    const now = new Date()
+    const due = claimsNeedingReminder(list, now)
+    let reminded = 0
+    for (const c of due) {
+      const days = daysSince(c.SubmittedAt, now)
+      const tpl = expenseClaimReminderEmailHtml({
+        claimNumber: c.ClaimNumber,
+        memberName: c.MemberName,
+        payable: eur(c.Payable) || '—',
+        waiting: ageLabel(days),
+        remindersSent: c.ReminderLog?.count || 0,
+        folderUrl: c.FolderUrl || null,
+        ocUrl: OC_URL,
+      })
+      const ok = await sendOcEmail(to([FINANCE_EMAIL])[0], subj(tpl.subject), tpl.html, {
+        from: FINANCE_FROM, replyTo: FINANCE_EMAIL,
+        ...(test ? {} : { cc: [SEAT_MAILBOX.admin] }),
+      })
+      if (ok) {
+        reminded++
+        sent.push(`claim:${c.ClaimNumber}`)
+        // Η μνήμη γράφεται ΜΟΝΟ σε πραγματική αποστολή — μια δοκιμή δεν
+        // πρέπει να σπρώχνει την επόμενη αληθινή υπενθύμιση κατά 5 ημέρες
+        if (!test) {
+          await strapi(`/expense-claims/${c.documentId}`, 'PUT', {
+            ReminderLog: { lastSentAt: new Date().toISOString(), count: (c.ReminderLog?.count || 0) + 1 },
+          })
+        }
+      }
+    }
+    claims = { checked: list.length, reminded }
+  }
+
   return NextResponse.json({
-    ok: true, today, test, digest, urgentSent: sent.filter(s => s !== 'digest').length, sent,
+    ok: true, today, test, digest, claims, urgentSent: sent.filter(s => !s.startsWith('digest') && !s.startsWith('claim:')).length, sent,
     note: test ? `Δοκιμή — όλα στάλθηκαν μόνο στο ${SEAT_MAILBOX.it}` : undefined,
     adminMailbox: ADMIN_EMAIL,
   })
