@@ -12,6 +12,8 @@ export default function AboutSection() {
   const [isStatsVisible, setIsStatsVisible] = useState(false)
   const [counter1, setCounter1] = useState(0)
   const [counter2, setCounter2] = useState(0)
+  // Προεπιλογές = οι τιμές που έδειχνε η σελίδα πριν γίνει ζωντανή
+  const [targets, setTargets] = useState({ activities: 65, members: 112 })
   const imageRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const statsRef = useRef<HTMLDivElement>(null)
@@ -69,13 +71,25 @@ export default function AboutSection() {
     }
   }, [])
 
+  // Ζωντανοί αριθμοί: ΔΡΑΣΕΙΣ και ΜΕΛΗ από τη βάση, όχι γραμμένοι στο χέρι.
+  // Αν η κλήση αποτύχει, μένουν οι τελευταίες γνωστές τιμές — ο μετρητής
+  // δεν δείχνει ΠΟΤΕ μηδέν σε δημόσια σελίδα.
+  useEffect(() => {
+    fetch('/api/stats/counters')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        if (d?.members && d?.activities) setTargets({ activities: d.activities, members: d.members })
+      })
+      .catch(() => { /* σιωπηλά — κρατάμε τις προεπιλογές */ })
+  }, [])
+
   // Animate counters when stats become visible
   useEffect(() => {
     if (!isStatsVisible) return
 
     const duration = 3000 // 3 seconds
-    const target1 = 10
-    const target2 = 101
+    const target1 = targets.activities
+    const target2 = targets.members
     const steps = 60 // 60 frames for smooth animation
     const increment1 = target1 / steps
     const increment2 = target2 / steps
@@ -93,7 +107,7 @@ export default function AboutSection() {
     }, interval)
 
     return () => clearInterval(timer)
-  }, [isStatsVisible])
+  }, [isStatsVisible, targets])
 
   return (
     <section id="about" className="py-24 bg-gray-50 dark:bg-gray-800 -mt-[10%]">
@@ -156,7 +170,7 @@ export default function AboutSection() {
         >
           <div>
             <div className="text-8xl font-bold text-charcoal dark:text-coral-light mb-2">{counter1}</div>
-            <p className="text-xl font-medium dark:text-gray-200">ΕΡΓΑ</p>
+            <p className="text-xl font-medium dark:text-gray-200">ΔΡΑΣΕΙΣ</p>
           </div>
           <div>
             <div className="text-8xl font-bold text-charcoal dark:text-coral-light mb-2">{counter2}</div>
