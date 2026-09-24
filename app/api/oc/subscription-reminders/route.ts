@@ -4,7 +4,7 @@ export const maxDuration = 60
 import { cookies } from 'next/headers'
 import { verifyToken, generateRenewalClaimToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
-import { sendOcEmail, subscriptionReminderEmailHtml, renewalClaimUrl, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, subscriptionReminderEmailHtml, renewalClaimUrl, FINANCE_FROM, FINANCE_EMAIL, COMMUNITY_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
 
 /**
  * Υπενθύμιση συνδρομής σε μέλος — από τα bubbles «Προς ειδοποίηση /
@@ -14,6 +14,10 @@ import { sendOcEmail, subscriptionReminderEmailHtml, renewalClaimUrl, FINANCE_FR
  *
  * Επιτρέπεται ΜΟΝΟ σε ενεργό ρόλο Financer ή Community. Αποστολέας
  * finance@ με υπογραφή του/της τρέχοντος Financer (θέμα πληρωμών).
+ *
+ * Κοινοποίηση σε community@, hello@ και finance@. ΠΡΟΣΟΧΗ στον όγκο: το
+ * «Σε όλους» στέλνει μία κλήση ανά μέλος, άρα μια παρτίδα 55 μελών αφήνει
+ * 55 αντίγραφα σε κάθε ένα από τα τρία γραμματοκιβώτια.
  */
 
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
@@ -49,7 +53,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const res = await fetch(
-      `${STRAPI_URL}/api/members/${memberDocId}?fields[0]=Name&fields[1]=Email&fields[2]=Payments&fields[3]=RegistrationYear&fields[4]=AM`,
+      `${STRAPI_URL}/api/members/${memberDocId}`,
       { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store' },
     )
     const member = res.ok ? (await res.json())?.data : null
@@ -82,14 +86,23 @@ export async function POST(request: NextRequest) {
     const sent = await sendOcEmail(email, tpl.subject, tpl.html, {
       from: FINANCE_FROM,
       replyTo: FINANCE_EMAIL,
+      // Η Διαχείριση διαβάζει στο hello@ — το admin@ είναι μόνο για το IT
+      cc: [COMMUNITY_EMAIL, ADMIN_EMAIL, FINANCE_EMAIL],
     })
     if (!sent) return NextResponse.json({ error: 'Αποτυχία αποστολής email' }, { status: 502 })
 
-    // Ίχνος αποστολής → αλλάζει το περίγραμμα του chip (ΜΟΝΟ αριθμητικό id στο PUT)
+    // Ίχνος αποστολής (ΜΟΝΟ αριθμητικό id στο PUT). Κρατάμε ΙΣΤΟΡΙΚΟ, όχι
+    // μόνο την τελευταία ημερομηνία: το «πόσες φορές πιέσαμε κάποιον» δεν
+    // προκύπτει από μία σφραγίδα που ξαναγράφεται σε κάθε αποστολή.
+    const now = new Date().toISOString()
+    const log: string[] = Array.isArray(member.ReminderLog) ? member.ReminderLog.filter((d: any) => typeof d === 'string') : []
+    // Πρώτη φορά με ιστορικό: κρατάμε και την παλιά μεμονωμένη σφραγίδα
+    if (log.length === 0 && member.ReminderSentAt) log.push(String(member.ReminderSentAt))
+    log.push(now)
     const stamp = await fetch(`${STRAPI_URL}/api/members/${member.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
-      body: JSON.stringify({ data: { ReminderSentAt: new Date().toISOString() } }),
+      body: JSON.stringify({ data: { ReminderSentAt: now, ReminderLog: log.slice(-20) } }),
     })
     if (!stamp.ok) console.error('subscription-reminders: ReminderSentAt stamp failed', stamp.status)
 

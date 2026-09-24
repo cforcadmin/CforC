@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navigation from '@/components/Navigation'
@@ -9,10 +9,11 @@ import SignaturePad from '@/components/expenses/SignaturePad'
 import CityField from '@/components/expenses/CityField'
 import MemberPicker from '@/components/expenses/MemberPicker'
 import CforcLoader from '@/components/apply/CforcLoader'
+import ExpenseGuideModal from '@/components/expenses/ExpenseGuideModal'
 import { useAuth } from '@/components/AuthProvider'
 import {
   EVENT_TYPES, EVENT_NEEDS_NAME, EXPENSE_CATEGORIES, RECEIPT_TYPES, receiptSpec,
-  BANKS, BANK_OTHER, TRAVEL_MODES, buildReturnLegs, computeTotals, eventDays,
+  BANKS, BANK_OTHER, TRAVEL_MODES, buildReturnLegs, allLegs, missingTravelLines, computeTotals, eventDays,
   ibanLooksValid, validateClaim, type ClaimLine, type TravelLeg,
 } from '@/lib/expenseClaims'
 
@@ -57,6 +58,7 @@ export default function ExpenseClaimShell() {
   const [rememberBank, setRememberBank] = useState(true)
   const [signature, setSignature] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
+  const [showGuide, setShowGuide] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState<{ claimNumber: string; payable: number } | null>(null)
@@ -88,6 +90,11 @@ export default function ExpenseClaimShell() {
 
   const days = eventDays(eventStart, eventEnd)
   const returnPreview = useMemo(() => buildReturnLegs(legs), [legs])
+  // Υπόδειξη, όχι κανόνας: ποια σκέλη της διαδρομής δεν έχουν ακόμη έξοδο
+  const missingLegs = useMemo(
+    () => missingTravelLines(allLegs(legs, returnIncluded), lines),
+    [legs, returnIncluded, lines],
+  )
   const totals = useMemo(
     () => computeTotals(lines.map(l => ({ ...l, amount: Number(l.amount) || 0, files: [] })), Number(advance) || 0),
     [lines, advance],
@@ -95,6 +102,23 @@ export default function ExpenseClaimShell() {
 
   function patchLeg(i: number, changes: Partial<TravelLeg>) {
     setLegs(prev => prev.map((l, idx) => (idx === i ? { ...l, ...changes } : l)))
+  }
+
+  /** Ίδιο είδος παραστατικού, καθαρά ποσά και αρχεία — για το δεύτερο εισιτήριο */
+  function duplicateLine(i: number) {
+    setLines(prev => {
+      const src = prev[i]
+      const copy: Draft = { ...emptyLine(), category: src.category, receiptType: src.receiptType }
+      return [...prev.slice(0, i + 1), copy, ...prev.slice(i + 1)]
+    })
+  }
+
+  /** Γραμμή για σκέλος που λείπει, με το μέσο και τη διαδρομή συμπληρωμένα */
+  function addLineForLeg(leg: { from: string; to: string; mode: string }) {
+    setLines(prev => [...prev, {
+      ...emptyLine(), category: 'Ταξίδι', receiptType: leg.mode,
+      description: `${leg.from} → ${leg.to}`,
+    }])
   }
 
   function patch(i: number, changes: Partial<Draft>) {
@@ -207,13 +231,20 @@ export default function ExpenseClaimShell() {
         />
       )}
       <form onSubmit={submit} className="max-w-3xl mx-auto space-y-10">
-        <header>
-          <h1 className="text-3xl md:text-4xl font-bold text-charcoal dark:text-coral">ΕΞΟΔΟΛΟΓΙΟ</h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
-            Κάλυψη εξόδων μετακίνησης, διαμονής και διατροφής για δράσεις του δικτύου.
-            Κάθε έξοδο χρειάζεται το παραστατικό του.
-          </p>
+        <header className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-3xl md:text-4xl font-bold text-charcoal dark:text-coral">ΕΞΟΔΟΛΟΓΙΟ</h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">
+              Κάλυψη εξόδων μετακίνησης, διαμονής και διατροφής για δράσεις του δικτύου.
+              Κάθε έξοδο χρειάζεται το παραστατικό του.
+            </p>
+          </div>
+          <button type="button" onClick={() => setShowGuide(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-coral text-coral dark:text-coral-light font-bold text-sm hover:bg-coral hover:text-white transition-colors whitespace-nowrap">
+            <span aria-hidden="true">📄</span> Οδηγίες συμπλήρωσης
+          </button>
         </header>
+        <ExpenseGuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
 
         {/* ── Στοιχεία μέλους ── */}
         <Card title="Τα στοιχεία σου">
@@ -250,7 +281,7 @@ export default function ExpenseClaimShell() {
             </Field>
           )}
           <div className="grid sm:grid-cols-3 gap-x-6 gap-y-5 items-end">
-            <Field label="Από" required>
+            <Field label="Από" required tip="Οι ημερομηνίες της ΔΡΑΣΗΣ, όχι των εξόδων σου. Αν ταξίδεψες μια μέρα νωρίτερα, το έξοδο μπαίνει με τη δική του ημερομηνία πιο κάτω.">
               <input type="date" value={eventStart} onChange={e => setEventStart(e.target.value)} className={inputClass} />
             </Field>
             <Field label="Έως" required>
@@ -275,7 +306,7 @@ export default function ExpenseClaimShell() {
                 <Field label="Προς">
                   <CityField value={leg.to} onChange={v => patchLeg(i, { to: v })} placeholder="π.χ. Πάτρα" />
                 </Field>
-                <Field label="Μέσο">
+                <Field label="Μέσο" tip="Με τι έγινε αυτό το σκέλος. Το ίδιο θα ανεβάσεις και ως παραστατικό — και η φόρμα θα σου θυμίσει αν λείπει.">
                   <select value={leg.mode} onChange={e => patchLeg(i, { mode: e.target.value })} className={inputClass}>
                     <option value="">— διάλεξε —</option>
                     {TRAVEL_MODES.map(m => <option key={m} value={m}>{m}</option>)}
@@ -321,7 +352,7 @@ export default function ExpenseClaimShell() {
             </div>
           )}
 
-          <Field label="Μετακίνηση μαζί με μέλη">
+          <Field label="Μετακίνηση μαζί με μέλη" tip="Ποια μέλη ταξίδεψαν μαζί σου. Έτσι φαίνεται ότι ένα έξοδο — π.χ. βενζίνη ή διόδια — κάλυψε περισσότερους από έναν.">
             <MemberPicker value={coTravellers} onChange={setCoTravellers} options={memberNames} />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
               Γράψε τα πρώτα γράμματα και διάλεξε από το μητρώο. Μπορείς να προσθέσεις και όνομα
@@ -339,10 +370,19 @@ export default function ExpenseClaimShell() {
                 <div key={i} className="rounded-2xl border border-gray-200 dark:border-gray-600 p-5 sm:p-6 space-y-5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold tracking-wide text-gray-500 dark:text-gray-400">ΕΞΟΔΟ {i + 1}</span>
-                    {lines.length > 1 && (
-                      <button type="button" onClick={() => setLines(prev => prev.filter((_, idx) => idx !== i))}
-                        className="text-xs font-bold text-coral dark:text-coral-light hover:underline">Αφαίρεση</button>
-                    )}
+                    <span className="flex items-center gap-4">
+                      {line.receiptType && (
+                        <button type="button" onClick={() => duplicateLine(i)}
+                          title="Ίδιο είδος παραστατικού, κενά ποσό και αρχεία"
+                          className="text-xs font-bold text-coral dark:text-coral-light hover:underline">
+                          + Ακόμη ένα ίδιο
+                        </button>
+                      )}
+                      {lines.length > 1 && (
+                        <button type="button" onClick={() => setLines(prev => prev.filter((_, idx) => idx !== i))}
+                          className="text-xs font-bold text-coral dark:text-coral-light hover:underline">Αφαίρεση</button>
+                      )}
+                    </span>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-x-6 gap-y-5">
                     <Field label="Κατηγορία" required>
@@ -363,19 +403,16 @@ export default function ExpenseClaimShell() {
                     <Field label="Έναρξη" required>
                       <input type="date" value={line.date} onChange={e => patch(i, { date: e.target.value })} className={inputClass} />
                     </Field>
-                    <Field label="Ολοκλήρωση">
+                    <Field label="Ολοκλήρωση" tip="Για έξοδα που κρατούν μέρες — π.χ. ξενοδοχείο 3 βραδιών ή ενοικίαση αυτοκινήτου. Άφησέ το κενό αν το έξοδο αφορά μία μέρα.">
                       <input type="date" value={line.dateEnd || ''} min={line.date || undefined}
                         onChange={e => patch(i, { dateEnd: e.target.value })} className={inputClass} />
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        Άφησέ το κενό αν το έξοδο αφορά μία μέρα.
-                      </p>
                     </Field>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-x-6 gap-y-5">
                     <Field label="Ποσό (€)" required>
                       <input type="number" step="0.01" min="0" value={line.amount || ''} onChange={e => patch(i, { amount: Number(e.target.value) })} className={inputClass} />
                     </Field>
-                    <Field label="Περιγραφή">
+                    <Field label="Περιγραφή" tip="Τι ακριβώς κάλυψε το έξοδο, με δυο λέξεις: «βενζίνη Αθήνα–Ιωάννινα», «δύο διανυκτερεύσεις», «γεύμα ομάδας». Βοηθά τα Οικονομικά να αναγνωρίσουν τη δαπάνη χωρίς να ανοίξουν το παραστατικό.">
                       <input type="text" value={line.description} onChange={e => patch(i, { description: e.target.value })} className={inputClass} />
                     </Field>
                   </div>
@@ -394,6 +431,25 @@ export default function ExpenseClaimShell() {
               )
             })}
           </div>
+          {missingLegs.length > 0 && (
+            <div className="mt-5 rounded-2xl bg-[#F5F0EB] dark:bg-gray-700 p-4">
+              <p className="text-sm text-charcoal dark:text-gray-200">
+                Η διαδρομή σου έχει σκέλη χωρίς έξοδο. Αν πλήρωσες εσύ, πρόσθεσέ τα με ένα κλικ:
+              </p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {missingLegs.map((leg, i) => (
+                  <button key={`${leg.from}-${leg.to}-${i}`} type="button" onClick={() => addLineForLeg(leg)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-coral text-coral dark:text-coral-light text-sm font-bold hover:bg-coral hover:text-white transition-colors">
+                    + {leg.from} → {leg.to} · {leg.mode}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                Αγνόησέ το αν το πλήρωσε κάποιος άλλος ή αν ένα παραστατικό καλύπτει και τις δύο κατευθύνσεις.
+              </p>
+            </div>
+          )}
+
           <button type="button" onClick={() => setLines(prev => [...prev, emptyLine()])}
             className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-coral text-coral dark:text-coral-light font-bold text-sm hover:bg-coral hover:text-white transition-colors">
             + Προσθήκη εξόδου
@@ -402,7 +458,7 @@ export default function ExpenseClaimShell() {
 
         {/* ── Σύνολα ── */}
         <Card title="Σύνολα">
-          <Field label="Προκαταβολή / μετρητά που έχεις ήδη λάβει (€)">
+          <Field label="Προκαταβολή / μετρητά που έχεις ήδη λάβει (€)" tip="Μόνο αν είχες πάρει χρήματα ΠΡΙΝ από τη δράση. Αφαιρείται από το σύνολο, και το «πληρωτέο» που μένει είναι αυτό που θα κατατεθεί στον λογαριασμό σου.">
             <input type="number" step="0.01" min="0" value={advance} onChange={e => setAdvance(e.target.value)} placeholder="0,00" className={inputClass} />
           </Field>
           <div className="rounded-2xl bg-[#F5F0EB] dark:bg-gray-700 p-5 space-y-2">
@@ -435,7 +491,7 @@ export default function ExpenseClaimShell() {
                   placeholder="Γράψε την τράπεζα" className={`${inputClass} mt-2`} />
               )}
             </Field>
-            <Field label="Όνομα δικαιούχου" required><input type="text" value={accountHolder} onChange={e => setAccountHolder(e.target.value)} className={inputClass} /></Field>
+            <Field label="Όνομα δικαιούχου" required tip="Το όνομα όπως ακριβώς το έχει η τράπεζα στον λογαριασμό — αν διαφέρει από το δικό σου (π.χ. κοινός λογαριασμός), γράψε αυτό της τράπεζας."><input type="text" value={accountHolder} onChange={e => setAccountHolder(e.target.value)} className={inputClass} /></Field>
           </div>
           <Field label="IBAN" required>
             <input type="text" value={iban} onChange={e => setIban(e.target.value)} placeholder="GR…" className={`${inputClass} notranslate font-mono`} />
@@ -460,7 +516,7 @@ export default function ExpenseClaimShell() {
             επέχει θέση υπογραφής. Αν θέλεις, σχεδίασε και την υπογραφή σου για το αρχείο.
           </p>
           <SignaturePad onChange={setSignature} />
-          <Field label="Σχόλια">
+          <Field label="Σχόλια" tip="Ό,τι χρειάζεται να ξέρουν τα Οικονομικά και δεν φαίνεται αλλού: π.χ. «η βενζίνη καλύπτει και τις δύο κατευθύνσεις» ή «λείπει η απόδειξη του ταξί, ζητήθηκε αντίγραφο».">
             <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className={inputClass} />
           </Field>
         </Card>
@@ -507,12 +563,59 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   )
 }
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+/**
+ * Πεδίο με προαιρετικό σημείωμα «(i)».
+ *
+ * Το σημείωμα ανοίγει ΜΕΣΑ στη ροή, κάτω από την ετικέτα — όχι ως
+ * αιωρούμενο tooltip: στο OC τα αιωρούμενα κόβονταν από τα όρια του
+ * pop-up. Ανοίγει με hover, focus και κλικ, ώστε να δουλεύει και στην αφή.
+ */
+function Field({ label, required, tip, children }: {
+  label: string; required?: boolean; tip?: string; children: React.ReactNode
+}) {
+  // Δύο ΞΕΧΩΡΙΣΤΕΣ καταστάσεις. Με μία, το ποντίκι άνοιγε το σημείωμα στο
+  // hover και το κλικ —που έρχεται πάντα μετά— το ξανάκλεινε αμέσως.
+  // Τώρα: το hover δείχνει προσωρινά, το κλικ καρφιτσώνει.
+  const [pinned, setPinned] = useState(false)
+  const [hovered, setHovered] = useState(false)
+  const showTip = pinned || hovered
+  // useId αντί για slug της ελληνικής ετικέτας: τα ελληνικά σε CSS id
+  // δουλεύουν αλλά κάνουν τα selectors εύθραυστα χωρίς κανένα κέρδος
+  const tipId = useId()
   return (
     <label className="block">
-      <span className="block text-sm font-bold text-charcoal dark:text-gray-200 mb-2">
-        {label}{required && <span className="text-coral"> *</span>}
+      <span className="flex items-center gap-2 mb-2">
+        <span className="text-sm font-bold text-charcoal dark:text-gray-200">
+          {label}{required && <span className="text-coral"> *</span>}
+        </span>
+        {tip && (
+          <button
+            type="button"
+            // Το κουμπί ζει μέσα σε <label>: χωρίς stopPropagation το κλικ
+            // φτάνει στο label, εστιάζει το πεδίο και το blur έκλεινε το
+            // σημείωμα την ίδια στιγμή που άνοιγε. Το κλείσιμο γίνεται με
+            // δεύτερο κλικ ή όταν φύγει το ποντίκι — όχι με blur.
+            onClick={e => { e.preventDefault(); e.stopPropagation(); setPinned(v => !v) }}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            onFocus={() => setHovered(true)}
+            onBlur={() => setHovered(false)}
+            aria-label={`Τι συμπληρώνω στο πεδίο ${label}`}
+            aria-expanded={showTip}
+            aria-controls={tipId}
+            className={`w-5 h-5 shrink-0 rounded-full border border-coral text-[11px] font-bold leading-none flex items-center justify-center transition-colors ${
+              showTip ? 'bg-coral text-white' : 'text-coral dark:text-coral-light hover:bg-coral hover:text-white'
+            }`}
+          >
+            i
+          </button>
+        )}
       </span>
+      {tip && showTip && (
+        <p id={tipId} className="mb-2 rounded-xl bg-[#F5F0EB] dark:bg-gray-700 px-3 py-2 text-xs leading-relaxed text-charcoal dark:text-gray-200">
+          {tip}
+        </p>
+      )}
       {children}
     </label>
   )

@@ -27,6 +27,8 @@ export interface OcMemberRow {
   renewalClaimedAt: string | null
   /** Πότε στάλθηκε η τελευταία υπενθύμιση συνδρομής (outline στα chips) */
   reminderSentAt: string | null
+  /** Ιστορικό υπενθυμίσεων — πόσες φορές και πότε */
+  reminderLog: string[]
   status: OcMemberStatus
 }
 
@@ -157,23 +159,31 @@ export async function fetchOcOverview(): Promise<OcOverviewData> {
   const year = OC_CURRENT_YEAR
 
   // Μέλη με τα κρυφά πεδία μητρώου (paginated — clamp 100).
-  // Το RenewalClaimedAt ζητείται προαιρετικά: αν το πεδίο δεν υπάρχει ακόμη
-  // στο Strapi Cloud (deploy-order), το query ΔΕΝ πρέπει να ρίξει όλο το
-  // dashboard — ξαναδοκιμάζουμε χωρίς αυτό.
+  // Τα νεότερα πεδία ζητούνται προαιρετικά: αν κάποιο δεν υπάρχει ακόμη στο
+  // Strapi Cloud (deploy-order), το query επιστρέφει 400 «Invalid key» και
+  // ΔΕΝ πρέπει να ρίξει όλο το dashboard — ξαναδοκιμάζουμε με λιγότερα.
+  // Η υποχώρηση είναι κλιμακωτή, από το νεότερο πεδίο προς τα παλιότερα:
+  // ένα μόνο fallback στο baseFields θα έχανε σιωπηλά και το RenewalClaimedAt
+  // και το ReminderSentAt μέχρι να βγει το deploy του ReminderLog.
   const baseFields =
     `fields[0]=Name&fields[1]=Email&fields[2]=AM&fields[3]=RegistrationYear` +
     `&fields[4]=Payments&fields[5]=HideProfile&fields[6]=City&fields[7]=Phone&fields[8]=Slug`
-  let memberFields = `${baseFields}&fields[9]=RenewalClaimedAt&fields[10]=ReminderSentAt`
+  const fieldTiers = [
+    `${baseFields}&fields[9]=RenewalClaimedAt&fields[10]=ReminderSentAt&fields[11]=ReminderLog`,
+    `${baseFields}&fields[9]=RenewalClaimedAt&fields[10]=ReminderSentAt`,
+    baseFields,
+  ]
+  let tier = 0
   const members: OcMemberRow[] = []
   let start = 0
   while (true) {
     let page = await strapiGet(
-      `/members?${memberFields}&pagination[start]=${start}&pagination[limit]=100&pagination[withCount]=true`
+      `/members?${fieldTiers[tier]}&pagination[start]=${start}&pagination[limit]=100&pagination[withCount]=true`
     )
-    if (!page && memberFields !== baseFields) {
-      memberFields = baseFields
+    while (!page && tier < fieldTiers.length - 1) {
+      tier++
       page = await strapiGet(
-        `/members?${memberFields}&pagination[start]=${start}&pagination[limit]=100&pagination[withCount]=true`
+        `/members?${fieldTiers[tier]}&pagination[start]=${start}&pagination[limit]=100&pagination[withCount]=true`
       )
     }
     if (!page) break
@@ -198,6 +208,7 @@ export async function fetchOcOverview(): Promise<OcOverviewData> {
         profileVisible: !m.HideProfile,
         renewalClaimedAt: m.RenewalClaimedAt || null,
         reminderSentAt: m.ReminderSentAt || null,
+        reminderLog: Array.isArray(m.ReminderLog) ? m.ReminderLog : (m.ReminderSentAt ? [m.ReminderSentAt] : []),
         status: memberStatus(payments, regYear, year),
       })
     }

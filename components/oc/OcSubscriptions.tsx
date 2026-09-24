@@ -20,9 +20,41 @@ export interface SubMemberRow {
   status: string
   renewalClaimedAt: string | null
   reminderSentAt: string | null
+  reminderLog?: string[]
 }
 
 type SendState = 'idle' | 'sending' | 'sent' | 'error' | 'issuing' | 'issued' | 'issue-error'
+
+/**
+ * Οι κουκκίδες των υπενθυμίσεων: μία ανά αποστολή, με χρώμα που εντείνεται.
+ *
+ *   1 → κεχριμπάρι · 2 → πορτοκαλί · 3+ → κόκκινο
+ *
+ * Το χρώμα λέει «πόσο έχουμε πιέσει» με μια ματιά, χωρίς να διαβάσεις
+ * αριθμό· πάνω από τρεις κρατάμε τρεις κουκκίδες και το ακριβές πλήθος
+ * πάει στο tooltip, αλλιώς το chip γίνεται σειρά από τελείες.
+ */
+function ReminderDots({ log }: { log: string[] }) {
+  const n = log.length
+  if (n === 0) return null
+  const tone = n === 1
+    ? 'text-amber-500 dark:text-amber-400'
+    : n === 2
+      ? 'text-orange-500 dark:text-orange-400'
+      : 'text-red-600 dark:text-red-400'
+  return (
+    <span className={`ml-1.5 tracking-tight ${tone}`} aria-hidden="true">
+      {'•'.repeat(Math.min(n, 3))}
+    </span>
+  )
+}
+
+/** «3 υπενθυμίσεις · 2/9, 12/9, 24/9 — κλικ για νέα» */
+function reminderTitle(log: string[]): string {
+  const dates = log.map(d => new Date(d).toLocaleDateString('el-GR', { day: 'numeric', month: 'numeric' }))
+  const count = log.length === 1 ? '1 υπενθύμιση' : `${log.length} υπενθυμίσεις`
+  return `${count} · ${dates.join(', ')} — κλικ για νέα`
+}
 
 export default function OcSubscriptions({ members, canRemind, canIssue, onIssued }: {
   members: SubMemberRow[]
@@ -113,6 +145,10 @@ export default function OcSubscriptions({ members, canRemind, canIssue, onIssued
   function chip(m: SubMemberRow, tone: 'orange' | 'red') {
     const st = sendState[m.docId] || 'idle'
     const claimed = !!m.renewalClaimedAt && st !== 'issued'
+    // Παλιές εγγραφές έχουν μόνο ReminderSentAt — μετρούν ως μία υπενθύμιση
+    const remLog = (m.reminderLog && m.reminderLog.length)
+      ? m.reminderLog
+      : (m.reminderSentAt ? [m.reminderSentAt] : [])
     const toneCls = claimed
       ? 'border-teal-400 bg-teal-50 text-teal-900 dark:bg-teal-900/30 dark:border-teal-500/60 dark:text-teal-200'
       : st === 'issued'
@@ -134,13 +170,14 @@ export default function OcSubscriptions({ members, canRemind, canIssue, onIssued
           title={!canRemind
             ? 'Ενέργειες: μόνο Financer ή Community'
             : claimed ? 'Δήλωσε πληρωμή — κλικ για ενέργειες'
-              : m.reminderSentAt ? `Υπενθύμιση εστάλη ${new Date(m.reminderSentAt).toLocaleDateString('el-GR')} — κλικ για νέα`
+              : remLog.length ? reminderTitle(remLog)
                 : 'Κλικ για υπενθύμιση συνδρομής'}
           className={`px-3.5 py-1.5 rounded-full border text-sm ${toneCls} ${
             clickable ? 'hover:ring-2 hover:ring-coral/40 cursor-pointer' : 'cursor-default opacity-90'
           } disabled:opacity-50`}>
           {claimed && <span className="mr-1" aria-hidden="true">💶</span>}
           {m.name}
+          <ReminderDots log={remLog} />
           {st === 'sending' && <span className="ml-1.5 text-xs">…</span>}
           {st === 'sent' && <span className="ml-1.5 text-xs" aria-label="Η υπενθύμιση στάλθηκε">✉✓</span>}
           {st === 'error' && <span className="ml-1.5 text-xs text-red-600 dark:text-red-400">✗</span>}

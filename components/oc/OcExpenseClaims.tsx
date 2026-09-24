@@ -59,6 +59,41 @@ const MONTHS = ['Ιανουάριο', 'Φεβρουάριο', 'Μάρτιο', '�
   'Ιούλιο', 'Αύγουστο', 'Σεπτέμβριο', 'Οκτώβριο', 'Νοέμβριο', 'Δεκέμβριο']
 const monthName = (m: string) => MONTHS[Number(String(m).slice(5, 7)) - 1] || ''
 
+/**
+ * Τιμή που αντιγράφεται με ένα κλικ — δικαιούχος και IBAN.
+ *
+ * Ο/η Financer έχει ανοιχτό το e-banking δίπλα: η αντιγραφή με το χέρι από
+ * ένα IBAN 27 χαρακτήρων είναι ακριβώς το σημείο όπου γίνονται τα λάθη.
+ * Αντιγράφουμε ΧΩΡΙΣ κενά, όπως το θέλει η τράπεζα.
+ */
+function CopyValue({ value, label, mono, display, valueClass }: {
+  value: string; label: string; mono?: boolean; display?: string; valueClass?: string
+}) {
+  const [copied, setCopied] = useState(false)
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Σε browser χωρίς δικαίωμα clipboard το κείμενο μένει επιλέξιμο με το χέρι
+    }
+  }
+  return (
+    <button type="button" onClick={copy}
+      title={`Αντιγραφή — ${label}`}
+      aria-label={`Αντιγραφή ${label}: ${value}`}
+      className={`group inline-flex items-center gap-1.5 text-left rounded-lg px-1.5 -mx-1.5 py-0.5 hover:bg-coral/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral transition-colors ${
+        mono ? 'font-mono break-all' : ''
+      }`}>
+      <span className={`notranslate ${valueClass || 'text-charcoal dark:text-gray-100'}`}>{display || value}</span>
+      <span className={`text-xs whitespace-nowrap ${copied ? 'text-green-700 dark:text-green-300 font-bold' : 'text-coral dark:text-coral-light opacity-0 group-hover:opacity-100 group-focus:opacity-100'}`}>
+        {copied ? '✓ αντιγράφηκε' : 'αντιγραφή'}
+      </span>
+    </button>
+  )
+}
+
 export default function OcExpenseClaims() {
   const [data, setData] = useState<{
     pending: PendingClaim[]; total: number; canPay: boolean
@@ -181,7 +216,15 @@ export default function OcExpenseClaims() {
                       <span className="font-bold text-charcoal dark:text-gray-100">{c.memberName}</span>
                       <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 notranslate">{c.claimNumber}</span>
                     </div>
-                    <span className="text-xl font-bold text-charcoal dark:text-gray-100 notranslate">{money(c.payable)} €</span>
+                    {/* Φαίνεται «1.234,56 €», αντιγράφεται «1234,56»: χωρίς
+                        σύμβολο και χωρίς διαχωριστικό χιλιάδων, όπως το
+                        δέχεται η φόρμα του e-banking */}
+                    <CopyValue
+                      value={c.payable.toFixed(2).replace('.', ',')}
+                      display={`${money(c.payable)} €`}
+                      label="ποσό"
+                      valueClass="text-xl font-bold text-charcoal dark:text-gray-100"
+                    />
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{c.eventLabel}</p>
                   <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
@@ -191,10 +234,14 @@ export default function OcExpenseClaims() {
 
                   <div className="mt-3 rounded-xl bg-[#F5F0EB] dark:bg-gray-700 p-3">
                     <p className="text-xs font-bold tracking-wide text-gray-500 dark:text-gray-400">ΓΙΑ ΤΗΝ ΚΑΤΑΘΕΣΗ</p>
-                    <p className="text-sm text-charcoal dark:text-gray-200 mt-1">
-                      {c.accountHolder}{c.bankName ? ` · ${c.bankName}` : ''}
-                    </p>
-                    <p className="text-sm font-mono text-charcoal dark:text-gray-100 notranslate break-all">{c.iban}</p>
+                    <div className="text-sm mt-1 flex flex-wrap items-center gap-x-2">
+                      <CopyValue value={c.accountHolder} label="δικαιούχος" />
+                      {c.bankName && <span className="text-gray-500 dark:text-gray-400">· {c.bankName}</span>}
+                    </div>
+                    <div className="text-sm">
+                      {/* Διαβάζεται σε τετράδες, αντιγράφεται χωρίς κενά */}
+                      <CopyValue value={c.iban} display={c.iban.replace(/(.{4})/g, '$1 ').trim()} label="IBAN" mono />
+                    </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 mt-4">

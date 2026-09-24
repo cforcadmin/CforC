@@ -391,6 +391,16 @@ export function approvedEmailHtml(firstName: string, claimUrl: string, signerNam
   <tr>
     <td class="px" style="padding:24px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
       <p style="margin:0 0 20px 0;">Μόλις ολοκληρώσεις την κατάθεση, πάτησε το παρακάτω κουμπί για να ενημερωθεί αυτόματα η ομάδα οικονομικών και ανέβασε το αποδεικτικό της κατάθεσης στην πλατφόρμα μας — θα λάβεις απόδειξη είσπραξης ψηφιακά. Αν χρειάζεσαι το πρωτότυπο της απόδειξης είσπραξης, μας ενημερώνεις για να τη στείλουμε ταχυδρομικά.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 20px 0;border:1px solid #E0D8D0;border-radius:16px;">
+        <tr><td style="padding:18px 20px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#2D2D2D;">
+          <strong>Γιατί υπάρχει προθεσμία 30 ημερών</strong><br>
+          Αν η εγγραφή δεν ολοκληρωθεί μέσα σε αυτό το διάστημα, η αίτησή σου ακυρώνεται και
+          <strong>διαγράφουμε όλα τα προσωπικά σου στοιχεία</strong> από τα αρχεία μας, όπως επιβάλλει ο
+          Γενικός Κανονισμός Προστασίας Δεδομένων (GDPR): χωρίς ενεργή ιδιότητα μέλους δεν έχουμε νόμιμο
+          λόγο να τα κρατάμε. Αν θελήσεις αργότερα να γίνεις μέλος, θα χρειαστεί να υποβάλεις
+          <strong>νέα αίτηση από την αρχή</strong>, με νέα έγκριση από το ΔΣ.
+        </td></tr>
+      </table>
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td class="btn" align="center" bgcolor="#FF8B6A" style="background-color:#FF8B6A;border-radius:999px;">
@@ -2874,4 +2884,140 @@ export function expenseClaimPaidEmailHtml(opts: {
 </body>
 </html>`
   return { subject: `Η πληρωμή του εξοδολογίου ${opts.claimNumber} στάλθηκε — ${opts.payable}`, html }
+}
+
+/**
+ * Υπενθύμιση πληρωμής εγγραφής, σε δύο εντάσεις.
+ *
+ * Χτίζεται ΠΑΝΩ στο reminderEmailHtml ώστε τα τραπεζικά στοιχεία, το κουμπί
+ * δήλωσης και η υπογραφή να μένουν ένα κείμενο — αλλάζει ο τόνος, όχι τα
+ * δεδομένα. Μέχρι τώρα οι δύο υπενθυμίσεις ήταν ΤΟ ΙΔΙΟ γράμμα με άλλο
+ * θέμα: το μέλος έπαιρνε στις 28 ημέρες ένα επείγον subject πάνω σε κείμενο
+ * που δεν ανέφερε καμία επείγουσα προθεσμία.
+ *
+ *  stage 15 → «απομένουν 15 ημέρες», πορτοκαλί πλαίσιο
+ *  stage 28 → «ΤΕΛΕΥΤΑΙΑ ΕΙΔΟΠΟΙΗΣΗ», κόκκινο πλαίσιο, 2 ημέρες
+ *
+ * Και στις δύο εντάσεις ο λόγος διατυπώνεται ρητά: η διαγραφή δεν είναι
+ * τιμωρία αλλά υποχρέωση του GDPR — χωρίς ιδιότητα μέλους δεν υπάρχει
+ * νόμιμη βάση να κρατάμε τα δεδομένα.
+ */
+export function paymentReminderEmailHtml(
+  stage: 15 | 28,
+  firstName: string,
+  claimUrl: string,
+  signerName = 'Culture for Change — Community',
+): { subject: string; html: string } {
+  const base = reminderEmailHtml(firstName, claimUrl, signerName)
+
+  const box = stage === 28
+    ? `
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 22px 0;background-color:#FDECEA;border:2px solid #D93025;border-radius:16px;">
+        <tr><td style="padding:20px 22px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">
+          <span style="font-size:17px;font-weight:bold;color:#B3261E;">⚠ Απομένουν 2 ημέρες</span><br><br>
+          Αν η κατάθεση δεν γίνει μέσα στις επόμενες δύο ημέρες, με τη συμπλήρωση των 30 ημερών από την έγκριση:
+          <br><br>
+          • η <strong>έγκριση της αίτησής σου ακυρώνεται</strong>·<br>
+          • <strong>όλα τα προσωπικά σου στοιχεία διαγράφονται οριστικά</strong> από τα αρχεία μας, όπως
+            επιβάλλει ο Γενικός Κανονισμός Προστασίας Δεδομένων (GDPR) — χωρίς ενεργή ιδιότητα μέλους δεν
+            έχουμε νόμιμο λόγο να τα διατηρούμε·<br>
+          • για να γίνεις μέλος αργότερα θα χρειαστεί <strong>νέα αίτηση από την αρχή και νέα έγκριση από το ΔΣ</strong>.
+          <br><br>
+          Αν έχεις ήδη καταθέσει, αγνόησε αυτό το μήνυμα ή πάτησε το κουμπί πιο κάτω για να μας ενημερώσεις.
+        </td></tr>
+      </table>`
+    : `
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 22px 0;background-color:#FFF4E5;border:2px solid #E8A33D;border-radius:16px;">
+        <tr><td style="padding:20px 22px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">
+          <span style="font-size:16px;font-weight:bold;color:#9A6700;">Απομένουν 15 ημέρες</span><br><br>
+          Αν η συνδρομή δεν καταβληθεί μέσα σε αυτό το διάστημα, η <strong>αίτησή σου ακυρώνεται</strong> και
+          <strong>τα προσωπικά σου δεδομένα διαγράφονται</strong>, όπως ορίζει ο Γενικός Κανονισμός
+          Προστασίας Δεδομένων (GDPR). Για να γίνεις μέλος θα χρειαστεί νέα αίτηση από την αρχή.
+        </td></tr>
+      </table>`
+
+  // Το πλαίσιο μπαίνει αμέσως μετά τον χαιρετισμό, πριν από τα ποσά
+  const anchor = '<p style="margin:0 0 20px 0;">Μια φιλική υπενθύμιση από το Culture for Change'
+  let html = base.html.replace(anchor, `${box}\n      ${anchor}`)
+
+  if (stage === 28) {
+    html = html
+      .replace('>ΥΠΕΝΘΥΜΙΣΗ ΣΥΝΔΡΟΜΗΣ<', '>⚠ ΤΕΛΕΥΤΑΙΑ ΕΙΔΟΠΟΙΗΣΗ<')
+      .replace('<title>Υπενθύμιση συνδρομής — Culture for Change</title>',
+               '<title>Τελευταία ειδοποίηση — Culture for Change</title>')
+      .replace('Μια φιλική υπενθύμιση από το Culture for Change: το αίτημα εγγραφής σου έχει εγκριθεί και το μόνο που απομένει για να ολοκληρωθεί η εγγραφή σου είναι η καταβολή της εγγραφής και της ετήσιας συνδρομής σου.',
+               'Αυτή είναι η τελευταία ειδοποίηση πριν λήξει η προθεσμία των 30 ημερών από την έγκριση της αίτησής σου. Το μόνο που απομένει για να ολοκληρωθεί η εγγραφή σου είναι η καταβολή της εγγραφής και της ετήσιας συνδρομής.')
+  }
+
+  const subject = stage === 28
+    ? '⚠ Τελευταία ειδοποίηση — 2 ημέρες για την ολοκλήρωση της εγγραφής σου'
+    : 'Απομένουν 15 ημέρες για την ολοκλήρωση της εγγραφής σου — Culture for Change'
+
+  return { subject, html }
+}
+
+/**
+ * Διαγραφή εγκεκριμένης αίτησης που δεν πληρώθηκε μέσα στην προθεσμία (§4α).
+ *
+ * Προς hello@, community@, finance@ — ΟΧΙ προς τον/την αιτούντα/ούσα: του/της
+ * το είχαμε ήδη πει στα γράμματα των 15 και των 28 ημερών, και ένα τελευταίο
+ * «σε διαγράψαμε» δεν προσθέτει τίποτα παρά μόνο πίκρα.
+ *
+ * Το γράμμα ΕΙΝΑΙ το αρχείο. Μετά τη διαγραφή δεν μένει άλλη εγγραφή, οπότε
+ * εδώ μέσα πρέπει να υπάρχει ό,τι χρειάζεται για να τεκμηριωθεί η ενέργεια:
+ * ποιος/α, πότε εγκρίθηκε, πόσες μέρες πέρασαν, τι διαγράφηκε και τι όχι.
+ * Τα `pending` είναι τα σημεία που ΔΕΝ καθάρισε ο αυτοματισμός και θέλουν
+ * χέρι — αν λείψουν από το γράμμα, δεν θα τα θυμηθεί κανείς.
+ */
+export function applicationDeletedEmailHtml(opts: {
+  name: string
+  email: string
+  decisionDate: string | null
+  days: number
+  pending: string[]
+}): { subject: string; html: string } {
+  const { name, email, decisionDate, days, pending } = opts
+  const dateLabel = decisionDate
+    ? new Date(decisionDate).toLocaleDateString('el-GR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '—'
+  const row = (k: string, v: string) => `
+      <tr>
+        <td style="padding:6px 16px 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#6B6B6B;white-space:nowrap;vertical-align:top;">${k}</td>
+        <td style="padding:6px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#2D2D2D;">${v}</td>
+      </tr>`
+  const pendingBlock = pending.length === 0 ? '' : `
+  <tr>
+    <td class="px" style="padding:4px 48px 0 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;background:#FFF4E5;border-left:4px solid #E8912D;border-radius:6px;">
+        <tr>
+          <td style="padding:16px 20px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#6B4A15;">
+            <strong style="display:block;margin-bottom:6px;">Θέλει χέρι</strong>
+            ${pending.map(p => `• ${escapeHtml(p)}`).join('<br>')}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>`
+  const body = `
+  <tr>
+    <td class="px" style="padding:36px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;">
+      <p style="margin:0 0 20px 0;">Η αίτηση του/της <strong>${escapeHtml(name)}</strong> διαγράφηκε αυτόματα: εγκρίθηκε από το ΔΣ, αλλά η συνδρομή δεν πληρώθηκε μέσα στην προθεσμία των 30 ημερών.</p>
+      <p style="margin:0 0 20px 0;">Είχαν σταλεί οι υπενθυμίσεις της 15ης και της 28ης ημέρας, που ανήγγειλαν ρητά τη διαγραφή. Αν θελήσει να γίνει μέλος, ξεκινά νέα αίτηση από την αρχή.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin:0 0 20px 0;">
+        ${row('Ονοματεπώνυμο', escapeHtml(name))}
+        ${row('Email', escapeHtml(email))}
+        ${row('Έγκριση ΔΣ', dateLabel)}
+        ${row('Ημέρες από την έγκριση', String(days))}
+        ${row('Διαγραφή', new Date().toLocaleDateString('el-GR', { day: 'numeric', month: 'long', year: 'numeric' }))}
+      </table>
+    </td>
+  </tr>
+${pendingBlock}`
+  return {
+    subject: `Διαγραφή αίτησης — ${name} (άπρακτη προθεσμία 30 ημερών)`,
+    html: shell('Διαγραφή αίτησης', 'ΔΙΑΓΡΑΦΗ ΑΙΤΗΣΗΣ',
+      `${name}: η προθεσμία πληρωμής πέρασε άπρακτη και τα στοιχεία διαγράφηκαν.`,
+      body, `${SITE_URL}/oc`, 'Άνοιγμα OC',
+      'Αυτό το μήνυμα είναι το μόνο αρχείο της ενέργειας — τα στοιχεία της αίτησης δεν υπάρχουν πια.'),
+  }
 }

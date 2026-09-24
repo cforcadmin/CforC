@@ -162,6 +162,38 @@ export interface ClaimLine {
   files: ClaimLineFile[]
 }
 
+/**
+ * Σκέλη της διαδρομής που δεν έχουν ακόμη το έξοδό τους.
+ *
+ * Κάθε σκέλος δηλώνει το δικό του μέσο, οπότε μια μικτή διαδρομή —
+ * αεροπλάνο πήγαινε, ΚΤΕΛ επιστροφή — παράγει δύο διαφορετικές υποδείξεις.
+ * Μετράμε ανά μέσο: αν η διαδρομή έχει δύο αεροπορικά σκέλη και μία γραμμή
+ * «Αεροπορικό εισιτήριο», λείπει ένα.
+ *
+ * Είναι ΥΠΟΔΕΙΞΗ, όχι κανόνας: μπορεί ένα εισιτήριο να καλύπτει και τις δύο
+ * κατευθύνσεις, ή να πλήρωσε κάποιος άλλος (π.χ. συνεπιβάτης σε αυτοκίνητο).
+ * Γι' αυτό επιστρέφουμε τι λείπει και αποφασίζει το μέλος.
+ */
+export function missingTravelLines(
+  legs: TravelLeg[],
+  lines: Array<{ receiptType: string }>,
+): TravelLeg[] {
+  const counted = new Map<string, number>()
+  for (const l of lines) {
+    const t = String(l.receiptType || '').trim()
+    if (t) counted.set(t, (counted.get(t) || 0) + 1)
+  }
+  const missing: TravelLeg[] = []
+  for (const leg of legs) {
+    const mode = String(leg.mode || '').trim()
+    if (!mode || !leg.from.trim() || !leg.to.trim()) continue
+    const left = counted.get(mode) ?? 0
+    if (left > 0) counted.set(mode, left - 1)
+    else missing.push(leg)
+  }
+  return missing
+}
+
 export const MAX_LINES = 40
 export const MAX_FILE_BYTES = 10 * 1024 * 1024
 export const MAX_TOTAL_BYTES = 40 * 1024 * 1024

@@ -1,7 +1,7 @@
 import {
   computeTotals, eventDays, ibanLooksValid, normaliseIban, validateClaim,
   buildAttachmentName, buildClaimPdfName, formatClaimNumber, receiptSpec,
-  buildReturnLegs, allLegs, TRAVEL_MODES, RECEIPT_TYPES,
+  buildReturnLegs, allLegs, missingTravelLines, TRAVEL_MODES, RECEIPT_TYPES,
   type ClaimLine,
 } from '@/lib/expenseClaims'
 
@@ -179,5 +179,51 @@ describe('εξοδολόγια — σκέλη διαδρομής', () => {
     expect(validateClaim(claim({ travelLegs: [{ from: 'Αθήνα', to: 'Πάτρα', mode: '' }] }) as any))
       .toMatch(/μέσο μετακίνησης/)
     expect(validateClaim(claim({ travelLegs: [{ from: '', to: '', mode: '' }] }) as any)).toBeNull()
+  })
+})
+
+describe('εξοδολόγια — τι λείπει από τη διαδρομή', () => {
+  const leg = (from: string, to: string, mode: string, direction: 'outbound' | 'return' = 'outbound') =>
+    ({ from, to, mode, direction }) as any
+  const line = (receiptType: string) => ({ receiptType })
+
+  it('δύο αεροπορικά σκέλη με ένα εισιτήριο → λείπει ένα', () => {
+    const missing = missingTravelLines(
+      [leg('Αθήνα', 'Λονδίνο', 'Αεροπορικό εισιτήριο'), leg('Λονδίνο', 'Αθήνα', 'Αεροπορικό εισιτήριο', 'return')],
+      [line('Αεροπορικό εισιτήριο')],
+    )
+    expect(missing).toHaveLength(1)
+    expect(`${missing[0].from}→${missing[0].to}`).toBe('Λονδίνο→Αθήνα')
+  })
+
+  it('μικτή διαδρομή: αεροπλάνο πήγαινε, ΚΤΕΛ επιστροφή', () => {
+    const legs = [
+      leg('Αθήνα', 'Ιωάννινα', 'Αεροπορικό εισιτήριο'),
+      leg('Ιωάννινα', 'Αθήνα', 'Εισιτήριο ΚΤΕΛ / λεωφορείου', 'return'),
+    ]
+    expect(missingTravelLines(legs, []).map(l => l.mode))
+      .toEqual(['Αεροπορικό εισιτήριο', 'Εισιτήριο ΚΤΕΛ / λεωφορείου'])
+    // με το αεροπορικό καταχωρημένο, μένει μόνο το ΚΤΕΛ
+    expect(missingTravelLines(legs, [line('Αεροπορικό εισιτήριο')]).map(l => l.mode))
+      .toEqual(['Εισιτήριο ΚΤΕΛ / λεωφορείου'])
+  })
+
+  it('λεωφορείο πήγαινε, μοιρασμένο αυτοκίνητο επιστροφή', () => {
+    const legs = [
+      leg('Θεσσαλονίκη', 'Αθήνα', 'Εισιτήριο ΚΤΕΛ / λεωφορείου'),
+      leg('Αθήνα', 'Θεσσαλονίκη', 'Καύσιμα', 'return'),
+    ]
+    // Αν τα καύσιμα τα πλήρωσε άλλος, το μέλος απλώς αγνοεί την υπόδειξη
+    expect(missingTravelLines(legs, [line('Εισιτήριο ΚΤΕΛ / λεωφορείου')]).map(l => l.mode)).toEqual(['Καύσιμα'])
+    expect(missingTravelLines(legs, [line('Εισιτήριο ΚΤΕΛ / λεωφορείου'), line('Καύσιμα')])).toHaveLength(0)
+  })
+
+  it('ένα εισιτήριο μετ’ επιστροφής καλύπτει ένα σκέλος — το άλλο προτείνεται', () => {
+    const legs = [leg('Αθήνα', 'Βερολίνο', 'Αεροπορικό εισιτήριο'), leg('Βερολίνο', 'Αθήνα', 'Αεροπορικό εισιτήριο', 'return')]
+    expect(missingTravelLines(legs, [line('Αεροπορικό εισιτήριο'), line('Αεροπορικό εισιτήριο')])).toHaveLength(0)
+  })
+
+  it('αγνοεί μισοσυμπληρωμένα σκέλη και σκέλη χωρίς μέσο', () => {
+    expect(missingTravelLines([leg('Αθήνα', '', 'Αεροπορικό εισιτήριο'), leg('Αθήνα', 'Πάτρα', '')], [])).toHaveLength(0)
   })
 })

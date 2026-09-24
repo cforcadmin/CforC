@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generatePaymentClaimToken } from '@/lib/auth'
 import { getSeatHolder } from '@/lib/ocRoles'
-import { sendOcEmail, reminderEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL } from '@/lib/ocEmails'
+import {
+  sendOcEmail, paymentReminderEmailHtml, applicationDeletedEmailHtml, paymentClaimUrl,
+  COMMUNITY_FROM, COMMUNITY_EMAIL, ADMIN_EMAIL, FINANCE_EMAIL,
+} from '@/lib/ocEmails'
+import { sheetsConfigured, removeApplicantFromSheet } from '@/lib/googleSheets'
 
 export const maxDuration = 60
 
@@ -16,6 +20,7 @@ export const maxDuration = 60
  *  Ημέρα 15 → υπενθύμιση
  *  Ημέρα 28 → «απομένουν δύο μέρες»
  *  Ημέρα 30 → καμία αποστολή· το OC δείχνει «η προθεσμία έληξε»
+ *  Ημέρα 31 → διαγραφή της αίτησης (GDPR) + ειδοποίηση στο ΔΣ
  *
  * Αν έχει γίνει δήλωση πληρωμής (PaymentClaimedAt), δεν στέλνεται τίποτα.
  */
@@ -23,6 +28,9 @@ export const maxDuration = 60
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 const CRON_SECRET = process.env.CRON_SECRET
+
+/** Η προθεσμία σε ημέρες· από την επόμενη η αίτηση διαγράφεται. */
+const DEADLINE_DAYS = 30
 
 async function strapi(path: string, method = 'GET', data?: any) {
   const res = await fetch(`${STRAPI_URL}/api${path}`, {
@@ -56,7 +64,8 @@ export async function GET(request: NextRequest) {
       + '&filters[AutoRemindersArmed][$eq]=true'
       + '&pagination[limit]=200'
       + '&fields[0]=FirstName&fields[1]=LastName&fields[2]=Email&fields[3]=DecisionDate'
-      + '&fields[4]=PaymentClaimedAt&fields[5]=Reminder15SentAt&fields[6]=Reminder28SentAt',
+      + '&fields[4]=PaymentClaimedAt&fields[5]=Reminder15SentAt&fields[6]=Reminder28SentAt'
+      + '&populate[Photo][fields][0]=id',
     )
     if (!r.ok) return NextResponse.json({ error: `strapi ${r.status}` }, { status: 502 })
 
@@ -76,15 +85,17 @@ export async function GET(request: NextRequest) {
       if (days >= 28 && !app.Reminder28SentAt) stage = 28
       else if (days >= 15 && days < 28 && !app.Reminder15SentAt) stage = 15
       if (stage === null) continue
-      // Μετά τις 30 δεν ενοχλούμε άλλο — το OC δείχνει τη λήξη στον/στην Financer
-      if (days > 32) { skipped.push(`${email}: πέρασε η προθεσμία (${days} μέρες)`); continue }
+      // Η προθεσμία είναι 30 ημέρες: από την 31η και μετά δεν στέλνουμε τίποτα.
+      // Ήταν 32, που σήμαινε ότι κάποιος στη 31η ή 32η ημέρα λάμβανε το
+      // «απομένουν 2 ημέρες» ΜΕΤΑ τη λήξη της προθεσμίας που ανήγγειλε.
+      // Από εκεί και πέρα το θέμα το βλέπει ο/η Financer στο OC.
+      if (days > 30) { skipped.push(`${email}: πέρασε η προθεσμία (${days} μέρες)`); continue }
 
       const firstName = String(app.FirstName || '').trim()
       const claim = paymentClaimUrl(generatePaymentClaimToken(app.documentId))
-      const tpl = reminderEmailHtml(firstName, claim, signerName)
-      const subject = stage === 28
-        ? `Απομένουν δύο ημέρες — ${tpl.subject}`
-        : tpl.subject
+      // Κάθε στάδιο έχει το δικό του κείμενο — όχι ίδιο γράμμα με άλλο θέμα
+      const tpl = paymentReminderEmailHtml(stage, firstName, claim, signerName)
+      const subject = tpl.subject
 
       // Awaited: μη-awaited παρενέργειες πεθαίνουν με το πάγωμα της συνάρτησης
       const ok = await sendOcEmail(email, subject, tpl.html, {
@@ -100,8 +111,70 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // ── Διαγραφή όσων πέρασε άπρακτη η προθεσμία (§4α, GDPR) ────────────
+    //
+    // Δεν τρέχει σε όλες τις εγκεκριμένες αιτήσεις παρά ΜΟΝΟ στις οπλισμένες:
+    // η διαγραφή είναι η εκτέλεση της υπόσχεσης που έδωσαν τα γράμματα των 15
+    // και των 28 ημερών, και αυτά φεύγουν μόνο όταν AutoRemindersArmed=true.
+    // Χωρίς αυτόν τον όρο θα σβήναμε ανθρώπους που δεν προειδοποιήθηκαν ποτέ.
+    //
+    // Ούτε τρέχει χωρίς DecisionDate: αν λείπει, δεν υπάρχει αφετηρία, άρα
+    // δεν υπάρχει προθεσμία που να έχει λήξει. Η απουσία ημερομηνίας δεν
+    // σημαίνει «πάει πολύς καιρός» — σημαίνει «δεν ξέρουμε».
+    const deleted: string[] = []
+    for (const app of r.json?.data || []) {
+      if (!app.DecisionDate || app.PaymentClaimedAt) continue
+      if (daysSince(app.DecisionDate) <= DEADLINE_DAYS) continue
+
+      const days = daysSince(app.DecisionDate)
+      const name = `${app.FirstName || ''} ${app.LastName || ''}`.trim() || '—'
+      const email = String(app.Email || '').trim()
+      // Τα κρατάμε ΠΡΙΝ τη διαγραφή: μετά δεν υπάρχει από πού να διαβαστούν
+      const pending: string[] = []
+
+      // 1) Η γραμμή στα ΕΓΚΕΚΡΙΜΕΝΑ του φύλλου
+      if (!sheetsConfigured()) {
+        pending.push('Το Google Sheet δεν είναι ρυθμισμένο — σβήσε τη γραμμή από τα ΕΓΚΕΚΡΙΜΕΝΑ με το χέρι.')
+      } else {
+        try {
+          await removeApplicantFromSheet(email)
+        } catch (e) {
+          console.error('[PAYMENT-REMINDERS] sheet removal failed', app.documentId)
+          pending.push(`Δεν σβήστηκε η γραμμή από τα ΕΓΚΕΚΡΙΜΕΝΑ του φύλλου (${(e as Error).message}). Χρειάζεται διαγραφή με το χέρι.`)
+        }
+      }
+
+      // 2) Η φωτογραφία στη Βιβλιοθήκη Πολυμέσων — δεν φεύγει με την εγγραφή
+      const photoId = app.Photo?.id
+      if (photoId) {
+        const del = await fetch(`${STRAPI_URL}/api/upload/files/${photoId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
+        }).catch(() => null)
+        if (!del?.ok) {
+          pending.push('Η φωτογραφία της αίτησης έμεινε στη Βιβλιοθήκη Πολυμέσων του Strapi — χρειάζεται διαγραφή με το χέρι.')
+        }
+      }
+
+      // 3) Η ίδια η αίτηση. Αν αποτύχει, ΔΕΝ στέλνουμε ειδοποίηση διαγραφής
+      //    για κάτι που δεν διαγράφηκε — ξαναδοκιμάζει αύριο.
+      const gone = await strapi(`/membership-applications/${app.documentId}`, 'DELETE')
+      if (!gone.ok) {
+        console.error('[PAYMENT-REMINDERS] delete failed', gone.status, app.documentId)
+        skipped.push(`${email}: αποτυχία διαγραφής (${gone.status})`)
+        continue
+      }
+
+      const tpl = applicationDeletedEmailHtml({ name, email, decisionDate: app.DecisionDate, days, pending })
+      await sendOcEmail(ADMIN_EMAIL, tpl.subject, tpl.html, {
+        from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL, cc: [COMMUNITY_EMAIL, FINANCE_EMAIL],
+      })
+      deleted.push(`${name} (ημέρα ${days}${pending.length ? `, ${pending.length} εκκρεμότητες` : ''})`)
+    }
+
     console.log(`[PAYMENT-REMINDERS] sent ${sent.length}${sent.length ? ': ' + sent.join(', ') : ''}`)
-    return NextResponse.json({ success: true, sent, skipped })
+    if (deleted.length) console.log(`[PAYMENT-REMINDERS] deleted ${deleted.length}: ${deleted.join(', ')}`)
+    return NextResponse.json({ success: true, sent, skipped, deleted })
   } catch (err) {
     console.error('[PAYMENT-REMINDERS] error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

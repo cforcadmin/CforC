@@ -129,3 +129,64 @@ export async function sendDecisionToSheet(email: string, decision: 'approved' | 
     throw new Error(`Sheet web app rejected: ${json?.error || 'unknown error'}`)
   }
 }
+
+/**
+ * Σβήνει τη γραμμή ενός/μιας εγκεκριμένου/ης αιτούντα/ούσας από τα
+ * ΕΓΚΕΚΡΙΜΕΝΑ (ΠΛΗΡΩΜΗ=Όχι), όταν πέρασε άπρακτη η προθεσμία των 30 ημερών.
+ *
+ * Δεν κάνει τη δουλειά του `removeMember`: εκείνο δουλεύει με ΑΜ και τρέχει
+ * ολόκληρη τη ροή διαγραφής μέλους (snapshot, Επισκόπηση, Συνδρομές). Εδώ
+ * δεν υπάρχει ΑΜ — δεν έγινε ποτέ μέλος — ούτε snapshot: η υπόσχεση που
+ * δόθηκε στα γράμματα ήταν ότι διαγράφονται ΟΛΑ τα στοιχεία.
+ *
+ * Πετάει σε αποτυχία: ο caller το γράφει στο email ειδοποίησης ως εκκρεμότητα
+ * αντί να το καταπιεί — μια γραμμή που μένει στο φύλλο με ονοματεπώνυμο,
+ * email και τηλέφωνο ακυρώνει ό,τι μόλις υποσχεθήκαμε.
+ */
+export async function removeApplicantFromSheet(email: string): Promise<void> {
+  if (!WEBAPP_URL || !WEBAPP_SECRET) throw new Error('Sheet web app not configured')
+
+  // Κρύα εκκίνηση: η πρώτη κλήση μετά από αδράνεια μπορεί να γυρίσει σελίδα
+  // σφάλματος ή την απάντηση του doGet («CforC OC bridge…») αντί για JSON,
+  // ενώ στο Apps Script η εκτέλεση φαίνεται Completed — δηλαδή η ΔΟΥΛΕΙΑ ΕΓΙΝΕ
+  // και χάθηκε μόνο η απάντηση. Μετρημένο: 2/2 αποτυχίες σε κρύο, 6/6 επιτυχίες
+  // σε ζεστό (24/9/26).
+  //
+  // Το cron τρέχει μία φορά την ημέρα, άρα ΚΑΘΕ πραγματική διαγραφή είναι κρύα
+  // κλήση. Χωρίς επανάληψη, το email ειδοποίησης θα έγραφε «η γραμμή μένει στο
+  // φύλλο» για γραμμές που είχαν ήδη καθαριστεί.
+  //
+  // Η επανάληψη είναι ασφαλής ΕΔΩ επειδή η ενέργεια είναι idempotent: αν η
+  // γραμμή καθαρίστηκε στην πρώτη προσπάθεια, η δεύτερη γυρίζει row 0.
+  // ΔΕΝ ισχύει για τα recordPayment/removeMember/decide — εκείνα αποδίδουν ΑΜ
+  // και μετακινούν γραμμές, οπότε μια τυφλή επανάληψη θα διπλασίαζε ενέργειες.
+  let lastError = ''
+  let definitive = false
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    if (attempt > 1) await new Promise(r => setTimeout(r, 3000))
+    try {
+      const res = await fetch(WEBAPP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret: WEBAPP_SECRET, action: 'removeApplicant', email }),
+        redirect: 'follow',
+      })
+      const text = await res.text()
+      if (!res.ok) { lastError = `HTTP ${res.status}`; continue }
+      let json: any = null
+      try { json = JSON.parse(text) } catch {
+        // HTML σελίδα ή το κείμενο του doGet — όχι απάντηση της ενέργειας
+        lastError = 'μη αναγνωρίσιμη απάντηση (κρύα εκκίνηση;)'
+        continue
+      }
+      // Καθαρή απάντηση με ok:false είναι ΚΡΙΣΗ του script, όχι δικτυακή αστοχία
+      // (π.χ. «δεν βρέθηκε το μπλοκ»). Η επανάληψη δεν θα άλλαζε τίποτα.
+      // ΔΕΝ πετάμε εδώ μέσα: το catch του βρόχου θα το κατάπινε και θα ξανάτρεχε.
+      if (!json?.ok) { lastError = String(json?.error || 'unknown error'); definitive = true; break }
+      return
+    } catch (e) {
+      lastError = (e as Error).message
+    }
+  }
+  throw new Error(`Sheet web app: ${lastError}${definitive ? '' : ' (3 προσπάθειες)'}`)
+}
