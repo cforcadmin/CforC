@@ -35,6 +35,8 @@ export interface ReceiptInput {
   companyTaxId?: string | null
   notes?: string | null
   createdBy?: string
+  /** Γράφτηκε η χρονιά στο Μητρώο; null όταν δεν αφορά (δωρεές, εισφορές). */
+  registrySynced?: boolean | null
 }
 
 export interface CreatedReceipt {
@@ -145,6 +147,8 @@ export async function createReceipt(input: ReceiptInput, explicitNumber?: number
       CompanyAddress: input.companyAddress || null,
       CompanyTaxId: input.companyTaxId || null,
       SheetSynced: false,
+      // null = δεν αφορά αυτή την απόδειξη· false = επιχειρήθηκε και απέτυχε
+      RegistrySynced: input.registrySynced ?? null,
       Notes: input.notes || null,
       CreatedBy: input.createdBy || 'system',
     })

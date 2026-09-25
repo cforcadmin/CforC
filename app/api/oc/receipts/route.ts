@@ -88,13 +88,20 @@ export async function GET(request: NextRequest) {
   try {
     // ?all=1 → ολόκληρο το μητρώο αποδείξεων (cap 1000), αλλιώς οι 12 πρόσφατες
     const all = request.nextUrl.searchParams.get('all') === '1'
-    const [next, recentRes] = await Promise.all([
+    const baseFields =
+      '&fields[0]=Number&fields[1]=Type&fields[2]=Amount&fields[3]=MemberName' +
+      '&fields[4]=IssueDate&fields[5]=PaymentDate&fields[6]=SheetSynced&fields[7]=SentAt' +
+      '&fields[8]=PaymentMethod'
+    const list = (fields: string) =>
+      strapi(`/receipts?sort=Number:desc&pagination[limit]=${all ? 1000 : 12}${fields}`)
+    // Το RegistrySynced ζητείται προαιρετικά: όσο δεν έχει βγει στο Strapi
+    // Cloud, το query γυρίζει 400 «Invalid key» και η λίστα θα ερχόταν ΚΕΝΗ —
+    // ένα νέο πεδίο δεν πρέπει να σβήνει το μητρώο αποδείξεων από την οθόνη.
+    const [next, firstTry] = await Promise.all([
       nextReceiptNumber(),
-      strapi(`/receipts?sort=Number:desc&pagination[limit]=${all ? 1000 : 12}` +
-        '&fields[0]=Number&fields[1]=Type&fields[2]=Amount&fields[3]=MemberName' +
-        '&fields[4]=IssueDate&fields[5]=PaymentDate&fields[6]=SheetSynced&fields[7]=SentAt' +
-        '&fields[8]=PaymentMethod'),
+      list(baseFields + '&fields[9]=RegistrySynced'),
     ])
+    const recentRes = firstTry.ok ? firstTry : await list(baseFields)
     const recent = (recentRes.json?.data || []).map((r: any) => ({
       number: r.Number,
       type: r.Type,
@@ -104,6 +111,7 @@ export async function GET(request: NextRequest) {
       issueDate: r.IssueDate,
       paymentDate: r.PaymentDate,
       sheetSynced: !!r.SheetSynced,
+      registrySynced: r.RegistrySynced === null || r.RegistrySynced === undefined ? null : !!r.RegistrySynced,
       sentAt: r.SentAt || null,
       paymentMethod: r.PaymentMethod || null,
     }))
@@ -296,6 +304,9 @@ export async function POST(request: NextRequest) {
       companyTaxId: String(body?.companyTaxId || '').trim() || null,
       notes: String(body?.notes || '').trim() || null,
       createdBy: `financer:${auth.memberId}`,
+      // Αποθηκεύεται ώστε η αστοχία να φαίνεται και ΜΕΤΑ το reload — το μήνυμα
+      // της στιγμής χάνεται, η στήλη μένει.
+      registrySynced: isSubscriptionLike && memberAm !== '' ? registrySynced : null,
     })
 
     // PDF ΠΑΝΤΑ (και χωρίς email — χρειάζεται για την αρχειοθέτηση Drive),

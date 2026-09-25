@@ -58,3 +58,28 @@ describe('Ορατότητα αστοχίας συγχρονισμού', () => {
     expect(src).not.toContain('χειροκίνητα μέχρι τη Φάση Γ')
   })
 })
+
+describe('Μόνιμη ένδειξη Μητρώου', () => {
+  it('το πεδίο υπάρχει στο schema, nullable χωρίς default', () => {
+    const schema = JSON.parse(fs.readFileSync(
+      'StrapiDBforCforC/src/api/receipt/content-types/receipt/schema.json', 'utf8'))
+    const f = schema.attributes.RegistrySynced
+    expect(f).toBeDefined()
+    expect(f.type).toBe('boolean')
+    // ΧΩΡΙΣ default: null σημαίνει «δεν αφορά», false «απέτυχε». Ένα
+    // default:false θα εμφάνιζε κάθε δωρεά ως αποτυχία Μητρώου.
+    expect(f.default).toBeUndefined()
+  })
+
+  it('η λίστα αποδείξεων δεν αδειάζει αν το πεδίο δεν έχει βγει ακόμη', () => {
+    const src = fs.readFileSync('app/api/oc/receipts/route.ts', 'utf8')
+    expect(src).toContain('firstTry.ok ? firstTry : await list(baseFields)')
+  })
+
+  it('η στήλη «Μητρώο» ξεχωρίζει null από false', () => {
+    const src = fs.readFileSync('components/oc/OcFinances.tsx', 'utf8')
+    expect(src).toContain('r.registrySynced === null')
+    expect(src).toContain('Μητρώο ✗')
+    expect(src).toContain('<th className="py-2 font-medium">Μητρώο</th>')
+  })
+})

@@ -31,6 +31,7 @@ interface RecentReceipt {
   memberName: string | null
   issueDate: string | null
   sheetSynced: boolean
+  registrySynced: boolean | null
   sentAt: string | null
   paymentMethod: 'bank' | 'cash' | null
 }
@@ -770,7 +771,8 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
                   <th className="py-2 pr-4 font-medium">Τρόπος</th>
                   <th className="py-2 pr-4 font-medium">Ημ. έκδοσης</th>
                   <th className="py-2 pr-4 font-medium">Αποστολή</th>
-                  <th className="py-2 font-medium">ΕΣΟΔΑ</th>
+                  <th className="py-2 pr-4 font-medium">ΕΣΟΔΑ</th>
+                  <th className="py-2 font-medium">Μητρώο</th>
                 </tr>
               </thead>
               <tbody>
@@ -819,9 +821,19 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
                     </td>
                     <td className="py-3">
                       {r.sheetSynced ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200">✓</span>
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200" title="Η γραμμή γράφτηκε στο ΕΣΟΔΑ">✓</span>
                       ) : (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200" title="Γράψε τη γραμμή στο ΕΣΟΔΑ χειροκίνητα (αυτόματα από τη Φάση Γ)">χειροκίνητα</span>
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200" title="Η γραμμή ΔΕΝ γράφτηκε στο ΕΣΟΔΑ — χρειάζεται χειροκίνητα">χειροκίνητα</span>
+                      )}
+                    </td>
+                    <td className="py-3">
+                      {/* null = δεν αφορά (δωρεά, έκτακτη εισφορά) → τίποτα, όχι προειδοποίηση */}
+                      {r.registrySynced === null ? (
+                        <span className="text-xs text-gray-400 dark:text-gray-500" title="Δεν αφορά αυτή την απόδειξη (δωρεά, έκτακτη εισφορά, ή νέο μέλος όπου το Μητρώο ενημερώνεται από την προαγωγή)">—</span>
+                      ) : r.registrySynced ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200" title="Η χρονιά γράφτηκε στο Μητρώο (Επισκόπηση → Συνδρομές)">✓</span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200" title="Η χρονιά ΔΕΝ γράφτηκε στο Μητρώο — συμπλήρωσε το 1 στην Επισκόπηση">Μητρώο ✗</span>
                       )}
                     </td>
                   </tr>
