@@ -160,9 +160,14 @@ export async function removeApplicantFromSheet(email: string): Promise<void> {
   // γραμμή καθαρίστηκε στην πρώτη προσπάθεια, η δεύτερη γυρίζει row 0.
   // ΔΕΝ ισχύει για τα recordPayment/removeMember/decide — εκείνα αποδίδουν ΑΜ
   // και μετακινούν γραμμές, οπότε μια τυφλή επανάληψη θα διπλασίαζε ενέργειες.
+  // Όριο χρόνου στον βρόχο: τρεις προσπάθειες × ~55s κρύας κλήσης ξεπερνούν
+  // μόνες τους το μισό budget της διαδρομής, και η διαδρομή κάνει ΔΥΟ τέτοιες
+  // κλήσεις. Μετά τα 120s σταματάμε — η αστοχία καταγράφεται, δεν κρεμάει.
+  const deadline = Date.now() + 120_000
   let lastError = ''
   let definitive = false
   for (let attempt = 1; attempt <= 3; attempt++) {
+    if (attempt > 1 && Date.now() > deadline) { lastError += ' — λήξη χρόνου'; break }
     if (attempt > 1) await new Promise(r => setTimeout(r, 3000))
     try {
       const res = await fetch(WEBAPP_URL, {
@@ -217,9 +222,14 @@ export async function recordSubscriptionYearInSheet(
   if (!amClean) throw new Error('Λείπει ο ΑΜ')
   if (!Number.isFinite(Number(year))) throw new Error('Λείπει το έτος')
 
+  // Όριο χρόνου στον βρόχο: τρεις προσπάθειες × ~55s κρύας κλήσης ξεπερνούν
+  // μόνες τους το μισό budget της διαδρομής, και η διαδρομή κάνει ΔΥΟ τέτοιες
+  // κλήσεις. Μετά τα 120s σταματάμε — η αστοχία καταγράφεται, δεν κρεμάει.
+  const deadline = Date.now() + 120_000
   let lastError = ''
   let definitive = false
   for (let attempt = 1; attempt <= 3; attempt++) {
+    if (attempt > 1 && Date.now() > deadline) { lastError += ' — λήξη χρόνου'; break }
     if (attempt > 1) await new Promise(r => setTimeout(r, 3000))
     try {
       const res = await fetch(WEBAPP_URL, {

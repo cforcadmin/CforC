@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// PDF + email θέλουν χρόνο — όχι το Vercel default των 10s
-export const maxDuration = 60
+// PDF + email θέλουν χρόνο — όχι το Vercel default των 10s.
+//
+// 300s και όχι 60: η διαδρομή κάνει ΔΥΟ κλήσεις σε Apps Script (Μητρώο και
+// ΕΣΟΔΑ) και καθεμιά, σε κρύα εκκίνηση, αργεί 40–60 δευτερόλεπτα και μπορεί
+// να χρειαστεί δεύτερη προσπάθεια — μετρημένο 25/9/2026: 43,8s και 57,7s για
+// μία μόνο εγγραφή. Με 60s όριο, η πρώτη πραγματική πληρωμή της ημέρας θα
+// τερματιζόταν στη μέση: απόδειξη εκδομένη, φύλλα μισοενημερωμένα.
+export const maxDuration = 300
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'

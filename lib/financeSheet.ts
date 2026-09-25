@@ -43,8 +43,13 @@ export async function appendReceiptToEsoda(row: EsodaReceiptRow): Promise<{ ok: 
   //
   // Ασφαλής επειδή το ίδιο το script αναγνωρίζει τη διπλοεγγραφή και γυρίζει
   // duplicate:true — η δεύτερη προσπάθεια δεν προσθέτει δεύτερη γραμμή.
+  // Όριο χρόνου στον βρόχο: τρεις προσπάθειες × ~55s κρύας κλήσης ξεπερνούν
+  // μόνες τους το μισό budget της διαδρομής, και η διαδρομή κάνει ΔΥΟ τέτοιες
+  // κλήσεις. Μετά τα 120s σταματάμε — η αστοχία καταγράφεται, δεν κρεμάει.
+  const deadline = Date.now() + 120_000
   let lastError = ''
   for (let attempt = 1; attempt <= 3; attempt++) {
+    if (attempt > 1 && Date.now() > deadline) { lastError += ' — λήξη χρόνου'; break }
     if (attempt > 1) await new Promise(r => setTimeout(r, 3000))
     try {
       const res = await fetch(FINANCE_SHEET_WEBAPP_URL as string, {

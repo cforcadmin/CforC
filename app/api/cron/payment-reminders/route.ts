@@ -7,7 +7,10 @@ import {
 } from '@/lib/ocEmails'
 import { sheetsConfigured, removeApplicantFromSheet } from '@/lib/googleSheets'
 
-export const maxDuration = 60
+// 300s: η διαγραφή καλεί το Apps Script για ΚΑΘΕ αίτηση, και μια κρύα κλήση
+// θέλει 40–60s. Με 60s όριο, ήδη η πρώτη διαγραφή θα έκοβε τη διαδρομή στη
+// μέση — φάκελος σβησμένος, γραμμή φύλλου όρθια, email αστάλτο.
+export const maxDuration = 300
 
 /**
  * Αυτόματες υπενθυμίσεις προθεσμίας πληρωμής (§4α).
