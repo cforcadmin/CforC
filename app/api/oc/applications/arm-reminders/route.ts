@@ -52,9 +52,13 @@ export async function POST(request: NextRequest) {
   const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
   if (!all && !id) return NextResponse.json({ error: 'Λείπει η αίτηση' }, { status: 400 })
 
+  // Στο ξεκλείδωμα καθαρίζονται ΚΑΙ οι σφραγίδες. Παλιά έμεναν: μια αίτηση
+  // μπορούσε να λέει «οπλίστηκε 24/09 15:59» ενώ ήταν ξεοπλισμένη, και όποιος
+  // διάβαζε την εγγραφή —άνθρωπος ή μελλοντικός κώδικας— έβγαζε λάθος
+  // συμπέρασμα. Η σφραγίδα περιγράφει ΕΝΕΡΓΗ όπλιση· χωρίς όπλιση δεν υπάρχει.
   const stamp = armed
     ? { AutoRemindersArmed: true, AutoRemindersArmedAt: new Date().toISOString(), AutoRemindersArmedBy: `member:${decoded.memberId}` }
-    : { AutoRemindersArmed: false }
+    : { AutoRemindersArmed: false, AutoRemindersArmedAt: null, AutoRemindersArmedBy: null }
 
   try {
     if (!all) {
