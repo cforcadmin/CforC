@@ -43,6 +43,16 @@ export const APPLICATION_RECEIVED_CC = [
   'community@cultureforchange.net',
   'finance@cultureforchange.net',
 ]
+/** Αντίγραφα της απόδειξης είσπραξης: Οικονομικά (αρχείο), Διαχείριση και
+ *  Community. Ήταν μόνο το finance@ — αλλά την είσπραξη τη θέλουν και οι
+ *  τρεις, και το αντίγραφο είναι η μόνη ειδοποίηση που φτάνει χωρίς να μπει
+ *  κανείς στο OC. Ισχύει και για τις δύο διαδρομές έκδοσης: χειροκίνητη από
+ *  τα Οικονομικά και αυτόματη με την ολοκλήρωση πληρωμής. */
+export const RECEIPT_CC = [
+  'finance@cultureforchange.net',
+  'hello@cultureforchange.net',
+  'community@cultureforchange.net',
+]
 /** Κοινοποίηση αποχαιρετιστήριου email στις εμπλεκόμενες θέσεις */
 export const DEPARTURE_CC = ['hello@cultureforchange.net', 'finance@cultureforchange.net', 'community@cultureforchange.net']
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https')

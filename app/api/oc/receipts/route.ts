@@ -16,7 +16,7 @@ import { recordSubscriptionYearInSheet, sheetsConfigured } from '@/lib/googleShe
 import { athensToday } from '@/lib/receipts'
 import { formatAmountForName } from '@/lib/invoiceFilename'
 import { generateReceiptPdf } from '@/lib/receiptPdf'
-import { sendOcEmail, manualReceiptEmailHtml, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, manualReceiptEmailHtml, FINANCE_FROM, FINANCE_EMAIL, RECEIPT_CC } from '@/lib/ocEmails'
 import { upsertAlias } from '@/lib/payerAliases'
 
 /**
@@ -330,7 +330,7 @@ export async function POST(request: NextRequest) {
         emailSent = await sendOcEmail(email, tpl.subject, tpl.html, {
           from: FINANCE_FROM,
           replyTo: FINANCE_EMAIL,
-          cc: [FINANCE_EMAIL],
+          cc: RECEIPT_CC,
           attachments: [{ filename: `apodeixi-eispraxis-${receipt.number}.pdf`, content: pdfBase64 }],
         })
       }

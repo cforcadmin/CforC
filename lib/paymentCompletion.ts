@@ -1,7 +1,7 @@
 import { getSeatHolder } from '@/lib/ocRoles'
 import {
   sendOcEmail, welcomeEmailHtml, financeWelcomeEmailHtml,
-  IT_FROM, IT_EMAIL, WELCOME_CC, FINANCE_FROM, FINANCE_EMAIL,
+  IT_FROM, IT_EMAIL, WELCOME_CC, FINANCE_FROM, FINANCE_EMAIL, RECEIPT_CC,
 } from '@/lib/ocEmails'
 import { generateReceiptPdf } from '@/lib/receiptPdf'
 import { createReceipt, markReceiptSent, syncReceiptToSheet, athensToday } from '@/lib/receipts'
@@ -296,7 +296,7 @@ export async function processPaymentCompletion(input: PaymentCompletionInput): P
     receiptSent = await sendOcEmail(email, fTpl.subject, fTpl.html, {
       from: FINANCE_FROM,
       replyTo: FINANCE_EMAIL,
-      cc: [FINANCE_EMAIL],   // αντίγραφο της απόδειξης στο αρχείο του finance@
+      cc: RECEIPT_CC,   // Οικονομικά (αρχείο) + Διαχείριση + Community
       attachments: [{ filename: `apodeixi-eispraxis-${receipt.number}.pdf`, content: Buffer.from(pdf).toString('base64') }],
     })
     if (receiptSent) {
