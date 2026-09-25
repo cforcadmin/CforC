@@ -273,11 +273,21 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Αποτυχία')
+      // Τι πραγματικά έγινε, χωριστά για κάθε προορισμό. Το κείμενο έλεγε
+      // «μην ξεχάσεις τη γραμμή στο ΕΣΟΔΑ» — δεν ισχύει πια, γράφεται μόνη
+      // της· και το Μητρώο δεν αναφερόταν καθόλου, οπότε μια αστοχία εκεί
+      // δεν φαινόταν πουθενά στην οθόνη.
+      const pending: string[] = []
+      if (data.sheetSynced === false) pending.push('τη γραμμή στο ΕΣΟΔΑ')
+      if (data.registrySynced === false) pending.push('την πληρωμή στο Μητρώο (Επισκόπηση)')
       setNotice({
-        kind: 'ok',
+        kind: pending.length ? 'err' : 'ok',
         text: `Εκδόθηκε η ΑΠ. ΕΙΣ. ${data.number}.` +
           (data.emailSent ? ` Η απόδειξη στάλθηκε στο ${data.to}.` : sendEmail ? ' Το email ΔΕΝ στάλθηκε (λείπει διεύθυνση;).' : ' Χωρίς αποστολή email.') +
-          ' Μην ξεχάσεις τη γραμμή στο ΕΣΟΔΑ (χειροκίνητα μέχρι τη Φάση Γ).',
+          (pending.length
+            ? ` ⚠ Συμπλήρωσε χειροκίνητα: ${pending.join(' και ')}.`
+            + (data.registryError ? ` (${data.registryError})` : '')
+            : ' Ενημερώθηκαν ΕΣΟΔΑ και Μητρώο.'),
       })
       resetForm()
       await load()

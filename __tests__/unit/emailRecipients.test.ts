@@ -41,3 +41,20 @@ describe('Αντίγραφα έγκρισης αίτησης', () => {
     expect(src).toContain('app.Photo ? approvedEmailHtml : approvedLegacyEmailHtml')
   })
 })
+
+describe('Ορατότητα αστοχίας συγχρονισμού', () => {
+  it('η διαδρομή επιστρέφει registrySynced', () => {
+    const src = fs.readFileSync('app/api/oc/receipts/route.ts', 'utf8')
+    expect(src).toContain('registrySynced')
+    expect(src).toContain('registryError')
+  })
+
+  it('η οθόνη διαβάζει ΚΑΙ τα δύο — αλλιώς η αστοχία μένει αόρατη', () => {
+    const src = fs.readFileSync('components/oc/OcFinances.tsx', 'utf8')
+    expect(src).toContain('data.sheetSynced === false')
+    expect(src).toContain('data.registrySynced === false')
+    // Το παλιό κείμενο έλεγε στον Financer να γράψει το ΕΣΟΔΑ στο χέρι —
+    // δεν ισχύει πια και δεν πρέπει να επανέλθει
+    expect(src).not.toContain('χειροκίνητα μέχρι τη Φάση Γ')
+  })
+})
