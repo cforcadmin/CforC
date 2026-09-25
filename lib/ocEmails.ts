@@ -510,6 +510,10 @@ export function approvedEmailHtml(firstName: string, claimUrl: string, signerNam
  * φωτογραφία προφίλ ούτε τα στοιχεία τιμολόγησης, και χωρίς αυτά δεν
  * μπορούμε να φτιάξουμε το προφίλ ούτε να εκδώσουμε την απόδειξη.
  *
+ * Βιογραφικό ΔΕΝ ζητάμε: η παλιά φόρμα το ζητούσε κανονικά και όλες οι
+ * μεταφερμένες αιτήσεις το έχουν. Το να ζητάς κάτι που κάποιος σου έχει ήδη
+ * δώσει υπονομεύει και τα υπόλοιπα δύο αιτήματα του γράμματος.
+ *
  * Ποιος το παίρνει: όποια αίτηση δεν έχει φωτογραφία — αυτό ακριβώς
  * ξεχωρίζει τις μεταφερμένες αιτήσεις από όσες ήρθαν μέσω /apply.
  */
@@ -519,15 +523,18 @@ export function approvedLegacyEmailHtml(
   signerName = 'Culture for Change — Community',
 ): { subject: string; html: string } {
   const base = approvedEmailHtml(firstName, claimUrl, signerName)
+  // Το κουτί μπαίνει ΑΜΕΣΩΣ κάτω από το κουμπί «Έκανα την κατάθεση»: εκεί
+  // κοιτάει ήδη το μάτι, και το αίτημα δεν χάνεται στο τέλος του γράμματος.
+  //
+  // Γι' αυτό είναι ΕΝΘΕΤΟΣ πίνακας, όχι <tr> του εξωτερικού: το κουμπί ζει
+  // μέσα σε <td>, οπότε σειρές του εξωτερικού πίνακα δεν χωράνε εκεί.
   const extra = `
-  <!-- Συμπληρωματικά στοιχεία (αίτηση από την παλιά φόρμα) -->
-  <tr>
-    <td class="px" style="padding:8px 48px 0 48px;">
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background-color:#F5F0EB;border-radius:16px;">
+      <!-- Συμπληρωματικά στοιχεία (αίτηση από την παλιά φόρμα) -->
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background-color:#F5F0EB;border-radius:16px;margin:0 0 20px 0;">
         <tr>
           <td style="padding:24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;mso-line-height-rule:exactly;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;letter-spacing:1.2px;color:#C9552F;font-weight:bold;mso-line-height-rule:exactly;">ΧΡΕΙΑΖΟΜΑΣΤΕ ΑΚΟΜΗ ΤΡΙΑ ΠΡΑΓΜΑΤΑ</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;letter-spacing:1.2px;color:#C9552F;font-weight:bold;mso-line-height-rule:exactly;">ΧΡΕΙΑΖΟΜΑΣΤΕ ΑΚΟΜΗ ΔΥΟ ΠΡΑΓΜΑΤΑ</td></tr>
               <tr><td height="12" style="height:12px;line-height:12px;font-size:0;">&nbsp;</td></tr>
               <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;mso-line-height-rule:exactly;">
                 Η αίτησή σου υποβλήθηκε με την προηγούμενη φόρμα μας, η οποία δεν ζητούσε δύο στοιχεία που
@@ -548,14 +555,7 @@ export function approvedLegacyEmailHtml(
               </td></tr>
               <tr><td height="14" style="height:14px;line-height:14px;font-size:0;">&nbsp;</td></tr>
               <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;mso-line-height-rule:exactly;">
-                <strong>2. Βιογραφικό για το προφίλ σου</strong><br>
-                Ένα σύντομο βιογραφικό στα <em>ελληνικά</em> (έως 200 λέξεις) και, αν θέλεις να εμφανίζεσαι και
-                στα αγγλικά, το αντίστοιχο κείμενο στα <em>αγγλικά</em>. Αυτό είναι το κείμενο που θα διαβάζουν
-                τα υπόλοιπα μέλη και οι επισκέπτες στη σελίδα σου.
-              </td></tr>
-              <tr><td height="14" style="height:14px;line-height:14px;font-size:0;">&nbsp;</td></tr>
-              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;mso-line-height-rule:exactly;">
-                <strong>3. Στοιχεία για την απόδειξη</strong><br>
+                <strong>2. Στοιχεία για την απόδειξη</strong><br>
                 Αν την θέλεις <em>στο όνομά σου</em>: πατρώνυμο και ΑΦΜ.<br>
                 Αν την θέλεις <em>σε εταιρεία</em>: επωνυμία, διεύθυνση έδρας και ΑΦΜ εταιρείας.
               </td></tr>
@@ -568,11 +568,18 @@ export function approvedLegacyEmailHtml(
           </td>
         </tr>
       </table>
-    </td>
-  </tr>
-  <tr><td height="8" style="height:8px;line-height:8px;font-size:0;">&nbsp;</td></tr>
-
-  <!-- Signature -->`
+`
+  // Άγκυρα: το κλείσιμο του πίνακα του κουμπιού, ακριβώς πριν την παράγραφο
+  // «Στην πλατφόρμα…». Εμφανίζεται μία φορά στο γράμμα.
+  const anchor = `      </table>
+      <p style="margin:0 0 20px 0;">Στην <a href="https://cultureforchange.net"`
+  if (!base.html.includes(anchor)) {
+    throw new Error('approvedLegacyEmailHtml: δεν βρέθηκε το σημείο κάτω από το κουμπί')
+  }
+  return {
+    subject: base.subject,
+    html: base.html.replace(anchor, `      </table>\n${extra}      <p style="margin:0 0 20px 0;">Στην <a href="https://cultureforchange.net"`),
+  }
   return { subject: base.subject, html: base.html.replace('  <!-- Signature -->', extra) }
 }
 
@@ -3020,4 +3027,82 @@ ${pendingBlock}`
       body, `${SITE_URL}/oc`, 'Άνοιγμα OC',
       'Αυτό το μήνυμα είναι το μόνο αρχείο της ενέργειας — τα στοιχεία της αίτησης δεν υπάρχουν πια.'),
   }
+}
+
+/**
+ * Τελευταία ειδοποίηση πληρωμής για ΗΔΗ εγκεκριμένα μέλη που δεν πλήρωσαν.
+ *
+ * ΔΕΝ είναι το email έγκρισης: αυτοί το έχουν ήδη λάβει (από το community@,
+ * εκτός συστήματος). Είναι η συνέχεια εκείνης της επικοινωνίας, με μία
+ * συγκεκριμένη ημερομηνία αντί για την προθεσμία των 30 ημερών — γι' αυτούς
+ * η προθεσμία δεν τρέχει από κάπου, την ορίζει το ΔΣ.
+ *
+ * Χτίζεται πάνω στο approvedLegacyEmailHtml ώστε να κρατά ό,τι ήδη δουλεύει
+ * (ποσά, IBAN, κουμπί δήλωσης, το μπλοκ με φωτογραφία/βιογραφικό/ΑΦΜ) και
+ * ΔΕΝ το αλλάζει: εκείνο μένει ως έχει για τις νέες εγκρίσεις.
+ *
+ * Κάθε αντικατάθεση ελέγχεται. Αν το βασικό κείμενο αλλάξει και μια
+ * αντικατάσταση δεν βρει τι να πιάσει, η συνάρτηση ΠΕΤΑΕΙ — γιατί το σιωπηλό
+ * αποτέλεσμα θα ήταν ένα γράμμα που υπόσχεται «30 ημέρες» ενώ ανακοινώνει
+ * διορία Τρίτης.
+ */
+export function finalPaymentNoticeEmailHtml(
+  firstName: string,
+  claimUrl: string,
+  deadlineLabel: string,
+  signerName = 'Culture for Change — Community',
+): { subject: string; html: string } {
+  const base = approvedLegacyEmailHtml(firstName, claimUrl, signerName)
+  const year = new Date().getFullYear()
+  let html = base.html
+
+  const swap = (needle: string, replacement: string, what: string) => {
+    if (!html.includes(needle)) {
+      throw new Error(`finalPaymentNoticeEmailHtml: δεν βρέθηκε «${what}» στο βασικό πρότυπο`)
+    }
+    html = html.replace(needle, replacement)
+  }
+
+  // 1) Τίτλος: δεν ανακοινώνουμε έγκριση, υπενθυμίζουμε εκκρεμότητα
+  swap('ΤΟ ΑΙΤΗΜΑ ΕΓΓΡΑΦΗΣ ΣΟΥ ΕΓΚΡΙΘΗΚΕ', 'ΕΚΚΡΕΜΕΙ Η ΕΓΓΡΑΦΗ ΣΟΥ', 'επικεφαλίδα')
+  swap('<title>Έγκριση αιτήματος εγγραφής — Culture for Change</title>',
+    '<title>Εκκρεμεί η εγγραφή σου — Culture for Change</title>', 'title')
+
+  // 2) Εισαγωγή: συνέχεια της προηγούμενης επικοινωνίας, όχι νέα είδηση
+  swap(
+    '<p style="margin:0 0 20px 0;">Θα θέλαμε να σε ενημερώσουμε ότι το αίτημα εγγραφής μέλους που υπέβαλες στο Culture for Change έχει εγκριθεί!</p>',
+    '<p style="margin:0 0 20px 0;">Σε συνέχεια της προηγούμενης επικοινωνίας μας, σου υπενθυμίζουμε ότι το αίτημα εγγραφής σου στο Culture for Change <strong>έχει εγκριθεί</strong> — η εγγραφή σου όμως δεν έχει ολοκληρωθεί, γιατί δεν έχει καταβληθεί ακόμη το κόστος εγγραφής και η ετήσια συνδρομή.</p>',
+    'εισαγωγή')
+
+  // 3) Η πρόταση των «30 ημερών» φεύγει· μένουν τα ποσά
+  swap(
+    `<p style="margin:0 0 20px 0;">Για να ολοκληρωθεί η διαδικασία της εγγραφής σου στο δίκτυο θα χρειαστεί, εντός 30 ημερών, να καταθέσεις το κόστος της εγγραφής που ανέρχεται στα 10€ (εφάπαξ ποσό) και την ετήσια συνδρομή σου για το οικονομικό έτος ${year} που ανέρχεται στα 35€ (ανανεώνεται κάθε έτος).</p>`,
+    `<p style="margin:0 0 20px 0;">Για να ολοκληρωθεί η εγγραφή σου στο δίκτυο χρειάζεται να καταθέσεις το κόστος της εγγραφής που ανέρχεται στα 10€ (εφάπαξ ποσό) και την ετήσια συνδρομή σου για το οικονομικό έτος ${year} που ανέρχεται στα 35€ (ανανεώνεται κάθε έτος).</p>`,
+    'πρόταση 30 ημερών')
+
+  // 4) Το κουτί «Γιατί υπάρχει προθεσμία 30 ημερών» γίνεται η διορία της Τρίτης
+  const oldBox = `          <strong>Γιατί υπάρχει προθεσμία 30 ημερών</strong><br>
+          Αν η εγγραφή δεν ολοκληρωθεί μέσα σε αυτό το διάστημα, η αίτησή σου ακυρώνεται και
+          <strong>διαγράφουμε όλα τα προσωπικά σου στοιχεία</strong> από τα αρχεία μας, όπως επιβάλλει ο
+          Γενικός Κανονισμός Προστασίας Δεδομένων (GDPR): χωρίς ενεργή ιδιότητα μέλους δεν έχουμε νόμιμο
+          λόγο να τα κρατάμε. Αν θελήσεις αργότερα να γίνεις μέλος, θα χρειαστεί να υποβάλεις
+          <strong>νέα αίτηση από την αρχή</strong>, με νέα έγκριση από το ΔΣ.`
+  const newBox = `          <strong>Προθεσμία: ${escapeHtml(deadlineLabel)}</strong><br>
+          Αν η κατάθεση δεν γίνει μέχρι και την <strong>${escapeHtml(deadlineLabel)}</strong>, η αίτησή σου
+          ακυρώνεται και <strong>διαγράφουμε όλα τα προσωπικά σου στοιχεία</strong> από τα αρχεία μας, όπως
+          επιβάλλει ο Γενικός Κανονισμός Προστασίας Δεδομένων (GDPR): χωρίς ενεργή ιδιότητα μέλους δεν
+          έχουμε νόμιμο λόγο να τα κρατάμε. Αν θελήσεις αργότερα να γίνεις μέλος, θα χρειαστεί να
+          υποβάλεις <strong>νέα αίτηση από την αρχή</strong>, με νέα έγκριση από το ΔΣ.`
+  swap(oldBox, newBox, 'κουτί προθεσμίας')
+
+  // Το κόκκινο περίγραμμα ΜΟΝΟ σε αυτό το κουτί: το βασικό έχει ουδέτερο #E0D8D0
+  swap('style="margin:0 0 20px 0;border:1px solid #E0D8D0;border-radius:16px;"',
+    'style="margin:0 0 20px 0;border:2px solid #C9552F;border-radius:16px;background-color:#FDF3F0;"',
+    'πλαίσιο κουτιού')
+
+  if (html.includes('30 ημερ')) {
+    throw new Error('finalPaymentNoticeEmailHtml: έμεινε αναφορά σε «30 ημέρες»')
+  }
+
+  return { subject: `Εκκρεμεί η εγγραφή σου — προθεσμία ${deadlineLabel}`, html }
 }

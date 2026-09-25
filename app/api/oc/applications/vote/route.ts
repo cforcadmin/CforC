@@ -1,20 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken, generatePaymentClaimToken } from '@/lib/auth'
-import { resolveOcAccess, getBoardRoster, getSeatHolder, SEAT_LABELS, type OcSeat } from '@/lib/ocRoles'
+import { resolveOcAccess, getBoardRoster, getSeatHolder, isVoter, voteWeight, SEAT_LABELS, type OcSeat } from '@/lib/ocRoles'
 import { sendDecisionToSheet, sheetsConfigured } from '@/lib/googleSheets'
-import { sendOcEmail, approvedEmailHtml, approvedLegacyEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, approvedEmailHtml, approvedLegacyEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, FINANCE_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { OC_LAST_SEAT_COOKIE } from '@/components/oc/ocPrefs'
 
 /**
  * OC voting on membership applications (simplified v1).
  *
- * - Every board member can vote Έγκριση/Απόρριψη on a submitted application.
+ * - Το ΔΣ είναι ΠΕΝΤΕ θέσεις (VOTING_SEATS). Η Γραμματεία δεν είναι μέλος του
+ *   ΔΣ — στηρίζει το ΔΣ — και δεν ψηφίζει· ούτε το IT.
  * - Votes are blind: the UI shows WHO (which roles) voted, never what.
- * - The application is decided when EVERY distinct roster member has voted:
- *   simple majority wins; a tie keeps it pending (IT/Admin can resolve).
- * - IT and Admin are super-voters: their vote decides immediately
- *   (replaces all votes) — agreed simplification for v1.
+ * - Η αίτηση κρίνεται όταν ψηφίσουν ΟΛΑ τα μέλη με δικαίωμα ψήφου. Η ψήφος
+ *   της Προέδρου (Συντονισμός) μετράει διπλά, άρα σύνολο 6: η ισοπαλία 3–3
+ *   είναι εφικτή και κρατά την αίτηση εκκρεμή.
+ * - IT και Γραμματεία είναι το δίχτυ ασφαλείας, όχι στάδιο έγκρισης: η ψήφος
+ *   τους αποφασίζει αμέσως (καθολική απόφαση), για όταν κάποιος δεν ψηφίζει
+ *   ή όταν έχει δώσει προφορική συγκατάθεση.
  * - On decision the Sheet row is moved too (web app action "decide");
  *   a Sheet failure never blocks the decision — Strapi is the source of
  *   truth and the response flags sheetSynced for manual follow-up.
@@ -116,15 +119,20 @@ export async function POST(request: NextRequest) {
     decisionBy = `OC — ${SEAT_LABELS[activeSeat!]} (καθολική απόφαση)`
   } else {
     const roster = await getBoardRoster()
-    const allVoted = roster.length > 0 && roster.every(r => votes[r.memberDocumentId])
+    // ΜΟΝΟ όσοι έχουν δικαίωμα ψήφου: η Γραμματεία δεν κρατά την αίτηση όμηρο
+    const voters = roster.filter(r => isVoter(r.seats))
+    const allVoted = voters.length > 0 && voters.every(r => votes[r.memberDocumentId])
     if (allVoted) {
-      const tally = Object.values(votes).reduce(
-        (t, v) => { t[v.vote]++; return t },
-        { approve: 0, reject: 0 }
+      // Η καταμέτρηση διατρέχει τους ΨΗΦΟΦΟΡΟΥΣ, όχι το αντικείμενο votes:
+      // έτσι μια παλιά ψήφος από θέση που δεν ψηφίζει πια δεν μετράει, και
+      // το βάρος βγαίνει από τις θέσεις του μέλους στο μητρώο.
+      const tally = voters.reduce(
+        (t, r) => { t[votes[r.memberDocumentId].vote] += voteWeight(r.seats); return t },
+        { approve: 0, reject: 0 } as Record<'approve' | 'reject', number>
       )
       if (tally.approve > tally.reject) finalState = 'approved'
       else if (tally.reject > tally.approve) finalState = 'rejected'
-      // Ισοψηφία: παραμένει submitted — IT/Admin λύνει
+      // Ισοψηφία: παραμένει submitted — IT/Γραμματεία λύνει
       decisionBy = finalState ? `OC — ψηφοφορία ΔΣ (${tally.approve}-${tally.reject})` : ''
     }
   }
@@ -168,7 +176,13 @@ export async function POST(request: NextRequest) {
     // email ζητά επιπλέον φωτογραφία προφίλ και στοιχεία τιμολόγησης
     const template = app.Photo ? approvedEmailHtml : approvedLegacyEmailHtml
     const tpl = template(String(app.FirstName || '').trim() || 'μέλος', claim, signerName)
-    await sendOcEmail(String(app.Email).trim(), tpl.subject, tpl.html, { from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL })
+    // Κοινοποίηση σε Οικονομικά, Γραμματεία και Κοινότητα: η έγκριση ανοίγει
+    // εκκρεμότητα πληρωμής που την παρακολουθούν και οι τρεις — ισχύει και για
+    // το κανονικό και για το «παλιάς φόρμας» πρότυπο.
+    await sendOcEmail(String(app.Email).trim(), tpl.subject, tpl.html, {
+      from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL,
+      cc: [FINANCE_EMAIL, ADMIN_EMAIL, COMMUNITY_EMAIL],
+    })
   }
 
   // Ρόλοι που έχουν ψηφίσει (ποτέ ΤΙ ψήφισαν)
