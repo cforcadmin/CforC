@@ -35,31 +35,51 @@ export interface EsodaReceiptRow {
  *  οποιοδήποτε πρόβλημα (δίκτυο, secret, layout) — ο καλών συνεχίζει. */
 export async function appendReceiptToEsoda(row: EsodaReceiptRow): Promise<{ ok: boolean; duplicate?: boolean; aa?: string; error?: string }> {
   if (!financeSheetConfigured()) return { ok: false, error: 'not configured' }
-  try {
-    const res = await fetch(FINANCE_SHEET_WEBAPP_URL as string, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        secret: FINANCE_SHEET_WEBAPP_SECRET,
-        action: 'appendIncome',
-        ...row,
-        method: row.method || 'bank',
-      }),
-      // Το Apps Script απαντά με redirect — follow όπως στο Μητρώο
-      redirect: 'follow',
-      cache: 'no-store',
-    })
-    const text = await res.text()
-    let json: any = null
-    try { json = JSON.parse(text) } catch { /* HTML error page κ.λπ. */ }
-    if (!res.ok || !json?.ok) {
-      const error = json?.error || `HTTP ${res.status}`
-      console.error('financeSheet append failed:', error, text.slice(0, 200))
-      return { ok: false, error }
+
+  // Επανάληψη: σε κρύα εκκίνηση το Apps Script ΓΡΑΦΕΙ τη γραμμή και χάνει την
+  // απάντηση (σελίδα HTML αντί για JSON) — μετρημένο 3/3 στο Μητρώο στις
+  // 25/9/2026, και η αιτία που οι αποδείξεις 366 και 367 έμειναν
+  // SheetSynced:false ενώ οι γραμμές τους υπήρχαν κανονικά στο ΕΣΟΔΑ.
+  //
+  // Ασφαλής επειδή το ίδιο το script αναγνωρίζει τη διπλοεγγραφή και γυρίζει
+  // duplicate:true — η δεύτερη προσπάθεια δεν προσθέτει δεύτερη γραμμή.
+  let lastError = ''
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    if (attempt > 1) await new Promise(r => setTimeout(r, 3000))
+    try {
+      const res = await fetch(FINANCE_SHEET_WEBAPP_URL as string, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          secret: FINANCE_SHEET_WEBAPP_SECRET,
+          action: 'appendIncome',
+          ...row,
+          method: row.method || 'bank',
+        }),
+        // Το Apps Script απαντά με redirect — follow όπως στο Μητρώο
+        redirect: 'follow',
+        cache: 'no-store',
+      })
+      const text = await res.text()
+      let json: any = null
+      try { json = JSON.parse(text) } catch { /* HTML error page κ.λπ. */ }
+      if (!res.ok || json === null) {
+        // Δίκτυο ή χαμένη απάντηση — αξίζει νέα προσπάθεια
+        lastError = json?.error || `HTTP ${res.status}`
+        console.error('financeSheet append: no JSON (attempt ' + attempt + ')', lastError, text.slice(0, 120))
+        continue
+      }
+      if (!json.ok) {
+        // Καθαρή άρνηση του script: η επανάληψη δεν θα άλλαζε τίποτα
+        const error = json.error || 'unknown error'
+        console.error('financeSheet append refused:', error)
+        return { ok: false, error }
+      }
+      return { ok: true, duplicate: !!json.duplicate, aa: json.aa || undefined }
+    } catch (err: any) {
+      lastError = String(err?.message || err)
+      console.error('financeSheet append error (attempt ' + attempt + '):', lastError)
     }
-    return { ok: true, duplicate: !!json.duplicate, aa: json.aa || undefined }
-  } catch (err: any) {
-    console.error('financeSheet append error:', err)
-    return { ok: false, error: String(err?.message || err) }
   }
+  return { ok: false, error: `${lastError} (3 προσπάθειες)` }
 }

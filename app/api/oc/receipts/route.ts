@@ -6,6 +6,7 @@ import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
 import { nextReceiptNumber, createReceipt, markReceiptSent, syncReceiptToSheet, type ReceiptType } from '@/lib/receipts'
+import { recordSubscriptionYearInSheet, sheetsConfigured } from '@/lib/googleSheets'
 import { athensToday } from '@/lib/receipts'
 import { formatAmountForName } from '@/lib/invoiceFilename'
 import { generateReceiptPdf } from '@/lib/receiptPdf'
@@ -202,6 +203,8 @@ export async function POST(request: NextRequest) {
     // Μέλος: ΑΜ/email για την απόδειξη + ενημέρωση Payments για συνδρομές.
     // ΠΡΟΣΟΧΗ: το custom member controller δέχεται ΜΟΝΟ αριθμητικό id στο PUT.
     let memberAm: number | string = ''
+    let registrySynced = false
+    let registryError = ''
     if (memberDocId) {
       const m = await strapi(`/members/${memberDocId}?fields[0]=Name&fields[1]=Email&fields[2]=AM&fields[3]=Payments`)
       const member = m.json?.data
@@ -220,6 +223,20 @@ export async function POST(request: NextRequest) {
         // Η έκδοση κλείνει και τυχόν ανοιχτή δήλωση πληρωμής (renewal claim)
         const upd = await strapi(`/members/${member.id}`, 'PUT', { Payments: payments, RenewalClaimedAt: null })
         if (!upd.ok) console.error('oc/receipts: Payments update failed', upd.status)
+
+        // Μητρώο (Επισκόπηση → Συνδρομές). Best-effort: η απόδειξη ΔΕΝ
+        // μπλοκάρεται από το φύλλο — το Strapi είναι η πηγή αλήθειας — αλλά η
+        // αστοχία επιστρέφεται στην απάντηση ώστε να μη μείνει αόρατη, όπως
+        // έμενε μέχρι τώρα που δεν υπήρχε καν κλήση.
+        if (memberAm !== '' && sheetsConfigured()) {
+          try {
+            await recordSubscriptionYearInSheet(memberAm, year)
+            registrySynced = true
+          } catch (e) {
+            console.error('oc/receipts: registry sync failed', (e as Error).message)
+            registryError = (e as Error).message
+          }
+        }
       }
     }
 
@@ -355,7 +372,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ ok: true, action: 'issue', number: receipt.number, emailSent, sheetSynced, to: sendEmail ? email || null : null })
+    return NextResponse.json({ ok: true, action: 'issue', number: receipt.number, emailSent, sheetSynced, registrySynced, ...(registryError && { registryError }), to: sendEmail ? email || null : null })
   } catch (err: any) {
     console.error('oc/receipts POST failed:', err)
     const msg = String(err?.message || '')

@@ -190,3 +190,60 @@ export async function removeApplicantFromSheet(email: string): Promise<void> {
   }
   throw new Error(`Sheet web app: ${lastError}${definitive ? '' : ' (3 προσπάθειες)'}`)
 }
+
+/**
+ * Καταχωρεί πληρωμένη συνδρομή έτους στο Μητρώο: γράφει στην Επισκόπηση και
+ * το Apps Script καθρεφτίζει στις Συνδρομές.
+ *
+ * Γιατί υπάρχει: το `recordPayment` αφορά ΝΕΟ μέλος (αποδίδει ΑΜ, τρέχει όλη
+ * την προαγωγή). Για ανανέωση παλιού μέλους δεν υπήρχε ΚΑΜΙΑ διαδρομή προς το
+ * Μητρώο — η πληρωμή ζούσε μόνο στο Strapi και στο ΕΣΟΔΑ.
+ *
+ * Το έτος δίνεται ΡΗΤΑ, δεν υποτίθεται το τρέχον: στις 25/9/2026 ένα μέλος
+ * πλήρωσε 2025 και 2026 μαζί, με χωριστή απόδειξη το καθένα.
+ *
+ * Επανάληψη όπως στο removeApplicantFromSheet, για τον ίδιο μετρημένο λόγο:
+ * η κλήση που ΟΝΤΩΣ γράφει χάνει την απάντησή της σε κρύα εκκίνηση (3/3 φορές
+ * στη δοκιμή). Ασφαλής επειδή η ενέργεια είναι idempotent — γράφει την ίδια
+ * τιμή στο ίδιο κελί.
+ */
+export async function recordSubscriptionYearInSheet(
+  am: number | string,
+  year: number,
+  value: number | string = 1,
+): Promise<void> {
+  if (!WEBAPP_URL || !WEBAPP_SECRET) throw new Error('Sheet web app not configured')
+  const amClean = String(am ?? '').trim()
+  if (!amClean) throw new Error('Λείπει ο ΑΜ')
+  if (!Number.isFinite(Number(year))) throw new Error('Λείπει το έτος')
+
+  let lastError = ''
+  let definitive = false
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    if (attempt > 1) await new Promise(r => setTimeout(r, 3000))
+    try {
+      const res = await fetch(WEBAPP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          secret: WEBAPP_SECRET, action: 'recordSubscriptionYear',
+          am: amClean, year: Number(year), value,
+        }),
+        redirect: 'follow',
+      })
+      const text = await res.text()
+      if (!res.ok) { lastError = `HTTP ${res.status}`; continue }
+      let json: any = null
+      try { json = JSON.parse(text) } catch {
+        lastError = 'μη αναγνωρίσιμη απάντηση (κρύα εκκίνηση;)'
+        continue
+      }
+      // Καθαρό ok:false είναι κρίση του script («δεν βρέθηκε ΑΜ»), όχι δίκτυο
+      if (!json?.ok) { lastError = String(json?.error || 'unknown error'); definitive = true; break }
+      return
+    } catch (e) {
+      lastError = (e as Error).message
+    }
+  }
+  throw new Error(`Sheet web app: ${lastError}${definitive ? '' : ' (3 προσπάθειες)'}`)
+}
