@@ -51,6 +51,7 @@ type Meta = {
   presets: Array<{ id: string; label: string; hint: string; blocks: Block[] }>
   mergeFields: Array<{ token: string; label: string; sample: string }>
   dailyBudget: number
+  tocDefaultTitle?: string
   footerStyles?: Array<{ id: string; label: string; hint: string }>
   footerLooks?: Array<{ id: string; label: string; hint: string }>
   headerStyles?: Array<{ id: string; label: string; hint: string }>
@@ -504,6 +505,56 @@ function BlockEditor({ blocks, setBlocks, meta }: { blocks: Block[]; setBlocks: 
     const next = [...blocks]; [next[i], next[j]] = [next[j], next[i]]; setBlocks(next)
   }
 
+  const [copying, setCopying] = useState<number | null>(null)
+
+  /**
+   * Διπλασιασμός μπλοκ.
+   *
+   * ΚΑΘΕ αντίγραφο παίρνει ΔΙΚΟ ΤΟΥ αρχείο στη Βιβλιοθήκη, όχι το ίδιο
+   * mediaId: αλλιώς δύο μπλοκ θα μοιράζονταν έναν φάκελο και το «Αφαίρεση»
+   * στο ένα θα άφηνε το άλλο με σπασμένη εικόνα — και στα γραμματοκιβώτια
+   * όσων το έλαβαν, αν είχε ήδη σταλεί.
+   *
+   * Αν η αντιγραφή αποτύχει, το αντίγραφο κρατά τη διεύθυνση αλλά ΧΑΝΕΙ το
+   * mediaId: γίνεται «εξωτερικός σύνδεσμος», που δεν διαγράφεται ποτέ. Το
+   * χειρότερο αποτέλεσμα είναι ένα αρχείο παραπάνω, όχι μια σβησμένη εικόνα.
+   */
+  const duplicate = async (i: number) => {
+    const clone: Block = JSON.parse(JSON.stringify(blocks[i]))
+    const jobs: Array<{ node: any; idKey: string; srcKey: string }> = []
+    const walk = (v: any) => {
+      if (Array.isArray(v)) { v.forEach(walk); return }
+      if (!v || typeof v !== 'object') return
+      if (Number.isInteger(v.mediaId) && v.src) jobs.push({ node: v, idKey: 'mediaId', srcKey: 'src' })
+      if (Number.isInteger(v.origMediaId) && v.origSrc) jobs.push({ node: v, idKey: 'origMediaId', srcKey: 'origSrc' })
+      Object.values(v).forEach(walk)
+    }
+    walk(clone)
+
+    if (jobs.length) {
+      setCopying(i)
+      for (const j of jobs) {
+        try {
+          const res = await fetch('/api/oc/campaigns/image', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'copy', src: j.node[j.srcKey] }),
+          })
+          if (!res.ok) throw new Error('copy failed')
+          const d = await res.json()
+          j.node[j.idKey] = d.id
+          j.node[j.srcKey] = d.url
+        } catch {
+          j.node[j.idKey] = undefined
+        }
+      }
+      setCopying(null)
+    }
+
+    const next = [...blocks]
+    next.splice(i + 1, 0, clone)
+    setBlocks(next)
+  }
+
   return (
     <div className={CARD}>
       <div className="flex flex-wrap items-baseline gap-2 mb-1">
@@ -561,11 +612,16 @@ function BlockEditor({ blocks, setBlocks, meta }: { blocks: Block[]; setBlocks: 
                   className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">↑</button>
                 <button type="button" onClick={() => move(i, 1)} aria-label="Κάτω"
                   className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">↓</button>
+                <button type="button" onClick={() => duplicate(i)} disabled={copying !== null}
+                  aria-label="Διπλασιασμός" title="Διπλασιασμός"
+                  className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40">
+                  {copying === i ? '…' : '⧉'}
+                </button>
                 <button type="button" onClick={() => setBlocks(blocks.filter((_, j) => j !== i))} aria-label="Διαγραφή"
                   className="w-8 h-8 rounded-full hover:bg-red-100 dark:hover:bg-red-900/40 text-red-700 dark:text-red-300">✕</button>
               </div>
             </div>
-            <BlockFields block={b} onChange={p => update(i, p)} />
+            <BlockFields block={b} onChange={p => update(i, p)} tocDefault={meta.tocDefaultTitle} />
           </div>
         ))}
       </div>
@@ -575,7 +631,7 @@ function BlockEditor({ blocks, setBlocks, meta }: { blocks: Block[]; setBlocks: 
           <div className="flex flex-wrap gap-2">
             {Object.entries(meta.blockLabels).map(([type, label]) => (
               <button key={type} type="button"
-                onClick={() => { setBlocks([...blocks, newBlock(type)]); setAdding(false) }}
+                onClick={() => { setBlocks([...blocks, newBlock(type, meta.tocDefaultTitle)]); setAdding(false) }}
                 className={`${CHIP} border-gray-300 dark:border-gray-600 hover:border-coral`}>{label}</button>
             ))}
             <button type="button" onClick={() => setAdding(false)}
@@ -603,7 +659,7 @@ function BlockEditor({ blocks, setBlocks, meta }: { blocks: Block[]; setBlocks: 
   )
 }
 
-function newBlock(type: string): Block {
+function newBlock(type: string, tocDefault = ''): Block {
   switch (type) {
     case 'section': return { type, title: 'Τίτλος ενότητας' }
     case 'text': return { type, html: '' }
@@ -612,6 +668,8 @@ function newBlock(type: string): Block {
     case 'card': return { type, title: '', html: '' }
     case 'person': return { type, name: '', role: '', html: '' }
     case 'logos': return { type, items: [] }
+    // Προσυμπληρωμένος, ώστε να φαίνεται τι θα δει ο παραλήπτης αν δεν αλλάξει τίποτα
+    case 'toc': return { type, title: tocDefault }
     case 'button': return { type, label: '', href: '' }
     case 'box': return { type, title: '', html: '', tone: 'cream' }
     case 'divider': return { type, style: 'line' }
@@ -623,7 +681,9 @@ function newBlock(type: string): Block {
 
 const IN = 'w-full min-h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm'
 
-function BlockFields({ block: b, onChange }: { block: Block; onChange: (p: Record<string, any>) => void }) {
+function BlockFields({ block: b, onChange, tocDefault = '' }: {
+  block: Block; onChange: (p: Record<string, any>) => void; tocDefault?: string
+}) {
   const rich = (label: string, key = 'html') => (
     <div className="grid gap-1">
       <span className="text-xs text-gray-600 dark:text-gray-400">{label}</span>
@@ -650,7 +710,14 @@ function BlockFields({ block: b, onChange }: { block: Block; onChange: (p: Recor
     case 'mono': return <div className="grid gap-2">{line('Ετικέτα', 'label', 'π.χ. IBAN')}{line('Τιμή', 'value')}</div>
     case 'logos': return <LogosFields items={b.items || []} onChange={items => onChange({ items })} />
     case 'amounts': return <AmountsFields rows={b.rows || []} total={b.total || ''} onChange={onChange} />
-    case 'toc': return <p className="text-xs text-gray-600 dark:text-gray-400">Χτίζεται αυτόματα από τις ενότητες του μηνύματος.</p>
+    case 'toc': return (
+      <div className="grid gap-1">
+        {line('Τίτλος', 'title', tocDefault)}
+        <p className="text-xs text-gray-600 dark:text-gray-400">
+          Χτίζεται αυτόματα από τις ενότητες (επικεφαλίδες ενότητας) του μηνύματος.
+        </p>
+      </div>
+    )
     default: return null
   }
 }

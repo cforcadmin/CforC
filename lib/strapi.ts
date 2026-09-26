@@ -255,7 +255,17 @@ export async function getWorkingGroups() {
  * Get all coordination teams with coordinator and members populated
  */
 export async function getCoordinationTeams() {
-  const response = await fetchStrapi('/coordination-teams?populate[Image]=true&populate[Coordinator][populate]=Image&populate[Members][populate]=Image&populate[Admin][populate]=Image&populate[Comms][populate]=Image&populate[IT][populate]=Image&pagination[limit]=1000&sort=SortOrder:asc');
+  const base = '/coordination-teams?populate[Image]=true&populate[Coordinator][populate]=Image&populate[Members][populate]=Image&populate[Admin][populate]=Image&populate[Comms][populate]=Image&populate[IT][populate]=Image';
+  const tail = '&pagination[limit]=1000&sort=SortOrder:asc';
+  // Το Media μπορεί να μην έχει βγει ακόμη στο Strapi Cloud. Ένα populate σε
+  // άγνωστο πεδίο γυρίζει 400 και το fetchStrapi ΡΙΧΝΕΙ — δηλαδή θα χανόταν
+  // ΟΛΗ η Συντονιστική Ομάδα από το site, όχι μόνο το νέο πρόσωπο.
+  let response;
+  try {
+    response = await fetchStrapi(`${base}&populate[Media][populate]=Image${tail}`);
+  } catch {
+    response = await fetchStrapi(`${base}${tail}`);
+  }
   (response.data || []).forEach(sanitizeNestedMembers);
   return response;
 }

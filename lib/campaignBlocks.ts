@@ -135,6 +135,9 @@ export type AmountsBlock = { type: 'amounts'; rows: Array<{ label: string; amoun
 export type MonoBlock = { type: 'mono'; label?: string; value: string }
 export type TocBlock = { type: 'toc'; title?: string }
 
+/** Ο προεπιλεγμένος τίτλος του πίνακα — ο συντάκτης μπορεί να τον αλλάξει */
+export const TOC_DEFAULT_TITLE = 'Σε αυτό το τεύχος'
+
 export type Block =
   | SectionBlock | TextBlock | ImageBlock | ImageTextBlock | CardBlock | PersonBlock
   | LogosBlock | ButtonBlock | BoxBlock | DividerBlock | AmountsBlock | MonoBlock | TocBlock
@@ -330,7 +333,7 @@ function renderToc(blocks: Block[], title?: string): string {
   return row(`
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${BRAND.cream};border-radius:16px;">
     <tr><td style="padding:20px;">
-      <div style="font-family:${FONT};font-size:12px;line-height:16px;letter-spacing:1.2px;color:${BRAND.coralDeep};font-weight:bold;">${escapeHtml(title || 'ΣΕ ΑΥΤΟ ΤΟ ΤΕΥΧΟΣ')}</div>
+      <div style="font-family:${FONT};font-size:12px;line-height:16px;letter-spacing:1.2px;color:${BRAND.coralDeep};font-weight:bold;">${escapeHtml(upperGreek(title || TOC_DEFAULT_TITLE))}</div>
       <div style="height:10px;line-height:10px;font-size:0;">&nbsp;</div>
       ${items.map(it => `<div style="${bodyText()}padding:3px 0;">→ <a href="#${it.id}" style="color:${BRAND.coralDeep};text-decoration:underline;">${escapeHtml(it.title)}</a></div>`).join('')}
     </td></tr>

@@ -205,7 +205,7 @@ function CurrentTeamCard({ team }: { team: CoordinationTeam }) {
         )}
 
         {/* Operations */}
-        {(team.Admin || team.Comms || team.IT) && (
+        {(team.Admin || team.Comms || team.IT || team.Media) && (
           <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
               Διοικητική Υποστήριξη
@@ -219,6 +219,9 @@ function CurrentTeamCard({ team }: { team: CoordinationTeam }) {
               )}
               {team.IT && !team.IT.HideProfile && (
                 <MemberAvatar member={team.IT} roleLabel="IT" />
+              )}
+              {team.Media && !team.Media.HideProfile && (
+                <MemberAvatar member={team.Media} roleLabel="Media" />
               )}
             </div>
           </div>
@@ -409,12 +412,13 @@ function CoolCurrentStation({ team }: { team: CoordinationTeam }) {
         )}
 
         {/* Διοικητική Υποστήριξη — δεύτερη, μικρή σειρά */}
-        {(team.Admin || team.Comms || team.IT) && (
+        {(team.Admin || team.Comms || team.IT || team.Media) && (
           <div className="flex flex-wrap items-center gap-4 mt-6 pt-4 border-t border-charcoal/10">
             <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Διοικητική Υποστήριξη</span>
             {team.Admin && !team.Admin.HideProfile && <CoolOpsAvatar member={team.Admin} roleLabel="Admin" />}
             {team.Comms && !team.Comms.HideProfile && <CoolOpsAvatar member={team.Comms} roleLabel="Comms" />}
             {team.IT && !team.IT.HideProfile && <CoolOpsAvatar member={team.IT} roleLabel="IT" />}
+            {team.Media && !team.Media.HideProfile && <CoolOpsAvatar member={team.Media} roleLabel="Media" />}
           </div>
         )}
       </div>

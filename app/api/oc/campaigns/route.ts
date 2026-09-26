@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, SEAT_LABELS, SEAT_MAILBOX, type OcSeat } from '@/lib/ocRoles'
-import { campaignEmailHtml, PRESETS, BLOCK_LABELS, BLOCK_VARIANTS, MERGE_FIELDS, FOOTER_STYLES, FOOTER_LOOKS, HEADER_STYLES, applyMergeFields, type Block, type FooterStyle, type FooterLook, type HeaderStyle, type CampaignSigner } from '@/lib/campaignBlocks'
+import { campaignEmailHtml, PRESETS, TOC_DEFAULT_TITLE, BLOCK_LABELS, BLOCK_VARIANTS, MERGE_FIELDS, FOOTER_STYLES, FOOTER_LOOKS, HEADER_STYLES, applyMergeFields, type Block, type FooterStyle, type FooterLook, type HeaderStyle, type CampaignSigner } from '@/lib/campaignBlocks'
 import { drainCampaigns } from '@/lib/campaignDrain'
 import {
   resolveRecipients, toQueue, validateCampaign, daysNeeded, recipientSummary,
@@ -285,6 +285,7 @@ export async function GET(request: NextRequest) {
       headerStyles: HEADER_STYLES,
       signer: await signerFor(auth.activeSeat),
       dailyBudget: DAILY_EMAIL_BUDGET,
+      tocDefaultTitle: TOC_DEFAULT_TITLE,
       seat: auth.activeSeat,
     })
   } catch (err) {

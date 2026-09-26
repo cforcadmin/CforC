@@ -12,8 +12,10 @@ export const maxDuration = 60
 /**
  * Εικόνες των μηνυμάτων: ανέβασμα στη Βιβλιοθήκη Πολυμέσων και διαγραφή.
  *
- *  POST   multipart «file»  → { id, url, name, width, height }
- *  DELETE ?id=              → διαγραφή, ΜΕ φρένο (βλ. παρακάτω)
+ *  POST   multipart «file»        → { id, url, name, width, height }
+ *  POST   { src, tone }           → νέο αρχείο με το σήμα CforC καμένο μέσα
+ *  POST   { action:'copy', src }  → ΑΥΤΟΥΣΙΟ αντίγραφο, δικό του mediaId
+ *  DELETE ?id=                    → διαγραφή, ΜΕ φρένο (βλ. παρακάτω)
  *
  * ΤΟ ΦΡΕΝΟ ΣΤΗ ΔΙΑΓΡΑΦΗ
  * Ένα email που έχει ήδη φύγει κατεβάζει τις εικόνες του από αυτές τις
@@ -29,6 +31,24 @@ const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 const ALLOWED_SEATS = OC_EMAIL_SEATS as OcSeat[]
 const MAX_BYTES = 5 * 1024 * 1024
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+
+/**
+ * Το αντίγραφο διαβάζει ΜΟΝΟ από τη δική μας Βιβλιοθήκη.
+ *
+ * Χωρίς αυτόν τον έλεγχο η διαδρομή θα κατέβαζε ό,τι διεύθυνση της δώσεις —
+ * και θα ήταν έτοιμο εργαλείο για να χτυπηθεί εσωτερικό δίκτυο μέσω του
+ * server μας. Τα αρχεία που αντιγράφουμε τα ανεβάσαμε εμείς, οπότε ο
+ * περιορισμός δεν κοστίζει τίποτα.
+ */
+function isOwnMedia(raw: string): boolean {
+  try {
+    const u = new URL(raw)
+    if (u.protocol !== 'https:') return false
+    if (u.hostname.endsWith('.media.strapiapp.com')) return true
+    const base = STRAPI_URL ? new URL(STRAPI_URL).hostname : ''
+    return !!base && u.hostname === base
+  } catch { return false }
+}
 
 async function authorize() {
   const cookieStore = await cookies()
@@ -100,6 +120,43 @@ export async function POST(request: NextRequest) {
       if (!/^https?:\/\//i.test(src)) {
         return NextResponse.json({ error: 'Χρειάζεται εικόνα με διεύθυνση' }, { status: 400 })
       }
+
+      /**
+       * ΑΝΤΙΓΡΑΦΟ ΑΡΧΕΙΟΥ — για τη διπλασίαση μπλοκ.
+       *
+       * Το αντίγραφο παίρνει ΔΙΚΟ ΤΟΥ αρχείο και δικό του mediaId αντί να
+       * δείχνει στο ίδιο. Αλλιώς δύο μπλοκ θα μοιράζονταν έναν φάκελο: το
+       * «Αφαίρεση» στο ένα θα έσβηνε το αρχείο και το άλλο θα έμενε με
+       * σπασμένη εικόνα — και στα γραμματοκιβώτια όσων το έλαβαν.
+       */
+      if (body?.action === 'copy') {
+        if (!isOwnMedia(src)) {
+          return NextResponse.json({ error: 'Αντιγράφονται μόνο αρχεία της Βιβλιοθήκης' }, { status: 400 })
+        }
+        const got = await fetch(src)
+        if (!got.ok) return NextResponse.json({ error: 'Η εικόνα δεν κατέβηκε' }, { status: 502 })
+        const buf = Buffer.from(await got.arrayBuffer())
+        if (buf.byteLength > MAX_BYTES) {
+          return NextResponse.json({ error: 'Η εικόνα ξεπερνά τα 5MB' }, { status: 400 })
+        }
+        const type = got.headers.get('content-type') || 'image/png'
+        if (!ALLOWED_TYPES.includes(type.split(';')[0].trim())) {
+          return NextResponse.json({ error: 'Μη αποδεκτός τύπος εικόνας' }, { status: 400 })
+        }
+        const ext = (src.split('?')[0].match(/\.([a-z0-9]+)$/i)?.[1] || 'png').toLowerCase()
+        const fd = new FormData()
+        fd.append('files', new Blob([new Uint8Array(buf)], { type }), `copy_${Date.now()}.${ext}`)
+        const up = await fetch(`${STRAPI_URL}/api/upload`, {
+          method: 'POST', headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, body: fd,
+        })
+        if (!up.ok) {
+          console.error('campaigns/image: copy upload failed', up.status)
+          return NextResponse.json({ error: 'Αποτυχία αντιγραφής' }, { status: 502 })
+        }
+        const [cf] = await up.json()
+        return NextResponse.json({ id: cf.id, url: cf.url, name: cf.name })
+      }
+
       const tone = body?.tone === 'light' ? 'light' : 'dark'
       const out = await brandImage(src, tone)
       const fd = new FormData()

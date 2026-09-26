@@ -266,6 +266,7 @@ export interface CoordinationTeam extends StrapiData<CoordinationTeam> {
   Admin?: WorkingGroupMemberRef
   Comms?: WorkingGroupMemberRef
   IT?: WorkingGroupMemberRef
+  Media?: WorkingGroupMemberRef
   SortOrder?: number
   Slug: string
   createdAt: string

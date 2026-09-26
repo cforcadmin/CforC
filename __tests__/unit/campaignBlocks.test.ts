@@ -1,7 +1,6 @@
 import {
   campaignEmailHtml, richText, renderCampaignBody, renderCampaignText, sanitizeInline,
-  applyMergeFields, PRESETS, BLOCK_LABELS, BLOCK_VARIANTS, BRAND, type Block,
-} from '@/lib/campaignBlocks'
+  applyMergeFields, PRESETS, BLOCK_LABELS, BLOCK_VARIANTS, BRAND, type Block, TOC_DEFAULT_TITLE } from '@/lib/campaignBlocks'
 
 /**
  * Το μπλοκ υπάρχει για να κάνει το εκτός ταυτότητας αποτέλεσμα ΑΔΥΝΑΤΟ.
@@ -368,5 +367,34 @@ describe('Το γράμμα σε στενή οθόνη', () => {
     const html = render({ blocks: [{ type: 'imageText', src: 'https://x/y.png', html: '<p>κ</p>' } as any] })
     expect(html).toMatch(/class="stack"[^>]*width="200"/)
     expect(html).toContain('.stack{display:block !important;width:100% !important;}')
+  })
+})
+
+describe('Πίνακας περιεχομένων — τίτλος', () => {
+  const withToc = (toc: any) => campaignEmailHtml({
+    subject: 'Θ',
+    blocks: [toc, { type: 'section', title: 'Πρώτη' }, { type: 'section', title: 'Δεύτερη' }] as any,
+  }).html
+
+  it('χωρίς τίτλο χρησιμοποιεί την προεπιλογή', () => {
+    expect(withToc({ type: 'toc' })).toContain('ΣΕ ΑΥΤΟ ΤΟ ΤΕΥΧΟΣ')
+  })
+
+  it('ο συντάκτης μπορεί να τον μετονομάσει', () => {
+    const html = withToc({ type: 'toc', title: 'Τι θα βρεις εδώ' })
+    expect(html).toContain('ΤΙ ΘΑ ΒΡΕΙΣ ΕΔΩ')
+    expect(html).not.toContain('ΣΕ ΑΥΤΟ ΤΟ ΤΕΥΧΟΣ')
+  })
+
+  it('ο τίτλος κεφαλαιοποιείται ΧΩΡΙΣ τόνους, όπως κάθε άλλη επικεφαλίδα', () => {
+    // «Νέα» → «ΝΈΑ» με σκέτο toUpperCase· η ελληνική κεφαλαιοποίηση ρίχνει τόνους
+    const html = withToc({ type: 'toc', title: 'Νέα και δράσεις' })
+    expect(html).toContain('ΝΕΑ ΚΑΙ ΔΡΑΣΕΙΣ')
+    expect(html).not.toContain('ΝΈΑ')
+  })
+
+  it('η προεπιλογή είναι μία — ίδια στο lib και στην οθόνη', () => {
+    expect(TOC_DEFAULT_TITLE).toBe('Σε αυτό το τεύχος')
+    expect(withToc({ type: 'toc', title: TOC_DEFAULT_TITLE })).toContain('ΣΕ ΑΥΤΟ ΤΟ ΤΕΥΧΟΣ')
   })
 })
