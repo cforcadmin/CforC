@@ -21,7 +21,7 @@ jest.mock('@/lib/ocRoles', () => ({
 const verifyToken = jest.fn()
 jest.mock('@/lib/auth', () => ({ get verifyToken() { return verifyToken } }))
 
-import { GET, POST } from '@/app/api/oc/campaigns/route'
+import { GET, POST, DELETE } from '@/app/api/oc/campaigns/route'
 import { cookies } from 'next/headers'
 
 function signedInAs(seat: string | null, isBoard = true) {
@@ -176,5 +176,82 @@ describe('Υπογραφή', () => {
     expect(json.html).not.toContain('Σόνια Ντόβα')
     expect(json.html).not.toContain('Φιλικά,')
     expect(json.html).toContain('background-color:#2D2D2D;border-radius:16px')
+  })
+})
+
+describe('Αρχειοθέτηση και διαγραφή', () => {
+  afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks() })
+
+  /** Καταγράφει κάθε κλήση, ώστε να ελέγχουμε ΤΙ σβήστηκε */
+  function mockWith(campaign: any, others: any[] = []) {
+    const calls: Array<{ method: string; url: string; body?: any }> = []
+    jest.spyOn(global, 'fetch').mockImplementation(async (input: any, init?: any) => {
+      const url = typeof input === 'string' ? input : input?.url ?? ''
+      const method = (init?.method || 'GET').toUpperCase()
+      calls.push({ method, url, body: init?.body ? JSON.parse(init.body) : undefined })
+      if (url.includes('/api/oc-campaigns?pagination[limit]=200')) {
+        return new Response(JSON.stringify({ data: others }), { status: 200 })
+      }
+      if (url.includes('/api/oc-campaigns/') && method === 'GET') {
+        return new Response(JSON.stringify({ data: campaign }), { status: 200 })
+      }
+      return new Response(JSON.stringify({ data: {} }), { status: 200 })
+    })
+    return calls
+  }
+
+  const del = async (id: string) => {
+    const res = await DELETE(buildRequest(`/api/oc/campaigns?id=${id}`, { method: 'DELETE' }))
+    return { status: res.status, json: await res.json() }
+  }
+
+  it('η αρχειοθέτηση δεν αγγίζει τίποτα άλλο', async () => {
+    signedInAs('admin'); mockStrapi()
+    const { status } = await post({ action: 'archive', id: 'c1', archived: true })
+    expect(status).toBe(200)
+  })
+
+  it('η διαγραφή σβήνει τις εικόνες που κρατά ΜΟΝΟ αυτή', async () => {
+    signedInAs('admin')
+    const calls = mockWith(
+      { documentId: 'c1', State: 'sent', Subject: 'Θ', Blocks: [{ type: 'image', mediaId: 11 }, { type: 'card', mediaId: 12 }] },
+      [],
+    )
+    const { json } = await del('c1')
+    expect(json.imagesDeleted).toBe(2)
+    expect(calls.some(c => c.method === 'DELETE' && c.url.includes('/upload/files/11'))).toBe(true)
+    expect(calls.some(c => c.method === 'DELETE' && c.url.includes('/upload/files/12'))).toBe(true)
+  })
+
+  it('ΔΕΝ σβήνει εικόνα που χρησιμοποιεί άλλη καμπάνια', async () => {
+    signedInAs('admin')
+    const calls = mockWith(
+      { documentId: 'c1', State: 'sent', Subject: 'Θ', Blocks: [{ type: 'image', mediaId: 11 }] },
+      [{ documentId: 'c2', Blocks: [{ type: 'image', mediaId: 11 }] }],
+    )
+    const { json } = await del('c1')
+    expect(json.imagesDeleted).toBe(0)
+    expect(json.imagesKept).toBe(1)
+    expect(calls.some(c => c.url.includes('/upload/files/11'))).toBe(false)
+  })
+
+  it('βρίσκει και τα πρωτότυπα πίσω από σημασμένες εικόνες', async () => {
+    signedInAs('admin')
+    const calls = mockWith(
+      { documentId: 'c1', State: 'sent', Subject: 'Θ', Blocks: [{ type: 'image', mediaId: 20, origMediaId: 21 }] },
+      [],
+    )
+    await del('c1')
+    for (const id of [20, 21]) {
+      expect(calls.some(c => c.method === 'DELETE' && c.url.includes(`/upload/files/${id}`))).toBe(true)
+    }
+  })
+
+  it('αρνείται διαγραφή καμπάνιας που στέλνει αυτή τη στιγμή', async () => {
+    signedInAs('admin')
+    mockWith({ documentId: 'c1', State: 'sending', Subject: 'Θ', Blocks: [] })
+    const { status, json } = await del('c1')
+    expect(status).toBe(409)
+    expect(json.error).toContain('σε εξέλιξη')
   })
 })

@@ -3,12 +3,15 @@ import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, SEAT_LABELS, SEAT_MAILBOX, type OcSeat } from '@/lib/ocRoles'
 import { campaignEmailHtml, PRESETS, BLOCK_LABELS, BLOCK_VARIANTS, MERGE_FIELDS, FOOTER_STYLES, FOOTER_LOOKS, HEADER_STYLES, applyMergeFields, type Block, type FooterStyle, type FooterLook, type HeaderStyle, type CampaignSigner } from '@/lib/campaignBlocks'
+import { drainCampaigns } from '@/lib/campaignDrain'
 import {
   resolveRecipients, toQueue, validateCampaign, daysNeeded, recipientSummary,
-  firstNameOf, DAILY_EMAIL_BUDGET, type CampaignMember, type RecipientSelection,
+  firstNameOf, DAILY_EMAIL_BUDGET, SEAT_AUDIENCES, SEAT_LABEL_SET,
+  type CampaignMember, type RecipientSelection,
 } from '@/lib/campaignRecipients'
 
-export const maxDuration = 60
+// Η «Αποστολή» στέλνει ΤΩΡΑ ό,τι χωράει — χρειάζεται χρόνο, όχι 60 δευτερόλεπτα
+export const maxDuration = 300
 
 /**
  * Μαζική αποστολή email από το OC — σύνθεση, παραλήπτες, ουρά.
@@ -123,7 +126,9 @@ async function attachGroups(members: CampaignMember[]): Promise<string[]> {
       }
     }
   } catch { /* ομοίως */ }
-  return [...names].sort((a, b) => a.localeCompare(b, 'el'))
+  // Οι έδρες βγαίνουν από εδώ: έχουν δικό τους άξονα και πάνε σε θυρίδα,
+  // όχι στο προσωπικό email του κατόχου.
+  return [...names].filter(n => !SEAT_LABEL_SET.has(n)).sort((a, b) => a.localeCompare(b, 'el'))
 }
 
 /**
@@ -140,10 +145,11 @@ async function signerFor(seat: OcSeat): Promise<CampaignSigner> {
   }
 }
 
-const CAMPAIGN_FIELDS =
+const CAMPAIGN_FIELDS_BASE =
   'fields[0]=Subject&fields[1]=State&fields[2]=SentCount&fields[3]=FailedCount' +
   '&fields[4]=TotalCount&fields[5]=QueuedAt&fields[6]=LastRunAt&fields[7]=CompletedAt' +
   '&fields[8]=CreatedByName&fields[9]=IsTemplate&fields[10]=TemplateName&fields[11]=updatedAt'
+const CAMPAIGN_FIELDS = CAMPAIGN_FIELDS_BASE + '&fields[12]=Archived&fields[13]=ArchivedAt'
 
 export async function GET(request: NextRequest) {
   const auth = await authorize()
@@ -157,12 +163,18 @@ export async function GET(request: NextRequest) {
     }
     const members = await loadMembers()
     const groups = await attachGroups(members)
-    const list = await strapi(`/oc-campaigns?sort=updatedAt:desc&pagination[limit]=50&${CAMPAIGN_FIELDS}`)
+    // Το Archived μπορεί να μην έχει βγει ακόμη στο Strapi Cloud: τότε το query
+    // γυρίζει 400 «Invalid key» και η λίστα θα ερχόταν ΚΕΝΗ — δηλαδή οι
+    // καμπάνιες θα «εξαφανίζονταν» ενώ υπάρχουν. Ξαναδοκιμάζουμε χωρίς αυτό.
+    const listUrl = (f: string) => `/oc-campaigns?sort=updatedAt:desc&pagination[limit]=50&${f}`
+    let list = await strapi(listUrl(CAMPAIGN_FIELDS))
+    if (!list.ok) list = await strapi(listUrl(CAMPAIGN_FIELDS_BASE))
     return NextResponse.json({
       campaigns: list.json?.data || [],
       // Ό,τι χρειάζεται η οθόνη για να χτίσει τον επιλογέα, χωρίς δεύτερη κλήση
       memberCount: members.filter(m => m.am != null && m.email).length,
       groups,
+      seats: SEAT_AUDIENCES,
       blockLabels: BLOCK_LABELS,
       blockVariants: BLOCK_VARIANTS,
       presets: PRESETS.map(p => ({ id: p.id, label: p.label, hint: p.hint, blocks: p.blocks })),
@@ -268,14 +280,50 @@ export async function POST(request: NextRequest) {
         console.error('oc/campaigns: save failed', res.status)
         return NextResponse.json({ error: 'Αποτυχία αποθήκευσης' }, { status: 502 })
       }
+      const savedId = res.json?.data?.documentId || id
+
+      // Στέλνουμε ΑΜΕΣΩΣ ό,τι χωράει στο σημερινό όριο. Η ουρά υπάρχει για
+      // ό,τι ΔΕΝ χωράει — δεν έχει νόημα ένα μήνυμα σε τρεις παραλήπτες να
+      // περιμένει τις 08:00 επειδή το όριο είναι 80.
+      let sentNow = 0
+      let drainReport: string[] = []
+      if (action === 'queue' && savedId) {
+        try {
+          const d = await drainCampaigns({ onlyId: savedId, timeBudgetMs: 240_000 })
+          sentNow = d.sent
+          drainReport = d.report
+        } catch (e) {
+          // Η καμπάνια είναι ήδη στην ουρά· το cron θα την πιάσει το πρωί
+          console.error('oc/campaigns: άμεση αποστολή απέτυχε', (e as Error).message)
+        }
+      }
+
+      const remaining = recipients.length - sentNow
       return NextResponse.json({
         ok: true,
-        id: res.json?.data?.documentId || id,
+        id: savedId,
         state: payload.State,
         count: recipients.length,
+        sentNow,
+        remaining,
         days: daysNeeded(recipients.length),
         summary: recipientSummary(recipients.length),
+        report: drainReport,
       })
+    }
+
+    if (action === 'archive') {
+      const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
+      if (!id) return NextResponse.json({ error: 'Λείπει η καμπάνια' }, { status: 400 })
+      const archived = body?.archived !== false
+      // Η αρχειοθέτηση ΔΕΝ αγγίζει τίποτα: κρατά παραλήπτες, μπλοκ και εικόνες.
+      // Είναι το «θέλω να φύγει από τα μάτια μου», όχι το «θέλω να χαθεί».
+      const res = await strapi(`/oc-campaigns/${id}`, 'PUT', {
+        Archived: archived,
+        ArchivedAt: archived ? new Date().toISOString() : null,
+      })
+      if (!res.ok) return NextResponse.json({ error: 'Αποτυχία αρχειοθέτησης' }, { status: 502 })
+      return NextResponse.json({ ok: true, archived })
     }
 
     if (action === 'cancel') {
@@ -295,23 +343,73 @@ export async function POST(request: NextRequest) {
   }
 }
 
+/** Τα mediaId που κρατά μια καμπάνια — και τα πρωτότυπα πίσω από τα σημασμένα */
+function mediaIdsOf(blocks: any): number[] {
+  const ids = new Set<number>()
+  const walk = (v: any) => {
+    if (Array.isArray(v)) { v.forEach(walk); return }
+    if (v && typeof v === 'object') {
+      for (const [k, val] of Object.entries(v)) {
+        if ((k === 'mediaId' || k === 'origMediaId') && Number.isInteger(val)) ids.add(val as number)
+        else walk(val)
+      }
+    }
+  }
+  walk(blocks)
+  return [...ids]
+}
+
 export async function DELETE(request: NextRequest) {
   const auth = await authorize()
   if ('error' in auth) return auth.error
   const id = String(request.nextUrl.searchParams.get('id') || '').replace(/[^a-z0-9]/gi, '')
   if (!id) return NextResponse.json({ error: 'Λείπει η καμπάνια' }, { status: 400 })
-  const cur = await strapi(`/oc-campaigns/${id}?fields[0]=State`)
-  const state = cur.json?.data?.State
-  // Ό,τι έχει αρχίσει να φεύγει δεν σβήνεται: το αρχείο του τι στάλθηκε σε
-  // ποιον είναι το μόνο που απομένει μετά την αποστολή.
-  if (state && state !== 'draft' && state !== 'cancelled') {
-    return NextResponse.json({ error: 'Διαγράφονται μόνο προσχέδια και ακυρωμένες' }, { status: 409 })
+
+  try {
+    const cur = await strapi(`/oc-campaigns/${id}?fields[0]=State&fields[1]=Blocks&fields[2]=Subject`)
+    const row = cur.json?.data
+    if (!row) return NextResponse.json({ error: 'Η καμπάνια δεν βρέθηκε' }, { status: 404 })
+    if (row.State === 'sending') {
+      // Στη μέση της αποστολής η διαγραφή θα άφηνε μισούς παραλήπτες με
+      // γράμμα και κανένα αρχείο για το ποιοι ήταν.
+      return NextResponse.json({ error: 'Η αποστολή είναι σε εξέλιξη — ακύρωσέ την πρώτα' }, { status: 409 })
+    }
+
+    // Οι εικόνες φεύγουν ΜΟΝΟ αν δεν τις κρατά άλλη καμπάνια
+    const mine = mediaIdsOf(row.Blocks)
+    const others = await strapi('/oc-campaigns?pagination[limit]=200&fields[0]=Blocks')
+    const usedElsewhere = new Set<number>()
+    if (others.ok) {
+      for (const c of others.json?.data || []) {
+        if (c.documentId === id) continue
+        for (const m of mediaIdsOf(c.Blocks)) usedElsewhere.add(m)
+      }
+    } else {
+      // Δεν ξέρουμε τι χρησιμοποιεί ποιος → δεν σβήνουμε καμία εικόνα
+      mine.forEach(m => usedElsewhere.add(m))
+    }
+
+    const deleted: number[] = []
+    const kept: number[] = []
+    for (const m of mine) {
+      if (usedElsewhere.has(m)) { kept.push(m); continue }
+      const d = await fetch(`${STRAPI_URL}/api/upload/files/${m}`, {
+        method: 'DELETE', headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
+      }).catch(() => null)
+      if (d?.ok || d?.status === 404) deleted.push(m)
+      else kept.push(m)
+    }
+
+    const res = await strapi(`/oc-campaigns/${id}`, 'DELETE')
+    if (!res.ok) return NextResponse.json({ error: 'Αποτυχία διαγραφής' }, { status: 502 })
+    return NextResponse.json({ ok: true, imagesDeleted: deleted.length, imagesKept: kept.length })
+  } catch (err) {
+    console.error('oc/campaigns DELETE failed:', err)
+    return NextResponse.json({ error: 'Εσωτερικό σφάλμα' }, { status: 500 })
   }
-  const res = await strapi(`/oc-campaigns/${id}`, 'DELETE')
-  if (!res.ok) return NextResponse.json({ error: 'Αποτυχία διαγραφής' }, { status: 502 })
-  return NextResponse.json({ ok: true })
 }
 
+/** Το όνομα του μέλους για τη σφραγίδα «ποιος συνέθεσε» */
 async function memberName(memberId: string): Promise<string> {
   const r = await strapi(`/members/${memberId}?fields[0]=Name`)
   return String(r.json?.data?.Name || '').trim() || `member:${memberId}`

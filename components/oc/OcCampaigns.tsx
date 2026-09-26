@@ -20,6 +20,7 @@ type Block = Record<string, any> & { type: string }
 type Recipient = { email: string; name: string; via: string; am?: number | null }
 type Selection = {
   allMembers?: boolean
+  seats?: string[]
   paymentStatus?: { year: number; paid: boolean }
   groups?: string[]
   memberDocIds?: string[]
@@ -29,10 +30,12 @@ type Campaign = {
   documentId: string; Subject: string; State: string
   SentCount: number; FailedCount: number; TotalCount: number
   QueuedAt?: string | null; CompletedAt?: string | null; CreatedByName?: string | null
+  Archived?: boolean; ArchivedAt?: string | null
 }
 type Meta = {
   memberCount: number
   groups: string[]
+  seats?: Array<{ id: string; label: string; email: string }>
   blockLabels: Record<string, string>
   blockVariants: Record<string, { key: string; options: Array<{ value: string; label: string }> }>
   presets: Array<{ id: string; label: string; hint: string; blocks: Block[] }>
@@ -61,21 +64,18 @@ const AUDIENCES: Array<{ id: string; label: string; hint: string; build: (m: Met
     build: () => ({ allMembers: true }),
   },
   {
-    id: 'board', label: 'Ομάδα Συντονισμού', hint: 'Όσοι κατέχουν έδρα στο ΔΣ',
-    build: m => ({ groups: m.groups.filter(g => SEAT_NAMES.includes(g)) }),
+    id: 'board', label: 'Ομάδα Συντονισμού', hint: 'Όλες οι θυρίδες των εδρών',
+    build: m => ({ seats: (m.seats || []).map(s => s.id) }),
   },
   {
     id: 'workgroups', label: 'Ομάδες Εργασίας', hint: 'Μέλη όλων των ομάδων εργασίας',
-    build: m => ({ groups: m.groups.filter(g => !SEAT_NAMES.includes(g)) }),
+    build: m => ({ groups: m.groups }),
   },
   {
     id: 'unpaid', label: `Απλήρωτοι ${new Date().getFullYear()}`, hint: 'Χωρίς συνδρομή για φέτος',
     build: () => ({ paymentStatus: { year: new Date().getFullYear(), paid: false } }),
   },
 ]
-
-/** Οι έδρες, ώστε να ξεχωρίζουν από τις ομάδες εργασίας στην ίδια λίστα */
-const SEAT_NAMES = ['Συντονισμός', 'Γραμματεία', 'Επικοινωνία', 'IT', 'Κοινότητα', 'Ταμίας', 'Outreach']
 
 /**
  * Οι θυρίδες των εδρών. Μία ανά ρόλο, όχι έτοιμοι συνδυασμοί: ο συνδυασμός
@@ -171,9 +171,13 @@ export default function OcCampaigns() {
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
       setNotice({
         kind: 'ok',
-        text: action === 'queue'
-          ? `Μπήκε στην ουρά: ${d.summary}. Η πρώτη παρτίδα φεύγει στις 08:00.`
-          : 'Το προσχέδιο αποθηκεύτηκε.',
+        text: action !== 'queue'
+          ? 'Το προσχέδιο αποθηκεύτηκε.'
+          : d.remaining === 0
+            ? `Στάλθηκε σε ${d.sentNow} ${d.sentNow === 1 ? 'παραλήπτη' : 'παραλήπτες'}.`
+            : d.sentNow > 0
+              ? `Στάλθηκε σε ${d.sentNow}. Απομένουν ${d.remaining} — φεύγουν αύριο στις 08:15.`
+              : `Μπήκε στην ουρά: ${d.summary}. Η πρώτη παρτίδα φεύγει στις 08:15.`,
       })
       setConfirming(false)
       if (action === 'queue') { setTab('queue'); setSubject(''); setBlocks([]); setSelection({}); setCc([]) }
@@ -213,7 +217,7 @@ export default function OcCampaigns() {
       )}
 
       {tab === 'queue' ? (
-        <QueueView campaigns={campaigns} />
+        <QueueView campaigns={campaigns} onChanged={load} />
       ) : (
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] items-start">
           <div className="grid gap-6 min-w-0">
@@ -327,20 +331,24 @@ export default function OcCampaigns() {
               )}
             </div>
 
-            <div className={CARD}>
-              <h3 className={`${EYEBROW} mb-1`}>ΠΡΟΓΡΑΜΜΑ ΑΠΟΣΤΟΛΗΣ</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Ο πάροχος στέλνει έως 100 email την ημέρα. Τα 20 κρατούνται για τα αυτόματα μηνύματα, ώστε μια
-                απόδειξη ή μια έγκριση να μην περιμένει ποτέ. Τα υπόλοιπα {meta?.dailyBudget} είναι για μαζικές
-                αποστολές· ό,τι δεν χωράει φεύγει αυτόματα στις 08:00 κάθε πρωί.
-              </p>
-              {resolved.count > 0 && (
-                <div className="rounded-2xl bg-gray-100 dark:bg-gray-900 px-4 py-3 text-sm">
-                  <strong className="tabular-nums">{emailCost}</strong> email ·{' '}
-                  {days === 1 ? 'φεύγουν όλα με την πρώτη παρτίδα' : `${days} ημέρες, ${meta?.dailyBudget} την ημέρα`}
+            {/* Εμφανίζεται ΜΟΝΟ όταν η αποστολή δεν χωράει σε μία μέρα: για
+                τρεις παραλήπτες η εξήγηση του ημερήσιου ορίου είναι θόρυβος. */}
+            {meta && emailCost > meta.dailyBudget && (
+              <div className={CARD}>
+                <h3 className={`${EYEBROW} mb-1`}>ΠΡΟΓΡΑΜΜΑ ΑΠΟΣΤΟΛΗΣ</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Ο πάροχος στέλνει έως 100 email την ημέρα. Τα 20 κρατούνται για τα αυτόματα μηνύματα, ώστε μια
+                  απόδειξη ή μια έγκριση να μην περιμένει ποτέ. Τα υπόλοιπα {meta.dailyBudget} είναι για μαζικές
+                  αποστολές.
+                </p>
+                <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/25 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
+                  <strong className="tabular-nums">{emailCost}</strong> email · φεύγουν{' '}
+                  <strong className="tabular-nums">{meta.dailyBudget}</strong> τώρα και τα υπόλοιπα σε{' '}
+                  {days - 1} {days - 1 === 1 ? 'ημέρα' : 'ημέρες'}, στις 08:15 κάθε πρωί
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
           </div>
 
           <aside className="lg:sticky lg:top-24 min-w-0">
@@ -812,7 +820,7 @@ function RecipientPicker({ meta, selection, setSelection }: { meta: Meta; select
               {a.id === 'community' && <span className="tabular-nums text-gray-500">{meta.memberCount}</span>}
             </button>
           ))}
-          {(selection.allMembers || selection.groups?.length || selection.paymentStatus || selection.memberDocIds?.length) && (
+          {(selection.allMembers || selection.seats?.length || selection.groups?.length || selection.paymentStatus || selection.memberDocIds?.length) && (
             <button type="button" onClick={() => setSelection({ external: selection.external })}
               className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 underline">Καθαρισμός</button>
           )}
@@ -848,8 +856,32 @@ function RecipientPicker({ meta, selection, setSelection }: { meta: Meta; select
             </div>
           </div>
 
+          {meta.seats && (
+            <div>
+              <h4 className="text-sm font-semibold mb-2">Κατά έδρα</h4>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                Το μήνυμα πάει στη θυρίδα του ρόλου, όχι στο προσωπικό email του κατόχου.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {meta.seats.map(s => {
+                  const on = (selection.seats || []).includes(s.id)
+                  return (
+                    <button key={s.id} type="button" title={s.email}
+                      onClick={() => {
+                        const cur = selection.seats || []
+                        setSelection({ ...selection, seats: on ? cur.filter(x => x !== s.id) : [...cur, s.id] })
+                      }}
+                      className={`${CHIP} ${on ? 'border-coral bg-coral/10' : 'border-gray-300 dark:border-gray-600'}`}>
+                      {s.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           <div>
-            <h4 className="text-sm font-semibold mb-2">Κατά ομάδα εργασίας ή έδρα</h4>
+            <h4 className="text-sm font-semibold mb-2">Κατά ομάδα εργασίας</h4>
             <div className="flex flex-wrap gap-2">
               {meta.groups.map(g => {
                 const on = (selection.groups || []).includes(g)
@@ -918,7 +950,7 @@ function ConfirmDialog(props: {
     return [...m.entries()]
   }, [recipients])
   const VIA: Record<string, string> = {
-    all: 'όλα τα μέλη', payment: 'κατά συνδρομή', group: 'κατά ομάδα',
+    all: 'όλα τα μέλη', payment: 'κατά συνδρομή', seat: 'θυρίδες εδρών', group: 'κατά ομάδα',
     individual: 'μεμονωμένα', external: 'εξωτερικές',
   }
   return (
@@ -952,19 +984,153 @@ function ConfirmDialog(props: {
   )
 }
 
-function QueueView({ campaigns }: { campaigns: Campaign[] }) {
-  if (campaigns.length === 0) {
-    return (
-      <div className={`${CARD} text-center`}>
-        <p className="font-semibold">Καμία μαζική αποστολή ακόμη</p>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Ό,τι στείλεις θα εμφανίζεται εδώ με την πορεία του.</p>
-      </div>
-    )
-  }
+
+/**
+ * Το ανοιγμένο περιεχόμενο μιας αποστολής: το ΓΡΑΜΜΑ όπως έφυγε και ΠΟΙΟΙ το
+ * έλαβαν. Φορτώνεται με το κλικ, όχι μαζί με τη λίστα: τα μπλοκ και οι
+ * παραλήπτες είναι βαριά, και σπάνια τα θέλεις για όλες τις καμπάνιες μαζί.
+ */
+function CampaignDetail({ id }: { id: string }) {
+  const [data, setData] = useState<any>(null)
+  const [html, setHtml] = useState('')
+  const [err, setErr] = useState('')
+
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/oc/campaigns?id=${id}`, { cache: 'no-store' })
+        const d = await res.json()
+        if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
+        if (!alive) return
+        setData(d.campaign)
+        // Το γράμμα ξαναποδίδεται από τα ΑΠΟΘΗΚΕΥΜΕΝΑ μπλοκ και στυλ, οπότε
+        // δείχνει ό,τι έφυγε — όχι ό,τι θα έφευγε με τις σημερινές ρυθμίσεις.
+        const p = await fetch('/api/oc/campaigns', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'preview', subject: d.campaign?.Subject, blocks: d.campaign?.Blocks || [],
+            footerStyle: d.campaign?.FooterStyle, footerLook: d.campaign?.FooterLook,
+            footerLogo: d.campaign?.FooterLogo, headerStyle: d.campaign?.HeaderStyle,
+            headerLogo: d.campaign?.HeaderLogo,
+          }),
+        })
+        if (p.ok && alive) setHtml((await p.json()).html)
+      } catch (e: any) { if (alive) setErr(e?.message || 'Αποτυχία') }
+    })()
+    return () => { alive = false }
+  }, [id])
+
+  if (err) return <p className="mt-3 text-sm text-red-700 dark:text-red-300">{err}</p>
+  if (!data) return <p className="mt-3 text-sm text-gray-500">Φόρτωση…</p>
+
+  const recipients: any[] = Array.isArray(data.Recipients) ? data.Recipients : []
+  const STATUS: Record<string, string> = { sent: 'στάλθηκε', failed: 'απέτυχε', pending: 'εκκρεμεί' }
+
   return (
-    <div className="grid gap-3">
-      {campaigns.map(c => {
+    <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <div>
+        <h4 className={`${EYEBROW} mb-2`}>ΤΟ ΓΡΑΜΜΑ ΟΠΩΣ ΕΦΥΓΕ</h4>
+        {html
+          ? <PreviewFrame html={html} />
+          : <p className="text-sm text-gray-500">Φόρτωση προεπισκόπησης…</p>}
+      </div>
+      <div className="min-w-0">
+        <h4 className={`${EYEBROW} mb-2`}>ΠΑΡΑΛΗΠΤΕΣ ({recipients.length})</h4>
+        {(data.Cc || []).length > 0 && (
+          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+            Κοινοποίηση: <span translate="no">{(data.Cc || []).join(', ')}</span>
+          </p>
+        )}
+        <div className="max-h-96 overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-600 divide-y divide-gray-200 dark:divide-gray-700">
+          {recipients.map((r, i) => (
+            <div key={i} className="px-3 py-2 text-sm flex flex-wrap items-baseline gap-x-2">
+              <span className="min-w-0">{r.name}</span>
+              <span className="text-xs text-gray-500 min-w-0 truncate" translate="no">{r.email}</span>
+              <span className={`ml-auto text-xs ${
+                r.status === 'sent' ? 'text-green-700 dark:text-green-300'
+                  : r.status === 'failed' ? 'text-red-700 dark:text-red-300'
+                    : 'text-gray-500'}`}>
+                {STATUS[r.status] || r.status}
+                {r.sentAt && ` · ${new Date(r.sentAt).toLocaleString('el-GR', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })}`}
+              </span>
+              {r.error && <span className="w-full text-xs text-red-700 dark:text-red-300">{r.error}</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function QueueView({ campaigns, onChanged }: { campaigns: Campaign[]; onChanged: () => void }) {
+  const [box, setBox] = useState<'active' | 'archived'>('active')
+  const [busy, setBusy] = useState<string | null>(null)
+  const [open, setOpen] = useState<string | null>(null)
+  const [err, setErr] = useState('')
+
+  const shown = campaigns.filter(c => !!c.Archived === (box === 'archived'))
+
+  const archive = async (c: Campaign, archived: boolean) => {
+    setBusy(c.documentId); setErr('')
+    try {
+      const res = await fetch('/api/oc/campaigns', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'archive', id: c.documentId, archived }),
+      })
+      if (!res.ok) throw new Error((await res.json())?.error || 'Αποτυχία')
+      await onChanged()
+    } catch (e: any) { setErr(e?.message || 'Αποτυχία') } finally { setBusy(null) }
+  }
+
+  const remove = async (c: Campaign) => {
+    // Η διαγραφή παίρνει μαζί και τις εικόνες· η αρχειοθέτηση υπάρχει ακριβώς
+    // για όποιον θέλει να κρύψει χωρίς να χάσει.
+    if (!confirm(
+      `Οριστική διαγραφή της «${c.Subject}»;\n\n` +
+      'Χάνεται το αρχείο του ποιοι το έλαβαν, και σβήνονται οι εικόνες που δεν ' +
+      'χρησιμοποιεί άλλη καμπάνια. Δεν αναιρείται.'
+    )) return
+    setBusy(c.documentId); setErr('')
+    try {
+      const res = await fetch(`/api/oc/campaigns?id=${c.documentId}`, { method: 'DELETE' })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
+      await onChanged()
+    } catch (e: any) { setErr(e?.message || 'Αποτυχία') } finally { setBusy(null) }
+  }
+
+  const archivedCount = campaigns.filter(c => c.Archived).length
+  const activeCount = campaigns.length - archivedCount
+
+  return (
+    <div className="grid gap-4">
+      <div className="flex gap-1 p-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 self-start" role="tablist">
+        {([['active', `Απεσταλμένα ${activeCount || ''}`], ['archived', `Αρχείο ${archivedCount || ''}`]] as const).map(([k, label]) => (
+          <button key={k} type="button" role="tab" aria-selected={box === k} onClick={() => setBox(k)}
+            className={`px-4 min-h-11 rounded-full text-sm font-semibold ${
+              box === k ? 'bg-coral text-charcoal' : 'text-gray-600 dark:text-gray-300'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {err && <div className="rounded-2xl px-4 py-3 text-sm bg-red-50 text-red-900 dark:bg-red-900/30 dark:text-red-200">{err}</div>}
+
+      {shown.length === 0 ? (
+        <div className={`${CARD} text-center`}>
+          <p className="font-semibold">
+            {box === 'archived' ? 'Το αρχείο είναι άδειο' : 'Καμία μαζική αποστολή ακόμη'}
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            {box === 'archived'
+              ? 'Ό,τι αρχειοθετήσεις κρατά όλα του τα στοιχεία και μπορεί να επανέλθει.'
+              : 'Ό,τι στείλεις θα εμφανίζεται εδώ με την πορεία του.'}
+          </p>
+        </div>
+      ) : shown.map(c => {
         const pct = c.TotalCount ? Math.round((c.SentCount / c.TotalCount) * 100) : 0
+        const working = busy === c.documentId
         return (
           <div key={c.documentId} className={CARD}>
             <div className="flex flex-wrap items-baseline gap-2">
@@ -974,11 +1140,31 @@ function QueueView({ campaigns }: { campaigns: Campaign[] }) {
             <div className="mt-2 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
               <div className="h-full bg-coral" style={{ width: `${pct}%` }} />
             </div>
-            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 tabular-nums">
-              {c.SentCount}/{c.TotalCount} στάλθηκαν
-              {c.FailedCount > 0 && <span className="text-red-700 dark:text-red-300"> · {c.FailedCount} απέτυχαν</span>}
-              {c.CreatedByName && <span> · {c.CreatedByName}</span>}
+            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-600 dark:text-gray-400 tabular-nums">
+              <span>{c.SentCount}/{c.TotalCount} στάλθηκαν</span>
+              {c.CompletedAt && (
+                <span>· {new Date(c.CompletedAt).toLocaleString('el-GR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</span>
+              )}
+              {c.FailedCount > 0 && <span className="text-red-700 dark:text-red-300">· {c.FailedCount} απέτυχαν</span>}
+              {c.CreatedByName && <span>· {c.CreatedByName}</span>}
+              {c.ArchivedAt && <span>· αρχειοθετήθηκε {new Date(c.ArchivedAt).toLocaleDateString('el-GR')}</span>}
+              <span className="ml-auto flex gap-2">
+                <button type="button" onClick={() => setOpen(open === c.documentId ? null : c.documentId)}
+                  aria-expanded={open === c.documentId}
+                  className="px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-semibold">
+                  {open === c.documentId ? 'Κλείσιμο' : 'Προβολή'}
+                </button>
+                <button type="button" disabled={working} onClick={() => archive(c, !c.Archived)}
+                  className="px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-semibold disabled:opacity-50">
+                  {c.Archived ? 'Επαναφορά' : 'Αρχειοθέτηση'}
+                </button>
+                <button type="button" disabled={working} onClick={() => remove(c)}
+                  className="px-3 py-1.5 rounded-full border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 text-sm font-semibold disabled:opacity-50">
+                  Διαγραφή
+                </button>
+              </span>
             </div>
+            {open === c.documentId && <CampaignDetail id={c.documentId} />}
           </div>
         )
       })}

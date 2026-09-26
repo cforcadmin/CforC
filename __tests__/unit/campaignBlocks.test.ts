@@ -93,7 +93,7 @@ describe('Πίνακας περιεχομένων', () => {
     expect(out).toContain('Πρώτη')
     expect(out).toContain('Δεύτερη')
     expect(out).toMatch(/href="#s1-/)
-    expect(out).toMatch(/<a name="s1-/)
+    expect(out).toMatch(/<a id="s1-/)
   })
 
   it('δεν εμφανίζεται με λιγότερες από δύο ενότητες', () => {
@@ -257,5 +257,64 @@ describe('Επικεφαλίδες μέσα στο κείμενο', () => {
 
   it('οι επικεφαλίδες κρατούν χρώμα ταυτότητας', () => {
     expect(richText('<h2>Α</h2>')).toContain(BRAND.ink)
+  })
+})
+
+describe('Πρόσωπο — πλευρά φωτογραφίας', () => {
+  const person = (side?: 'left' | 'right'): Block => ({
+    type: 'person', name: 'Μαρία Κ', role: 'Αρχιτέκτονας',
+    src: 'https://x.gr/p.jpg', alt: 'Μαρία', html: 'Βιογραφικό', side,
+  })
+
+  it('αριστερά είναι η προεπιλογή — φωτογραφία πριν το κείμενο', () => {
+    const html = campaignEmailHtml({ subject: 'Θ', blocks: [person()] }).html
+    expect(html.indexOf('p.jpg')).toBeLessThan(html.indexOf('Μαρία Κ<'))
+  })
+
+  it('δεξιά: το κείμενο πρώτα, η φωτογραφία μετά', () => {
+    const html = campaignEmailHtml({ subject: 'Θ', blocks: [person('right')] }).html
+    expect(html.indexOf('Μαρία Κ<')).toBeLessThan(html.indexOf('p.jpg'))
+  })
+
+  it('χωρίς φωτογραφία δεν μένει κενή στήλη', () => {
+    const html = campaignEmailHtml({
+      subject: 'Θ', blocks: [{ type: 'person', name: 'Χωρίς', html: 'κείμενο', side: 'right' }],
+    }).html
+    expect(html).not.toContain('width:120px')
+  })
+
+  it('στοιβάζεται σε κινητό, όπως το «Εικόνα + κείμενο»', () => {
+    expect(campaignEmailHtml({ subject: 'Θ', blocks: [person('right')] }).html).toContain('class="stack"')
+  })
+})
+
+describe('Πίνακας περιεχομένων', () => {
+  const withSections: Block[] = [
+    { type: 'toc' },
+    { type: 'section', title: 'Πρώτη ενότητα' },
+    { type: 'text', html: 'α' },
+    { type: 'section', title: 'Δεύτερη ενότητα' },
+  ]
+
+  it('κάθε ενότητα έχει ΚΑΙ id ΚΑΙ name — το σκέτο name είναι παρωχημένο', () => {
+    const html = campaignEmailHtml({ subject: 'Θ', blocks: withSections }).html
+    expect(html).toMatch(/<a id="s1-[^"]*" name="s1-[^"]*">/)
+  })
+
+  it('ο σύνδεσμος δείχνει στην άγκυρα που υπάρχει', () => {
+    const html = campaignEmailHtml({ subject: 'Θ', blocks: withSections }).html
+    const hrefs = [...html.matchAll(/href="#([^"]+)"/g)].map(m => m[1])
+    expect(hrefs.length).toBe(2)
+    for (const h of hrefs) expect(html).toContain(`id="${h}"`)
+  })
+
+  it('λειτουργεί όπου κι αν μπει ο πίνακας — λίστα ίδια', () => {
+    const top = campaignEmailHtml({ subject: 'Θ', blocks: withSections }).html
+    const bottom = campaignEmailHtml({
+      subject: 'Θ', blocks: [...withSections.slice(1), { type: 'toc' }],
+    }).html
+    const names = (h: string) => [...h.matchAll(/→ <a href="#[^"]+"[^>]*>([^<]+)</g)].map(m => m[1])
+    expect(names(top)).toEqual(['Πρώτη ενότητα', 'Δεύτερη ενότητα'])
+    expect(names(bottom)).toEqual(names(top))
   })
 })

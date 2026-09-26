@@ -126,7 +126,7 @@ export type CardBlock = {
   type: 'card'; src?: string; alt?: string; title: string; html: string
   buttonLabel?: string; buttonHref?: string
 }
-export type PersonBlock = { type: 'person'; src?: string; alt?: string; name: string; role?: string; html: string }
+export type PersonBlock = { type: 'person'; src?: string; alt?: string; name: string; role?: string; html: string; side?: 'left' | 'right' }
 export type LogosBlock = { type: 'logos'; items: Array<{ src: string; alt: string; href?: string }>; note?: string }
 export type ButtonBlock = { type: 'button'; label: string; href: string; style?: 'coral' | 'outline' | 'dark' }
 export type BoxBlock = { type: 'box'; title?: string; html: string; tone?: 'cream' | 'neutral' | 'warning' | 'alert' }
@@ -160,6 +160,7 @@ export const BLOCK_VARIANTS: Partial<Record<Block['type'], { key: string; option
   text: { key: 'tone', options: [{ value: 'normal', label: 'Κανονικό' }, { value: 'soft', label: 'Δευτερεύον' }] },
   image: { key: 'size', options: [{ value: 'full', label: 'Πλήρες πλάτος' }, { value: 'inset', label: 'Ένθετη' }] },
   imageText: { key: 'side', options: [{ value: 'left', label: 'Εικόνα αριστερά' }, { value: 'right', label: 'Εικόνα δεξιά' }] },
+  person: { key: 'side', options: [{ value: 'left', label: 'Φωτογραφία αριστερά' }, { value: 'right', label: 'Φωτογραφία δεξιά' }] },
   button: { key: 'style', options: [{ value: 'coral', label: 'Coral' }, { value: 'outline', label: 'Περίγραμμα' }, { value: 'dark', label: 'Σκούρο' }] },
   box: {
     key: 'tone',
@@ -193,7 +194,7 @@ function anchorId(title: string, i: number): string {
 function renderBlock(b: Block, i: number): string {
   switch (b.type) {
     case 'section':
-      return row(`<a name="${anchorId(b.title, i)}"></a>
+      return row(`<a id="${anchorId(b.title, i)}" name="${anchorId(b.title, i)}"></a>
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:8px 0 4px 0;">
         <tr><td style="font-family:${FONT};font-size:12px;line-height:16px;letter-spacing:1.2px;color:${BRAND.coralDeep};font-weight:bold;mso-line-height-rule:exactly;">${escapeHtml(upperGreek(b.title))}</td></tr>
         <tr><td height="6" style="height:6px;line-height:6px;font-size:0;">&nbsp;</td></tr>
@@ -225,17 +226,23 @@ function renderBlock(b: Block, i: number): string {
         </td></tr>
       </table>`, '16px 48px 0 48px')
 
-    case 'person':
-      return row(`
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-        ${b.src ? `<td class="stack" width="120" style="width:120px;vertical-align:top;">${img(b.src, b.alt || b.name, 120)}</td>
-        <td class="stack" width="16" style="width:16px;font-size:0;line-height:16px;">&nbsp;</td>` : ''}
-        <td class="stack" style="vertical-align:top;">
+    case 'person': {
+      const photo = b.src
+        ? `<td class="stack" width="120" style="width:120px;vertical-align:top;">${img(b.src, b.alt || b.name, 120)}</td>
+        <td class="stack" width="16" style="width:16px;font-size:0;line-height:16px;">&nbsp;</td>`
+        : ''
+      const text = `<td class="stack" style="vertical-align:top;">
           <div style="font-family:${FONT};font-size:17px;line-height:22px;font-weight:bold;color:${BRAND.ink};">${escapeHtml(b.name)}</div>
           ${b.role ? `<div style="font-family:${FONT};font-size:13px;line-height:18px;color:${BRAND.coralDeep};padding-top:2px;">${escapeHtml(b.role)}</div>` : ''}
           <div style="${bodyText()}padding-top:8px;">${richText(b.html)}</div>
-        </td>
-      </tr></table>`, '16px 48px 0 48px')
+        </td>`
+      // Με τη φωτογραφία δεξιά, το κενό μπαίνει ΠΡΙΝ από αυτήν — αλλιώς
+      // κολλάει στο κείμενο και η άλλη πλευρά αποκτά περιττό περιθώριο.
+      const cells = b.side === 'right' && photo
+        ? `${text}<td class="stack" width="16" style="width:16px;font-size:0;line-height:16px;">&nbsp;</td><td class="stack" width="120" style="width:120px;vertical-align:top;">${img(b.src!, b.alt || b.name, 120)}</td>`
+        : `${photo}${text}`
+      return row(`<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>${cells}</tr></table>`, '16px 48px 0 48px')
+    }
 
     case 'logos': {
       // Λογότυπα συνεργατών: ΠΟΤΕ φίλτρα ή grayscale — μόνο λευκό πλαίσιο

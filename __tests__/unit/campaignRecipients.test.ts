@@ -1,5 +1,5 @@
 import {
-  resolveRecipients, daysNeeded, recipientSummary, validateCampaign,
+  SEAT_AUDIENCES, resolveRecipients, daysNeeded, recipientSummary, validateCampaign,
   toQueue, firstNameOf, isValidEmail, DAILY_EMAIL_BUDGET, type CampaignMember,
 } from '@/lib/campaignRecipients'
 
@@ -143,5 +143,34 @@ describe('Βοηθητικά', () => {
     expect(isValidEmail('a@b.gr')).toBe(true)
     expect(isValidEmail('a@b')).toBe(false)
     expect(isValidEmail('')).toBe(false)
+  })
+})
+
+describe('Έδρες → θυρίδες', () => {
+  it('η έδρα στέλνει στη θυρίδα, όχι στο πρόσωπο', () => {
+    const r = resolveRecipients(members, { seats: ['admin'] })
+    expect(r).toEqual([{ email: 'hello@cultureforchange.net', name: 'Admin', via: 'seat' }])
+  })
+
+  it('δεν εξαρτάται από ΑΜ ή από το αν υπάρχει καν μέλος', () => {
+    // Καμία εγγραφή μέλους δεν χρειάζεται: η θυρίδα υπάρχει από μόνη της
+    expect(resolveRecipients([], { seats: ['financer', 'it'] }).map(x => x.email))
+      .toEqual(['finance@cultureforchange.net', 'it@cultureforchange.net'])
+  })
+
+  it('επτά έδρες, όλες με διεύθυνση cultureforchange.net', () => {
+    expect(SEAT_AUDIENCES).toHaveLength(7)
+    for (const s of SEAT_AUDIENCES) expect(s.email).toMatch(/@cultureforchange\.net$/)
+  })
+
+  it('η Γραμματεία εμφανίζεται ως «Admin» και πάει στο hello@', () => {
+    const admin = SEAT_AUDIENCES.find(s => s.id === 'admin')!
+    expect(admin.label).toBe('Admin')
+    expect(admin.email).toBe('hello@cultureforchange.net')
+  })
+
+  it('η θυρίδα δεν διπλασιάζεται αν μπει και ως εξωτερική διεύθυνση', () => {
+    const r = resolveRecipients([], { seats: ['admin'], external: ['hello@cultureforchange.net'] })
+    expect(r).toHaveLength(1)
   })
 })

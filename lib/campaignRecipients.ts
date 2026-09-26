@@ -21,6 +21,32 @@
  */
 export const DAILY_EMAIL_BUDGET = 80
 
+/**
+ * Οι έδρες στέλνονται στη ΘΥΡΙΔΑ, όχι στο προσωπικό email του κατόχου.
+ *
+ * Έτσι το γράμμα φτάνει στον ρόλο και όχι στο πρόσωπο: επιβιώνει των εκλογών,
+ * το βλέπει όποιος κρατά τη θυρίδα, και μένει στο αρχείο της θέσης. Παράπλευρο
+ * κέρδος: δεν εξαρτάται από το αν ο κάτοχος έχει ΑΜ — η Γραμματεία δεν είναι
+ * μέλος του ΔΣ και έπεφτε έξω από το φίλτρο του μητρώου.
+ *
+ * Οι διευθύνσεις είναι ΟΙ ΙΔΙΕΣ με το SEAT_MAILBOX του lib/ocRoles — μία πηγή
+ * αλήθειας, που χρησιμοποιούν ήδη οι προσκλήσεις του ημερολογίου.
+ */
+export const SEAT_AUDIENCES: Array<{ id: string; label: string; email: string }> = [
+  { id: 'admin', label: 'Admin', email: 'hello@cultureforchange.net' },
+  { id: 'comms', label: 'Επικοινωνία', email: 'communication@cultureforchange.net' },
+  { id: 'community', label: 'Κοινότητα', email: 'community@cultureforchange.net' },
+  { id: 'coordinator', label: 'Συντονισμός', email: 'coordination@cultureforchange.net' },
+  { id: 'financer', label: 'Ταμίας', email: 'finance@cultureforchange.net' },
+  { id: 'it', label: 'IT', email: 'it@cultureforchange.net' },
+  { id: 'outreach', label: 'Outreach', email: 'outreach@cultureforchange.net' },
+]
+
+/** Τα ελληνικά ονόματα των εδρών, για να μη μπερδεύονται με ομάδες εργασίας */
+export const SEAT_LABEL_SET = new Set([
+  'Γραμματεία', 'Επικοινωνία', 'Κοινότητα', 'Συντονισμός', 'Ταμίας', 'IT', 'Outreach',
+])
+
 export interface CampaignMember {
   docId: string
   name: string
@@ -36,6 +62,8 @@ export interface RecipientSelection {
   allMembers?: boolean
   /** π.χ. { year: 2026, paid: false } → όσοι ΔΕΝ έχουν πληρώσει το 2026 */
   paymentStatus?: { year: number; paid: boolean }
+  /** Ταυτότητες εδρών (SEAT_AUDIENCES) — πάνε στη θυρίδα, όχι σε πρόσωπο */
+  seats?: string[]
   groups?: string[]
   memberDocIds?: string[]
   external?: string[]
@@ -47,7 +75,7 @@ export interface Recipient {
   docId?: string
   am?: number | null
   /** Από πού μπήκε — για να εξηγεί η οθόνη γιατί είναι στη λίστα */
-  via: 'all' | 'payment' | 'group' | 'individual' | 'external'
+  via: 'all' | 'payment' | 'seat' | 'group' | 'individual' | 'external'
 }
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
@@ -94,6 +122,13 @@ export function resolveRecipients(
       // θα έλειπαν σιωπηλά από κάθε υπενθύμιση.
       const isPaid = (m.payments || {})[String(year)] === 1
       if (isPaid === paid) add({ email: m.email, name: m.name, docId: m.docId, am: m.am, via: 'payment' })
+    }
+  }
+
+  if (selection.seats?.length) {
+    const want = new Set(selection.seats)
+    for (const seat of SEAT_AUDIENCES) {
+      if (want.has(seat.id)) add({ email: seat.email, name: seat.label, via: 'seat' })
     }
   }
 
