@@ -355,6 +355,10 @@ export async function POST(request: NextRequest) {
         Preheader: String(body?.preheader || '').trim() || null,
         Blocks: blocks,
         Recipients: toQueue(recipients),
+        // Η ΕΠΙΛΟΓΗ, όχι μόνο το αποτέλεσμά της: χωρίς αυτήν, ανοίγοντας ξανά
+        // ένα προσχέδιο θα βλέπαμε 113 ονόματα αντί για «όλα τα μέλη», και
+        // κάθε αλλαγή στο μητρώο θα «πάγωνε» στο προσχέδιο.
+        Selection: body?.selection ?? {},
         TotalCount: recipients.length,
         Cc: Array.isArray(body?.cc) ? body.cc : null,
         Notes: String(body?.notes || '').trim() || null,
@@ -382,13 +386,18 @@ export async function POST(request: NextRequest) {
       let res = await write(payload)
       if (!res.ok && res.status === 400) {
         // Ένα νέο πεδίο που δεν έχει βγει ακόμη στο Strapi Cloud δεν πρέπει να
-        // εμποδίζει την αποθήκευση. Πετάμε ΠΡΩΤΑ μόνο το νεότερο (Desk) — αν
-        // πετούσαμε όλη την ομάδα μαζί, μια καμπάνια θα έχανε σιωπηλά και την
-        // κεφαλίδα και το υποσέλιδο που διάλεξε ο συντάκτης.
-        const { Desk, ...noDesk } = payload
-        res = await write(noDesk)
+        // εμποδίζει την αποθήκευση. Πετάμε ΕΝΑ-ΕΝΑ, από το νεότερο προς το
+        // παλαιότερο (Selection → Desk → στυλ) — αν πετούσαμε όλη την ομάδα
+        // μαζί, η καμπάνια θα έχανε σιωπηλά και την κεφαλίδα και το υποσέλιδο
+        // που διάλεξε ο συντάκτης.
+        const { Selection, ...noSel } = payload
+        res = await write(noSel)
         if (!res.ok && res.status === 400) {
-          const { FooterStyle, FooterLook, FooterLogo, HeaderStyle, HeaderLogo, Signer, ...rest } = noDesk
+          const { Desk, ...noDesk } = noSel
+          res = await write(noDesk)
+        }
+        if (!res.ok && res.status === 400) {
+          const { Desk, FooterStyle, FooterLook, FooterLogo, HeaderStyle, HeaderLogo, Signer, ...rest } = noSel
           res = await write(rest)
         }
       }

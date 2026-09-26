@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import Navigation from '@/components/Navigation'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
-import { OC_SEAT_LABELS, OC_SEAT_SHORT, canSendEmailFrom } from '@/components/oc/ocPrefs'
+import { OC_SEAT_LABELS, OC_SEAT_SHORT, canSendEmailFrom, canSeeSection } from '@/components/oc/ocPrefs'
 import OcSeatChoiceModal from '@/components/oc/OcSeatChoiceModal'
 import OcOverview from '@/components/oc/OcOverview'
 import OcFinances from '@/components/oc/OcFinances'
@@ -40,6 +40,7 @@ const SEAT_LANDING: Record<string, SectionKey> = {
   comms: 'comms',
   admin: 'admin',
   it: 'admin',
+  media: 'comms',
 }
 
 export interface OcApplicationSummary {
@@ -140,10 +141,16 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
   // Καθολική επαναφορά διάταξης (Ρυθμίσεις): null → 'ask' → 'busy' → 'done'
   const [layoutReset, setLayoutReset] = useState<null | 'ask' | 'busy' | 'done'>(null)
   // Οι ενότητες που βλέπει η τρέχουσα θέση (η «Διορθώσεις / Προτάσεις» μόνο το IT)
-  const visibleSections = SECTIONS.filter(s => !('itOnly' in s && s.itOnly) || activeSeat === 'it')
+  const visibleSections = SECTIONS.filter(s =>
+    (!('itOnly' in s && s.itOnly) || activeSeat === 'it') && canSeeSection(s.key, activeSeat))
   useEffect(() => {
-    if (activeSection === 'corrections' && activeSeat !== 'it') setActiveSection('admin')
-  }, [activeSection, activeSeat])
+    if (activeSection === 'corrections' && activeSeat !== 'it') { setActiveSection('admin'); return }
+    // Αλλαγή ρόλου σε έδρα με περιορισμένη πρόσβαση: δεν μένουμε σε ενότητα
+    // που δεν της ανήκει — ούτε σε λευκή οθόνη.
+    if (!canSeeSection(activeSection, activeSeat)) {
+      setActiveSection((visibleSections[0]?.key ?? 'comms') as SectionKey)
+    }
+  }, [activeSection, activeSeat, visibleSections])
   // Same threshold as Navigation (scrollY > 150): the glass strip below the
   // header copies the pill's geometry, and the hero's accessibility button
   // yields to the header's own

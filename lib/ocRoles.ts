@@ -14,6 +14,7 @@ export type OcSeat =
   | 'community'
   | 'financer'
   | 'outreach'
+  | 'media'
 
 // Relation field name on coordination-team → seat key
 const SEAT_FIELDS: Array<{ field: string; seat: OcSeat }> = [
@@ -24,6 +25,7 @@ const SEAT_FIELDS: Array<{ field: string; seat: OcSeat }> = [
   { field: 'Community', seat: 'community' },
   { field: 'Financer', seat: 'financer' },
   { field: 'Outreach', seat: 'outreach' },
+  { field: 'Media', seat: 'media' },
 ]
 
 export const SEAT_LABELS: Record<OcSeat, string> = {
@@ -34,6 +36,7 @@ export const SEAT_LABELS: Record<OcSeat, string> = {
   community: 'Κοινότητα',
   financer: 'Ταμίας',
   outreach: 'Outreach',
+  media: 'Media',
 }
 
 /**
@@ -43,6 +46,8 @@ export const SEAT_LABELS: Record<OcSeat, string> = {
  * στηρίζει το ΔΣ, δεν ψηφίζει. Το IT ομοίως. Και οι δύο υπάρχουν ως δίχτυ
  * ασφαλείας (καθολική απόφαση) όταν κάποιος δεν ψηφίζει ή όταν έχει δώσει
  * προφορική συγκατάθεση — όχι ως επιπλέον στάδιο έγκρισης.
+ *
+ * Το Media ομοίως ΔΕΝ ψηφίζει: είναι υποστήριξη επικοινωνίας, όχι έδρα του ΔΣ.
  *
  * Η Πρόεδρος (Συντονισμός) μετράει ΔΙΠΛΑ. Άρα το σύνολο των ψήφων είναι 6,
  * ζυγό: 3–3 είναι εφικτή ισοπαλία (π.χ. Πρόεδρος + 1 απέναντι στους άλλους 3)
@@ -184,6 +189,7 @@ export const SEAT_MAILBOX: Record<OcSeat, string> = {
   community: 'community@cultureforchange.net',
   financer: 'finance@cultureforchange.net',
   outreach: 'outreach@cultureforchange.net',
+  media: 'media@cultureforchange.net',
 }
 
 /**

@@ -39,12 +39,13 @@ export const SEAT_AUDIENCES: Array<{ id: string; label: string; email: string }>
   { id: 'coordinator', label: 'Συντονισμός', email: 'coordination@cultureforchange.net' },
   { id: 'financer', label: 'Ταμίας', email: 'finance@cultureforchange.net' },
   { id: 'it', label: 'IT', email: 'it@cultureforchange.net' },
+  { id: 'media', label: 'Media', email: 'media@cultureforchange.net' },
   { id: 'outreach', label: 'Outreach', email: 'outreach@cultureforchange.net' },
 ]
 
 /** Τα ελληνικά ονόματα των εδρών, για να μη μπερδεύονται με ομάδες εργασίας */
 export const SEAT_LABEL_SET = new Set([
-  'Γραμματεία', 'Επικοινωνία', 'Κοινότητα', 'Συντονισμός', 'Ταμίας', 'IT', 'Outreach',
+  'Γραμματεία', 'Επικοινωνία', 'Κοινότητα', 'Συντονισμός', 'Ταμίας', 'IT', 'Outreach', 'Media',
 ])
 
 export interface CampaignMember {

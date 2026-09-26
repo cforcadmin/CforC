@@ -114,7 +114,7 @@ const STATE_LABELS: Record<string, string> = {
  *              ενώ τα Οικονομικά δεν βλέπουν τίποτα από τα Μέλη.
  */
 export default function OcCampaigns({ desk }: { desk: string }) {
-  const [tab, setTab] = useState<'compose' | 'queue'>('compose')
+  const [tab, setTab] = useState<'compose' | 'drafts' | 'queue'>('compose')
   const [meta, setMeta] = useState<Meta | null>(null)
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
@@ -132,6 +132,17 @@ export default function OcCampaigns({ desk }: { desk: string }) {
   const [resolved, setResolved] = useState<{ count: number; days: number; summary: string; recipients: Recipient[] }>(
     { count: 0, days: 0, summary: '', recipients: [] })
   const [preview, setPreview] = useState('')
+  /**
+   * Ποιο ΥΠΑΡΧΟΝ προσχέδιο επεξεργαζόμαστε.
+   *
+   * Χωρίς αυτό, κάθε «Αποθήκευση προσχεδίου» έφτιαχνε ΝΕΑ καμπάνια: τρεις
+   * αποθηκεύσεις = τρία προσχέδια. Και επειδή το γραμματοκιβώτιο ανήκει στο
+   * γραφείο, η Επικοινωνία και το Media βλέπουν τα ίδια προσχέδια — άρα
+   * πρέπει να μπορούν να ανοίξουν και να συνεχίσουν το ίδιο, όχι να φτιάχνουν
+   * αντίγραφα ο ένας του άλλου.
+   */
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingSubject, setEditingSubject] = useState('')
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -185,7 +196,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
     try {
       const res = await fetch('/api/oc/campaigns', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, desk, subject, blocks, selection, cc, footerStyle, footerLook, footerLogo, headerStyle, headerLogo }),
+        body: JSON.stringify({ action, desk, id: editingId || undefined, subject, blocks, selection, cc, footerStyle, footerLook, footerLogo, headerStyle, headerLogo }),
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
@@ -200,13 +211,62 @@ export default function OcCampaigns({ desk }: { desk: string }) {
               : `Μπήκε στην ουρά: ${d.summary}. Η πρώτη παρτίδα φεύγει στις 08:15.`,
       })
       setConfirming(false)
-      if (action === 'queue') { setTab('queue'); setSubject(''); setBlocks([]); setSelection({}); setCc([]) }
+      // Κρατάμε το id ώστε η επόμενη αποθήκευση να ΕΝΗΜΕΡΩΣΕΙ, όχι να διπλασιάσει
+      if (action === 'save' && d.id) { setEditingId(d.id); setEditingSubject(subject) }
+      if (action === 'queue') { setTab('queue'); newMessage() }
       await load()
     } catch (e: any) {
       setConfirming(false)
       setNotice({ kind: 'err', text: e?.message || 'Αποτυχία' })
     } finally { setBusy(false) }
   }
+
+  /** Καθαρή σύνθεση — και αποδέσμευση από το προσχέδιο που ήταν ανοιχτό */
+  const newMessage = () => {
+    setEditingId(null); setEditingSubject('')
+    setSubject(''); setBlocks([]); setSelection({}); setCc([]); setPreview('')
+  }
+
+  /**
+   * Άνοιγμα υπάρχοντος προσχεδίου στον συνθέτη.
+   *
+   * Η ΕΠΙΛΟΓΗ παραληπτών έρχεται από το αποθηκευμένο Selection. Αν λείπει
+   * (παλιά προσχέδια, ή το πεδίο δεν έχει βγει ακόμη στο Strapi), την
+   * ανασυνθέτουμε από τους ΛΥΜΕΝΟΥΣ παραλήπτες: χάνεται το «όλα τα μέλη» ως
+   * κανόνας, αλλά κανένας άνθρωπος δεν χάνεται από τη λίστα.
+   */
+  const openDraft = async (id: string) => {
+    setNotice(null)
+    try {
+      const res = await fetch(`/api/oc/campaigns?id=${encodeURIComponent(id)}&desk=${encodeURIComponent(desk)}`, { cache: 'no-store' })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
+      const c = d.campaign || {}
+      setEditingId(c.documentId || id)
+      setEditingSubject(String(c.Subject || ''))
+      setSubject(String(c.Subject || ''))
+      setBlocks(Array.isArray(c.Blocks) ? c.Blocks : [])
+      setCc(Array.isArray(c.Cc) ? c.Cc : [])
+      setFooterStyle(c.FooterStyle || 'signature'); setFooterLook(c.FooterLook || 'plain')
+      setFooterLogo(!!c.FooterLogo); setHeaderStyle(c.HeaderStyle || 'coral'); setHeaderLogo(!!c.HeaderLogo)
+      if (c.Selection && typeof c.Selection === 'object' && Object.keys(c.Selection).length) {
+        setSelection(c.Selection as Selection)
+      } else {
+        const rs: any[] = Array.isArray(c.Recipients) ? c.Recipients : []
+        setSelection({
+          memberDocIds: rs.filter(r => r.docId).map(r => r.docId),
+          external: rs.filter(r => !r.docId && r.email).map(r => r.email),
+        })
+      }
+      setTab('compose')
+    } catch (e: any) {
+      setNotice({ kind: 'err', text: e?.message || 'Αποτυχία ανοίγματος' })
+    }
+  }
+
+  // Το αρχειοθετημένο δεν μετράει σε καμία από τις δύο: ζει στο Αρχείο
+  const draftCount = campaigns.filter(c => c.State === 'draft' && !c.Archived).length
+  const sentCount = campaigns.filter(c => c.State !== 'draft' && !c.Archived).length
 
   if (loading) return <div className="text-sm text-gray-600 dark:text-gray-400">Φόρτωση…</div>
 
@@ -225,11 +285,18 @@ export default function OcCampaigns({ desk }: { desk: string }) {
             υπενθυμίσεις του συστήματος.
           </p>
         </div>
+        {/* Τρεις καρτέλες, όχι δύο: τα προσχέδια κρύβονταν μέσα στις
+            «Αποστολές» και έπρεπε να το μαντέψει κανείς. Χωριστός μετρητής
+            σε καθεμία, ώστε να φαίνεται αμέσως τι σε περιμένει. */}
         <div className="flex gap-1 p-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600" role="tablist">
-          {(['compose', 'queue'] as const).map(t => (
-            <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
-              className={`px-4 min-h-11 rounded-full text-sm font-semibold ${tab === t ? 'bg-coral text-charcoal' : 'text-gray-600 dark:text-gray-300'}`}>
-              {t === 'compose' ? 'Νέο μήνυμα' : `Αποστολές ${campaigns.length ? `(${campaigns.length})` : ''}`}
+          {([
+            { id: 'compose', label: 'Νέο μήνυμα', n: 0 },
+            { id: 'drafts', label: 'Προσχέδια', n: draftCount },
+            { id: 'queue', label: 'Αποστολές', n: sentCount },
+          ] as const).map(t => (
+            <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
+              className={`px-4 min-h-11 rounded-full text-sm font-semibold ${tab === t.id ? 'bg-coral text-charcoal' : 'text-gray-600 dark:text-gray-300'}`}>
+              {t.label}{t.n ? ` (${t.n})` : ''}
             </button>
           ))}
         </div>
@@ -241,8 +308,21 @@ export default function OcCampaigns({ desk }: { desk: string }) {
           : 'bg-red-50 text-red-900 dark:bg-red-900/30 dark:text-red-200'}`}>{notice.text}</div>
       )}
 
-      {tab === 'queue' ? (
-        <QueueView campaigns={campaigns} onChanged={load} />
+      {editingId && tab === 'compose' && (
+        <div className="rounded-2xl px-4 py-3 text-sm flex flex-wrap items-center gap-2 bg-amber-50 text-amber-900 dark:bg-amber-900/30 dark:text-amber-100">
+          <span>
+            Επεξεργάζεσαι το προσχέδιο{editingSubject ? ` «${editingSubject}»` : ''} — η αποθήκευση
+            ΕΝΗΜΕΡΩΝΕΙ αυτό, δεν φτιάχνει νέο.
+          </span>
+          <button type="button" onClick={newMessage}
+            className="ml-auto px-3 py-1.5 rounded-full border border-amber-400 dark:border-amber-500 font-semibold">
+            Νέο μήνυμα
+          </button>
+        </div>
+      )}
+
+      {tab === 'queue' || tab === 'drafts' ? (
+        <QueueView campaigns={campaigns} onChanged={load} onEdit={openDraft} mode={tab} />
       ) : (
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] items-start">
           <div className="grid gap-6 min-w-0">
@@ -1165,7 +1245,11 @@ function CampaignDetail({ id }: { id: string }) {
   )
 }
 
-function QueueView({ campaigns, onChanged }: { campaigns: Campaign[]; onChanged: () => void }) {
+function QueueView({ campaigns, onChanged, onEdit, mode }: {
+  campaigns: Campaign[]; onChanged: () => void; onEdit: (id: string) => void
+  /** 'drafts' = ό,τι δεν έχει φύγει ακόμη · 'queue' = ό,τι έφυγε ή φεύγει */
+  mode: 'drafts' | 'queue'
+}) {
   const [box, setBox] = useState<'active' | 'archived'>('active')
   const [busy, setBusy] = useState<string | null>(null)
   const [open, setOpen] = useState<string | null>(null)
@@ -1178,7 +1262,12 @@ function QueueView({ campaigns, onChanged }: { campaigns: Campaign[]; onChanged:
   const [onlyFailed, setOnlyFailed] = useState(false)
   const [sort, setSort] = useState('recent')
 
-  const inBox = campaigns.filter(c => !!c.Archived === (box === 'archived'))
+  // Στα Προσχέδια δεν υπάρχει «Αρχείο»: ένα αρχειοθετημένο προσχέδιο δεν είναι
+  // πια δουλειά σε εξέλιξη — βρίσκεται στο Αρχείο των Αποστολών.
+  const isDraft = (c: Campaign) => c.State === 'draft'
+  const archived = mode === 'drafts' ? false : box === 'archived'
+  const inBox = campaigns.filter(c =>
+    !!c.Archived === archived && (mode === 'drafts' ? isDraft(c) : !isDraft(c) || !!c.Archived))
   const authors = [...new Set(inBox.map(c => c.CreatedByName).filter(Boolean))] as string[]
 
   /** Η ημερομηνία που «μετράει» για μια αποστολή: πότε τελείωσε, αλλιώς πότε
@@ -1188,7 +1277,7 @@ function QueueView({ campaigns, onChanged }: { campaigns: Campaign[]; onChanged:
 
   const shown = inBox
     .filter(c => {
-      if (state !== 'all' && c.State !== state) return false
+      if (mode === 'queue' && state !== 'all' && c.State !== state) return false
       if (author !== 'all' && c.CreatedByName !== author) return false
       if (onlyFailed && !(c.FailedCount > 0)) return false
       if (period !== 'all') {
@@ -1242,10 +1331,13 @@ function QueueView({ campaigns, onChanged }: { campaigns: Campaign[]; onChanged:
   }
 
   const archivedCount = campaigns.filter(c => c.Archived).length
-  const activeCount = campaigns.length - archivedCount
+  const activeCount = campaigns.filter(c => !c.Archived && c.State !== 'draft').length
 
   return (
     <div className="grid gap-4">
+      {/* Το Αρχείο ανήκει στις Αποστολές. Τα Προσχέδια είναι δουλειά σε
+          εξέλιξη — δεν έχουν δικό τους αρχείο. */}
+      {mode === 'queue' && (
       <div className="flex gap-1 p-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 self-start" role="tablist">
         {([['active', `Απεσταλμένα ${activeCount || ''}`], ['archived', `Αρχείο ${archivedCount || ''}`]] as const).map(([k, label]) => (
           <button key={k} type="button" role="tab" aria-selected={box === k} onClick={() => setBox(k)}
@@ -1255,15 +1347,18 @@ function QueueView({ campaigns, onChanged }: { campaigns: Campaign[]; onChanged:
           </button>
         ))}
       </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <input type="search" value={q} onChange={e => setQ(e.target.value)}
           placeholder="Αναζήτηση σε θέμα ή συντάκτη"
           className={`${CONTROL} flex-1 min-w-52`} />
-        <select value={state} onChange={e => setState(e.target.value)} className={CONTROL}>
-          <option value="all">Κάθε κατάσταση</option>
-          {Object.entries(STATE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-        </select>
+        {mode === 'queue' && (
+          <select value={state} onChange={e => setState(e.target.value)} className={CONTROL}>
+            <option value="all">Κάθε κατάσταση</option>
+            {Object.entries(STATE_LABELS).filter(([k]) => k !== 'draft').map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+        )}
         <select value={period} onChange={e => setPeriod(e.target.value)} className={CONTROL}>
           <option value="all">Όλο το διάστημα</option>
           <option value="7">Τελευταίες 7 ημέρες</option>
@@ -1280,10 +1375,10 @@ function QueueView({ campaigns, onChanged }: { campaigns: Campaign[]; onChanged:
           <option value="recent">Νεότερη πρώτη</option>
           <option value="oldest">Παλαιότερη πρώτη</option>
           <option value="recipients">Περισσότεροι παραλήπτες</option>
-          <option value="failures">Περισσότερες αποτυχίες</option>
+          {mode === 'queue' && <option value="failures">Περισσότερες αποτυχίες</option>}
           <option value="subject">Αλφαβητικά</option>
         </select>
-        <label className={`${CONTROL} inline-flex items-center gap-2 cursor-pointer whitespace-nowrap ${onlyFailed ? 'glass-control-on' : ''}`}>
+        <label hidden={mode === 'drafts'} className={`${CONTROL} inline-flex items-center gap-2 cursor-pointer whitespace-nowrap ${onlyFailed ? 'glass-control-on' : ''}`}>
           <input type="checkbox" checked={onlyFailed} onChange={e => setOnlyFailed(e.target.checked)}
             className="accent-coral w-4 h-4" />
           Μόνο με αποτυχίες
@@ -1305,14 +1400,17 @@ function QueueView({ campaigns, onChanged }: { campaigns: Campaign[]; onChanged:
           <p className="font-semibold">
             {inBox.length > 0
               ? 'Κανένα αποτέλεσμα με αυτά τα φίλτρα'
-              : box === 'archived' ? 'Το αρχείο είναι άδειο' : 'Καμία αποστολή ακόμη'}
+              : mode === 'drafts' ? 'Κανένα προσχέδιο'
+                : box === 'archived' ? 'Το αρχείο είναι άδειο' : 'Καμία αποστολή ακόμη'}
           </p>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             {inBox.length > 0
               ? 'Δοκίμασε να καθαρίσεις κάποιο φίλτρο.'
-              : box === 'archived'
-                ? 'Ό,τι αρχειοθετήσεις κρατά όλα του τα στοιχεία και μπορεί να επανέλθει.'
-                : 'Ό,τι στείλεις θα εμφανίζεται εδώ με την πορεία του.'}
+              : mode === 'drafts'
+                ? 'Ό,τι αποθηκεύεις με το «Αποθήκευση προσχεδίου» μένει εδώ — και το βλέπει όλο το γραφείο.'
+                : box === 'archived'
+                  ? 'Ό,τι αρχειοθετήσεις κρατά όλα του τα στοιχεία και μπορεί να επανέλθει.'
+                  : 'Ό,τι στείλεις θα εμφανίζεται εδώ με την πορεία του.'}
           </p>
         </div>
       ) : shown.map(c => {
@@ -1324,11 +1422,13 @@ function QueueView({ campaigns, onChanged }: { campaigns: Campaign[]; onChanged:
               <span className="font-semibold min-w-0">{c.Subject}</span>
               <span className="ml-auto text-xs px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-900">{STATE_LABELS[c.State] || c.State}</span>
             </div>
-            <div className="mt-2 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-              <div className="h-full bg-coral" style={{ width: `${pct}%` }} />
-            </div>
+            {c.State !== 'draft' && (
+              <div className="mt-2 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                <div className="h-full bg-coral" style={{ width: `${pct}%` }} />
+              </div>
+            )}
             <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-600 dark:text-gray-400 tabular-nums">
-              <span>{c.SentCount}/{c.TotalCount} στάλθηκαν</span>
+              <span>{c.State === 'draft' ? `${c.TotalCount} παραλήπτες` : `${c.SentCount}/${c.TotalCount} στάλθηκαν`}</span>
               {c.CompletedAt && (
                 <span>· {new Date(c.CompletedAt).toLocaleString('el-GR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</span>
               )}
@@ -1336,6 +1436,15 @@ function QueueView({ campaigns, onChanged }: { campaigns: Campaign[]; onChanged:
               {c.CreatedByName && <span>· {c.CreatedByName}</span>}
               {c.ArchivedAt && <span>· αρχειοθετήθηκε {new Date(c.ArchivedAt).toLocaleDateString('el-GR')}</span>}
               <span className="ml-auto flex gap-2">
+                {/* Μόνο στα προσχέδια: ό,τι έχει φύγει δεν ξαναγράφεται.
+                    Το γραμματοκιβώτιο ανήκει στο ΓΡΑΦΕΙΟ, οπότε η Επικοινωνία
+                    και το Media συνεχίζουν ο ένας το προσχέδιο του άλλου. */}
+                {c.State === 'draft' && (
+                  <button type="button" onClick={() => onEdit(c.documentId)}
+                    className="px-3 py-1.5 rounded-full bg-coral text-charcoal text-sm font-bold">
+                    Επεξεργασία
+                  </button>
+                )}
                 <button type="button" onClick={() => setOpen(open === c.documentId ? null : c.documentId)}
                   aria-expanded={open === c.documentId}
                   className="px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-semibold">

@@ -2,6 +2,7 @@ import {
   SEAT_AUDIENCES, resolveRecipients, daysNeeded, recipientSummary, validateCampaign,
   toQueue, firstNameOf, isValidEmail, DAILY_EMAIL_BUDGET, type CampaignMember,
 } from '@/lib/campaignRecipients'
+import { SEAT_MAILBOX } from '@/lib/ocRoles'
 
 /**
  * Η επιλογή παραληπτών είναι το επικίνδυνο κομμάτι: καθορίζει σε ποιους
@@ -158,9 +159,16 @@ describe('Έδρες → θυρίδες', () => {
       .toEqual(['finance@cultureforchange.net', 'it@cultureforchange.net'])
   })
 
-  it('επτά έδρες, όλες με διεύθυνση cultureforchange.net', () => {
-    expect(SEAT_AUDIENCES).toHaveLength(7)
-    for (const s of SEAT_AUDIENCES) expect(s.email).toMatch(/@cultureforchange\.net$/)
+  it('κάθε έδρα του OC έχει θυρίδα, καμία δεν λείπει και καμία δεν περισσεύει', () => {
+    // ΟΧΙ σταθερός αριθμός: όταν προστέθηκε η έδρα Media, ένα «toHaveLength(7)»
+    // έσπασε χωρίς να λέει τίποτα χρήσιμο. Η σύγκριση γίνεται με την πηγή.
+    expect([...SEAT_AUDIENCES].map(s => s.id).sort())
+      .toEqual(Object.keys(SEAT_MAILBOX).sort())
+    for (const s of SEAT_AUDIENCES) {
+      expect(s.email).toMatch(/@cultureforchange\.net$/)
+      expect(s.email).toBe(SEAT_MAILBOX[s.id as keyof typeof SEAT_MAILBOX])
+      expect(s.label).toBeTruthy()
+    }
   })
 
   it('η Γραμματεία εμφανίζεται ως «Admin» και πάει στο hello@', () => {

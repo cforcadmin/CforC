@@ -17,13 +17,13 @@ jest.mock('@/lib/ocRoles', () => ({
   get getSeatHolder() { return getSeatHolder },
   SEAT_LABELS: {
     admin: 'Γραμματεία', it: 'IT', financer: 'Ταμίας', comms: 'Επικοινωνία',
-    community: 'Κοινότητα', coordinator: 'Συντονισμός', outreach: 'Outreach',
+    community: 'Κοινότητα', coordinator: 'Συντονισμός', outreach: 'Outreach', media: 'Media',
   },
   SEAT_MAILBOX: {
     admin: 'hello@cultureforchange.net', it: 'it@cultureforchange.net',
     financer: 'finance@cultureforchange.net', comms: 'communication@cultureforchange.net',
     community: 'community@cultureforchange.net', coordinator: 'coordination@cultureforchange.net',
-    outreach: 'outreach@cultureforchange.net',
+    outreach: 'outreach@cultureforchange.net', media: 'media@cultureforchange.net',
   },
 }))
 const verifyToken = jest.fn()
@@ -133,6 +133,83 @@ describe('Θυρίδα ανά έδρα', () => {
     await post({ action: 'save', subject: 'Δ', blocks: [{ type: 'text', html: '<p>γεια</p>' }], selection: { allMembers: true } })
     expect(saved.Signer.email).toBe('finance@cultureforchange.net')
     expect(saved.Signer.role).toBe('Ταμίας')
+  })
+})
+
+describe('Προσχέδια που μοιράζονται δύο έδρες', () => {
+  afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks() })
+
+  /** Πιάνει ό,τι στάλθηκε στο Strapi, και με ποια μέθοδο */
+  function capture(existing?: any) {
+    const seen: { method?: string; url?: string; data?: any } = {}
+    jest.spyOn(global, 'fetch').mockImplementation(async (input: any, init: any) => {
+      const url = typeof input === 'string' ? input : input?.url ?? ''
+      const json = (d: any) => new Response(JSON.stringify(d), { status: 200 })
+      if (url.includes('/api/members?')) return json({ data: members })
+      if (url.includes('/api/working-groups')) return json({ data: [] })
+      // ΠΡΟΣΟΧΗ: το strapi() της διαδρομής στέλνει ΠΑΝΤΑ method, με 'GET' ως
+      // προεπιλογή — ένα `!init?.method` δεν πιάνει ποτέ την ανάγνωση.
+      if (url.includes('/api/oc-campaigns/') && (!init?.method || init.method === 'GET')) {
+        return json({ data: existing })
+      }
+      if (url.includes('/api/oc-campaigns') && (init?.method === 'POST' || init?.method === 'PUT')) {
+        seen.method = init.method; seen.url = url; seen.data = JSON.parse(init.body).data
+        return json({ data: { documentId: 'kept1' } })
+      }
+      return json({ data: {} })
+    })
+    return seen
+  }
+
+  const body = (extra: any = {}) => ({
+    action: 'save', desk: 'comms', subject: 'Δελτίο',
+    blocks: [{ type: 'text', html: '<p>κ</p>' }], selection: { allMembers: true }, ...extra,
+  })
+
+  it('χωρίς id δημιουργεί ΝΕΟ προσχέδιο', async () => {
+    signedInAs('comms')
+    const seen = capture()
+    await post(body())
+    expect(seen.method).toBe('POST')
+  })
+
+  it('με id ΕΝΗΜΕΡΩΝΕΙ το ίδιο — δεν διπλασιάζει', async () => {
+    // Χωρίς αυτό, τρεις αποθηκεύσεις άφηναν τρία προσχέδια στο γραφείο
+    signedInAs('comms')
+    const seen = capture({ Desk: 'comms', Signer: { email: 'communication@cultureforchange.net' } })
+    await post(body({ id: 'kept1' }))
+    expect(seen.method).toBe('PUT')
+    expect(seen.url).toContain('kept1')
+  })
+
+  it('αποθηκεύεται η ΕΠΙΛΟΓΗ, όχι μόνο οι λυμένοι παραλήπτες', async () => {
+    // Αλλιώς το άνοιγμα του προσχεδίου θα έδειχνε 113 ονόματα αντί «όλα τα μέλη»
+    signedInAs('media')
+    const seen = capture()
+    await post(body())
+    expect(seen.data.Selection).toEqual({ allMembers: true })
+    expect(Array.isArray(seen.data.Recipients)).toBe(true)
+  })
+
+  it('το Media συνεχίζει προσχέδιο της Επικοινωνίας — ίδιο τραπέζι', async () => {
+    signedInAs('media')
+    const seen = capture({ Desk: 'comms', Signer: { email: 'communication@cultureforchange.net' } })
+    const r = await post(body({ id: 'kept1' }))
+    expect(r.status).toBe(200)
+    expect(seen.method).toBe('PUT')
+  })
+
+  it('…αλλά ΟΧΙ προσχέδιο άλλου γραφείου', async () => {
+    signedInAs('media')
+    capture({ Desk: 'finances', Signer: { email: 'finance@cultureforchange.net' } })
+    expect((await post(body({ id: 'other1' }))).status).toBe(403)
+  })
+
+  it('το Media υπογράφει media@ ακόμη κι όταν συνεχίζει ξένο προσχέδιο', async () => {
+    signedInAs('media')
+    const seen = capture({ Desk: 'comms', Signer: { email: 'communication@cultureforchange.net' } })
+    await post(body({ id: 'kept1' }))
+    expect(seen.data.Signer.email).toBe('media@cultureforchange.net')
   })
 })
 

@@ -34,6 +34,7 @@ export const OC_SEAT_LABELS: Record<string, string> = {
   community: 'Κοινότητα',
   financer: 'Οικονομικά',
   outreach: 'Outreach',
+  media: 'Media',
 }
 
 // Short seat codes for the compact hero bubble
@@ -45,6 +46,7 @@ export const OC_SEAT_SHORT: Record<string, string> = {
   community: 'CM',
   financer: 'F',
   outreach: 'VC',
+  media: 'M',
 }
 
 /**
@@ -63,7 +65,7 @@ export const OC_EMAIL_DESKS: Record<string, string[]> = {
   overview: ['coordinator', 'outreach'],
   members: ['community'],
   finances: ['financer'],
-  comms: ['comms'],
+  comms: ['comms', 'media'],
   admin: ['admin'],
 }
 
@@ -109,4 +111,23 @@ export const OC_DESK_LABELS: Record<string, string> = {
   finances: 'Οικονομικά',
   comms: 'Επικοινωνία',
   admin: 'Διαχείριση',
+}
+
+/**
+ * Έδρες που βλέπουν ΜΟΝΟ συγκεκριμένες ενότητες του OC.
+ *
+ * Το Media υποστηρίζει την επικοινωνία — δελτία τύπου, newsletter, επαφές με
+ * δημοσιογράφους. Δεν έχει δουλειά στα Οικονομικά ή στο Μητρώο, και δεν
+ * ψηφίζει (βλ. VOTING_SEATS). Ό,τι δεν αναφέρεται εδώ βλέπει τα πάντα.
+ */
+export const OC_SECTION_ACCESS: Record<string, string[]> = {
+  media: ['comms'],
+}
+
+/** Βλέπει αυτή η έδρα αυτή την ενότητα; */
+export function canSeeSection(section: string, seat: string | null | undefined): boolean {
+  if (!seat) return true
+  const allowed = Object.prototype.hasOwnProperty.call(OC_SECTION_ACCESS, seat)
+    ? OC_SECTION_ACCESS[seat] : null
+  return !allowed || allowed.includes(section)
 }
