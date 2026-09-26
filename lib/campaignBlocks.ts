@@ -494,9 +494,9 @@ function headerHtml(style: HeaderStyle, subject: string, withLogo: boolean): str
   <tr>
     <td class="px" style="background-color:${skin.bg};padding:32px 48px;${border}">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-        <td class="stack" style="vertical-align:middle;">${eyebrow}${spacer}${heading}</td>
-        <td class="stack" width="88" style="width:88px;vertical-align:middle;text-align:right;">
-          <img src="${skin.logo}" alt="Culture for Change" width="72" style="display:inline-block;width:72px;max-width:72px;height:auto;border:0;" />
+        <td style="vertical-align:middle;">${eyebrow}${spacer}${heading}</td>
+        <td class="logocell" width="88" style="width:88px;vertical-align:middle;text-align:right;">
+          <img class="logoimg" src="${skin.logo}" alt="Culture for Change" width="72" style="display:inline-block;width:72px;max-width:72px;height:auto;border:0;" />
         </td>
       </tr></table>
     </td>
@@ -602,11 +602,11 @@ function footerHtml(
   /** Το σήμα μπαίνει δεξιά από την υπογραφή, σε οποιαδήποτε εμφάνιση */
   const withMark = (inner: string) => withLogo ? `
         <tr>
-          <td class="stack" style="vertical-align:middle;">
+          <td style="vertical-align:middle;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${inner}</table>
           </td>
-          <td class="stack" width="64" style="width:64px;vertical-align:middle;text-align:right;">
-            <img src="${skin.logo}" alt="Culture for Change" width="48" style="display:inline-block;width:48px;max-width:48px;height:auto;border:0;" />
+          <td class="markcell" width="64" style="width:64px;vertical-align:middle;text-align:right;">
+            <img class="markimg" src="${skin.logo}" alt="Culture for Change" width="48" style="display:inline-block;width:48px;max-width:48px;height:auto;border:0;" />
           </td>
         </tr>` : inner
 
@@ -684,7 +684,14 @@ export function campaignEmailHtml(opts: {
   @media only screen and (max-width:620px){
     .px{padding-left:24px !important;padding-right:24px !important;}
     .h1{font-size:26px !important;line-height:32px !important;}
+    /* Στοιβάζεται το ΠΕΡΙΕΧΟΜΕΝΟ (φωτογραφία δίπλα σε κείμενο), ΟΧΙ το σήμα:
+       ένα λογότυπο 72px χωράει πάντα δίπλα στον τίτλο, και όταν έπεφτε από
+       κάτω το γράμμα φαινόταν σπασμένο σε σχέση με την προεπισκόπηση. */
     .stack{display:block !important;width:100% !important;}
+    .logocell{width:64px !important;}
+    .logoimg{width:56px !important;max-width:56px !important;}
+    .markcell{width:52px !important;}
+    .markimg{width:44px !important;max-width:44px !important;}
   }
 </style>
 </head>
@@ -692,7 +699,7 @@ export function campaignEmailHtml(opts: {
 <span style="display:none;font-size:1px;color:${BRAND.cream};line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${escapeHtml(preheader || subject)}</span>
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${BRAND.cream};">
 <tr><td align="center" style="padding:32px 12px 48px 12px;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${CONTENT_WIDTH}" style="width:${CONTENT_WIDTH}px;max-width:${CONTENT_WIDTH}px;background-color:${BRAND.white};border-radius:24px;overflow:hidden;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${CONTENT_WIDTH}" style="width:100%;max-width:${CONTENT_WIDTH}px;background-color:${BRAND.white};border-radius:24px;overflow:hidden;">
 
 ${headerHtml(headerStyle, subject, headerLogo)}
 

@@ -193,9 +193,13 @@ describe('Κεφαλίδες', () => {
     expect(html).toContain('alt="Culture for Change"')
   })
 
-  it('το λογότυπο στοιβάζεται σε κινητό μαζί με τον τίτλο', () => {
+  it('το λογότυπο ΔΕΝ στοιβάζεται σε κινητό — μένει δίπλα στον τίτλο', () => {
+    // Αυτός ο έλεγχος ζητούσε κάποτε το αντίθετο. Η υπόθεση ήταν λάθος: στο
+    // τηλέφωνο το σήμα έπεφτε κάτω από τον τίτλο και το γράμμα δεν έμοιαζε
+    // καθόλου με την προεπισκόπηση (αναφέρθηκε 26/9/26 με φωτογραφία).
     const { html } = campaignEmailHtml({ subject: 'Θ', blocks, headerStyle: 'coral', headerLogo: true })
-    expect(html).toContain('class="stack"')
+    expect(html).toMatch(/<td class="logocell" width="88"/)
+    expect(html).not.toMatch(/class="stack"[^>]*width="88"/)
   })
 })
 
@@ -316,5 +320,53 @@ describe('Πίνακας περιεχομένων', () => {
     const names = (h: string) => [...h.matchAll(/→ <a href="#[^"]+"[^>]*>([^<]+)</g)].map(m => m[1])
     expect(names(top)).toEqual(['Πρώτη ενότητα', 'Δεύτερη ενότητα'])
     expect(names(bottom)).toEqual(names(top))
+  })
+})
+
+describe('Το γράμμα σε στενή οθόνη', () => {
+  const render = (o: any = {}) => campaignEmailHtml({
+    subject: 'COMMUNITY',
+    blocks: [{ type: 'text', html: '<p>Σου υπενθυμίζουμε ότι…</p>' } as any],
+    headerStyle: 'dark', headerLogo: true,
+    footerStyle: 'signature', footerLogo: true,
+    ...o,
+  }).html
+
+  it('η κάρτα συρρικνώνεται — δεν μένει καρφωμένη στα 600px', () => {
+    // Με `width:600px` το γράμμα ΞΕΧΕΙΛΙΖΕ σε στενό παράθυρο και κοβόταν
+    // δεξιά· ο Gmail το έκρυβε ζουμάροντας, η προεπισκόπηση όχι.
+    const outer = render().match(/<table[^>]*width="600"[^>]*>/)![0]
+    expect(outer).toContain('width:100%')
+    expect(outer).toContain('max-width:600px')
+    expect(outer).not.toContain('style="width:600px')
+    // Το attribute μένει: ο Outlook αγνοεί το max-width και χρειάζεται αριθμό
+    expect(outer).toContain('width="600"')
+  })
+
+  it('το σήμα της κεφαλίδας ΔΕΝ πέφτει κάτω από τον τίτλο', () => {
+    // Το .stack έριχνε το λογότυπο σε δική του γραμμή στο κινητό, οπότε το
+    // γράμμα φαινόταν εντελώς αλλιώς απ' ό,τι στην προεπισκόπηση.
+    const html = render()
+    expect(html).toMatch(/<td class="logocell" width="88"/)
+    expect(html).not.toMatch(/class="stack"[^>]*width="88"/)
+  })
+
+  it('ούτε το σήμα της υπογραφής — αδελφό στοιχείο, ίδια συμπεριφορά', () => {
+    const html = render()
+    expect(html).toMatch(/<td class="markcell" width="64"/)
+    expect(html).not.toMatch(/class="stack"[^>]*width="64"/)
+  })
+
+  it('τα σήματα μικραίνουν σε στενή οθόνη αντί να στοιβαχτούν', () => {
+    const html = render()
+    expect(html).toMatch(/\.logoimg\{width:56px !important/)
+    expect(html).toMatch(/\.markimg\{width:44px !important/)
+  })
+
+  it('το ΠΕΡΙΕΧΟΜΕΝΟ εξακολουθεί να στοιβάζεται — εκεί χρειάζεται', () => {
+    // Φωτογραφία 200px δίπλα σε κείμενο ΠΡΕΠΕΙ να πέσει από κάτω στο κινητό
+    const html = render({ blocks: [{ type: 'imageText', src: 'https://x/y.png', html: '<p>κ</p>' } as any] })
+    expect(html).toMatch(/class="stack"[^>]*width="200"/)
+    expect(html).toContain('.stack{display:block !important;width:100% !important;}')
   })
 })
