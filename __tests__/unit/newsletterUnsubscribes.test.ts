@@ -1,4 +1,5 @@
 import { farewellEmail, DELETE_CAP, GRACE_DAYS } from '@/lib/newsletterUnsubscribes'
+import { UNSUBSCRIBE_CC } from '@/lib/ocEmails'
 
 /**
  * Ο συγχρονισμός απεγγραφών σβήνει ανθρώπους και τους στέλνει γράμμα. Τα
@@ -38,5 +39,26 @@ describe('Φρένα ασφαλείας', () => {
   it('υπάρχει περίοδος χάριτος για νέες εγγραφές', () => {
     // Αποτυχία καταχώρησης στον Sender μοιάζει ΑΚΡΙΒΩΣ με απεγγραφή
     expect(GRACE_DAYS).toBeGreaterThanOrEqual(7)
+  })
+})
+
+describe('Κοινοποίηση απεγγραφής', () => {
+  it('ενημερώνονται IT, Γραμματεία και Κοινότητα', () => {
+    // Η απεγγραφή γίνεται στον Sender· χωρίς κοινοποίηση δεν τη μαθαίνει κανείς
+    expect(UNSUBSCRIBE_CC).toEqual(expect.arrayContaining([
+      'it@cultureforchange.net',
+      'hello@cultureforchange.net',
+      'community@cultureforchange.net',
+    ]))
+    expect(UNSUBSCRIBE_CC).toHaveLength(3)
+  })
+
+  it('ποτέ στο admin@ — είναι θυρίδα του IT, η Γραμματεία διαβάζει στο hello@', () => {
+    expect(UNSUBSCRIBE_CC).not.toContain('admin@cultureforchange.net')
+  })
+
+  it('το όριο διαγραφών αντέχει το κόστος των κοινοποιήσεων', () => {
+    // Κάθε CC μετράει ως ξεχωριστό email: 25 × (1+3) = 100 = όλο το ημερήσιο όριο
+    expect(DELETE_CAP * (1 + UNSUBSCRIBE_CC.length)).toBeLessThanOrEqual(100)
   })
 })

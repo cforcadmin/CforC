@@ -55,6 +55,20 @@ export const RECEIPT_CC = [
 ]
 /** Κοινοποίηση αποχαιρετιστήριου email στις εμπλεκόμενες θέσεις */
 export const DEPARTURE_CC = ['hello@cultureforchange.net', 'finance@cultureforchange.net', 'community@cultureforchange.net']
+
+/**
+ * Κοινοποίηση στο αποχαιρετιστήριο της απεγγραφής από το newsletter.
+ *
+ * Η απεγγραφή γίνεται στον Sender και δεν τη βλέπει κανείς μας· η κοινοποίηση
+ * είναι ο μόνος τρόπος να το μάθει το γραφείο τη στιγμή που συμβαίνει.
+ * ΠΡΟΣΟΧΗ ΣΤΟ ΚΟΣΤΟΣ: κάθε CC μετράει ως ξεχωριστό email στο Resend, οπότε
+ * μία απεγγραφή κοστίζει τέσσερα.
+ */
+export const UNSUBSCRIBE_CC = [
+  'it@cultureforchange.net',
+  'hello@cultureforchange.net',
+  'community@cultureforchange.net',
+]
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https')
   ? process.env.NEXT_PUBLIC_SITE_URL
   : 'https://www.cultureforchange.net'

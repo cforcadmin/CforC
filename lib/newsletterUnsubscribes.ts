@@ -1,5 +1,5 @@
 import { campaignEmailHtml } from '@/lib/campaignBlocks'
-import { sendOcEmailResult, COMMUNITY_FROM } from '@/lib/ocEmails'
+import { sendOcEmailResult, COMMUNITY_FROM, UNSUBSCRIBE_CC } from '@/lib/ocEmails'
 
 /**
  * Συγχρονισμός απεγγραφών: ο Sender είναι η ΠΗΓΗ ΑΛΗΘΕΙΑΣ.
@@ -27,6 +27,10 @@ const SENDER_PAID = process.env.SENDER_PAID_GROUP_ID
  * Μια φυσιολογική μηνιαία απώλεια είναι λίγες μονάδες. Δεκάδες σημαίνει ότι
  * κάτι έσπασε — λάθος ομάδα, άδεια απάντηση, αλλαγή στο API — και τότε η
  * σωστή κίνηση είναι να ΜΗ σβήσουμε τίποτα.
+ *
+ * Το όριο πιάνει ΚΑΙ το κόστος: με τρεις κοινοποιήσεις, κάθε αποχαιρετιστήριο
+ * μετράει τέσσερα email στο Resend — 25 απεγγραφές = 100, δηλαδή ολόκληρο το
+ * ημερήσιο όριο.
  */
 export const DELETE_CAP = 25
 
@@ -160,6 +164,7 @@ export async function syncUnsubscribes(opts: { dryRun?: boolean; cap?: number } 
     const tpl = farewellEmail(s.FirstName)
     const sent = await sendOcEmailResult(s.Email, tpl.subject, tpl.html, {
       from: COMMUNITY_FROM, replyTo: 'community@cultureforchange.net',
+      cc: UNSUBSCRIBE_CC,
     })
     if (sent.ok) result.emailed.push(s.Email)
   }
