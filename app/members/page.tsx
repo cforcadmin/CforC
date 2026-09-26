@@ -458,7 +458,7 @@ function MembersPageContent() {
               </p>
               <div className="shrink-0">
                 <div className="bg-white dark:bg-gray-700 px-6 py-3 rounded-full border-2 border-charcoal dark:border-gray-400 inline-block">
-                  <p className="text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap">Μέλη: <span className="text-coral dark:text-coral-light">{displayCount}</span></p>
+                  <p className="text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap">Προφίλ μελών: <span className="text-coral dark:text-coral-light">{displayCount}</span></p>
                 </div>
               </div>
             </div>

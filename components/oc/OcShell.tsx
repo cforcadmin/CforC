@@ -11,6 +11,7 @@ import OcFinances from '@/components/oc/OcFinances'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
 import OcComms from '@/components/oc/OcComms'
 import OcAdmin from '@/components/oc/OcAdmin'
+import OcCampaigns from '@/components/oc/OcCampaigns'
 import OcIndicators from '@/components/oc/OcIndicators'
 import OcCorrections from '@/components/oc/OcCorrections'
 import type { OcOverviewData } from '@/lib/ocOverview'
@@ -617,6 +618,12 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
               canContracts={activeSeat === 'financer' || activeSeat === 'admin' || activeSeat === 'it'}
               seat={activeSeat}
             />
+          )}
+
+          {activeSection === 'admin' && (activeSeat === 'admin' || activeSeat === 'it') && (
+            <div className="mt-8">
+              <OcCampaigns />
+            </div>
           )}
 
           {activeSection === 'comms' && <OcComms />}
