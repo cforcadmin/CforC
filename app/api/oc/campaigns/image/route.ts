@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
+import { OC_EMAIL_SEATS } from '@/components/oc/ocPrefs'
 import sharp from 'sharp'
 import path from 'path'
 import { readFile } from 'fs/promises'
@@ -9,7 +10,7 @@ import { readFile } from 'fs/promises'
 export const maxDuration = 60
 
 /**
- * Εικόνες μαζικής αποστολής: ανέβασμα στη Βιβλιοθήκη Πολυμέσων και διαγραφή.
+ * Εικόνες των μηνυμάτων: ανέβασμα στη Βιβλιοθήκη Πολυμέσων και διαγραφή.
  *
  *  POST   multipart «file»  → { id, url, name, width, height }
  *  DELETE ?id=              → διαγραφή, ΜΕ φρένο (βλ. παρακάτω)
@@ -24,7 +25,8 @@ export const maxDuration = 60
 
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
-const ALLOWED_SEATS: OcSeat[] = ['admin', 'it']
+// Ίδιο φράγμα με τη διαδρομή των καμπανιών: όποια έδρα στέλνει, ανεβάζει
+const ALLOWED_SEATS = OC_EMAIL_SEATS as OcSeat[]
 const MAX_BYTES = 5 * 1024 * 1024
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 
@@ -42,7 +44,7 @@ async function authorize() {
     seatCookie && access.seats.includes(seatCookie) ? seatCookie
       : access.seats.length === 1 ? access.seats[0] : null
   if (!activeSeat || !ALLOWED_SEATS.includes(activeSeat)) {
-    return { error: NextResponse.json({ error: 'Η μαζική αποστολή ανήκει στη Γραμματεία' }, { status: 403 }) }
+    return { error: NextResponse.json({ error: 'Η έδρα σου δεν στέλνει email από το OC' }, { status: 403 }) }
   }
   return { memberId: decoded.memberId }
 }

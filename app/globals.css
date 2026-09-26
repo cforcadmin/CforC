@@ -2220,3 +2220,82 @@ html.nav-cool .cool-flush > section > div > .pt-24 { padding-top: 0; }
 .tile-ring-ink { box-shadow: 0 0 0 2px rgba(45, 45, 45, .7), 0 8px 22px rgba(45, 45, 45, .18); }
 .dark .tile-ring-ink { box-shadow: 0 0 0 2px rgba(245, 240, 235, .8), 0 8px 22px rgba(0, 0, 0, .35); }
 
+
+/* ── Γυάλινα χειριστήρια φίλτρων ────────────────────────────────────────────
+   Αδελφός του .menu-glass, αλλά για στοιχεία ΜΕΣΑ στη σελίδα και όχι για
+   αιωρούμενα πάνελ: ίδια θόλωση και κορεσμός, χωρίς τη βαριά ρίψη σκιάς που
+   σε μια σειρά από inputs μοιάζει με λάθος. */
+.glass-control {
+  border-radius: 9999px;
+  /* appearance:none και στα δύο: χωρίς αυτό το Safari δίνει στο select και στο
+     search δικό του φόντο και δική του στρογγυλότητα, και η σειρά βγαίνει
+     ανομοιόμορφη όσα utilities κι αν μπουν από πάνω. */
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: rgba(255, 255, 255, 0.55);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  color: #2D2D2D;
+  transition: background-color .18s ease, border-color .18s ease;
+}
+.glass-control::placeholder { color: rgba(45, 45, 45, 0.55); }
+.glass-control:hover { background-color: rgba(255, 255, 255, 0.72); }
+.glass-control:focus-within,
+.glass-control:focus {
+  outline: none;
+  border-color: rgba(255, 139, 106, 0.9);
+  background-color: rgba(255, 255, 255, 0.82);
+}
+
+/* Σκούρο θέμα: το φόντο της σελίδας είναι σχεδόν μαύρο, οπότε ένα γέμισμα
+   34% δεν ξεχωρίζει καθόλου. Χρειάζεται ΦΩΤΕΙΝΟ πέπλο πάνω από το σκούρο,
+   όχι σκούρο πάνω σε σκούρο — και περίγραμμα που να διαβάζεται. */
+.dark .glass-control {
+  background-color: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  color: #F3F4F6;
+}
+.dark .glass-control::placeholder { color: rgba(243, 244, 246, 0.62); }
+.dark .glass-control:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.40);
+}
+.dark .glass-control:focus-within,
+.dark .glass-control:focus {
+  border-color: rgba(255, 139, 106, 0.85);
+  background-color: rgba(255, 255, 255, 0.17);
+}
+/* Οι επιλογές του μενού κληρονομούν το φόντο του συστήματος, όχι το γυαλί */
+.dark .glass-control option { background-color: #1f2230; color: #F3F4F6; }
+
+/* Επιλεγμένο: κοραλί απόχρωση αντί για γεμάτο χρώμα, ώστε να μένει γυάλινο */
+.glass-control-on {
+  background-color: rgba(255, 139, 106, 0.20);
+  border-color: rgba(255, 139, 106, 0.85);
+}
+.dark .glass-control-on {
+  background-color: rgba(255, 139, 106, 0.26);
+  border-color: rgba(255, 139, 106, 0.85);
+}
+
+/* Το βελάκι του select: δικό μας, ώστε να είναι ίδιο σε όλα τα λειτουργικά */
+select.glass-control {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%232D2D2D' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1.1rem center;
+  padding-right: 2.6rem;
+}
+.dark select.glass-control {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%23F3F4F6' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+/* Το κουμπάκι «καθαρισμού» του search βγαίνει λευκό τετράγωνο σε σκούρο */
+.dark .glass-control::-webkit-search-cancel-button { filter: invert(1) opacity(0.6); }
+
+/* Χωρίς backdrop-filter το διάφανο φόντο κάνει το κείμενο δυσανάγνωστο */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .glass-control { background-color: #ffffff; }
+  .dark .glass-control { background-color: #2b3040; }
+}

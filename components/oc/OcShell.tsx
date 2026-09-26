@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Navigation from '@/components/Navigation'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
-import { OC_SEAT_LABELS, OC_SEAT_SHORT } from '@/components/oc/ocPrefs'
+import { OC_SEAT_LABELS, OC_SEAT_SHORT, canSendEmailFrom } from '@/components/oc/ocPrefs'
 import OcSeatChoiceModal from '@/components/oc/OcSeatChoiceModal'
 import OcOverview from '@/components/oc/OcOverview'
 import OcFinances from '@/components/oc/OcFinances'
@@ -620,17 +620,25 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
             />
           )}
 
-          {activeSection === 'admin' && (activeSeat === 'admin' || activeSeat === 'it') && (
-            <div className="mt-8">
-              <OcCampaigns />
-            </div>
-          )}
 
           {activeSection === 'comms' && <OcComms />}
 
           {activeSection === 'reports' && <OcIndicators />}
 
           {activeSection === 'corrections' && activeSeat === 'it' && <OcCorrections />}
+
+          {/* Το γραφείο αποστολής email της κάθε έδρας, στο τέλος της ενότητάς της.
+              Ποια έδρα σε ποια ενότητα: OC_EMAIL_DESKS. Η θυρίδα αποστολής
+              βγαίνει από την ΕΝΕΡΓΗ ΕΔΡΑ (η διαδρομή υπογράφει με SEAT_MAILBOX),
+              οπότε η ίδια οθόνη στην Επισκόπηση στέλνει από coordination@ ή από
+              outreach@ ανάλογα με το ποιος είναι συνδεδεμένος. */}
+          {canSendEmailFrom(activeSection, activeSeat) && (
+            <div className="mt-8">
+              {/* key: αλλάζοντας ενότητα αλλάζει γραμματοκιβώτιο — η οθόνη
+                  ξαναστήνεται ώστε να μη μείνει ανοιχτό προσχέδιο άλλου γραφείου */}
+              <OcCampaigns key={activeSection} desk={activeSection} />
+            </div>
+          )}
 
           {activeSection !== 'overview' && activeSection !== 'settings' && activeSection !== 'members' && activeSection !== 'finances' && activeSection !== 'admin' && activeSection !== 'comms' && activeSection !== 'reports' && activeSection !== 'corrections' && (
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-12 text-center">

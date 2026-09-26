@@ -4,7 +4,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import CampaignRichText from './CampaignRichText'
 
 /**
- * Μαζική αποστολή email (Διαχείριση).
+ * Αποστολή email — το γραφείο αποστολής της κάθε έδρας.
+ *
+ * Η ίδια οθόνη εμφανίζεται στο τέλος πέντε ενοτήτων (Επισκόπηση, Μέλη,
+ * Οικονομικά, Επικοινωνία, Διαχείριση) και τη βλέπει μόνο η έδρα στην οποία
+ * ανήκει η ενότητα — το IT τις βλέπει όλες. Δεν παίρνει prop για τη θυρίδα:
+ * τη βγάζει η διαδρομή από την ΕΝΕΡΓΗ ΕΔΡΑ και έρχεται στο `meta.signer`, οπότε
+ * η Επισκόπηση υπογράφει coordination@ ή outreach@ ανάλογα με το ποιος μπήκε.
+ *
+ * ΟΧΙ «μαζική»: η ίδια οθόνη στέλνει σε έναν παραλήπτη, σε μια έδρα, σε μια
+ * ομάδα εργασίας ή σε όλο το δίκτυο. Η ουρά και το ημερήσιο όριο αφορούν μόνο
+ * την περίπτωση που οι παραλήπτες δεν χωρούν σε μία μέρα.
  *
  * Η διάταξη, οι κλάσεις και τα κείμενα είναι από το σχέδιο· η διαφορά είναι
  * ότι το σώμα δεν είναι textarea αλλά ΜΠΛΟΚ. Το HTML των email δεν είναι HTML
@@ -50,6 +60,7 @@ type Meta = {
 const CARD = 'bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8 border border-gray-200 dark:border-gray-600'
 const EYEBROW = 'text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400'
 const FIELD = 'w-full min-h-11 px-4 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-base'
+const CONTROL = 'h-11 rounded-full px-4 text-sm glass-control'
 const CHIP = 'px-3 py-1.5 rounded-full border text-sm min-h-11 sm:min-h-0 inline-flex items-center gap-1.5'
 /**
  * Έτοιμα κοινά. Σταθερά στον κώδικα — αν χρειαστεί νέο, μπαίνει εδώ.
@@ -95,7 +106,13 @@ const STATE_LABELS: Record<string, string> = {
   draft: 'Προσχέδιο', queued: 'Σε ουρά', sending: 'Σε εξέλιξη', sent: 'Ολοκληρώθηκε', cancelled: 'Ακυρώθηκε',
 }
 
-export default function OcCampaigns() {
+/**
+ * @param desk  Η ενότητα στην οποία κάθεται η οθόνη — και το «γραμματοκιβώτιο»
+ *              της. Τα Απεσταλμένα και το Αρχείο είναι ΤΟΥ ΓΡΑΦΕΙΟΥ: η
+ *              Επισκόπηση είναι ένα κοινό τραπέζι για Συντονισμό και Outreach,
+ *              ενώ τα Οικονομικά δεν βλέπουν τίποτα από τα Μέλη.
+ */
+export default function OcCampaigns({ desk }: { desk: string }) {
   const [tab, setTab] = useState<'compose' | 'queue'>('compose')
   const [meta, setMeta] = useState<Meta | null>(null)
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -118,17 +135,19 @@ export default function OcCampaigns() {
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/oc/campaigns', { cache: 'no-store' })
+    const res = await fetch(`/api/oc/campaigns?desk=${encodeURIComponent(desk)}`, { cache: 'no-store' })
     if (!res.ok) {
-      // Το μήνυμα του server, όχι σκέτο «αποτυχία»: το «ανήκει στη Γραμματεία»
-      // και το «εσωτερικό σφάλμα» θέλουν εντελώς διαφορετική αντίδραση.
+      // Το μήνυμα του server, όχι σκέτο «αποτυχία»: το «ανήκει σε άλλο
+      // γραφείο» και το «εσωτερικό σφάλμα» θέλουν διαφορετική αντίδραση.
       const d = await res.json().catch(() => null)
       setNotice({ kind: 'err', text: `${d?.error || 'Αποτυχία φόρτωσης'} (${res.status})` })
       setLoading(false); return
     }
     const d = await res.json()
     setMeta(d); setCampaigns(d.campaigns || []); setLoading(false)
-  }, [])
+    // Το γραφείο είναι εξάρτηση: το IT αλλάζει ενότητα και πρέπει να δει το
+    // γραμματοκιβώτιο ΕΚΕΙΝΟΥ του τραπεζιού, όχι του προηγούμενου.
+  }, [desk])
   useEffect(() => { load() }, [load])
 
   // Οι παραλήπτες ξαναϋπολογίζονται με καθυστέρηση: κάθε τικ σε chip αλλιώς
@@ -165,7 +184,7 @@ export default function OcCampaigns() {
     try {
       const res = await fetch('/api/oc/campaigns', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, subject, blocks, selection, cc, footerStyle, footerLook, footerLogo, headerStyle, headerLogo }),
+        body: JSON.stringify({ action, desk, subject, blocks, selection, cc, footerStyle, footerLook, footerLogo, headerStyle, headerLogo }),
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
@@ -194,10 +213,15 @@ export default function OcCampaigns() {
     <div className="grid gap-6">
       <div className="flex flex-wrap items-end gap-4">
         <div className="min-w-0 flex-1">
-          <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Μαζική αποστολή email</h2>
+          <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Αποστολή email</h2>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 max-w-2xl">
-            Το μήνυμα φεύγει από το <span translate="no">hello@</span> με την ίδια ακριβώς μορφή που έχουν
-            οι αποδείξεις, οι εγκρίσεις και οι υπενθυμίσεις του συστήματος.
+            Σε έναν παραλήπτη, σε μια ομάδα ή σε όλο το δίκτυο. Το μήνυμα φεύγει από τη θυρίδα
+            της έδρας σου{meta?.signer?.email ? ' ' : ''}
+            {meta?.signer?.email && (
+              <span className="font-semibold" translate="no">{meta.signer.email}</span>
+            )}
+            {' '}με την ίδια ακριβώς μορφή που έχουν οι αποδείξεις, οι εγκρίσεις και οι
+            υπενθυμίσεις του συστήματος.
           </p>
         </div>
         <div className="flex gap-1 p-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600" role="tablist">
@@ -225,10 +249,21 @@ export default function OcCampaigns() {
             <div className={CARD}>
               <h3 className={`${EYEBROW} mb-4`}>ΜΗΝΥΜΑ</h3>
               <div className="grid gap-4">
-                <div className="text-sm flex flex-wrap gap-x-2">
+                {/* Η θυρίδα ΔΕΝ γράφεται εδώ: έρχεται από τη διαδρομή, που τη
+                    βγάζει από την ενεργή έδρα (SEAT_MAILBOX). Καρφωμένο hello@
+                    θα έλεγε ψέματα σε κάθε άλλη έδρα. */}
+                <div className="text-sm flex flex-wrap items-baseline gap-x-2">
                   <span className="text-gray-600 dark:text-gray-400">Από</span>
-                  <span className="font-semibold">Γραμματεία CforC</span>
-                  <span className="text-gray-600 dark:text-gray-400" translate="no">&lt;hello@cultureforchange.net&gt;</span>
+                  <span className="font-semibold">Culture for Change</span>
+                  <span className="text-gray-600 dark:text-gray-400" translate="no">
+                    &lt;{meta?.signer?.email || '…'}&gt;
+                  </span>
+                  {meta?.signer?.name && (
+                    <span className="text-gray-600 dark:text-gray-400">
+                      · υπογράφει {meta.signer.name}
+                      {meta.signer.role ? ` (${meta.signer.role})` : ''}
+                    </span>
+                  )}
                 </div>
                 <label className="grid gap-1.5">
                   <span className="text-sm font-semibold">Θέμα</span>
@@ -338,7 +373,7 @@ export default function OcCampaigns() {
                 <h3 className={`${EYEBROW} mb-1`}>ΠΡΟΓΡΑΜΜΑ ΑΠΟΣΤΟΛΗΣ</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   Ο πάροχος στέλνει έως 100 email την ημέρα. Τα 20 κρατούνται για τα αυτόματα μηνύματα, ώστε μια
-                  απόδειξη ή μια έγκριση να μην περιμένει ποτέ. Τα υπόλοιπα {meta.dailyBudget} είναι για μαζικές
+                  απόδειξη ή μια έγκριση να μην περιμένει ποτέ. Τα υπόλοιπα {meta.dailyBudget} είναι για τις δικές σου
                   αποστολές.
                 </p>
                 <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/25 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
@@ -1069,7 +1104,46 @@ function QueueView({ campaigns, onChanged }: { campaigns: Campaign[]; onChanged:
   const [open, setOpen] = useState<string | null>(null)
   const [err, setErr] = useState('')
 
-  const shown = campaigns.filter(c => !!c.Archived === (box === 'archived'))
+  const [q, setQ] = useState('')
+  const [state, setState] = useState('all')
+  const [author, setAuthor] = useState('all')
+  const [period, setPeriod] = useState('all')
+  const [onlyFailed, setOnlyFailed] = useState(false)
+  const [sort, setSort] = useState('recent')
+
+  const inBox = campaigns.filter(c => !!c.Archived === (box === 'archived'))
+  const authors = [...new Set(inBox.map(c => c.CreatedByName).filter(Boolean))] as string[]
+
+  /** Η ημερομηνία που «μετράει» για μια αποστολή: πότε τελείωσε, αλλιώς πότε
+   *  μπήκε στην ουρά, αλλιώς η τελευταία αλλαγή. */
+  const dateOf = (c: Campaign) =>
+    new Date(c.CompletedAt || c.QueuedAt || (c as any).updatedAt || 0).getTime()
+
+  const shown = inBox
+    .filter(c => {
+      if (state !== 'all' && c.State !== state) return false
+      if (author !== 'all' && c.CreatedByName !== author) return false
+      if (onlyFailed && !(c.FailedCount > 0)) return false
+      if (period !== 'all') {
+        const days = period === '7' ? 7 : period === '30' ? 30 : 365
+        if (Date.now() - dateOf(c) > days * 86400000) return false
+      }
+      if (q.trim()) {
+        const needle = q.trim().toLowerCase()
+        const hay = `${c.Subject} ${c.CreatedByName || ''}`.toLowerCase()
+        if (!hay.includes(needle)) return false
+      }
+      return true
+    })
+    .sort((a, b) => {
+      switch (sort) {
+        case 'oldest': return dateOf(a) - dateOf(b)
+        case 'recipients': return (b.TotalCount || 0) - (a.TotalCount || 0)
+        case 'failures': return (b.FailedCount || 0) - (a.FailedCount || 0)
+        case 'subject': return String(a.Subject).localeCompare(String(b.Subject), 'el')
+        default: return dateOf(b) - dateOf(a)
+      }
+    })
 
   const archive = async (c: Campaign, archived: boolean) => {
     setBusy(c.documentId); setErr('')
@@ -1115,17 +1189,63 @@ function QueueView({ campaigns, onChanged }: { campaigns: Campaign[]; onChanged:
         ))}
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <input type="search" value={q} onChange={e => setQ(e.target.value)}
+          placeholder="Αναζήτηση σε θέμα ή συντάκτη"
+          className={`${CONTROL} flex-1 min-w-52`} />
+        <select value={state} onChange={e => setState(e.target.value)} className={CONTROL}>
+          <option value="all">Κάθε κατάσταση</option>
+          {Object.entries(STATE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+        <select value={period} onChange={e => setPeriod(e.target.value)} className={CONTROL}>
+          <option value="all">Όλο το διάστημα</option>
+          <option value="7">Τελευταίες 7 ημέρες</option>
+          <option value="30">Τελευταίες 30 ημέρες</option>
+          <option value="365">Τελευταίος χρόνος</option>
+        </select>
+        {authors.length > 1 && (
+          <select value={author} onChange={e => setAuthor(e.target.value)} className={CONTROL}>
+            <option value="all">Κάθε συντάκτης</option>
+            {authors.map(a => <option key={a} value={a}>{a}</option>)}
+          </select>
+        )}
+        <select value={sort} onChange={e => setSort(e.target.value)} className={CONTROL}>
+          <option value="recent">Νεότερη πρώτη</option>
+          <option value="oldest">Παλαιότερη πρώτη</option>
+          <option value="recipients">Περισσότεροι παραλήπτες</option>
+          <option value="failures">Περισσότερες αποτυχίες</option>
+          <option value="subject">Αλφαβητικά</option>
+        </select>
+        <label className={`${CONTROL} inline-flex items-center gap-2 cursor-pointer whitespace-nowrap ${onlyFailed ? 'glass-control-on' : ''}`}>
+          <input type="checkbox" checked={onlyFailed} onChange={e => setOnlyFailed(e.target.checked)}
+            className="accent-coral w-4 h-4" />
+          Μόνο με αποτυχίες
+        </label>
+      </div>
+
+      {shown.length !== inBox.length && (
+        <p className="text-sm text-gray-600 dark:text-gray-400 tabular-nums">
+          {shown.length} από {inBox.length}
+          <button type="button" onClick={() => { setQ(''); setState('all'); setAuthor('all'); setPeriod('all'); setOnlyFailed(false) }}
+            className="ml-2 underline">Καθαρισμός φίλτρων</button>
+        </p>
+      )}
+
       {err && <div className="rounded-2xl px-4 py-3 text-sm bg-red-50 text-red-900 dark:bg-red-900/30 dark:text-red-200">{err}</div>}
 
       {shown.length === 0 ? (
         <div className={`${CARD} text-center`}>
           <p className="font-semibold">
-            {box === 'archived' ? 'Το αρχείο είναι άδειο' : 'Καμία μαζική αποστολή ακόμη'}
+            {inBox.length > 0
+              ? 'Κανένα αποτέλεσμα με αυτά τα φίλτρα'
+              : box === 'archived' ? 'Το αρχείο είναι άδειο' : 'Καμία αποστολή ακόμη'}
           </p>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            {box === 'archived'
-              ? 'Ό,τι αρχειοθετήσεις κρατά όλα του τα στοιχεία και μπορεί να επανέλθει.'
-              : 'Ό,τι στείλεις θα εμφανίζεται εδώ με την πορεία του.'}
+            {inBox.length > 0
+              ? 'Δοκίμασε να καθαρίσεις κάποιο φίλτρο.'
+              : box === 'archived'
+                ? 'Ό,τι αρχειοθετήσεις κρατά όλα του τα στοιχεία και μπορεί να επανέλθει.'
+                : 'Ό,τι στείλεις θα εμφανίζεται εδώ με την πορεία του.'}
           </p>
         </div>
       ) : shown.map(c => {

@@ -9,12 +9,16 @@ import {
   firstNameOf, DAILY_EMAIL_BUDGET, SEAT_AUDIENCES, SEAT_LABEL_SET,
   type CampaignMember, type RecipientSelection,
 } from '@/lib/campaignRecipients'
+import { OC_EMAIL_SEATS, OC_DESK_LABELS, canSendEmailFrom, deskOfSeat, isEmailDesk } from '@/components/oc/ocPrefs'
 
 // Η «Αποστολή» στέλνει ΤΩΡΑ ό,τι χωράει — χρειάζεται χρόνο, όχι 60 δευτερόλεπτα
 export const maxDuration = 300
 
 /**
- * Μαζική αποστολή email από το OC — σύνθεση, παραλήπτες, ουρά.
+ * Αποστολή email από το OC — σύνθεση, παραλήπτες, ουρά.
+ *
+ * Ένας παραλήπτης ή εκατόν δεκατρείς: ίδια διαδρομή. Η ουρά ενεργοποιείται
+ * μόνο όταν δεν χωρούν όλοι στο σημερινό όριο.
  *
  * Η αποστολή ΔΕΝ γίνεται εδώ. Η διαδρομή φτιάχνει την καμπάνια και τη βάζει
  * στην ουρά· το cron τη στραγγίζει με το ημερήσιο όριο. Έτσι μια αποστολή σε
@@ -29,14 +33,25 @@ export const maxDuration = 300
  *  POST action=cancel       → ακύρωση (ό,τι έχει ήδη φύγει, έχει φύγει)
  *  DELETE ?id=              → διαγραφή προσχεδίου
  *
- * Πρόσβαση: Γραμματεία και IT. Η μαζική αποστολή φτάνει σε αληθινούς
- * ανθρώπους και δεν παίρνει πίσω — δεν την ανοίγουμε σε όλο το ΔΣ «προς το
- * παρόν», γιατί το προσωρινό γίνεται μόνιμο.
+ * ΠΡΟΣΒΑΣΗ ΚΑΙ ΘΥΡΙΔΑ
+ * Κάθε έδρα με δικό της γραφείο αποστολής (βλ. OC_EMAIL_DESKS) στέλνει από
+ * ΤΗ ΔΙΚΗ ΤΗΣ θυρίδα: ο Ταμίας από finance@, η Κοινότητα από community@, ο
+ * Συντονισμός από coordination@, το Outreach από outreach@. Η θυρίδα βγαίνει
+ * από την ΕΝΕΡΓΗ ΕΔΡΑ, όχι από την ενότητα — γι' αυτό η ίδια οθόνη στην
+ * Επισκόπηση υπογράφει coordination@ για την Έφη και outreach@ για τη Δήμητρα.
+ *
+ * Η ΛΙΣΤΑ ανήκει στο ΓΡΑΦΕΙΟ, όχι στο πρόσωπο: κάθε ενότητα έχει δικά της
+ * Απεσταλμένα και δικό της Αρχείο. Η Επισκόπηση είναι ΕΝΑ γραφείο που το
+ * μοιράζονται Συντονισμός και Outreach — βλέπουν ο ένας τα γράμματα του άλλου,
+ * γιατί δουλεύουν στο ίδιο τραπέζι. Τα Οικονομικά δεν βλέπουν τίποτα από αυτά.
+ * Χωρίς αυτόν τον διαχωρισμό, ένα «Διαγραφή» σε λάθος γραμμή θα έσβηνε τα
+ * γράμματα —και τις εικόνες— άλλου γραφείου. Το IT κάθεται σε όποιο γραφείο
+ * ανοίξει και βλέπει ό,τι υπάρχει εκεί.
  */
 
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
-const ALLOWED_SEATS: OcSeat[] = ['admin', 'it']
+const ALLOWED_SEATS = OC_EMAIL_SEATS as OcSeat[]
 
 async function strapi(path: string, method = 'GET', data?: any) {
   const res = await fetch(`${STRAPI_URL}/api${path}`, {
@@ -64,7 +79,7 @@ async function authorize() {
     seatCookie && access.seats.includes(seatCookie) ? seatCookie
       : access.seats.length === 1 ? access.seats[0] : null
   if (!activeSeat || !ALLOWED_SEATS.includes(activeSeat)) {
-    return { error: NextResponse.json({ error: 'Η μαζική αποστολή ανήκει στη Γραμματεία' }, { status: 403 }) }
+    return { error: NextResponse.json({ error: 'Η έδρα σου δεν στέλνει email από το OC' }, { status: 403 }) }
   }
   return { memberId: decoded.memberId, activeSeat }
 }
@@ -149,16 +164,90 @@ const CAMPAIGN_FIELDS_BASE =
   'fields[0]=Subject&fields[1]=State&fields[2]=SentCount&fields[3]=FailedCount' +
   '&fields[4]=TotalCount&fields[5]=QueuedAt&fields[6]=LastRunAt&fields[7]=CompletedAt' +
   '&fields[8]=CreatedByName&fields[9]=IsTemplate&fields[10]=TemplateName&fields[11]=updatedAt'
-const CAMPAIGN_FIELDS = CAMPAIGN_FIELDS_BASE + '&fields[12]=Archived&fields[13]=ArchivedAt'
+// Κλιμακωτά, ΟΧΙ ένα ενιαίο query: ένα πεδίο που δεν έχει βγει ακόμη στο
+// Strapi Cloud γυρίζει 400 «Invalid key» και ΠΑΡΑΣΕΡΝΕΙ μαζί του όλα τα
+// αδέλφια του — η λίστα έρχεται κενή και οι καμπάνιες μοιάζουν χαμένες.
+const CAMPAIGN_FIELDS_SIGNER = CAMPAIGN_FIELDS_BASE + '&fields[12]=Signer'
+const CAMPAIGN_FIELDS_ARCHIVE = CAMPAIGN_FIELDS_SIGNER + '&fields[13]=Archived&fields[14]=ArchivedAt'
+const CAMPAIGN_FIELDS = CAMPAIGN_FIELDS_ARCHIVE + '&fields[15]=Desk'
+
+/**
+ * Θυρίδα → γραφείο. Χτίζεται από τις ΙΔΙΕΣ πηγές που ορίζουν ποιος στέλνει
+ * από πού (SEAT_MAILBOX) και ποιος κάθεται πού (OC_EMAIL_DESKS), ώστε να μην
+ * υπάρχει τρίτος πίνακας να ξεσυγχρονιστεί.
+ */
+const DESK_BY_MAILBOX: Map<string, string> = new Map(
+  Object.entries(SEAT_MAILBOX)
+    .map(([seat, box]) => [String(box).toLowerCase(), deskOfSeat(seat)] as const)
+    .filter((e): e is readonly [string, string] => !!e[1])
+)
+
+/**
+ * Σε ποιο γραφείο ανήκει μια καμπάνια.
+ *
+ * Πρώτα το γραμμένο `Desk` — είναι η αλήθεια, γιατί το IT μπορεί να έχει
+ * συνθέσει από οποιοδήποτε τραπέζι και η θυρίδα του (it@) δεν προδίδει ποιο.
+ * Αν λείπει (παλιές εγγραφές, ή το πεδίο δεν έχει βγει ακόμη στο Strapi
+ * Cloud), το συμπεραίνουμε από τη θυρίδα του υπογράφοντα: coordination@ και
+ * outreach@ δείχνουν και τα δύο στην Επισκόπηση. Ό,τι δεν αναγνωρίζεται —
+ * χωρίς υπογραφή, ή υπογεγραμμένο από it@ πριν υπάρξει το πεδίο — πέφτει στη
+ * Διαχείριση, που ήταν ούτως ή άλλως η κοινή δεξαμενή μέχρι σήμερα.
+ */
+function deskOfCampaign(row: any): string {
+  const stored = String(row?.Desk || '').trim()
+  if (isEmailDesk(stored)) return stored
+  const box = String(row?.Signer?.email || '').trim().toLowerCase()
+  return DESK_BY_MAILBOX.get(box) || 'admin'
+}
+
+/** Φτάνει αυτή η έδρα σε αυτή την καμπάνια; */
+function campaignInReach(row: any, seat: OcSeat): boolean {
+  return canSendEmailFrom(deskOfCampaign(row), seat)
+}
+
+/** Το ίδιο, για μια καμπάνια που ξέρουμε μόνο με το documentId της */
+async function assertOwnership(id: string, seat: OcSeat): Promise<NextResponse | null> {
+  if (seat === 'it') return null
+  // Το Desk μπορεί να μην έχει βγει ακόμη — τότε ζητάμε μόνο το Signer και
+  // συμπεραίνουμε. Ένα 400 εδώ θα μπλόκαρε κάθε αρχειοθέτηση και διαγραφή.
+  let r = await strapi(`/oc-campaigns/${id}?fields[0]=Signer&fields[1]=Desk`)
+  if (!r.ok) r = await strapi(`/oc-campaigns/${id}?fields[0]=Signer`)
+  if (!r.ok) {
+    // Δεν μπορούμε να δούμε πού ανήκει → δεν την πειράζουμε. Μια άρνηση
+    // είναι αναστρέψιμη· μια διαγραφή σε ξένο γραφείο δεν είναι.
+    return NextResponse.json({ error: 'Η καμπάνια δεν βρέθηκε' }, { status: 404 })
+  }
+  if (!campaignInReach(r.json?.data, seat)) {
+    return NextResponse.json({ error: 'Το μήνυμα ανήκει σε άλλο γραφείο' }, { status: 403 })
+  }
+  return null
+}
+
+/**
+ * Σε ποιο γραφείο δουλεύει αυτό το αίτημα.
+ *
+ * Το λέει η οθόνη (η ενότητα που είναι ανοιχτή) και το ΕΛΕΓΧΟΥΜΕ: χωρίς
+ * έλεγχο, ένα χειροκίνητο `?desk=finances` θα άνοιγε τα Οικονομικά σε
+ * οποιονδήποτε. Αν δεν το πει, πέφτουμε στο γραφείο της έδρας του.
+ */
+function deskOfRequest(asked: string | null | undefined, seat: OcSeat): string | null {
+  const want = String(asked || '').trim()
+  if (want && canSendEmailFrom(want, seat)) return want
+  return deskOfSeat(seat) || (seat === 'it' ? 'admin' : null)
+}
 
 export async function GET(request: NextRequest) {
   const auth = await authorize()
   if ('error' in auth) return auth.error
   try {
+    const desk = deskOfRequest(request.nextUrl.searchParams.get('desk'), auth.activeSeat)
     const id = request.nextUrl.searchParams.get('id')
     if (id) {
       const one = await strapi(`/oc-campaigns/${id.replace(/[^a-z0-9]/gi, '')}`)
       if (!one.ok) return NextResponse.json({ error: 'Η καμπάνια δεν βρέθηκε' }, { status: 404 })
+      if (!campaignInReach(one.json?.data, auth.activeSeat)) {
+        return NextResponse.json({ error: 'Το μήνυμα ανήκει σε άλλο γραφείο' }, { status: 403 })
+      }
       return NextResponse.json({ campaign: one.json?.data })
     }
     const members = await loadMembers()
@@ -166,11 +255,23 @@ export async function GET(request: NextRequest) {
     // Το Archived μπορεί να μην έχει βγει ακόμη στο Strapi Cloud: τότε το query
     // γυρίζει 400 «Invalid key» και η λίστα θα ερχόταν ΚΕΝΗ — δηλαδή οι
     // καμπάνιες θα «εξαφανίζονταν» ενώ υπάρχουν. Ξαναδοκιμάζουμε χωρίς αυτό.
-    const listUrl = (f: string) => `/oc-campaigns?sort=updatedAt:desc&pagination[limit]=50&${f}`
+    const listUrl = (f: string) => `/oc-campaigns?sort=updatedAt:desc&pagination[limit]=100&${f}`
+    // Κλιμακωτά: το Desk είναι το νεότερο πεδίο και μπορεί να μην έχει βγει
+    // ακόμη. Χωρίς αυτό δουλεύουμε με τη θυρίδα του υπογράφοντα — ο
+    // διαχωρισμός των γραφείων ΔΕΝ περιμένει το deploy του Strapi.
     let list = await strapi(listUrl(CAMPAIGN_FIELDS))
-    if (!list.ok) list = await strapi(listUrl(CAMPAIGN_FIELDS_BASE))
+    if (!list.ok) list = await strapi(listUrl(CAMPAIGN_FIELDS_ARCHIVE))
+    if (!list.ok) list = await strapi(listUrl(CAMPAIGN_FIELDS_SIGNER))
+    let scoped = true
+    if (!list.ok) { list = await strapi(listUrl(CAMPAIGN_FIELDS_BASE)); scoped = false }
+    // Χωρίς ούτε Signer δεν ξέρουμε πού ανήκει τίποτα· τότε δείχνουμε τα πάντα
+    // αντί για τίποτα — η λίστα είναι αρχείο, όχι μυστικό.
+    const rows: any[] = list.json?.data || []
+    const campaigns = scoped && desk ? rows.filter(c => deskOfCampaign(c) === desk) : rows
     return NextResponse.json({
-      campaigns: list.json?.data || [],
+      campaigns,
+      desk,
+      deskLabel: desk ? OC_DESK_LABELS[desk] || '' : '',
       // Ό,τι χρειάζεται η οθόνη για να χτίσει τον επιλογέα, χωρίς δεύτερη κλήση
       memberCount: members.filter(m => m.am != null && m.email).length,
       groups,
@@ -243,7 +344,12 @@ export async function POST(request: NextRequest) {
       }
 
       const name = await memberName(auth.memberId)
+      // Το γραφείο γράφεται ΜΙΑ φορά, τη στιγμή της σύνθεσης. Δεν βγαίνει από
+      // τη θυρίδα του υπογράφοντα, γιατί το IT υπογράφει πάντα it@ ανεξάρτητα
+      // από το τραπέζι στο οποίο κάθεται.
+      const desk = deskOfRequest(body?.desk, auth.activeSeat)
       const payload: Record<string, any> = {
+        Desk: desk,
         Subject: subject || '(χωρίς θέμα)',
         Preheader: String(body?.preheader || '').trim() || null,
         Blocks: blocks,
@@ -265,16 +371,25 @@ export async function POST(request: NextRequest) {
       }
 
       const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
+      if (id) {
+        const denied = await assertOwnership(id, auth.activeSeat)
+        if (denied) return denied
+      }
       const write = (p: Record<string, any>) => id
         ? strapi(`/oc-campaigns/${id}`, 'PUT', p)
         : strapi('/oc-campaigns', 'POST', { ...p, CreatedByName: name })
       let res = await write(payload)
       if (!res.ok && res.status === 400) {
-        // Το FooterStyle μπορεί να μην έχει βγει ακόμη στο Strapi Cloud. Ένα
-        // νέο πεδίο δεν πρέπει να εμποδίζει την αποθήκευση της καμπάνιας —
-        // ξαναγράφουμε χωρίς αυτό και κρατάμε ό,τι έχει αξία.
-        const { FooterStyle, FooterLook, FooterLogo, HeaderStyle, HeaderLogo, Signer, ...rest } = payload
-        res = await write(rest)
+        // Ένα νέο πεδίο που δεν έχει βγει ακόμη στο Strapi Cloud δεν πρέπει να
+        // εμποδίζει την αποθήκευση. Πετάμε ΠΡΩΤΑ μόνο το νεότερο (Desk) — αν
+        // πετούσαμε όλη την ομάδα μαζί, μια καμπάνια θα έχανε σιωπηλά και την
+        // κεφαλίδα και το υποσέλιδο που διάλεξε ο συντάκτης.
+        const { Desk, ...noDesk } = payload
+        res = await write(noDesk)
+        if (!res.ok && res.status === 400) {
+          const { FooterStyle, FooterLook, FooterLogo, HeaderStyle, HeaderLogo, Signer, ...rest } = noDesk
+          res = await write(rest)
+        }
       }
       if (!res.ok) {
         console.error('oc/campaigns: save failed', res.status)
@@ -315,6 +430,8 @@ export async function POST(request: NextRequest) {
     if (action === 'archive') {
       const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
       if (!id) return NextResponse.json({ error: 'Λείπει η καμπάνια' }, { status: 400 })
+      const deniedArchive = await assertOwnership(id, auth.activeSeat)
+      if (deniedArchive) return deniedArchive
       const archived = body?.archived !== false
       // Η αρχειοθέτηση ΔΕΝ αγγίζει τίποτα: κρατά παραλήπτες, μπλοκ και εικόνες.
       // Είναι το «θέλω να φύγει από τα μάτια μου», όχι το «θέλω να χαθεί».
@@ -329,6 +446,8 @@ export async function POST(request: NextRequest) {
     if (action === 'cancel') {
       const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
       if (!id) return NextResponse.json({ error: 'Λείπει η καμπάνια' }, { status: 400 })
+      const deniedCancel = await assertOwnership(id, auth.activeSeat)
+      if (deniedCancel) return deniedCancel
       // Η ακύρωση σταματά ΜΟΝΟ ό,τι δεν έχει φύγει. Τα σταλμένα δεν
       // ανακαλούνται — και η οθόνη δεν πρέπει να υπονοεί ότι ανακαλούνται.
       const res = await strapi(`/oc-campaigns/${id}`, 'PUT', { State: 'cancelled' })
@@ -366,9 +485,13 @@ export async function DELETE(request: NextRequest) {
   if (!id) return NextResponse.json({ error: 'Λείπει η καμπάνια' }, { status: 400 })
 
   try {
-    const cur = await strapi(`/oc-campaigns/${id}?fields[0]=State&fields[1]=Blocks&fields[2]=Subject`)
+    let cur = await strapi(`/oc-campaigns/${id}?fields[0]=State&fields[1]=Blocks&fields[2]=Subject&fields[3]=Signer&fields[4]=Desk`)
+    if (!cur.ok) cur = await strapi(`/oc-campaigns/${id}?fields[0]=State&fields[1]=Blocks&fields[2]=Subject&fields[3]=Signer`)
     const row = cur.json?.data
     if (!row) return NextResponse.json({ error: 'Η καμπάνια δεν βρέθηκε' }, { status: 404 })
+    if (!campaignInReach(row, auth.activeSeat)) {
+      return NextResponse.json({ error: 'Το μήνυμα ανήκει σε άλλο γραφείο' }, { status: 403 })
+    }
     if (row.State === 'sending') {
       // Στη μέση της αποστολής η διαγραφή θα άφηνε μισούς παραλήπτες με
       // γράμμα και κανένα αρχείο για το ποιοι ήταν.
