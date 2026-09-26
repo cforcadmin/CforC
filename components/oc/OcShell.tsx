@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import Navigation from '@/components/Navigation'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
@@ -87,6 +87,28 @@ function formatDate(iso: string | null): string {
   }
 }
 
+/**
+ * Στενή οθόνη; (Tailwind `md` = 768px)
+ *
+ * useSyncExternalStore και ΟΧΙ useEffect: ο server δεν ξέρει πλάτος, οπότε το
+ * πρώτο render είναι πάντα «όχι» και το React το αντιμετωπίζει σαν κανονική
+ * αλλαγή μετά την ενυδάτωση — χωρίς προειδοποίηση ασυμφωνίας.
+ */
+const NARROW_QUERY = '(max-width: 767px)'
+function subscribeNarrow(onChange: () => void) {
+  if (typeof window === 'undefined') return () => {}
+  const mq = window.matchMedia(NARROW_QUERY)
+  mq.addEventListener('change', onChange)
+  return () => mq.removeEventListener('change', onChange)
+}
+function useIsNarrow(): boolean {
+  return useSyncExternalStore(
+    subscribeNarrow,
+    () => window.matchMedia(NARROW_QUERY).matches,
+    () => false,
+  )
+}
+
 // Preferences persist via /api/oc/prefs (httpOnly cookies) — client web
 // storage is unreliable under content blockers, so it is not used at all.
 async function persistPrefs(prefs: { landing?: string; seat?: string; heroCompact?: boolean }) {
@@ -150,20 +172,33 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
     setHeroCompactState(v)
     persistPrefs({ heroCompact: v })
   }
-  // Εξαρτάται από το heroCompact: στο restore το hero ΞΑΝΑμπαίνει στο DOM
+  /**
+   * Στο κινητό η συμπαγής προβολή είναι η ΜΟΝΗ προβολή.
+   *
+   * Το πλήρες hero απλώνει τα chips με flex-wrap· σε στενή οθόνη κάθε chip
+   * στενεύει τόσο που η ελληνική λέξη σπάει σε ένα γράμμα ανά γραμμή και η
+   * σελίδα γίνεται μια στήλη από χρωματιστές ράβδους. Η λωρίδα κυλά οριζόντια
+   * και δουλεύει ήδη σωστά, οπότε εκεί μένουμε.
+   *
+   * ΔΕΝ γράφεται στην προτίμηση: το cookie ανήκει στην επιλογή του χρήστη για
+   * υπολογιστή και δεν πρέπει να την πατήσει μια επίσκεψη από τηλέφωνο.
+   */
+  const isNarrow = useIsNarrow()
+  const compact = heroCompact || isNarrow
+  // Εξαρτάται από το compact: στο restore το hero ΞΑΝΑμπαίνει στο DOM
   // και ο observer πρέπει να ξαναδεθεί
   // Εξαρτάται ΚΑΙ από το coolMode: στο Cool το hero δεν υπάρχει στο DOM,
   // και χωρίς re-run ο παλιός observer έμενε καρφωμένος σε αποσυνδεμένο
   // στοιχείο με heroOut=true — γυρνώντας σε Classic εμφανίζονταν λωρίδα
   // ΚΑΙ hero μαζί (διπλό μενού).
   useEffect(() => {
-    if (heroCompact || coolMode) { setHeroOut(false); return }
+    if (compact || coolMode) { setHeroOut(false); return }
     const el = heroRef.current
     if (!el) return
     const obs = new IntersectionObserver(([e]) => setHeroOut(!e.isIntersecting), { threshold: 0 })
     obs.observe(el)
     return () => obs.disconnect()
-  }, [heroCompact, coolMode])
+  }, [compact, coolMode])
 
   useEffect(() => {
     // Single-seat members: make sure the cookie reflects their one seat
@@ -192,9 +227,13 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
         {/* OC hero σε κανονική ροή (όπως στο /profile): κυλά έξω από την
             οθόνη και τα chips συνεχίζουν στη γυάλινη λωρίδα πιο κάτω.
             pt clears the fixed site navbar, which overlays the padding area. */}
-        {(heroCompact || coolMode) && <div className="h-28" aria-hidden="true" />}
-        {!heroCompact && !coolMode && (
-        <section ref={heroRef}>
+        {/* Ο κενός χώρος κάτω από το σταθερό μενού. Στο κινητό χρειάζεται ΠΑΝΤΑ,
+            γιατί εκεί το hero δεν εμφανίζεται ποτέ· στον υπολογιστή τον δίνει
+            το ίδιο το hero με το pt-28 του. Το `md:hidden` τον κρατά και στο
+            πρώτο render, πριν προλάβει να μετρηθεί το πλάτος. */}
+        <div className={`h-28 ${compact || coolMode ? '' : 'md:hidden'}`} aria-hidden="true" />
+        {!compact && !coolMode && (
+        <section ref={heroRef} className="hidden md:block">
           <div className="bg-coral dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 rounded-b-3xl relative pt-28 pb-6">
             <div className="w-full px-6 lg:px-12">
               <div className="flex flex-wrap items-center gap-4">
@@ -311,15 +350,15 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
             κάθε translate-y class στο ίδιο property — η λωρίδα γλιστρά
             από πίσω από το πλωτό μενού προς τα κάτω, με fade μαζί. */}
         <div
-          className={`fixed z-40 transition-all duration-300 ${(heroOut || heroCompact || coolMode) ? '' : 'pointer-events-none'}`}
+          className={`fixed z-40 transition-all duration-300 ${(heroOut || compact || coolMode) ? '' : 'pointer-events-none'}`}
           style={navMode === 'cool'
             ? { top: '0.75rem', left: '50%', transform: 'translateX(-50%)', maxWidth: '46vw' }
             : isScrolled
               ? { top: '5.1rem', left: '50%', transform: 'translateX(-50%)', width: 'calc((100% - 2rem) * 0.9)' }
               : { top: '4.5rem', left: 0, right: 0, width: '100%' }}
-          aria-hidden={!(heroOut || heroCompact || coolMode)}
+          aria-hidden={!(heroOut || compact || coolMode)}
         >
-          <div className={`flex items-center gap-2.5 overflow-x-auto menu-glass glass-rim strip-slide ${navMode === 'cool' ? 'rounded-full px-4 py-2' : 'rounded-b-2xl px-3 pt-3 pb-2'} ${coolMode && isScrolled ? 'cool-dim' : ''} ${(heroOut || heroCompact || coolMode) ? 'strip-shown' : 'strip-hidden'}`}
+          <div className={`flex items-center gap-2.5 overflow-x-auto menu-glass glass-rim strip-slide ${navMode === 'cool' ? 'rounded-full px-4 py-2' : 'rounded-b-2xl px-3 pt-3 pb-2'} ${coolMode && isScrolled ? 'cool-dim' : ''} ${(heroOut || compact || coolMode) ? 'strip-shown' : 'strip-hidden'}`}
             style={{ scrollbarWidth: 'none', ...(navMode === 'cool' ? { borderRadius: '9999px' } : { borderTopLeftRadius: 0, borderTopRightRadius: 0 }) }}>
             <span className="text-sm font-bold text-charcoal dark:text-gray-100 whitespace-nowrap pl-1 notranslate">OC</span>
             {/* Cool: το hero δεν υπάρχει, άρα η φυσαλίδα ρόλου (και η εναλλαγή
@@ -346,7 +385,10 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
                 {OC_SEAT_SHORT[activeSeat] || activeSeat}
               </button>
             )}
-            {heroCompact && (
+            {/* Χωρίς διακόπτη στο κινητό: δεν υπάρχει πλήρης προβολή να
+                επαναφέρεις, και ένα κουμπί που δεν κάνει τίποτα είναι χειρότερο
+                από κανένα κουμπί. */}
+            {compact && !isNarrow && (
               <button
                 type="button"
                 onClick={() => { setHeroCompact(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
@@ -366,7 +408,7 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
                   key={section.key}
                   type="button"
                   onClick={() => { setActiveSection(section.key); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-                  tabIndex={(heroOut || heroCompact || coolMode) ? 0 : -1}
+                  tabIndex={(heroOut || compact || coolMode) ? 0 : -1}
                   aria-current={active ? 'page' : undefined}
                   className={`inline-flex items-stretch rounded-lg overflow-hidden text-xs font-bold flex-shrink-0 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-coral ${
                     active ? 'shadow-md' : 'opacity-85 hover:opacity-100'
