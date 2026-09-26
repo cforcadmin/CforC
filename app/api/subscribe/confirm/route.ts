@@ -27,7 +27,11 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${SITE_URL}/?subscribe_error=expired`)
     }
 
-    const email = payload.email
+    // ΠΕΖΑ ΠΑΝΤΟΥ. Το φίλτρο $eq του Strapi και το unique constraint είναι και
+    // τα δύο case-sensitive: «Nadine@x.com» και «nadine@x.com» περνούσαν και τα
+    // δύο τον έλεγχο διπλότυπου και δημιουργούσαν δύο εγγραφές (βρέθηκε ακριβώς
+    // αυτό στις 27/9/2026).
+    const email = String(payload.email || '').trim().toLowerCase()
     const firstName = (payload as any).firstName || ''
     const lastName = (payload as any).lastName || ''
 
@@ -41,7 +45,8 @@ export async function GET(request: Request) {
 
     // Check for existing subscriber (prevent duplicates)
     const checkResponse = await fetch(
-      `${STRAPI_URL}/api/newsletter-subscribers?filters[Email][$eq]=${encodeURIComponent(email)}`,
+      // $eqi, όχι $eq: ο έλεγχος διπλότυπου πρέπει να αγνοεί πεζά/κεφαλαία
+      `${STRAPI_URL}/api/newsletter-subscribers?filters[Email][$eqi]=${encodeURIComponent(email)}`,
       {
         headers: {
           Authorization: `Bearer ${STRAPI_API_TOKEN}`,
@@ -79,33 +84,61 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${SITE_URL}/?subscribe_error=expired`)
     }
 
-    // Add subscriber to Sender.net newsletter group
+    /**
+     * Προσθήκη στον Sender — ΤΟ ΚΡΙΣΙΜΟ ΣΚΕΛΟΣ.
+     *
+     * Το newsletter φεύγει από τον Sender, όχι από το Strapi: αν αυτό εδώ
+     * αποτύχει, ο άνθρωπος εμφανίζεται εγγεγραμμένος και δεν λαμβάνει ποτέ
+     * τίποτα. Παλιά η αποτυχία καταπινόταν σιωπηλά.
+     *
+     * Χειρότερα: από τότε που ο μηνιαίος συγχρονισμός σβήνει ό,τι υπάρχει στο
+     * Strapi και λείπει από τον Sender, μια σιωπηλή αποτυχία εδώ θα ΔΙΕΓΡΑΦΕ
+     * τον συνδρομητή και θα του έστελνε αποχαιρετιστήριο. Γι' αυτό: δεύτερη
+     * προσπάθεια, και αν πάλι αποτύχει το λέει η ειδοποίηση προς το γραφείο.
+     */
     const SENDER_API_KEY = process.env.SENDER_API_KEY
     const SENDER_GROUP_ID = process.env.SENDER_GROUP_ID
+    let senderStatus: 'ok' | 'failed' | 'skipped' = 'skipped'
+    let senderError = ''
     if (SENDER_API_KEY && SENDER_GROUP_ID) {
-      try {
-        const senderResponse = await fetch('https://api.sender.net/v2/subscribers', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${SENDER_API_KEY}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify({
-            email,
-            firstname: firstName || undefined,
-            lastname: lastName || undefined,
-            groups: [SENDER_GROUP_ID],
-            trigger_automation: false,
-          }),
-        })
-
-        if (!senderResponse.ok) {
-          const errorText = await senderResponse.text()
-          console.error('Failed to add subscriber to Sender:', errorText)
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const senderResponse = await fetch('https://api.sender.net/v2/subscribers', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${SENDER_API_KEY}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+              email,
+              firstname: firstName || undefined,
+              lastname: lastName || undefined,
+              groups: [SENDER_GROUP_ID],
+              trigger_automation: false,
+            }),
+          })
+          if (senderResponse.ok) { senderStatus = 'ok'; break }
+          senderError = `HTTP ${senderResponse.status}: ${(await senderResponse.text()).slice(0, 200)}`
+          // 409/422 = υπάρχει ήδη· τότε αρκεί να μπει στην ομάδα
+          const add = await fetch(`https://api.sender.net/v2/subscribers/groups/${SENDER_GROUP_ID}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${SENDER_API_KEY}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify({ subscribers: [email] }),
+          })
+          if (add.ok) { senderStatus = 'ok'; break }
+          senderStatus = 'failed'
+        } catch (err) {
+          senderStatus = 'failed'
+          senderError = err instanceof Error ? err.message : 'άγνωστο σφάλμα'
         }
-      } catch (err) {
-        console.error('Sender API error:', err)
+      }
+      if (senderStatus !== 'ok') {
+        console.error('[SUBSCRIBE] Ο Sender ΔΕΝ δέχτηκε τον συνδρομητή:', email, senderError)
       }
     }
 
@@ -125,7 +158,9 @@ export async function GET(request: Request) {
           from: fromEmail,
           to: ['media@cultureforchange.net'],
           cc: ['it@cultureforchange.net'],
-          subject: 'Νέα Εγγραφή στο Newsletter - Culture for Change',
+          subject: senderStatus === 'ok'
+            ? 'Νέα Εγγραφή στο Newsletter - Culture for Change'
+            : '⚠️ Νέα Εγγραφή ΧΩΡΙΣ καταχώρηση στον Sender - Culture for Change',
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #2d3748;">Νέα Επιβεβαιωμένη Εγγραφή στο Newsletter</h2>
@@ -144,6 +179,15 @@ export async function GET(request: Request) {
                 <p style="margin: 10px 0 0 0; color: #718096; font-size: 14px;">
                   <strong>Ημερομηνία επιβεβαίωσης:</strong> ${new Date().toLocaleString('el-GR')}
                 </p>
+                ${senderStatus === 'ok' ? '' : `
+                <p style="margin: 14px 0 0 0; padding: 12px; border-radius: 8px; background-color: #fff4ed; color: #8a3311; font-size: 14px;">
+                  <strong>ΠΡΟΣΟΧΗ:</strong> η εγγραφή ΔΕΝ καταχωρήθηκε στον Sender, οπότε
+                  αυτός ο άνθρωπος ΔΕΝ θα λάβει newsletter. Πρόσθεσέ τον χειροκίνητα στην
+                  ομάδα «External» πριν από τις 12 του μήνα, αλλιώς ο μηνιαίος
+                  συγχρονισμός θα τον διαγράψει.<br>
+                  <span style="color: #b06a4a;">${escapeHtml(senderError || 'άγνωστο σφάλμα')}</span>
+                </p>
+                `}
               </div>
             </div>
           `,
