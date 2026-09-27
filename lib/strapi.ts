@@ -113,7 +113,27 @@ export async function getOpenCalls() {
  * Get all newsletters
  */
 export async function getNewsletters() {
-  return fetchStrapiAll('/newsletters?populate=Image&sort=Date:desc');
+  // Κλιμακωτά: τα Html/Audience είναι νέα πεδία. Ένα populate/fields σε πεδίο
+  // που δεν έχει βγει ακόμη ρίχνει ΟΛΗ τη λίστα των τευχών από τη σελίδα.
+  try {
+    return await fetchStrapiAll('/newsletters?populate=Image&sort=Date:desc');
+  } catch {
+    return fetchStrapiAll('/newsletters?sort=Date:desc');
+  }
+}
+
+/**
+ * Ένα τεύχος από το slug του — για τη σελίδα ανάγνωσης.
+ *
+ * Τα τεύχη που φεύγουν από το OC κρατούν το ΙΔΙΟ το γράμμα (Html) αντί για
+ * σύνδεσμο Drive: ανοίγουν στη σελίδα μας, δεν εξαρτώνται από τον λογαριασμό
+ * Google κανενός, και δεν σπάνε αν κάποιος μετακινήσει ένα αρχείο.
+ */
+export async function getNewsletterBySlug(slug: string) {
+  const res = await fetchStrapi(
+    `/newsletters?filters[Slug][$eq]=${encodeURIComponent(slug)}&populate=Image&pagination[limit]=1`
+  );
+  return res?.data?.[0] || null;
 }
 
 /**

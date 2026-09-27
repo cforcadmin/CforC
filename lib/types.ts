@@ -81,7 +81,12 @@ export interface OpenCall extends StrapiData<OpenCall> {
 export interface Newsletter extends StrapiData<Newsletter> {
   Title: string;
   Date: string;
-  DriveLink: string;
+  /** Παλιά τεύχη: PDF στο Drive. Όσα φεύγουν από το OC δεν έχουν. */
+  DriveLink?: string;
+  /** Τεύχη που στάλθηκαν από το OC: το ίδιο το γράμμα, ανοίγει στη σελίδα μας */
+  Html?: string;
+  /** «members» = πήγε μόνο στα μέλη, δεν είναι δημόσιο υλικό */
+  Audience?: 'members' | 'public';
   Slug: string;
   Image?: StrapiMediaObject | StrapiMediaArray;
   createdAt: string;

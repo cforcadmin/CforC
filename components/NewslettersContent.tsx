@@ -65,17 +65,29 @@ export default function NewslettersContent() {
       selected ? 'text-white border-coral' : 'text-white/70 border-transparent hover:text-white'
     }`
 
+  /**
+   * Πού οδηγεί ένα τεύχος.
+   *
+   * Όσα στάλθηκαν από το OC κρατούν το ίδιο το γράμμα και ανοίγουν ΣΤΗ ΣΕΛΙΔΑ
+   * ΜΑΣ. Τα παλιά είναι PDF στο Drive και συνεχίζουν να ανοίγουν εκεί, σε νέα
+   * καρτέλα. Χωρίς αυτόν τον διαχωρισμό, ένα τεύχος του OC θα είχε κενό href.
+   */
+  const linkOf = (n: any) => (n.Html && n.Slug)
+    ? { href: `/newsletters/${n.Slug}`, external: false }
+    : { href: n.DriveLink || '#', external: true }
+
   const gridView = (
     <div className="grid md:grid-cols-3 gap-10">
       {filtered.map((newsletter) => {
         const imageUrl = newsletterImageUrl(newsletter)
 
+        const link = linkOf(newsletter)
+
         return (
           <a
             key={newsletter.id}
-            href={newsletter.DriveLink}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={link.href}
+            {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
             className={cool
               ? 'menu-glass rounded-3xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow transform hover:scale-105 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light'
               : 'bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow transform hover:scale-105 border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light'}
@@ -133,12 +145,13 @@ export default function NewslettersContent() {
       {filtered.map((newsletter) => {
         const imageUrl = newsletterImageUrl(newsletter)
 
+        const link = linkOf(newsletter)
+
         return (
           <a
             key={newsletter.id}
-            href={newsletter.DriveLink}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={link.href}
+            {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
             className={cool
               ? 'menu-glass rounded-3xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex items-center gap-5 p-4 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light'
               : 'bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex items-center gap-5 p-4 group border-l-4 border-transparent hover:border-coral dark:hover:border-coral-light'}
