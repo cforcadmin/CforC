@@ -17,8 +17,15 @@ const src = readFileSync(path.join(process.cwd(), 'components/oc/OcCampaigns.tsx
 
 describe('Φρουρός σε καθυστερημένες απαντήσεις', () => {
   it('κάθε setTimeout+fetch effect καθαρίζει με alive=false', () => {
+    /**
+     * ΣΤΕΝΟ κριτήριο: `setTimeout(async`, δηλαδή το μοτίβο του debounce που
+     * όντως στέλνει αίτημα. Ένα σκέτο `setTimeout` έπιανε και κώδικα ΕΚΤΟΣ
+     * effect: το τμήμα ενός μονόγραμμου useEffect εκτείνεται ως τον επόμενο,
+     * οπότε μάζευε από κάτω ένα `window.setTimeout` και ένα `fetch` που δεν
+     * είχαν καμία σχέση, και ζητούσε φρουρό από effect χωρίς αίτημα.
+     */
     const effects = src.split('useEffect(').slice(1)
-      .filter(e => e.includes('setTimeout') && e.includes('fetch('))
+      .filter(e => e.includes('setTimeout(async') && e.includes('fetch('))
     expect(effects.length).toBeGreaterThanOrEqual(2)
     for (const e of effects) {
       const head = e.slice(0, e.indexOf('}, ['))

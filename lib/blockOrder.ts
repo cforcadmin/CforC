@@ -64,3 +64,32 @@ export function moveGroupTo<T>(items: T[], selection: number[], target: number):
   const next = [...rest.slice(0, before), ...moving, ...rest.slice(before)]
   return { items: next, selection: moving.map((_, n) => before + n) }
 }
+
+/**
+ * Η σειρά της παλέτας στοιχείων.
+ *
+ * Ο συντάκτης τη ρυθμίζει σύροντας τα chip, και ισχύει και στις δύο λίστες
+ * (στο «+» ανάμεσα στα μπλοκ και στο κουτί στο τέλος): μία προτίμηση, όχι δύο
+ * που αποκλίνουν. Η αποθηκευμένη σειρά ΔΕΝ είναι αυθεντία για το τι υπάρχει —
+ * ό,τι δεν αναγνωρίζουμε πέφτει έξω και ό,τι προστέθηκε αργότερα μπαίνει στο
+ * τέλος, ώστε μια παλιά προτίμηση να μη μπορεί ποτέ να κρύψει νέο στοιχείο.
+ */
+export function mergePaletteOrder(saved: string[], all: string[]): string[] {
+  const known = new Set(all)
+  const seen = new Set<string>()
+  const first: string[] = []
+  for (const t of saved) {
+    if (known.has(t) && !seen.has(t)) { first.push(t); seen.add(t) }
+  }
+  return [...first, ...all.filter(t => !seen.has(t))]
+}
+
+/** Το chip `from` πάει ΠΡΙΝ από το `target` */
+export function movePaletteChip(order: string[], from: string, target: string): string[] {
+  if (from === target) return order
+  const rest = order.filter(t => t !== from)
+  const at = rest.indexOf(target)
+  if (at < 0) return order
+  rest.splice(at, 0, from)
+  return rest
+}

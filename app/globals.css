@@ -2311,3 +2311,18 @@ select.glass-control {
   animation: oc-flash-in 1.4s ease-out;
   border-radius: 1rem;
 }
+
+/**
+ * Ο κάθετος ολισθητήρας θέσης στον συνθέτη του OC.
+ *
+ * `writing-mode` είναι ο τυποποιημένος τρόπος για κάθετο input[type=range]
+ * (Chrome 120+, Safari 17.4+, Firefox 127+) και βάζει το ελάχιστο ΠΑΝΩ, που
+ * είναι η σωστή φορά: κάτω = πιο κάτω στο τεύχος. Το παλιό
+ * `-webkit-appearance: slider-vertical` επίτηδες ΔΕΝ μπαίνει — βάζει το
+ * ελάχιστο κάτω, οπότε μαζί θα έδιναν αντίθετη φορά ανά browser.
+ */
+.oc-vrange {
+  writing-mode: vertical-rl;
+  width: 20px;
+  height: 14rem;
+}

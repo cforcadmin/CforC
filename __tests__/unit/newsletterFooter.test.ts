@@ -81,3 +81,33 @@ describe('Υποσέλιδο newsletter', () => {
     expect(render({ arrangement: 'stack' })).toContain('cforc_lockup_light')
   })
 })
+
+describe('Στρογγυλεμένες ζώνες', () => {
+  // Η ταυτότητα είναι στρογγυλεμένη παντού· η «Λωρίδα λογοτύπου» είναι η μόνη
+  // που μένει σκόπιμα από άκρη σε άκρη.
+  const SQUARE = 'logoBanner'
+
+  it('όλες οι διατάξεις εκτός από μία έχουν στρογγυλές γωνίες', () => {
+    const rounded = NEWSLETTER_FOOTERS
+      .filter(f => render({ arrangement: f.id }).includes('border-radius:20px')
+        || render({ arrangement: f.id }).includes('border-radius:16px'))
+      .map(f => f.id)
+    const square = NEWSLETTER_FOOTERS.map(f => f.id).filter(id => !rounded.includes(id))
+    expect(square).toEqual([SQUARE])
+  })
+
+  it('η λωρίδα λογοτύπου μένει από άκρη σε άκρη', () => {
+    // Όχι σκέτο «border-radius»: η ίδια η κάρτα του γράμματος έχει 24px.
+    // Εδώ μετράει μόνο αν η ΖΩΝΗ του υποσέλιδου είναι στρογγυλή.
+    const html = render({ arrangement: SQUARE })
+    expect(html).toContain('background-color:#FF8B6A;padding:36px 48px')
+    expect(html).not.toContain('background-color:#FF8B6A;border-radius')
+    expect(html).not.toContain('background-color:#F5F5F5;border-radius')
+  })
+
+  it('η στοίβα, αντίθετα, έχει στρογγυλή ζώνη και στρογγυλή απεγγραφή', () => {
+    const html = render({ arrangement: 'stack' })
+    expect(html).toContain('background-color:#FF8B6A;border-radius:20px')
+    expect(html).toContain('background-color:#F5F5F5;border-radius:16px')
+  })
+})

@@ -221,6 +221,14 @@ export type ImageTextBlock = {
 export type CardBlock = {
   type: 'card'; src?: string; alt?: string; title: string; html: string
   buttonLabel?: string; buttonHref?: string
+  /** Πού κάθεται η φωτογραφία μέσα στην κάρτα */
+  imgPos?: 'top' | 'bottom' | 'left' | 'right' | 'titleLeft' | 'titleRight'
+  /** «full» μόνο για πάνω/κάτω — μια πλαϊνή στήλη δεν γίνεται πλήρους πλάτους */
+  imgSize?: 'full' | 'large' | 'medium' | 'small'
+  imgAlign?: 'left' | 'center' | 'right'
+  tone?: 'cream' | 'coral' | 'tint' | 'dark' | 'white' | 'none'
+  /** Ένθετη κάρτα ή ζώνη από άκρη σε άκρη του γράμματος */
+  width?: 'inset' | 'full'
 }
 export type PersonBlock = { type: 'person'; src?: string; alt?: string; name: string; role?: string; html: string; side?: 'left' | 'right' }
 export type LogosBlock = { type: 'logos'; items: Array<{ src: string; alt: string; href?: string }>; note?: string }
@@ -384,6 +392,17 @@ export const BLOCK_VARIANTS: Partial<Record<Block['type'], { key: string; option
   imageText: {
     key: 'side',
     options: [{ value: 'left', label: 'Εικόνα αριστερά' }, { value: 'right', label: 'Εικόνα δεξιά' }],
+  },
+  card: {
+    key: 'imgPos',
+    options: [
+      { value: 'top', label: 'Εικόνα πάνω' },
+      { value: 'bottom', label: 'Εικόνα κάτω' },
+      { value: 'left', label: 'Εικόνα αριστερά' },
+      { value: 'right', label: 'Εικόνα δεξιά' },
+      { value: 'titleLeft', label: 'Σήμα αριστερά από τον τίτλο' },
+      { value: 'titleRight', label: 'Σήμα δεξιά από τον τίτλο' },
+    ],
   },
   person: { key: 'side', options: [{ value: 'left', label: 'Φωτογραφία αριστερά' }, { value: 'right', label: 'Φωτογραφία δεξιά' }] },
   button: { key: 'style', options: [{ value: 'coral', label: 'Coral' }, { value: 'outline', label: 'Περίγραμμα' }, { value: 'dark', label: 'Σκούρο' }] },
@@ -583,16 +602,109 @@ function renderBlock(b: Block, i: number): string {
   </td></tr>`
     }
 
-    case 'card':
-      return row(`
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${BRAND.cream};border-radius:16px;">
-        ${b.src ? `<tr><td style="padding:16px 16px 0 16px;">${img(b.src, b.alt || b.title, INNER_WIDTH - 32)}</td></tr>` : ''}
-        <tr><td style="padding:16px;">
-          <div style="font-family:${FONT};font-size:18px;line-height:24px;font-weight:bold;color:${BRAND.ink};">${escapeHtml(b.title)}</div>
-          <div style="${bodyText()}padding-top:8px;">${richText(b.html)}</div>
-          ${b.buttonLabel && b.buttonHref ? `<div style="padding-top:14px;">${buttonHtml(b.buttonLabel, b.buttonHref, 'coral', false)}</div>` : ''}
-        </td></tr>
-      </table>`, '16px 48px 0 48px')
+    case 'card': {
+      /**
+       * Η φωτογραφία της κάρτας: έξι θέσεις, με δικό της μέγεθος.
+       *
+       * Ήταν πάντα πάνω και σε πλήρες πλάτος, που σε μια λίστα με δώδεκα
+       * open calls έκανε το γράμμα ατέλειωτο. Οι πλαϊνές θέσεις δίνουν
+       * μικρογραφία δίπλα στο κείμενο, και οι «δίπλα στον τίτλο» ένα σήμα
+       * στο ύψος της επικεφαλίδας με το κείμενο να τρέχει από κάτω.
+       */
+      /**
+       * Φόντο και πλάτος.
+       *
+       * «Πλήρες πλάτος» σημαίνει ζώνη από άκρη σε άκρη του γράμματος, όπως
+       * στην Εικόνα + Κείμενο: τότε ΔΕΝ υπάρχει εσωτερικό περιθώριο ούτε
+       * στρογγυλή γωνία, γιατί μια ζώνη με γωνίες μοιάζει με κουτί που
+       * ξεχείλισε. Στην ένθετη κάρτα μένουν και τα δύο.
+       */
+      const tones: Record<string, { bg: string; ink: string; border?: string }> = {
+        cream: { bg: BRAND.cream, ink: BRAND.ink },
+        coral: { bg: BRAND.coral, ink: BRAND.ink },
+        tint: { bg: BRAND.coralTint, ink: BRAND.ink },
+        dark: { bg: BRAND.ink, ink: BRAND.white },
+        white: { bg: BRAND.white, ink: BRAND.ink, border: BRAND.hairline },
+        none: { bg: '', ink: BRAND.ink },
+      }
+      const tone = tones[b.tone || 'cream'] || tones.cream!
+      const full = b.width === 'full'
+      const PAD = full || (b.tone || 'cream') === 'none' ? 0 : 16
+      const INSET = INNER_WIDTH - PAD * 2
+      const pos = b.imgPos || 'top'
+      const size = b.imgSize || 'full'
+
+      const title = b.title
+        ? `<div style="font-family:${FONT};font-size:18px;line-height:24px;font-weight:bold;color:${tone.ink};">${escapeHtml(b.title)}</div>`
+        : ''
+      // Σε σκούρο φόντο το #C9552F των συνδέσμων σβήνει — γίνονται λευκοί
+      const cardHtml = tone.ink === BRAND.white
+        ? richText(b.html).replace(new RegExp(`color:${BRAND.coralDeep};`, 'g'), `color:${BRAND.white};`)
+        : richText(b.html)
+      const text = `<div style="${bodyText()}color:${tone.ink};${title ? 'padding-top:8px;' : ''}">${cardHtml}</div>`
+      const btn = b.buttonLabel && b.buttonHref
+        ? `<div style="padding-top:14px;">${buttonHtml(b.buttonLabel, b.buttonHref, 'coral', false)}</div>` : ''
+      const body = `${title}${text}${btn}`
+      const gap = (w: number) => `<td class="stack" width="${w}" style="width:${w}px;font-size:0;line-height:${w}px;">&nbsp;</td>`
+      const col = (w: number, inner: string, va = 'top') =>
+        `<td class="stack" width="${w}" style="width:${w}px;vertical-align:${va};">${inner}</td>`
+
+      let inner: string
+      if (!b.src) {
+        inner = `<tr><td style="padding:${PAD}px;">${body}</td></tr>`
+      } else if (pos === 'left' || pos === 'right') {
+        const w = size === 'large' ? 220 : size === 'small' ? 120 : 170
+        const pic = col(w, img(b.src, b.alt || b.title, w))
+        const txt = `<td class="stack" style="vertical-align:top;">${body}</td>`
+        inner = `<tr><td style="padding:${PAD}px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>${
+            pos === 'right' ? `${txt}${gap(16)}${pic}` : `${pic}${gap(16)}${txt}`}</tr></table>
+        </td></tr>`
+      } else if (pos === 'titleLeft' || pos === 'titleRight') {
+        // Σήμα στο ύψος του τίτλου — δεν στοιβάζεται σε κινητό: 76px χωρούν
+        // πάντα δίπλα σε μια επικεφαλίδα, και από κάτω θα έμοιαζε με λάθος.
+        const w = size === 'large' ? 96 : size === 'small' ? 56 : 76
+        const pic = `<td width="${w}" style="width:${w}px;vertical-align:middle;">${img(b.src, b.alt || b.title, w)}</td>`
+        const ttl = `<td style="vertical-align:middle;">${title}</td>`
+        inner = `<tr><td style="padding:${PAD}px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>${
+            pos === 'titleRight' ? `${ttl}${gap(12)}${pic}` : `${pic}${gap(12)}${ttl}`}</tr></table>
+          <div style="${bodyText()}color:${tone.ink};padding-top:10px;">${cardHtml}</div>${btn}
+        </td></tr>`
+      } else {
+        const w = size === 'full' ? INSET : size === 'large' ? 420 : size === 'medium' ? 320 : 200
+        const align = size === 'full' ? 'left' : (b.imgAlign || 'center')
+        const pic = img(b.src, b.alt || b.title, w)
+        // Πίνακας με ΡΗΤΟ πλάτος και align: το max-width μόνο του δεν φτάνει
+        // στον Outlook, και το margin:auto δεν κεντράρει σε γραμματοκιβώτιο.
+        const framed = size === 'full' ? pic : `
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${w}" align="${align}" style="width:${w}px;max-width:100%;">
+            <tr><td>${pic}</td></tr>
+          </table>`
+        const picRow = (padding: string) =>
+          `<tr><td align="${align}" style="padding:${padding};">${framed}</td></tr>`
+        const txtRow = `<tr><td style="padding:${PAD}px;">${body}</td></tr>`
+        inner = pos === 'bottom'
+          ? txtRow + picRow(`0 ${PAD}px ${PAD}px ${PAD}px`)
+          : picRow(`${PAD}px ${PAD}px 0 ${PAD}px`) + txtRow
+      }
+
+      const skin = `${tone.bg ? `background-color:${tone.bg};` : ''}${tone.border ? `border:1px solid ${tone.border};` : ''}`
+      const table = (extra: string) => `
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="${skin}${extra}">
+        ${inner}
+      </table>`
+
+      // Η ζώνη πιάνει ΟΛΟ το πλάτος του γράμματος — φεύγει έξω από το κανονικό
+      // περιθώριο, αλλιώς θα έμοιαζε με κουτί και όχι με ζώνη.
+      if (full) {
+        return `
+  <tr><td ${tone.bg ? `bgcolor="${tone.bg}" ` : ''}style="${tone.bg ? `background-color:${tone.bg};` : ''}padding:22px 48px;">
+    ${table('')}
+  </td></tr>`
+      }
+      return row(table(tone.bg || tone.border ? 'border-radius:16px;' : ''), '16px 48px 0 48px')
+    }
 
     case 'person': {
       const photo = b.src
@@ -1447,16 +1559,44 @@ function newsletterFooterHtml(cfg: NewsletterFooter): string {
     <div style="height:10px;line-height:10px;font-size:0;">&nbsp;</div>
     <div style="font-family:${FONT};font-size:13px;line-height:21px;color:${sk.soft};text-align:${align};mso-line-height-rule:exactly;">${escapeHtml(cfg.notice)}</div>`
 
-  /** Η ζώνη απεγγραφής: πάντα έξω από το χρώμα, σε ουδέτερο γκρι */
-  const unsub = () => `
+  /**
+   * Η ζώνη απεγγραφής: πάντα έξω από το χρώμα, σε ουδέτερο γκρι.
+   *
+   * Στρογγυλή σαν τις υπόλοιπες ζώνες — εκτός από τη «Λωρίδα λογοτύπου»,
+   * που είναι εξ ορισμού από άκρη σε άκρη.
+   */
+  const unsub = (rounded = true) => {
+    const text = `<a href="{{unsubscribe_link}}" style="color:${BRAND.inkSoft};text-decoration:underline;">${escapeHtml(cfg.unsubscribeLead)}</a>`
+    const cell = `font-family:${FONT};font-size:13px;line-height:20px;color:${BRAND.inkSoft};`
+    if (!rounded) {
+      return `
+  <tr><td class="px" align="center" style="background-color:#F5F5F5;padding:22px 48px;${cell}">${text}</td></tr>`
+    }
+    return `
   <tr>
-    <td class="px" align="center" style="background-color:#F5F5F5;padding:22px 48px;font-family:${FONT};font-size:13px;line-height:20px;color:${BRAND.inkSoft};">
-      <a href="{{unsubscribe_link}}" style="color:${BRAND.inkSoft};text-decoration:underline;">${escapeHtml(cfg.unsubscribeLead)}</a>
+    <td class="px" style="padding:0 24px 24px 24px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F5F5;border-radius:16px;">
+        <tr><td align="center" style="padding:18px 24px;${cell}">${text}</td></tr>
+      </table>
     </td>
   </tr>`
+  }
 
-  const band = (bg: string, inner: string, pad = '32px 48px') =>
-    `<tr><td class="px" style="background-color:${bg};padding:${pad};">${inner}</td></tr>`
+  /**
+   * Μια ζώνη του υποσέλιδου.
+   *
+   * Στρογγυλή εξ ορισμού: η ταυτότητα είναι στρογγυλεμένη παντού αλλού —
+   * κουμπιά, κάρτες, επικεφαλίδες ενοτήτων, η ίδια η κάρτα του γράμματος.
+   * ΠΡΟΣΟΧΗ: το Outlook αγνοεί το border-radius και θα δείξει ορθή γωνία —
+   * το ίδιο ισχύει ήδη για τις επικεφαλίδες, οπότε μένει συνεπές.
+   */
+  const band = (bg: string, inner: string, pad = '26px 24px', rounded = true) => rounded
+    ? `<tr><td class="px" style="padding:0 24px 16px 24px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${bg};border-radius:20px;">
+          <tr><td class="px" style="padding:${pad};">${inner}</td></tr>
+        </table>
+      </td></tr>`
+    : `<tr><td class="px" style="background-color:${bg};padding:${pad};">${inner}</td></tr>`
 
   switch (cfg.arrangement) {
     case 'centred': {
@@ -1495,13 +1635,13 @@ function newsletterFooterHtml(cfg: NewsletterFooter): string {
       const low = skins.cream
       return band(top.bg, `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
           <tr><td align="center">${logo(top, 300)}</td></tr>
-        </table>`, '36px 48px')
+        </table>`, '36px 48px', false)
         + band(low.bg, `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
           <tr><td align="center">${icons(low, 'center')}</td></tr>
           <tr><td height="18" style="height:18px;line-height:18px;font-size:0;">&nbsp;</td></tr>
           <tr><td align="center">${copy(low, 'center')}${mailLink(low, 'center')}</td></tr>
-        </table>`, '28px 48px')
-        + unsub()
+        </table>`, '28px 48px', false)
+        + unsub(false)
     }
 
     case 'textBand': {
@@ -1509,14 +1649,14 @@ function newsletterFooterHtml(cfg: NewsletterFooter): string {
       const low = skins.coral
       return band(top.bg, `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
           <tr><td align="center">${copy(top, 'center')}</td></tr>
-        </table>`, '28px 48px')
+        </table>`, '24px')
         + band(low.bg, `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
           <tr>
             <td class="stack" width="220" style="width:220px;vertical-align:middle;">${logo(low, 200)}</td>
             <td class="stack" align="right" style="vertical-align:middle;">${icons(low, 'right', 30)}</td>
           </tr>
           <tr><td class="stack" colspan="2" style="padding-top:14px;">${mailLink(low)}</td></tr>
-        </table>`, '24px 48px')
+        </table>`, '22px 24px')
         + unsub()
     }
 
@@ -1540,7 +1680,7 @@ function newsletterFooterHtml(cfg: NewsletterFooter): string {
           </td></tr>
           <tr><td height="8" style="height:8px;line-height:8px;font-size:0;">&nbsp;</td></tr>
           <tr><td align="center" style="font-family:${FONT};font-size:12px;line-height:18px;color:${BRAND.inkMuted};">${escapeHtml(cfg.notice)}</td></tr>
-        </table>`, '0 48px 24px 48px') + unsub()
+        </table>`, '0 48px 20px 48px', false) + unsub()
     }
 
     // «Στοίβα» — και σε coral και σε ανθρακί είναι η ΙΔΙΑ διάταξη

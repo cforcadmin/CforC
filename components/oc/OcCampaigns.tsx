@@ -2,7 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import CampaignRichText from './CampaignRichText'
-import { moveUp, moveDown, moveToBottom, moveGroupTo } from '@/lib/blockOrder'
+import { moveUp, moveDown, moveToBottom, moveGroupTo, mergePaletteOrder, movePaletteChip } from '@/lib/blockOrder'
 import { PREVIEW_DESKTOP_WIDTH } from '@/lib/campaignBlocks'
 import type { NewsletterFooter } from '@/lib/campaignBlocks'
 
@@ -44,6 +44,8 @@ type Campaign = {
   SentCount: number; FailedCount: number; TotalCount: number
   QueuedAt?: string | null; CompletedAt?: string | null; CreatedByName?: string | null
   Archived?: boolean; ArchivedAt?: string | null
+  /** Λείπει σε παλιές εγγραφές και όσο το πεδίο δεν έχει βγει στο Strapi */
+  Kind?: 'message' | 'newsletter' | null
 }
 type Meta = {
   memberCount: number
@@ -175,6 +177,71 @@ export default function OcCampaigns({ desk }: { desk: string }) {
   /** Κενό = άμεση αποστολή. Τιμή «YYYY-MM-DDTHH:mm» = προγραμματισμός. */
   const [scheduleAt, setScheduleAt] = useState('')
   const [busy, setBusy] = useState(false)
+
+  /**
+   * Πού βρισκόμαστε μέσα στο τεύχος — η θέση που δείχνει ο κάθετος
+   * ολισθητήρας. Ζει ΕΔΩ και όχι στον BlockEditor, γιατί ο ολισθητήρας
+   * στέκεται ανάμεσα στις δύο στήλες και κινεί και τις δύο.
+   */
+  const [cursor, setCursor] = useState(0)
+  const seen = useRef<Set<number>>(new Set())
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(entries => {
+      for (const e of entries) {
+        const i = Number((e.target as HTMLElement).dataset.blockIndex)
+        if (!Number.isInteger(i)) continue
+        if (e.isIntersecting) seen.current.add(i)
+        else seen.current.delete(i)
+      }
+      if (seen.current.size) setCursor(Math.min(...seen.current))
+    // Το κάτω περιθώριο κρατά ως «τρέχον» το μπλοκ στο πάνω μισό της οθόνης
+    }, { rootMargin: '-110px 0px -55% 0px' })
+    for (let i = 0; i < blocks.length; i++) {
+      const el = document.getElementById(`oc-block-${i}`)
+      if (el) io.observe(el)
+    }
+    return () => { io.disconnect(); seen.current.clear() }
+  }, [blocks.length, tab])
+
+  /**
+   * Αρχείο που πέφτει ΕΚΤΟΣ στόχου.
+   *
+   * Ο browser το ανοίγει, φεύγοντας από τη σελίδα — και παίρνει μαζί του ένα
+   * προσχέδιο 85 μπλοκ που δεν έχει αποθηκευτεί. Τώρα που καλούμε τον χρήστη
+   * να σύρει φωτογραφίες, η αστοχία κατά δύο εκατοστά δεν επιτρέπεται να
+   * κοστίζει το κείμενο μιας ώρας. Τα πλαίσια εικόνας σταματούν το συμβάν
+   * πριν φτάσει εδώ, οπότε αυτό πιάνει μόνο τις αστοχίες.
+   */
+  useEffect(() => {
+    const swallow = (e: DragEvent) => {
+      if (e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files')) e.preventDefault()
+    }
+    window.addEventListener('dragover', swallow)
+    window.addEventListener('drop', swallow)
+    return () => {
+      window.removeEventListener('dragover', swallow)
+      window.removeEventListener('drop', swallow)
+    }
+  }, [])
+
+  /** Ο ολισθητήρας κινεί ΚΑΙ τα στοιχεία ΚΑΙ την προεπισκόπηση */
+  const goToPosition = (i: number) => {
+    const at = Math.max(0, Math.min(i, blocks.length - 1))
+    setCursor(at)
+    const el = document.getElementById(`oc-block-${at}`)
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 110 })
+    setGoTo(g => ({ i: at, n: (g?.n ?? 0) + 1 }))
+  }
+
+  /** Σε ποια ενότητα βρισκόμαστε — η τελευταία επικεφαλίδα πριν τον δείκτη */
+  const hereSection = useMemo(() => {
+    for (let i = Math.min(cursor, blocks.length - 1); i >= 0; i--) {
+      const b = blocks[i]
+      if (b?.type === 'section' && b.title) return String(b.title)
+    }
+    return ''
+  }, [cursor, blocks])
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/oc/campaigns?desk=${encodeURIComponent(desk)}`, { cache: 'no-store' })
@@ -363,6 +430,59 @@ export default function OcCampaigns({ desk }: { desk: string }) {
   }
 
   /**
+   * ΔΥΟ ΧΩΡΙΣΤΑ ΓΡΑΦΕΙΑ, όχι ένα με διακόπτη.
+   *
+   * Το μήνυμα και το τεύχος είναι διαφορετικά πράγματα: άλλοι παραλήπτες,
+   * άλλη διαδρομή αποστολής, άλλο υποσέλιδο. Όταν ο διακόπτης μοιραζόταν την
+   * ίδια κατάσταση, ένα κλικ στο «Μήνυμα» έσερνε ογδόντα μπλοκ τεύχους μέσα
+   * σε ένα απλό email — και το αντίστροφο. Τώρα η κάθε πλευρά κρατά τη δική
+   * της δουλειά στο ράφι και τη βρίσκει όπως την άφησε.
+   *
+   * Ράφι στη ΜΝΗΜΗ, όχι στο Strapi: είναι η μισοτελειωμένη σκέψη της στιγμής.
+   * Ό,τι πρέπει να επιβιώσει, αποθηκεύεται ρητά ως προσχέδιο.
+   */
+  interface Bench {
+    subject: string; blocks: Block[]; selection: Selection; cc: string[]
+    footerStyle: string; footerLook: string; footerLogo: boolean
+    headerStyle: string; headerLogo: boolean; footer: NewsletterFooter | null
+    audiences: string[]; editingId: string | null; editingSubject: string; scheduleAt: string
+  }
+  const bench = useRef<Partial<Record<'message' | 'newsletter', Bench>>>({})
+
+  const snapshot = (): Bench => ({
+    subject, blocks, selection, cc, footerStyle, footerLook, footerLogo,
+    headerStyle, headerLogo, footer, audiences, editingId, editingSubject, scheduleAt,
+  })
+  const restore = (b: Bench | undefined) => {
+    setSubject(b?.subject ?? '')
+    setBlocks(b?.blocks ?? [])
+    setSelection(b?.selection ?? {})
+    setCc(b?.cc ?? [])
+    setFooterStyle(b?.footerStyle ?? 'signature')
+    setFooterLook(b?.footerLook ?? 'plain')
+    setFooterLogo(b?.footerLogo ?? false)
+    setHeaderStyle(b?.headerStyle ?? 'coral')
+    setHeaderLogo(b?.headerLogo ?? false)
+    setFooter(b?.footer ?? null)
+    setAudiences(b?.audiences ?? [])
+    setEditingId(b?.editingId ?? null)
+    setEditingSubject(b?.editingSubject ?? '')
+    setScheduleAt(b?.scheduleAt ?? '')
+    // Η προεπισκόπηση ξαναχτίζεται από τα νέα μπλοκ· χωρίς καθάρισμα θα
+    // έδειχνε για μια στιγμή το ΑΛΛΟ γράμμα, που είναι το ίδιο το μπέρδεμα
+    // που θέλουμε να λύσουμε.
+    setPreview('')
+  }
+
+  const switchKind = (next: 'message' | 'newsletter') => {
+    if (next === kind) return
+    bench.current[kind] = snapshot()
+    restore(bench.current[next])
+    setKind(next)
+    setNotice(null)
+  }
+
+  /**
    * Άνοιγμα υπάρχοντος προσχεδίου στον συνθέτη.
    *
    * Η ΕΠΙΛΟΓΗ παραληπτών έρχεται από το αποθηκευμένο Selection. Αν λείπει
@@ -377,12 +497,16 @@ export default function OcCampaigns({ desk }: { desk: string }) {
       const d = await res.json()
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
       const c = d.campaign || {}
+      // Το προσχέδιο μπορεί να είναι της άλλης πλευράς· ό,τι δουλεύεται εδώ
+      // πάει στο ράφι πριν αλλάξει το γραφείο, αλλιώς χάνεται αθόρυβα.
+      const opened: 'message' | 'newsletter' = c.Kind === 'newsletter' ? 'newsletter' : 'message'
+      if (opened !== kind) bench.current[kind] = snapshot()
       setEditingId(c.documentId || id)
       setEditingSubject(String(c.Subject || ''))
       setSubject(String(c.Subject || ''))
       setBlocks(Array.isArray(c.Blocks) ? c.Blocks : [])
       setCc(Array.isArray(c.Cc) ? c.Cc : [])
-      setKind(c.Kind === 'newsletter' ? 'newsletter' : 'message')
+      setKind(opened)
       setAudiences(Array.isArray(c.Groups) ? c.Groups : [])
       setFooterStyle(c.FooterStyle || 'signature'); setFooterLook(c.FooterLook || 'plain')
       setFooterLogo(!!c.FooterLogo); setHeaderStyle(c.HeaderStyle || 'coral'); setHeaderLogo(!!c.HeaderLogo)
@@ -462,7 +586,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
               { id: 'newsletter', label: 'Newsletter' },
             ] as const).map(k => (
               <button key={k.id} type="button" role="tab" aria-selected={kind === k.id}
-                onClick={() => { setKind(k.id); setNotice(null) }}
+                onClick={() => switchKind(k.id)}
                 className={`px-4 min-h-11 rounded-full text-sm font-semibold ${
                   kind === k.id ? 'bg-coral text-charcoal' : 'text-gray-600 dark:text-gray-300'}`}>
                 {k.label}
@@ -493,7 +617,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
       {tab === 'queue' || tab === 'drafts' ? (
         <QueueView campaigns={campaigns} onChanged={load} onEdit={openDraft} mode={tab} />
       ) : (
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] items-start">
+        <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,30rem)] items-start">
           <div className="grid gap-6 min-w-0">
 
             <div className={CARD}>
@@ -658,6 +782,8 @@ export default function OcCampaigns({ desk }: { desk: string }) {
             )}
 
           </div>
+
+          <PositionRail count={blocks.length} cursor={cursor} here={hereSection} onGo={goToPosition} />
 
           <aside className="lg:sticky lg:top-24 min-w-0">
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-5 sm:p-6 border border-gray-200 dark:border-gray-600">
@@ -985,6 +1111,53 @@ function FullPreview({ html, onClose }: { html: string; onClose: () => void }) {
 const BLOCK_DND = 'application/x-oc-block'
 
 /**
+ * Ο κάθετος ολισθητήρας θέσης, ανάμεσα στα στοιχεία και την προεπισκόπηση.
+ *
+ * Κινεί ΚΑΙ ΤΑ ΔΥΟ μαζί: κυλά τη λίστα των στοιχείων και στέλνει την ίδια
+ * θέση στην προεπισκόπηση. Δεν τα κλειδώνει όμως — η ανεξάρτητη κύλιση σε
+ * καθένα συνεχίζει να δουλεύει, και όταν κυλήσεις με το χέρι ο δείκτης
+ * ακολουθεί, ώστε η λαβή να μη λέει ψέματα για το πού βρίσκεσαι.
+ *
+ * Κάθετο input[type=range] μέσω `writing-mode` — ο τυποποιημένος τρόπος. Το
+ * παλιό `-webkit-appearance:slider-vertical` ΔΕΝ μπαίνει: βάζει το ελάχιστο
+ * κάτω, δηλαδή ανάποδα, και τα δύο μαζί δίνουν διαφορετική φορά ανά browser.
+ */
+function PositionRail({ count, cursor, here, onGo }: {
+  count: number; cursor: number; here: string; onGo: (i: number) => void
+}) {
+  /**
+   * Χωρίς ράγα μένει ΚΕΝΟ ΚΕΛΙ, δεν εξαφανίζεται το παιδί.
+   *
+   * Το πλέγμα έχει τρεις στήλες. Με δύο μόνο παιδιά, η προεπισκόπηση έπεφτε
+   * στη μεσαία στήλη — την `auto` — και έπαιρνε το πλάτος του περιεχομένου
+   * της, στραγγαλίζοντας τη στήλη των στοιχείων σε μια λωρίδα. Το αρνητικό
+   * περιθώριο ακυρώνει το ένα από τα δύο κενά που αφήνει ένα μηδενικό κελί.
+   */
+  if (count < 5) return <div aria-hidden="true" className="hidden lg:block w-0 lg:-mx-3" />
+  const at = Math.min(Math.max(cursor, 0), count - 1)
+  const step = (
+    <span className="text-[10px] tabular-nums text-gray-500 dark:text-gray-400">{at + 1}/{count}</span>
+  )
+  return (
+    <div className="hidden lg:flex sticky top-24 flex-col items-center gap-2 py-3 px-1 rounded-full border border-gray-200 dark:border-gray-600 bg-white/90 dark:bg-gray-800/90 backdrop-blur">
+      <button type="button" onClick={() => onGo(0)} title="Στην αρχή του τεύχους" aria-label="Στην αρχή του τεύχους"
+        className="w-7 h-7 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">⤒</button>
+      <input type="range" min={0} max={count - 1} value={at}
+        onChange={e => onGo(Number(e.target.value))}
+        aria-label="Θέση στο τεύχος"
+        title={here ? `${at + 1}/${count} · ${here}` : `${at + 1}/${count}`}
+        className="oc-vrange accent-coral cursor-pointer" />
+      <button type="button" onClick={() => onGo(count - 1)} title="Στο τέλος του τεύχους" aria-label="Στο τέλος του τεύχους"
+        className="w-7 h-7 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">⤓</button>
+      {step}
+    </div>
+  )
+}
+
+/** Η σειρά της παλέτας ανήκει στον συντάκτη, όχι στο προσχέδιο */
+const PALETTE_ORDER_KEY = 'oc-palette-order'
+
+/**
  * Το υποσέλιδο του τεύχους.
  *
  * Επτά διατάξεις του ίδιου υλικού, και δίπλα τους τα κείμενα που αλλάζουν
@@ -1096,6 +1269,63 @@ function BlockEditor({ blocks, setBlocks, meta, onReveal }: {
   const [pickerAt, setPickerAt] = useState<number | null>(null)
 
   /**
+   * Η σειρά της παλέτας — ΜΙΑ, για όλες τις λίστες.
+   *
+   * Τα chip εμφανίζονται σε δύο σημεία (στο «+» ανάμεσα στα μπλοκ και στο
+   * κουτί στο τέλος). Αν η κάθε λίστα κρατούσε δική της σειρά, το σύρσιμο
+   * στη μία δεν θα φαινόταν στην άλλη και ο συντάκτης θα τις ρύθμιζε δύο
+   * φορές. Γι' αυτό η σειρά ζει εδώ, ψηλότερα και από τις δύο.
+   */
+  const [paletteOrder, setPaletteOrder] = useState<string[]>([])
+  // Διαβάζεται ΜΕΤΑ την πρώτη απόδοση: στον server δεν υπάρχει localStorage
+  // και μια διαφορετική πρώτη εικόνα θα έσπαγε την ενυδάτωση.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PALETTE_ORDER_KEY)
+      const v = raw ? JSON.parse(raw) : null
+      if (Array.isArray(v)) setPaletteOrder(v.filter((x: unknown) => typeof x === 'string'))
+    } catch { /* ιδιωτικό παράθυρο ή κλειδωμένη αποθήκευση — μένει η φυσική σειρά */ }
+  }, [])
+  const paletteTypes = useMemo(
+    () => mergePaletteOrder(paletteOrder, Object.keys(meta.blockLabels)),
+    [paletteOrder, meta.blockLabels],
+  )
+  const [chipFrom, setChipFrom] = useState<string | null>(null)
+  const reorderChip = (target: string) => {
+    if (!chipFrom) return
+    const next = movePaletteChip(paletteTypes, chipFrom, target)
+    setPaletteOrder(next)
+    setChipFrom(null)
+    try { localStorage.setItem(PALETTE_ORDER_KEY, JSON.stringify(next)) } catch { /* ισχύει τουλάχιστον για τη συνεδρία */ }
+  }
+
+  /** Τα ίδια chip, στις δύο λίστες — αλλάζει μόνο πού προσγειώνεται το κλικ */
+  const paletteChips = (onPick: (type: string) => void) => (
+    <div className="flex flex-wrap gap-2">
+      {paletteTypes.map(type => (
+        <button key={type} type="button" draggable
+          onDragStart={e => {
+            setChipFrom(type)
+            e.dataTransfer.setData(BLOCK_DND, type)
+            e.dataTransfer.effectAllowed = 'copyMove'
+          }}
+          onDragEnd={() => setChipFrom(null)}
+          onDragOver={e => { if (chipFrom) { e.preventDefault(); e.dataTransfer.dropEffect = 'move' } }}
+          // ΧΩΡΙΣ stopPropagation το ίδιο αφήσιμο θα μετρούσε και ως πτώση
+          // στη γραμμή «+» από κάτω: θα άλλαζε η σειρά ΚΑΙ θα προστίθετο μπλοκ.
+          onDrop={e => { if (!chipFrom) return; e.preventDefault(); e.stopPropagation(); reorderChip(type) }}
+          onClick={() => onPick(type)}
+          title={`${meta.blockLabels[type]} — κλικ για προσθήκη · σύρσιμο στη λίστα για θέση · σύρσιμο πάνω σε άλλο chip για σειρά`}
+          className={`${CHIP} cursor-grab active:cursor-grabbing border-gray-300 dark:border-gray-600 hover:border-coral bg-white dark:bg-gray-800 ${
+            chipFrom === type ? 'opacity-50' : ''}`}>
+          {meta.blockLabels[type]}
+        </button>
+      ))}
+    </div>
+  )
+
+
+  /**
    * Η γραμμή ανάμεσα σε δύο μπλοκ: και κουμπί «+» και στόχος για σύρσιμο.
    *
    * Με 85 μπλοκ, το «πρόσθεσε στο τέλος και ανέβασέ το» ήταν εξήντα πατήματα.
@@ -1142,14 +1372,7 @@ function BlockEditor({ blocks, setBlocks, meta, onReveal }: {
               <button type="button" onClick={() => setPickerAt(null)}
                 aria-label="Κλείσιμο" className="ml-auto text-sm text-gray-500 hover:text-coral">✕</button>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(meta.blockLabels).map(([type, label]) => (
-                <button key={type} type="button" onClick={() => insertAt(at, type)}
-                  className={`${CHIP} border-gray-300 dark:border-gray-600 hover:border-coral bg-white dark:bg-gray-800`}>
-                  {label}
-                </button>
-              ))}
-            </div>
+            {paletteChips(type => insertAt(at, type))}
           </div>
         )}
       </div>
@@ -1312,7 +1535,7 @@ function BlockEditor({ blocks, setBlocks, meta, onReveal }: {
         {blocks.map((b, i) => (
           <Fragment key={i}>
           {inserter(i)}
-          <div id={`oc-block-${i}`}
+          <div id={`oc-block-${i}`} data-block-index={i}
             onDragOver={e => over(e, i)}
             onDragLeave={() => setDragOver(o => (o === i ? null : o))}
             onDrop={e => drop(e, i)}
@@ -1404,20 +1627,7 @@ function BlockEditor({ blocks, setBlocks, meta, onReveal }: {
           Τα chip σύρονται κιόλας: κλικ = στο τέλος, σύρσιμο = στη θέση που θες. */}
       <div className="mt-6 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 p-4 bg-gray-50/60 dark:bg-gray-900/40">
         <h4 className={`${EYEBROW} mb-3`}>ΣΤΟΙΧΕΙΑ ΠΡΟΣ ΠΡΟΣΘΗΚΗ</h4>
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(meta.blockLabels).map(([type, label]) => (
-            <button key={type} type="button" draggable
-              onDragStart={e => {
-                e.dataTransfer.setData(BLOCK_DND, type)
-                e.dataTransfer.effectAllowed = 'copy'
-              }}
-              onClick={() => insertAt(blocks.length, type)}
-              title={`${label} — κλικ: στο τέλος · σύρσιμο: στη θέση που θες`}
-              className={`${CHIP} cursor-grab active:cursor-grabbing border-gray-300 dark:border-gray-600 hover:border-coral bg-white dark:bg-gray-800`}>
-              {label}
-            </button>
-          ))}
-        </div>
+        {paletteChips(type => insertAt(blocks.length, type))}
       </div>
 
       <details className="mt-4">
@@ -1441,7 +1651,7 @@ function newBlock(type: string, tocDefault = ''): Block {
     case 'text': return { type, html: '' }
     case 'image': return { type, src: '', alt: '', size: 'full', align: 'center', band: 'none' }
     case 'imageText': return { type, src: '', alt: '', html: '', side: 'left', size: 'medium', band: 'none', valign: 'top' }
-    case 'card': return { type, title: '', html: '' }
+    case 'card': return { type, title: '', html: '', imgPos: 'top', imgSize: 'full', imgAlign: 'center', tone: 'cream', width: 'inset' }
     case 'person': return { type, name: '', role: '', html: '' }
     case 'logos': return { type, items: [] }
     // Προσυμπληρωμένος, ώστε να φαίνεται τι θα δει ο παραλήπτης αν δεν αλλάξει τίποτα
@@ -1550,7 +1760,55 @@ function BlockFields({ block: b, onChange, tocDefault = '' }: {
         {line('Σύνδεσμος στον οποίο οδηγεί η εικόνα (προαιρετικό)', 'href')}
       </div>
     )
-    case 'card': return <div className="grid gap-2">{line('Τίτλος', 'title')}{rich('Κείμενο')}<ImageField src={b.src || ''} alt={b.alt || ''} mediaId={b.mediaId} branded={b.branded} origSrc={b.origSrc} origMediaId={b.origMediaId} onChange={onChange} />{line('Κουμπί — ετικέτα', 'buttonLabel')}{line('Κουμπί — σύνδεσμος', 'buttonHref')}</div>
+    case 'card': {
+      const pos = b.imgPos || 'top'
+      const stacked = pos === 'top' || pos === 'bottom'
+      return (
+        <div className="grid gap-3">
+          {line('Τίτλος', 'title')}
+          {rich('Κείμενο')}
+          <ImageField src={b.src || ''} alt={b.alt || ''} mediaId={b.mediaId}
+            branded={b.branded} origSrc={b.origSrc} origMediaId={b.origMediaId} onChange={onChange} />
+          {/* Χωρίς φωτογραφία οι επιλογές θέσης δεν έχουν τι να τοποθετήσουν */}
+          {b.src && (
+            <>
+              <Choice label="Μέγεθος εικόνας" value={b.imgSize || 'full'} onChange={v => onChange({ imgSize: v })}
+                options={stacked
+                  ? [
+                    { value: 'full', label: 'Πλήρες πλάτος' }, { value: 'large', label: 'Μεγάλη' },
+                    { value: 'medium', label: 'Μεσαία' }, { value: 'small', label: 'Μικρή' },
+                  ]
+                  : [
+                    { value: 'large', label: 'Μεγάλη' }, { value: 'medium', label: 'Μεσαία' },
+                    { value: 'small', label: 'Μικρή' },
+                  ]} />
+              {/* Η στοίχιση έχει νόημα μόνο όταν η εικόνα δεν γεμίζει την κάρτα */}
+              {stacked && (b.imgSize || 'full') !== 'full' && (
+                <Choice label="Στοίχιση" value={b.imgAlign || 'center'} onChange={v => onChange({ imgAlign: v })}
+                  options={[
+                    { value: 'left', label: 'Αριστερά' }, { value: 'center', label: 'Κέντρο' }, { value: 'right', label: 'Δεξιά' },
+                  ]} />
+              )}
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Η θέση της εικόνας αλλάζει από το μενού πάνω δεξιά στο στοιχείο.
+              </p>
+            </>
+          )}
+          <Choice label="Φόντο" value={b.tone || 'cream'} onChange={v => onChange({ tone: v })}
+            options={[
+              { value: 'cream', label: 'Κρεμ (ως τώρα)' }, { value: 'coral', label: 'Coral' },
+              { value: 'tint', label: 'Απαλό coral' }, { value: 'dark', label: 'Σκούρο' },
+              { value: 'white', label: 'Λευκό με περίγραμμα' }, { value: 'none', label: 'Χωρίς φόντο' },
+            ]} />
+          <Choice label="Πλάτος" value={b.width || 'inset'} onChange={v => onChange({ width: v })}
+            options={[
+              { value: 'inset', label: 'Ένθετη (ως τώρα)' }, { value: 'full', label: 'Ζώνη πλήρους πλάτους' },
+            ]} />
+          {line('Κουμπί — ετικέτα', 'buttonLabel')}
+          {line('Κουμπί — σύνδεσμος', 'buttonHref')}
+        </div>
+      )
+    }
     case 'person': return <div className="grid gap-2">{line('Όνομα', 'name')}{line('Ιδιότητα', 'role')}<ImageField src={b.src || ''} alt={b.alt || ''} mediaId={b.mediaId} branded={b.branded} origSrc={b.origSrc} origMediaId={b.origMediaId} onChange={onChange} />{rich('Κείμενο')}</div>
     case 'button': return <div className="grid gap-2">{line('Ετικέτα', 'label')}{line('Σύνδεσμος', 'href', 'https://…')}</div>
     case 'box': return <div className="grid gap-2">{line('Τίτλος (προαιρετικό)', 'title')}{rich('Κείμενο')}</div>
@@ -1649,6 +1907,14 @@ function ImageField({ src, alt, mediaId, branded, origSrc, origMediaId, onChange
   const [busy, setBusy] = useState(false)
   const [branding, setBranding] = useState(false)
   const [err, setErr] = useState('')
+  /** Κρατιέται αρχείο πάνω από το πλαίσιο; */
+  const [hovering, setHovering] = useState(false)
+  /** Μόλις έγινε αντικατάσταση — το λέει για λίγο και σβήνει */
+  const [swapped, setSwapped] = useState(false)
+  // Το χρονόμετρο ακυρώνεται στην αποσύνδεση: αλλιώς μια δεύτερη
+  // αντικατάσταση θα έσβηνε το μήνυμα της πρώτης στη μέση.
+  const swapTimer = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(swapTimer.current), [])
 
   /**
    * Το σήμα δημιουργεί ΝΕΟ αρχείο και κρατά το πρωτότυπο, ώστε το ξετικάρισμα
@@ -1679,14 +1945,48 @@ function ImageField({ src, alt, mediaId, branded, origSrc, origMediaId, onChange
     } catch (e: any) { setErr(e?.message || 'Αποτυχία') } finally { setBranding(false) }
   }
 
+  /**
+   * Ό,τι έρχεται από Finder ή Explorer.
+   *
+   * Το είδος ελέγχεται ΕΔΩ και όχι μόνο στον server: ένα PDF ή ένας φάκελος
+   * που πέφτει κατά λάθος πρέπει να το πει αμέσως, όχι μετά από ανέβασμα.
+   */
+  const accept = (list: FileList | null) => {
+    const f = list?.[0]
+    if (!f) return
+    if (!/^image\/(png|jpeg|webp|gif)$/.test(f.type)) {
+      setErr('Μόνο εικόνες — PNG, JPG, WEBP ή GIF')
+      return
+    }
+    upload(f)
+  }
+
   const upload = async (f: File) => {
     setBusy(true); setErr('')
+    // Τα παλιά αρχεία σημειώνονται ΠΡΙΝ αντικατασταθούν — μετά δεν υπάρχει
+    // τρόπος να τα βρει κανείς, και μένουν για πάντα στη Βιβλιοθήκη.
+    const stale = [mediaId, origMediaId].filter((x): x is number => Number.isInteger(x))
     try {
       const fd = new FormData(); fd.append('file', f)
       const res = await fetch('/api/oc/campaigns/image', { method: 'POST', body: fd })
       const d = await res.json()
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία ανεβάσματος')
-      onChange({ src: d.url, mediaId: d.id, alt: alt || d.name.replace(/\.[a-z]+$/i, '') })
+      onChange({
+        src: d.url, mediaId: d.id, alt: alt || d.name.replace(/\.[a-z]+$/i, ''),
+        // ΠΡΕΠΕΙ να καθαρίσουν: αλλιώς η νέα φωτογραφία κληρονομεί το σήμα
+        // της προηγούμενης, και το «Χωρίς σήμα» θα επανέφερε ΤΗΝ ΠΑΛΙΑ εικόνα.
+        branded: undefined, origSrc: undefined, origMediaId: undefined,
+      })
+      if (src) {
+        setSwapped(true)
+        window.clearTimeout(swapTimer.current)
+        swapTimer.current = window.setTimeout(() => setSwapped(false), 3000)
+      }
+      // Καλύτερης προσπάθειας: η διαδρομή αρνείται να σβήσει αρχείο που
+      // χρησιμοποιεί σταλμένο μήνυμα, και αυτό είναι το σωστό.
+      for (const id of stale) {
+        await fetch(`/api/oc/campaigns/image?id=${id}`, { method: 'DELETE' }).catch(() => {})
+      }
     } catch (e: any) { setErr(e?.message || 'Αποτυχία') } finally { setBusy(false) }
   }
 
@@ -1703,27 +2003,66 @@ function ImageField({ src, alt, mediaId, branded, origSrc, origMediaId, onChange
     onChange({ src: '', mediaId: undefined })
   }
 
+  const hasFiles = (dt: DataTransfer | null) => !!dt && Array.from(dt.types).includes('Files')
+
   return (
-    <div className="grid gap-2">
+    <div
+      onDragOver={e => {
+        if (!hasFiles(e.dataTransfer)) return
+        // Χωρίς stopPropagation το ίδιο σύρσιμο θα το χρέωνε και η γραμμή «+»
+        // από κάτω, που θα φώτιζε σαν να πρόκειται να μπει νέο μπλοκ.
+        e.preventDefault(); e.stopPropagation()
+        e.dataTransfer.dropEffect = 'copy'
+        setHovering(true)
+      }}
+      onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setHovering(false) }}
+      onDrop={e => {
+        if (!hasFiles(e.dataTransfer)) return
+        e.preventDefault(); e.stopPropagation()
+        setHovering(false)
+        accept(e.dataTransfer.files)
+      }}
+      // Σταθερό περίγραμμα και περιθώριο, ΜΟΝΟ το χρώμα αλλάζει: αν το
+      // πλαίσιο εμφανιζόταν μόνο στο hover, όλη η φόρμα θα αναπηδούσε τη
+      // στιγμή που κρατάς ένα αρχείο από πάνω.
+      className={`grid gap-2 rounded-xl border-2 border-dashed p-2 -m-2 transition-colors ${
+        hovering ? 'border-coral bg-coral/5' : 'border-transparent'}`}>
       {src ? (
         <div className="flex items-start gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={src} alt="" className="w-20 h-20 object-cover rounded-lg border border-gray-200 dark:border-gray-600" />
+          <div className="relative shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={src} alt=""
+              className={`w-20 h-20 object-cover rounded-lg border border-gray-200 dark:border-gray-600 transition-opacity ${
+                hovering || busy ? 'opacity-30' : ''}`} />
+            {/* Η αντικατάσταση φαίνεται ΠΑΝΩ στη μικρογραφία — εκεί κοιτάς
+                όταν κρατάς το αρχείο, όχι σε ένα μήνυμα δίπλα. */}
+            {(hovering || busy) && (
+              <span className="absolute inset-0 grid place-items-center rounded-lg border-2 border-dashed border-coral bg-white/75 dark:bg-gray-900/75 px-1 text-center text-[10px] font-bold leading-tight text-coral">
+                {busy ? 'Ανεβαίνει…' : 'Αντικατάσταση'}
+              </span>
+            )}
+          </div>
           <div className="min-w-0 flex-1 grid gap-1">
             <span className="text-xs text-gray-600 dark:text-gray-400 truncate" translate="no">{src}</span>
             <span className="text-xs text-gray-500">{mediaId ? 'Στη Βιβλιοθήκη Πολυμέσων' : 'Εξωτερικός σύνδεσμος'}</span>
+            {hovering && <span className="text-xs font-semibold text-coral">Άφησέ την εδώ για αντικατάσταση</span>}
+            {busy && <span className="text-xs font-semibold text-coral">Ανεβαίνει η νέα εικόνα…</span>}
+            {swapped && !busy && <span className="text-xs font-semibold text-coral">Η εικόνα αντικαταστάθηκε</span>}
           </div>
-          <button type="button" onClick={remove} className="px-3 py-1.5 text-sm rounded-full border border-gray-300 dark:border-gray-600 text-red-700 dark:text-red-300">Αφαίρεση</button>
+          <button type="button" onClick={remove} disabled={busy}
+            className="px-3 py-1.5 text-sm rounded-full border border-gray-300 dark:border-gray-600 text-red-700 dark:text-red-300 disabled:opacity-40">Αφαίρεση</button>
         </div>
       ) : (
         <div className="flex flex-wrap gap-2 items-center">
           <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden"
-            onChange={e => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = '' }} />
+            onChange={e => { accept(e.target.files); e.target.value = '' }} />
           <button type="button" onClick={() => fileRef.current?.click()} disabled={busy}
             className="px-4 min-h-11 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-semibold disabled:opacity-50">
             {busy ? 'Ανεβαίνει…' : 'Από τον υπολογιστή'}
           </button>
-          <span className="text-xs text-gray-500">ή</span>
+          <span className="text-xs text-gray-500">
+            {hovering ? 'Άφησέ την εδώ' : 'ή σύρε ένα αρχείο εδώ · ή'}
+          </span>
           <input value={src} onChange={e => onChange({ src: e.target.value, mediaId: undefined })}
             className={`flex-1 min-w-40 ${IN}`} placeholder="https://… σύνδεσμος εικόνας" translate="no" />
         </div>
@@ -2379,6 +2718,14 @@ function QueueView({ campaigns, onChanged, onEdit, mode }: {
         return (
           <div key={c.documentId} className={CARD}>
             <div className="flex flex-wrap items-baseline gap-2">
+              {/* Το είδος ΠΡΙΝ από το θέμα: καθορίζει σε ποιον συνθέτη θα
+                  ανοίξει και με ποια διαδρομή θα φύγει — δεν είναι λεπτομέρεια. */}
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                c.Kind === 'newsletter'
+                  ? 'bg-coral text-charcoal'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}>
+                {c.Kind === 'newsletter' ? 'Newsletter' : 'Μήνυμα'}
+              </span>
               <span className="font-semibold min-w-0">{c.Subject}</span>
               <span className="ml-auto text-xs px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-900">{STATE_LABELS[c.State] || c.State}</span>
             </div>

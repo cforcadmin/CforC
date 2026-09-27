@@ -187,6 +187,32 @@ describe('Προσχέδια που μοιράζονται δύο έδρες', (
     expect(seen.url).toContain('kept1')
   })
 
+  it('ένα προσχέδιο ΔΕΝ αλλάζει είδος — τεύχος δεν γίνεται μήνυμα', async () => {
+    // Αλλιώς το τεύχος θα έφευγε από τη διαδρομή των μηνυμάτων, δηλαδή χωρίς
+    // σύνδεσμο απεγγραφής — που δεν είναι απλώς λάθος, είναι παράβαση.
+    signedInAs('comms')
+    const seen = capture({ Desk: 'comms', Kind: 'newsletter', Signer: { email: 'communication@cultureforchange.net' } })
+    const r = await post(body({ id: 'kept1', kind: 'message' }))
+    expect(r.status).toBe(409)
+    expect(seen.method).toBeUndefined()
+  })
+
+  it('ίδιο είδος περνά κανονικά', async () => {
+    signedInAs('comms')
+    const seen = capture({ Desk: 'comms', Kind: 'newsletter', Signer: { email: 'communication@cultureforchange.net' } })
+    await post(body({ id: 'kept1', kind: 'newsletter' }))
+    expect(seen.method).toBe('PUT')
+  })
+
+  it('παλιό προσχέδιο χωρίς Kind δεν μπλοκάρεται', async () => {
+    // Το πεδίο μπορεί να μην έχει βγει ακόμη· μια άρνηση εδώ θα σταματούσε
+    // ΚΑΘΕ αποθήκευση σε κάθε παλιά εγγραφή.
+    signedInAs('comms')
+    const seen = capture({ Desk: 'comms', Signer: { email: 'communication@cultureforchange.net' } })
+    await post(body({ id: 'kept1', kind: 'message' }))
+    expect(seen.method).toBe('PUT')
+  })
+
   it('αποθηκεύεται η ΕΠΙΛΟΓΗ, όχι μόνο οι λυμένοι παραλήπτες', async () => {
     // Αλλιώς το άνοιγμα του προσχεδίου θα έδειχνε 113 ονόματα αντί «όλα τα μέλη»
     signedInAs('media')

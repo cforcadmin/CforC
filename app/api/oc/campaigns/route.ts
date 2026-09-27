@@ -216,7 +216,10 @@ const CAMPAIGN_FIELDS_BASE =
 // αδέλφια του — η λίστα έρχεται κενή και οι καμπάνιες μοιάζουν χαμένες.
 const CAMPAIGN_FIELDS_SIGNER = CAMPAIGN_FIELDS_BASE + '&fields[12]=Signer'
 const CAMPAIGN_FIELDS_ARCHIVE = CAMPAIGN_FIELDS_SIGNER + '&fields[13]=Archived&fields[14]=ArchivedAt'
-const CAMPAIGN_FIELDS = CAMPAIGN_FIELDS_ARCHIVE + '&fields[15]=Desk'
+const CAMPAIGN_FIELDS_DESK = CAMPAIGN_FIELDS_ARCHIVE + '&fields[15]=Desk'
+// Το είδος: η λίστα πρέπει να ξεχωρίζει μήνυμα από τεύχος, αλλιώς ανοίγεις
+// ένα προσχέδιο και ο συνθέτης δεν ξέρει σε ποια από τις δύο διαδρομές ανήκει.
+const CAMPAIGN_FIELDS = CAMPAIGN_FIELDS_DESK + '&fields[16]=Kind'
 
 /**
  * Θυρίδα → γραφείο. Χτίζεται από τις ΙΔΙΕΣ πηγές που ορίζουν ποιος στέλνει
@@ -271,6 +274,29 @@ async function assertOwnership(id: string, seat: OcSeat): Promise<NextResponse |
 }
 
 /**
+ * Ένα προσχέδιο ΔΕΝ αλλάζει είδος.
+ *
+ * Μήνυμα και τεύχος έχουν άλλη διαδρομή αποστολής, άλλους παραλήπτες και
+ * άλλο υποσέλιδο· ένα «μήνυμα» αποθηκευμένο πάνω σε τεύχος θα έστελνε το
+ * τεύχος χωρίς σύνδεσμο απεγγραφής, που είναι και παράβαση. Ο συνθέτης
+ * κρατά πια χωριστές καταστάσεις ανά είδος — αυτό είναι η δεύτερη γραμμή.
+ *
+ * Αν το πεδίο Kind δεν έχει βγει ακόμη στο Strapi, ΔΕΝ μπλοκάρουμε: μια
+ * άρνηση εδώ θα σταματούσε κάθε αποθήκευση σε κάθε παλιό προσχέδιο.
+ */
+async function assertKindMatches(id: string, kind: string): Promise<NextResponse | null> {
+  const r = await strapi(`/oc-campaigns/${id}?fields[0]=Kind`)
+  if (!r.ok) return null
+  const stored = r.json?.data?.Kind
+  if (!stored || stored === kind) return null
+  return NextResponse.json({
+    error: stored === 'newsletter'
+      ? 'Αυτό το προσχέδιο είναι newsletter — άνοιξέ το από τα Προσχέδια για να το συνεχίσεις'
+      : 'Αυτό το προσχέδιο είναι μήνυμα — άνοιξέ το από τα Προσχέδια για να το συνεχίσεις',
+  }, { status: 409 })
+}
+
+/**
  * Σε ποιο γραφείο δουλεύει αυτό το αίτημα.
  *
  * Το λέει η οθόνη (η ενότητα που είναι ανοιχτή) και το ΕΛΕΓΧΟΥΜΕ: χωρίς
@@ -322,6 +348,7 @@ export async function GET(request: NextRequest) {
     // ακόμη. Χωρίς αυτό δουλεύουμε με τη θυρίδα του υπογράφοντα — ο
     // διαχωρισμός των γραφείων ΔΕΝ περιμένει το deploy του Strapi.
     let list = await strapi(listUrl(CAMPAIGN_FIELDS))
+    if (!list.ok) list = await strapi(listUrl(CAMPAIGN_FIELDS_DESK))
     if (!list.ok) list = await strapi(listUrl(CAMPAIGN_FIELDS_ARCHIVE))
     if (!list.ok) list = await strapi(listUrl(CAMPAIGN_FIELDS_SIGNER))
     let scoped = true
@@ -460,6 +487,8 @@ export async function POST(request: NextRequest) {
       if (id) {
         const denied = await assertOwnership(id, auth.activeSeat)
         if (denied) return denied
+        const wrongKind = await assertKindMatches(id, String(body?.kind || 'message'))
+        if (wrongKind) return wrongKind
       }
       const write = (p: Record<string, any>) => id
         ? strapi(`/oc-campaigns/${id}`, 'PUT', p)
