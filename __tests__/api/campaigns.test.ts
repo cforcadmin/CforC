@@ -213,6 +213,71 @@ describe('Προσχέδια που μοιράζονται δύο έδρες', (
   })
 })
 
+describe('Μήνυμα ή newsletter', () => {
+  afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks() })
+
+  function capture() {
+    const seen: { data?: any } = {}
+    jest.spyOn(global, 'fetch').mockImplementation(async (input: any, init: any) => {
+      const url = typeof input === 'string' ? input : input?.url ?? ''
+      const json = (d: any) => new Response(JSON.stringify(d), { status: 200 })
+      if (url.includes('/api/members?')) return json({ data: members })
+      if (url.includes('/api/working-groups')) return json({ data: [] })
+      if (url.includes('api.sender.net')) return json({ data: [] })
+      if (url.includes('/api/oc-campaigns') && (init?.method === 'POST' || init?.method === 'PUT')) {
+        seen.data = JSON.parse(init.body).data
+        return json({ data: { documentId: 'n1' } })
+      }
+      return json({ data: {} })
+    })
+    return seen
+  }
+  const save = (extra: any = {}) => post({
+    action: 'save', desk: 'comms', subject: 'Τεύχος',
+    blocks: [{ type: 'text', html: '<p>κ</p>' }], selection: {}, ...extra,
+  })
+
+  it('το είδος και οι λίστες αποθηκεύονται', async () => {
+    signedInAs('comms'); const seen = capture()
+    await save({ kind: 'newsletter', audiences: ['paid', 'external'] })
+    expect(seen.data.Kind).toBe('newsletter')
+    expect(seen.data.Groups).toEqual(['paid', 'external'])
+  })
+
+  it('άκυρη λίστα δεν περνά — ούτε οι επαφές τύπου', async () => {
+    signedInAs('media'); const seen = capture()
+    await save({ kind: 'newsletter', audiences: ['media', 'paid', 'ολα'] })
+    expect(seen.data.Groups).toEqual(['paid'])
+  })
+
+  it('newsletter ΜΟΝΟ από την Επικοινωνία — αλλού γίνεται μήνυμα', async () => {
+    // Οι λίστες και τα στατιστικά ζουν στην Επικοινωνία· τα Οικονομικά δεν
+    // έχουν newsletter, όσο κι αν το ζητήσει το αίτημα.
+    signedInAs('financer'); const seen = capture()
+    await save({ desk: 'finances', kind: 'newsletter', audiences: ['paid'] })
+    expect(seen.data.Kind).toBe('message')
+  })
+
+  it('χωρίς είδος, είναι μήνυμα', async () => {
+    signedInAs('comms'); const seen = capture()
+    await save()
+    expect(seen.data.Kind).toBe('message')
+    expect(seen.data.Groups).toEqual([])
+  })
+
+  it('η προεπισκόπηση newsletter δείχνει τη γραμμή απεγγραφής', async () => {
+    signedInAs('comms'); capture()
+    const r = await post({ action: 'preview', kind: 'newsletter', subject: 'Τ', blocks: [{ type: 'text', html: '<p>κ</p>' }] })
+    expect(r.json.html).toContain('{{unsubscribe_link}}')
+  })
+
+  it('η προεπισκόπηση μηνύματος ΔΕΝ τη δείχνει', async () => {
+    signedInAs('comms'); capture()
+    const r = await post({ action: 'preview', subject: 'Τ', blocks: [{ type: 'text', html: '<p>κ</p>' }] })
+    expect(r.json.html).not.toContain('unsubscribe')
+  })
+})
+
 describe('Κάθε γραφείο έχει δικό του γραμματοκιβώτιο', () => {
   afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks() })
 

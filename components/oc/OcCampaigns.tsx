@@ -52,6 +52,8 @@ type Meta = {
   mergeFields: Array<{ token: string; label: string; sample: string }>
   dailyBudget: number
   tocDefaultTitle?: string
+  /** Οι λίστες του Sender, με το τρέχον μέγεθός τους */
+  newsletterLists?: Array<{ id: string; label: string; hint: string; count: number | null }>
   footerStyles?: Array<{ id: string; label: string; hint: string }>
   footerLooks?: Array<{ id: string; label: string; hint: string }>
   headerStyles?: Array<{ id: string; label: string; hint: string }>
@@ -141,6 +143,16 @@ export default function OcCampaigns({ desk }: { desk: string }) {
    * πρέπει να μπορούν να ανοίξουν και να συνεχίσουν το ίδιο, όχι να φτιάχνουν
    * αντίγραφα ο ένας του άλλου.
    */
+  /**
+   * Μήνυμα ή newsletter.
+   *
+   * Ίδιος συνθέτης, δύο εντελώς διαφορετικές διαδρομές: το μήνυμα φεύγει από
+   * εμάς μέσω Resend, ανά παραλήπτη, χωρίς απεγγραφή· το newsletter φεύγει
+   * από τον Sender σε ΛΙΣΤΑ, με υποχρεωτικό σύνδεσμο απεγγραφής. Ο διακόπτης
+   * υπάρχει για να μη μπερδευτούν ποτέ τα δύο.
+   */
+  const [kind, setKind] = useState<'message' | 'newsletter'>('message')
+  const [audiences, setAudiences] = useState<string[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingSubject, setEditingSubject] = useState('')
   const [confirming, setConfirming] = useState(false)
@@ -180,12 +192,12 @@ export default function OcCampaigns({ desk }: { desk: string }) {
       if (!blocks.length && !subject) { setPreview(''); return }
       const res = await fetch('/api/oc/campaigns', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'preview', subject, blocks, footerStyle, footerLook, footerLogo, headerStyle, headerLogo }),
+        body: JSON.stringify({ action: 'preview', kind, subject, blocks, footerStyle, footerLook, footerLogo, headerStyle, headerLogo }),
       })
       if (res.ok) setPreview((await res.json()).html)
     }, 400)
     return () => clearTimeout(t)
-  }, [subject, blocks, footerStyle, footerLook, footerLogo, headerStyle, headerLogo])
+  }, [kind, subject, blocks, footerStyle, footerLook, footerLogo, headerStyle, headerLogo])
 
   /** Κάθε CC μετράει ξανά σε ΚΑΘΕ μήνυμα — γι' αυτό πολλαπλασιάζεται */
   const emailCost = resolved.count * (1 + cc.length)
@@ -196,7 +208,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
     try {
       const res = await fetch('/api/oc/campaigns', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, desk, id: editingId || undefined, subject, blocks, selection, cc, footerStyle, footerLook, footerLogo, headerStyle, headerLogo }),
+        body: JSON.stringify({ action, desk, kind, audiences, id: editingId || undefined, subject, blocks, selection, cc, footerStyle, footerLook, footerLogo, headerStyle, headerLogo }),
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
@@ -224,7 +236,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
   /** Καθαρή σύνθεση — και αποδέσμευση από το προσχέδιο που ήταν ανοιχτό */
   const newMessage = () => {
     setEditingId(null); setEditingSubject('')
-    setSubject(''); setBlocks([]); setSelection({}); setCc([]); setPreview('')
+    setSubject(''); setBlocks([]); setSelection({}); setCc([]); setPreview(''); setAudiences([])
   }
 
   /**
@@ -247,6 +259,8 @@ export default function OcCampaigns({ desk }: { desk: string }) {
       setSubject(String(c.Subject || ''))
       setBlocks(Array.isArray(c.Blocks) ? c.Blocks : [])
       setCc(Array.isArray(c.Cc) ? c.Cc : [])
+      setKind(c.Kind === 'newsletter' ? 'newsletter' : 'message')
+      setAudiences(Array.isArray(c.Groups) ? c.Groups : [])
       setFooterStyle(c.FooterStyle || 'signature'); setFooterLook(c.FooterLook || 'plain')
       setFooterLogo(!!c.FooterLogo); setHeaderStyle(c.HeaderStyle || 'coral'); setHeaderLogo(!!c.HeaderLogo)
       if (c.Selection && typeof c.Selection === 'object' && Object.keys(c.Selection).length) {
@@ -265,6 +279,9 @@ export default function OcCampaigns({ desk }: { desk: string }) {
   }
 
   // Το αρχειοθετημένο δεν μετράει σε καμία από τις δύο: ζει στο Αρχείο
+  // Το newsletter ανήκει στην Επικοινωνία: εκεί ζουν οι λίστες και τα
+  // στατιστικά του Sender. Τα άλλα γραφεία στέλνουν μηνύματα.
+  const canNewsletter = desk === 'comms'
   const draftCount = campaigns.filter(c => c.State === 'draft' && !c.Archived).length
   const sentCount = campaigns.filter(c => c.State !== 'draft' && !c.Archived).length
 
@@ -306,6 +323,29 @@ export default function OcCampaigns({ desk }: { desk: string }) {
         <div className={`rounded-2xl px-4 py-3 text-sm ${notice.kind === 'ok'
           ? 'bg-green-50 text-green-900 dark:bg-green-900/30 dark:text-green-200'
           : 'bg-red-50 text-red-900 dark:bg-red-900/30 dark:text-red-200'}`}>{notice.text}</div>
+      )}
+
+      {tab === 'compose' && canNewsletter && (
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex gap-1 p-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600" role="tablist">
+            {([
+              { id: 'message', label: 'Μήνυμα' },
+              { id: 'newsletter', label: 'Newsletter' },
+            ] as const).map(k => (
+              <button key={k.id} type="button" role="tab" aria-selected={kind === k.id}
+                onClick={() => { setKind(k.id); setNotice(null) }}
+                className={`px-4 min-h-11 rounded-full text-sm font-semibold ${
+                  kind === k.id ? 'bg-coral text-charcoal' : 'text-gray-600 dark:text-gray-300'}`}>
+                {k.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400 min-w-0 flex-1">
+            {kind === 'message'
+              ? 'Σε πρόσωπα, έδρες ή ομάδες. Φεύγει από τη θυρίδα σου, χωρίς σύνδεσμο απεγγραφής.'
+              : 'Στις λίστες του Sender. Φέρει υποχρεωτικά σύνδεσμο απεγγραφής και μετρά ανοίγματα.'}
+          </p>
+        </div>
       )}
 
       {editingId && tab === 'compose' && (
@@ -411,16 +451,28 @@ export default function OcCampaigns({ desk }: { desk: string }) {
               <BlockEditor blocks={blocks} setBlocks={setBlocks} meta={meta} />
             )}
 
-            <div className={CARD}>
-              <div className="flex flex-wrap items-baseline gap-2 mb-1">
-                <h3 className={EYEBROW}>ΠΑΡΑΛΗΠΤΕΣ</h3>
-                <span className="ml-auto text-sm font-bold tabular-nums" translate="no">{resolved.count}</span>
+            {kind === 'newsletter' ? (
+              <div className={CARD}>
+                <h3 className={`${EYEBROW} mb-1`}>ΛΙΣΤΕΣ</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Το newsletter φεύγει σε ΛΙΣΤΕΣ, ποτέ σε διευθύνσεις που γράφει κάποιος με το χέρι —
+                  έτσι δεν φτάνει σε ανθρώπους που δεν το ζήτησαν. Οι λίστες συντηρούνται από τις
+                  εγγραφές και τις απεγγραφές.
+                </p>
+                <NewsletterLists meta={meta} value={audiences} onChange={setAudiences} />
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-5">
-                Συνδύασε όσες επιλογές χρειάζεσαι. Κάθε διεύθυνση μετράει μία φορά, όσες ομάδες κι αν την περιλαμβάνουν.
-              </p>
-              {meta && <RecipientPicker meta={meta} selection={selection} setSelection={setSelection} />}
-            </div>
+            ) : (
+              <div className={CARD}>
+                <div className="flex flex-wrap items-baseline gap-2 mb-1">
+                  <h3 className={EYEBROW}>ΠΑΡΑΛΗΠΤΕΣ</h3>
+                  <span className="ml-auto text-sm font-bold tabular-nums" translate="no">{resolved.count}</span>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-5">
+                  Συνδύασε όσες επιλογές χρειάζεσαι. Κάθε διεύθυνση μετράει μία φορά, όσες ομάδες κι αν την περιλαμβάνουν.
+                </p>
+                {meta && <RecipientPicker meta={meta} selection={selection} setSelection={setSelection} />}
+              </div>
+            )}
 
             <div className={CARD}>
               <h3 className={`${EYEBROW} mb-1`}>ΚΟΙΝΟΠΟΙΗΣΗ (CC)</h3>
@@ -558,6 +610,55 @@ function PreviewFrame({ html }: { html: string }) {
             transform: `scale(${scale})`, transformOrigin: 'top left',
           }} />
       </div>
+    </div>
+  )
+}
+
+/**
+ * Οι δύο λίστες του newsletter.
+ *
+ * Καμία ελεύθερη πληκτρολόγηση εδώ — ούτε καν κρυμμένη. Το μόνο που κάνει ο
+ * συντάκτης είναι να διαλέξει λίστα.
+ */
+function NewsletterLists({ meta, value, onChange }: {
+  meta: Meta | null
+  value: string[]
+  onChange: (v: string[]) => void
+}) {
+  const lists = meta?.newsletterLists || []
+  const total = lists.filter(l => value.includes(l.id)).reduce((n, l) => n + (l.count ?? 0), 0)
+
+  if (!lists.length) {
+    return <p className="text-sm text-gray-600 dark:text-gray-400">Οι λίστες δεν φορτώθηκαν.</p>
+  }
+  return (
+    <div className="grid gap-3">
+      <div className="grid gap-2 sm:grid-cols-2">
+        {lists.map(l => {
+          const on = value.includes(l.id)
+          return (
+            <button key={l.id} type="button"
+              onClick={() => onChange(on ? value.filter(x => x !== l.id) : [...value, l.id])}
+              aria-pressed={on}
+              className={`text-left p-4 rounded-2xl border transition-colors ${
+                on ? 'border-coral bg-coral/10' : 'border-gray-300 dark:border-gray-600 hover:border-coral'}`}>
+              <span className="flex items-baseline gap-2">
+                <span className="font-bold">{l.label}</span>
+                <span className="ml-auto text-lg font-bold tabular-nums" translate="no">
+                  {l.count == null ? '—' : l.count}
+                </span>
+              </span>
+              <span className="block text-xs text-gray-600 dark:text-gray-400 mt-1">{l.hint}</span>
+            </button>
+          )
+        })}
+      </div>
+      <p className="text-sm text-gray-600 dark:text-gray-400">
+        {value.length === 0
+          ? 'Διάλεξε τουλάχιστον μία λίστα.'
+          : <>Θα φύγει σε <strong className="tabular-nums" translate="no">{total}</strong> παραλήπτες
+            {value.length > 1 && ' — όποιος είναι και στις δύο λίστες θα το λάβει δύο φορές, αν το στείλεις μία φορά και στις δύο.'}</>}
+      </p>
     </div>
   )
 }

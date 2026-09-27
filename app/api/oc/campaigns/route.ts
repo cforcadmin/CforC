@@ -10,6 +10,7 @@ import {
   type CampaignMember, type RecipientSelection,
 } from '@/lib/campaignRecipients'
 import { OC_EMAIL_SEATS, OC_DESK_LABELS, canSendEmailFrom, deskOfSeat, isEmailDesk } from '@/components/oc/ocPrefs'
+import { NEWSLETTER_AUDIENCES, senderGroupId, normaliseAudiences } from '@/lib/newsletterAudiences'
 
 // Η «Αποστολή» στέλνει ΤΩΡΑ ό,τι χωράει — χρειάζεται χρόνο, όχι 60 δευτερόλεπτα
 export const maxDuration = 300
@@ -82,6 +83,33 @@ async function authorize() {
     return { error: NextResponse.json({ error: 'Η έδρα σου δεν στέλνει email από το OC' }, { status: 403 }) }
   }
   return { memberId: decoded.memberId, activeSeat }
+}
+
+/**
+ * Τα μεγέθη των λιστών του Sender.
+ *
+ * Best-effort: αν ο Sender δεν απαντήσει, η οθόνη δείχνει «—» αντί για ψεύτικο
+ * νούμερο. Ποτέ μηδέν — ένα «0 παραλήπτες» θα έμοιαζε με άδεια λίστα και θα
+ * οδηγούσε σε λάθος συμπέρασμα.
+ */
+async function newsletterLists() {
+  const key = process.env.SENDER_API_KEY
+  const out = NEWSLETTER_AUDIENCES.map(a => ({ id: a.id, label: a.label, hint: a.hint, count: null as number | null }))
+  if (!key) return out
+  try {
+    const res = await fetch('https://api.sender.net/v2/groups', {
+      headers: { Authorization: `Bearer ${key}`, Accept: 'application/json' },
+      next: { revalidate: 300 },
+    })
+    if (!res.ok) return out
+    const rows = (await res.json())?.data || []
+    for (const a of out) {
+      const gid = senderGroupId(a.id as any)
+      const g = rows.find((x: any) => x.id === gid)
+      if (g) a.count = Number(g.recipient_count ?? g.subscribers_count ?? 0)
+    }
+  } catch { /* η οθόνη δείχνει «—» */ }
+  return out
 }
 
 /** Όλα τα μέλη με ό,τι χρειάζεται η επιλογή — μία φορά, με pagination */
@@ -286,6 +314,8 @@ export async function GET(request: NextRequest) {
       signer: await signerFor(auth.activeSeat),
       dailyBudget: DAILY_EMAIL_BUDGET,
       tocDefaultTitle: TOC_DEFAULT_TITLE,
+      // Μόνο η Επικοινωνία στέλνει newsletter — αλλού η οθόνη δεν το δείχνει
+      newsletterLists: desk === 'comms' ? await newsletterLists() : [],
       seat: auth.activeSeat,
     })
   } catch (err) {
@@ -328,6 +358,9 @@ export async function POST(request: NextRequest) {
         footerLogo: !!body?.footerLogo,
         headerStyle: (body?.headerStyle || 'coral') as HeaderStyle,
         headerLogo: !!body?.headerLogo,
+        // Η προεπισκόπηση πρέπει να δείχνει ΚΑΙ τη γραμμή απεγγραφής, αλλιώς
+        // ο συντάκτης δεν βλέπει ποτέ το γράμμα όπως φτάνει στον παραλήπτη
+        unsubscribe: body?.kind === 'newsletter',
       })
       return NextResponse.json({ html: applyMergeFields(tpl.html, sample), text: tpl.text, subject: tpl.subject })
     }
@@ -351,6 +384,10 @@ export async function POST(request: NextRequest) {
       const desk = deskOfRequest(body?.desk, auth.activeSeat)
       const payload: Record<string, any> = {
         Desk: desk,
+        // Το είδος καθορίζει ΟΛΗ τη διαδρομή αποστολής. Newsletter μόνο από
+        // την Επικοινωνία — αλλού η οθόνη δεν το προσφέρει καν.
+        Kind: body?.kind === 'newsletter' && desk === 'comms' ? 'newsletter' : 'message',
+        Groups: normaliseAudiences(body?.audiences),
         Subject: subject || '(χωρίς θέμα)',
         Preheader: String(body?.preheader || '').trim() || null,
         Blocks: blocks,
@@ -383,23 +420,28 @@ export async function POST(request: NextRequest) {
       const write = (p: Record<string, any>) => id
         ? strapi(`/oc-campaigns/${id}`, 'PUT', p)
         : strapi('/oc-campaigns', 'POST', { ...p, CreatedByName: name })
-      let res = await write(payload)
-      if (!res.ok && res.status === 400) {
-        // Ένα νέο πεδίο που δεν έχει βγει ακόμη στο Strapi Cloud δεν πρέπει να
-        // εμποδίζει την αποθήκευση. Πετάμε ΕΝΑ-ΕΝΑ, από το νεότερο προς το
-        // παλαιότερο (Selection → Desk → στυλ) — αν πετούσαμε όλη την ομάδα
-        // μαζί, η καμπάνια θα έχανε σιωπηλά και την κεφαλίδα και το υποσέλιδο
-        // που διάλεξε ο συντάκτης.
-        const { Selection, ...noSel } = payload
-        res = await write(noSel)
-        if (!res.ok && res.status === 400) {
-          const { Desk, ...noDesk } = noSel
-          res = await write(noDesk)
-        }
-        if (!res.ok && res.status === 400) {
-          const { Desk, FooterStyle, FooterLook, FooterLogo, HeaderStyle, HeaderLogo, Signer, ...rest } = noSel
-          res = await write(rest)
-        }
+      /**
+       * Αποθήκευση με σταδιακή υποχώρηση.
+       *
+       * Ένα πεδίο που δεν έχει βγει ακόμη στο Strapi Cloud γυρίζει 400 και θα
+       * εμπόδιζε ΟΛΗ την αποθήκευση. Πετάμε τα νεότερα πεδία ένα-ένα, από το
+       * νεότερο προς το παλαιότερο, ώστε να χαθεί όσο το δυνατόν λιγότερο: αν
+       * πετούσαμε όλη την ομάδα μαζί, η καμπάνια θα έχανε σιωπηλά και την
+       * κεφαλίδα και το υποσέλιδο που διάλεξε ο συντάκτης.
+       */
+      const DROP_ORDER: Array<keyof typeof payload | string> = [
+        'Kind', 'Groups',                                   // newsletter
+        'Selection',                                        // κοινά προσχέδια
+        'Desk',                                             // γραφεία
+        'FooterStyle', 'FooterLook', 'FooterLogo', 'HeaderStyle', 'HeaderLogo', 'Signer',
+      ]
+      let attempt: Record<string, any> = { ...payload }
+      let res = await write(attempt)
+      for (const field of DROP_ORDER) {
+        if (res.ok || res.status !== 400) break
+        if (!(field in attempt)) continue
+        delete attempt[field as string]
+        res = await write(attempt)
       }
       if (!res.ok) {
         console.error('oc/campaigns: save failed', res.status)
