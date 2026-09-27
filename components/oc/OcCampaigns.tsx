@@ -179,6 +179,20 @@ export default function OcCampaigns({ desk }: { desk: string }) {
   const [busy, setBusy] = useState(false)
 
   /**
+   * Η επιλεγμένη ώρα ως ΠΡΑΓΜΑΤΙΚΗ στιγμή.
+   *
+   * Το `datetime-local` δίνει «2026-09-27T12:30» χωρίς ζώνη. Ο server τρέχει
+   * σε UTC και θα το διάβαζε ως 12:30 UTC — τρεις ώρες μετά από ό,τι είδε ο
+   * συντάκτης. Ο browser είναι ο μόνος που ξέρει τη ζώνη, οπότε η μετατροπή
+   * γίνεται ΕΔΩ.
+   */
+  const scheduleAtIso = useMemo(() => {
+    if (!scheduleAt) return ''
+    const d = new Date(scheduleAt)
+    return Number.isNaN(d.getTime()) ? '' : d.toISOString()
+  }, [scheduleAt])
+
+  /**
    * Πού βρισκόμαστε μέσα στο τεύχος — η θέση που δείχνει ο κάθετος
    * ολισθητήρας. Ζει ΕΔΩ και όχι στον BlockEditor, γιατί ο ολισθητήρας
    * στέκεται ανάμεσα στις δύο στήλες και κινεί και τις δύο.
@@ -305,7 +319,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
     try {
       const res = await fetch('/api/oc/campaigns', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, desk, kind, audiences, id: editingId || undefined, subject, blocks, selection, cc, footerStyle, footerLook, footerLogo, headerStyle, headerLogo, footer }),
+        body: JSON.stringify({ action, desk, kind, audiences, id: editingId || undefined, subject, blocks, selection, cc, footerStyle, footerLook, footerLogo, headerStyle, headerLogo, footer, scheduleAtIso }),
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
@@ -345,7 +359,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
         body: JSON.stringify({
           action: 'newsletter-send', desk, id: editingId || undefined,
           subject, blocks, audiences, scheduleAt: scheduleAt || undefined,
-          footerStyle, footerLook, footerLogo, headerStyle, headerLogo, footer,
+          footerStyle, footerLook, footerLogo, headerStyle, headerLogo, footer, scheduleAtIso,
         }),
       })
       const d = await res.json()
@@ -382,7 +396,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: final ? 'newsletter-final-test' : 'newsletter-test',
-          desk, subject, blocks, footerStyle, footerLook, footerLogo, headerStyle, headerLogo, footer,
+          desk, subject, blocks, footerStyle, footerLook, footerLogo, headerStyle, headerLogo, footer, scheduleAtIso,
         }),
       })
       const d = await res.json()
@@ -776,7 +790,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
                 <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/25 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
                   <strong className="tabular-nums">{emailCost}</strong> email · φεύγουν{' '}
                   <strong className="tabular-nums">{meta.dailyBudget}</strong> τώρα και τα υπόλοιπα σε{' '}
-                  {days - 1} {days - 1 === 1 ? 'ημέρα' : 'ημέρες'}, στις 08:15 κάθε πρωί
+                  {days - 1} {days - 1 === 1 ? 'ημέρα' : 'ημέρες'} — η ουρά ελέγχεται κάθε ώρα
                 </div>
               </div>
             )}
@@ -814,7 +828,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
               ? (audiences.length ? `${audiences.length === 2 ? 'Μέλη και Κοινό' : audiences[0] === 'paid' ? 'Μέλη' : 'Κοινό'}` : 'Καμία λίστα')
               : (resolved.summary || 'Κανένας παραλήπτης')}
           </span>
-          {kind === 'newsletter' && (
+          {(
             <label className="flex items-center gap-2 text-sm">
               <span className="text-gray-600 dark:text-gray-400">Προγραμματισμός</span>
               <input type="datetime-local" value={scheduleAt} onChange={e => setScheduleAt(e.target.value)}
@@ -848,7 +862,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
             <button type="button" onClick={() => setConfirming(true)}
               disabled={busy || blocks.length === 0 || (kind === 'newsletter' ? audiences.length === 0 : resolved.count === 0)}
               className="px-5 min-h-11 rounded-full bg-coral text-charcoal text-sm font-bold disabled:opacity-50">
-              {scheduleAt && kind === 'newsletter' ? 'Προγραμματισμός…' : 'Αποστολή…'}
+              {scheduleAt ? 'Προγραμματισμός…' : 'Αποστολή…'}
             </button>
           </div>
         </div>
@@ -887,6 +901,13 @@ export default function OcCampaigns({ desk }: { desk: string }) {
         <ConfirmDialog
           subject={subject} count={resolved.count} emailCost={emailCost} days={days}
           cc={cc} recipients={resolved.recipients} busy={busy}
+          {...(scheduleAt && {
+            title: 'Προγραμματισμός μηνύματος',
+            confirmLabel: 'Προγραμματισμός',
+            body: `Θα μπει στην ουρά τώρα και θα αρχίσει να φεύγει μετά τις `
+              + `${new Date(scheduleAt).toLocaleString('el-GR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}. `
+              + 'Η ουρά ελέγχεται κάθε ώρα, οπότε η αποστολή ξεκινά στην πρώτη ώρα μετά από αυτή τη στιγμή.',
+          })}
           onCancel={() => setConfirming(false)} onConfirm={() => send('queue')}
         />
       )}

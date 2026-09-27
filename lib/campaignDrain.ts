@@ -38,6 +38,8 @@ interface CampaignRow {
   Recipients: QueuedRecipient[]
   Cc?: string[] | null
   State: string
+  /** Πότε ΕΠΙΤΡΕΠΕΤΑΙ να φύγει — στο μέλλον όταν είναι προγραμματισμένη */
+  QueuedAt?: string | null
   SentCount?: number
   FailedCount?: number
   TotalCount?: number
@@ -56,6 +58,43 @@ const isPending = (r: QueuedRecipient) =>
 
 /** Ξαναδοκιμάζουμε μόνο όσους απέτυχαν λιγότερες από MAX_ATTEMPTS φορές */
 
+/**
+ * Πόσα email έχουν ΗΔΗ φύγει σήμερα.
+ *
+ * Το όριο του Resend είναι ΗΜΕΡΗΣΙΟ, όχι ανά εκτέλεση. Όσο το cron έτρεχε μία
+ * φορά την ημέρα τα δύο ταυτίζονταν και κανείς δεν το πρόσεχε· από τη στιγμή
+ * που τρέχει ωριαία —για να τηρείται η ώρα που διάλεξε ο συντάκτης— ένα
+ * φρέσκο όριο σε κάθε πέρασμα θα έδινε 24 × 80 = 1920 email την ημέρα και θα
+ * έκαιγε τον λογαριασμό πριν το μεσημέρι.
+ *
+ * Μετράει από τις εγγραφές των ίδιων των παραληπτών (`sentAt`), που είναι η
+ * μόνη αλήθεια για το τι όντως στάλθηκε — όχι από μετρητές που μπορεί να
+ * έχουν μείνει πίσω.
+ */
+async function spentToday(): Promise<number | null> {
+  // Τοπική ώρα του server = UTC στο Vercel· το ίδιο όριο μετρά και ο πάροχος
+  const since = new Date(); since.setHours(0, 0, 0, 0)
+  const iso = since.toISOString()
+  let r = await strapi(
+    `/oc-campaigns?filters[LastRunAt][$gte]=${encodeURIComponent(iso)}&pagination[limit]=50`,
+  )
+  // Αν το φίλτρο δεν γίνει δεκτό, μετράμε από τις πιο πρόσφατες — ακριβότερο
+  // αλλά σωστό· το φιλτράρισμα ανά ημέρα γίνεται έτσι κι αλλιώς παρακάτω.
+  if (!r.ok) r = await strapi('/oc-campaigns?sort=updatedAt:desc&pagination[limit]=50')
+  // ΔΕΝ επιστρέφουμε 0: το μηδέν σημαίνει «όλο το όριο ελεύθερο» και θα
+  // μετέτρεπε ένα προσωρινό σφάλμα ανάγνωσης σε υπέρβαση ορίου.
+  if (!r.ok) return null
+
+  let spent = 0
+  for (const c of (r.json?.data || []) as CampaignRow[]) {
+    const per = 1 + (Array.isArray(c.Cc) ? c.Cc.filter(Boolean).length : 0)
+    for (const x of (Array.isArray(c.Recipients) ? c.Recipients : [])) {
+      if (x.status === 'sent' && x.sentAt && x.sentAt >= iso) spent += per
+    }
+  }
+  return spent
+}
+
 export interface DrainResult { sent: number; budgetLeft: number; report: string[] }
 
 export async function drainCampaigns(opts: {
@@ -65,10 +104,24 @@ export async function drainCampaigns(opts: {
   onlyId?: string
 } = {}): Promise<DrainResult> {
   const startedAt = Date.now()
-  let budget = opts.budget ?? DAILY_EMAIL_BUDGET
   const timeBudget = opts.timeBudgetMs ?? 240_000
   const report: string[] = []
   let sentTotal = 0
+
+  let budget: number
+  if (opts.budget != null) {
+    budget = opts.budget
+  } else {
+    const spent = await spentToday()
+    if (spent === null) {
+      // Δεν ξέρουμε πόσα έχουν φύγει → δεν στέλνουμε. Με ωριαίο cron το
+      // κόστος είναι μία ώρα καθυστέρηση· το αντίθετο κόστος θα ήταν
+      // μπλοκαρισμένος λογαριασμός και μηνύματα που δεν φτάνουν πουθενά.
+      return { sent: 0, budgetLeft: 0, report: ['δεν μετρήθηκε το σημερινό όριο — παράλειψη'] }
+    }
+    budget = Math.max(0, DAILY_EMAIL_BUDGET - spent)
+    if (budget <= 0) return { sent: 0, budgetLeft: 0, report: [`το σημερινό όριο εξαντλήθηκε (${spent})`] }
+  }
 
   const list = await strapi(
     '/oc-campaigns?filters[State][$in][0]=queued&filters[State][$in][1]=sending' +
@@ -81,6 +134,18 @@ export async function drainCampaigns(opts: {
 
   for (const c of campaigns) {
     if (budget <= 0 || Date.now() - startedAt > timeBudget) break
+
+    /**
+     * Προγραμματισμένη για αργότερα.
+     *
+     * Το QueuedAt είναι η ΩΡΑ ΑΔΕΙΑΣ, όχι η ώρα που πατήθηκε το κουμπί. Μια
+     * καμπάνια που έχει ήδη αρχίσει («sending») δεν σταματά ποτέ εδώ: τα
+     * μισά γράμματα έχουν φύγει και τα υπόλοιπα πρέπει να ακολουθήσουν.
+     */
+    if (c.State === 'queued' && c.QueuedAt && Date.parse(c.QueuedAt) > Date.now()) {
+      report.push(`${c.Subject}: προγραμματισμένη για αργότερα`)
+      continue
+    }
 
     const recipients: QueuedRecipient[] = Array.isArray(c.Recipients) ? c.Recipients : []
     const cc = Array.isArray(c.Cc) ? c.Cc.filter(Boolean) : []

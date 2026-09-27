@@ -187,6 +187,29 @@ describe('Προσχέδια που μοιράζονται δύο έδρες', (
     expect(seen.url).toContain('kept1')
   })
 
+  it('προγραμματισμένο μήνυμα παίρνει ΜΕΛΛΟΝΤΙΚΟ QueuedAt και δεν φεύγει τώρα', async () => {
+    signedInAs('comms')
+    const at = new Date(Date.now() + 3 * 3600_000).toISOString()
+    const seen = capture()
+    await post(body({ action: 'queue', scheduleAtIso: at }))
+    expect(seen.data.State).toBe('queued')
+    expect(Date.parse(seen.data.QueuedAt)).toBe(Date.parse(at))
+  })
+
+  it('χωρίς ώρα, το QueuedAt είναι ΤΩΡΑ', async () => {
+    signedInAs('comms')
+    const seen = capture()
+    await post(body({ action: 'queue' }))
+    expect(Date.now() - Date.parse(seen.data.QueuedAt)).toBeLessThan(10_000)
+  })
+
+  it('ώρα που ήδη πέρασε δεν είναι προγραμματισμός — φεύγει τώρα', async () => {
+    signedInAs('comms')
+    const seen = capture()
+    await post(body({ action: 'queue', scheduleAtIso: new Date(Date.now() - 60_000).toISOString() }))
+    expect(Date.now() - Date.parse(seen.data.QueuedAt)).toBeLessThan(10_000)
+  })
+
   it('ένα προσχέδιο ΔΕΝ αλλάζει είδος — τεύχος δεν γίνεται μήνυμα', async () => {
     // Αλλιώς το τεύχος θα έφευγε από τη διαδρομή των μηνυμάτων, δηλαδή χωρίς
     // σύνδεσμο απεγγραφής — που δεν είναι απλώς λάθος, είναι παράβαση.

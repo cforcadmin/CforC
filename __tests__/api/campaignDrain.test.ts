@@ -138,3 +138,70 @@ describe('Στράγγιση', () => {
     expect(sendOcEmailResult.mock.calls[0][2]).toContain('Σόνια Ντόβα')
   })
 })
+
+describe('Προγραμματισμός και ημερήσιο όριο', () => {
+  afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks() })
+
+  const inHours = (h: number) => new Date(Date.now() + h * 3600_000).toISOString()
+  const agoHours = (h: number) => new Date(Date.now() - h * 3600_000).toISOString()
+
+  it('καμπάνια προγραμματισμένη για αργότερα ΔΕΝ φεύγει', async () => {
+    mockStrapi([campaign({ QueuedAt: inHours(3) })])
+    const r = await run()
+    expect(r.json.sent).toBe(0)
+    expect(sendOcEmailResult).not.toHaveBeenCalled()
+  })
+
+  it('όταν έρθει η ώρα της, φεύγει', async () => {
+    mockStrapi([campaign({ QueuedAt: agoHours(1) })])
+    const r = await run()
+    expect(r.json.sent).toBe(3)
+  })
+
+  it('καμπάνια που ΗΔΗ στέλνει δεν παγώνει από μελλοντικό QueuedAt', async () => {
+    // Τα μισά γράμματα έχουν φύγει· τα υπόλοιπα πρέπει να ακολουθήσουν
+    mockStrapi([campaign({ State: 'sending', QueuedAt: inHours(3) })])
+    const r = await run()
+    expect(r.json.sent).toBe(3)
+  })
+
+  it('χωρίς QueuedAt (παλιές εγγραφές) φεύγει κανονικά', async () => {
+    mockStrapi([campaign()])
+    expect((await run()).json.sent).toBe(3)
+  })
+
+  it('το σημερινό όριο μετράει ΟΣΑ ήδη στάλθηκαν σήμερα', async () => {
+    // Με ωριαίο cron, φρέσκο όριο σε κάθε πέρασμα θα έδινε 24×80 την ημέρα
+    const already = Array.from({ length: 79 }, (_, i) => ({
+      email: `p${i}@x.gr`, name: `Π${i}`, via: 'all', am: i,
+      status: 'sent', sentAt: new Date().toISOString(), attempts: 1,
+    }))
+    mockStrapi([campaign({ documentId: 'old', Recipients: already, State: 'sent' }), campaign()])
+    const r = await run()
+    // Έμεινε χώρος για ΕΝΑ μόνο
+    expect(r.json.sent).toBe(1)
+  })
+
+  it('ό,τι στάλθηκε ΧΘΕΣ δεν μετράει στο σημερινό όριο', async () => {
+    const yesterday = Array.from({ length: 79 }, (_, i) => ({
+      email: `p${i}@x.gr`, name: `Π${i}`, via: 'all', am: i,
+      status: 'sent', sentAt: new Date(Date.now() - 36 * 3600_000).toISOString(), attempts: 1,
+    }))
+    mockStrapi([campaign({ documentId: 'old', Recipients: yesterday, State: 'sent' }), campaign()])
+    expect((await run()).json.sent).toBe(3)
+  })
+
+  it('αν δεν μπορεί να μετρηθεί το σημερινό όριο, ΔΕΝ στέλνει τίποτα', async () => {
+    // Σιωπηλό μηδέν θα σήμαινε «όλο το όριο ελεύθερο» — δηλαδή υπέρβαση
+    jest.spyOn(global, 'fetch').mockImplementation(async (input: any, init?: any) => {
+      const url = typeof input === 'string' ? input : input?.url ?? ''
+      const method = (init?.method || 'GET').toUpperCase()
+      if (method === 'PUT') return new Response(JSON.stringify({ data: {} }), { status: 200 })
+      if (url.includes('/api/oc-campaigns?')) return new Response('{}', { status: 500 })
+      return new Response(JSON.stringify({ data: {} }), { status: 200 })
+    })
+    const r = await run()
+    expect(r.json.sent).toBe(0)
+    expect(sendOcEmailResult).not.toHaveBeenCalled()
+  })
+})

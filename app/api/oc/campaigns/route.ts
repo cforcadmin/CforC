@@ -274,6 +274,23 @@ async function assertOwnership(id: string, seat: OcSeat): Promise<NextResponse |
 }
 
 /**
+ * Η ώρα προγραμματισμού, ως πραγματική στιγμή.
+ *
+ * Ο επιλογέας `datetime-local` δίνει «2026-09-27T12:30» ΧΩΡΙΣ ζώνη ώρας. Αν
+ * το διάβαζε ο server, θα το εκλάμβανε ως UTC και το γράμμα θα έφευγε τρεις
+ * ώρες αργότερα από ό,τι είδε ο συντάκτης. Γι' αυτό ο browser στέλνει ISO με
+ * ζώνη και εδώ δεχόμαστε ΜΟΝΟ αυτό.
+ *
+ * Το περιθώριο του ενός λεπτού κρατά το «τώρα» να σημαίνει τώρα: μια ώρα που
+ * μόλις πέρασε δεν είναι προγραμματισμός, είναι άμεση αποστολή.
+ */
+function scheduledFor(v: unknown): Date | null {
+  const t = Date.parse(String(v || ''))
+  if (!Number.isFinite(t) || t <= Date.now() + 60_000) return null
+  return new Date(t)
+}
+
+/**
  * Ένα προσχέδιο ΔΕΝ αλλάζει είδος.
  *
  * Μήνυμα και τεύχος έχουν άλλη διαδρομή αποστολής, άλλους παραλήπτες και
@@ -452,6 +469,7 @@ export async function POST(request: NextRequest) {
       // τη θυρίδα του υπογράφοντα, γιατί το IT υπογράφει πάντα it@ ανεξάρτητα
       // από το τραπέζι στο οποίο κάθεται.
       const desk = deskOfRequest(body?.desk, auth.activeSeat)
+      const sendAt = action === 'queue' ? scheduledFor(body?.scheduleAtIso) : null
       const payload: Record<string, any> = {
         Desk: desk,
         // Το είδος καθορίζει ΟΛΗ τη διαδρομή αποστολής. Newsletter μόνο από
@@ -480,7 +498,9 @@ export async function POST(request: NextRequest) {
         IsTemplate: !!body?.isTemplate,
         TemplateName: String(body?.templateName || '').trim() || null,
         State: action === 'queue' ? 'queued' : 'draft',
-        ...(action === 'queue' && { QueuedAt: new Date().toISOString() }),
+        // Η ΩΡΑ ΑΔΕΙΑΣ, όχι η ώρα που πατήθηκε το κουμπί: η στράγγιση δεν
+        // αγγίζει καμπάνια που δεν έχει ωριμάσει ακόμη.
+        ...(action === 'queue' && { QueuedAt: (sendAt || new Date()).toISOString() }),
       }
 
       const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
@@ -528,7 +548,9 @@ export async function POST(request: NextRequest) {
       // περιμένει τις 08:00 επειδή το όριο είναι 80.
       let sentNow = 0
       let drainReport: string[] = []
-      if (action === 'queue' && savedId) {
+      // Προγραμματισμένη: ΔΕΝ τη στραγγίζουμε τώρα — θα την πιάσει το cron
+      // όταν έρθει η ώρα της.
+      if (action === 'queue' && savedId && !sendAt) {
         try {
           const d = await drainCampaigns({ onlyId: savedId, timeBudgetMs: 240_000 })
           sentNow = d.sent

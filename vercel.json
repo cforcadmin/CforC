@@ -18,7 +18,7 @@
     },
     {
       "path": "/api/cron/campaign-drain",
-      "schedule": "15 8 * * *"
+      "schedule": "15 * * * *"
     },
     {
       "path": "/api/cron/sync-unsubscribes",
