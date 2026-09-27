@@ -26,6 +26,11 @@ jest.mock('@/lib/ocRoles', () => ({
     outreach: 'outreach@cultureforchange.net', media: 'media@cultureforchange.net',
   },
 }))
+const sendOcEmailResult = jest.fn(async () => ({ ok: true }))
+jest.mock('@/lib/ocEmails', () => ({
+  get sendOcEmailResult() { return sendOcEmailResult },
+  COMMUNITY_FROM: 'Culture for Change <community@cultureforchange.net>',
+}))
 const verifyToken = jest.fn()
 jest.mock('@/lib/auth', () => ({ get verifyToken() { return verifyToken } }))
 
@@ -210,6 +215,225 @@ describe('Προσχέδια που μοιράζονται δύο έδρες', (
     const seen = capture({ Desk: 'comms', Signer: { email: 'communication@cultureforchange.net' } })
     await post(body({ id: 'kept1' }))
     expect(seen.data.Signer.email).toBe('media@cultureforchange.net')
+  })
+})
+
+describe('Αποστολή newsletter μέσω Sender', () => {
+  // Οι ομάδες του Sender έρχονται από το περιβάλλον· χωρίς αυτές καμία
+  // λίστα δεν λύνεται και η αποστολή κόβεται πριν καν ξεκινήσει.
+  beforeAll(() => {
+    process.env.SENDER_API_KEY = 'test-key'
+    process.env.SENDER_GROUP_ID = 'extG'
+    process.env.SENDER_PAID_GROUP_ID = 'paidG'
+  })
+  afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks() })
+
+  /** Στήνει Strapi + Sender και καταγράφει τι στάλθηκε πού */
+  function stub(opts: { createOk?: boolean; sendOk?: boolean } = {}) {
+    const seen: any = { sender: [], strapi: [], archive: null }
+    jest.spyOn(global, 'fetch').mockImplementation(async (input: any, init: any) => {
+      const url = typeof input === 'string' ? input : input?.url ?? ''
+      const json = (d: any, status = 200) => new Response(JSON.stringify(d), { status })
+      if (url.includes('/api/members?')) return json({ data: members })
+      if (url.includes('/api/working-groups')) return json({ data: [] })
+      if (url.includes('api.sender.net/v2/campaigns') && url.endsWith('/send')) {
+        seen.sender.push({ op: 'send', url })
+        return opts.sendOk === false ? json({ error: 'no' }, 500) : json({ success: true })
+      }
+      if (url.includes('api.sender.net/v2/campaigns') && url.endsWith('/schedule')) {
+        seen.sender.push({ op: 'schedule', body: JSON.parse(init.body) })
+        return json({ success: true })
+      }
+      if (url.includes('api.sender.net/v2/campaigns')) {
+        seen.sender.push({ op: 'create', body: JSON.parse(init.body) })
+        return opts.createOk === false ? json({ error: 'no' }, 422) : json({ data: { id: 'snd42' } })
+      }
+      if (url.includes('api.sender.net')) return json({ data: [] })
+      if (url.includes('/api/newsletters')) { seen.archive = JSON.parse(init.body).data; return json({ data: { documentId: 'arch1' } }) }
+      if (url.includes('/api/oc-campaigns') && (init?.method === 'POST' || init?.method === 'PUT')) {
+        seen.strapi.push(JSON.parse(init.body).data); return json({ data: { documentId: 'c9' } })
+      }
+      return json({ data: {} })
+    })
+    return seen
+  }
+  const send = (extra: any = {}) => post({
+    action: 'newsletter-send', desk: 'comms', subject: 'Τεύχος Οκτωβρίου',
+    blocks: [{ type: 'text', html: '<p>Γεια σου {{όνομα}}</p>' }], audiences: ['external'], ...extra,
+  })
+
+  it('δημιουργεί καμπάνια και μετά τη στέλνει — δύο βήματα', async () => {
+    signedInAs('comms'); const seen = stub()
+    const r = await send()
+    expect(r.status).toBe(200)
+    expect(seen.sender.map((x: any) => x.op)).toEqual(['create', 'send'])
+  })
+
+  it('στέλνει HTML με ετικέτες Sender, ΟΧΙ λυμένες τιμές', async () => {
+    // Ένα html για όλη τη λίστα: τα ονόματα τα βάζει ο Sender ανά παραλήπτη
+    signedInAs('comms'); const seen = stub()
+    await send()
+    const body = seen.sender[0].body
+    expect(body.content).toContain('{{ firstname }}')
+    expect(body.content).toContain('{{unsubscribe_link}}')
+    expect(body.content_type).toBe('html')
+  })
+
+  it('υπογράφει από τη θυρίδα της έδρας', async () => {
+    signedInAs('media'); const seen = stub()
+    await send()
+    expect(seen.sender[0].body.reply_to).toBe('media@cultureforchange.net')
+  })
+
+  it('κρατά το id της καμπάνιας του Sender — αλλιώς χάνονται τα στατιστικά', async () => {
+    signedInAs('comms'); const seen = stub()
+    await send()
+    expect(seen.strapi[0].SenderCampaignId).toBe('snd42')
+    expect(seen.strapi[0].Kind).toBe('newsletter')
+    expect(seen.strapi[0].State).toBe('sent')
+  })
+
+  it('γράφει το τεύχος στο δημόσιο αρχείο, με το ΙΔΙΟ το γράμμα', async () => {
+    signedInAs('comms'); const seen = stub()
+    await send()
+    expect(seen.archive.Title).toBe('Τεύχος Οκτωβρίου')
+    expect(String(seen.archive.Html)).toContain('<!DOCTYPE html>')
+    expect(seen.archive.Audience).toBe('public')
+  })
+
+  it('τεύχος μόνο προς μέλη ΔΕΝ γίνεται δημόσιο', async () => {
+    signedInAs('comms'); const seen = stub()
+    await send({ audiences: ['paid'] })
+    expect(seen.archive.Audience).toBe('members')
+  })
+
+  it('χωρίς λίστα δεν φεύγει τίποτα', async () => {
+    signedInAs('comms'); const seen = stub()
+    expect((await send({ audiences: [] })).status).toBe(400)
+    expect(seen.sender).toHaveLength(0)
+  })
+
+  it('αποτυχία δημιουργίας δεν στέλνει τίποτα', async () => {
+    signedInAs('comms'); const seen = stub({ createOk: false })
+    expect((await send()).status).toBe(502)
+    expect(seen.sender.map((x: any) => x.op)).toEqual(['create'])
+  })
+
+  it('αν η καμπάνια φτιάχτηκε αλλά δεν ξεκίνησε, το λέει ΜΕ το id', async () => {
+    // Χωρίς αυτό, δεύτερο πάτημα «Αποστολή» θα έφτιαχνε δεύτερη καμπάνια
+    signedInAs('comms'); stub({ sendOk: false })
+    const r = await send()
+    expect(r.status).toBe(502)
+    expect(r.json.campaignId).toBe('snd42')
+    expect(r.json.error).toContain('snd42')
+  })
+
+  it('προγραμματισμός αντί άμεσης αποστολής — και ΟΧΙ αρχείο ακόμη', async () => {
+    signedInAs('comms'); const seen = stub()
+    const r = await send({ scheduleAt: new Date(2026, 9, 15, 9, 0, 0).toISOString() })
+    expect(seen.sender.map((x: any) => x.op)).toEqual(['create', 'schedule'])
+    expect(seen.sender[1].body.schedule_time).toBe('2026-10-15 09:00:00')
+    expect(seen.strapi[0].State).toBe('queued')
+    expect(seen.archive).toBeNull()
+    expect(r.json.scheduled).toBeTruthy()
+  })
+
+  it('προειδοποιεί για πεδία που ο Sender δεν ξέρει', async () => {
+    signedInAs('comms'); stub()
+    const r = await send({ blocks: [{ type: 'text', html: '<p>ΑΜ {{ΑΜ}}</p>' }] })
+    expect(r.json.warnings).toContain('ΑΜ')
+  })
+
+  it('άλλο γραφείο δεν στέλνει newsletter', async () => {
+    signedInAs('financer'); const seen = stub()
+    expect((await send({ desk: 'finances' })).status).toBe(403)
+    expect(seen.sender).toHaveLength(0)
+  })
+
+  it('η δοκιμαστική πάει στη θυρίδα του συντάκτη, με γεμάτες ετικέτες', async () => {
+    signedInAs('comms'); stub()
+    const r = await post({
+      action: 'newsletter-test', subject: 'Δ',
+      blocks: [{ type: 'text', html: '<p>Γεια σου {{όνομα}}</p>' }],
+    })
+    expect(r.status).toBe(200)
+    expect(r.json.to).toBe('communication@cultureforchange.net')
+    const [to, subj, html] = sendOcEmailResult.mock.calls[0] as any[]
+    expect(to).toBe('communication@cultureforchange.net')
+    expect(subj).toContain('[ΔΟΚΙΜΗ]')
+    expect(html).not.toContain('{{')
+    expect(html).toContain('Μαρία')
+  })
+})
+
+describe('Τελική δοκιμή μέσω Sender', () => {
+  beforeAll(() => {
+    process.env.SENDER_API_KEY = 'test-key'
+    process.env.SENDER_GROUP_ID = 'extG'
+    process.env.SENDER_PAID_GROUP_ID = 'paidG'
+  })
+  afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks() })
+
+  function stub(seatStatus = 'active') {
+    const seen: any = { created: null, sent: false }
+    jest.spyOn(global, 'fetch').mockImplementation(async (input: any, init: any) => {
+      const url = typeof input === 'string' ? input : input?.url ?? ''
+      const json = (d: any) => new Response(JSON.stringify(d), { status: 200 })
+      if (url.includes('/api/members?')) return json({ data: members })
+      if (url.includes('/api/working-groups')) return json({ data: [] })
+      if (url.includes('/v2/subscribers/')) return json({ data: { status: { email: seatStatus } } })
+      if (url.endsWith('/send')) { seen.sent = true; return json({ success: true }) }
+      if (url.includes('/v2/campaigns')) { seen.created = JSON.parse(init.body); return json({ data: { id: 'tst9' } }) }
+      if (url.includes('api.sender.net')) return json({ data: [] })
+      return json({ data: {} })
+    })
+    return seen
+  }
+  const test1 = () => post({
+    action: 'newsletter-final-test', desk: 'comms', subject: 'Τεύχος',
+    blocks: [{ type: 'text', html: '<p>Γεια σου {{όνομα}}</p>' }],
+  })
+
+  it('στοχεύει την ομάδα ΜΙΑΣ θυρίδας, όχι λίστα newsletter', async () => {
+    signedInAs('comms'); const seen = stub()
+    const r = await test1()
+    expect(r.status).toBe(200)
+    expect(seen.created.groups).toEqual(['aQqRZl'])
+    expect(seen.sent).toBe(true)
+  })
+
+  it('κάθε έδρα στη δική της ομάδα', async () => {
+    signedInAs('media'); const seen = stub()
+    await test1()
+    expect(seen.created.groups).toEqual(['dPp8Xw'])
+  })
+
+  it('ο τίτλος φέρει [ΔΟΚΙΜΗ] ώστε να φιλτράρεται από τα στατιστικά', async () => {
+    // Αλλιώς κάθε δοκιμή είναι καμπάνια ενός παραλήπτη με 100% άνοιγμα
+    signedInAs('comms'); const seen = stub()
+    await test1()
+    expect(seen.created.title).toContain('[ΔΟΚΙΜΗ]')
+    expect(seen.created.subject).toContain('[ΔΟΚΙΜΗ]')
+  })
+
+  it('στέλνει ΑΛΗΘΙΝΕΣ ετικέτες — εκεί είναι όλο το νόημα της τελικής δοκιμής', async () => {
+    signedInAs('comms'); const seen = stub()
+    await test1()
+    expect(seen.created.content).toContain('{{unsubscribe_link}}')
+    expect(seen.created.content).toContain('{{ firstname }}')
+  })
+
+  it('προειδοποιεί αν η θυρίδα βρεθεί απεγγεγραμμένη', async () => {
+    // Μη αναστρέψιμο από API: πρέπει να το μάθει αμέσως, όχι σε έναν μήνα
+    signedInAs('comms'); stub('unsubscribed')
+    const r = await test1()
+    expect(r.json.seatStatus).toBe('unsubscribed')
+  })
+
+  it('έδρα χωρίς ομάδα δοκιμών δεν στέλνει τελική δοκιμή', async () => {
+    signedInAs('admin'); const seen = stub()
+    expect((await test1()).status).toBe(400)
+    expect(seen.created).toBeNull()
   })
 })
 

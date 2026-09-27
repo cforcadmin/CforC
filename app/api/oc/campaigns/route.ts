@@ -10,7 +10,15 @@ import {
   type CampaignMember, type RecipientSelection,
 } from '@/lib/campaignRecipients'
 import { OC_EMAIL_SEATS, OC_DESK_LABELS, canSendEmailFrom, deskOfSeat, isEmailDesk } from '@/components/oc/ocPrefs'
-import { NEWSLETTER_AUDIENCES, senderGroupId, normaliseAudiences } from '@/lib/newsletterAudiences'
+import {
+  NEWSLETTER_AUDIENCES, senderGroupId, normaliseAudiences,
+  validateNewsletter, applySenderTags, unsupportedTags, SEAT_TEST_GROUPS,
+} from '@/lib/newsletterAudiences'
+import {
+  createSenderCampaign, createSenderCampaignRaw, sendSenderCampaign,
+  scheduleSenderCampaign, fillTagsForTest,
+} from '@/lib/senderCampaigns'
+import { sendOcEmailResult } from '@/lib/ocEmails'
 
 // Η «Αποστολή» στέλνει ΤΩΡΑ ό,τι χωράει — χρειάζεται χρόνο, όχι 60 δευτερόλεπτα
 export const maxDuration = 300
@@ -96,19 +104,30 @@ async function newsletterLists() {
   const key = process.env.SENDER_API_KEY
   const out = NEWSLETTER_AUDIENCES.map(a => ({ id: a.id, label: a.label, hint: a.hint, count: null as number | null }))
   if (!key) return out
-  try {
-    const res = await fetch('https://api.sender.net/v2/groups', {
-      headers: { Authorization: `Bearer ${key}`, Accept: 'application/json' },
-      next: { revalidate: 300 },
-    })
-    if (!res.ok) return out
-    const rows = (await res.json())?.data || []
-    for (const a of out) {
-      const gid = senderGroupId(a.id as any)
-      const g = rows.find((x: any) => x.id === gid)
-      if (g) a.count = Number(g.recipient_count ?? g.subscribers_count ?? 0)
-    }
-  } catch { /* η οθόνη δείχνει «—» */ }
+  /**
+   * ΟΧΙ το recipient_count του /groups.
+   *
+   * Εκείνο μετράει και τις κατασταλμένες επαφές — όσους έχουν απεγγραφεί ή
+   * έχουν κάνει bounce — και έδειχνε 116/420 ενώ οι λίστες που ΠΑΡΑΔΙΔΟΥΝ
+   * είχαν 114/408. Ένα φουσκωμένο νούμερο εδώ γίνεται λάθος προσδοκία για το
+   * πόσοι θα λάβουν το γράμμα.
+   *
+   * Με `limit=1` το `meta.last_page` ισούται με το πλήθος των ΠΡΑΓΜΑΤΙΚΩΝ
+   * συνδρομητών — μία κλήση ανά λίστα, χωρίς σελιδοποίηση.
+   */
+  await Promise.all(out.map(async a => {
+    const gid = senderGroupId(a.id as any)
+    if (!gid) return
+    try {
+      const res = await fetch(`https://api.sender.net/v2/groups/${gid}/subscribers?limit=1`, {
+        headers: { Authorization: `Bearer ${key}`, Accept: 'application/json' },
+        next: { revalidate: 300 },
+      })
+      if (!res.ok) return
+      const j = await res.json()
+      a.count = (j?.data || []).length === 0 ? 0 : Number(j?.meta?.last_page ?? 0)
+    } catch { /* η οθόνη δείχνει «—» */ }
+  }))
   return out
 }
 
@@ -507,6 +526,183 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, state: 'cancelled' })
     }
 
+    /**
+     * ΔΟΚΙΜΑΣΤΙΚΗ ΑΠΟΣΤΟΛΗ NEWSLETTER
+     *
+     * Ο Sender ΔΕΝ έχει endpoint δοκιμής, οπότε η δοκιμή φεύγει από εμάς
+     * (Resend) στη θυρίδα αυτού που συνθέτει. Οι ετικέτες του Sender δεν
+     * γεμίζουν εκεί, άρα τις γεμίζουμε με δείγματα — αλλιώς ο συντάκτης θα
+     * έβλεπε «Γεια σου {{ firstname }}» και δεν θα ήξερε αν είναι λάθος.
+     *
+     * ΤΙ ΔΕΝ ΔΟΚΙΜΑΖΕΙ: την παράδοση του Sender και τα δικά του link tracking.
+     * Δοκιμάζει το γράμμα, όχι τη διαδρομή.
+     */
+    if (action === 'newsletter-test') {
+      const signer = await signerFor(auth.activeSeat)
+      const blocks: Block[] = Array.isArray(body?.blocks) ? body.blocks : []
+      const tpl = campaignEmailHtml({
+        subject: String(body?.subject || '(χωρίς θέμα)'),
+        preheader: String(body?.preheader || ''),
+        blocks, signer,
+        footerStyle: (body?.footerStyle || 'signature') as FooterStyle,
+        footerLook: (body?.footerLook || 'plain') as FooterLook,
+        footerLogo: !!body?.footerLogo,
+        headerStyle: (body?.headerStyle || 'coral') as HeaderStyle,
+        headerLogo: !!body?.headerLogo,
+        unsubscribe: true,
+      })
+      const html = fillTagsForTest(applySenderTags(tpl.html))
+      const sent = await sendOcEmailResult(signer.email, `[ΔΟΚΙΜΗ] ${tpl.subject}`, html, {
+        from: `Culture for Change <${signer.email}>`, replyTo: signer.email,
+      })
+      if (!sent.ok) return NextResponse.json({ error: sent.error || 'Η δοκιμή δεν στάλθηκε' }, { status: 502 })
+      return NextResponse.json({
+        ok: true, to: signer.email,
+        warnings: unsupportedTags(tpl.html),
+      })
+    }
+
+    /**
+     * ΤΕΛΙΚΗ ΔΟΚΙΜΗ — αληθινή καμπάνια Sender σε ομάδα μιας θυρίδας.
+     *
+     * Ό,τι δεν δοκιμάζει η γρήγορη δοκιμή: παράδοση από τον Sender, ξαναγραμμένοι
+     * σύνδεσμοι παρακολούθησης, και ο ΑΛΗΘΙΝΟΣ σύνδεσμος απεγγραφής.
+     *
+     * Ο τίτλος φέρει «[ΔΟΚΙΜΗ]» ώστε να φιλτράρεται από τα στατιστικά: αλλιώς
+     * κάθε δοκιμή θα προσγειωνόταν εκεί ως καμπάνια ενός παραλήπτη με 100%
+     * άνοιγμα και θα τραβούσε τους μέσους όρους.
+     */
+    if (action === 'newsletter-final-test') {
+      const group = SEAT_TEST_GROUPS[auth.activeSeat]
+      if (!group) {
+        return NextResponse.json({
+          error: 'Η έδρα σου δεν έχει ομάδα δοκιμών στον Sender',
+        }, { status: 400 })
+      }
+      const signer = await signerFor(auth.activeSeat)
+      const blocks: Block[] = Array.isArray(body?.blocks) ? body.blocks : []
+      const tpl = campaignEmailHtml({
+        subject: String(body?.subject || '(χωρίς θέμα)'),
+        preheader: String(body?.preheader || ''), blocks, signer,
+        footerStyle: (body?.footerStyle || 'signature') as FooterStyle,
+        footerLook: (body?.footerLook || 'plain') as FooterLook,
+        footerLogo: !!body?.footerLogo,
+        headerStyle: (body?.headerStyle || 'coral') as HeaderStyle,
+        headerLogo: !!body?.headerLogo,
+        unsubscribe: true,
+      })
+      const created = await createSenderCampaignRaw({
+        subject: `[ΔΟΚΙΜΗ] ${tpl.subject}`,
+        html: applySenderTags(tpl.html),
+        fromName: 'Culture for Change', replyTo: signer.email,
+        groups: [group],
+        title: `[ΔΟΚΙΜΗ] ${tpl.subject}`,
+      })
+      if (!created.ok || !created.campaignId) {
+        return NextResponse.json({ error: created.error || 'Αποτυχία δοκιμής' }, { status: 502 })
+      }
+      const fired = await sendSenderCampaign(created.campaignId)
+      if (!fired.ok) return NextResponse.json({ error: fired.error }, { status: 502 })
+
+      // Η απεγγραφή είναι μη αναστρέψιμη· αν συνέβη, να το μάθει ΤΩΡΑ
+      const status = await seatSubscriberStatus(signer.email)
+      return NextResponse.json({
+        ok: true, to: signer.email, campaignId: created.campaignId,
+        seatStatus: status, warnings: unsupportedTags(tpl.html),
+      })
+    }
+
+    /**
+     * ΠΡΑΓΜΑΤΙΚΗ ΑΠΟΣΤΟΛΗ NEWSLETTER — μέσω Sender.
+     *
+     * Δύο βήματα στον Sender (δημιουργία → αποστολή), ώστε μια αποτυχία
+     * σύνθεσης να σταματά ΠΡΙΝ φύγει γράμμα. Το documentId της καμπάνιας του
+     * Sender αποθηκεύεται: χωρίς αυτό δεν μπορούμε ποτέ να δέσουμε τα
+     * στατιστικά με το τεύχος.
+     */
+    if (action === 'newsletter-send') {
+      const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
+      if (id) {
+        const denied = await assertOwnership(id, auth.activeSeat)
+        if (denied) return denied
+      }
+      const desk = deskOfRequest(body?.desk, auth.activeSeat)
+      if (desk !== 'comms') {
+        return NextResponse.json({ error: 'Το newsletter στέλνεται από την Επικοινωνία' }, { status: 403 })
+      }
+      const blocks: Block[] = Array.isArray(body?.blocks) ? body.blocks : []
+      const subject = String(body?.subject || '').trim()
+      const audiences = normaliseAudiences(body?.audiences)
+      const v = validateNewsletter({ subject, blocks, audiences })
+      if (!v.ok) return NextResponse.json({ error: v.errors.join(' · '), errors: v.errors }, { status: 400 })
+
+      const signer = await signerFor(auth.activeSeat)
+      const tpl = campaignEmailHtml({
+        subject, preheader: String(body?.preheader || ''), blocks, signer,
+        footerStyle: (body?.footerStyle || 'signature') as FooterStyle,
+        footerLook: (body?.footerLook || 'plain') as FooterLook,
+        footerLogo: !!body?.footerLogo,
+        headerStyle: (body?.headerStyle || 'coral') as HeaderStyle,
+        headerLogo: !!body?.headerLogo,
+        unsubscribe: true,
+      })
+      // Οι ετικέτες μεταφράζονται, ΔΕΝ αποδίδονται: τις γεμίζει ο Sender
+      const html = applySenderTags(tpl.html)
+
+      const created = await createSenderCampaign({
+        subject: tpl.subject, html, audiences,
+        fromName: 'Culture for Change', replyTo: signer.email,
+        preheader: String(body?.preheader || '') || undefined,
+        title: `${tpl.subject} — ${new Date().toLocaleDateString('el-GR')}`,
+      })
+      if (!created.ok || !created.campaignId) {
+        return NextResponse.json({ error: created.error || 'Αποτυχία δημιουργίας' }, { status: 502 })
+      }
+
+      const when = String(body?.scheduleAt || '').trim()
+      const fired = when
+        ? await scheduleSenderCampaign(created.campaignId, when)
+        : await sendSenderCampaign(created.campaignId)
+      if (!fired.ok) {
+        // Η καμπάνια ΥΠΑΡΧΕΙ στον Sender αλλά δεν ξεκίνησε: το λέμε ρητά,
+        // ώστε να μην ξαναπατηθεί «Αποστολή» και δημιουργηθεί δεύτερη.
+        return NextResponse.json({
+          error: `${fired.error} — η καμπάνια υπάρχει στον Sender (${created.campaignId}) και μπορεί να σταλεί από εκεί.`,
+          campaignId: created.campaignId,
+        }, { status: 502 })
+      }
+
+      const name = await memberName(auth.memberId)
+      const record: Record<string, any> = {
+        Desk: 'comms', Kind: 'newsletter', Groups: audiences,
+        Subject: tpl.subject, Preheader: String(body?.preheader || '').trim() || null,
+        Blocks: blocks, Recipients: [], Selection: {}, Cc: null,
+        FooterStyle: String(body?.footerStyle || 'signature'),
+        FooterLook: String(body?.footerLook || 'plain'),
+        FooterLogo: !!body?.footerLogo,
+        HeaderStyle: String(body?.headerStyle || 'coral'),
+        HeaderLogo: !!body?.headerLogo,
+        Signer: signer, SenderCampaignId: created.campaignId,
+        State: when ? 'queued' : 'sent',
+        QueuedAt: new Date().toISOString(),
+        ...(when ? {} : { CompletedAt: new Date().toISOString() }),
+      }
+      const saved = id
+        ? await strapi(`/oc-campaigns/${id}`, 'PUT', record)
+        : await strapi('/oc-campaigns', 'POST', { ...record, CreatedByName: name })
+      if (!saved.ok) console.error('oc/campaigns: newsletter saved at Sender but not in Strapi', saved.status)
+
+      // Το τεύχος μπαίνει στο δημόσιο αρχείο — best-effort, ΠΟΤΕ δεν ρίχνει
+      // την αποστολή που ήδη έφυγε
+      let archive: string | null = null
+      if (!when) archive = await archiveNewsletter(tpl.subject, tpl.html, audiences)
+
+      return NextResponse.json({
+        ok: true, campaignId: created.campaignId, scheduled: when || null,
+        archived: !!archive, warnings: unsupportedTags(tpl.html),
+      })
+    }
+
     return NextResponse.json({ error: 'Μη έγκυρη ενέργεια' }, { status: 400 })
   } catch (err) {
     console.error('oc/campaigns POST failed:', err)
@@ -581,6 +777,56 @@ export async function DELETE(request: NextRequest) {
   } catch (err) {
     console.error('oc/campaigns DELETE failed:', err)
     return NextResponse.json({ error: 'Εσωτερικό σφάλμα' }, { status: 500 })
+  }
+}
+
+/** Η κατάσταση μιας θυρίδας στον Sender — για τον έλεγχο μετά την τελική δοκιμή */
+async function seatSubscriberStatus(email: string): Promise<string | null> {
+  const key = process.env.SENDER_API_KEY
+  if (!key) return null
+  try {
+    const r = await fetch(`https://api.sender.net/v2/subscribers/${encodeURIComponent(email)}`, {
+      headers: { Authorization: `Bearer ${key}`, Accept: 'application/json' }, cache: 'no-store',
+    })
+    if (!r.ok) return null
+    const d = (await r.json())?.data || {}
+    return String(d.status?.email || d.status || '') || null
+  } catch { return null }
+}
+
+/**
+ * Το τεύχος μπαίνει στο δημόσιο αρχείο newsletter.
+ *
+ * Κρατάμε το ΙΔΙΟ το γράμμα (Html), όχι σύνδεσμο Drive: το αρχείο ανοίγει
+ * στη σελίδα μας, δεν εξαρτάται από τον λογαριασμό Google κανενός, και δεν
+ * σπάει αν κάποιος μετακινήσει ένα αρχείο.
+ *
+ * BEST-EFFORT: το γράμμα έχει ΗΔΗ φύγει όταν τρέχει αυτό. Μια αποτυχία εδώ
+ * δεν επιτρέπεται να εμφανιστεί ως αποτυχία αποστολής — θα οδηγούσε σε
+ * δεύτερη αποστολή στους ίδιους ανθρώπους.
+ */
+async function archiveNewsletter(
+  subject: string, html: string, audiences: string[],
+): Promise<string | null> {
+  try {
+    const today = new Date()
+    const slugBase = subject.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zα-ω0-9]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 60)
+    const r = await strapi('/newsletters', 'POST', {
+      Title: subject,
+      Date: today.toISOString().slice(0, 10),
+      Html: html,
+      // Ένα τεύχος που πήγε ΜΟΝΟ στα μέλη δεν είναι δημόσιο υλικό
+      Audience: audiences.length === 1 && audiences[0] === 'paid' ? 'members' : 'public',
+      Slug: `${slugBase || 'newsletter'}-${today.getTime().toString(36)}`,
+      publishedAt: today.toISOString(),
+    })
+    if (!r.ok) { console.error('newsletter archive failed', r.status); return null }
+    return r.json?.data?.documentId || null
+  } catch (err) {
+    console.error('newsletter archive threw:', err)
+    return null
   }
 }
 

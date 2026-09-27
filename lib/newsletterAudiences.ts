@@ -25,7 +25,7 @@ export interface NewsletterAudience {
 }
 
 export const NEWSLETTER_AUDIENCES: NewsletterAudience[] = [
-  { id: 'paid', label: 'Μέλη', hint: 'Τα ταμειακά εντάξει μέλη του δικτύου', envKey: 'SENDER_PAID_GROUP_ID' },
+  { id: 'paid', label: 'Μέλη', hint: 'Όλα τα ενεργά μέλη του δικτύου', envKey: 'SENDER_PAID_GROUP_ID' },
   { id: 'external', label: 'Κοινό', hint: 'Όσοι εγγράφηκαν στο newsletter από τον ιστότοπο', envKey: 'SENDER_GROUP_ID' },
 ]
 
@@ -46,6 +46,23 @@ export function normaliseAudiences(input: unknown): NewsletterAudienceId[] {
 export function senderGroupId(id: NewsletterAudienceId): string | undefined {
   const a = NEWSLETTER_AUDIENCES.find(x => x.id === id)
   return a ? process.env[a.envKey] : undefined
+}
+
+/**
+ * Οι ομάδες «μιας θυρίδας» για την Τελική Δοκιμή.
+ *
+ * Κάθε έδρα δοκιμάζει στη ΔΙΚΗ της θυρίδα, μέσω του Sender — άρα με αληθινούς
+ * συνδέσμους, αληθινή παρακολούθηση και αληθινό σύνδεσμο απεγγραφής.
+ *
+ * ΠΡΟΣΟΧΗ: η απεγγραφή στον Sender είναι ΚΑΘΟΛΙΚΗ και ΜΗ ΑΝΑΣΤΡΕΨΙΜΗ από το
+ * API — μια θυρίδα που θα πατήσει «απεγγραφή» σε δοκιμή χάνει και το κανονικό
+ * newsletter, και επιστρέφει μόνο με νέα εγγραφή από τη φόρμα. Γι' αυτό η
+ * οθόνη προειδοποιεί πριν από την Τελική Δοκιμή.
+ */
+export const SEAT_TEST_GROUPS: Record<string, string> = {
+  media: 'dPp8Xw',   // Δοκιμές — Media
+  comms: 'aQqRZl',   // Δοκιμές — Επικοινωνία
+  it: 'aOX8wR',      // Test group (it@cultureforchange.net)
 }
 
 export interface NewsletterValidation { ok: boolean; errors: string[] }

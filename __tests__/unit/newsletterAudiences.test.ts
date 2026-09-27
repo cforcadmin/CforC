@@ -73,3 +73,20 @@ describe('Πεδία → ετικέτες Sender', () => {
     expect(unsupportedTags('<p>Καθαρό</p>')).toEqual([])
   })
 })
+
+describe('Περιγραφές λιστών', () => {
+  it('τα Μέλη είναι ΟΛΑ τα ενεργά μέλη, όχι μόνο τα ταμειακά εντάξει', () => {
+    // Η ομάδα «Paid» του Sender γεμίζει με την ΠΡΩΤΗ πληρωμή και δεν αδειάζει
+    // κάθε χρόνο — «ταμειακά εντάξει» ήταν λάθος περιγραφή.
+    const paid = NEWSLETTER_AUDIENCES.find(a => a.id === 'paid')!
+    expect(paid.hint).toContain('ενεργά μέλη')
+    expect(paid.hint).not.toContain('ταμειακά')
+  })
+
+  it('κάθε λίστα λέει καθαρά ποιους περιέχει', () => {
+    for (const a of NEWSLETTER_AUDIENCES) {
+      expect(a.label).toBeTruthy()
+      expect(a.hint.length).toBeGreaterThan(10)
+    }
+  })
+})

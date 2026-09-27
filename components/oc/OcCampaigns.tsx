@@ -156,6 +156,9 @@ export default function OcCampaigns({ desk }: { desk: string }) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingSubject, setEditingSubject] = useState('')
   const [confirming, setConfirming] = useState(false)
+  const [finalTestAsk, setFinalTestAsk] = useState(false)
+  /** Κενό = άμεση αποστολή. Τιμή «YYYY-MM-DDTHH:mm» = προγραμματισμός. */
+  const [scheduleAt, setScheduleAt] = useState('')
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
@@ -233,6 +236,79 @@ export default function OcCampaigns({ desk }: { desk: string }) {
     } finally { setBusy(false) }
   }
 
+  /**
+   * Αποστολή newsletter — άλλη διαδρομή από το μήνυμα.
+   *
+   * Το μήνυμα μπαίνει στη δική μας ουρά και φεύγει ανά παραλήπτη· το
+   * newsletter φτιάχνει καμπάνια στον Sender και την ξεκινά (ή την
+   * προγραμματίζει). Κοινό κουμπί, χωριστές διαδρομές.
+   */
+  const sendNewsletter = async () => {
+    setBusy(true); setNotice(null)
+    try {
+      const res = await fetch('/api/oc/campaigns', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'newsletter-send', desk, id: editingId || undefined,
+          subject, blocks, audiences, scheduleAt: scheduleAt || undefined,
+          footerStyle, footerLook, footerLogo, headerStyle, headerLogo,
+        }),
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
+      const warn = (d.warnings || []).length
+        ? ` Πεδία που ο Sender δεν αναγνωρίζει: ${d.warnings.join(', ')}.`
+        : ''
+      setNotice({
+        kind: 'ok',
+        text: d.scheduled
+          ? `Προγραμματίστηκε για ${new Date(d.scheduled).toLocaleString('el-GR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}.${warn}`
+          : `Ξεκίνησε η αποστολή από τον Sender.${d.archived ? ' Το τεύχος μπήκε στο αρχείο.' : ' ΠΡΟΣΟΧΗ: δεν μπήκε στο αρχείο — πρόσθεσέ το με το χέρι.'}${warn}`,
+      })
+      setConfirming(false)
+      setTab('queue'); newMessage(); setScheduleAt('')
+      await load()
+    } catch (e: any) {
+      setConfirming(false)
+      setNotice({ kind: 'err', text: e?.message || 'Αποτυχία' })
+    } finally { setBusy(false) }
+  }
+
+  /**
+   * Οι δύο δοκιμές.
+   *
+   * «Δοκιμή» φεύγει από εμάς (Resend) — γρήγορη, ακίνδυνη, για τη διάταξη.
+   * «Τελική δοκιμή» φεύγει ΑΠΟ ΤΟΝ SENDER σε ομάδα με μόνη τη θυρίδα σου —
+   * αληθινοί σύνδεσμοι, αληθινή απεγγραφή. Γι' αυτό ρωτάει πρώτα.
+   */
+  const runTest = async (final: boolean) => {
+    setBusy(true); setNotice(null)
+    try {
+      const res = await fetch('/api/oc/campaigns', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: final ? 'newsletter-final-test' : 'newsletter-test',
+          desk, subject, blocks, footerStyle, footerLook, footerLogo, headerStyle, headerLogo,
+        }),
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
+      const warn = (d.warnings || []).length
+        ? ` Πεδία που ο Sender δεν αναγνωρίζει και θα φανούν ως κείμενο: ${d.warnings.join(', ')}.`
+        : ''
+      // Αν η θυρίδα απεγγράφηκε, πρέπει να το μάθει ΤΩΡΑ: δεν επαναφέρεται
+      const dead = d.seatStatus && d.seatStatus !== 'active'
+      setNotice({
+        kind: dead ? 'err' : 'ok',
+        text: dead
+          ? `Η δοκιμή στάλθηκε, αλλά το ${d.to} είναι πλέον «${d.seatStatus}» στον Sender — δεν λαμβάνει τίποτα. Επανέρχεται ΜΟΝΟ με νέα εγγραφή από τη φόρμα του ιστότοπου.`
+          : `${final ? 'Η τελική δοκιμή' : 'Η δοκιμή'} στάλθηκε στο ${d.to}.${warn}`,
+      })
+    } catch (e: any) {
+      setNotice({ kind: 'err', text: e?.message || 'Αποτυχία' })
+    } finally { setBusy(false); setFinalTestAsk(false) }
+  }
+
   /** Καθαρή σύνθεση — και αποδέσμευση από το προσχέδιο που ήταν ανοιχτό */
   const newMessage = () => {
     setEditingId(null); setEditingSubject('')
@@ -282,6 +358,10 @@ export default function OcCampaigns({ desk }: { desk: string }) {
   // Το newsletter ανήκει στην Επικοινωνία: εκεί ζουν οι λίστες και τα
   // στατιστικά του Sender. Τα άλλα γραφεία στέλνουν μηνύματα.
   const canNewsletter = desk === 'comms'
+  // Πόσοι θα λάβουν το newsletter, από τα μεγέθη των λιστών του Sender
+  const newsletterCount = (meta?.newsletterLists || [])
+    .filter(l => audiences.includes(l.id))
+    .reduce((n, l) => n + (l.count ?? 0), 0)
   const draftCount = campaigns.filter(c => c.State === 'draft' && !c.Archived).length
   const sentCount = campaigns.filter(c => c.State !== 'draft' && !c.Archived).length
 
@@ -539,21 +619,81 @@ export default function OcCampaigns({ desk }: { desk: string }) {
 
       {tab === 'compose' && (
         <div className="flex flex-wrap items-center gap-3 sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 -mx-4 px-4 py-3 sm:-mx-8 sm:px-8">
-          <span className="text-sm text-gray-600 dark:text-gray-400">{resolved.summary || 'Κανένας παραλήπτης'}</span>
-          <div className="ml-auto flex gap-2">
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            {kind === 'newsletter'
+              ? (audiences.length ? `${audiences.length === 2 ? 'Μέλη και Κοινό' : audiences[0] === 'paid' ? 'Μέλη' : 'Κοινό'}` : 'Καμία λίστα')
+              : (resolved.summary || 'Κανένας παραλήπτης')}
+          </span>
+          {kind === 'newsletter' && (
+            <label className="flex items-center gap-2 text-sm">
+              <span className="text-gray-600 dark:text-gray-400">Προγραμματισμός</span>
+              <input type="datetime-local" value={scheduleAt} onChange={e => setScheduleAt(e.target.value)}
+                title="Άφησέ το κενό για άμεση αποστολή"
+                className="h-11 px-3 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm" />
+              {scheduleAt && (
+                <button type="button" onClick={() => setScheduleAt('')}
+                  className="text-xs underline text-gray-600 dark:text-gray-400">άμεσα</button>
+              )}
+            </label>
+          )}
+          <div className="ml-auto flex flex-wrap gap-2">
             <button type="button" onClick={() => send('save')} disabled={busy}
               className="px-4 min-h-11 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-semibold disabled:opacity-50">
               Αποθήκευση προσχεδίου
             </button>
-            <button type="button" onClick={() => setConfirming(true)} disabled={busy || resolved.count === 0 || blocks.length === 0}
+            {kind === 'newsletter' && (
+              <>
+                <button type="button" onClick={() => runTest(false)} disabled={busy || blocks.length === 0}
+                  title="Γρήγορη δοκιμή στη θυρίδα σου, κυρίως για τη ΔΙΑΤΑΞΗ. Φεύγει από εμάς, όχι από τον Sender: οι σύνδεσμοι παρακολούθησης και η απεγγραφή ΔΕΝ είναι αληθινοί. Για πραγματικούς συνδέσμους, κάνε Τελική δοκιμή."
+                  className="px-4 min-h-11 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-semibold disabled:opacity-50">
+                  Δοκιμή
+                </button>
+                <button type="button" onClick={() => setFinalTestAsk(true)} disabled={busy || blocks.length === 0}
+                  title="Αληθινή αποστολή από τον Sender στη θυρίδα σου: όλοι οι σύνδεσμοι δουλεύουν κανονικά. ΜΗΝ πατήσεις «απεγγραφή» — η απεγγραφή είναι καθολική και δεν αναιρείται."
+                  className="px-4 min-h-11 rounded-full border border-coral text-sm font-semibold disabled:opacity-50">
+                  Τελική δοκιμή
+                </button>
+              </>
+            )}
+            <button type="button" onClick={() => setConfirming(true)}
+              disabled={busy || blocks.length === 0 || (kind === 'newsletter' ? audiences.length === 0 : resolved.count === 0)}
               className="px-5 min-h-11 rounded-full bg-coral text-charcoal text-sm font-bold disabled:opacity-50">
-              Αποστολή…
+              {scheduleAt && kind === 'newsletter' ? 'Προγραμματισμός…' : 'Αποστολή…'}
             </button>
           </div>
         </div>
       )}
 
-      {confirming && (
+      {finalTestAsk && (
+        <ConfirmDialog
+          subject={subject} count={1} emailCost={1} days={1} cc={[]} busy={busy}
+          recipients={[{ email: meta?.signer?.email || '', name: 'η θυρίδα σου', via: 'seat' }]}
+          title="Τελική δοκιμή μέσω Sender"
+          body={'Θα φύγει αληθινό γράμμα από τον Sender στη θυρίδα σου, με όλους τους συνδέσμους ενεργούς. '
+            + 'ΜΗΝ πατήσεις «απεγγραφή» μέσα στο γράμμα: η απεγγραφή στον Sender είναι καθολική, '
+            + 'δεν αναιρείται από εμάς, και η θυρίδα θα σταματήσει να λαμβάνει και το κανονικό newsletter.'}
+          confirmLabel="Στείλε την τελική δοκιμή" compact
+          onCancel={() => setFinalTestAsk(false)}
+          onConfirm={() => runTest(true)}
+        />
+      )}
+
+      {confirming && kind === 'newsletter' && (
+        <ConfirmDialog
+          subject={subject} count={newsletterCount} emailCost={newsletterCount} days={1}
+          cc={[]} recipients={[]} busy={busy} compact
+          title={scheduleAt ? 'Προγραμματισμός newsletter' : 'Αποστολή newsletter'}
+          body={(scheduleAt
+            ? `Θα φύγει αυτόματα στις ${new Date(scheduleAt).toLocaleString('el-GR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}, από τον Sender, `
+            : 'Θα ξεκινήσει αμέσως η αποστολή από τον Sender, ')
+            + `σε ${audiences.length === 2 ? 'Μέλη και Κοινό' : audiences[0] === 'paid' ? 'τα Μέλη' : 'το Κοινό'}. `
+            + 'Το γράμμα δεν ανακαλείται. Αν δεν έχεις κάνει Τελική δοκιμή, κάν\' την πρώτα.'}
+          confirmLabel={scheduleAt ? 'Προγραμματισμός' : `Αποστολή σε ${newsletterCount}`}
+          onCancel={() => setConfirming(false)} onConfirm={sendNewsletter}
+        />
+      )}
+
+      {confirming && kind !== 'newsletter' && (
         <ConfirmDialog
           subject={subject} count={resolved.count} emailCost={emailCost} days={days}
           cc={cc} recipients={resolved.recipients} busy={busy}
@@ -1225,6 +1365,8 @@ function EmailAdder({ values, onChange, placeholder }: { values: string[]; onCha
 function ConfirmDialog(props: {
   subject: string; count: number; emailCost: number; days: number; cc: string[]
   recipients: Recipient[]; busy: boolean; onCancel: () => void; onConfirm: () => void
+  /** Παραλλαγή για τη δοκιμή: δικός της τίτλος, προειδοποίηση και κουμπί */
+  title?: string; body?: string; confirmLabel?: string; compact?: boolean
 }) {
   const { subject, count, emailCost, days, cc, recipients, busy, onCancel, onConfirm } = props
   const byVia = useMemo(() => {
@@ -1239,27 +1381,31 @@ function ConfirmDialog(props: {
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center sm:p-6" role="dialog" aria-modal="true">
       <div className="bg-white dark:bg-gray-800 w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
-        <h3 className="text-lg font-bold mb-1">Επιβεβαίωση αποστολής</h3>
+        <h3 className="text-lg font-bold mb-1">{props.title || 'Επιβεβαίωση αποστολής'}</h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Το μήνυμα φεύγει σε πραγματικούς ανθρώπους και <strong>δεν ανακαλείται</strong>.
+          {props.body || <>Το μήνυμα φεύγει σε πραγματικούς ανθρώπους και <strong>δεν ανακαλείται</strong>.</>}
         </p>
         <dl className="grid gap-2 text-sm mb-4">
           <div className="flex gap-2"><dt className="text-gray-600 dark:text-gray-400 w-32">Θέμα</dt><dd className="font-semibold min-w-0">{subject || '—'}</dd></div>
           <div className="flex gap-2"><dt className="text-gray-600 dark:text-gray-400 w-32">Παραλήπτες</dt><dd className="tabular-nums">{count}</dd></div>
           {cc.length > 0 && <div className="flex gap-2"><dt className="text-gray-600 dark:text-gray-400 w-32">CC</dt><dd translate="no">{cc.join(', ')}</dd></div>}
           <div className="flex gap-2"><dt className="text-gray-600 dark:text-gray-400 w-32">Σύνολο email</dt><dd className="tabular-nums">{emailCost}</dd></div>
-          <div className="flex gap-2"><dt className="text-gray-600 dark:text-gray-400 w-32">Πότε</dt><dd>{days === 1 ? 'με την επόμενη παρτίδα (08:00)' : `σε ${days} ημέρες, από τις 08:00`}</dd></div>
+          {!props.compact && (
+            <div className="flex gap-2"><dt className="text-gray-600 dark:text-gray-400 w-32">Πότε</dt><dd>{days === 1 ? 'με την επόμενη παρτίδα (08:00)' : `σε ${days} ημέρες, από τις 08:00`}</dd></div>
+          )}
         </dl>
-        <div className="rounded-2xl bg-gray-100 dark:bg-gray-900 px-4 py-3 text-sm mb-5">
-          <div className="font-semibold mb-1">Ποιοι θα το λάβουν</div>
-          {byVia.map(([via, n]) => <div key={via} className="text-gray-700 dark:text-gray-300">{n} {VIA[via] || via}</div>)}
-        </div>
+        {!props.compact && (
+          <div className="rounded-2xl bg-gray-100 dark:bg-gray-900 px-4 py-3 text-sm mb-5">
+            <div className="font-semibold mb-1">Ποιοι θα το λάβουν</div>
+            {byVia.map(([via, n]) => <div key={via} className="text-gray-700 dark:text-gray-300">{n} {VIA[via] || via}</div>)}
+          </div>
+        )}
         <div className="flex gap-2 justify-end">
           <button type="button" onClick={onCancel} disabled={busy}
             className="px-4 min-h-11 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-semibold">Άκυρο</button>
           <button type="button" onClick={onConfirm} disabled={busy}
             className="px-5 min-h-11 rounded-full bg-coral text-charcoal text-sm font-bold disabled:opacity-50">
-            {busy ? 'Καταχώριση…' : `Αποστολή σε ${count}`}
+            {busy ? 'Καταχώριση…' : (props.confirmLabel || `Αποστολή σε ${count}`)}
           </button>
         </div>
       </div>

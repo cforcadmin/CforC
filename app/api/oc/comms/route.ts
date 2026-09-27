@@ -59,7 +59,13 @@ async function fetchCampaigns() {
     const groupsUsed = new Set<string>()
     for (const c of json?.data || []) {
       const recipients = Number(c.recipient_count ?? 0)
-      if (recipients < 10) continue                 // δοκιμαστική αποστολή
+      // Οι δοκιμές φέρουν ΡΗΤΑ «[ΔΟΚΙΜΗ]» στον τίτλο: μία αποστολή σε μία
+      // θυρίδα θα προσγειωνόταν εδώ με 100% άνοιγμα και θα τραβούσε τους
+      // μέσους όρους. Ο έλεγχος «<10» μένει ως δίχτυ για παλιές δοκιμές,
+      // αλλά είναι εικασία — θα έκοβε και μια αληθινή αποστολή σε 8 άτομα.
+      const title = `${c.subject || ''} ${c.title || ''}`
+      if (title.includes('[ΔΟΚΙΜΗ]')) continue
+      if (recipients < 10) continue
       const sent = Number(c.sent_count ?? recipients ?? 0)
       const opens = Number(c.opens ?? 0)
       const stats = {
