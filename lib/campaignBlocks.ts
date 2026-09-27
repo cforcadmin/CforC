@@ -660,6 +660,22 @@ function footerHtml(
 }
 
 /** Το εξωτερικό περίβλημα — ίδιο με τα αυτόματα email (600px, κρεμ, coral) */
+/**
+ * Η γραμμή απεγγραφής ενός newsletter.
+ *
+ * Χαμηλός τόνος και έξω από τη ζώνη της υπογραφής: είναι υποχρέωση, όχι
+ * κάλεσμα. Οι ετικέτες μένουν ΑΚΕΡΑΙΕΣ για τον Sender.
+ */
+function unsubscribeRow(): string {
+  return `
+  <tr>
+    <td class="px" align="center" style="padding:0 48px 28px 48px;font-family:${FONT};font-size:12px;line-height:18px;color:${BRAND.inkSoft};">
+      Λαμβάνεις αυτό το μήνυμα επειδή εγγράφηκες στο newsletter του Culture for Change.<br>
+      <a href="{{unsubscribe_link}}" style="color:${BRAND.inkSoft};text-decoration:underline;">{{unsubscribe_text}}</a>
+    </td>
+  </tr>`
+}
+
 export function campaignEmailHtml(opts: {
   subject: string
   blocks: Block[]
@@ -670,8 +686,21 @@ export function campaignEmailHtml(opts: {
   footerLogo?: boolean
   headerStyle?: HeaderStyle
   headerLogo?: boolean
+  /**
+   * Newsletter: προσθέτει τη γραμμή απεγγραφής κάτω από το υποσέλιδο.
+   *
+   * ΜΟΝΟ στα newsletter. Τα μηνύματα του γραφείου είναι επίσημη αλληλογραφία
+   * προς μέλη και συνεργάτες — μια «απεγγραφή» εκεί θα υπονοούσε ότι μπορείς
+   * να μη λάβεις την απόδειξη ή την έγκρισή σου.
+   *
+   * Οι ετικέτες είναι του Sender και ΔΕΝ αποδίδονται από εμάς: τις γεμίζει
+   * εκείνος τη στιγμή της αποστολής, ανά παραλήπτη. Αν λείψουν, ο Sender
+   * κολλάει δικό του υποσέλιδο — οπότε το βάζουμε εμείς, με τη δική μας
+   * τυπογραφία.
+   */
+  unsubscribe?: boolean
 }): { subject: string; html: string; text: string } {
-  const { subject, blocks, preheader, footerStyle = 'signature', footerLook = 'plain', footerLogo = false, headerStyle = 'coral', headerLogo = false } = opts
+  const { subject, blocks, preheader, footerStyle = 'signature', footerLook = 'plain', footerLogo = false, headerStyle = 'coral', headerLogo = false, unsubscribe = false } = opts
   const signer: CampaignSigner = opts.signer || {
     name: 'Culture for Change', role: 'Γραμματεία', email: 'hello@cultureforchange.net',
   }
@@ -709,7 +738,7 @@ ${headerHtml(headerStyle, subject, headerLogo)}
 ${renderCampaignBody(blocks)}
 
 ${footerHtml(footerStyle, footerLook, signer, year, footerLogo)}
-
+${unsubscribe ? unsubscribeRow() : ''}
 </table>
 </td></tr>
 </table>

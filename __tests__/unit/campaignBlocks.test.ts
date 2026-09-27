@@ -398,3 +398,34 @@ describe('Πίνακας περιεχομένων — τίτλος', () => {
     expect(withToc({ type: 'toc', title: TOC_DEFAULT_TITLE })).toContain('ΣΕ ΑΥΤΟ ΤΟ ΤΕΥΧΟΣ')
   })
 })
+
+describe('Γραμμή απεγγραφής', () => {
+  const render = (o: any = {}) => campaignEmailHtml({
+    subject: 'Τεύχος', blocks: [{ type: 'text', html: '<p>κ</p>' }] as any, ...o,
+  }).html
+
+  it('ΔΕΝ μπαίνει στα μηνύματα του γραφείου', () => {
+    // Μια «απεγγραφή» σε απόδειξη ή έγκριση θα υπονοούσε ότι μπορείς να μην
+    // τη λάβεις — τα μηνύματα του OC είναι επίσημη αλληλογραφία.
+    const html = render()
+    expect(html).not.toContain('unsubscribe')
+  })
+
+  it('μπαίνει στα newsletter', () => {
+    const html = render({ unsubscribe: true })
+    expect(html).toContain('{{unsubscribe_link}}')
+    expect(html).toContain('{{unsubscribe_text}}')
+  })
+
+  it('οι ετικέτες μένουν ΑΚΕΡΑΙΕΣ — τις γεμίζει ο Sender', () => {
+    // Αν τις κωδικοποιούσαμε, ο σύνδεσμος θα έφτανε σπασμένος στον παραλήπτη
+    const html = render({ unsubscribe: true })
+    expect(html).toContain('href="{{unsubscribe_link}}"')
+    expect(html).not.toContain('%7B%7B')
+    expect(html).not.toContain('&#123;')
+  })
+
+  it('λέει ΓΙΑΤΙ το λαμβάνει κανείς — απαίτηση, όχι διακόσμηση', () => {
+    expect(render({ unsubscribe: true })).toContain('εγγράφηκες στο newsletter')
+  })
+})
