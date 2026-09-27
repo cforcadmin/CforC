@@ -150,3 +150,46 @@ export function fillTagsForTest(html: string, sample = { firstname: 'Μαρία'
     .replace(/\{\{\s*unsubscribe_text\s*\}\}/gi, 'Απεγγραφή')
     .replace(/\{\{\s*unsubscribe_url\s*\}\}/gi, '#')
 }
+
+export interface SenderStats {
+  status: string
+  sentAt: string | null
+  recipients: number
+  sent: number
+  opens: number
+  clicks: number
+  bounces: number
+  /** Ποσοστά επί των ΑΠΕΣΤΑΛΜΕΝΩΝ, όχι των παραληπτών */
+  openRate: number | null
+  clickRate: number | null
+}
+
+/**
+ * Τα στατιστικά ενός τεύχους, από τον Sender.
+ *
+ * Τα ποσοστά βγαίνουν από τα ΑΠΕΣΤΑΛΜΕΝΑ, όχι από τους παραλήπτες: όταν
+ * υπάρχουν bounces οι δύο αριθμοί διαφέρουν, και το ποσοστό ανοίγματος επί
+ * των παραληπτών θα έδειχνε χαμηλότερο απ' το πραγματικό.
+ *
+ * Τα ανοίγματα είναι ΠΑΝΤΑ υποεκτίμηση: μετριούνται με εικονοστοιχείο, που
+ * πολλά γραμματοκιβώτια μπλοκάρουν. Χρήσιμα ως τάση, όχι ως ακριβές πλήθος.
+ */
+export async function getSenderCampaignStats(campaignId: string): Promise<SenderStats | null> {
+  try {
+    const r = await call(`/campaigns/${encodeURIComponent(campaignId)}`)
+    if (!r.ok) return null
+    const d = r.json?.data || r.json || {}
+    const recipients = Number(d.recipient_count ?? 0)
+    const sent = Number(d.sent_count ?? recipients ?? 0)
+    const opens = Number(d.opens ?? 0)
+    const clicks = Number(d.clicks ?? 0)
+    return {
+      status: String(d.status || ''),
+      sentAt: d.sent_time || null,
+      recipients, sent, opens, clicks,
+      bounces: Number(d.bounces_count ?? 0),
+      openRate: sent > 0 ? Math.round((opens / sent) * 1000) / 10 : null,
+      clickRate: sent > 0 ? Math.round((clicks / sent) * 1000) / 10 : null,
+    }
+  } catch { return null }
+}

@@ -366,6 +366,70 @@ describe('Αποστολή newsletter μέσω Sender', () => {
   })
 })
 
+describe('Στατιστικά ανά τεύχος', () => {
+  beforeAll(() => { process.env.SENDER_API_KEY = 'test-key' })
+  afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks() })
+
+  function stub(campaign: any, senderBody?: any) {
+    jest.spyOn(global, 'fetch').mockImplementation(async (input: any) => {
+      const url = typeof input === 'string' ? input : input?.url ?? ''
+      const json = (d: any, status = 200) => new Response(JSON.stringify(d), { status })
+      if (url.includes('/api/members?')) return json({ data: members })
+      if (url.includes('/api/working-groups')) return json({ data: [] })
+      if (url.includes('api.sender.net/v2/campaigns/')) {
+        return senderBody === null ? json({}, 404) : json({ data: senderBody })
+      }
+      if (url.includes('api.sender.net')) return json({ data: [] })
+      if (url.includes('/api/oc-campaigns/')) return json({ data: campaign })
+      return json({ data: {} })
+    })
+  }
+  const open1 = async () => {
+    const res = await GET(buildRequest('/api/oc/campaigns?id=c1&desk=comms'))
+    return { status: res.status, json: await res.json() }
+  }
+  const NL = {
+    documentId: 'c1', Subject: 'Τεύχος', Kind: 'newsletter', Desk: 'comms',
+    SenderCampaignId: 'snd7', Signer: { email: 'communication@cultureforchange.net' },
+  }
+
+  it('φέρνει τα στατιστικά από τον Sender και υπολογίζει ποσοστά', async () => {
+    signedInAs('comms')
+    stub(NL, { status: 'SENT', sent_time: '2026-09-27 09:06:03', recipient_count: 400, sent_count: 380, opens: 95, clicks: 19, bounces_count: 20 })
+    const r = await open1()
+    expect(r.json.senderStats.opens).toBe(95)
+    // Ποσοστά επί των ΑΠΕΣΤΑΛΜΕΝΩΝ (380), όχι των παραληπτών (400)
+    expect(r.json.senderStats.openRate).toBe(25)
+    expect(r.json.senderStats.clickRate).toBe(5)
+    expect(r.json.senderStats.bounces).toBe(20)
+  })
+
+  it('μήνυμα χωρίς καμπάνια Sender δεν ζητά τίποτα', async () => {
+    signedInAs('comms')
+    stub({ ...NL, Kind: 'message', SenderCampaignId: null })
+    const r = await open1()
+    expect(r.json.senderStats).toBeNull()
+  })
+
+  it('αν ο Sender δεν απαντήσει, η γραμμή ανοίγει κανονικά χωρίς στατιστικά', async () => {
+    // Τα στατιστικά είναι στολίδι· το ΓΡΑΜΜΑ είναι το περιεχόμενο
+    signedInAs('comms')
+    stub(NL, null)
+    const r = await open1()
+    expect(r.status).toBe(200)
+    expect(r.json.campaign.Subject).toBe('Τεύχος')
+    expect(r.json.senderStats).toBeNull()
+  })
+
+  it('μηδέν απεσταλμένα δεν δίνει διαίρεση με το μηδέν', async () => {
+    signedInAs('comms')
+    stub(NL, { status: 'DRAFT', recipient_count: 0, sent_count: 0, opens: 0, clicks: 0 })
+    const r = await open1()
+    expect(r.json.senderStats.openRate).toBeNull()
+    expect(r.json.senderStats.clickRate).toBeNull()
+  })
+})
+
 describe('Τελική δοκιμή μέσω Sender', () => {
   beforeAll(() => {
     process.env.SENDER_API_KEY = 'test-key'

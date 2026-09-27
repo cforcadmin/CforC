@@ -1421,6 +1421,7 @@ function ConfirmDialog(props: {
  */
 function CampaignDetail({ id }: { id: string }) {
   const [data, setData] = useState<any>(null)
+  const [stats, setStats] = useState<any>(null)
   const [html, setHtml] = useState('')
   const [err, setErr] = useState('')
 
@@ -1433,6 +1434,7 @@ function CampaignDetail({ id }: { id: string }) {
         if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
         if (!alive) return
         setData(d.campaign)
+        setStats(d.senderStats || null)
         // Το γράμμα ξαναποδίδεται από τα ΑΠΟΘΗΚΕΥΜΕΝΑ μπλοκ και στυλ, οπότε
         // δείχνει ό,τι έφυγε — όχι ό,τι θα έφευγε με τις σημερινές ρυθμίσεις.
         const p = await fetch('/api/oc/campaigns', {
@@ -1465,10 +1467,44 @@ function CampaignDetail({ id }: { id: string }) {
           : <p className="text-sm text-gray-500">Φόρτωση προεπισκόπησης…</p>}
       </div>
       <div className="min-w-0">
+        {/* Τα στατιστικά ενός τεύχους έρχονται από τον Sender, όχι από εμάς:
+            εκείνος παραδίδει και εκείνος μετράει. Μπαίνουν ΔΙΠΛΑ στο γράμμα
+            που αφορούν, αντί να ζουν μόνο στον πίνακα της Επικοινωνίας. */}
+        {stats && (
+          <div className="mb-5">
+            <h4 className={`${EYEBROW} mb-2`}>ΑΠΟΔΟΣΗ</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                { label: 'Στάλθηκαν', value: stats.sent, hint: null },
+                { label: 'Ανοίγματα', value: stats.openRate != null ? `${stats.openRate}%` : '—', hint: `${stats.opens} συνολικά` },
+                { label: 'Κλικ', value: stats.clickRate != null ? `${stats.clickRate}%` : '—', hint: `${stats.clicks} συνολικά` },
+                { label: 'Bounces', value: stats.bounces, hint: null },
+              ].map(k => (
+                <div key={k.label} className="rounded-2xl border border-gray-200 dark:border-gray-600 px-3 py-2">
+                  <div className="text-lg font-bold tabular-nums" translate="no">{k.value}</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">{k.label}</div>
+                  {k.hint && <div className="text-xs text-gray-500" translate="no">{k.hint}</div>}
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Τα ανοίγματα μετριούνται με εικονοστοιχείο που πολλά γραμματοκιβώτια μπλοκάρουν —
+              είναι πάντα υποεκτίμηση. Χρήσιμα ως τάση, όχι ως ακριβές πλήθος.
+            </p>
+          </div>
+        )}
         <h4 className={`${EYEBROW} mb-2`}>ΠΑΡΑΛΗΠΤΕΣ ({recipients.length})</h4>
         {(data.Cc || []).length > 0 && (
           <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
             Κοινοποίηση: <span translate="no">{(data.Cc || []).join(', ')}</span>
+          </p>
+        )}
+        {data.Kind === 'newsletter' && recipients.length === 0 && (
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Το newsletter φεύγει σε λίστες του Sender
+            {Array.isArray(data.Groups) && data.Groups.length
+              ? ` (${data.Groups.map((g: string) => g === 'paid' ? 'Μέλη' : 'Κοινό').join(' και ')})`
+              : ''} — τους παραλήπτες τους κρατά εκείνος, όχι εμείς.
           </p>
         )}
         <div className="max-h-96 overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-600 divide-y divide-gray-200 dark:divide-gray-700">

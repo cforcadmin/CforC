@@ -16,7 +16,7 @@ import {
 } from '@/lib/newsletterAudiences'
 import {
   createSenderCampaign, createSenderCampaignRaw, sendSenderCampaign,
-  scheduleSenderCampaign, fillTagsForTest,
+  scheduleSenderCampaign, fillTagsForTest, getSenderCampaignStats,
 } from '@/lib/senderCampaigns'
 import { sendOcEmailResult } from '@/lib/ocEmails'
 
@@ -295,7 +295,11 @@ export async function GET(request: NextRequest) {
       if (!campaignInReach(one.json?.data, auth.activeSeat)) {
         return NextResponse.json({ error: 'Το μήνυμα ανήκει σε άλλο γραφείο' }, { status: 403 })
       }
-      return NextResponse.json({ campaign: one.json?.data })
+      // Τα στατιστικά ενός τεύχους ζουν στον Sender. Τα φέρνουμε ΜΟΝΟ όταν
+      // ανοίγει η γραμμή — μία κλήση, όχι μία ανά καμπάνια στη λίστα.
+      const sid = one.json?.data?.SenderCampaignId
+      const senderStats = sid ? await getSenderCampaignStats(String(sid)) : null
+      return NextResponse.json({ campaign: one.json?.data, senderStats })
     }
     const members = await loadMembers()
     const groups = await attachGroups(members)
