@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, SEAT_LABELS, SEAT_MAILBOX, type OcSeat } from '@/lib/ocRoles'
-import { campaignEmailHtml, PRESETS, TOC_DEFAULT_TITLE, BLOCK_LABELS, BLOCK_VARIANTS, MERGE_FIELDS, FOOTER_STYLES, FOOTER_LOOKS, HEADER_STYLES, applyMergeFields, type Block, type FooterStyle, type FooterLook, type HeaderStyle, type CampaignSigner } from '@/lib/campaignBlocks'
+import { campaignEmailHtml, PRESETS, TOC_DEFAULT_TITLE, visibleBlocks, BLOCK_LABELS, BLOCK_VARIANTS, MERGE_FIELDS, FOOTER_STYLES, FOOTER_LOOKS, HEADER_STYLES, NEWSLETTER_FOOTERS, NEWSLETTER_FOOTER_DEFAULTS, normaliseNewsletterFooter, applyMergeFields, type Block, type FooterStyle, type FooterLook, type HeaderStyle, type CampaignSigner } from '@/lib/campaignBlocks'
 import { drainCampaigns } from '@/lib/campaignDrain'
 import {
   resolveRecipients, toQueue, validateCampaign, daysNeeded, recipientSummary,
@@ -277,6 +277,17 @@ async function assertOwnership(id: string, seat: OcSeat): Promise<NextResponse |
  * έλεγχο, ένα χειροκίνητο `?desk=finances` θα άνοιγε τα Οικονομικά σε
  * οποιονδήποτε. Αν δεν το πει, πέφτουμε στο γραφείο της έδρας του.
  */
+/**
+ * Το υποσέλιδο ισχύει ΜΟΝΟ για newsletter.
+ *
+ * Ένα μήνυμα γραφείου υπογράφεται από πρόσωπο και δεν έχει απεγγραφή· αν του
+ * κολλούσαμε τη ζώνη με τα κοινωνικά δίκτυα και το σημείωμα GDPR, μια απλή
+ * απόδειξη θα έμοιαζε με διαφημιστικό.
+ */
+function nlFooter(body: any) {
+  return body?.kind === 'newsletter' ? normaliseNewsletterFooter(body?.footer) : null
+}
+
 function deskOfRequest(asked: string | null | undefined, seat: OcSeat): string | null {
   const want = String(asked || '').trim()
   if (want && canSendEmailFrom(want, seat)) return want
@@ -331,6 +342,8 @@ export async function GET(request: NextRequest) {
       blockVariants: BLOCK_VARIANTS,
       presets: PRESETS.map(p => ({ id: p.id, label: p.label, hint: p.hint, blocks: p.blocks })),
       mergeFields: MERGE_FIELDS,
+      newsletterFooters: NEWSLETTER_FOOTERS,
+      newsletterFooterDefaults: NEWSLETTER_FOOTER_DEFAULTS,
       footerStyles: FOOTER_STYLES,
       footerLooks: FOOTER_LOOKS,
       headerStyles: HEADER_STYLES,
@@ -379,13 +392,19 @@ export async function POST(request: NextRequest) {
         footerStyle: (body?.footerStyle || 'signature') as FooterStyle,
         footerLook: (body?.footerLook || 'plain') as FooterLook,
         footerLogo: !!body?.footerLogo,
+        newsletterFooter: nlFooter(body),
         headerStyle: (body?.headerStyle || 'coral') as HeaderStyle,
         headerLogo: !!body?.headerLogo,
         // Η προεπισκόπηση πρέπει να δείχνει ΚΑΙ τη γραμμή απεγγραφής, αλλιώς
         // ο συντάκτης δεν βλέπει ποτέ το γράμμα όπως φτάνει στον παραλήπτη
         unsubscribe: body?.kind === 'newsletter',
+        // Σήμανση μπλοκ: μόνο εδώ, ώστε το κλικ στην προεπισκόπηση να ξέρει
+        // ποιο στοιχείο πατήθηκε. Στο γράμμα που φεύγει δεν μπαίνει ποτέ.
+        annotate: true,
       })
-      return NextResponse.json({ html: applyMergeFields(tpl.html, sample), text: tpl.text, subject: tpl.subject })
+      // Δεν υπάρχει ακόμη τεύχος στο αρχείο — ο σύνδεσμος μένει αδρανής
+      const previewHtml = applyMergeFields(tpl.html, sample).replace(/\{\{ARCHIVE_URL\}\}/g, '#')
+      return NextResponse.json({ html: previewHtml, text: tpl.text, subject: tpl.subject })
     }
 
     if (action === 'save' || action === 'queue') {
@@ -396,7 +415,8 @@ export async function POST(request: NextRequest) {
       const recipients = resolveRecipients(members, (body?.selection || {}) as RecipientSelection)
 
       if (action === 'queue') {
-        const v = validateCampaign({ subject, blocks, recipients })
+        // Τα κρυφά ΔΕΝ μετράνε: γράμμα με μόνο κρυφά στοιχεία είναι κενό
+        const v = validateCampaign({ subject, blocks: visibleBlocks(blocks), recipients })
         if (!v.ok) return NextResponse.json({ error: v.errors.join(' · '), errors: v.errors }, { status: 400 })
       }
 
@@ -425,6 +445,7 @@ export async function POST(request: NextRequest) {
         FooterStyle: String(body?.footerStyle || 'signature'),
         FooterLook: String(body?.footerLook || 'plain'),
         FooterLogo: !!body?.footerLogo,
+        Footer: nlFooter(body),
         HeaderStyle: String(body?.headerStyle || 'coral'),
         HeaderLogo: !!body?.headerLogo,
         // Παγώνει εδώ: η αποστολή μπορεί να κρατήσει ημέρες
@@ -453,6 +474,7 @@ export async function POST(request: NextRequest) {
        * κεφαλίδα και το υποσέλιδο που διάλεξε ο συντάκτης.
        */
       const DROP_ORDER: Array<keyof typeof payload | string> = [
+        'Footer',                                           // υποσέλιδο newsletter
         'Kind', 'Groups',                                   // newsletter
         'Selection',                                        // κοινά προσχέδια
         'Desk',                                             // γραφεία
@@ -551,11 +573,12 @@ export async function POST(request: NextRequest) {
         footerStyle: (body?.footerStyle || 'signature') as FooterStyle,
         footerLook: (body?.footerLook || 'plain') as FooterLook,
         footerLogo: !!body?.footerLogo,
+        newsletterFooter: nlFooter(body),
         headerStyle: (body?.headerStyle || 'coral') as HeaderStyle,
         headerLogo: !!body?.headerLogo,
         unsubscribe: true,
       })
-      const html = fillTagsForTest(applySenderTags(tpl.html))
+      const html = fillTagsForTest(applySenderTags(tpl.html)).replace(/\{\{ARCHIVE_URL\}\}/g, '#')
       const sent = await sendOcEmailResult(signer.email, `[ΔΟΚΙΜΗ] ${tpl.subject}`, html, {
         from: `Culture for Change <${signer.email}>`, replyTo: signer.email,
       })
@@ -591,13 +614,14 @@ export async function POST(request: NextRequest) {
         footerStyle: (body?.footerStyle || 'signature') as FooterStyle,
         footerLook: (body?.footerLook || 'plain') as FooterLook,
         footerLogo: !!body?.footerLogo,
+        newsletterFooter: nlFooter(body),
         headerStyle: (body?.headerStyle || 'coral') as HeaderStyle,
         headerLogo: !!body?.headerLogo,
         unsubscribe: true,
       })
       const created = await createSenderCampaignRaw({
         subject: `[ΔΟΚΙΜΗ] ${tpl.subject}`,
-        html: applySenderTags(tpl.html),
+        html: applySenderTags(tpl.html).replace(/\{\{ARCHIVE_URL\}\}/g, '#'),
         fromName: 'Culture for Change', replyTo: signer.email,
         groups: [group],
         title: `[ΔΟΚΙΜΗ] ${tpl.subject}`,
@@ -637,7 +661,7 @@ export async function POST(request: NextRequest) {
       const blocks: Block[] = Array.isArray(body?.blocks) ? body.blocks : []
       const subject = String(body?.subject || '').trim()
       const audiences = normaliseAudiences(body?.audiences)
-      const v = validateNewsletter({ subject, blocks, audiences })
+      const v = validateNewsletter({ subject, blocks: visibleBlocks(blocks), audiences })
       if (!v.ok) return NextResponse.json({ error: v.errors.join(' · '), errors: v.errors }, { status: 400 })
 
       const signer = await signerFor(auth.activeSeat)
@@ -646,12 +670,20 @@ export async function POST(request: NextRequest) {
         footerStyle: (body?.footerStyle || 'signature') as FooterStyle,
         footerLook: (body?.footerLook || 'plain') as FooterLook,
         footerLogo: !!body?.footerLogo,
+        newsletterFooter: nlFooter(body),
         headerStyle: (body?.headerStyle || 'coral') as HeaderStyle,
         headerLogo: !!body?.headerLogo,
         unsubscribe: true,
       })
+      /**
+       * Ο σύνδεσμος «δες το στον browser» δείχνει στο ΔΙΚΟ μας αρχείο, άρα
+       * το slug πρέπει να υπάρχει ΠΡΙΝ φτιαχτεί το HTML. Γι' αυτό
+       * υπολογίζεται εδώ και χρησιμοποιείται και στην εγγραφή του αρχείου —
+       * ίδιο slug, αλλιώς ο σύνδεσμος θα οδηγούσε σε 404.
+       */
+      const slug = newsletterSlug(tpl.subject)
       // Οι ετικέτες μεταφράζονται, ΔΕΝ αποδίδονται: τις γεμίζει ο Sender
-      const html = applySenderTags(tpl.html)
+      const html = applySenderTags(tpl.html).replace(/\{\{ARCHIVE_URL\}\}/g, archiveUrlFor(slug))
 
       const created = await createSenderCampaign({
         subject: tpl.subject, html, audiences,
@@ -684,6 +716,7 @@ export async function POST(request: NextRequest) {
         FooterStyle: String(body?.footerStyle || 'signature'),
         FooterLook: String(body?.footerLook || 'plain'),
         FooterLogo: !!body?.footerLogo,
+        Footer: nlFooter(body),
         HeaderStyle: String(body?.headerStyle || 'coral'),
         HeaderLogo: !!body?.headerLogo,
         Signer: signer, SenderCampaignId: created.campaignId,
@@ -699,7 +732,7 @@ export async function POST(request: NextRequest) {
       // Το τεύχος μπαίνει στο δημόσιο αρχείο — best-effort, ΠΟΤΕ δεν ρίχνει
       // την αποστολή που ήδη έφυγε
       let archive: string | null = null
-      if (!when) archive = await archiveNewsletter(tpl.subject, tpl.html, audiences)
+      if (!when) archive = await archiveNewsletter(tpl.subject, html, audiences, slug)
 
       return NextResponse.json({
         ok: true, campaignId: created.campaignId, scheduled: when || null,
@@ -809,21 +842,31 @@ async function seatSubscriberStatus(email: string): Promise<string | null> {
  * δεν επιτρέπεται να εμφανιστεί ως αποτυχία αποστολής — θα οδηγούσε σε
  * δεύτερη αποστολή στους ίδιους ανθρώπους.
  */
+function newsletterSlug(subject: string): string {
+  const base = subject.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zα-ω0-9]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 60)
+  return `${base || 'newsletter'}-${Date.now().toString(36)}`
+}
+
+/** Η διεύθυνση του τεύχους στο δικό μας αρχείο */
+function archiveUrlFor(slug: string): string {
+  const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://cultureforchange.net'
+  return `${site.replace(/\/$/, '')}/newsletters/${slug}`
+}
+
 async function archiveNewsletter(
-  subject: string, html: string, audiences: string[],
+  subject: string, html: string, audiences: string[], slug: string,
 ): Promise<string | null> {
   try {
     const today = new Date()
-    const slugBase = subject.toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-zα-ω0-9]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 60)
     const r = await strapi('/newsletters', 'POST', {
       Title: subject,
       Date: today.toISOString().slice(0, 10),
       Html: html,
       // Ένα τεύχος που πήγε ΜΟΝΟ στα μέλη δεν είναι δημόσιο υλικό
       Audience: audiences.length === 1 && audiences[0] === 'paid' ? 'members' : 'public',
-      Slug: `${slugBase || 'newsletter'}-${today.getTime().toString(36)}`,
+      Slug: slug,
       publishedAt: today.toISOString(),
     })
     if (!r.ok) { console.error('newsletter archive failed', r.status); return null }

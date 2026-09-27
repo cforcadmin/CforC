@@ -501,6 +501,32 @@ describe('Τελική δοκιμή μέσω Sender', () => {
   })
 })
 
+describe('Κρυφά στοιχεία και αποστολή', () => {
+  afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks() })
+
+  it('γράμμα με ΜΟΝΟ κρυφά στοιχεία δεν φεύγει', async () => {
+    // Τα κρυφά δεν αποδίδονται· χωρίς αυτόν τον έλεγχο θα έφευγε κενό γράμμα
+    signedInAs('admin'); mockStrapi()
+    const r = await post({
+      action: 'queue', desk: 'admin', subject: 'Θ',
+      blocks: [{ type: 'text', html: '<p>κ</p>', hidden: true }],
+      selection: { allMembers: true },
+    })
+    expect(r.status).toBe(400)
+    expect(r.json.error).toContain('κενό')
+  })
+
+  it('αρκεί ΕΝΑ ορατό στοιχείο', async () => {
+    signedInAs('admin'); mockStrapi()
+    const r = await post({
+      action: 'queue', desk: 'admin', subject: 'Θ',
+      blocks: [{ type: 'text', html: '<p>κ</p>', hidden: true }, { type: 'text', html: '<p>ν</p>' }],
+      selection: { allMembers: true },
+    })
+    expect(r.status).toBe(200)
+  })
+})
+
 describe('Μήνυμα ή newsletter', () => {
   afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks() })
 

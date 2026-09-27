@@ -28,6 +28,8 @@ export const BRAND = {
   cream: '#F5F0EB',
   white: '#FFFFFF',
   hairline: '#E0D8D0',
+  /** Απαλή απόχρωση του κοραλί — για ζώνες που δεν πρέπει να φωνάζουν */
+  coralTint: '#FFE7DF',
   /** Η λεπτή γραμμή πάνω από την υπογραφή — 38 χρήσεις στα αυτόματα email */
   rule: '#E5E7EB',
   warnBg: '#FFF4E5',
@@ -39,9 +41,27 @@ export const BRAND = {
 } as const
 
 const FONT = 'Arial,Helvetica,sans-serif'
-const CONTENT_WIDTH = 600
+/**
+ * Το πλάτος της κάρτας.
+ *
+ * Ο κανόνας για email είναι 600–640px: πάνω από εκεί ο Outlook των Windows
+ * (μηχανή του Word) γίνεται απρόβλεπτος, και το παράθυρο ανάγνωσης στενεύει.
+ * Στα 640 κερδίζουμε λίγο αέρα μένοντας ΜΕΣΑ στον κανόνα — δεν είναι
+ * αυθαίρετη επιλογή.
+ */
+const CONTENT_WIDTH = 640
 /** Το πλάτος μέσα στα padding του 600άρη — όριο για εικόνες */
-export const INNER_WIDTH = 504
+/**
+ * Το πλάτος του πλαισίου προεπισκόπησης «Υπολογιστής».
+ *
+ * Ζει εδώ, δίπλα στο CONTENT_WIDTH, ώστε να μη μπορεί να συμπέσει με το
+ * σημείο θραύσης — αν συμπέσουν, η προεπισκόπηση δείχνει τα πάντα
+ * στοιβαγμένα ενώ στο γραμματοκιβώτιο είναι δίπλα-δίπλα.
+ */
+export const PREVIEW_DESKTOP_WIDTH = CONTENT_WIDTH + 40
+
+/** Ό,τι μένει μέσα στα περιθώρια των 48px — παράγεται, δεν γράφεται */
+export const INNER_WIDTH = CONTENT_WIDTH - 96
 
 /**
  * Κεφαλαία στα ελληνικά: ο τόνος ΦΕΥΓΕΙ. Το σκέτο toUpperCase() τον κρατά
@@ -87,10 +107,21 @@ export function sanitizeInline(html: string): string {
     }
     if (t === 'b') return '<strong>'
     if (t === 'i') return '<em>'
+    /**
+     * Η ΣΤΟΙΧΙΣΗ επιβιώνει — τίποτε άλλο από το style.
+     *
+     * Ο καθαριστής πετά κάθε attribute, οπότε χωρίς αυτό η στοίχιση που
+     * διάλεξε ο συντάκτης χανόταν σιωπηλά μεταξύ επεξεργαστή και γράμματος.
+     * Δεκτές μόνο οι τέσσερις τιμές: ό,τι άλλο θα ήταν παράθυρο για
+     * αυθαίρετο CSS μέσα στο γράμμα.
+     */
+    const al = /text-align\s*:\s*(left|right|center|justify)/i.exec(attrs)
+    const align = al ? `text-align:${al[1].toLowerCase()};` : ''
     // Οι επικεφαλίδες χρειάζονται inline styles: τα γραμματοκιβώτια έχουν δικά
     // τους μεγέθη και περιθώρια για h2/h3, που δεν είναι τα δικά μας.
-    if (t === 'h2') return `<h2 style="font-family:${FONT};font-size:22px;line-height:28px;font-weight:bold;color:${BRAND.ink};margin:18px 0 8px 0;">`
-    if (t === 'h3') return `<h3 style="font-family:${FONT};font-size:18px;line-height:24px;font-weight:bold;color:${BRAND.ink};margin:14px 0 6px 0;">`
+    if (t === 'h2') return `<h2 style="font-family:${FONT};font-size:22px;line-height:28px;font-weight:bold;color:${BRAND.ink};margin:18px 0 8px 0;${align}">`
+    if (t === 'h3') return `<h3 style="font-family:${FONT};font-size:18px;line-height:24px;font-weight:bold;color:${BRAND.ink};margin:14px 0 6px 0;${align}">`
+    if (t === 'p' && align) return `<p style="${align}">`
     return `<${t}>`
   })
   return out
@@ -107,6 +138,15 @@ export function sanitizeInline(html: string): string {
  */
 export function richText(html: string): string {
   return sanitizeInline(html)
+    /**
+     * Η ΚΕΝΗ ΠΑΡΑΓΡΑΦΟΣ πρέπει να πιάνει χώρο.
+     *
+     * Ο επεξεργαστής δίνει «<p></p>» όταν πατήσεις Enter σε άδεια γραμμή, και
+     * ο καθαριστής τη διατηρεί — αλλά μια παράγραφος χωρίς περιεχόμενο δεν
+     * φτιάχνει γραμμή, οπότε το κενό εξαφανιζόταν. Ένα &nbsp; της δίνει ύψος
+     * σε κάθε γραμματοκιβώτιο.
+     */
+    .replace(/<p>\s*(<br\s*\/?>)?\s*<\/p>/gi, '<p>&nbsp;</p>')
     .replace(/\r\n?/g, '\n')
     .replace(/\n(?=\s*<\/?(p|ul|ol|li|h2|h3)\b)/gi, '')
     .replace(/(<\/(p|ul|ol|li|h2|h3)>)\n/gi, '$1')
@@ -115,12 +155,68 @@ export function richText(html: string): string {
 
 // ── Τα μπλοκ ────────────────────────────────────────────────────────────────
 
-export type SectionBlock = { type: 'section'; title: string }
-export type TextBlock = { type: 'text'; html: string; tone?: 'normal' | 'soft' }
-export type ImageBlock = { type: 'image'; src: string; alt: string; href?: string; size?: 'full' | 'inset' }
+/**
+ * Η επικεφαλίδα ενότητας, σε δύο κόσμους.
+ *
+ * ΜΟΝΤΕΡΝΑ (προεπιλογή): χρωματιστή ζώνη με στρογγυλεμένες γωνίες και,
+ * προαιρετικά, το σήμα CforC — αυτό που χρησιμοποιεί ήδη το μηνιαίο τεύχος.
+ * ΚΛΑΣΙΚΗ: το παλιό μικρό κεφαλαίο με τη γραμμή από κάτω.
+ *
+ * Και οι δύο μοιράζονται τις ίδιες επτά εμφανίσεις — πέντε σε πλήρες πλάτος
+ * και δύο ένθετες — ώστε ένα τεύχος να μη μοιάζει με δύο διαφορετικά έντυπα.
+ */
+export type SectionBlock = {
+  type: 'section'
+  title: string
+  variant?: 'modern' | 'classic'
+  look?: 'coral' | 'dark' | 'cream' | 'tint' | 'outline' | 'pill' | 'pillOutline'
+  logo?: boolean
+  logoSide?: 'left' | 'right'
+}
+/**
+ * Η παράγραφος, σε πέντε εμφανίσεις.
+ *
+ * Οι δύο πρώτες είναι σκέτο κείμενο· οι τρεις επόμενες βάζουν το κείμενο σε
+ * χρωματιστή ζώνη, με το χρώμα γραμμάτων που ΤΑΙΡΙΑΖΕΙ — ο συντάκτης δεν
+ * διαλέγει χρώματα, διαλέγει εμφάνιση. Έτσι δεν γίνεται ποτέ λευκό σε κρεμ.
+ */
+export type TextBlock = {
+  type: 'text'
+  html: string
+  tone?: 'normal' | 'soft' | 'cream' | 'coral' | 'dark'
+}
+/**
+ * Η εικόνα, σε τρεις ανεξάρτητους άξονες.
+ *
+ * ΜΕΓΕΘΟΣ πόσο πλατιά · ΣΤΟΙΧΙΣΗ πού κάθεται όταν δεν γεμίζει · ΖΩΝΗ αν
+ * πατά σε χρωματιστό φόντο που πιάνει όλο το πλάτος. Παλιά υπήρχαν μόνο δύο
+ * επιλογές μεγέθους και τίποτα άλλο.
+ *
+ * Το «inset» των παλιών μπλοκ διαβάζεται ως «medium» — καμία καμπάνια δεν
+ * χαλάει επειδή άλλαξαν οι επιλογές.
+ */
+export type ImageBlock = {
+  type: 'image'
+  src: string
+  alt: string
+  href?: string
+  size?: 'full' | 'large' | 'medium' | 'small' | 'inset'
+  align?: 'left' | 'center' | 'right'
+  band?: 'none' | 'coral' | 'dark' | 'cream' | 'tint'
+}
+/**
+ * Εικόνα δίπλα σε κείμενο, με τους ίδιους άξονες που έχει και η σκέτη εικόνα.
+ *
+ * ΠΛΕΥΡΑ πού κάθεται η φωτογραφία · ΜΕΓΕΘΟΣ πόσο χώρο πιάνει · ΖΩΝΗ αν το
+ * ζευγάρι πατά σε χρωματιστό φόντο · ΚΑΘ' ΥΨΟΣ πού ευθυγραμμίζεται το
+ * κείμενο δίπλα σε ψηλή φωτογραφία.
+ */
 export type ImageTextBlock = {
   type: 'imageText'; src: string; alt: string; html: string
   side?: 'left' | 'right'; href?: string
+  size?: 'small' | 'medium' | 'large'
+  band?: 'none' | 'coral' | 'dark' | 'cream' | 'tint'
+  valign?: 'top' | 'middle'
 }
 export type CardBlock = {
   type: 'card'; src?: string; alt?: string; title: string; html: string
@@ -132,15 +228,88 @@ export type ButtonBlock = { type: 'button'; label: string; href: string; style?:
 export type BoxBlock = { type: 'box'; title?: string; html: string; tone?: 'cream' | 'neutral' | 'warning' | 'alert' }
 export type DividerBlock = { type: 'divider'; style?: 'line' | 'space' }
 export type AmountsBlock = { type: 'amounts'; rows: Array<{ label: string; amount: string }>; total?: string }
-export type MonoBlock = { type: 'mono'; label?: string; value: string }
+/**
+ * Το μονόστοιχο κουτί — IBAN, κωδικοί, ό,τι αντιγράφεται.
+ *
+ * Ίδιο λεξιλόγιο εμφανίσεων με την επικεφαλίδα ενότητας: πέντε σε πλήρες
+ * πλάτος και δύο ένθετες. Ένα γράμμα με δύο διαφορετικά συστήματα χρωμάτων
+ * μοιάζει με δύο διαφορετικά έντυπα.
+ */
+export type MonoBlock = {
+  type: 'mono'
+  label?: string
+  value: string
+  look?: 'cream' | 'coral' | 'dark' | 'tint' | 'outline' | 'pill' | 'pillOutline'
+}
 export type TocBlock = { type: 'toc'; title?: string }
+export type GreetingBlock = { type: 'greeting'; html: string }
+export type GridBlock = {
+  type: 'grid'
+  items: Array<{ src?: string; alt?: string; title: string; html: string; href?: string }>
+  cols?: '2' | '3'
+}
+export type AgendaBlock = {
+  type: 'agenda'
+  rows: Array<{ date: string; title: string; place?: string; href?: string }>
+}
+export type QuoteBlock = { type: 'quote'; html: string; who?: string; tone?: 'cream' | 'coral' }
+export type StatsBlock = { type: 'stats'; items: Array<{ value: string; label: string }> }
+export type SocialBlock = {
+  type: 'social'
+  items: Array<{ network: string; href: string }>
+  note?: string
+}
+export type SpacerBlock = { type: 'spacer'; size?: 'small' | 'medium' | 'large' }
+/** Η λωρίδα «δεν εμφανίζεται σωστά;» — πάντα ΠΡΩΤΗ, πάνω από την κεφαλίδα */
+export type BrowserViewBlock = {
+  type: 'browserView'
+  text?: string
+  linkText?: string
+  tone?: 'white' | 'cream' | 'dark' | 'coral'
+}
+/** Η κεφαλίδα του τεύχους: τίτλος δύο γραμμών + φωτογραφία */
+/**
+ * Η κεφαλίδα του τεύχους, σε ΤΕΣΣΕΡΙΣ ανεξάρτητους άξονες.
+ *
+ * Παλιά ήταν ένα «style» που έδενε μαζί διάταξη και χρώμα — οπότε «σκούρα με
+ * εικόνα πρώτα» ήταν αδύνατο. Χωριστοί άξονες: πού κάθεται η εικόνα, τι
+ * χρώμα έχει η ζώνη, αν υπάρχει εικόνα, πόσο μεγάλη.
+ */
+export type MastheadBlock = {
+  type: 'masthead'
+  eyebrow?: string
+  title: string
+  src?: string
+  alt?: string
+  mediaId?: number
+  layout?: 'textTop' | 'imageTop' | 'imageLeft' | 'imageRight' | 'minimal'
+  tone?: 'coral' | 'dark' | 'cream' | 'white'
+  withImage?: boolean
+  imageSize?: 'small' | 'medium' | 'large'
+}
 
 /** Ο προεπιλεγμένος τίτλος του πίνακα — ο συντάκτης μπορεί να τον αλλάξει */
 export const TOC_DEFAULT_TITLE = 'Σε αυτό το τεύχος'
 
-export type Block =
+/**
+ * Ό,τι ισχύει για ΚΑΘΕ μπλοκ.
+ *
+ * `hidden`: το στοιχείο μένει στο προσχέδιο αλλά ΔΕΝ αποδίδεται — ούτε στην
+ * προεπισκόπηση ούτε στο γράμμα που φεύγει. Το «κρυφό μόνο στην
+ * προεπισκόπηση» θα ήταν παγίδα: θα ενέκρινες ό,τι βλέπεις και θα έφευγε
+ * κάτι άλλο.
+ */
+export type BlockCommon = { hidden?: boolean }
+
+export type Block = (
   | SectionBlock | TextBlock | ImageBlock | ImageTextBlock | CardBlock | PersonBlock
   | LogosBlock | ButtonBlock | BoxBlock | DividerBlock | AmountsBlock | MonoBlock | TocBlock
+  | GreetingBlock | GridBlock | AgendaBlock | QuoteBlock | StatsBlock | SocialBlock | SpacerBlock
+  | BrowserViewBlock | MastheadBlock
+) & BlockCommon
+
+/** Τα μπλοκ που όντως φτάνουν στον παραλήπτη */
+export const visibleBlocks = (blocks: Block[]): Block[] => (blocks || []).filter(b => !b?.hidden)
 
 export const BLOCK_LABELS: Record<Block['type'], string> = {
   section: 'Επικεφαλίδα ενότητας',
@@ -156,13 +325,66 @@ export const BLOCK_LABELS: Record<Block['type'], string> = {
   amounts: 'Πίνακας ποσών',
   mono: 'Μονόστοιχο κουτί',
   toc: 'Πίνακας περιεχομένων',
+  greeting: 'Χαιρετισμός',
+  grid: 'Πλέγμα',
+  agenda: 'Ατζέντα',
+  quote: 'Απόσπασμα',
+  stats: 'Αριθμοί',
+  social: 'Κοινωνικά δίκτυα',
+  spacer: 'Κενό',
+  browserView: 'Λωρίδα «προβολή στον browser»',
+  masthead: 'Κεφαλίδα τεύχους',
 }
 
 /** Οι μόνες επιλογές ανά μπλοκ — κλειστές λίστες, όχι ελεύθερα χρώματα */
 export const BLOCK_VARIANTS: Partial<Record<Block['type'], { key: string; options: Array<{ value: string; label: string }> }>> = {
-  text: { key: 'tone', options: [{ value: 'normal', label: 'Κανονικό' }, { value: 'soft', label: 'Δευτερεύον' }] },
-  image: { key: 'size', options: [{ value: 'full', label: 'Πλήρες πλάτος' }, { value: 'inset', label: 'Ένθετη' }] },
-  imageText: { key: 'side', options: [{ value: 'left', label: 'Εικόνα αριστερά' }, { value: 'right', label: 'Εικόνα δεξιά' }] },
+  mono: {
+    key: 'look',
+    options: [
+      { value: 'cream', label: 'Κρεμ — πλήρες πλάτος' },
+      { value: 'coral', label: 'Coral — πλήρες πλάτος' },
+      { value: 'dark', label: 'Σκούρο — πλήρες πλάτος' },
+      { value: 'tint', label: 'Απαλό coral — πλήρες πλάτος' },
+      { value: 'outline', label: 'Περίγραμμα — πλήρες πλάτος' },
+      { value: 'pill', label: 'Πλακέτα coral — ένθετη' },
+      { value: 'pillOutline', label: 'Πλακέτα με περίγραμμα — ένθετη' },
+    ],
+  },
+  section: {
+    key: 'look',
+    options: [
+      { value: 'coral', label: 'Coral — πλήρες πλάτος' },
+      { value: 'dark', label: 'Σκούρο — πλήρες πλάτος' },
+      { value: 'cream', label: 'Κρεμ — πλήρες πλάτος' },
+      { value: 'tint', label: 'Απαλό coral — πλήρες πλάτος' },
+      { value: 'outline', label: 'Περίγραμμα — πλήρες πλάτος' },
+      { value: 'pill', label: 'Πλακέτα coral — ένθετη' },
+      { value: 'pillOutline', label: 'Πλακέτα με περίγραμμα — ένθετη' },
+    ],
+  },
+  text: {
+    key: 'tone',
+    options: [
+      { value: 'normal', label: 'Κανονικό' },
+      { value: 'soft', label: 'Δευτερεύον' },
+      { value: 'cream', label: 'Σε κρεμ ζώνη' },
+      { value: 'coral', label: 'Σε coral ζώνη' },
+      { value: 'dark', label: 'Σε σκούρη ζώνη' },
+    ],
+  },
+  image: {
+    key: 'size',
+    options: [
+      { value: 'full', label: 'Πλήρες πλάτος' },
+      { value: 'large', label: 'Μεγάλη' },
+      { value: 'medium', label: 'Μεσαία' },
+      { value: 'small', label: 'Μικρή' },
+    ],
+  },
+  imageText: {
+    key: 'side',
+    options: [{ value: 'left', label: 'Εικόνα αριστερά' }, { value: 'right', label: 'Εικόνα δεξιά' }],
+  },
   person: { key: 'side', options: [{ value: 'left', label: 'Φωτογραφία αριστερά' }, { value: 'right', label: 'Φωτογραφία δεξιά' }] },
   button: { key: 'style', options: [{ value: 'coral', label: 'Coral' }, { value: 'outline', label: 'Περίγραμμα' }, { value: 'dark', label: 'Σκούρο' }] },
   box: {
@@ -173,6 +395,31 @@ export const BLOCK_VARIANTS: Partial<Record<Block['type'], { key: string; option
     ],
   },
   divider: { key: 'style', options: [{ value: 'line', label: 'Γραμμή' }, { value: 'space', label: 'Κενό' }] },
+  grid: { key: 'cols', options: [{ value: '2', label: 'Δύο στήλες' }, { value: '3', label: 'Τρεις στήλες' }] },
+  quote: { key: 'tone', options: [{ value: 'cream', label: 'Κρεμ' }, { value: 'coral', label: 'Coral' }] },
+  browserView: {
+    key: 'tone',
+    options: [
+      { value: 'white', label: 'Λευκή' }, { value: 'cream', label: 'Κρεμ' },
+      { value: 'coral', label: 'Coral' }, { value: 'dark', label: 'Σκούρα' },
+    ],
+  },
+  masthead: {
+    key: 'layout',
+    options: [
+      { value: 'textTop', label: 'Τίτλος πάνω, φωτογραφία κάτω' },
+      { value: 'imageTop', label: 'Φωτογραφία πάνω, τίτλος κάτω' },
+      { value: 'imageLeft', label: 'Φωτογραφία αριστερά' },
+      { value: 'imageRight', label: 'Φωτογραφία δεξιά' },
+      { value: 'minimal', label: 'Λιτή, με γραμμή' },
+    ],
+  },
+  spacer: {
+    key: 'size',
+    options: [
+      { value: 'small', label: 'Μικρό' }, { value: 'medium', label: 'Μεσαίο' }, { value: 'large', label: 'Μεγάλο' },
+    ],
+  },
 }
 
 // ── Απόδοση σε HTML email ───────────────────────────────────────────────────
@@ -180,8 +427,15 @@ export const BLOCK_VARIANTS: Partial<Record<Block['type'], { key: string; option
 const row = (inner: string, pad = '0 48px') => `
   <tr><td class="px" style="padding:${pad};">${inner}</td></tr>`
 
-const bodyText = (tone: 'normal' | 'soft' = 'normal') =>
+const bodyText = (tone: string = 'normal') =>
   `font-family:${FONT};font-size:${tone === 'soft' ? 14 : 16}px;line-height:${tone === 'soft' ? 22 : 26}px;color:${tone === 'soft' ? BRAND.inkSoft : BRAND.ink};mso-line-height-rule:exactly;`
+
+/** Οι ζώνες της παραγράφου: φόντο και χρώμα γραμμάτων πάνε ΜΑΖΙ */
+const TEXT_BANDS: Record<string, { bg: string; ink: string; link: string }> = {
+  cream: { bg: BRAND.cream, ink: BRAND.ink, link: BRAND.coralDeep },
+  coral: { bg: BRAND.coral, ink: BRAND.ink, link: BRAND.ink },
+  dark: { bg: BRAND.ink, ink: BRAND.white, link: BRAND.white },
+}
 
 /** Σταθερό πλάτος και alt σε ΚΑΘΕ εικόνα: χωρίς αυτά, Outlook και οι
  *  αποκλεισμένες εικόνες δίνουν σπασμένη σελίδα αντί για κείμενο. */
@@ -196,32 +450,143 @@ function anchorId(title: string, i: number): string {
 
 function renderBlock(b: Block, i: number): string {
   switch (b.type) {
-    case 'section':
-      return row(`<a id="${anchorId(b.title, i)}" name="${anchorId(b.title, i)}"></a>
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:8px 0 4px 0;">
-        <tr><td style="font-family:${FONT};font-size:12px;line-height:16px;letter-spacing:1.2px;color:${BRAND.coralDeep};font-weight:bold;mso-line-height-rule:exactly;">${escapeHtml(upperGreek(b.title))}</td></tr>
+    case 'section': {
+      const anchor = `<a id="${anchorId(b.title, i)}" name="${anchorId(b.title, i)}"></a>`
+      const look = b.look || 'coral'
+      const inset = look === 'pill' || look === 'pillOutline'
+      /**
+       * Οι επτά εμφανίσεις: φόντο, γράμματα, σήμα και περίγραμμα ΜΑΖΙ.
+       *
+       * Ο συντάκτης διαλέγει εμφάνιση, όχι χρώματα — γι' αυτό δεν γίνεται
+       * ποτέ λευκό σήμα πάνω σε κρεμ ούτε σκούρα γράμματα σε ανθρακί.
+       */
+      const skins: Record<string, { bg: string; ink: string; logo: string; border?: string }> = {
+        coral: { bg: BRAND.coral, ink: BRAND.white, logo: LOGO_LIGHT },
+        dark: { bg: BRAND.ink, ink: BRAND.white, logo: LOGO_LIGHT },
+        cream: { bg: BRAND.cream, ink: BRAND.ink, logo: LOGO_DARK },
+        tint: { bg: BRAND.coralTint, ink: BRAND.ink, logo: LOGO_DARK },
+        outline: { bg: BRAND.white, ink: BRAND.ink, logo: LOGO_DARK, border: BRAND.coral },
+        pill: { bg: BRAND.coral, ink: BRAND.white, logo: LOGO_LIGHT },
+        pillOutline: { bg: BRAND.white, ink: BRAND.ink, logo: LOGO_DARK, border: BRAND.coral },
+      }
+      const sk = skins[look] || skins.coral
+
+      if (b.variant === 'classic') {
+        // Η κλασική κρατά τη λιτή της μορφή· από την εμφάνιση παίρνει μόνο
+        // το χρώμα των γραμμάτων και της γραμμής.
+        const accent = look === 'dark' ? BRAND.ink : look === 'cream' || look === 'tint' ? BRAND.coralDeep : BRAND.coralDeep
+        return row(`${anchor}
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${inset ? '' : '100%'}" style="margin:8px 0 4px 0;">
+        <tr><td style="font-family:${FONT};font-size:12px;line-height:16px;letter-spacing:1.2px;color:${accent};font-weight:bold;mso-line-height-rule:exactly;">${escapeHtml(upperGreek(b.title))}</td></tr>
         <tr><td height="6" style="height:6px;line-height:6px;font-size:0;">&nbsp;</td></tr>
-        <tr><td style="border-top:2px solid ${BRAND.coral};font-size:0;line-height:0;">&nbsp;</td></tr>
+        <tr><td style="border-top:2px solid ${look === 'dark' ? BRAND.ink : BRAND.coral};font-size:0;line-height:0;">&nbsp;</td></tr>
       </table>`, '20px 48px 0 48px')
+      }
 
-    case 'text':
-      return row(`<div style="${bodyText(b.tone)}">${richText(b.html)}</div>`, '16px 48px 0 48px')
+      // ΜΟΝΤΕΡΝΑ: ζώνη με στρογγυλεμένες γωνίες
+      const showLogo = b.logo !== false
+      const mark = showLogo
+        ? `<td width="40" style="width:40px;vertical-align:middle;padding:0 12px;"><img src="${sk.logo}" alt="" width="26" style="display:block;width:26px;max-width:26px;height:auto;border:0;" /></td>`
+        : ''
+      const title = `<td style="vertical-align:middle;padding:14px 18px;font-family:${FONT};font-size:19px;line-height:26px;color:${sk.ink};font-weight:bold;mso-line-height-rule:exactly;" align="${b.logoSide === 'right' ? 'left' : 'right'}">${escapeHtml(b.title)}</td>`
+      const cells = b.logoSide === 'right' ? `${title}${mark}` : `${mark}${title}`
+      const band = `
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" ${inset ? '' : 'width="100%"'} bgcolor="${sk.bg}"
+        style="${inset ? '' : 'width:100%;'}background-color:${sk.bg};border-radius:14px;${sk.border ? `border:2px solid ${sk.border};` : ''}">
+        <tr>${cells}</tr>
+      </table>`
+      return row(`${anchor}${band}`, '20px 48px 0 48px')
+    }
 
-    case 'image':
-      return row(img(b.src, b.alt, b.size === 'inset' ? 280 : INNER_WIDTH, b.href), '16px 48px 0 48px')
+    case 'text': {
+      const band = b.tone ? TEXT_BANDS[b.tone] : undefined
+      if (!band) return row(`<div style="${bodyText(b.tone)}">${richText(b.html)}</div>`, '16px 48px 0 48px')
+      // Οι σύνδεσμοι μέσα στη ζώνη πρέπει να αλλάξουν κι αυτοί χρώμα, αλλιώς
+      // ένα coralDeep πάνω σε σκούρο φόντο γίνεται αδιάβαστο.
+      const inner = richText(b.html).replace(
+        new RegExp(`color:${BRAND.coralDeep};`, 'g'), `color:${band.link};`)
+      return row(`
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${band.bg}" style="background-color:${band.bg};border-radius:16px;">
+        <tr><td style="padding:20px 22px;">
+          <div style="${bodyText()}color:${band.ink};">${inner}</div>
+        </td></tr>
+      </table>`, '16px 48px 0 48px')
+    }
+
+    case 'image': {
+      // Χωρίς αρχείο δεν αποδίδεται τίποτα: ένα <img> με κενό src δίνει
+      // σπασμένο πλαίσιο με στρογγυλεμένες γωνίες, όχι κενό.
+      if (!b.src) return ''
+      const size = b.size === 'inset' ? 'medium' : (b.size || 'full')
+      const w = size === 'full' ? INNER_WIDTH : size === 'large' ? 420 : size === 'medium' ? 300 : 200
+      const align = b.align || 'center'
+      const pic = img(b.src, b.alt, w, b.href)
+      // Πίνακας με ΡΗΤΟ πλάτος και align: το max-width μόνο του δεν φτάνει
+      // στον Outlook, και το margin:auto δεν κεντράρει σε γραμματοκιβώτιο.
+      const framed = size === 'full' ? pic : `
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${w}" align="${align}" style="width:${w}px;max-width:100%;">
+        <tr><td>${pic}</td></tr>
+      </table>`
+
+      const bands: Record<string, string> = {
+        coral: BRAND.coral, dark: BRAND.ink, cream: BRAND.cream, tint: BRAND.coralTint,
+      }
+      const bg = b.band && b.band !== 'none' ? bands[b.band] : ''
+      if (!bg) return row(framed, '16px 48px 0 48px')
+
+      /**
+       * Η ζώνη πιάνει ΟΛΟ το πλάτος του γράμματος — φεύγει έξω από το
+       * κανονικό περιθώριο, αλλιώς θα έμοιαζε με κουτί και όχι με ζώνη.
+       */
+      return `
+  <tr><td bgcolor="${bg}" align="${align}" style="background-color:${bg};padding:22px 48px;">
+    ${framed}
+  </td></tr>`
+    }
 
     case 'imageText': {
-      const pic = `<td class="stack" width="200" style="width:200px;vertical-align:top;">${img(b.src, b.alt, 200, b.href)}</td>`
+      const w = b.size === 'large' ? 280 : b.size === 'small' ? 140 : 200
+      const va = b.valign === 'middle' ? 'middle' : 'top'
+      /**
+       * Χωρίς φωτογραφία, η στήλη μένει ΚΕΝΗ — δεν εξαφανίζεται.
+       *
+       * Ένα <img> με κενό src ζωγραφίζει σπασμένο πλαίσιο με στρογγυλεμένες
+       * γωνίες. Κρατάμε όμως το πλάτος της στήλης, γιατί το μπλοκ
+       * χρησιμοποιείται και σκέτο, για να σπρώξει κείμενο στη μία πλευρά.
+       */
+      const pic = b.src
+        ? `<td class="stack" width="${w}" style="width:${w}px;vertical-align:${va};">${img(b.src, b.alt, w, b.href)}</td>`
+        : `<td class="stack" width="${w}" style="width:${w}px;font-size:0;line-height:0;">&nbsp;</td>`
       const gap = `<td class="stack" width="16" style="width:16px;font-size:0;line-height:16px;">&nbsp;</td>`
-      const txt = `<td class="stack" style="vertical-align:top;${bodyText()}">${richText(b.html)}</td>`
+
+      const bands: Record<string, { bg: string; ink: string }> = {
+        coral: { bg: BRAND.coral, ink: BRAND.ink },
+        dark: { bg: BRAND.ink, ink: BRAND.white },
+        cream: { bg: BRAND.cream, ink: BRAND.ink },
+        tint: { bg: BRAND.coralTint, ink: BRAND.ink },
+      }
+      const band = b.band && b.band !== 'none' ? bands[b.band] : undefined
+      // Οι σύνδεσμοι μέσα σε σκούρη ζώνη πρέπει να αλλάξουν κι αυτοί χρώμα
+      const inner = band
+        ? richText(b.html).replace(new RegExp(`color:${BRAND.coralDeep};`, 'g'),
+            `color:${band.bg === BRAND.ink ? BRAND.white : BRAND.ink};`)
+        : richText(b.html)
+      const txt = `<td class="stack" style="vertical-align:${va};${bodyText()}${band ? `color:${band.ink};` : ''}">${inner}</td>`
       const cells = b.side === 'right' ? `${txt}${gap}${pic}` : `${pic}${gap}${txt}`
-      return row(`<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>${cells}</tr></table>`, '16px 48px 0 48px')
+      const table = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>${cells}</tr></table>`
+
+      if (!band) return row(table, '16px 48px 0 48px')
+      // Η ζώνη πιάνει ΟΛΟ το πλάτος — αλλιώς μοιάζει με κουτί, όχι με ζώνη
+      return `
+  <tr><td bgcolor="${band.bg}" style="background-color:${band.bg};padding:22px 48px;">
+    ${table}
+  </td></tr>`
     }
 
     case 'card':
       return row(`
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${BRAND.cream};border-radius:16px;">
-        ${b.src ? `<tr><td style="padding:16px 16px 0 16px;">${img(b.src, b.alt || b.title, 472)}</td></tr>` : ''}
+        ${b.src ? `<tr><td style="padding:16px 16px 0 16px;">${img(b.src, b.alt || b.title, INNER_WIDTH - 32)}</td></tr>` : ''}
         <tr><td style="padding:16px;">
           <div style="font-family:${FONT};font-size:18px;line-height:24px;font-weight:bold;color:${BRAND.ink};">${escapeHtml(b.title)}</div>
           <div style="${bodyText()}padding-top:8px;">${richText(b.html)}</div>
@@ -298,17 +663,221 @@ function renderBlock(b: Block, i: number): string {
         </td></tr>
       </table>`, '16px 48px 0 48px')
 
-    case 'mono':
+    case 'mono': {
+      const look = b.look || 'cream'
+      const inset = look === 'pill' || look === 'pillOutline'
+      const skins: Record<string, { bg: string; ink: string; label: string; border?: string }> = {
+        cream: { bg: BRAND.cream, ink: BRAND.ink, label: BRAND.coralDeep },
+        coral: { bg: BRAND.coral, ink: BRAND.ink, label: BRAND.ink },
+        dark: { bg: BRAND.ink, ink: BRAND.white, label: BRAND.coral },
+        tint: { bg: BRAND.coralTint, ink: BRAND.ink, label: BRAND.coralDeep },
+        outline: { bg: BRAND.white, ink: BRAND.ink, label: BRAND.coralDeep, border: BRAND.coral },
+        pill: { bg: BRAND.coral, ink: BRAND.ink, label: BRAND.ink },
+        pillOutline: { bg: BRAND.white, ink: BRAND.ink, label: BRAND.coralDeep, border: BRAND.coral },
+      }
+      const sk = skins[look] || skins.cream
       return row(`
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${BRAND.cream};border-radius:16px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" ${inset ? '' : 'width="100%"'} bgcolor="${sk.bg}"
+        style="${inset ? '' : 'width:100%;'}background-color:${sk.bg};border-radius:16px;${sk.border ? `border:2px solid ${sk.border};` : ''}">
         <tr><td style="padding:18px 20px;">
-          ${b.label ? `<div style="font-family:${FONT};font-size:12px;line-height:16px;letter-spacing:1px;color:${BRAND.coralDeep};font-weight:bold;">${escapeHtml(upperGreek(b.label))}</div>` : ''}
-          <div style="font-family:'Courier New',Courier,monospace;font-size:17px;line-height:26px;color:${BRAND.ink};font-weight:bold;word-break:break-all;padding-top:4px;">${escapeHtml(b.value)}</div>
+          ${b.label ? `<div style="font-family:${FONT};font-size:12px;line-height:16px;letter-spacing:1px;color:${sk.label};font-weight:bold;">${escapeHtml(upperGreek(b.label))}</div>` : ''}
+          <div style="font-family:'Courier New',Courier,monospace;font-size:17px;line-height:26px;color:${sk.ink};font-weight:bold;word-break:break-all;padding-top:4px;">${escapeHtml(b.value)}</div>
         </td></tr>
       </table>`, '16px 48px 0 48px')
+    }
 
     case 'toc':
       return '' // παράγεται στο renderCampaignBody, όπου φαίνονται όλες οι ενότητες
+
+    case 'greeting':
+      // Ξεχωριστό από την παράγραφο ΜΟΝΟ για τον χώρο: ο χαιρετισμός ανοίγει
+      // το γράμμα και θέλει αέρα από πάνω, πριν από κάθε ενότητα.
+      return row(`<div style="${bodyText()}">${richText(b.html)}</div>`, '28px 48px 0 48px')
+
+    case 'spacer': {
+      const h = b.size === 'large' ? 48 : b.size === 'small' ? 12 : 28
+      return `<tr><td height="${h}" style="height:${h}px;line-height:${h}px;font-size:0;">&nbsp;</td></tr>`
+    }
+
+    case 'quote': {
+      const coral = b.tone === 'coral'
+      const bg = coral ? BRAND.coral : BRAND.cream
+      const ink = BRAND.ink
+      return row(`
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${bg};border-radius:16px;">
+        <tr><td style="padding:22px 24px;">
+          <div style="font-family:${FONT};font-size:19px;line-height:29px;color:${ink};font-style:italic;mso-line-height-rule:exactly;">${richText(b.html)}</div>
+          ${b.who ? `<div style="font-family:${FONT};font-size:13px;line-height:20px;color:${coral ? ink : BRAND.inkSoft};font-weight:bold;padding-top:10px;">— ${escapeHtml(b.who)}</div>` : ''}
+        </td></tr>
+      </table>`, '16px 48px 0 48px')
+    }
+
+    case 'stats': {
+      const items = (b.items || []).filter(x => x.value || x.label)
+      if (!items.length) return ''
+      // ΠΙΝΑΚΑΣ και όχι flex: το Outlook δεν ξέρει flexbox. Κάθε κελί
+      // στοιβάζεται σε στενή οθόνη με το .stack.
+      return row(`
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${BRAND.cream};border-radius:16px;">
+        <tr><td style="padding:18px 12px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+            ${items.map(x => `<td class="stack" align="center" style="padding:6px 8px;">
+              <div style="font-family:${FONT};font-size:26px;line-height:32px;color:${BRAND.coralDeep};font-weight:bold;">${escapeHtml(x.value)}</div>
+              <div style="font-family:${FONT};font-size:13px;line-height:19px;color:${BRAND.inkSoft};">${escapeHtml(x.label)}</div>
+            </td>`).join('')}
+          </tr></table>
+        </td></tr>
+      </table>`, '16px 48px 0 48px')
+    }
+
+    case 'agenda': {
+      const rows = (b.rows || []).filter(r => r.title || r.date)
+      if (!rows.length) return ''
+      return row(`
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        ${rows.map((r, n) => `<tr>
+          <td class="stack" width="110" style="width:110px;vertical-align:top;padding:12px 12px 12px 0;${n ? `border-top:1px solid ${BRAND.hairline};` : ''}">
+            <div style="font-family:${FONT};font-size:13px;line-height:19px;letter-spacing:0.6px;color:${BRAND.coralDeep};font-weight:bold;">${escapeHtml(upperGreek(r.date || ''))}</div>
+          </td>
+          <td class="stack" style="vertical-align:top;padding:12px 0;${n ? `border-top:1px solid ${BRAND.hairline};` : ''}">
+            <div style="font-family:${FONT};font-size:16px;line-height:24px;color:${BRAND.ink};font-weight:bold;">${
+              r.href ? `<a href="${escapeHtml(r.href)}" style="color:${BRAND.ink};text-decoration:underline;">${escapeHtml(r.title)}</a>` : escapeHtml(r.title)
+            }</div>
+            ${r.place ? `<div style="font-family:${FONT};font-size:14px;line-height:21px;color:${BRAND.inkSoft};">${escapeHtml(r.place)}</div>` : ''}
+          </td>
+        </tr>`).join('')}
+      </table>`, '16px 48px 0 48px')
+    }
+
+    case 'grid': {
+      const items = (b.items || []).filter(x => x.title || x.html || x.src)
+      if (!items.length) return ''
+      const per = b.cols === '3' ? 3 : 2
+      // Σπάμε σε σειρές των 2 ή 3: μια ενιαία σειρά με πέντε κελιά θα
+      // στρίμωχνε το κείμενο σε στήλη ενός γράμματος.
+      const chunks: typeof items[] = []
+      for (let n = 0; n < items.length; n += per) chunks.push(items.slice(n, n + per))
+      const cellW = per === 3 ? 160 : 250
+      const body = chunks.map(chunk => `<tr>${chunk.map((x, n) => `
+        ${n ? `<td class="stack" width="16" style="width:16px;font-size:0;line-height:16px;">&nbsp;</td>` : ''}
+        <td class="stack" width="${cellW}" style="width:${cellW}px;vertical-align:top;padding-bottom:16px;">
+          ${x.src ? `${img(x.src, x.alt || x.title || '', cellW, x.href)}<div style="height:10px;line-height:10px;font-size:0;">&nbsp;</div>` : ''}
+          <div style="font-family:${FONT};font-size:16px;line-height:23px;color:${BRAND.ink};font-weight:bold;">${
+            x.href ? `<a href="${escapeHtml(x.href)}" style="color:${BRAND.ink};text-decoration:none;">${escapeHtml(x.title)}</a>` : escapeHtml(x.title)
+          }</div>
+          <div style="${bodyText('soft')}padding-top:4px;">${richText(x.html)}</div>
+        </td>`).join('')}</tr>`).join('')
+      return row(`<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${body}</table>`, '16px 48px 0 48px')
+    }
+
+    case 'browserView': {
+      /**
+       * Η λωρίδα φεύγει ΕΞΩ από την κάρτα, πάνω από τα πάντα.
+       *
+       * Ο σύνδεσμος δείχνει στο ΔΙΚΟ μας αρχείο τεύχους, όχι σε φιλοξενούμενη
+       * σελίδα του Sender: ίδια ταυτότητα, δικιά μας διεύθυνση, και συνεχίζει
+       * να δουλεύει αν κάποτε αλλάξουμε πάροχο. Το URL μπαίνει τη στιγμή της
+       * αποστολής — στην προεπισκόπηση δεν υπάρχει ακόμη τεύχος.
+       */
+      const skin = b.tone === 'dark'
+        ? { bg: BRAND.ink, ink: BRAND.white, link: BRAND.white }
+        : b.tone === 'coral' ? { bg: BRAND.coral, ink: BRAND.ink, link: BRAND.ink }
+        : b.tone === 'cream' ? { bg: BRAND.cream, ink: BRAND.inkSoft, link: BRAND.coralDeep }
+        : { bg: BRAND.white, ink: BRAND.inkSoft, link: BRAND.coralDeep }
+      const text = b.text || 'Δεν εμφανίζεται σωστά αυτό το μήνυμα;'
+      const linkText = b.linkText || 'Δες το στον browser'
+      return `
+  <tr>
+    <td class="px" align="center" bgcolor="${skin.bg}" style="background-color:${skin.bg};padding:12px 24px;font-family:${FONT};font-size:12px;line-height:18px;color:${skin.ink};">
+      ${escapeHtml(text)}
+      <a href="{{ARCHIVE_URL}}" style="color:${skin.link};text-decoration:underline;">${escapeHtml(linkText)}</a>
+    </td>
+  </tr>`
+    }
+
+    case 'masthead': {
+      const layout = b.layout || 'textTop'
+      const tone = b.tone || 'coral'
+      const band =
+        tone === 'dark' ? { bg: BRAND.ink, ink: BRAND.white, eyebrow: BRAND.coral } :
+        tone === 'cream' ? { bg: BRAND.cream, ink: BRAND.ink, eyebrow: BRAND.coralDeep } :
+        tone === 'white' ? { bg: BRAND.white, ink: BRAND.ink, eyebrow: BRAND.coralDeep } :
+        { bg: BRAND.coral, ink: BRAND.white, eyebrow: BRAND.white }
+
+      const heading = (align: 'center' | 'left') => `
+        ${b.eyebrow ? `<div style="font-family:${FONT};font-size:13px;line-height:18px;letter-spacing:1.6px;font-weight:bold;color:${band.eyebrow};padding-bottom:8px;text-align:${align};">${escapeHtml(upperGreek(b.eyebrow))}</div>` : ''}
+        <div class="h1" style="font-family:${FONT};font-size:30px;line-height:38px;font-weight:bold;color:${band.ink};text-align:${align};">${escapeHtml(upperGreek(b.title || ''))}</div>`
+
+      // Η εικόνα είναι ΠΑΝΤΑ στρογγυλεμένη — ταυτότητα, όχι επιλογή
+      const show = b.withImage !== false && !!b.src
+      const wide = layout === 'imageLeft' || layout === 'imageRight' ? 240 : INNER_WIDTH
+      const scale = b.imageSize === 'small' ? 0.62 : b.imageSize === 'large' ? 1 : 0.82
+      const w = Math.round(wide * (layout === 'imageLeft' || layout === 'imageRight' ? 1 : scale))
+      /**
+       * ΡΗΤΟ ΠΛΑΤΟΣ ΣΕ ΠΙΝΑΚΑ, όχι max-width στην εικόνα.
+       *
+       * Το img() δίνει `width:100%;max-width:Xpx`. Το max-width όμως ΔΕΝ το
+       * υποστηρίζει ο Outlook: εκεί κάθε μέγεθος έβγαινε ίδιο, σε πλήρες
+       * πλάτος. Ένας πίνακας με σταθερό width το σέβονται όλα τα
+       * γραμματοκιβώτια, και η εικόνα γεμίζει αυτόν.
+       */
+      const hero = show
+        ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${w}" align="center" style="width:${w}px;max-width:100%;"><tr><td>${img(b.src!, b.alt || b.title || '', w)}</td></tr></table>`
+        : ''
+      // Κενό ΠΑΝΩ από τη φωτογραφία: κολλημένη στο χείλος της ζώνης έμοιαζε
+      // με λάθος στοίχιση
+      const heroBlock = show ? `<div style="height:22px;line-height:22px;font-size:0;">&nbsp;</div>${hero}` : ''
+
+      if (layout === 'minimal') {
+        return `
+  <tr><td class="px" bgcolor="${band.bg}" style="background-color:${band.bg};padding:32px 48px;">
+    ${heading('left')}
+    <div style="height:14px;line-height:14px;font-size:0;">&nbsp;</div>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+      <td style="border-top:3px solid ${BRAND.coral};font-size:0;line-height:0;">&nbsp;</td></tr></table>
+    ${heroBlock}
+  </td></tr>`
+      }
+
+      if (layout === 'imageLeft' || layout === 'imageRight') {
+        const pic = show ? `<td class="stack" width="${w}" style="width:${w}px;vertical-align:middle;">${hero}</td>
+          <td class="stack" width="20" style="width:20px;font-size:0;line-height:20px;">&nbsp;</td>` : ''
+        const txt = `<td class="stack" style="vertical-align:middle;">${heading('left')}</td>`
+        return `
+  <tr><td class="px" bgcolor="${band.bg}" style="background-color:${band.bg};padding:32px 48px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+      ${layout === 'imageLeft' ? `${pic}${txt}` : `${txt}${show ? `<td class="stack" width="20" style="width:20px;font-size:0;line-height:20px;">&nbsp;</td><td class="stack" width="${w}" style="width:${w}px;vertical-align:middle;">${hero}</td>` : ''}`}
+    </tr></table>
+  </td></tr>`
+      }
+
+      if (layout === 'imageTop') {
+        return `
+  <tr><td class="px" bgcolor="${band.bg}" align="center" style="background-color:${band.bg};padding:32px 48px;">
+    ${show ? hero + '<div style="height:22px;line-height:22px;font-size:0;">&nbsp;</div>' : ''}
+    ${heading('center')}
+  </td></tr>`
+      }
+
+      return `
+  <tr><td class="px" bgcolor="${band.bg}" align="center" style="background-color:${band.bg};padding:32px 48px;">
+    ${heading('center')}${heroBlock}
+  </td></tr>`
+    }
+
+    case 'social': {
+      const items = (b.items || []).filter(x => x.network && x.href)
+      if (!items.length) return ''
+      // ΚΕΙΜΕΝΟ, όχι εικονίδια: τα εικονίδια θα ήταν εικόνες που τα
+      // γραμματοκιβώτια μπλοκάρουν, αφήνοντας μια σειρά από σπασμένα κουτιά.
+      return row(`
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td align="center" style="padding:4px 0;">
+          ${items.map(x => `<a href="${escapeHtml(x.href)}" style="font-family:${FONT};font-size:14px;line-height:22px;color:${BRAND.coralDeep};text-decoration:underline;padding:0 8px;">${escapeHtml(x.network)}</a>`).join('<span style="color:' + BRAND.inkSoft + ';">·</span>')}
+        </td></tr>
+        ${b.note ? `<tr><td align="center" style="font-family:${FONT};font-size:12px;line-height:18px;color:${BRAND.inkSoft};padding-top:6px;">${escapeHtml(b.note)}</td></tr>` : ''}
+      </table>`, '16px 48px 0 48px')
+    }
   }
 }
 
@@ -327,7 +896,7 @@ function buttonHtml(label: string, href: string, style: 'coral' | 'outline' | 'd
 /** Ο πίνακας περιεχομένων χτίζεται ΑΠΟ τις ενότητες — δεν συντηρείται με το χέρι */
 function renderToc(blocks: Block[], title?: string): string {
   const items = blocks
-    .map((b, i) => (b.type === 'section' ? { title: b.title, id: anchorId(b.title, i) } : null))
+    .map((b, i) => (b.type === 'section' && !b.hidden ? { title: b.title, id: anchorId(b.title, i) } : null))
     .filter(Boolean) as Array<{ title: string; id: string }>
   if (items.length < 2) return ''
   return row(`
@@ -340,9 +909,72 @@ function renderToc(blocks: Block[], title?: string): string {
   </table>`, '16px 48px 0 48px')
 }
 
-export function renderCampaignBody(blocks: Block[]): string {
-  return blocks.map((b, i) => (b.type === 'toc' ? renderToc(blocks, b.title) : renderBlock(b, i))).join('\n')
+/**
+ * Σημαδεύει κάθε μπλοκ με τη θέση του, για το «κλικ στην προεπισκόπηση».
+ *
+ * ΜΟΝΟ στην προεπισκόπηση: στο γράμμα που φεύγει δεν έχουν καμία δουλειά
+ * — θα ήταν άχρηστα bytes σε κάθε παραλήπτη. Μπαίνει στο ΠΡΩΤΟ <td κάθε
+ * μπλοκ, οπότε δεν χρειάζεται να αλλάξει κανένας renderer.
+ */
+function annotateBlock(html: string, i: number): string {
+  return html.replace(/<td\b/, `<td data-b="${i}"`)
 }
+
+export function renderCampaignBody(blocks: Block[], annotate = false): string {
+  return blocks
+    .map((b, i) => {
+      // Τα κρυφά δεν αποδίδονται — αλλά ΚΡΑΤΟΥΝ τη θέση τους στη σειρά, ώστε
+      // το κλικ στην προεπισκόπηση να δείχνει στο σωστό μπλοκ του συνθέτη.
+      if (b?.hidden) return ''
+      const html = b.type === 'toc' ? renderToc(blocks, b.title) : renderBlock(b, i)
+      return annotate && html ? annotateBlock(html, i) : html
+    })
+    .join('\n')
+}
+
+/**
+ * Το σενάριο που στέλνει «πατήθηκε το μπλοκ Ν» στον γονέα.
+ *
+ * Μικρό επίτηδες: το πλαίσιο τρέχει με sandbox="allow-scripts" και ΧΩΡΙΣ
+ * allow-same-origin, οπότε δεν μπορεί να αγγίξει τη σελίδα μας — μόνο να
+ * στείλει μήνυμα.
+ */
+const PICK_SCRIPT = `<script>
+document.addEventListener('click', function (e) {
+  var el = e.target;
+  while (el && el !== document.body && !el.getAttribute?.('data-b')) el = el.parentElement;
+  var i = el && el.getAttribute && el.getAttribute('data-b');
+  if (i !== null && i !== undefined) {
+    e.preventDefault();
+    parent.postMessage({ source: 'oc-preview', index: Number(i) }, '*');
+  }
+}, true);
+addEventListener('message', function (e) {
+  var d = e.data || {};
+  if (d.source !== 'oc-editor' || typeof d.index !== 'number') return;
+  var el = document.querySelector('[data-b="' + d.index + '"]');
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // Σύντομη λάμψη, ίδια λογική με τον συνθέτη: δείχνει πού πήγες και σβήνει
+  var prev = el.style.outline;
+  el.style.outline = '3px solid #FF8B6A';
+  el.style.outlineOffset = '-3px';
+  setTimeout(function () { el.style.outline = prev; }, 1200);
+});
+var st;
+addEventListener('scroll', function () {
+  clearTimeout(st);
+  st = setTimeout(function () {
+    parent.postMessage({ source: 'oc-preview', scroll: window.scrollY }, '*');
+  }, 120);
+}, { passive: true });
+document.addEventListener('mouseover', function (e) {
+  var el = e.target;
+  while (el && el !== document.body && !el.getAttribute?.('data-b')) el = el.parentElement;
+  document.querySelectorAll('[data-b]').forEach(function (n) { n.style.outline = ''; });
+  if (el && el.style) { el.style.outline = '2px solid #FF8B6A'; el.style.outlineOffset = '-2px'; el.style.cursor = 'pointer'; }
+}, true);
+<\/script>`
 
 /**
  * Απλό κείμενο από τα ΙΔΙΑ μπλοκ — ποτέ γραμμένο στο χέρι, ώστε να μην
@@ -352,6 +984,7 @@ export function renderCampaignText(blocks: Block[]): string {
   const strip = (h: string) => sanitizeInline(h).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
   const out: string[] = []
   for (const b of blocks) {
+    if (b?.hidden) continue
     switch (b.type) {
       case 'section': out.push(`\n${upperGreek(b.title)}\n${'─'.repeat(Math.min(b.title.length, 40))}`); break
       case 'text': out.push(strip(b.html)); break
@@ -364,6 +997,18 @@ export function renderCampaignText(blocks: Block[]): string {
       case 'mono': out.push(`${b.label ? `${b.label}: ` : ''}${b.value}`); break
       case 'image': out.push(b.alt ? `[${b.alt}]` : ''); break
       case 'logos': out.push(b.items.map(l => l.alt).join(' · ')); break
+      case 'greeting': out.push(strip(b.html)); break
+      case 'masthead': out.push(`${b.eyebrow ? `${upperGreek(b.eyebrow)}\n` : ''}${upperGreek(b.title || '')}`); break
+      // Η λωρίδα «προβολή στον browser» δεν έχει νόημα σε απλό κείμενο
+      case 'browserView': break
+      case 'quote': out.push(`«${strip(b.html)}»${b.who ? `\n— ${b.who}` : ''}`); break
+      case 'stats': out.push((b.items || []).map(x => `${x.value} ${x.label}`).join(' · ')); break
+      case 'agenda': out.push((b.rows || []).map(r =>
+        `${r.date} — ${r.title}${r.place ? `, ${r.place}` : ''}${r.href ? `\n  ${r.href}` : ''}`).join('\n')); break
+      case 'grid': out.push((b.items || []).map(x =>
+        `${x.title}\n${strip(x.html)}${x.href ? `\n  ${x.href}` : ''}`).join('\n\n')); break
+      case 'social': out.push((b.items || []).map(x => `${x.network}: ${x.href}`).join('\n')); break
+      // Το «spacer» δεν έχει κείμενο — ο κενός χώρος δεν διαβάζεται
       default: break
     }
   }
@@ -676,6 +1321,257 @@ function unsubscribeRow(): string {
   </tr>`
 }
 
+// ── Υποσέλιδο newsletter ────────────────────────────────────────────────────
+
+/** Το ΠΛΗΡΕΣ λογότυπο (σήμα + λεκτικό) — όχι το σκέτο σήμα των υπογραφών */
+export const LOCKUP_LIGHT = `${MEDIA}/cforc_lockup_light_2a324b9a5f.png`
+export const LOCKUP_DARK = `${MEDIA}/cforc_lockup_dark_9d66f78693.png`
+
+/**
+ * Τα εικονίδια σε δύο εκδοχές, ανάλογα με το φόντο.
+ *
+ * Το ίδιο το σήμα κάθε δικτύου μένει ΑΘΙΚΤΟ και στις δύο — αλλάζει μόνο ο
+ * δίσκος από κάτω: λευκός πάνω σε coral ή ανθρακί, coral πάνω σε κρεμ ή λευκό.
+ */
+export const SOCIAL_ICONS: Record<string, { onDark: string; onLight: string }> = {
+  Instagram: {
+    onDark: `${MEDIA}/social_instagram_on_coral_5439a478f2.png`,
+    onLight: `${MEDIA}/social_instagram_on_light_e65a54d0a9.png`,
+  },
+  Facebook: {
+    onDark: `${MEDIA}/social_facebook_on_coral_56d959b2fb.png`,
+    onLight: `${MEDIA}/social_facebook_on_light_dd16aeec9b.png`,
+  },
+  LinkedIn: {
+    onDark: `${MEDIA}/social_linkedin_on_coral_6e44787ce4.png`,
+    onLight: `${MEDIA}/social_linkedin_on_light_44ee1ebfc2.png`,
+  },
+  YouTube: {
+    onDark: `${MEDIA}/social_youtube_on_coral_026d85e69b.png`,
+    onLight: `${MEDIA}/social_youtube_on_light_57d8aa65c8.png`,
+  },
+}
+
+export interface SocialLink { network: string; href: string }
+
+export interface NewsletterFooter {
+  arrangement: NewsletterFooterId
+  /** «Copyright © 2026 Culture for Change, All rights reserved.» */
+  copyright: string
+  /** Γιατί το λαμβάνεις και τι κάνουμε με τα στοιχεία σου */
+  notice: string
+  /** Η θυρίδα επικοινωνίας που δείχνει το υποσέλιδο */
+  email: string
+  socials: SocialLink[]
+  /** Η γραμμή πάνω από τον σύνδεσμο απεγγραφής */
+  unsubscribeLead: string
+}
+
+/**
+ * Επτά διατάξεις του ΙΔΙΟΥ υλικού: λογότυπο, εικονίδια, δικαιώματα, σημείωμα
+ * GDPR, θυρίδα, απεγγραφή. Αλλάζει η διάταξη και το φόντο — ποτέ το τι λέει,
+ * γιατί το σημείωμα και η απεγγραφή είναι υποχρέωση, όχι διακόσμηση.
+ */
+export const NEWSLETTER_FOOTERS = [
+  { id: 'stack', label: 'Στοίβα', hint: 'Εικονίδια πάνω, λογότυπο αριστερά και κείμενο δεξιά — όπως τα τωρινά τεύχη' },
+  { id: 'centred', label: 'Κεντραρισμένη', hint: 'Όλα στο κέντρο: λογότυπο, εικονίδια, κείμενο' },
+  { id: 'split', label: 'Δίστηλη', hint: 'Λογότυπο και θυρίδα αριστερά, εικονίδια και κείμενο δεξιά' },
+  { id: 'logoBanner', label: 'Λωρίδα λογοτύπου', hint: 'Μεγάλο λογότυπο σε coral λωρίδα, το κείμενο από κάτω σε κρεμ' },
+  { id: 'textBand', label: 'Κείμενο πρώτα', hint: 'Το σημείωμα σε κρεμ, από κάτω λεπτή coral λωρίδα με λογότυπο και εικονίδια' },
+  { id: 'dark', label: 'Σκούρα', hint: 'Η στοίβα σε ανθρακί φόντο' },
+  { id: 'slim', label: 'Λιτή', hint: 'Χωρίς ζώνη: λεπτή γραμμή, μικρό λογότυπο, μία σειρά κείμενο' },
+] as const
+
+export type NewsletterFooterId = (typeof NEWSLETTER_FOOTERS)[number]['id']
+
+export const NEWSLETTER_FOOTER_DEFAULTS: NewsletterFooter = {
+  arrangement: 'stack',
+  copyright: `Copyright © ${new Date().getFullYear()} Culture for Change, All rights reserved.`,
+  notice: 'Λαμβάνετε αυτό το email, επειδή έχετε εγγραφεί στη λίστα συνδρομητών του Culture for Change. '
+    + 'Το Culture for Change χρησιμοποιεί τα στοιχεία επικοινωνίας σας αποκλειστικά για ενημέρωση των δράσεων '
+    + 'και των πρωτοβουλιών του και δεν τα χρησιμοποιεί για άλλους σκοπούς ούτε τα παραχωρεί σε τρίτους.',
+  email: 'hello@cultureforchange.net',
+  socials: [
+    { network: 'Instagram', href: 'https://www.instagram.com/culture_for_change/' },
+    { network: 'Facebook', href: 'https://www.facebook.com/cultureforchange' },
+    { network: 'LinkedIn', href: 'https://www.linkedin.com/company/culture-for-change-gr/' },
+    { network: 'YouTube', href: 'https://www.youtube.com/channel/UCKFq7TQlenx36UPc3F63Opw' },
+  ],
+  unsubscribeLead: 'If you would like to unsubscribe, please click here.',
+}
+
+/** Συμπληρώνει ό,τι λείπει από ένα αποθηκευμένο υποσέλιδο */
+export function normaliseNewsletterFooter(v: Partial<NewsletterFooter> | null | undefined): NewsletterFooter {
+  const d = NEWSLETTER_FOOTER_DEFAULTS
+  const ids = NEWSLETTER_FOOTERS.map(f => f.id) as readonly string[]
+  return {
+    arrangement: ids.includes(String(v?.arrangement)) ? v!.arrangement as NewsletterFooterId : d.arrangement,
+    copyright: typeof v?.copyright === 'string' ? v.copyright : d.copyright,
+    notice: typeof v?.notice === 'string' ? v.notice : d.notice,
+    email: typeof v?.email === 'string' ? v.email : d.email,
+    // Άγνωστο δίκτυο = δεν έχουμε εικονίδιο· πέφτει έξω αντί να βγει σπασμένη εικόνα
+    socials: Array.isArray(v?.socials)
+      ? v!.socials.filter(s => s && s.href && SOCIAL_ICONS[s.network])
+      : d.socials,
+    unsubscribeLead: typeof v?.unsubscribeLead === 'string' ? v.unsubscribeLead : d.unsubscribeLead,
+  }
+}
+
+function newsletterFooterHtml(cfg: NewsletterFooter): string {
+  interface Skin { bg: string; ink: string; soft: string; logo: string; icon: 'onDark' | 'onLight' }
+  const skins: Record<'coral' | 'dark' | 'cream' | 'white', Skin> = {
+    coral: { bg: BRAND.coral, ink: BRAND.ink, soft: BRAND.ink, logo: LOCKUP_LIGHT, icon: 'onDark' },
+    dark: { bg: BRAND.ink, ink: BRAND.white, soft: '#D8D8D8', logo: LOCKUP_LIGHT, icon: 'onDark' },
+    cream: { bg: BRAND.cream, ink: BRAND.ink, soft: BRAND.inkSoft, logo: LOCKUP_DARK, icon: 'onLight' },
+    white: { bg: BRAND.white, ink: BRAND.ink, soft: BRAND.inkSoft, logo: LOCKUP_DARK, icon: 'onLight' },
+  }
+
+  const icons = (sk: Skin, align: 'left' | 'center' | 'right', size = 34) => {
+    const items = cfg.socials.filter(s => SOCIAL_ICONS[s.network])
+    if (!items.length) return ''
+    return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="${align}" style="${align === 'center' ? 'margin:0 auto;' : ''}">
+        <tr>${items.map(s => `<td style="padding:0 6px;">
+          <a href="${escapeHtml(s.href)}"><img src="${SOCIAL_ICONS[s.network]![sk.icon]}" alt="${escapeHtml(s.network)}" width="${size}" height="${size}" style="display:block;width:${size}px;height:${size}px;border:0;" /></a>
+        </td>`).join('')}</tr>
+      </table>`
+  }
+
+  const logo = (sk: Skin, width: number) =>
+    `<img src="${sk.logo}" alt="Culture for Change" width="${width}" style="display:block;width:${width}px;max-width:${width}px;height:auto;border:0;" />`
+
+  const mailLink = (sk: Skin, align: 'left' | 'center' = 'left') =>
+    `<div style="font-family:${FONT};font-size:14px;line-height:22px;text-align:${align};"><a href="mailto:${escapeHtml(cfg.email)}" style="color:${sk.ink};text-decoration:underline;">${escapeHtml(cfg.email)}</a></div>`
+
+  const copy = (sk: Skin, align: 'left' | 'center' = 'left') => `
+    <div style="font-family:${FONT};font-size:14px;line-height:22px;color:${sk.ink};font-weight:bold;text-align:${align};mso-line-height-rule:exactly;">${escapeHtml(cfg.copyright)}</div>
+    <div style="height:10px;line-height:10px;font-size:0;">&nbsp;</div>
+    <div style="font-family:${FONT};font-size:13px;line-height:21px;color:${sk.soft};text-align:${align};mso-line-height-rule:exactly;">${escapeHtml(cfg.notice)}</div>`
+
+  /** Η ζώνη απεγγραφής: πάντα έξω από το χρώμα, σε ουδέτερο γκρι */
+  const unsub = () => `
+  <tr>
+    <td class="px" align="center" style="background-color:#F5F5F5;padding:22px 48px;font-family:${FONT};font-size:13px;line-height:20px;color:${BRAND.inkSoft};">
+      <a href="{{unsubscribe_link}}" style="color:${BRAND.inkSoft};text-decoration:underline;">${escapeHtml(cfg.unsubscribeLead)}</a>
+    </td>
+  </tr>`
+
+  const band = (bg: string, inner: string, pad = '32px 48px') =>
+    `<tr><td class="px" style="background-color:${bg};padding:${pad};">${inner}</td></tr>`
+
+  switch (cfg.arrangement) {
+    case 'centred': {
+      const sk = skins.coral
+      return band(sk.bg, `
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr><td align="center">${logo(sk, 240)}</td></tr>
+          <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+          <tr><td align="center">${icons(sk, 'center')}</td></tr>
+          <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+          <tr><td align="center">${copy(sk, 'center')}${mailLink(sk, 'center')}</td></tr>
+        </table>`) + unsub()
+    }
+
+    case 'split': {
+      const sk = skins.coral
+      return band(sk.bg, `
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr>
+            <td class="stack" width="220" style="width:220px;vertical-align:top;padding-right:24px;">
+              ${logo(sk, 200)}
+              <div style="height:12px;line-height:12px;font-size:0;">&nbsp;</div>
+              ${mailLink(sk)}
+            </td>
+            <td class="stack" style="vertical-align:top;">
+              ${icons(sk, 'left', 30)}
+              <div style="height:14px;line-height:14px;font-size:0;">&nbsp;</div>
+              ${copy(sk)}
+            </td>
+          </tr>
+        </table>`) + unsub()
+    }
+
+    case 'logoBanner': {
+      const top = skins.coral
+      const low = skins.cream
+      return band(top.bg, `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr><td align="center">${logo(top, 300)}</td></tr>
+        </table>`, '36px 48px')
+        + band(low.bg, `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr><td align="center">${icons(low, 'center')}</td></tr>
+          <tr><td height="18" style="height:18px;line-height:18px;font-size:0;">&nbsp;</td></tr>
+          <tr><td align="center">${copy(low, 'center')}${mailLink(low, 'center')}</td></tr>
+        </table>`, '28px 48px')
+        + unsub()
+    }
+
+    case 'textBand': {
+      const top = skins.cream
+      const low = skins.coral
+      return band(top.bg, `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr><td align="center">${copy(top, 'center')}</td></tr>
+        </table>`, '28px 48px')
+        + band(low.bg, `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr>
+            <td class="stack" width="220" style="width:220px;vertical-align:middle;">${logo(low, 200)}</td>
+            <td class="stack" align="right" style="vertical-align:middle;">${icons(low, 'right', 30)}</td>
+          </tr>
+          <tr><td class="stack" colspan="2" style="padding-top:14px;">${mailLink(low)}</td></tr>
+        </table>`, '24px 48px')
+        + unsub()
+    }
+
+    case 'slim': {
+      const sk = skins.white
+      return `
+  <tr>
+    <td class="px" style="padding:28px 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:${BRAND.rule};">&nbsp;</td></tr>
+      </table>
+    </td>
+  </tr>` + band(sk.bg, `
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr><td align="center">${logo(sk, 170)}</td></tr>
+          <tr><td height="14" style="height:14px;line-height:14px;font-size:0;">&nbsp;</td></tr>
+          <tr><td align="center">${icons(sk, 'center', 28)}</td></tr>
+          <tr><td height="14" style="height:14px;line-height:14px;font-size:0;">&nbsp;</td></tr>
+          <tr><td align="center" style="font-family:${FONT};font-size:13px;line-height:20px;color:${sk.soft};">
+            ${escapeHtml(cfg.copyright)} · <a href="mailto:${escapeHtml(cfg.email)}" style="color:${sk.soft};text-decoration:underline;">${escapeHtml(cfg.email)}</a>
+          </td></tr>
+          <tr><td height="8" style="height:8px;line-height:8px;font-size:0;">&nbsp;</td></tr>
+          <tr><td align="center" style="font-family:${FONT};font-size:12px;line-height:18px;color:${BRAND.inkMuted};">${escapeHtml(cfg.notice)}</td></tr>
+        </table>`, '0 48px 24px 48px') + unsub()
+    }
+
+    // «Στοίβα» — και σε coral και σε ανθρακί είναι η ΙΔΙΑ διάταξη
+    case 'dark':
+    case 'stack':
+    default: {
+      const sk = cfg.arrangement === 'dark' ? skins.dark : skins.coral
+      // Ο διαχωριστής είναι ημιδιαφανές λευκό σε coral, ημιδιαφανές δεν
+      // υπάρχει στο Outlook — γι' αυτό σταθερό χρώμα, όχι rgba.
+      const rule = cfg.arrangement === 'dark' ? '#454545' : '#FFB59D'
+      return band(sk.bg, `
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr><td>${icons(sk, 'left')}</td></tr>
+          <tr><td height="24" style="height:24px;line-height:24px;font-size:0;">&nbsp;</td></tr>
+          <tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:${rule};">&nbsp;</td></tr>
+          <tr><td height="24" style="height:24px;line-height:24px;font-size:0;">&nbsp;</td></tr>
+        </table>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr>
+            <td class="stack" width="240" style="width:240px;vertical-align:top;padding-right:24px;">
+              ${logo(sk, 220)}
+              <div style="height:12px;line-height:12px;font-size:0;">&nbsp;</div>
+              ${mailLink(sk)}
+            </td>
+            <td class="stack" style="vertical-align:top;">${copy(sk)}</td>
+          </tr>
+        </table>`) + unsub()
+    }
+  }
+}
+
 export function campaignEmailHtml(opts: {
   subject: string
   blocks: Block[]
@@ -686,6 +1582,8 @@ export function campaignEmailHtml(opts: {
   footerLogo?: boolean
   headerStyle?: HeaderStyle
   headerLogo?: boolean
+  /** Προεπισκόπηση: σημαδεύει τα μπλοκ ώστε το κλικ να βρίσκει ποιο πατήθηκε */
+  annotate?: boolean
   /**
    * Newsletter: προσθέτει τη γραμμή απεγγραφής κάτω από το υποσέλιδο.
    *
@@ -699,8 +1597,17 @@ export function campaignEmailHtml(opts: {
    * τυπογραφία.
    */
   unsubscribe?: boolean
+  /**
+   * Το υποσέλιδο του newsletter — αντικαθιστά ΟΛΟΚΛΗΡΗ την υπογραφή.
+   *
+   * Ένα τεύχος δεν το υπογράφει άνθρωπος: το στέλνει το δίκτυο. Γι' αυτό εδώ
+   * μπαίνει λογότυπο, κοινωνικά δίκτυα, δικαιώματα, σημείωμα GDPR και
+   * απεγγραφή — και η γραμμή απεγγραφής ζει ΜΕΣΑ σε αυτό, ώστε να μη
+   * διπλασιάζεται με το `unsubscribe`.
+   */
+  newsletterFooter?: Partial<NewsletterFooter> | null
 }): { subject: string; html: string; text: string } {
-  const { subject, blocks, preheader, footerStyle = 'signature', footerLook = 'plain', footerLogo = false, headerStyle = 'coral', headerLogo = false, unsubscribe = false } = opts
+  const { subject, blocks, preheader, footerStyle = 'signature', footerLook = 'plain', footerLogo = false, headerStyle = 'coral', headerLogo = false, unsubscribe = false, annotate = false } = opts
   const signer: CampaignSigner = opts.signer || {
     name: 'Culture for Change', role: 'Γραμματεία', email: 'hello@cultureforchange.net',
   }
@@ -713,7 +1620,15 @@ export function campaignEmailHtml(opts: {
 <meta name="color-scheme" content="light">
 <title>${escapeHtml(subject)}</title>
 <style>
-  @media only screen and (max-width:620px){
+  /**
+   * Στοιβάζει ΜΟΝΟ όταν η κάρτα δεν χωράει πια.
+   *
+   * Η κάρτα θέλει CONTENT_WIDTH + 12px περιθώριο εκατέρωθεν = ${CONTENT_WIDTH + 24}px.
+   * Το όριο μπαίνει ΕΝΑ pixel πιο κάτω, αλλιώς στοιβάζει και στο ακριβές
+   * πλάτος όπου ακόμη χωράει — ακριβώς αυτό συνέβη όταν το όριο συνέπεσε με
+   * το πλάτος του πλαισίου προεπισκόπησης και όλα έπεσαν το ένα κάτω από το άλλο.
+   */
+  @media only screen and (max-width:${CONTENT_WIDTH + 23}px){
     .px{padding-left:24px !important;padding-right:24px !important;}
     .h1{font-size:26px !important;line-height:32px !important;}
     /* Στοιβάζεται το ΠΕΡΙΕΧΟΜΕΝΟ (φωτογραφία δίπλα σε κείμενο), ΟΧΙ το σήμα:
@@ -735,13 +1650,15 @@ export function campaignEmailHtml(opts: {
 
 ${headerHtml(headerStyle, subject, headerLogo)}
 
-${renderCampaignBody(blocks)}
+${renderCampaignBody(blocks, annotate)}
 
-${footerHtml(footerStyle, footerLook, signer, year, footerLogo)}
-${unsubscribe ? unsubscribeRow() : ''}
+${opts.newsletterFooter
+  ? newsletterFooterHtml(normaliseNewsletterFooter(opts.newsletterFooter))
+  : footerHtml(footerStyle, footerLook, signer, year, footerLogo) + (unsubscribe ? unsubscribeRow() : '')}
 </table>
 </td></tr>
 </table>
+${annotate ? PICK_SCRIPT : ''}
 </body>
 </html>
 `

@@ -2299,3 +2299,15 @@ select.glass-control {
   .glass-control { background-color: #ffffff; }
   .dark .glass-control { background-color: #2b3040; }
 }
+
+/* Το μπλοκ που μόλις διάλεξε κάποιος από την προεπισκόπηση.
+   Σύντομη λάμψη αντί για μόνιμο χρώμα: δείχνει «εδώ είσαι» και φεύγει,
+   χωρίς να αφήνει τη σελίδα γεμάτη σημάδια. */
+@keyframes oc-flash-in {
+  0%   { box-shadow: 0 0 0 3px rgba(255, 139, 106, 0.9); }
+  100% { box-shadow: 0 0 0 3px rgba(255, 139, 106, 0); }
+}
+.oc-flash {
+  animation: oc-flash-in 1.4s ease-out;
+  border-radius: 1rem;
+}

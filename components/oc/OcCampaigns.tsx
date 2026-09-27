@@ -1,7 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import CampaignRichText from './CampaignRichText'
+import { moveUp, moveDown, moveToBottom, moveGroupTo } from '@/lib/blockOrder'
+import { PREVIEW_DESKTOP_WIDTH } from '@/lib/campaignBlocks'
+import type { NewsletterFooter } from '@/lib/campaignBlocks'
 
 /**
  * Αποστολή email — το γραφείο αποστολής της κάθε έδρας.
@@ -55,6 +58,8 @@ type Meta = {
   /** Οι λίστες του Sender, με το τρέχον μέγεθός τους */
   newsletterLists?: Array<{ id: string; label: string; hint: string; count: number | null }>
   footerStyles?: Array<{ id: string; label: string; hint: string }>
+  newsletterFooters?: Array<{ id: string; label: string; hint: string }>
+  newsletterFooterDefaults?: NewsletterFooter
   footerLooks?: Array<{ id: string; label: string; hint: string }>
   headerStyles?: Array<{ id: string; label: string; hint: string }>
   signer?: { name: string; role: string; email: string }
@@ -129,6 +134,12 @@ export default function OcCampaigns({ desk }: { desk: string }) {
   const [footerStyle, setFooterStyle] = useState('signature')
   const [footerLook, setFooterLook] = useState('plain')
   const [footerLogo, setFooterLogo] = useState(false)
+  /**
+   * Το υποσέλιδο του τεύχους — λογότυπο, κοινωνικά δίκτυα, δικαιώματα,
+   * σημείωμα GDPR, απεγγραφή. Αντικαθιστά ΟΛΗ την υπογραφή στα newsletter:
+   * ένα τεύχος δεν το υπογράφει άνθρωπος, το στέλνει το δίκτυο.
+   */
+  const [footer, setFooter] = useState<NewsletterFooter | null>(null)
   const [headerStyle, setHeaderStyle] = useState('coral')
   const [headerLogo, setHeaderLogo] = useState(false)
   const [resolved, setResolved] = useState<{ count: number; days: number; summary: string; recipients: Recipient[] }>(
@@ -153,6 +164,10 @@ export default function OcCampaigns({ desk }: { desk: string }) {
    */
   const [kind, setKind] = useState<'message' | 'newsletter'>('message')
   const [audiences, setAudiences] = useState<string[]>([])
+  /** Το μπλοκ που πρέπει να δείξει η προεπισκόπηση — η αντίστροφη διαδρομή
+   *  από το «κλικ στην προεπισκόπηση → εστίαση στο μπλοκ». Το n αυξάνει σε
+   *  κάθε κλικ, ώστε δύο κλικ στο ίδιο μπλοκ να ξαναστείλουν την εντολή. */
+  const [goTo, setGoTo] = useState<{ i: number; n: number } | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingSubject, setEditingSubject] = useState('')
   const [confirming, setConfirming] = useState(false)
@@ -179,28 +194,40 @@ export default function OcCampaigns({ desk }: { desk: string }) {
 
   // Οι παραλήπτες ξαναϋπολογίζονται με καθυστέρηση: κάθε τικ σε chip αλλιώς
   // θα χτυπούσε τον server, και η λίστα των μελών δεν είναι μικρή.
+  /**
+   * ΤΟ debounce ΔΕΝ ΑΡΚΕΙ.
+   *
+   * Ακυρώνει το χρονόμετρο, όχι το αίτημα που ήδη ταξιδεύει. Δύο αλλαγές με
+   * απόσταση μεγαλύτερη από το debounce στέλνουν ΔΥΟ αιτήματα, και κερδίζει
+   * όποιο ΓΥΡΙΣΕΙ τελευταίο — όχι όποιο στάλθηκε τελευταίο. Έτσι «Μεγάλη →
+   * Μεσαία → Μεγάλη» κατέληγε να δείχνει Μεσαία: η αργή απάντηση της Μεσαίας
+   * πατούσε τη σωστή. Το `alive` κόβει κάθε απάντηση που δεν αφορά πια την
+   * τρέχουσα κατάσταση.
+   */
   useEffect(() => {
+    let alive = true
     const t = setTimeout(async () => {
       const res = await fetch('/api/oc/campaigns', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'resolve', selection }),
       })
-      if (res.ok) setResolved(await res.json())
+      if (res.ok && alive) setResolved(await res.json())
     }, 350)
-    return () => clearTimeout(t)
+    return () => { alive = false; clearTimeout(t) }
   }, [selection])
 
   useEffect(() => {
+    let alive = true
     const t = setTimeout(async () => {
       if (!blocks.length && !subject) { setPreview(''); return }
       const res = await fetch('/api/oc/campaigns', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'preview', kind, subject, blocks, footerStyle, footerLook, footerLogo, headerStyle, headerLogo }),
+        body: JSON.stringify({ action: 'preview', kind, subject, blocks, footerStyle, footerLook, footerLogo, headerStyle, headerLogo, footer }),
       })
-      if (res.ok) setPreview((await res.json()).html)
+      if (res.ok && alive) setPreview((await res.json()).html)
     }, 400)
-    return () => clearTimeout(t)
-  }, [kind, subject, blocks, footerStyle, footerLook, footerLogo, headerStyle, headerLogo])
+    return () => { alive = false; clearTimeout(t) }
+  }, [kind, subject, blocks, footerStyle, footerLook, footerLogo, headerStyle, headerLogo, footer])
 
   /** Κάθε CC μετράει ξανά σε ΚΑΘΕ μήνυμα — γι' αυτό πολλαπλασιάζεται */
   const emailCost = resolved.count * (1 + cc.length)
@@ -211,7 +238,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
     try {
       const res = await fetch('/api/oc/campaigns', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, desk, kind, audiences, id: editingId || undefined, subject, blocks, selection, cc, footerStyle, footerLook, footerLogo, headerStyle, headerLogo }),
+        body: JSON.stringify({ action, desk, kind, audiences, id: editingId || undefined, subject, blocks, selection, cc, footerStyle, footerLook, footerLogo, headerStyle, headerLogo, footer }),
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
@@ -251,7 +278,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
         body: JSON.stringify({
           action: 'newsletter-send', desk, id: editingId || undefined,
           subject, blocks, audiences, scheduleAt: scheduleAt || undefined,
-          footerStyle, footerLook, footerLogo, headerStyle, headerLogo,
+          footerStyle, footerLook, footerLogo, headerStyle, headerLogo, footer,
         }),
       })
       const d = await res.json()
@@ -288,7 +315,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: final ? 'newsletter-final-test' : 'newsletter-test',
-          desk, subject, blocks, footerStyle, footerLook, footerLogo, headerStyle, headerLogo,
+          desk, subject, blocks, footerStyle, footerLook, footerLogo, headerStyle, headerLogo, footer,
         }),
       })
       const d = await res.json()
@@ -308,6 +335,26 @@ export default function OcCampaigns({ desk }: { desk: string }) {
       setNotice({ kind: 'err', text: e?.message || 'Αποτυχία' })
     } finally { setBusy(false); setFinalTestAsk(false) }
   }
+
+  /**
+   * Κλικ σε στοιχείο της προεπισκόπησης → πάμε στο μπλοκ που το φτιάχνει.
+   *
+   * ΟΧΙ επιτόπου επεξεργασία μέσα στο γράμμα: η προεπισκόπηση είναι
+   * ΠΑΡΑΓΟΜΕΝΟ html, οπότε ό,τι γράψει κανείς εκεί θα έπρεπε να ξαναγυρίσει
+   * στα πεδία — διαδρομή με απώλειες, ειδικά σε εικόνες που θέλουν ανέβασμα,
+   * σήμα και καθάρισμα στο Strapi. Έτσι πατάς αυτό που βλέπεις, και γράφεις
+   * εκεί όπου τα πεδία ξέρουν τι κάνουν.
+   */
+  const focusBlock = useCallback((i: number) => {
+    const el = document.getElementById(`oc-block-${i}`)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    // Σύντομη λάμψη: χωρίς αυτήν, σε μεγάλο γράμμα δεν καταλαβαίνεις πού πήγες
+    el.classList.add('oc-flash')
+    window.setTimeout(() => el.classList.remove('oc-flash'), 1400)
+    const field = el.querySelector<HTMLElement>('input, textarea, [contenteditable="true"]')
+    field?.focus({ preventScroll: true })
+  }, [])
 
   /** Καθαρή σύνθεση — και αποδέσμευση από το προσχέδιο που ήταν ανοιχτό */
   const newMessage = () => {
@@ -339,6 +386,8 @@ export default function OcCampaigns({ desk }: { desk: string }) {
       setAudiences(Array.isArray(c.Groups) ? c.Groups : [])
       setFooterStyle(c.FooterStyle || 'signature'); setFooterLook(c.FooterLook || 'plain')
       setFooterLogo(!!c.FooterLogo); setHeaderStyle(c.HeaderStyle || 'coral'); setHeaderLogo(!!c.HeaderLogo)
+      // Παλιό προσχέδιο χωρίς αποθηκευμένο υποσέλιδο: πέφτει στα προεπιλεγμένα
+      setFooter(c.Footer && typeof c.Footer === 'object' ? (c.Footer as NewsletterFooter) : null)
       if (c.Selection && typeof c.Selection === 'object' && Object.keys(c.Selection).length) {
         setSelection(c.Selection as Selection)
       } else {
@@ -490,7 +539,17 @@ export default function OcCampaigns({ desk }: { desk: string }) {
                   </div>
                 )}
 
-                {meta?.footerStyles && (
+                {/* Το τεύχος δεν υπογράφεται από πρόσωπο: παίρνει το
+                    υποσέλιδο του δικτύου, στη θέση ΟΛΗΣ της υπογραφής. */}
+                {kind === 'newsletter' && meta?.newsletterFooters && meta.newsletterFooterDefaults && (
+                  <NewsletterFooterFields
+                    options={meta.newsletterFooters}
+                    value={footer || meta.newsletterFooterDefaults}
+                    onChange={setFooter}
+                  />
+                )}
+
+                {kind !== 'newsletter' && meta?.footerStyles && (
                   <div className="grid gap-1.5">
                     <span className="text-sm font-semibold">Υπογραφή</span>
                     <div className="flex flex-wrap gap-2">
@@ -528,7 +587,8 @@ export default function OcCampaigns({ desk }: { desk: string }) {
             </div>
 
             {meta && (
-              <BlockEditor blocks={blocks} setBlocks={setBlocks} meta={meta} />
+              <BlockEditor blocks={blocks} setBlocks={setBlocks} meta={meta}
+                onReveal={i => setGoTo(g => ({ i, n: (g?.n ?? 0) + 1 }))} />
             )}
 
             {kind === 'newsletter' ? (
@@ -603,7 +663,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-5 sm:p-6 border border-gray-200 dark:border-gray-600">
               <h3 className={`${EYEBROW} mb-3`}>ΠΡΟΕΠΙΣΚΟΠΗΣΗ</h3>
               {preview ? (
-                <PreviewFrame html={preview} />
+                <PreviewFrame html={preview} onPick={focusBlock} goTo={goTo} />
               ) : (
                 <div className="h-[32rem] rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 grid place-items-center text-sm text-gray-500">
                   Γράψε θέμα και πρόσθεσε ένα μπλοκ
@@ -714,11 +774,22 @@ export default function OcCampaigns({ desk }: { desk: string }) {
  * με transform, οπότε βλέπεις τη διάταξη υπολογιστή· ο διακόπτης δείχνει και
  * τη μορφή κινητού, που είναι υπαρκτή και σκόπιμη.
  */
-function PreviewFrame({ html }: { html: string }) {
+function PreviewFrame({ html, onPick, goTo }: {
+  html: string
+  onPick?: (i: number) => void
+  /** Εντολή «πήγαινε σε αυτό το μπλοκ». Το n αλλάζει σε κάθε κλικ, ώστε δύο
+   *  διαδοχικά κλικ στο ΙΔΙΟ μπλοκ να ξαναστείλουν την εντολή. */
+  goTo?: { i: number; n: number } | null
+}) {
   const wrap = useRef<HTMLDivElement>(null)
+  const frame = useRef<HTMLIFrameElement>(null)
   const [scale, setScale] = useState(1)
   const [mode, setMode] = useState<'desktop' | 'mobile'>('desktop')
-  const frameWidth = mode === 'desktop' ? 640 : 390
+  const [full, setFull] = useState(false)
+  // 680 = κάρτα 640 + τα 12px περιθώρια εκατέρωθεν, με λίγο αέρα. Αν το
+  // πλαίσιο ήταν 640, η κάρτα θα ακουμπούσε τις άκρες και η προεπισκόπηση
+  // θα έδειχνε στενότερη απ' ό,τι φτάνει στο γραμματοκιβώτιο.
+  const frameWidth = mode === 'desktop' ? PREVIEW_DESKTOP_WIDTH : 390
 
   useEffect(() => {
     const el = wrap.current
@@ -730,10 +801,58 @@ function PreviewFrame({ html }: { html: string }) {
     return () => ro.disconnect()
   }, [frameWidth])
 
+  /**
+   * Η θέση κύλισης επιβιώνει της ανανέωσης.
+   *
+   * Κάθε αλλαγή φτιάχνει νέο srcDoc, άρα το πλαίσιο ΞΑΝΑΦΟΡΤΩΝΕΙ και γυρίζει
+   * στην κορυφή — δουλεύοντας στο τέλος ενός μεγάλου γράμματος, κάθε πάτημα
+   * σε έστελνε πίσω στην αρχή.
+   *
+   * Δεν μπορούμε να διαβάσουμε το scrollTop απ' έξω: το πλαίσιο τρέχει με
+   * allow-scripts ΧΩΡΙΣ allow-same-origin, και σωστά — δεν θέλουμε να αγγίζει
+   * τη σελίδα μας. Οπότε το ίδιο μας λέει πού βρίσκεται, και του το δίνουμε
+   * πίσω μέσα στο επόμενο έγγραφο.
+   */
+  const scrollRef = useRef(0)
+  useEffect(() => {
+    if (!onPick) return
+    const onMsg = (e: MessageEvent) => {
+      if (e.data?.source !== 'oc-preview') return
+      if (Number.isInteger(e.data.index)) onPick(e.data.index)
+      if (typeof e.data.scroll === 'number') scrollRef.current = e.data.scroll
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [onPick])
+
+  /**
+   * Το έγγραφο με τη «θύμηση» της θέσης.
+   *
+   * useMemo με εξάρτηση ΜΟΝΟ το html: αν έμπαινε και το scroll, κάθε κύλιση
+   * θα άλλαζε το srcDoc και θα ξαναφόρτωνε το πλαίσιο — ακριβώς το πρόβλημα
+   * που λύνουμε. Η τιμή διαβάζεται από ref τη στιγμή που αλλάζει το γράμμα.
+   */
+  const doc = useMemo(() => {
+    if (!onPick || !html || !scrollRef.current) return html
+    const y = Math.round(scrollRef.current)
+    // Επαναφορά σε τρεις στιγμές: οι εικόνες φορτώνουν μετά και μετακινούν
+    // το περιεχόμενο, οπότε μία φορά δεν αρκεί.
+    const restore = `<script>(function(){var y=${y};function go(){window.scrollTo(0,y)}go();`
+      + `addEventListener('load',go);setTimeout(go,120);setTimeout(go,400);})();<\/script>`
+    return html.replace('</body>', `${restore}</body>`)
+  }, [html, onPick])
+
+  // Ο συνθέτης λέει στο πλαίσιο πού να πάει. Μόνο postMessage — το πλαίσιο
+  // τρέχει σε ξένη προέλευση και δεν το αγγίζουμε απευθείας.
+  useEffect(() => {
+    if (!goTo || !frame.current?.contentWindow) return
+    frame.current.contentWindow.postMessage({ source: 'oc-editor', index: goTo.i }, '*')
+  }, [goTo])
+
   const height = 520
   return (
     <div>
-      <div className="flex gap-1 mb-2">
+      <div className="flex gap-1 mb-2 items-center">
         {(['desktop', 'mobile'] as const).map(m => (
           <button key={m} type="button" onClick={() => setMode(m)}
             className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -741,10 +860,20 @@ function PreviewFrame({ html }: { html: string }) {
             {m === 'desktop' ? 'Υπολογιστής' : 'Κινητό'}
           </button>
         ))}
+        {/* Πλήρης οθόνη: το πλαίσιο των 520px κόβει κάθε γράμμα στη μέση και
+            δεν μπορείς να κρίνεις ρυθμό και αποστάσεις από ένα απόσπασμα. */}
+        <button type="button" onClick={() => setFull(true)}
+          className="ml-auto px-3 py-1 rounded-full text-xs font-semibold border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400">
+          Πλήρης οθόνη
+        </button>
       </div>
-      <div ref={wrap} className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-600 bg-white"
+      {full && <FullPreview html={html} onClose={() => setFull(false)} />}
+      <div ref={wrap} onClick={onPick ? undefined : () => setFull(true)}
+        title={onPick ? 'Κλικ σε στοιχείο για επεξεργασία' : 'Κλικ για πλήρη οθόνη'}
+        className={`overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-600 bg-white relative ${onPick ? '' : 'cursor-zoom-in'}`}
         style={{ height: height * scale }}>
-        <iframe title="Προεπισκόπηση" srcDoc={html} sandbox=""
+        <iframe ref={frame} title="Προεπισκόπηση" srcDoc={doc}
+          sandbox={onPick ? 'allow-scripts' : ''}
           style={{
             width: frameWidth, height, border: 0,
             transform: `scale(${scale})`, transformOrigin: 'top left',
@@ -803,27 +932,284 @@ function NewsletterLists({ meta, value, onChange }: {
   )
 }
 
+/**
+ * Το γράμμα σε πλήρη οθόνη.
+ *
+ * Δύο πλάτη, εναλλάξ: 640 για υπολογιστή και 390 για κινητό — τα ίδια με τη
+ * μικρή προεπισκόπηση, ώστε να μη δείχνει αλλού αλλιώς. Escape κλείνει.
+ */
+function FullPreview({ html, onClose }: { html: string; onClose: () => void }) {
+  const [w, setW] = useState(PREVIEW_DESKTOP_WIDTH)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    // Το σώμα δεν κυλά από πίσω όσο είναι ανοιχτό
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
+  }, [onClose])
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 flex flex-col" role="dialog" aria-modal="true" aria-label="Προεπισκόπηση σε πλήρη οθόνη">
+      <div className="flex items-center gap-2 p-3">
+        {[[PREVIEW_DESKTOP_WIDTH, 'Υπολογιστής'], [390, 'Κινητό']].map(([px, label]) => (
+          <button key={px as number} type="button" onClick={() => setW(px as number)}
+            className={`px-3 min-h-11 rounded-full text-sm font-semibold ${
+              w === px ? 'bg-coral text-charcoal' : 'bg-white/10 text-white'}`}>
+            {label as string}
+          </button>
+        ))}
+        <button type="button" onClick={onClose}
+          className="ml-auto px-4 min-h-11 rounded-full bg-white text-charcoal text-sm font-bold">
+          Κλείσιμο
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto px-3 pb-3">
+        <iframe title="Προεπισκόπηση πλήρους οθόνης" srcDoc={html} sandbox=""
+          className="mx-auto bg-white rounded-2xl"
+          style={{ width: w, maxWidth: '100%', height: '100%', minHeight: '80vh', border: 0 }} />
+      </div>
+    </div>
+  )
+}
+
 // ── Ο επεξεργαστής μπλοκ ────────────────────────────────────────────────────
 
-function BlockEditor({ blocks, setBlocks, meta }: { blocks: Block[]; setBlocks: (b: Block[]) => void; meta: Meta }) {
-  const [adding, setAdding] = useState(false)
+/**
+ * Το είδος του νέου μπλοκ ταξιδεύει στο dataTransfer.
+ *
+ * Έτσι η λίστα ξεχωρίζει το «νέο στοιχείο από την παλέτα» (εισαγωγή) από τη
+ * «μετακίνηση υπάρχοντος» (αναδιάταξη) — δύο κινήσεις που μοιάζουν ίδιες στο
+ * χέρι αλλά κάνουν εντελώς διαφορετικά πράγματα.
+ */
+const BLOCK_DND = 'application/x-oc-block'
+
+/**
+ * Το υποσέλιδο του τεύχους.
+ *
+ * Επτά διατάξεις του ίδιου υλικού, και δίπλα τους τα κείμενα που αλλάζουν
+ * πραγματικά: τα δικαιώματα (η χρονιά), το σημείωμα GDPR, η θυρίδα και η
+ * γραμμή απεγγραφής. Τα κοινωνικά δίκτυα είναι σταθερά τέσσερα — αλλάζει
+ * μόνο η διεύθυνση, και όποιο μείνει κενό δεν εμφανίζεται.
+ */
+function NewsletterFooterFields({ options, value, onChange }: {
+  options: Array<{ id: string; label: string; hint: string }>
+  value: NewsletterFooter
+  onChange: (v: NewsletterFooter) => void
+}) {
+  const set = (p: Partial<NewsletterFooter>) => onChange({ ...value, ...p })
+  const socials = value.socials || []
+  const setSocial = (i: number, href: string) =>
+    set({ socials: socials.map((s, j) => (j === i ? { ...s, href } : s)) })
+
+  return (
+    <div className="grid gap-1.5">
+      <span className="text-sm font-semibold">Υποσέλιδο τεύχους</span>
+      <div className="flex flex-wrap gap-2">
+        {options.map(o => (
+          <button key={o.id} type="button" title={o.hint} onClick={() => set({ arrangement: o.id as NewsletterFooter['arrangement'] })}
+            className={`${CHIP} ${value.arrangement === o.id ? 'border-coral bg-coral/10' : 'border-gray-300 dark:border-gray-600'}`}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+
+      <label className="grid gap-1 pt-2">
+        <span className="text-xs text-gray-600 dark:text-gray-400">Δικαιώματα</span>
+        <input value={value.copyright} onChange={e => set({ copyright: e.target.value })} className={IN} />
+      </label>
+      <label className="grid gap-1">
+        <span className="text-xs text-gray-600 dark:text-gray-400">Γιατί το λαμβάνουν (σημείωμα GDPR)</span>
+        <textarea value={value.notice} onChange={e => set({ notice: e.target.value })} rows={4}
+          className={`${IN} py-2 min-h-0 resize-y`} />
+      </label>
+      <div className="grid sm:grid-cols-2 gap-2">
+        <label className="grid gap-1">
+          <span className="text-xs text-gray-600 dark:text-gray-400">Θυρίδα επικοινωνίας</span>
+          <input value={value.email} onChange={e => set({ email: e.target.value })} className={IN} translate="no" />
+        </label>
+        <label className="grid gap-1">
+          <span className="text-xs text-gray-600 dark:text-gray-400">Γραμμή απεγγραφής</span>
+          <input value={value.unsubscribeLead} onChange={e => set({ unsubscribeLead: e.target.value })} className={IN} />
+        </label>
+      </div>
+
+      <details className="pt-1">
+        <summary className="text-xs text-gray-600 dark:text-gray-400 cursor-pointer">Σύνδεσμοι κοινωνικών δικτύων</summary>
+        <div className="grid gap-2 pt-2">
+          {socials.map((s, i) => (
+            <label key={s.network} className="grid gap-1">
+              <span className="text-xs text-gray-600 dark:text-gray-400">{s.network}</span>
+              <input value={s.href} onChange={e => setSocial(i, e.target.value)} className={IN}
+                placeholder="Άφησέ το κενό για να μην εμφανιστεί" translate="no" />
+            </label>
+          ))}
+        </div>
+      </details>
+    </div>
+  )
+}
+
+function BlockEditor({ blocks, setBlocks, meta, onReveal }: {
+  blocks: Block[]; setBlocks: (b: Block[]) => void; meta: Meta
+  /** Ζητά από την προεπισκόπηση να δείξει αυτό το μπλοκ */
+  onReveal?: (i: number) => void
+}) {
   // Σύρσιμο για αναδιάταξη. Τα βελάκια μένουν: είναι ο μόνος τρόπος με
   // πληκτρολόγιο, και το σύρσιμο δεν δουλεύει σε κάθε συσκευή.
   const [dragFrom, setDragFrom] = useState<number | null>(null)
   const [dragOver, setDragOver] = useState<number | null>(null)
-  const drop = (to: number) => {
-    if (dragFrom === null || dragFrom === to) { setDragFrom(null); setDragOver(null); return }
+  /** Το σύρσιμο έρχεται από την παλέτα — δηλαδή ΠΡΟΣΘΕΤΕΙ, δεν μεταφέρει */
+  const [adding, setAdding] = useState(false)
+
+  /** Το `to` είναι θέση ΠΡΙΝ από το μπλοκ i· το blocks.length σημαίνει «στο τέλος» */
+  const over = (e: React.DragEvent, i: number) => {
+    const fromPalette = e.dataTransfer.types.includes(BLOCK_DND)
+    if (dragFrom === null && !fromPalette) return
+    e.preventDefault()
+    setDragOver(i)
+    setAdding(dragFrom === null && fromPalette)
+  }
+  const insertAt = (at: number, type: string) => {
     const next = [...blocks]
-    const [moved] = next.splice(dragFrom, 1)
-    next.splice(to, 0, moved)
-    setBlocks(next); setDragFrom(null); setDragOver(null)
+    next.splice(at, 0, newBlock(type, meta.tocDefaultTitle))
+    setBlocks(next)
+    // Η επιλογή κρατιέται σε ΔΕΙΚΤΕΣ: ό,τι ήταν από τη θέση `at` και κάτω
+    // μόλις μετακινήθηκε μία θέση — χωρίς αυτό η επιλογή έδειχνε αλλού.
+    setSelected(s => s.map(i => (i >= at ? i + 1 : i)))
+    setPickerAt(null)
+    onReveal?.(at)
+  }
+  const drop = (e: React.DragEvent, to: number) => {
+    e.preventDefault()
+    const type = e.dataTransfer.getData(BLOCK_DND)
+    setDragOver(null); setAdding(false)
+    if (type && dragFrom === null) { insertAt(to, type); return }
+    if (dragFrom === null || dragFrom === to) { setDragFrom(null); return }
+    apply(moveGroupTo(blocks, group(dragFrom), to))
+    setDragFrom(null)
+  }
+  const dropZone = (i: number) =>
+    dragOver === i && (adding || (dragFrom !== null && dragFrom !== i))
+
+  /** Ποιος «+» έχει ανοιχτή τη λίστα στοιχείων — ένας κάθε φορά */
+  const [pickerAt, setPickerAt] = useState<number | null>(null)
+
+  /**
+   * Η γραμμή ανάμεσα σε δύο μπλοκ: και κουμπί «+» και στόχος για σύρσιμο.
+   *
+   * Με 85 μπλοκ, το «πρόσθεσε στο τέλος και ανέβασέ το» ήταν εξήντα πατήματα.
+   * Εδώ η θέση επιλέγεται ΠΡΩΤΗ και το στοιχείο γεννιέται ήδη στη θέση του.
+   * Μένει αχνό ώσπου να το πλησιάσεις — αλλά ορατό, όχι κρυφό σε hover: σε
+   * οθόνη αφής το hover δεν υπάρχει καθόλου.
+   */
+  const inserter = (at: number) => {
+    const open = pickerAt === at
+    const hot = dropZone(at)
+    return (
+      <div
+        onDragOver={e => over(e, at)}
+        onDragLeave={() => setDragOver(o => (o === at ? null : o))}
+        onDrop={e => drop(e, at)}
+        className={`group relative ${open ? 'z-10' : ''}`}>
+        <div className={`flex items-center gap-2 h-7 transition-opacity ${
+          hot || open ? 'opacity-100' : 'opacity-45 group-hover:opacity-100 focus-within:opacity-100'}`}>
+          <span className={`h-px flex-1 ${hot ? 'bg-coral' : 'bg-gray-300 dark:bg-gray-600'}`} />
+          <button type="button"
+            onClick={() => setPickerAt(p => (p === at ? null : at))}
+            aria-expanded={open}
+            aria-label={at === 0 ? 'Πρόσθεσε στοιχείο στην αρχή'
+              : at >= blocks.length ? 'Πρόσθεσε στοιχείο στο τέλος' : 'Πρόσθεσε στοιχείο εδώ'}
+            title={hot ? 'Άφησέ το εδώ' : 'Πρόσθεσε στοιχείο εδώ'}
+            className={`w-6 h-6 shrink-0 rounded-full border text-base leading-none grid place-items-center transition-colors ${
+              open || hot
+                ? 'border-coral bg-coral text-charcoal'
+                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:border-coral hover:text-coral'
+            }`}>
+            <span aria-hidden="true" className="-mt-0.5">+</span>
+          </button>
+          <span className={`h-px flex-1 ${hot ? 'bg-coral' : 'bg-gray-300 dark:bg-gray-600'}`} />
+        </div>
+        {open && (
+          <div
+            onKeyDown={e => { if (e.key === 'Escape') setPickerAt(null) }}
+            className="my-2 rounded-2xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4 shadow-lg">
+            <div className="flex items-baseline gap-2 mb-3">
+              <h4 className={EYEBROW}>ΣΤΟΙΧΕΙΑ ΠΡΟΣ ΠΡΟΣΘΗΚΗ</h4>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {at === 0 ? 'στην αρχή' : at >= blocks.length ? 'στο τέλος' : `πριν από το «${meta.blockLabels[blocks[at]?.type] || blocks[at]?.type}»`}
+              </span>
+              <button type="button" onClick={() => setPickerAt(null)}
+                aria-label="Κλείσιμο" className="ml-auto text-sm text-gray-500 hover:text-coral">✕</button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(meta.blockLabels).map(([type, label]) => (
+                <button key={type} type="button" onClick={() => insertAt(at, type)}
+                  className={`${CHIP} border-gray-300 dark:border-gray-600 hover:border-coral bg-white dark:bg-gray-800`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    )
   }
   const update = (i: number, patch: Record<string, any>) =>
     setBlocks(blocks.map((b, j) => (j === i ? { ...b, ...patch } : b)))
-  const move = (i: number, d: -1 | 1) => {
-    const j = i + d
-    if (j < 0 || j >= blocks.length) return
-    const next = [...blocks]; [next[i], next[j]] = [next[j], next[i]]; setBlocks(next)
+
+  /**
+   * Πολλαπλή επιλογή.
+   *
+   * Κλικ στην κεφαλίδα ενός μπλοκ το επιλέγει· τα βελάκια και το σύρσιμο
+   * κινούν ΟΛΑ τα επιλεγμένα μαζί. Χωρίς αυτό, η αναδιάταξη μιας ενότητας
+   * τεσσάρων στοιχείων ήταν δεκαέξι πατήματα.
+   *
+   * Η επιλογή κρατιέται σε δείκτες, όχι σε αντικείμενα: τα μπλοκ είναι απλά
+   * JSON χωρίς ταυτότητα, και δύο ίδια μπλοκ θα ήταν αδιάκριτα.
+   */
+  const [selected, setSelected] = useState<number[]>([])
+  const isSel = (i: number) => selected.includes(i)
+  const toggleSel = (i: number) =>
+    setSelected(s => (s.includes(i) ? s.filter(x => x !== i) : [...s, i]))
+
+  /** Ποια μπλοκ κινούνται: η επιλογή αν το πατημένο ανήκει σε αυτήν, αλλιώς μόνο του */
+  const group = (i: number) => (isSel(i) && selected.length ? selected : [i])
+
+  const apply = (r: { items: Block[]; selection: number[] }) => {
+    setBlocks(r.items)
+    setSelected(selected.length ? r.selection : [])
+  }
+  const move = (i: number, d: -1 | 1) =>
+    apply(d === -1 ? moveUp(blocks, group(i)) : moveDown(blocks, group(i)))
+  const toBottom = (i: number) => apply(moveToBottom(blocks, group(i)))
+
+  /**
+   * Απόκρυψη/εμφάνιση για ΟΛΑ τα επιλεγμένα.
+   *
+   * Όλα παίρνουν την ίδια κατάσταση — του μπλοκ που πατήθηκε — αντί να
+   * αναστρέφεται το καθένα χωριστά. Με ανάμεικτη επιλογή, η εναλλαγή ανά
+   * στοιχείο θα άφηνε άλλα κρυφά και άλλα ορατά, δηλαδή ακριβώς το
+   * μπέρδεμα που ήθελες να ξεμπερδέψεις.
+   */
+  /**
+   * Διαγραφή — ενός ή όλων των επιλεγμένων.
+   *
+   * Για ΠΟΛΛΑ ρωτάει πρώτα: το μεμονωμένο ✕ αναιρείται με ένα ξανα-πρόσθεσε,
+   * αλλά τέσσερα στοιχεία με κείμενο και εικόνες δεν ξαναγράφονται εύκολα.
+   * Το μονό μένει άμεσο — μια επιβεβαίωση σε κάθε διαγραφή θα ήταν τροχοπέδη.
+   */
+  const removeBlocks = (i: number) => {
+    const ids = group(i)
+    if (ids.length > 1 && !confirm(`Να διαγραφούν και τα ${ids.length} επιλεγμένα στοιχεία;`)) return
+    setBlocks(blocks.filter((_, j) => !ids.includes(j)))
+    setSelected([])
+  }
+
+  const toggleHidden = (i: number) => {
+    const ids = group(i)
+    const next = !blocks[i]?.hidden
+    setBlocks(blocks.map((b, j) => (ids.includes(j) ? { ...b, hidden: next } : b)))
   }
 
   const [copying, setCopying] = useState<number | null>(null)
@@ -841,49 +1227,66 @@ function BlockEditor({ blocks, setBlocks, meta }: { blocks: Block[]; setBlocks: 
    * χειρότερο αποτέλεσμα είναι ένα αρχείο παραπάνω, όχι μια σβησμένη εικόνα.
    */
   const duplicate = async (i: number) => {
-    const clone: Block = JSON.parse(JSON.stringify(blocks[i]))
-    const jobs: Array<{ node: any; idKey: string; srcKey: string }> = []
-    const walk = (v: any) => {
-      if (Array.isArray(v)) { v.forEach(walk); return }
-      if (!v || typeof v !== 'object') return
-      if (Number.isInteger(v.mediaId) && v.src) jobs.push({ node: v, idKey: 'mediaId', srcKey: 'src' })
-      if (Number.isInteger(v.origMediaId) && v.origSrc) jobs.push({ node: v, idKey: 'origMediaId', srcKey: 'origSrc' })
-      Object.values(v).forEach(walk)
-    }
-    walk(clone)
-
-    if (jobs.length) {
-      setCopying(i)
-      for (const j of jobs) {
-        try {
-          const res = await fetch('/api/oc/campaigns/image', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'copy', src: j.node[j.srcKey] }),
-          })
-          if (!res.ok) throw new Error('copy failed')
-          const d = await res.json()
-          j.node[j.idKey] = d.id
-          j.node[j.srcKey] = d.url
-        } catch {
-          j.node[j.idKey] = undefined
+    const ids = group(i)
+    setCopying(i)
+    try {
+      const clones: Block[] = []
+      for (const id of ids) {
+        const clone: Block = JSON.parse(JSON.stringify(blocks[id]))
+        const jobs: Array<{ node: any; idKey: string; srcKey: string }> = []
+        const walk = (v: any) => {
+          if (Array.isArray(v)) { v.forEach(walk); return }
+          if (!v || typeof v !== 'object') return
+          if (Number.isInteger(v.mediaId) && v.src) jobs.push({ node: v, idKey: 'mediaId', srcKey: 'src' })
+          if (Number.isInteger(v.origMediaId) && v.origSrc) jobs.push({ node: v, idKey: 'origMediaId', srcKey: 'origSrc' })
+          Object.values(v).forEach(walk)
         }
+        walk(clone)
+        for (const j of jobs) {
+          try {
+            const res = await fetch('/api/oc/campaigns/image', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'copy', src: j.node[j.srcKey] }),
+            })
+            if (!res.ok) throw new Error('copy failed')
+            const d = await res.json()
+            j.node[j.idKey] = d.id
+            j.node[j.srcKey] = d.url
+          } catch {
+            // Αποτυχία αντιγραφής: το αντίγραφο κρατά τη διεύθυνση αλλά χάνει
+            // το mediaId — γίνεται εξωτερικός σύνδεσμος που δεν διαγράφεται ποτέ
+            j.node[j.idKey] = undefined
+          }
+        }
+        clones.push(clone)
       }
-      setCopying(null)
-    }
-
-    const next = [...blocks]
-    next.splice(i + 1, 0, clone)
-    setBlocks(next)
+      // Τα αντίγραφα μπαίνουν ΜΕΤΑ το τελευταίο επιλεγμένο, με τη σειρά τους
+      const after = Math.max(...ids)
+      const next = [...blocks]
+      next.splice(after + 1, 0, ...clones)
+      setBlocks(next)
+      // Η επιλογή ακολουθεί τα ΑΝΤΙΓΡΑΦΑ — συνήθως αυτά θέλεις να πειράξεις
+      setSelected(ids.length > 1 ? clones.map((_, n) => after + 1 + n) : [])
+    } finally { setCopying(null) }
   }
 
   return (
     <div className={CARD}>
       <div className="flex flex-wrap items-baseline gap-2 mb-1">
         <h3 className={EYEBROW}>ΣΩΜΑ ΜΗΝΥΜΑΤΟΣ</h3>
-        <span className="ml-auto text-sm text-gray-600 dark:text-gray-400 tabular-nums">{blocks.length} μπλοκ</span>
+        <span className="ml-auto text-sm text-gray-600 dark:text-gray-400 tabular-nums">
+          {blocks.filter(b => !b.hidden).length} μπλοκ
+          {blocks.some(b => b.hidden) && ` · ${blocks.filter(b => b.hidden).length} κρυφά`}
+        </span>
+        {selected.length > 0 && (
+          <button type="button" onClick={() => setSelected([])}
+            className="text-sm text-coral dark:text-coral-light underline">
+            {selected.length} επιλεγμένα — καθάρισε την επιλογή
+          </button>
+        )}
         {blocks.length > 0 && (
           <button type="button"
-            onClick={() => { if (confirm('Να αφαιρεθούν και τα ' + blocks.length + ' μπλοκ;')) setBlocks([]) }}
+            onClick={() => { if (confirm('Να αφαιρεθούν και τα ' + blocks.length + ' μπλοκ;')) { setBlocks([]); setSelected([]) } }}
             className="text-sm text-red-700 dark:text-red-300 underline">Καθαρισμός όλων</button>
         )}
       </div>
@@ -905,22 +1308,47 @@ function BlockEditor({ blocks, setBlocks, meta }: { blocks: Block[]; setBlocks: 
         </div>
       )}
 
-      <div className="grid gap-3">
+      <div className="grid gap-0">
         {blocks.map((b, i) => (
-          <div key={i}
-            onDragOver={e => { e.preventDefault(); setDragOver(i) }}
+          <Fragment key={i}>
+          {inserter(i)}
+          <div id={`oc-block-${i}`}
+            onDragOver={e => over(e, i)}
             onDragLeave={() => setDragOver(o => (o === i ? null : o))}
-            onDrop={e => { e.preventDefault(); drop(i) }}
-            className={`rounded-2xl border p-3 transition-colors ${
-              dragOver === i && dragFrom !== null && dragFrom !== i
+            onDrop={e => drop(e, i)}
+            className={`rounded-2xl border p-3 transition-colors ${b.hidden ? 'opacity-55' : ''} ${
+              isSel(i) ? 'ring-2 ring-coral ring-offset-2 ring-offset-white dark:ring-offset-gray-800 ' : ''}${
+              dropZone(i)
                 ? 'border-coral border-2 bg-coral/5'
                 : 'border-gray-200 dark:border-gray-600'
             } ${dragFrom === i ? 'opacity-50' : ''}`}>
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span draggable onDragStart={() => setDragFrom(i)} onDragEnd={() => { setDragFrom(null); setDragOver(null) }}
+            <div className="flex flex-wrap items-center gap-2 mb-2 cursor-pointer"
+              onClick={e => {
+                // Μόνο η κενή περιοχή της κεφαλίδας επιλέγει — όχι τα κουμπιά
+                // ή το select της παραλλαγής
+                if ((e.target as HTMLElement).closest('button, select, input, a')) return
+                toggleSel(i)
+                onReveal?.(i)
+              }}
+              title="Κλικ για επιλογή — τα βελάκια κινούν όλα τα επιλεγμένα μαζί">
+              <span draggable
+                onDragStart={e => {
+                  setDragFrom(i)
+                  // Χωρίς φορτίο ο Firefox δεν ξεκινά καν το σύρσιμο. Το
+                  // text/plain είναι αδιάφορο — αρκεί που υπάρχει, και ΔΕΝ
+                  // είναι το BLOCK_DND, ώστε να μη μοιάσει με νέο στοιχείο.
+                  e.dataTransfer.setData('text/plain', String(i))
+                  e.dataTransfer.effectAllowed = 'move'
+                }}
+                onDragEnd={() => { setDragFrom(null); setDragOver(null); setAdding(false) }}
                 title="Σύρε για αναδιάταξη" aria-hidden="true"
                 className="cursor-grab active:cursor-grabbing select-none px-1 text-gray-400 hover:text-coral">⠿</span>
               <span className="text-xs font-bold tracking-wider text-coral">{meta.blockLabels[b.type] || b.type}</span>
+              {b.hidden && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  ΚΡΥΦΟ — δεν στέλνεται
+                </span>
+              )}
               {meta.blockVariants[b.type] && (
                 <select value={b[meta.blockVariants[b.type].key] ?? meta.blockVariants[b.type].options[0].value}
                   onChange={e => update(i, { [meta.blockVariants[b.type].key]: e.target.value })}
@@ -933,37 +1361,63 @@ function BlockEditor({ blocks, setBlocks, meta }: { blocks: Block[]; setBlocks: 
                   className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">↑</button>
                 <button type="button" onClick={() => move(i, 1)} aria-label="Κάτω"
                   className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">↓</button>
+                {/* Στο τέλος όλων, χωρίς κύλιση ως εκεί — κυρίως μετά από
+                    διπλασιασμό, όπου το αντίγραφο γεννιέται δίπλα στο πρωτότυπο */}
+                <button type="button" onClick={() => toBottom(i)} aria-label="Στο τέλος όλων"
+                  title="Στο τέλος όλων"
+                  className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">⤓</button>
+                {/* Απόκρυψη: το στοιχείο μένει στο προσχέδιο αλλά ΔΕΝ φεύγει.
+                    Ούτε στην προεπισκόπηση ούτε στο γράμμα — αλλιώς θα
+                    ενέκρινες ό,τι βλέπεις και θα έφευγε κάτι άλλο. */}
+                <button type="button" onClick={() => toggleHidden(i)}
+                  aria-pressed={!!b.hidden}
+                  aria-label={b.hidden ? 'Εμφάνιση στοιχείου' : 'Απόκρυψη στοιχείου'}
+                  title={isSel(i) && selected.length > 1
+                    ? `Απόκρυψη/εμφάνιση και για τα ${selected.length} επιλεγμένα`
+                    : (b.hidden ? 'Κρυφό — δεν θα σταλεί. Κλικ για εμφάνιση.' : 'Απόκρυψη — μένει στο προσχέδιο αλλά δεν στέλνεται')}
+                  className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                  {b.hidden ? '🙈' : '👁'}
+                </button>
                 <button type="button" onClick={() => duplicate(i)} disabled={copying !== null}
                   aria-label="Διπλασιασμός" title="Διπλασιασμός"
                   className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40">
                   {copying === i ? '…' : '⧉'}
                 </button>
-                <button type="button" onClick={() => setBlocks(blocks.filter((_, j) => j !== i))} aria-label="Διαγραφή"
+                <button type="button" onClick={() => removeBlocks(i)}
+                  aria-label={isSel(i) && selected.length > 1 ? `Διαγραφή ${selected.length} στοιχείων` : 'Διαγραφή'}
+                  title={isSel(i) && selected.length > 1 ? `Διαγραφή και των ${selected.length} επιλεγμένων` : 'Διαγραφή'}
                   className="w-8 h-8 rounded-full hover:bg-red-100 dark:hover:bg-red-900/40 text-red-700 dark:text-red-300">✕</button>
               </div>
             </div>
             <BlockFields block={b} onChange={p => update(i, p)} tocDefault={meta.tocDefaultTitle} />
           </div>
+          </Fragment>
         ))}
+        {/* Η τελευταία θέση. Τα μπλοκ δέχονται πτώση «πριν από εμένα», οπότε
+            χωρίς αυτήν δεν υπήρχε τρόπος να αφήσεις κάτι στο τέλος — και με
+            άδεια λίστα δεν υπήρχε κανένας στόχος καθόλου. */}
+        {inserter(blocks.length)}
       </div>
 
-      <div className="mt-4">
-        {adding ? (
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(meta.blockLabels).map(([type, label]) => (
-              <button key={type} type="button"
-                onClick={() => { setBlocks([...blocks, newBlock(type, meta.tocDefaultTitle)]); setAdding(false) }}
-                className={`${CHIP} border-gray-300 dark:border-gray-600 hover:border-coral`}>{label}</button>
-            ))}
-            <button type="button" onClick={() => setAdding(false)}
-              className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400">Άκυρο</button>
-          </div>
-        ) : (
-          <button type="button" onClick={() => setAdding(true)}
-            className="px-4 min-h-11 rounded-full border border-dashed border-gray-400 dark:border-gray-500 text-sm font-semibold hover:border-coral">
-            + Προσθήκη στοιχείου
-          </button>
-        )}
+      {/* Η παλέτα μένει ΑΝΟΙΧΤΗ. Πίσω από ένα «+ Προσθήκη στοιχείου» τα
+          στοιχεία ήταν αόρατα: έπρεπε να θυμάσαι ότι υπάρχουν και τι είναι.
+          Τα chip σύρονται κιόλας: κλικ = στο τέλος, σύρσιμο = στη θέση που θες. */}
+      <div className="mt-6 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 p-4 bg-gray-50/60 dark:bg-gray-900/40">
+        <h4 className={`${EYEBROW} mb-3`}>ΣΤΟΙΧΕΙΑ ΠΡΟΣ ΠΡΟΣΘΗΚΗ</h4>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(meta.blockLabels).map(([type, label]) => (
+            <button key={type} type="button" draggable
+              onDragStart={e => {
+                e.dataTransfer.setData(BLOCK_DND, type)
+                e.dataTransfer.effectAllowed = 'copy'
+              }}
+              onClick={() => insertAt(blocks.length, type)}
+              title={`${label} — κλικ: στο τέλος · σύρσιμο: στη θέση που θες`}
+              className={`${CHIP} cursor-grab active:cursor-grabbing border-gray-300 dark:border-gray-600 hover:border-coral bg-white dark:bg-gray-800`}>
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <details className="mt-4">
@@ -982,20 +1436,35 @@ function BlockEditor({ blocks, setBlocks, meta }: { blocks: Block[]; setBlocks: 
 
 function newBlock(type: string, tocDefault = ''): Block {
   switch (type) {
-    case 'section': return { type, title: 'Τίτλος ενότητας' }
+    // Μοντέρνα εξ ορισμού: είναι η μορφή που ήδη χρησιμοποιεί το μηνιαίο τεύχος
+    case 'section': return { type, title: 'Τίτλος ενότητας', variant: 'modern', look: 'coral', logo: true, logoSide: 'left' }
     case 'text': return { type, html: '' }
-    case 'image': return { type, src: '', alt: '' }
-    case 'imageText': return { type, src: '', alt: '', html: '' }
+    case 'image': return { type, src: '', alt: '', size: 'full', align: 'center', band: 'none' }
+    case 'imageText': return { type, src: '', alt: '', html: '', side: 'left', size: 'medium', band: 'none', valign: 'top' }
     case 'card': return { type, title: '', html: '' }
     case 'person': return { type, name: '', role: '', html: '' }
     case 'logos': return { type, items: [] }
     // Προσυμπληρωμένος, ώστε να φαίνεται τι θα δει ο παραλήπτης αν δεν αλλάξει τίποτα
     case 'toc': return { type, title: tocDefault }
+    case 'greeting': return { type, html: '<p>Αγαπητό μέλος,</p>' }
+    case 'grid': return { type, cols: '2', items: [{ title: '', html: '' }, { title: '', html: '' }] }
+    case 'agenda': return { type, rows: [{ date: '', title: '', place: '' }] }
+    case 'quote': return { type, html: '', who: '', tone: 'cream' }
+    case 'stats': return { type, items: [{ value: '', label: '' }, { value: '', label: '' }] }
+    case 'social': return { type, items: [
+      { network: 'Facebook', href: '' }, { network: 'Instagram', href: '' }, { network: 'LinkedIn', href: '' },
+    ] }
+    case 'spacer': return { type, size: 'medium' }
+    case 'browserView': return { type, tone: 'white', text: 'Δεν εμφανίζεται σωστά αυτό το μήνυμα;', linkText: 'Δες το στον browser' }
+    case 'masthead': return {
+      type, layout: 'textTop', tone: 'coral', withImage: true, imageSize: 'medium',
+      eyebrow: 'CforC — Community Journal', title: '', src: '', alt: '',
+    }
     case 'button': return { type, label: '', href: '' }
     case 'box': return { type, title: '', html: '', tone: 'cream' }
     case 'divider': return { type, style: 'line' }
     case 'amounts': return { type, rows: [{ label: '', amount: '' }] }
-    case 'mono': return { type, label: '', value: '' }
+    case 'mono': return { type, label: '', value: '', look: 'cream' }
     default: return { type }
   }
 }
@@ -1019,11 +1488,68 @@ function BlockFields({ block: b, onChange, tocDefault = '' }: {
   )
 
   switch (b.type) {
-    case 'section': return line('Τίτλος', 'title')
+    case 'section': return (
+      <div className="grid gap-3">
+        {line('Τίτλος', 'title')}
+        <Choice label="Μορφή" value={b.variant || 'modern'} onChange={v => onChange({ variant: v })}
+          options={[{ value: 'modern', label: 'Μοντέρνα ζώνη' }, { value: 'classic', label: 'Κλασική γραμμή' }]} />
+        {(b.variant || 'modern') === 'modern' && (
+          <>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={b.logo !== false}
+                onChange={e => onChange({ logo: e.target.checked })} className="accent-coral w-4 h-4" />
+              <span>Με το σήμα CforC</span>
+            </label>
+            {b.logo !== false && (
+              <Choice label="Θέση σήματος" value={b.logoSide || 'left'} onChange={v => onChange({ logoSide: v })}
+                options={[{ value: 'left', label: 'Αριστερά' }, { value: 'right', label: 'Δεξιά' }]} />
+            )}
+          </>
+        )}
+      </div>
+    )
     case 'text': return rich('Κείμενο')
     case 'divider': return null
-    case 'image': return <div className="grid gap-2"><ImageField src={b.src || ''} alt={b.alt || ''} mediaId={b.mediaId} branded={b.branded} origSrc={b.origSrc} origMediaId={b.origMediaId} onChange={onChange} />{line('Σύνδεσμος στον οποίο οδηγεί (προαιρετικό)', 'href')}</div>
-    case 'imageText': return <div className="grid gap-2"><ImageField src={b.src || ''} alt={b.alt || ''} mediaId={b.mediaId} branded={b.branded} origSrc={b.origSrc} origMediaId={b.origMediaId} onChange={onChange} />{rich('Κείμενο δίπλα')}</div>
+    case 'image': return (
+      <div className="grid gap-3">
+        <ImageField src={b.src || ''} alt={b.alt || ''} mediaId={b.mediaId}
+          branded={b.branded} origSrc={b.origSrc} origMediaId={b.origMediaId} onChange={onChange} />
+        {/* Η στοίχιση έχει νόημα μόνο όταν η εικόνα δεν γεμίζει το πλάτος */}
+        {(b.size || 'full') !== 'full' && (
+          <Choice label="Στοίχιση" value={b.align || 'center'} onChange={v => onChange({ align: v })}
+            options={[
+              { value: 'left', label: 'Αριστερά' }, { value: 'center', label: 'Κέντρο' }, { value: 'right', label: 'Δεξιά' },
+            ]} />
+        )}
+        <Choice label="Ζώνη φόντου (πλήρες πλάτος)" value={b.band || 'none'} onChange={v => onChange({ band: v })}
+          options={[
+            { value: 'none', label: 'Καμία' }, { value: 'coral', label: 'Coral' },
+            { value: 'dark', label: 'Σκούρα' }, { value: 'cream', label: 'Κρεμ' },
+            { value: 'tint', label: 'Απαλό coral' },
+          ]} />
+        {line('Σύνδεσμος στον οποίο οδηγεί (προαιρετικό)', 'href')}
+      </div>
+    )
+    case 'imageText': return (
+      <div className="grid gap-3">
+        <ImageField src={b.src || ''} alt={b.alt || ''} mediaId={b.mediaId}
+          branded={b.branded} origSrc={b.origSrc} origMediaId={b.origMediaId} onChange={onChange} />
+        <Choice label="Μέγεθος φωτογραφίας" value={b.size || 'medium'} onChange={v => onChange({ size: v })}
+          options={[
+            { value: 'small', label: 'Μικρή' }, { value: 'medium', label: 'Μεσαία' }, { value: 'large', label: 'Μεγάλη' },
+          ]} />
+        <Choice label="Ευθυγράμμιση κειμένου" value={b.valign || 'top'} onChange={v => onChange({ valign: v })}
+          options={[{ value: 'top', label: 'Πάνω' }, { value: 'middle', label: 'Στο κέντρο' }]} />
+        <Choice label="Ζώνη φόντου (πλήρες πλάτος)" value={b.band || 'none'} onChange={v => onChange({ band: v })}
+          options={[
+            { value: 'none', label: 'Καμία' }, { value: 'coral', label: 'Coral' },
+            { value: 'dark', label: 'Σκούρα' }, { value: 'cream', label: 'Κρεμ' },
+            { value: 'tint', label: 'Απαλό coral' },
+          ]} />
+        {rich('Κείμενο δίπλα')}
+        {line('Σύνδεσμος στον οποίο οδηγεί η εικόνα (προαιρετικό)', 'href')}
+      </div>
+    )
     case 'card': return <div className="grid gap-2">{line('Τίτλος', 'title')}{rich('Κείμενο')}<ImageField src={b.src || ''} alt={b.alt || ''} mediaId={b.mediaId} branded={b.branded} origSrc={b.origSrc} origMediaId={b.origMediaId} onChange={onChange} />{line('Κουμπί — ετικέτα', 'buttonLabel')}{line('Κουμπί — σύνδεσμος', 'buttonHref')}</div>
     case 'person': return <div className="grid gap-2">{line('Όνομα', 'name')}{line('Ιδιότητα', 'role')}<ImageField src={b.src || ''} alt={b.alt || ''} mediaId={b.mediaId} branded={b.branded} origSrc={b.origSrc} origMediaId={b.origMediaId} onChange={onChange} />{rich('Κείμενο')}</div>
     case 'button': return <div className="grid gap-2">{line('Ετικέτα', 'label')}{line('Σύνδεσμος', 'href', 'https://…')}</div>
@@ -1031,6 +1557,70 @@ function BlockFields({ block: b, onChange, tocDefault = '' }: {
     case 'mono': return <div className="grid gap-2">{line('Ετικέτα', 'label', 'π.χ. IBAN')}{line('Τιμή', 'value')}</div>
     case 'logos': return <LogosFields items={b.items || []} onChange={items => onChange({ items })} />
     case 'amounts': return <AmountsFields rows={b.rows || []} total={b.total || ''} onChange={onChange} />
+    case 'greeting': return rich('Χαιρετισμός')
+    case 'browserView': return (
+      <div className="grid gap-2">
+        {line('Κείμενο', 'text')}
+        {line('Κείμενο συνδέσμου', 'linkText')}
+        <p className="text-xs text-gray-600 dark:text-gray-400">
+          Ο σύνδεσμος δείχνει στο τεύχος μέσα στον ιστότοπό μας και μπαίνει αυτόματα τη στιγμή
+          της αποστολής — στην προεπισκόπηση είναι ανενεργός.
+        </p>
+      </div>
+    )
+    case 'masthead': return (
+      <div className="grid gap-3">
+        {line('Μικρός τίτλος από πάνω', 'eyebrow', 'CforC — Community Journal')}
+        {line('Τίτλος', 'title', 'ΣΕΠΤΕΜΒΡΙΟΣ 2026')}
+
+        {/* Χωριστοί άξονες: διάταξη (στο select του μπλοκ), χρώμα, εικόνα.
+            Παλιά ήταν ένα «style» που τα έδενε μαζί, οπότε «σκούρα με εικόνα
+            πρώτα» ήταν αδύνατο. */}
+        <Choice label="Χρώμα ζώνης" value={b.tone || 'coral'} onChange={v => onChange({ tone: v })}
+          options={[
+            { value: 'coral', label: 'Coral' }, { value: 'dark', label: 'Σκούρο' },
+            { value: 'cream', label: 'Κρεμ' }, { value: 'white', label: 'Λευκό' },
+          ]} />
+
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={b.withImage !== false}
+            onChange={e => onChange({ withImage: e.target.checked })} className="accent-coral w-4 h-4" />
+          <span>Με φωτογραφία</span>
+        </label>
+
+        {b.withImage !== false && (
+          <>
+            <Choice label="Μέγεθος φωτογραφίας" value={b.imageSize || 'medium'} onChange={v => onChange({ imageSize: v })}
+              options={[
+                { value: 'small', label: 'Μικρή' }, { value: 'medium', label: 'Μεσαία' }, { value: 'large', label: 'Μεγάλη' },
+              ]} />
+            <ImageField src={b.src || ''} alt={b.alt || ''} mediaId={b.mediaId}
+              branded={b.branded} origSrc={b.origSrc} origMediaId={b.origMediaId} onChange={onChange} />
+          </>
+        )}
+        <p className="text-xs text-gray-600 dark:text-gray-400">
+          Οι τίτλοι γράφονται κεφαλαίοι αυτόματα, χωρίς τόνους. Η φωτογραφία είναι πάντα
+          στρογγυλεμένη — ταυτότητα, όχι επιλογή.
+        </p>
+      </div>
+    )
+    case 'spacer': return null
+    case 'quote': return <div className="grid gap-2">{rich('Απόσπασμα')}{line('Ποιος το είπε', 'who', 'π.χ. Μαρία Κ., μέλος')}</div>
+    case 'stats': return <RepeatFields rows={b.items || []} onChange={v => onChange({ items: v })}
+      blank={{ value: '', label: '' }} addLabel="+ Αριθμός"
+      cols={[{ key: 'value', ph: '139', width: 'max-w-28' }, { key: 'label', ph: 'μέλη' }]} />
+    case 'agenda': return <RepeatFields rows={b.rows || []} onChange={v => onChange({ rows: v })}
+      blank={{ date: '', title: '', place: '', href: '' }} addLabel="+ Γεγονός"
+      cols={[
+        { key: 'date', ph: '12 Οκτ', width: 'max-w-32' },
+        { key: 'title', ph: 'Τίτλος' },
+        { key: 'place', ph: 'Τόπος', width: 'max-w-40' },
+        { key: 'href', ph: 'Σύνδεσμος (προαιρετικό)', width: 'max-w-56' },
+      ]} />
+    case 'social': return <RepeatFields rows={b.items || []} onChange={v => onChange({ items: v })}
+      blank={{ network: '', href: '' }} addLabel="+ Δίκτυο"
+      cols={[{ key: 'network', ph: 'Facebook', width: 'max-w-40' }, { key: 'href', ph: 'https://…' }]} />
+    case 'grid': return <GridFields items={b.items || []} onChange={onChange} />
     case 'toc': return (
       <div className="grid gap-1">
         {line('Τίτλος', 'title', tocDefault)}
@@ -1213,6 +1803,93 @@ function AmountsFields({ rows, total, onChange }: { rows: Array<{ label: string;
         <button type="button" onClick={() => onChange({ rows: [...rows, { label: '', amount: '' }] })}
           className="px-3 py-1.5 text-sm rounded-full border border-gray-300 dark:border-gray-600">+ Γραμμή</button>
         <input value={total} onChange={e => onChange({ total: e.target.value })} className={`${IN} max-w-40`} placeholder="Σύνολο" />
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Επαναλαμβανόμενες γραμμές με απλά πεδία κειμένου.
+ *
+ * Ένας μηχανισμός για Αριθμούς, Ατζέντα και Κοινωνικά δίκτυα, αντί για τρεις
+ * σχεδόν ίδιους — αλλιώς μια διόρθωση στο ένα ξεχνιέται στα άλλα δύο.
+ */
+function RepeatFields({ rows, onChange, blank, cols, addLabel }: {
+  rows: any[]
+  onChange: (rows: any[]) => void
+  blank: Record<string, string>
+  cols: Array<{ key: string; ph: string; width?: string }>
+  addLabel: string
+}) {
+  const set = (i: number, key: string, v: string) =>
+    onChange(rows.map((x, j) => (j === i ? { ...x, [key]: v } : x)))
+  return (
+    <div className="grid gap-2">
+      {rows.map((r, i) => (
+        <div key={i} className="flex flex-wrap gap-2">
+          {cols.map(c => (
+            <input key={c.key} value={r[c.key] || ''} onChange={e => set(i, c.key, e.target.value)}
+              placeholder={c.ph} translate={c.key === 'href' ? 'no' : undefined}
+              className={`${IN} ${c.width || 'flex-1 min-w-32'}`} />
+          ))}
+          <button type="button" aria-label="Αφαίρεση γραμμής"
+            onClick={() => onChange(rows.filter((_, j) => j !== i))}
+            className="px-3 rounded-lg text-red-700 dark:text-red-300">✕</button>
+        </div>
+      ))}
+      <div>
+        <button type="button" onClick={() => onChange([...rows, { ...blank }])}
+          className="px-3 py-1.5 text-sm rounded-full border border-gray-300 dark:border-gray-600">{addLabel}</button>
+      </div>
+    </div>
+  )
+}
+
+/** Σειρά από chips για μία κλειστή επιλογή — ίδια αίσθηση με τα υπόλοιπα */
+function Choice({ label, value, onChange, options }: {
+  label: string; value: string; onChange: (v: string) => void
+  options: Array<{ value: string; label: string }>
+}) {
+  return (
+    <div className="grid gap-1.5">
+      <span className="text-xs text-gray-600 dark:text-gray-400">{label}</span>
+      <div className="flex flex-wrap gap-2">
+        {options.map(o => (
+          <button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={value === o.value}
+            className={`${CHIP} ${value === o.value ? 'border-coral bg-coral/10' : 'border-gray-300 dark:border-gray-600'}`}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** Το πλέγμα: κάθε κελί έχει και εικόνα, οπότε θέλει δικό του πεδίο */
+function GridFields({ items, onChange }: { items: any[]; onChange: (p: any) => void }) {
+  const set = (i: number, patch: Record<string, any>) =>
+    onChange({ items: items.map((x, j) => (j === i ? { ...x, ...patch } : x)) })
+  return (
+    <div className="grid gap-3">
+      {items.map((it, i) => (
+        <div key={i} className="rounded-xl border border-gray-200 dark:border-gray-600 p-3 grid gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-gray-600 dark:text-gray-400">Κελί {i + 1}</span>
+            <button type="button" aria-label="Αφαίρεση κελιού"
+              onClick={() => onChange({ items: items.filter((_, j) => j !== i) })}
+              className="ml-auto px-3 rounded-lg text-red-700 dark:text-red-300">✕</button>
+          </div>
+          <input value={it.title || ''} onChange={e => set(i, { title: e.target.value })} className={IN} placeholder="Τίτλος" />
+          <CampaignRichText value={it.html || ''} onChange={v => set(i, { html: v })} placeholder="Σύντομο κείμενο" />
+          <input value={it.href || ''} onChange={e => set(i, { href: e.target.value })} className={IN} placeholder="Σύνδεσμος (προαιρετικό)" translate="no" />
+          <ImageField src={it.src || ''} alt={it.alt || ''} mediaId={it.mediaId}
+            branded={it.branded} origSrc={it.origSrc} origMediaId={it.origMediaId}
+            onChange={p => set(i, p)} />
+        </div>
+      ))}
+      <div>
+        <button type="button" onClick={() => onChange({ items: [...items, { title: '', html: '' }] })}
+          className="px-3 py-1.5 text-sm rounded-full border border-gray-300 dark:border-gray-600">+ Κελί</button>
       </div>
     </div>
   )

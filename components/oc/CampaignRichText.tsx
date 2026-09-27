@@ -6,6 +6,8 @@ import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
+import TextAlign from '@tiptap/extension-text-align'
+import { unwrapHardBreaks, cleanPastedHtml, joinBrokenLines } from '@/lib/pasteClean'
 
 /**
  * Επεξεργαστής κειμένου για τα μπλοκ της μαζικής αποστολής.
@@ -21,7 +23,7 @@ import Placeholder from '@tiptap/extension-placeholder'
  * πρότυπο, όχι στον συντάκτη.
  */
 
-const btnBase = 'p-1.5 rounded-lg text-sm transition-colors flex items-center justify-center min-w-[32px] h-8'
+const btnBase = 'px-2 py-1 rounded-lg text-sm transition-colors flex items-center justify-center min-w-[31px] h-8'
 const active = 'bg-coral text-white dark:bg-coral-light'
 const inactive = 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
 const btn = (on: boolean) => `${btnBase} ${on ? active : inactive}`
@@ -49,11 +51,26 @@ export default function CampaignRichText({ value, onChange, placeholder }: {
         strike: false,
       }),
       Underline,
+      // Στοίχιση σε παραγράφους και επικεφαλίδες. Ο καθαριστής κρατά ΜΟΝΟ το
+      // text-align από το style — τίποτε άλλο δεν περνά στο γράμμα.
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Link.configure({ openOnClick: false, autolink: false }),
       Placeholder.configure({ placeholder: placeholder || 'Γράψε εδώ…' }),
     ],
     content: value || '',
     editorProps: {
+      /**
+       * Η επικόλληση καθαρίζεται ΠΡΙΝ μπει στον επεξεργαστή.
+       *
+       * PDF και Word τυλίγουν το κείμενο στο πλάτος ΤΗΣ ΔΙΚΗΣ ΤΟΥΣ σελίδας,
+       * με σκληρές αλλαγές γραμμής. Χωρίς αυτό, η πρόταση έσπαγε σε παράλογα
+       * σημεία και ο συντάκτης το διόρθωνε γραμμή γραμμή.
+       *
+       * Ο καθαρισμός γίνεται εδώ και όχι στην αποστολή, ώστε ο συντάκτης να
+       * βλέπει από την αρχή ΑΚΡΙΒΩΣ ό,τι θα φύγει.
+       */
+      transformPastedText: (text: string) => unwrapHardBreaks(text),
+      transformPastedHTML: (html: string) => cleanPastedHtml(html),
       attributes: {
         // Κανένα δικό μας styling εδώ: το .rich-text-editor .tiptap του
         // globals.css στολίζει ήδη λίστες, επικεφαλίδες και συνδέσμους, και
@@ -129,6 +146,35 @@ export default function CampaignRichText({ value, onChange, placeholder }: {
           className={btn(editor.isActive('bulletList'))} title="Λίστα με κουκκίδες">•—</button>
         <button type="button" onClick={() => editor.chain().focus().toggleOrderedList().run()}
           className={btn(editor.isActive('orderedList'))} title="Αριθμημένη λίστα">1.</button>
+
+        <div className="w-px h-5 bg-gray-300 dark:bg-gray-500 mx-1" />
+
+        {/* Στοίχιση. Το «πλήρης» (justify) υπάρχει γιατί το ζητούν τα
+            ενημερωτικά δελτία — αλλά σε στενή οθόνη ανοίγει μεγάλα κενά,
+            οπότε δεν είναι η προεπιλογή. */}
+        {([
+          ['left', '⇤', 'Αριστερά'],
+          ['center', '≡', 'Κέντρο'],
+          ['right', '⇥', 'Δεξιά'],
+          ['justify', '☰', 'Πλήρης στοίχιση'],
+        ] as const).map(([a, glyph, label]) => (
+          <button key={a} type="button" title={label}
+            onClick={() => editor.chain().focus().setTextAlign(a).run()}
+            className={btn(editor.isActive({ textAlign: a }))}>{glyph}</button>
+        ))}
+
+        <div className="w-px h-5 bg-gray-300 dark:bg-gray-500 mx-1" />
+
+        {/* Χειροκίνητη ένωση: το transformPastedText πιάνει μόνο την καθαρά
+            κειμενική επικόλληση. Από PDF ή ιστοσελίδα το πρόχειρο κουβαλά ΚΑΙ
+            HTML, οπότε οι σκληρές αλλαγές έρχονται ως <br> ή χωριστές <p> και
+            πρέπει να ενωθούν εκ των υστέρων. */}
+        <button type="button" title="Ένωση σπασμένων γραμμών — για κείμενο επικολλημένο από PDF ή Word"
+          onClick={() => {
+            const tidy = joinBrokenLines(editor.getHTML())
+            editor.commands.setContent(tidy, { emitUpdate: true })
+          }}
+          className={btn(false)}>⏎⇥</button>
 
         <div className="w-px h-5 bg-gray-300 dark:bg-gray-500 mx-1" />
 
