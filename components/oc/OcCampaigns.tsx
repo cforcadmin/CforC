@@ -790,7 +790,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
                 <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/25 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
                   <strong className="tabular-nums">{emailCost}</strong> email · φεύγουν{' '}
                   <strong className="tabular-nums">{meta.dailyBudget}</strong> τώρα και τα υπόλοιπα σε{' '}
-                  {days - 1} {days - 1 === 1 ? 'ημέρα' : 'ημέρες'} — η ουρά ελέγχεται κάθε ώρα
+                  {days - 1} {days - 1 === 1 ? 'ημέρα' : 'ημέρες'}, στις 08:15 κάθε πρωί
                 </div>
               </div>
             )}
@@ -906,7 +906,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
             confirmLabel: 'Προγραμματισμός',
             body: `Θα μπει στην ουρά τώρα και θα αρχίσει να φεύγει μετά τις `
               + `${new Date(scheduleAt).toLocaleString('el-GR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}. `
-              + 'Η ουρά ελέγχεται κάθε ώρα, οπότε η αποστολή ξεκινά στην πρώτη ώρα μετά από αυτή τη στιγμή.',
+              + 'Η ουρά ελέγχεται μία φορά την ημέρα, στις 08:15, οπότε η αποστολή ξεκινά το πρώτο πρωί μετά από αυτή τη στιγμή.',
           })}
           onCancel={() => setConfirming(false)} onConfirm={() => send('queue')}
         />
