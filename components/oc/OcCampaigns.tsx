@@ -1158,21 +1158,29 @@ function PositionRail({ count, cursor, here, onGo }: {
    * της, στραγγαλίζοντας τη στήλη των στοιχείων σε μια λωρίδα. Το αρνητικό
    * περιθώριο ακυρώνει το ένα από τα δύο κενά που αφήνει ένα μηδενικό κελί.
    */
-  if (count < 5) return <div aria-hidden="true" className="hidden lg:block w-0 lg:-mx-3" />
+  /**
+   * Από ΔΥΟ κομμάτια και πάνω.
+   *
+   * Το όριο ήταν πέντε, με το τεύχος στο μυαλό. Ένα απλό μήνυμα σπάνια έχει
+   * τόσα, οπότε η ράγα δεν εμφανιζόταν ποτέ εκεί — ενώ και με τρία κομμάτια
+   * το «πήγαινε στο τέλος» γλιτώνει κύλιση. Με ένα μόνο κομμάτι ο
+   * ολισθητήρας δεν έχει πού να πάει (min === max) και θα ήταν νεκρό κουμπί.
+   */
+  if (count < 2) return <div aria-hidden="true" className="hidden lg:block w-0 lg:-mx-3" />
   const at = Math.min(Math.max(cursor, 0), count - 1)
   const step = (
     <span className="text-[10px] tabular-nums text-gray-500 dark:text-gray-400">{at + 1}/{count}</span>
   )
   return (
     <div className="hidden lg:flex sticky top-24 flex-col items-center gap-2 py-3 px-1 rounded-full border border-gray-200 dark:border-gray-600 bg-white/90 dark:bg-gray-800/90 backdrop-blur">
-      <button type="button" onClick={() => onGo(0)} title="Στην αρχή του τεύχους" aria-label="Στην αρχή του τεύχους"
+      <button type="button" onClick={() => onGo(0)} title="Στην αρχή του γράμματος" aria-label="Στην αρχή του γράμματος"
         className="w-7 h-7 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">⤒</button>
       <input type="range" min={0} max={count - 1} value={at}
         onChange={e => onGo(Number(e.target.value))}
-        aria-label="Θέση στο τεύχος"
+        aria-label="Θέση στο γράμμα"
         title={here ? `${at + 1}/${count} · ${here}` : `${at + 1}/${count}`}
         className="oc-vrange accent-coral cursor-pointer" />
-      <button type="button" onClick={() => onGo(count - 1)} title="Στο τέλος του τεύχους" aria-label="Στο τέλος του τεύχους"
+      <button type="button" onClick={() => onGo(count - 1)} title="Στο τέλος του γράμματος" aria-label="Στο τέλος του γράμματος"
         className="w-7 h-7 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">⤓</button>
       {step}
     </div>
