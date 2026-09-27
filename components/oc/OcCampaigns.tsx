@@ -803,8 +803,12 @@ export default function OcCampaigns({ desk }: { desk: string }) {
         </section>
       )}
 
+      {/* Η γραμμή αποστολής αιωρείται λίγο πάνω από την άκρη, με στρογγυλές
+          γωνίες όπως κάθε άλλη επιφάνεια της ταυτότητας — όχι κολλημένη
+          λωρίδα από άκρη σε άκρη. rounded-2xl και όχι rounded-full: σε στενή
+          οθόνη τα κουμπιά τυλίγονται σε δεύτερη σειρά και ένα χάπι θα έσπαγε. */}
       {tab === 'compose' && (
-        <div className="flex flex-wrap items-center gap-3 sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 -mx-4 px-4 py-3 sm:-mx-8 sm:px-8">
+        <div className="flex flex-wrap items-center gap-3 sticky bottom-3 z-30 mt-2 rounded-2xl border border-gray-200 dark:border-gray-600 bg-white/95 dark:bg-gray-800/95 backdrop-blur px-4 py-3 shadow-lg">
           <span className="text-sm text-gray-600 dark:text-gray-400">
             {kind === 'newsletter'
               ? (audiences.length ? `${audiences.length === 2 ? 'Μέλη και Κοινό' : audiences[0] === 'paid' ? 'Μέλη' : 'Κοινό'}` : 'Καμία λίστα')
