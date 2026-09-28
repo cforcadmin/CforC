@@ -112,16 +112,18 @@ function useIsNarrow(): boolean {
 
 // Preferences persist via /api/oc/prefs (httpOnly cookies) — client web
 // storage is unreliable under content blockers, so it is not used at all.
-async function persistPrefs(prefs: { landing?: string; seat?: string; heroCompact?: boolean }) {
+async function persistPrefs(prefs: { landing?: string; seat?: string; heroCompact?: boolean }): Promise<boolean> {
   try {
-    await fetch('/api/oc/prefs', {
+    const res = await fetch('/api/oc/prefs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(prefs),
       keepalive: true,
     })
+    return res.ok
   } catch {
-    // Non-fatal: worst case the preference is asked again next time
+    // Για landing/heroCompact είναι αθώο· για την ΕΔΡΑ όχι — βλ. applySeat
+    return false
   }
 }
 
@@ -138,6 +140,8 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
   )
   // Direct entry without a stored seat and several seats held — ask in place
   const [showSeatModal, setShowSeatModal] = useState(!initialSeat && seats.length > 1)
+  /** Η αλλαγή έδρας δεν έφτασε στον server — το λέμε αντί να το κρύψουμε */
+  const [seatError, setSeatError] = useState<string | null>(null)
   // Καθολική επαναφορά διάταξης (Ρυθμίσεις): null → 'ask' → 'busy' → 'done'
   const [layoutReset, setLayoutReset] = useState<null | 'ask' | 'busy' | 'done'>(null)
   // Οι ενότητες που βλέπει η τρέχουσα θέση (η «Διορθώσεις / Προτάσεις» μόνο το IT)
@@ -213,9 +217,25 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function applySeat(seat: string) {
+  /**
+   * Αλλαγή ενεργής έδρας.
+   *
+   * Το cookie γράφεται ΠΡΩΤΑ και το περιμένουμε. Η έδρα δεν είναι διακοσμητική:
+   * ο server τη διαβάζει από το httpOnly cookie για να βρει τη θυρίδα και το
+   * γραφείο. Όσο το γράψιμο ταξίδευε ασύγχρονα, η οθόνη προλάβαινε να πει «IT»
+   * ενώ ο server απαντούσε ακόμη ως Ταμίας — και ο συντάκτης έβλεπε τα
+   * προσχέδια ΑΛΛΟΥ γραφείου, χωρίς τίποτα να δείχνει γιατί.
+   *
+   * Αν το γράψιμο αποτύχει, η οθόνη ΔΕΝ αλλάζει: μια ψεύτικη έδρα είναι
+   * χειρότερη από μια έδρα που δεν άλλαξε.
+   */
+  async function applySeat(seat: string) {
+    if (!(await persistPrefs({ seat }))) {
+      setSeatError('Η αλλαγή έδρας δεν αποθηκεύτηκε. Δοκίμασε ξανά.')
+      return
+    }
+    setSeatError(null)
     setActiveSeat(seat)
-    persistPrefs({ seat })
     // Each seat lands on its most relevant section
     if (seat === 'financer') setActiveSection('finances')
   }
@@ -443,8 +463,12 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
           </div>
         </div>
 
-        {/* Section content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* Section content
+            key στην ΕΔΡΑ: κάθε ενότητα φέρνει δεδομένα δεμένα με την έδρα
+            (θυρίδα, γραφείο, δικαιώματα). Χωρίς αυτό, η αλλαγή έδρας άλλαζε
+            μόνο το σήμα πάνω αριστερά και οι οθόνες κρατούσαν ό,τι είχαν
+            φέρει με την ΠΡΟΗΓΟΥΜΕΝΗ έδρα. */}
+        <div key={activeSeat || 'no-seat'} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           {activeSection === 'overview' && (
             overview ? (
               <OcOverview
@@ -709,6 +733,15 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
       </main>
 
       {/* TEMPORARY: in-shell seat chooser (direct URL entry or seat switch) */}
+      {seatError && (
+        <div role="alert"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-[90vw] rounded-2xl border border-red-300 dark:border-red-700 bg-white dark:bg-gray-800 px-4 py-3 shadow-lg text-sm text-red-700 dark:text-red-300">
+          {seatError}
+          <button type="button" onClick={() => setSeatError(null)}
+            className="ml-3 underline">Κλείσιμο</button>
+        </div>
+      )}
+
       {showSeatModal && (
         <OcSeatChoiceModal
           seats={seats}

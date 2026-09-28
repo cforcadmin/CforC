@@ -23,6 +23,10 @@ describe('Συμπαγές OC στο κινητό', () => {
     // Επιτρέπονται μόνο: η δήλωση, ο setter, το persistPrefs και ο ορισμός
     const offenders = src.split('\n')
       .map((line, i) => [i + 1, line] as const)
+      // Τα ΣΧΟΛΙΑ δεν είναι συνθήκες διάταξης. Ένα σχόλιο που απλώς ΑΝΑΦΕΡΕΙ
+      // το heroCompact έριχνε τον έλεγχο — ψεύτικος συναγερμός, τρίτος της
+      // ίδιας οικογένειας μέσα σε μία μέρα.
+      .filter(([, l]) => !/^\s*(\/\/|\*|\/\*)/.test(l))
       .filter(([, l]) => l.includes('heroCompact'))
       .filter(([, l]) => !/useState\(initialHeroCompact\)|persistPrefs\(\{ heroCompact|setHeroCompactState|heroCompact\?: boolean|const compact = heroCompact/.test(l))
     expect(offenders).toEqual([])
