@@ -1188,6 +1188,34 @@ export const PRESETS: Preset[] = [
   },
 ]
 
+/**
+ * Τα έτοιμα σχέδια του NEWSLETTER — άλλα από του μηνύματος.
+ *
+ * Τα τέσσερα παραπάνω (Ανακοίνωση, Πρόσκληση, Ενημερωτικό δελτίο, Υπενθύμιση)
+ * αφορούν ΜΟΝΟ την αποστολή email· σε newsletter δεν έχουν νόημα.
+ *
+ * Το «Εσωτερικό NL» είναι ΣΤΙΓΜΙΟΤΥΠΟ του προσχεδίου «CforC Community
+ * Journal» όπως ήταν στις 29/9/2026 — 101 μπλοκ. Σκόπιμα αντιγραφή και όχι
+ * ζωντανή αναφορά: ένα έτοιμο σχέδιο που αλλάζει από κάτω σου επειδή κάποιος
+ * πείραξε ένα προσχέδιο είναι παγίδα, όχι διευκόλυνση.
+ */
+import INTERNAL_NL_BLOCKS from '@/lib/presets/internalNewsletter.json'
+
+export const NEWSLETTER_PRESETS: Preset[] = [
+  {
+    id: 'internal-nl',
+    label: 'Εσωτερικό NL',
+    hint: 'Το CforC Community Journal — πλήρης δομή με ενότητες, κάρτες και ημερολόγιο',
+    blocks: INTERNAL_NL_BLOCKS as unknown as Block[],
+  },
+  {
+    id: 'external-nl',
+    label: 'Εξωτερικό NL',
+    hint: 'Το περιεχόμενο δεν έχει οριστεί ακόμη — ξεκινά από λευκή σελίδα',
+    blocks: [],
+  },
+]
+
 /** Πεδία που αντικαθίστανται ανά παραλήπτη — από μενού, όχι πληκτρολογημένα */
 export const MERGE_FIELDS = [
   { token: '{{όνομα}}', label: 'Μικρό όνομα', sample: 'Μαρία' },

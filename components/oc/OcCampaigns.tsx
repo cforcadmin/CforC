@@ -54,6 +54,8 @@ type Meta = {
   blockLabels: Record<string, string>
   blockVariants: Record<string, { key: string; options: Array<{ value: string; label: string }> }>
   presets: Array<{ id: string; label: string; hint: string; blocks: Block[] }>
+  /** Άλλα σχέδια για newsletter — τα παραπάνω αφορούν μόνο email */
+  newsletterPresets?: Array<{ id: string; label: string; hint: string; blocks: Block[] }>
   mergeFields: Array<{ token: string; label: string; sample: string }>
   dailyBudget: number
   tocDefaultTitle?: string
@@ -171,6 +173,15 @@ export default function OcCampaigns({ desk }: { desk: string }) {
    *  κάθε κλικ, ώστε δύο κλικ στο ίδιο μπλοκ να ξαναστείλουν την εντολή. */
   const [goTo, setGoTo] = useState<{ i: number; n: number } | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
+  /**
+   * Παράθυρο ονόματος. Δύο χρήσεις, ίδιο κουτί:
+   *   'first-save' → η ΠΡΩΤΗ αποθήκευση νέου προσχεδίου
+   *   'duplicate'  → δημιουργία αντιγράφου με νέο όνομα
+   *
+   * Δεν χρησιμοποιείται window.prompt: μπλοκάρει το παράθυρο, δεν στυλίζεται
+   * και σε κάποιους browsers απενεργοποιείται μόνιμα από τον χρήστη.
+   */
+  const [naming, setNaming] = useState<null | { mode: 'first-save' | 'duplicate'; value: string }>(null)
   const [editingSubject, setEditingSubject] = useState('')
   const [confirming, setConfirming] = useState(false)
   const [finalTestAsk, setFinalTestAsk] = useState(false)
@@ -314,19 +325,24 @@ export default function OcCampaigns({ desk }: { desk: string }) {
   const emailCost = resolved.count * (1 + cc.length)
   const days = meta ? Math.max(1, Math.ceil(emailCost / meta.dailyBudget)) : 1
 
-  const send = async (action: 'save' | 'queue') => {
+  /**
+   * @param opts.asName  αποθήκευση με ΑΥΤΟ το όνομα αντί του τρέχοντος θέματος
+   * @param opts.asNew   αγνοεί το editingId ώστε να γεννηθεί ΝΕΑ εγγραφή
+   */
+  const send = async (action: 'save' | 'queue', opts: { asName?: string; asNew?: boolean } = {}) => {
     setBusy(true); setNotice(null)
+    const outSubject = opts.asName ?? subject
     try {
       const res = await fetch('/api/oc/campaigns', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, desk, kind, audiences, id: editingId || undefined, subject, blocks, selection, cc, footerStyle, footerLook, footerLogo, headerStyle, headerLogo, footer, scheduleAtIso }),
+        body: JSON.stringify({ action, desk, kind, audiences, id: opts.asNew ? undefined : (editingId || undefined), subject: outSubject, blocks, selection, cc, footerStyle, footerLook, footerLogo, headerStyle, headerLogo, footer, scheduleAtIso }),
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
       setNotice({
         kind: 'ok',
         text: action !== 'queue'
-          ? 'Το προσχέδιο αποθηκεύτηκε.'
+          ? (opts.asNew ? 'Το διπλότυπο δημιουργήθηκε.' : 'Το προσχέδιο αποθηκεύτηκε.')
           : d.remaining === 0
             ? `Στάλθηκε σε ${d.sentNow} ${d.sentNow === 1 ? 'παραλήπτη' : 'παραλήπτες'}.`
             : d.sentNow > 0
@@ -335,7 +351,12 @@ export default function OcCampaigns({ desk }: { desk: string }) {
       })
       setConfirming(false)
       // Κρατάμε το id ώστε η επόμενη αποθήκευση να ΕΝΗΜΕΡΩΣΕΙ, όχι να διπλασιάσει
-      if (action === 'save' && d.id) { setEditingId(d.id); setEditingSubject(subject) }
+      if (action === 'save' && d.id) {
+        setEditingId(d.id)
+        setEditingSubject(outSubject)
+        // Το όνομα που δόθηκε στο παράθυρο γίνεται το θέμα της καμπάνιας
+        if (opts.asName) setSubject(opts.asName)
+      }
       if (action === 'queue') { setTab('queue'); newMessage() }
       await load()
     } catch (e: any) {
@@ -615,6 +636,45 @@ export default function OcCampaigns({ desk }: { desk: string }) {
         </div>
       )}
 
+      {naming && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+          onClick={() => setNaming(null)}>
+          <div className="menu-glass rounded-3xl max-w-md w-full p-6 sm:p-8" onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-1">
+              {naming.mode === 'duplicate' ? 'Όνομα για το διπλότυπο' : 'Με τι όνομα να αποθηκευτεί;'}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              {naming.mode === 'duplicate'
+                ? 'Δημιουργείται νέο προσχέδιο με το ίδιο περιεχόμενο. Το τρέχον μένει όπως είναι.'
+                : 'Το όνομα γίνεται και το θέμα του μηνύματος — με αυτό θα το βρίσκεις στα Προσχέδια.'}
+            </p>
+            <form onSubmit={e => {
+              e.preventDefault()
+              const value = naming.value.trim()
+              if (!value) return
+              const mode = naming.mode
+              setNaming(null)
+              send('save', { asName: value, asNew: mode === 'duplicate' })
+            }}>
+              <input autoFocus value={naming.value}
+                onChange={e => setNaming(n => (n ? { ...n, value: e.target.value } : n))}
+                placeholder="π.χ. Ενημερωτικό Οκτωβρίου"
+                className="w-full rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-3 text-sm mb-4" />
+              <div className="flex flex-wrap gap-2 justify-end">
+                <button type="button" onClick={() => setNaming(null)}
+                  className="px-4 min-h-11 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-semibold">
+                  Άκυρο
+                </button>
+                <button type="submit" disabled={!naming.value.trim()}
+                  className="px-5 min-h-11 rounded-full bg-coral text-white text-sm font-bold disabled:opacity-50">
+                  {naming.mode === 'duplicate' ? 'Δημιουργία' : 'Αποθήκευση'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {editingId && tab === 'compose' && (
         <div className="rounded-2xl px-4 py-3 text-sm flex flex-wrap items-center gap-2 bg-amber-50 text-amber-900 dark:bg-amber-900/30 dark:text-amber-100">
           <span>
@@ -725,7 +785,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
             </div>
 
             {meta && (
-              <BlockEditor blocks={blocks} setBlocks={setBlocks} meta={meta}
+              <BlockEditor blocks={blocks} setBlocks={setBlocks} meta={meta} kind={kind}
                 onReveal={i => setGoTo(g => ({ i, n: (g?.n ?? 0) + 1 }))} />
             )}
 
@@ -841,9 +901,21 @@ export default function OcCampaigns({ desk }: { desk: string }) {
             </label>
           )}
           <div className="ml-auto flex flex-wrap gap-2">
-            <button type="button" onClick={() => send('save')} disabled={busy}
+            <button type="button" disabled={busy}
+              onClick={() => {
+                // Πρώτη αποθήκευση νέου προσχεδίου → ζητάμε όνομα. Μετά, σκέτη
+                // αποθήκευση: κανείς δεν θέλει να ονοματίζει στο κάθε Ctrl+S.
+                if (!editingId) setNaming({ mode: 'first-save', value: subject.trim() })
+                else send('save')
+              }}
               className="px-4 min-h-11 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-semibold disabled:opacity-50">
               Αποθήκευση προσχεδίου
+            </button>
+            <button type="button" disabled={busy || (blocks.length === 0 && !subject.trim())}
+              onClick={() => setNaming({ mode: 'duplicate', value: `${subject.trim() || 'Χωρίς θέμα'} — αντίγραφο` })}
+              title="Δημιουργεί ΝΕΟ προσχέδιο με το ίδιο περιεχόμενο. Το τρέχον μένει όπως είναι."
+              className="px-4 min-h-11 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-semibold disabled:opacity-50">
+              Διπλότυπο
             </button>
             {kind === 'newsletter' && (
               <>
@@ -1256,8 +1328,10 @@ function NewsletterFooterFields({ options, value, onChange }: {
   )
 }
 
-function BlockEditor({ blocks, setBlocks, meta, onReveal }: {
+function BlockEditor({ blocks, setBlocks, meta, kind, onReveal }: {
   blocks: Block[]; setBlocks: (b: Block[]) => void; meta: Meta
+  /** Τα έτοιμα σχέδια διαφέρουν: του μηνύματος δεν ταιριάζουν σε newsletter */
+  kind: 'message' | 'newsletter'
   /** Ζητά από την προεπισκόπηση να δείξει αυτό το μπλοκ */
   onReveal?: (i: number) => void
 }) {
@@ -1555,7 +1629,7 @@ function BlockEditor({ blocks, setBlocks, meta, onReveal }: {
         <div className="grid gap-2 mb-4">
           <span className="text-sm font-semibold">Ξεκίνα από ένα έτοιμο σχέδιο</span>
           <div className="flex flex-wrap gap-2">
-            {meta.presets.map(p => (
+            {(kind === 'newsletter' ? (meta.newsletterPresets || []) : meta.presets).map(p => (
               <button key={p.id} type="button" onClick={() => setBlocks(structuredClone(p.blocks))}
                 title={p.hint}
                 className={`${CHIP} border-gray-300 dark:border-gray-600 hover:border-coral`}>{p.label}</button>

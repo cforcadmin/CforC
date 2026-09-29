@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, SEAT_LABELS, SEAT_MAILBOX, type OcSeat } from '@/lib/ocRoles'
-import { campaignEmailHtml, PRESETS, TOC_DEFAULT_TITLE, visibleBlocks, BLOCK_LABELS, BLOCK_VARIANTS, MERGE_FIELDS, FOOTER_STYLES, FOOTER_LOOKS, HEADER_STYLES, NEWSLETTER_FOOTERS, NEWSLETTER_FOOTER_DEFAULTS, normaliseNewsletterFooter, applyMergeFields, type Block, type FooterStyle, type FooterLook, type HeaderStyle, type CampaignSigner } from '@/lib/campaignBlocks'
+import { campaignEmailHtml, PRESETS, NEWSLETTER_PRESETS, TOC_DEFAULT_TITLE, visibleBlocks, BLOCK_LABELS, BLOCK_VARIANTS, MERGE_FIELDS, FOOTER_STYLES, FOOTER_LOOKS, HEADER_STYLES, NEWSLETTER_FOOTERS, NEWSLETTER_FOOTER_DEFAULTS, normaliseNewsletterFooter, applyMergeFields, type Block, type FooterStyle, type FooterLook, type HeaderStyle, type CampaignSigner } from '@/lib/campaignBlocks'
 import { drainCampaigns } from '@/lib/campaignDrain'
 import {
   resolveRecipients, toQueue, validateCampaign, daysNeeded, recipientSummary,
@@ -385,6 +385,9 @@ export async function GET(request: NextRequest) {
       blockLabels: BLOCK_LABELS,
       blockVariants: BLOCK_VARIANTS,
       presets: PRESETS.map(p => ({ id: p.id, label: p.label, hint: p.hint, blocks: p.blocks })),
+      // Τα έτοιμα σχέδια του newsletter είναι ΑΛΛΑ: τα τέσσερα παραπάνω
+      // αφορούν μόνο την αποστολή email.
+      newsletterPresets: NEWSLETTER_PRESETS.map(p => ({ id: p.id, label: p.label, hint: p.hint, blocks: p.blocks })),
       mergeFields: MERGE_FIELDS,
       newsletterFooters: NEWSLETTER_FOOTERS,
       newsletterFooterDefaults: NEWSLETTER_FOOTER_DEFAULTS,
