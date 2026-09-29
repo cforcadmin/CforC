@@ -32,8 +32,22 @@ describe('Έτοιμα σχέδια ανά είδος', () => {
     }
   })
 
-  it('το Εξωτερικό NL είναι ακόμη κενό — μπαίνει όταν δοθεί το περιεχόμενο', () => {
-    expect(NEWSLETTER_PRESETS.find(p => p.id === 'external-nl')!.blocks).toEqual([])
+  /** Στιγμιότυπο του «CforC Newsletter #8», 30/9/2026 */
+  it('το Εξωτερικό NL κουβαλά τη δομή του Newsletter #8', () => {
+    const ext = NEWSLETTER_PRESETS.find(p => p.id === 'external-nl')!
+    expect(ext.blocks.length).toBeGreaterThan(35)
+    const types = new Set(ext.blocks.map(b => b.type))
+    for (const t of ['masthead', 'toc', 'section', 'card']) expect(types.has(t as any)).toBe(true)
+  })
+
+  it('τα δύο NL είναι ΔΙΑΦΟΡΕΤΙΚΑ — το εξωτερικό είναι συντομότερο', () => {
+    const internal = NEWSLETTER_PRESETS.find(p => p.id === 'internal-nl')!
+    const ext = NEWSLETTER_PRESETS.find(p => p.id === 'external-nl')!
+    expect(ext.blocks.length).toBeLessThan(internal.blocks.length)
+  })
+
+  it('κανένα έτοιμο σχέδιο δεν είναι κενό — ένα chip που δίνει λευκή σελίδα δεν χρησιμεύει', () => {
+    for (const p of NEWSLETTER_PRESETS) expect(p.blocks.length).toBeGreaterThan(0)
   })
 
   it('κάθε σχέδιο έχει ετικέτα και βοήθεια — το chip χωρίς εξήγηση δεν λέει τίποτα', () => {

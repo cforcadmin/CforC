@@ -1194,12 +1194,16 @@ export const PRESETS: Preset[] = [
  * Τα τέσσερα παραπάνω (Ανακοίνωση, Πρόσκληση, Ενημερωτικό δελτίο, Υπενθύμιση)
  * αφορούν ΜΟΝΟ την αποστολή email· σε newsletter δεν έχουν νόημα.
  *
- * Το «Εσωτερικό NL» είναι ΣΤΙΓΜΙΟΤΥΠΟ του προσχεδίου «CforC Community
- * Journal» όπως ήταν στις 29/9/2026 — 101 μπλοκ. Σκόπιμα αντιγραφή και όχι
- * ζωντανή αναφορά: ένα έτοιμο σχέδιο που αλλάζει από κάτω σου επειδή κάποιος
- * πείραξε ένα προσχέδιο είναι παγίδα, όχι διευκόλυνση.
+ * Και τα δύο είναι ΣΤΙΓΜΙΟΤΥΠΑ υπαρκτών καμπανιών:
+ *   · Εσωτερικό NL → «CforC Community Journal», 101 μπλοκ (29/9/2026)
+ *   · Εξωτερικό NL → «CforC Newsletter #8», 41 μπλοκ (30/9/2026)
+ *
+ * Σκόπιμα αντιγραφή και όχι ζωντανή αναφορά: ένα έτοιμο σχέδιο που αλλάζει
+ * από κάτω σου επειδή κάποιος πείραξε ένα προσχέδιο είναι παγίδα, όχι
+ * διευκόλυνση. Όταν αλλάξει το πρότυπο, ξανατρέχει η αντιγραφή συνειδητά.
  */
 import INTERNAL_NL_BLOCKS from '@/lib/presets/internalNewsletter.json'
+import EXTERNAL_NL_BLOCKS from '@/lib/presets/externalNewsletter.json'
 
 export const NEWSLETTER_PRESETS: Preset[] = [
   {
@@ -1211,8 +1215,8 @@ export const NEWSLETTER_PRESETS: Preset[] = [
   {
     id: 'external-nl',
     label: 'Εξωτερικό NL',
-    hint: 'Το περιεχόμενο δεν έχει οριστεί ακόμη — ξεκινά από λευκή σελίδα',
-    blocks: [],
+    hint: 'Το CforC Newsletter #8 — πιο σύντομη δομή, για το κοινό εκτός δικτύου',
+    blocks: EXTERNAL_NL_BLOCKS as unknown as Block[],
   },
 ]
 
