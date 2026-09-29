@@ -71,24 +71,37 @@ export interface Annotation {
  * Όσα συμπληρώνονται εδώ είναι ΕΠΑΛΗΘΕΥΜΕΝΑ από τον κώδικα (διάρκειες token,
  * αυτόματες διαγραφές). Τα υπόλοιπα είναι πολιτική και ανήκουν στην ΟΣ.
  */
+/**
+ * Οι αποφάσεις της Ομάδας Συντονισμού, 29/9/2026.
+ *
+ *   · Μητρώο μέλους: 10 έτη ΑΠΟ ΤΗΝ ΑΠΟΧΩΡΗΣΗ.
+ *   · Εσωτερικά αρχεία της ΟΣ: 10 έτη.
+ *   · Φορολογικά: 10 έτη — νόμιμο κατώτατο όριο, δεν είναι επιλογή.
+ *   · Αίτηση χωρίς πληρωμή σε 30 ημέρες: διαγραφή προσωπικών δεδομένων,
+ *     με μη-προσωπική απόδειξη της διαδικασίας να παραμένει.
+ */
+const TEN_YEARS = '10 έτη (απόφαση ΟΣ, 29/9/2026)'
+const TEN_YEARS_TAX = '10 έτη — νόμιμο όριο για τα φορολογικά, δεν είναι επιλογή της ΟΣ'
+const FOREVER = 'Διατηρούνται επ\' αόριστον (απόφαση ΟΣ, 29/9/2026)'
+
 export const ANNOTATIONS: Record<string, Annotation> = {
   member: {
     purpose: 'Μητρώο μελών: συνδρομές, επικοινωνία, δημόσιο προφίλ στον κατάλογο',
-    retention: null,
+    retention: '10 έτη από την ΑΠΟΧΩΡΗΣΗ του μέλους (απόφαση ΟΣ, 29/9/2026)',
     legalBasis: 'Σύμβαση (καταστατικό) — άρθρο 6(1)(β)',
     processors: ['strapi', 'vercel', 'resend', 'sender', 'sheets'],
     note: 'Η πιο ευαίσθητη συλλογή: IBAN, ΑΦΜ, πατρώνυμο, κωδικός. Το `password` είναι hash (bcrypt), το `magicLinkToken` SHA256.',
   },
   'membership-application': {
     purpose: 'Αξιολόγηση αίτησης εγγραφής',
-    retention: 'Διαγράφεται αυτόματα όταν η αίτηση λήξει χωρίς πληρωμή (cron payment-reminders), μαζί με τη φωτογραφία',
+    retention: '30 ημέρες από την έγκριση της ΟΣ. Χωρίς πληρωμή, τα προσωπικά δεδομένα και η φωτογραφία διαγράφονται (cron payment-reminders) και μένει μόνο μη-προσωπική απόδειξη της διαδικασίας. Ο ίδιος κανόνας και για τις απορριφθείσες με ψήφο.',
     legalBasis: 'Προσυμβατικά μέτρα — άρθρο 6(1)(β)',
     processors: ['strapi', 'vercel', 'resend'],
     note: 'Αν αποτύχει η διαγραφή της φωτογραφίας από τη Βιβλιοθήκη Πολυμέσων, ο κώδικας το αναφέρει για χειροκίνητη διαγραφή.',
   },
   'expense-claim': {
     purpose: 'Αποζημίωση εξόδων μελών και συνεργατών',
-    retention: null,
+    retention: TEN_YEARS_TAX,
     legalBasis: 'Έννομη υποχρέωση (φορολογική) — άρθρο 6(1)(γ)',
     processors: ['strapi', 'vercel', 'resend', 'drive', 'sheets'],
     notPersonal: ['EventName'],   // όνομα εκδήλωσης, όχι προσώπου
@@ -96,13 +109,13 @@ export const ANNOTATIONS: Record<string, Annotation> = {
   },
   'oc-contract': {
     purpose: 'Μητρώο συμβάσεων με συνεργάτες',
-    retention: null,
+    retention: TEN_YEARS_TAX,
     legalBasis: 'Σύμβαση — άρθρο 6(1)(β)',
     processors: ['strapi', 'vercel', 'sheets'],
   },
   receipt: {
     purpose: 'Αποδείξεις συνδρομών και εσόδων',
-    retention: null,
+    retention: TEN_YEARS_TAX,
     legalBasis: 'Έννομη υποχρέωση (φορολογική) — άρθρο 6(1)(γ)',
     processors: ['strapi', 'vercel', 'drive'],
   },
@@ -116,51 +129,51 @@ export const ANNOTATIONS: Record<string, Annotation> = {
   },
   'newsletter-subscriber': {
     purpose: 'Αποστολή newsletter',
-    retention: null,
+    retention: `Στην ανάκληση η εγγραφή ΑΠΕΝΕΡΓΟΠΟΙΕΙΤΑΙ, δεν διαγράφεται — η ίδια η ανάκληση πρέπει να μπορεί να αποδειχθεί. Κατά τα άλλα ${TEN_YEARS}.`,
     legalBasis: 'Συγκατάθεση (double opt-in) — άρθρο 6(1)(α)',
     processors: ['strapi', 'vercel', 'sender'],
   },
   'profile-change-log': {
     purpose: 'Μηνιαία αναφορά αλλαγών προφίλ προς την ΟΣ',
-    retention: null,
+    retention: TEN_YEARS,
     legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)',
     processors: ['strapi', 'vercel', 'resend'],
   },
   'exit-survey': {
     purpose: 'Λόγοι αποχώρησης μέλους',
-    retention: null,
+    retention: FOREVER,
     legalBasis: 'Συγκατάθεση — άρθρο 6(1)(α)',
     processors: ['strapi', 'vercel'],
   },
   'event-attendance': {
-    purpose: 'Παρουσίες σε εκδηλώσεις',
-    retention: null,
-    legalBasis: null,
+    purpose: 'Παρουσίες σε εκδηλώσεις — στατιστικά και αντίκρουση παραπόνων',
+    retention: TEN_YEARS,
+    legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)',
     processors: ['strapi', 'vercel', 'calendar'],
   },
   'library-item': {
     purpose: 'Ανοιχτή βιβλιοθήκη υλικού',
-    retention: null,
+    retention: `Το υλικό αφαιρείται ΜΟΝΟ κατόπιν γραπτού αιτήματος του υποβάλλοντος με email — ποτέ αυτόματα. Κατά τα άλλα ${TEN_YEARS}.`,
     legalBasis: 'Συγκατάθεση του υποβάλλοντος — άρθρο 6(1)(α)',
     processors: ['strapi', 'vercel', 'drive'],
     notPersonal: ['FileName'],
   },
   'oc-task': {
     purpose: 'Εργασίες του OC και σε ποιον έχουν ανατεθεί',
-    retention: null,
+    retention: TEN_YEARS,
     legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)',
     processors: ['strapi', 'vercel'],
     note: 'Προσωπικά δεδομένα μόνο δι\' αναφοράς: η σύνδεση εργασίας με μέλος.',
   },
   'library-rejection': {
-    purpose: 'Ιστορικό απορρίψεων υλικού',
-    retention: null,
-    legalBasis: null,
+    purpose: 'Ιστορικό απορρίψεων υλικού — στατιστικά και αντίκρουση παραπόνων',
+    retention: TEN_YEARS,
+    legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)',
     processors: ['strapi', 'vercel'],
   },
   'coordination-team': {
     purpose: 'Η τρέχουσα Ομάδα Συντονισμού και οι έδρες της',
-    retention: null,
+    retention: TEN_YEARS,
     legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)',
     processors: ['strapi', 'vercel'],
     // Οι διευθύνσεις ΘΕΣΗΣ (finance@, it@…) δεν ταυτοποιούν φυσικό πρόσωπο,
@@ -174,7 +187,7 @@ export const ANNOTATIONS: Record<string, Annotation> = {
   },
   expense: {
     purpose: 'Έξοδα προς προμηθευτές',
-    retention: null,
+    retention: TEN_YEARS_TAX,
     legalBasis: 'Έννομη υποχρέωση (φορολογική) — άρθρο 6(1)(γ)',
     processors: ['strapi', 'vercel', 'sheets', 'drive'],
     notPersonal: ['FileName'],
@@ -182,28 +195,49 @@ export const ANNOTATIONS: Record<string, Annotation> = {
   },
   'income-record': {
     purpose: 'Έσοδα και αντιστοίχιση καταθέσεων',
-    retention: null,
+    retention: TEN_YEARS_TAX,
     legalBasis: 'Έννομη υποχρέωση (φορολογική) — άρθρο 6(1)(γ)',
     processors: ['strapi', 'vercel', 'sheets'],
     notPersonal: ['FileName'],
   },
-  'payer-alias': { purpose: 'Αντιστοίχιση ονόματος κατάθεσης με μέλος', retention: null, legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)', processors: ['strapi', 'vercel'] },
+  'payer-alias': { purpose: 'Αντιστοίχιση ονόματος κατάθεσης με μέλος', retention: TEN_YEARS, legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)', processors: ['strapi', 'vercel'] },
   'supplier-alias': {
-    purpose: 'Αντιστοίχιση ονόματος προμηθευτή',
-    retention: null, legalBasis: null, processors: ['strapi', 'vercel'],
+    purpose: 'Αντιστοίχιση ονόματος προμηθευτή — στατιστικά και αντίκρουση παραπόνων',
+    retention: TEN_YEARS,
+    legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)',
+    processors: ['strapi', 'vercel'],
     notPersonal: ['SupplierName'],
     note: 'Αφορά κυρίως νομικά πρόσωπα· το ΑΦΜ ατομικής επιχείρησης παραμένει προσωπικό δεδομένο.',
   },
-  'oc-campaign': { purpose: 'Email και newsletter του OC', retention: null, legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)', processors: ['strapi', 'vercel', 'resend', 'sender'], notPersonal: ['TemplateName'] },
+  'oc-campaign': { purpose: 'Email και newsletter του OC', retention: TEN_YEARS, legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)', processors: ['strapi', 'vercel', 'resend', 'sender'], notPersonal: ['TemplateName'] },
   'treasury-balance': { purpose: 'Υπόλοιπα ταμείου', retention: null, legalBasis: null, processors: ['strapi', 'vercel'], notPersonal: ['Bank'] },
-  activity: { purpose: 'Δράσεις — δημόσιο περιεχόμενο', retention: null, legalBasis: null, processors: ['strapi', 'vercel'], notPersonal: ['ImageAltText'], note: 'Τα Visuals μπορεί να δείχνουν πρόσωπα — εκεί ισχύει η συγκατάθεση φωτογράφησης.' },
-  newsletter: { purpose: 'Αρχείο newsletter — δημόσιο', retention: null, legalBasis: null, processors: ['strapi', 'vercel'], notPersonal: ['Image'] },
-  'open-call': { purpose: 'Ανοιχτές προσκλήσεις — δημόσιο', retention: null, legalBasis: null, processors: ['strapi', 'vercel'], notPersonal: ['Image', 'ImageAltText'] },
-  project: { purpose: 'Έργα μελών — δημόσιο προφίλ', retention: null, legalBasis: 'Συγκατάθεση — άρθρο 6(1)(α)', processors: ['strapi', 'vercel'] },
-  'project-entry': { purpose: 'Καταχωρίσεις έργων — δημόσιο', retention: null, legalBasis: 'Συγκατάθεση — άρθρο 6(1)(α)', processors: ['strapi', 'vercel'] },
+  activity: {
+    purpose: 'Δράσεις — δημόσιο περιεχόμενο',
+    retention: FOREVER,
+    legalBasis: 'Καλύπτεται από ειδικές οδηγίες του DPO για τη φωτογράφηση',
+    processors: ['strapi', 'vercel'],
+    notPersonal: ['ImageAltText'],
+    note: 'Οι φωτογραφίες προσώπων ακολουθούν ξεχωριστή διαδικασία που έχει δώσει ο DPO και δεν αφορά τη λειτουργία του site.',
+  },
+  newsletter: { purpose: 'Αρχείο newsletter — δημόσιο', retention: FOREVER, legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)', processors: ['strapi', 'vercel'], notPersonal: ['Image'] },
+  'open-call': { purpose: 'Ανοιχτές προσκλήσεις — δημόσιο', retention: FOREVER, legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)', processors: ['strapi', 'vercel'], notPersonal: ['Image', 'ImageAltText'] },
+  project: {
+    purpose: 'Έργα μελών — δημόσιο προφίλ',
+    retention: FOREVER,
+    legalBasis: 'Συγκατάθεση — άρθρο 6(1)(α)',
+    processors: ['strapi', 'vercel'],
+    note: 'Η δημόσια σελίδα κατεβαίνει ΜΟΝΟ ύστερα από γραπτό αίτημα της ΟΣ προς το IT.',
+  },
+  'project-entry': {
+    purpose: 'Καταχωρίσεις έργων — δημόσιο',
+    retention: FOREVER,
+    legalBasis: 'Συγκατάθεση — άρθρο 6(1)(α)',
+    processors: ['strapi', 'vercel'],
+    note: 'Η δημόσια σελίδα κατεβαίνει ΜΟΝΟ ύστερα από γραπτό αίτημα της ΟΣ προς το IT.',
+  },
   'working-group': {
     purpose: 'Ομάδες εργασίας και ποιος συμμετέχει',
-    retention: null,
+    retention: TEN_YEARS,
     legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)',
     processors: ['strapi', 'vercel'],
     notPersonal: ['Name', 'EngName', 'Image', 'ImageAltText'],

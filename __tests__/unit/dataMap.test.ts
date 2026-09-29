@@ -15,13 +15,41 @@ describe('Χάρτης δεδομένων — άρθρο 30', () => {
   })
 
   /**
-   * Ο ΚΑΝΟΝΑΣ ΕΙΛΙΚΡΙΝΕΙΑΣ. Ένα αρχείο άρθρου 30 γεμάτο εύλογες εικασίες για
-   * χρόνους διατήρησης είναι χειρότερο από ένα με κενά: τα κενά φαίνονται.
+   * Ο ΚΑΝΟΝΑΣ ΕΙΛΙΚΡΙΝΕΙΑΣ, ως μηχανισμός. Οι αποφάσεις της ΟΣ ήρθαν στις
+   * 29/9/2026 και ο χάρτης γέμισε — αλλά ο μηχανισμός που ΔΕΙΧΝΕΙ τα κενά
+   * πρέπει να εξακολουθεί να δουλεύει για ό,τι προστεθεί αύριο.
    */
-  it('ό,τι δεν έχει αποφασιστεί δηλώνεται ΛΕΙΠΕΙ, δεν επινοείται', () => {
+  it('κενό πεδίο εμφανίζεται ως ΛΕΙΠΕΙ, δεν συμπληρώνεται με εικασία', () => {
+    const { buildDataMap: build } = require('@/lib/dataMap')
+    const rowsNow = build()
+    // Κάθε γραμμή χωρίς χρόνο διατήρησης ΠΡΕΠΕΙ να το δηλώνει
+    for (const r of rowsNow) {
+      if (!r.retention) expect(r.missing).toContain('χρόνος διατήρησης')
+      if (!r.legalBasis) expect(r.missing).toContain('νομική βάση')
+      if (r.retention && r.legalBasis && r.purpose) expect(r.missing).toHaveLength(0)
+    }
+  })
+
+  /** Οι αποφάσεις της ΟΣ, 29/9/2026 — δεν είναι εικασίες, είναι καταγραφή */
+  it('οι αποφάσεις της ΟΣ είναι καταγεγραμμένες', () => {
     const member = rows.find(r => r.api === 'member')!
-    expect(member.retention).toBeNull()
-    expect(member.missing).toContain('χρόνος διατήρησης')
+    expect(member.retention).toMatch(/10 έτη/)
+    expect(member.retention).toMatch(/ΑΠΟΧΩΡΗΣΗ/)   // η αφετηρία, όχι μόνο η διάρκεια
+    expect(member.missing).toHaveLength(0)
+
+    // Η ανάκληση συγκατάθεσης στο newsletter ΔΕΝ σβήνει — απενεργοποιεί
+    expect(rows.find(r => r.api === 'newsletter-subscriber')!.retention)
+      .toMatch(/ΑΠΕΝΕΡΓΟΠΟΙΕΙΤΑΙ/)
+    // Το υλικό βιβλιοθήκης φεύγει μόνο με γραπτό αίτημα
+    expect(rows.find(r => r.api === 'library-item')!.retention).toMatch(/γραπτού αιτήματος/)
+    // Οι δημόσιες σελίδες έργων κατεβαίνουν μόνο με αίτημα της ΟΣ προς το IT
+    expect(rows.find(r => r.api === 'project')!.note).toMatch(/ΟΣ προς το IT/)
+  })
+
+  it('τα φορολογικά δηλώνουν ότι ΔΕΝ είναι επιλογή', () => {
+    for (const api of ['expense-claim', 'receipt', 'expense', 'income-record']) {
+      expect(rows.find(r => r.api === api)!.retention).toMatch(/νόμιμο όριο/)
+    }
   })
 
   it('ό,τι είναι επαληθεύσιμο από τον κώδικα ΕΙΝΑΙ συμπληρωμένο', () => {
@@ -30,9 +58,9 @@ describe('Χάρτης δεδομένων — άρθρο 30', () => {
     expect(tokens.retention).toMatch(/6 ώρες/)
     expect(tokens.missing).not.toContain('χρόνος διατήρησης')
 
-    // Η αυτόματη διαγραφή αιτήσεων υπάρχει στο cron payment-reminders
+    // Ο κανόνας των 30 ημερών μετρά από την ΕΓΚΡΙΣΗ της ΟΣ
     const apps = rows.find(r => r.api === 'membership-application')!
-    expect(apps.retention).toMatch(/[Δδ]ιαγράφεται/)
+    expect(apps.retention).toMatch(/30 ημέρες από την έγκριση/)
     expect(apps.missing).toHaveLength(0)
   })
 
