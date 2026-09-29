@@ -258,3 +258,32 @@ describe('Προγραμματισμένες εργασίες', () => {
     })
   })
 })
+
+describe('Αιτήσεις που θέλουν ανθρώπινο χέρι', () => {
+  const { judgeApplicationsNeedingHand } = require('@/lib/ocHealth')
+
+  /**
+   * ΚΑΜΙΑ ΑΥΤΟΜΑΤΗ ΔΙΑΓΡΑΦΗ — ρητή απόφαση 29/9/2026. Ο κώδικας δείχνει,
+   * σβήνει ο άνθρωπος. Άρα η χειρότερη κατάσταση εδώ είναι ΠΡΟΣΟΧΗ, ποτέ
+   * κάτι που μοιάζει με «το ανέλαβε το σύστημα».
+   */
+  it('εκκρεμότητες = προσοχή, με ρητή οδηγία για χειροκίνητη ενέργεια', () => {
+    const r = judgeApplicationsNeedingHand(3, 0)
+    expect(r.state).toBe('warn')
+    expect(r.items![0].detail).toContain('3')
+    expect(r.items![0].action).toMatch(/ΜΕ ΤΟ ΧΕΡΙ/)
+  })
+
+  it('αίτηση με απόφαση αλλά χωρίς ημερομηνία: καμία προθεσμία δεν τρέχει', () => {
+    const r = judgeApplicationsNeedingHand(0, 2)
+    expect(r.state).toBe('warn')
+    expect(r.items![1].detail).toMatch(/καμία προθεσμία/)
+    expect(r.items![1].action).toMatch(/DecisionDate/)
+  })
+
+  it('τίποτα εκκρεμές = εντάξει, χωρίς θόρυβο', () => {
+    const r = judgeApplicationsNeedingHand(0, 0)
+    expect(r.state).toBe('ok')
+    expect(r.detail).toBe('2/2 εντάξει')
+  })
+})

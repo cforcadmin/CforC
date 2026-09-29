@@ -292,3 +292,42 @@ export function judgeCronJob(
   const did = String(lastRun.Summary || '').trim()
   return { state: 'ok', detail: did ? `${when} · ${did}` : when }
 }
+
+/**
+ * Αιτήσεις που θέλουν ΑΝΘΡΩΠΙΝΟ ΧΕΡΙ.
+ *
+ * Καμία αυτόματη διαγραφή εδώ — ρητή απόφαση (29/9/2026). Ο κώδικας μόνο
+ * ΔΕΙΧΝΕΙ· σβήνει ο άνθρωπος. Δύο καταστάσεις που αλλιώς μένουν αόρατες:
+ *
+ *  · Απορριφθείσες με ψήφο πέρα από τις 30 ημέρες. Δεν υπάρχει καμία
+ *    αυτόματη διαδρομή γι' αυτές, άρα μένουν με πλήρη προσωπικά δεδομένα.
+ *  · Αιτήσεις με απόφαση αλλά ΧΩΡΙΣ ημερομηνία απόφασης. Χωρίς αφετηρία δεν
+ *    υπάρχει προθεσμία — δεν τις πιάνει ποτέ κανένας κανόνας. Συμβαίνει όταν
+ *    αλλάξει κάποιος την κατάσταση με το χέρι στο Strapi.
+ */
+export function judgeApplicationsNeedingHand(
+  overdueRejected: number,
+  missingDecisionDate: number,
+): Omit<HealthCheck, 'key' | 'label'> {
+  const items: SubCheck[] = [
+    overdueRejected === 0
+      ? { key: 'rejected', label: 'Απορριφθείσες πέρα από 30 ημέρες', state: 'ok', detail: 'καμία εκκρεμότητα' }
+      : {
+        key: 'rejected',
+        label: 'Απορριφθείσες πέρα από 30 ημέρες',
+        state: 'warn',
+        detail: `${overdueRejected} ${overdueRejected === 1 ? 'αίτηση κρατά' : 'αιτήσεις κρατούν'} ακόμη προσωπικά δεδομένα`,
+        action: 'Διαγραφή ΜΕ ΤΟ ΧΕΡΙ: Strapi → Membership Applications, και η γραμμή στο Google Sheet',
+      },
+    missingDecisionDate === 0
+      ? { key: 'nodate', label: 'Χωρίς αφετηρία προθεσμίας', state: 'ok', detail: 'όλες έχουν ημερομηνία απόφασης' }
+      : {
+        key: 'nodate',
+        label: 'Χωρίς αφετηρία προθεσμίας',
+        state: 'warn',
+        detail: `${missingDecisionDate} με απόφαση αλλά χωρίς ημερομηνία — καμία προθεσμία δεν τρέχει`,
+        action: 'Συμπλήρωσε το DecisionDate στο Strapi με την πραγματική ημερομηνία της απόφασης',
+      },
+  ]
+  return summariseGroup(items)
+}

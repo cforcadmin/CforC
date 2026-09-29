@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { recordRun, cronAuthorized, triggerOf, type RunNote } from '@/lib/ocRunLog'
+import { recordOutcome } from '@/lib/applicationOutcome'
 import { generatePaymentClaimToken } from '@/lib/auth'
 import { getSeatHolder } from '@/lib/ocRoles'
 import {
@@ -160,7 +161,36 @@ async function runJob(request: NextRequest, log: RunNote) {
         }
       }
 
-      // 3) Η ίδια η αίτηση. Αν αποτύχει, ΔΕΝ στέλνουμε ειδοποίηση διαγραφής
+      /**
+       * 3) Η ΑΠΟΔΕΙΞΗ, ΠΡΙΝ από τη διαγραφή.
+       *
+       * Απόφαση ΟΣ 29/9/2026: σβήνουμε τα προσωπικά δεδομένα αλλά κρατάμε
+       * μη-προσωπική απόδειξη ότι τηρήθηκε η διαδικασία. Η σειρά δεν είναι
+       * θέμα γούστου: αν σβήσουμε πρώτα και αποτύχει η εγγραφή, η απόδειξη
+       * χάθηκε για πάντα. Ανάποδα διορθώνεται μόνο του — η αυριανή εκτέλεση
+       * ξαναδοκιμάζει τη διαγραφή και δεν ξαναγράφει απόδειξη.
+       *
+       * ΧΩΡΙΣ ΑΠΟΔΕΙΞΗ ΔΕΝ ΣΒΗΝΟΥΜΕ.
+       */
+      const proven = await recordOutcome({
+        ApplicationRef: app.documentId,
+        Outcome: 'no-payment-30d',
+        DecisionDate: app.DecisionDate,
+        ClosedAt: new Date().toISOString(),
+        DaysElapsed: days,
+        Reminder15SentAt: app.Reminder15SentAt || null,
+        Reminder28SentAt: app.Reminder28SentAt || null,
+        PhotoRemoved: !pending.some(x => /φωτογραφία/i.test(x)),
+        SheetRowRemoved: !pending.some(x => /ΕΓΚΕΚΡΙΜΕΝ|φύλλο/i.test(x)),
+        Pending: pending.join(' · ') || null,
+      })
+      if (!proven) {
+        console.error('[PAYMENT-REMINDERS] outcome record failed', app.documentId)
+        skipped.push(`${email}: δεν γράφτηκε η απόδειξη — η διαγραφή αναβάλλεται`)
+        continue
+      }
+
+      // 4) Η ίδια η αίτηση. Αν αποτύχει, ΔΕΝ στέλνουμε ειδοποίηση διαγραφής
       //    για κάτι που δεν διαγράφηκε — ξαναδοκιμάζει αύριο.
       const gone = await strapi(`/membership-applications/${app.documentId}`, 'DELETE')
       if (!gone.ok) {

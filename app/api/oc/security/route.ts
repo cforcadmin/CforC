@@ -5,7 +5,8 @@ import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import {
   guard, checkSecretsPresent, judgeDeployment, judgeCertificate, judgeStrapi,
-  judgeUnarchived, worstOf, summariseGroup, judgeCronJob, DEFAULT_CHECK_TIMEOUT_MS,
+  judgeUnarchived, worstOf, summariseGroup, judgeCronJob, judgeApplicationsNeedingHand,
+  DEFAULT_CHECK_TIMEOUT_MS,
   type HealthCheck, type SubCheck, type VercelDeployment,
 } from '@/lib/ocHealth'
 import { getAccessToken, SCOPES, googleConfigured } from '@/lib/googleAuth'
@@ -318,6 +319,36 @@ export async function GET() {
         }
       })
       return summariseGroup(items)
+    }),
+
+    /**
+     * ── Αιτήσεις που θέλουν ανθρώπινο χέρι. ΜΟΝΟ ανάγνωση.
+     *
+     * Αντικαθιστά αυτόματη διαγραφή που ΔΕΝ θα γίνει: ρητή απόφαση ότι οι
+     * απορριφθείσες σβήνονται με το χέρι. Ο κώδικας δείχνει, δεν σβήνει.
+     */
+    guard('applications', 'Αιτήσεις εγγραφής', async () => {
+      const q = '/api/membership-applications?pagination[limit]=100'
+        + '&fields[0]=ApplicationState&fields[1]=DecisionDate'
+      const res = await fetch(`${STRAPI_URL}${q}`, {
+        headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store',
+      })
+      if (!res.ok) return { state: 'unknown' as const, detail: `Strapi ${res.status}` }
+      const j = await res.json()
+      const rows: { ApplicationState?: string; DecisionDate?: string }[] = j?.data || []
+      // Το Strapi κόβει στα 100· αν υπάρχουν κι άλλες, το λέμε αντί να σιωπήσουμε
+      const total = j?.meta?.pagination?.total ?? rows.length
+      const days = (iso?: string) =>
+        iso ? Math.floor((Date.now() - Date.parse(iso)) / 86400000) : null
+      const decided = (x: { ApplicationState?: string }) =>
+        x.ApplicationState === 'approved' || x.ApplicationState === 'rejected'
+      const overdueRejected = rows.filter(
+        x => x.ApplicationState === 'rejected' && (days(x.DecisionDate) ?? -1) > 30).length
+      const missingDate = rows.filter(x => decided(x) && !x.DecisionDate).length
+      const out = judgeApplicationsNeedingHand(overdueRejected, missingDate)
+      return total > rows.length
+        ? { ...out, detail: `${out.detail} · ελέγχθηκαν ${rows.length} από ${total}` }
+        : out
     }),
 
     // ── Resend: από εδώ φεύγει κάθε συναλλακτικό email
