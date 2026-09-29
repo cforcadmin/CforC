@@ -3135,6 +3135,67 @@ export function paymentReminderEmailHtml(
  * Τα `pending` είναι τα σημεία που ΔΕΝ καθάρισε ο αυτοματισμός και θέλουν
  * χέρι — αν λείψουν από το γράμμα, δεν θα τα θυμηθεί κανείς.
  */
+/**
+ * ΑΙΤΗΜΑ χειροκίνητης διαγραφής προς την community@.
+ *
+ * Απόφαση ΟΣ 29/9/2026: το υποψήφιο μέλος ΔΕΝ διαγράφεται ποτέ αυτόματα. Όταν
+ * λήξει άπρακτη η προθεσμία, το σύστημα γράφει τη μη-προσωπική απόδειξη και
+ * ΖΗΤΑΕΙ από άνθρωπο να σβήσει — δεν σβήνει μόνο του.
+ *
+ * Το γράμμα απαριθμεί ΟΛΑ τα σημεία: μια διαγραφή που αφήνει τη γραμμή στο
+ * φύλλο ή τη φωτογραφία στη Βιβλιοθήκη Πολυμέσων δεν είναι διαγραφή.
+ */
+export function applicationDeletionDueEmailHtml(opts: {
+  name: string
+  email: string
+  decisionDate: string | null
+  days: number
+}): { subject: string; html: string } {
+  const { name, email, decisionDate, days } = opts
+  const dateLabel = decisionDate
+    ? new Date(decisionDate).toLocaleDateString('el-GR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '—'
+  const row = (k: string, v: string) => `
+      <tr>
+        <td style="padding:6px 16px 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#6B6B6B;white-space:nowrap;vertical-align:top;">${k}</td>
+        <td style="padding:6px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#2D2D2D;">${v}</td>
+      </tr>`
+  const body = `
+  <tr>
+    <td class="px" style="padding:36px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;">
+      <p style="margin:0 0 20px 0;">Η αίτηση του/της <strong>${escapeHtml(name)}</strong> εγκρίθηκε από την ΟΣ, αλλά η συνδρομή <strong>δεν πληρώθηκε</strong> μέσα στην προθεσμία των 30 ημερών.</p>
+      <p style="margin:0 0 20px 0;">Είχαν σταλεί οι υπενθυμίσεις της 15ης και της 28ης ημέρας, που ανήγγειλαν ρητά τη διαγραφή. <strong>Η διαγραφή γίνεται με το χέρι</strong> — το σύστημα δεν σβήνει μόνο του.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin:0 0 20px 0;">
+        ${row('Ονοματεπώνυμο', escapeHtml(name))}
+        ${row('Email', escapeHtml(email))}
+        ${row('Έγκριση ΟΣ', dateLabel)}
+        ${row('Ημέρες από την έγκριση', String(days))}
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" style="padding:4px 48px 0 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;background:#FFF4E5;border-left:4px solid #E8912D;border-radius:6px;">
+        <tr>
+          <td style="padding:16px 20px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#6B4A15;">
+            <strong style="display:block;margin-bottom:6px;">Τι πρέπει να σβηστεί — και τα τρία</strong>
+            • Η αίτηση στο Strapi (Membership Applications)<br>
+            • Η φωτογραφία στη Βιβλιοθήκη Πολυμέσων του Strapi — δεν φεύγει μαζί με την αίτηση<br>
+            • Η γραμμή στα ΕΓΚΕΚΡΙΜΕΝΑ του Google Sheet
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>`
+  return {
+    subject: `Χρειάζεται διαγραφή — ${name} (άπρακτη προθεσμία 30 ημερών)`,
+    html: shell('Χρειάζεται διαγραφή', 'ΧΕΙΡΟΚΙΝΗΤΗ ΔΙΑΓΡΑΦΗ',
+      `${name}: η προθεσμία πληρωμής πέρασε άπρακτη — τα στοιχεία θέλουν διαγραφή.`,
+      body, `${SITE_URL}/oc`, 'Άνοιγμα OC',
+      'Η απόδειξη ότι τηρήθηκε η διαδικασία έχει ήδη καταγραφεί χωρίς προσωπικά δεδομένα και μένει μετά τη διαγραφή.'),
+  }
+}
+
 export function applicationDeletedEmailHtml(opts: {
   name: string
   email: string

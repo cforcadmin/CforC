@@ -1,11 +1,13 @@
 /**
- * Απόδειξη ότι η διαδικασία απόρριψης τηρήθηκε — ΧΩΡΙΣ προσωπικά δεδομένα.
+ * Απόδειξη ότι η διαδικασία τηρήθηκε — ΧΩΡΙΣ προσωπικά δεδομένα.
  *
- * Απόφαση ΟΣ, 29/9/2026: μια αίτηση που δεν πληρώθηκε μέσα σε 30 ημέρες από
- * την έγκριση σβήνεται ολόκληρη, αλλά πρέπει να μπορούμε να αποδείξουμε ότι
- * ακολουθήσαμε τη σωστή διαδικασία — ότι φύγαν οι υπενθυμίσεις των 15 και 28
- * ημερών και ότι η προθεσμία όντως πέρασε. Ο ίδιος κανόνας ισχύει και για τις
- * απορριφθείσες με ψήφο.
+ * Απόφαση ΟΣ, 29/9/2026, ρητή και επαναλαμβανόμενη: **το υποψήφιο μέλος ΔΕΝ
+ * διαγράφεται ποτέ αυτόματα**. Η διαγραφή γίνεται ΧΕΙΡΟΚΙΝΗΤΑ.
+ *
+ * Ο ρόλος αυτής της εγγραφής είναι να γραφτεί ΟΤΑΝ ΛΗΞΕΙ Η ΠΡΟΘΕΣΜΙΑ και να
+ * παραμείνει αφού κάποιος άνθρωπος κάνει τη διαγραφή — ώστε να μπορούμε να
+ * αποδείξουμε ότι φύγαν οι υπενθυμίσεις των 15 και 28 ημερών και ότι η
+ * προθεσμία όντως πέρασε, χωρίς να κρατάμε ποιος ήταν.
  *
  * ΤΙ ΔΕΝ ΜΠΑΙΝΕΙ ΕΔΩ: όνομα, email, τηλέφωνο, ούτε hash τους. Σε πληθυσμό
  * λίγων εκατοντάδων ένα hash email αντιστρέφεται με απλή δοκιμή, άρα θα ήταν
@@ -25,13 +27,15 @@ export interface OutcomeRecord {
   ApplicationRef: string
   Outcome: OutcomeKind
   DecisionDate: string | null
-  ClosedAt: string
+  /** Πότε πέρασε η προθεσμία — ΟΧΙ πότε έγινε η διαγραφή */
+  DeadlineExpiredAt: string
   DaysElapsed: number | null
   Reminder15SentAt?: string | null
   Reminder28SentAt?: string | null
-  PhotoRemoved: boolean
-  SheetRowRemoved: boolean
-  Pending?: string | null
+  /** Πότε ζητήθηκε από την community@ να σβήσει */
+  DeletionRequestedAt?: string | null
+  /** Πότε επιβεβαιώθηκε η χειροκίνητη διαγραφή — μένει κενό ώσπου να γίνει */
+  DeletionConfirmedAt?: string | null
 }
 
 async function strapi(path: string, method = 'GET', data?: unknown) {
@@ -57,21 +61,15 @@ export async function outcomeExists(applicationRef: string): Promise<boolean> {
 /**
  * Γράφει την απόδειξη. Επιστρέφει `false` αν απέτυχε.
  *
- * Ο ΚΑΛΩΝ ΔΕΝ ΕΠΙΤΡΕΠΕΤΑΙ ΝΑ ΣΒΗΣΕΙ ΑΝ ΑΥΤΟ ΓΥΡΙΣΕΙ `false`.
- *
- * Η σειρά είναι ΠΡΩΤΑ η απόδειξη και ΜΕΤΑ η διαγραφή, όχι το αντίστροφο: αν
- * σβήσουμε πρώτα και αποτύχει η εγγραφή, η απόδειξη χάθηκε για πάντα και δεν
- * υπάρχει από πού να ξαναγραφτεί. Ανάποδα, μια απόδειξη για αίτηση που τελικά
- * δεν σβήστηκε διορθώνεται μόνη της: η επόμενη εκτέλεση ξαναδοκιμάζει τη
- * διαγραφή και το `outcomeExists` εμποδίζει τη διπλοεγγραφή.
+ * Γράφεται μία φορά, όταν λήξει η προθεσμία — πολύ πριν τη χειροκίνητη
+ * διαγραφή. Έτσι, όποτε κι αν γίνει η διαγραφή, η απόδειξη υπάρχει ήδη και
+ * επιβιώνει. Το `outcomeExists` εμποδίζει τη διπλοεγγραφή στην επόμενη
+ * ημερήσια εκτέλεση.
  */
 export async function recordOutcome(rec: OutcomeRecord): Promise<boolean> {
   try {
     if (await outcomeExists(rec.ApplicationRef)) return true
-    const r = await strapi('/oc-application-outcomes', 'POST', {
-      ...rec,
-      Pending: rec.Pending?.slice(0, 900) || null,
-    })
+    const r = await strapi('/oc-application-outcomes', 'POST', rec)
     return r.ok
   } catch {
     return false
@@ -79,8 +77,8 @@ export async function recordOutcome(rec: OutcomeRecord): Promise<boolean> {
 }
 
 /** Οι αποδείξεις, νεότερη πρώτη — για την οθόνη και για έλεγχο */
-export async function fetchOutcomes(limit = 200): Promise<OutcomeRecord[]> {
-  const r = await strapi(`/oc-application-outcomes?pagination[limit]=${limit}&sort[0]=ClosedAt:desc`)
+export async function fetchOutcomes(limit = 100): Promise<OutcomeRecord[]> {
+  const r = await strapi(`/oc-application-outcomes?pagination[limit]=${limit}&sort[0]=DeadlineExpiredAt:desc`)
   if (r.status === 404) throw new Error('η συλλογή δεν υπάρχει ακόμη στο Strapi Cloud')
   if (!r.ok) throw new Error(`Strapi ${r.status}`)
   return (r.json?.data || []) as OutcomeRecord[]

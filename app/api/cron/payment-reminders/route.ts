@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { recordRun, cronAuthorized, triggerOf, type RunNote } from '@/lib/ocRunLog'
-import { recordOutcome } from '@/lib/applicationOutcome'
+import { recordOutcome, outcomeExists } from '@/lib/applicationOutcome'
 import { generatePaymentClaimToken } from '@/lib/auth'
 import { getSeatHolder } from '@/lib/ocRoles'
 import {
-  sendOcEmail, paymentReminderEmailHtml, applicationDeletedEmailHtml, paymentClaimUrl,
-  COMMUNITY_FROM, COMMUNITY_EMAIL, ADMIN_EMAIL, FINANCE_EMAIL,
+  sendOcEmail, paymentReminderEmailHtml, applicationDeletionDueEmailHtml, paymentClaimUrl,
+  COMMUNITY_FROM, COMMUNITY_EMAIL,
 } from '@/lib/ocEmails'
-import { sheetsConfigured, removeApplicantFromSheet } from '@/lib/googleSheets'
 
-// 300s: η διαγραφή καλεί το Apps Script για ΚΑΘΕ αίτηση, και μια κρύα κλήση
-// θέλει 40–60s. Με 60s όριο, ήδη η πρώτη διαγραφή θα έκοβε τη διαδρομή στη
-// μέση — φάκελος σβησμένος, γραμμή φύλλου όρθια, email αστάλτο.
+// 300s μένουν παρότι έφυγε η αυτόματη διαγραφή: η διαδρομή στέλνει email ένα
+// προς ένα και το Strapi μπορεί να ξυπνά από ψυχρή εκκίνηση. Το περιθώριο δεν
+// κοστίζει τίποτα όταν όλα πάνε γρήγορα.
 export const maxDuration = 300
 
 /**
@@ -116,100 +115,67 @@ async function runJob(request: NextRequest, log: RunNote) {
       }
     }
 
-    // ── Διαγραφή όσων πέρασε άπρακτη η προθεσμία (§4α, GDPR) ────────────
-    //
-    // Δεν τρέχει σε όλες τις εγκεκριμένες αιτήσεις παρά ΜΟΝΟ στις οπλισμένες:
-    // η διαγραφή είναι η εκτέλεση της υπόσχεσης που έδωσαν τα γράμματα των 15
-    // και των 28 ημερών, και αυτά φεύγουν μόνο όταν AutoRemindersArmed=true.
-    // Χωρίς αυτόν τον όρο θα σβήναμε ανθρώπους που δεν προειδοποιήθηκαν ποτέ.
-    //
-    // Ούτε τρέχει χωρίς DecisionDate: αν λείπει, δεν υπάρχει αφετηρία, άρα
-    // δεν υπάρχει προθεσμία που να έχει λήξει. Η απουσία ημερομηνίας δεν
-    // σημαίνει «πάει πολύς καιρός» — σημαίνει «δεν ξέρουμε».
-    const deleted: string[] = []
+    /**
+     * ── Λήξη προθεσμίας: ΑΠΟΔΕΙΞΗ + ΑΙΤΗΜΑ, καμία διαγραφή ─────────────────
+     *
+     * ΤΟ ΥΠΟΨΗΦΙΟ ΜΕΛΟΣ ΔΕΝ ΔΙΑΓΡΑΦΕΤΑΙ ΠΟΤΕ ΑΥΤΟΜΑΤΑ (απόφαση ΟΣ, 29/9/2026,
+     * ρητή και επαναλαμβανόμενη). Μέχρι σήμερα ο κώδικας έσβηνε μόνος του
+     * αίτηση, φωτογραφία και γραμμή φύλλου· αυτό αφαιρέθηκε.
+     *
+     * Τώρα, όταν λήξει άπρακτη η προθεσμία, γίνονται ΔΥΟ πράγματα και μόνο:
+     *   1. Γράφεται η μη-προσωπική απόδειξη ότι τηρήθηκε η διαδικασία —
+     *      πότε εγκρίθηκε, πότε έφυγαν οι υπενθυμίσεις, πότε έληξε. Γράφεται
+     *      ΤΩΡΑ ώστε να υπάρχει ήδη όποτε κι αν γίνει η χειροκίνητη διαγραφή.
+     *   2. Στέλνεται ΜΙΑ φορά αίτημα διαγραφής στην community@.
+     *
+     * Δεν τρέχει σε όλες τις εγκεκριμένες παρά ΜΟΝΟ στις οπλισμένες: το
+     * αίτημα είναι η συνέχεια της υπόσχεσης που έδωσαν τα γράμματα των 15 και
+     * 28 ημερών, και αυτά φεύγουν μόνο όταν AutoRemindersArmed=true.
+     *
+     * Ούτε τρέχει χωρίς DecisionDate: χωρίς αφετηρία δεν υπάρχει προθεσμία
+     * που να έχει λήξει. Η απουσία ημερομηνίας δεν σημαίνει «πάει πολύς
+     * καιρός» — σημαίνει «δεν ξέρουμε».
+     */
+    const deletionDue: string[] = []
     for (const app of r.json?.data || []) {
       if (!app.DecisionDate || app.PaymentClaimedAt) continue
-      if (daysSince(app.DecisionDate) <= DEADLINE_DAYS) continue
-
       const days = daysSince(app.DecisionDate)
+      if (days <= DEADLINE_DAYS) continue
+
+      // Η απόδειξη γράφεται μία φορά· το outcomeExists κρατά το αίτημα μοναδικό
+      if (await outcomeExists(app.documentId)) continue
+
       const name = `${app.FirstName || ''} ${app.LastName || ''}`.trim() || '—'
       const email = String(app.Email || '').trim()
-      // Τα κρατάμε ΠΡΙΝ τη διαγραφή: μετά δεν υπάρχει από πού να διαβαστούν
-      const pending: string[] = []
+      const now = new Date().toISOString()
 
-      // 1) Η γραμμή στα ΕΓΚΕΚΡΙΜΕΝΑ του φύλλου
-      if (!sheetsConfigured()) {
-        pending.push('Το Google Sheet δεν είναι ρυθμισμένο — σβήσε τη γραμμή από τα ΕΓΚΕΚΡΙΜΕΝΑ με το χέρι.')
-      } else {
-        try {
-          await removeApplicantFromSheet(email)
-        } catch (e) {
-          console.error('[PAYMENT-REMINDERS] sheet removal failed', app.documentId)
-          pending.push(`Δεν σβήστηκε η γραμμή από τα ΕΓΚΕΚΡΙΜΕΝΑ του φύλλου (${(e as Error).message}). Χρειάζεται διαγραφή με το χέρι.`)
-        }
-      }
-
-      // 2) Η φωτογραφία στη Βιβλιοθήκη Πολυμέσων — δεν φεύγει με την εγγραφή
-      const photoId = app.Photo?.id
-      if (photoId) {
-        const del = await fetch(`${STRAPI_URL}/api/upload/files/${photoId}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
-        }).catch(() => null)
-        if (!del?.ok) {
-          pending.push('Η φωτογραφία της αίτησης έμεινε στη Βιβλιοθήκη Πολυμέσων του Strapi — χρειάζεται διαγραφή με το χέρι.')
-        }
-      }
-
-      /**
-       * 3) Η ΑΠΟΔΕΙΞΗ, ΠΡΙΝ από τη διαγραφή.
-       *
-       * Απόφαση ΟΣ 29/9/2026: σβήνουμε τα προσωπικά δεδομένα αλλά κρατάμε
-       * μη-προσωπική απόδειξη ότι τηρήθηκε η διαδικασία. Η σειρά δεν είναι
-       * θέμα γούστου: αν σβήσουμε πρώτα και αποτύχει η εγγραφή, η απόδειξη
-       * χάθηκε για πάντα. Ανάποδα διορθώνεται μόνο του — η αυριανή εκτέλεση
-       * ξαναδοκιμάζει τη διαγραφή και δεν ξαναγράφει απόδειξη.
-       *
-       * ΧΩΡΙΣ ΑΠΟΔΕΙΞΗ ΔΕΝ ΣΒΗΝΟΥΜΕ.
-       */
       const proven = await recordOutcome({
         ApplicationRef: app.documentId,
         Outcome: 'no-payment-30d',
         DecisionDate: app.DecisionDate,
-        ClosedAt: new Date().toISOString(),
+        DeadlineExpiredAt: now,
         DaysElapsed: days,
         Reminder15SentAt: app.Reminder15SentAt || null,
         Reminder28SentAt: app.Reminder28SentAt || null,
-        PhotoRemoved: !pending.some(x => /φωτογραφία/i.test(x)),
-        SheetRowRemoved: !pending.some(x => /ΕΓΚΕΚΡΙΜΕΝ|φύλλο/i.test(x)),
-        Pending: pending.join(' · ') || null,
+        DeletionRequestedAt: now,
+        DeletionConfirmedAt: null,
       })
       if (!proven) {
-        console.error('[PAYMENT-REMINDERS] outcome record failed', app.documentId)
-        skipped.push(`${email}: δεν γράφτηκε η απόδειξη — η διαγραφή αναβάλλεται`)
+        skipped.push(`${email}: δεν γράφτηκε η απόδειξη — ξαναδοκιμάζει αύριο`)
         continue
       }
 
-      // 4) Η ίδια η αίτηση. Αν αποτύχει, ΔΕΝ στέλνουμε ειδοποίηση διαγραφής
-      //    για κάτι που δεν διαγράφηκε — ξαναδοκιμάζει αύριο.
-      const gone = await strapi(`/membership-applications/${app.documentId}`, 'DELETE')
-      if (!gone.ok) {
-        console.error('[PAYMENT-REMINDERS] delete failed', gone.status, app.documentId)
-        skipped.push(`${email}: αποτυχία διαγραφής (${gone.status})`)
-        continue
-      }
-
-      const tpl = applicationDeletedEmailHtml({ name, email, decisionDate: app.DecisionDate, days, pending })
-      await sendOcEmail(ADMIN_EMAIL, tpl.subject, tpl.html, {
-        from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL, cc: [COMMUNITY_EMAIL, FINANCE_EMAIL],
+      const tpl = applicationDeletionDueEmailHtml({ name, email, decisionDate: app.DecisionDate, days })
+      await sendOcEmail(COMMUNITY_EMAIL, tpl.subject, tpl.html, {
+        from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL,
       })
-      deleted.push(`${name} (ημέρα ${days}${pending.length ? `, ${pending.length} εκκρεμότητες` : ''})`)
+      deletionDue.push(`${name} (ημέρα ${days})`)
     }
 
     console.log(`[PAYMENT-REMINDERS] sent ${sent.length}${sent.length ? ': ' + sent.join(', ') : ''}`)
-    if (deleted.length) console.log(`[PAYMENT-REMINDERS] deleted ${deleted.length}: ${deleted.join(', ')}`)
-    log.note(`${sent.length} υπενθυμίσεις· ${skipped.length} παραλείφθηκαν· ${deleted.length} διαγραφές`)
-    return NextResponse.json({ success: true, sent, skipped, deleted })
+    if (deletionDue.length) console.log(`[PAYMENT-REMINDERS] deletion requested ${deletionDue.length}: ${deletionDue.join(', ')}`)
+    log.note(`${sent.length} υπενθυμίσεις· ${skipped.length} παραλείφθηκαν· ${deletionDue.length} αιτήματα χειροκίνητης διαγραφής`)
+    return NextResponse.json({ success: true, sent, skipped, deletionDue })
   } catch (err) {
     console.error('[PAYMENT-REMINDERS] error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

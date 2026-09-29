@@ -1,9 +1,12 @@
 /**
- * Η απόδειξη απόρριψης — απόφαση ΟΣ 29/9/2026.
+ * Η απόδειξη ότι τηρήθηκε η διαδικασία — απόφαση ΟΣ 29/9/2026.
+ *
+ * Το υποψήφιο μέλος ΔΕΝ διαγράφεται ποτέ αυτόματα. Η απόδειξη γράφεται όταν
+ * λήξει η προθεσμία και μένει αφού κάποιος άνθρωπος κάνει τη διαγραφή.
  *
  * Δύο ιδιότητες που ΔΕΝ επιτρέπεται να σπάσουν:
- *   1. Καμία διαγραφή χωρίς απόδειξη.
- *   2. Καμία απόδειξη με προσωπικό δεδομένο μέσα.
+ *   1. Καμία απόδειξη με προσωπικό δεδομένο μέσα.
+ *   2. Καμία σιωπηλή αποτυχία — αν δεν γραφτεί, ο καλών το μαθαίνει.
  */
 import { recordOutcome, outcomeExists, type OutcomeRecord } from '@/lib/applicationOutcome'
 
@@ -11,13 +14,12 @@ const base: OutcomeRecord = {
   ApplicationRef: 'abc123xyz',
   Outcome: 'no-payment-30d',
   DecisionDate: '2026-08-20T10:00:00.000Z',
-  ClosedAt: '2026-09-29T10:00:00.000Z',
+  DeadlineExpiredAt: '2026-09-29T10:00:00.000Z',
   DaysElapsed: 40,
   Reminder15SentAt: '2026-09-04T08:00:00.000Z',
   Reminder28SentAt: '2026-09-17T08:00:00.000Z',
-  PhotoRemoved: true,
-  SheetRowRemoved: true,
-  Pending: null,
+  DeletionRequestedAt: '2026-09-29T10:00:00.000Z',
+  DeletionConfirmedAt: null,
 }
 
 describe('Απόδειξη διαδικασίας απόρριψης', () => {
@@ -69,11 +71,10 @@ describe('Απόδειξη διαδικασίας απόρριψης', () => {
   })
 
   /**
-   * Η ΚΡΙΣΙΜΗ: αν το Strapi δεν απαντά, το recordOutcome γυρίζει false και ο
-   * καλών ΑΝΑΒΑΛΛΕΙ τη διαγραφή. Διαγραφή χωρίς απόδειξη είναι ακριβώς αυτό
-   * που η απόφαση της ΟΣ απαγορεύει.
+   * Αν το Strapi δεν απαντά, γυρίζει false και ο καλών αναβάλλει το αίτημα
+   * διαγραφής για αύριο — δεν στέλνει γράμμα για κάτι που δεν καταγράφηκε.
    */
-  it('αποτυχία εγγραφής → false, ώστε ο καλών να ΜΗ σβήσει', async () => {
+  it('αποτυχία εγγραφής → false, ώστε ο καλών να αναβάλει', async () => {
     global.fetch = jest.fn(async () => { throw new Error('δίκτυο') }) as any
     expect(await recordOutcome(base)).toBe(false)
   })
@@ -88,10 +89,11 @@ describe('Απόδειξη διαδικασίας απόρριψης', () => {
     expect(await recordOutcome(base)).toBe(false)
   })
 
-  it('το Pending κόβεται και δεν σκάει σε μεγάλο κείμενο', async () => {
-    await recordOutcome({ ...base, Pending: 'x'.repeat(5000) })
+  it('η χειροκίνητη διαγραφή μένει ΑΚΑΤΑΓΡΑΦΗ ώσπου να γίνει', async () => {
+    await recordOutcome(base)
     const post = calls.find(c => c.method === 'POST')!
-    expect(post.body.data.Pending.length).toBeLessThanOrEqual(900)
+    expect(post.body.data.DeletionRequestedAt).toBeTruthy()
+    expect(post.body.data.DeletionConfirmedAt).toBeNull()
   })
 
   it('outcomeExists: κενή λίστα σημαίνει όχι', async () => {
