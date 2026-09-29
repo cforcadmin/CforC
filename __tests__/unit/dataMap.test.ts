@@ -37,11 +37,46 @@ describe('Χάρτης δεδομένων — άρθρο 30', () => {
   })
 
   it('η ανθρώπινη κρίση αφαιρεί τα ψευδώς θετικά', () => {
-    // Το όνομα μιας ομάδας εργασίας δεν είναι προσωπικό δεδομένο
-    const wg = rows.find(r => r.api === 'working-group')
-    expect(wg).toBeUndefined()
-    // Ούτε η τράπεζα στο υπόλοιπο ταμείου
+    // Η τράπεζα στο υπόλοιπο ταμείου δεν είναι προσωπικό δεδομένο
     expect(rows.find(r => r.api === 'treasury-balance')).toBeUndefined()
+    // Ούτε το όνομα/εικόνα μιας ομάδας εργασίας…
+    const wg = rows.find(r => r.api === 'working-group')!
+    expect(wg.personalFields.map(f => f.name)).not.toContain('Name')
+    // …ούτε οι διευθύνσεις ΘΕΣΗΣ της Ομάδας Συντονισμού (finance@, it@)
+    const ct = rows.find(r => r.api === 'coordination-team')!
+    expect(ct.personalFields.map(f => f.name)).not.toContain('FinancerEmail')
+  })
+
+  /**
+   * ΤΟ ΣΟΒΑΡΟΤΕΡΟ ΚΕΝΟ ΤΗΣ ΠΡΩΤΗΣ ΕΚΔΟΧΗΣ (29/9/2026). Είκοσι ένα πεδία
+   * σχέσης δείχνουν στο `member` και κανένα δεν εντοπιζόταν: οι Ομάδες
+   * Εργασίας και οι Εργασίες OC έλειπαν ΟΛΟΚΛΗΡΕΣ από το αρχείο, ενώ η Ομάδα
+   * Συντονισμού μετριόταν για τα λάθος πεδία. Προσωπικά δεδομένα δι' αναφοράς
+   * είναι εξίσου προσωπικά δεδομένα.
+   */
+  it('οι ΣΥΝΔΕΣΕΙΣ με μέλη μετράνε ως προσωπικά δεδομένα', () => {
+    const ct = rows.find(r => r.api === 'coordination-team')!
+    expect(ct.personalFields.map(f => f.name)).toEqual(
+      expect.arrayContaining(['Coordinator', 'Financer', 'IT', 'Members']))
+    // Συλλογές που ΜΟΝΟ μέσω σχέσης κρατούν προσωπικά δεδομένα
+    expect(rows.find(r => r.api === 'oc-task')!.personalFields.map(f => f.name)).toEqual(['assignees'])
+    expect(rows.find(r => r.api === 'working-group')).toBeDefined()
+  })
+
+  /**
+   * Ο έλεγχος ΤΥΠΟΥ πιάνει μηχανικά ό,τι το όνομα του πεδίου ξεγελά.
+   * Το `VatAmount` είναι decimal (ποσό ΦΠΑ) και καταγραφόταν ως «ΑΦΜ»· το
+   * `ReceiptType` είναι enumeration (Φυσικό πρόσωπο / Εταιρεία) και
+   * καταγραφόταν ως «παραστατικό».
+   */
+  it('αριθμός ή enumeration ΔΕΝ μπορεί να είναι όνομα, ΑΦΜ ή παραστατικό', () => {
+    const names = (api: string) =>
+      (rows.find(r => r.api === api)?.personalFields || []).map(f => f.name)
+    expect(names('expense')).not.toContain('VatAmount')
+    expect(names('member')).not.toContain('ReceiptType')
+    expect(names('membership-application')).not.toContain('ReceiptType')
+    // …αλλά το πραγματικό αποδεικτικό (media) μένει
+    expect(names('member')).toContain('RenewalReceipt')
   })
 
   it('κάθε γραμμή ονομάζει τους τρίτους που αγγίζουν τα δεδομένα', () => {

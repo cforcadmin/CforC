@@ -91,6 +91,7 @@ export const ANNOTATIONS: Record<string, Annotation> = {
     retention: null,
     legalBasis: 'Έννομη υποχρέωση (φορολογική) — άρθρο 6(1)(γ)',
     processors: ['strapi', 'vercel', 'resend', 'drive', 'sheets'],
+    notPersonal: ['EventName'],   // όνομα εκδήλωσης, όχι προσώπου
     note: 'Περιέχει IBAN και υπογραφή. Τα παραστατικά αρχειοθετούνται στο Drive.',
   },
   'oc-contract': {
@@ -110,6 +111,7 @@ export const ANNOTATIONS: Record<string, Annotation> = {
     retention: 'Magic link 6 ώρες · συνεδρία 30 ημέρες · newsletter 24 ώρες · πληρωμή 60 ημέρες · ερωτηματολόγιο αποχώρησης 90 ημέρες (lib/auth.ts)',
     legalBasis: 'Σύμβαση — άρθρο 6(1)(β)',
     processors: ['strapi', 'vercel'],
+    notPersonal: ['tokenExpiry'],   // ημερομηνία λήξης, όχι διαπιστευτήριο
     note: 'Αποθηκεύονται μόνο hash (SHA256), ποτέ το ίδιο το token.',
   },
   'newsletter-subscriber': {
@@ -141,6 +143,14 @@ export const ANNOTATIONS: Record<string, Annotation> = {
     retention: null,
     legalBasis: 'Συγκατάθεση του υποβάλλοντος — άρθρο 6(1)(α)',
     processors: ['strapi', 'vercel', 'drive'],
+    notPersonal: ['FileName'],
+  },
+  'oc-task': {
+    purpose: 'Εργασίες του OC και σε ποιον έχουν ανατεθεί',
+    retention: null,
+    legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)',
+    processors: ['strapi', 'vercel'],
+    note: 'Προσωπικά δεδομένα μόνο δι\' αναφοράς: η σύνδεση εργασίας με μέλος.',
   },
   'library-rejection': {
     purpose: 'Ιστορικό απορρίψεων υλικού',
@@ -153,14 +163,21 @@ export const ANNOTATIONS: Record<string, Annotation> = {
     retention: null,
     legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)',
     processors: ['strapi', 'vercel'],
-    notPersonal: ['Name', 'EngName', 'Image', 'ImageAltText'],
-    note: 'Τα *Email είναι διευθύνσεις ΘΕΣΗΣ (finance@, it@…), όχι προσωπικές.',
+    // Οι διευθύνσεις ΘΕΣΗΣ (finance@, it@…) δεν ταυτοποιούν φυσικό πρόσωπο,
+    // άρα δεν είναι προσωπικά δεδομένα. Το όνομα και η εικόνα αφορούν την ΟΜΑΔΑ.
+    notPersonal: [
+      'Name', 'EngName', 'Image', 'ImageAltText',
+      'AdminEmail', 'CommsEmail', 'CommunityEmail', 'CoordinatorEmail',
+      'FinancerEmail', 'ITEmail', 'MediaEmail', 'OutreachEmail',
+    ],
+    note: 'Τα προσωπικά δεδομένα εδώ είναι οι ΣΥΝΔΕΣΕΙΣ με μέλη: ποιος κρατά κάθε έδρα.',
   },
   expense: {
     purpose: 'Έξοδα προς προμηθευτές',
     retention: null,
     legalBasis: 'Έννομη υποχρέωση (φορολογική) — άρθρο 6(1)(γ)',
     processors: ['strapi', 'vercel', 'sheets', 'drive'],
+    notPersonal: ['FileName'],
     note: 'Αφορά κυρίως νομικά πρόσωπα· το ΑΦΜ ατομικής επιχείρησης παραμένει προσωπικό δεδομένο.',
   },
   'income-record': {
@@ -168,9 +185,15 @@ export const ANNOTATIONS: Record<string, Annotation> = {
     retention: null,
     legalBasis: 'Έννομη υποχρέωση (φορολογική) — άρθρο 6(1)(γ)',
     processors: ['strapi', 'vercel', 'sheets'],
+    notPersonal: ['FileName'],
   },
   'payer-alias': { purpose: 'Αντιστοίχιση ονόματος κατάθεσης με μέλος', retention: null, legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)', processors: ['strapi', 'vercel'] },
-  'supplier-alias': { purpose: 'Αντιστοίχιση ονόματος προμηθευτή', retention: null, legalBasis: null, processors: ['strapi', 'vercel'], notPersonal: ['SupplierName'] },
+  'supplier-alias': {
+    purpose: 'Αντιστοίχιση ονόματος προμηθευτή',
+    retention: null, legalBasis: null, processors: ['strapi', 'vercel'],
+    notPersonal: ['SupplierName'],
+    note: 'Αφορά κυρίως νομικά πρόσωπα· το ΑΦΜ ατομικής επιχείρησης παραμένει προσωπικό δεδομένο.',
+  },
   'oc-campaign': { purpose: 'Email και newsletter του OC', retention: null, legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)', processors: ['strapi', 'vercel', 'resend', 'sender'], notPersonal: ['TemplateName'] },
   'treasury-balance': { purpose: 'Υπόλοιπα ταμείου', retention: null, legalBasis: null, processors: ['strapi', 'vercel'], notPersonal: ['Bank'] },
   activity: { purpose: 'Δράσεις — δημόσιο περιεχόμενο', retention: null, legalBasis: null, processors: ['strapi', 'vercel'], notPersonal: ['ImageAltText'], note: 'Τα Visuals μπορεί να δείχνουν πρόσωπα — εκεί ισχύει η συγκατάθεση φωτογράφησης.' },
@@ -178,7 +201,14 @@ export const ANNOTATIONS: Record<string, Annotation> = {
   'open-call': { purpose: 'Ανοιχτές προσκλήσεις — δημόσιο', retention: null, legalBasis: null, processors: ['strapi', 'vercel'], notPersonal: ['Image', 'ImageAltText'] },
   project: { purpose: 'Έργα μελών — δημόσιο προφίλ', retention: null, legalBasis: 'Συγκατάθεση — άρθρο 6(1)(α)', processors: ['strapi', 'vercel'] },
   'project-entry': { purpose: 'Καταχωρίσεις έργων — δημόσιο', retention: null, legalBasis: 'Συγκατάθεση — άρθρο 6(1)(α)', processors: ['strapi', 'vercel'] },
-  'working-group': { purpose: 'Ομάδες εργασίας — δημόσιο', retention: null, legalBasis: null, processors: ['strapi', 'vercel'], notPersonal: ['Name', 'EngName', 'Image', 'ImageAltText'] },
+  'working-group': {
+    purpose: 'Ομάδες εργασίας και ποιος συμμετέχει',
+    retention: null,
+    legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)',
+    processors: ['strapi', 'vercel'],
+    notPersonal: ['Name', 'EngName', 'Image', 'ImageAltText'],
+    note: 'Όπως στην Ομάδα Συντονισμού: τα προσωπικά δεδομένα είναι οι συνδέσεις με μέλη.',
+  },
 }
 
 export interface MapRow {

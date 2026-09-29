@@ -27,6 +27,7 @@ const OUT = path.join(__dirname, '..', 'lib', 'dataMapCatalog.json')
 const PERSONAL = [
   [/^email$|email/i, 'email'],
   [/phone|tel$|mobile|κινητ/i, 'τηλέφωνο'],
+  [/^bankname$/i, 'όνομα τράπεζας'],   // η τράπεζα, όχι ο λογαριασμός
   [/iban|bank/i, 'τραπεζικός λογαριασμός'],
   [/signature|υπογραφ/i, 'υπογραφή'],
   [/afm|taxid|vat|αφμ/i, 'ΑΦΜ'],
@@ -41,7 +42,36 @@ const PERSONAL = [
   [/receipt|invoice|παραστατικ|απόδειξ/i, 'παραστατικό'],
 ]
 
-function classify(field) {
+/**
+ * Τύποι που ΔΕΝ μπορούν να κρατούν όνομα, email, IBAN ή ΑΦΜ, όσο κι αν
+ * μοιάζει το όνομα του πεδίου.
+ *
+ * Χωρίς αυτό, το `VatAmount` (decimal — ποσό ΦΠΑ) καταγραφόταν ως «ΑΦΜ» και
+ * το `ReceiptType` (enumeration: Φυσικό πρόσωπο / Εταιρεία) ως «παραστατικό».
+ * Ο έλεγχος τύπου είναι μηχανικός και σωστός· τα υπόλοιπα ψευδώς θετικά
+ * θέλουν ανθρώπινη κρίση και ζουν στο lib/dataMap.ts.
+ *
+ * Οι ημερομηνίες ΔΕΝ αποκλείονται: η ημερομηνία γέννησης είναι προσωπικό
+ * δεδομένο και είναι date.
+ */
+const IMPOSSIBLE_TYPES = new Set([
+  'decimal', 'integer', 'float', 'biginteger', 'boolean', 'enumeration',
+])
+
+function classify(field, attr) {
+  const type = attr?.type
+  /**
+   * ΣΧΕΣΗ ΠΡΟΣ ΜΕΛΟΣ = προσωπικά δεδομένα δι' αναφοράς.
+   *
+   * Το πιο σοβαρό κενό της πρώτης εκδοχής: 21 πεδία σχέσης δείχνουν στο
+   * `member` και κανένα δεν είχε εντοπιστεί. Οι Ομάδες Εργασίας και οι
+   * Εργασίες OC έλειπαν ΟΛΟΚΛΗΡΕΣ από το αρχείο του άρθρου 30, ενώ η Ομάδα
+   * Συντονισμού μετριόταν για τα ΛΑΘΟΣ πεδία.
+   */
+  if (type === 'relation' && /api::member\.member/.test(String(attr?.target || ''))) {
+    return 'σύνδεση με μέλος'
+  }
+  if (IMPOSSIBLE_TYPES.has(type)) return null
   for (const [re, kind] of PERSONAL) if (re.test(field)) return kind
   return null
 }
@@ -55,7 +85,7 @@ for (const dir of fs.readdirSync(API_DIR).sort()) {
   const fields = Object.keys(attrs).sort().map(name => ({
     name,
     type: attrs[name].type,
-    personal: classify(name),
+    personal: classify(name, attrs[name]),
   }))
   collections.push({
     api: dir,

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-29T11:04:22.428Z",
+  "generatedAt": "2026-09-29T11:34:54.607Z",
   "note": "Παράγεται από scripts/generate-data-map.js — μην το επεξεργάζεσαι με το χέρι",
   "collections": [
     {
@@ -98,10 +98,10 @@
         {
           "name": "tokenType",
           "type": "enumeration",
-          "personal": "διαπιστευτήριο"
+          "personal": null
         }
       ],
-      "personalCount": 5
+      "personalCount": 4
     },
     {
       "api": "coordination-team",
@@ -111,7 +111,7 @@
         {
           "name": "Admin",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         },
         {
           "name": "AdminEmail",
@@ -121,7 +121,7 @@
         {
           "name": "Comms",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         },
         {
           "name": "CommsEmail",
@@ -131,7 +131,7 @@
         {
           "name": "Community",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         },
         {
           "name": "CommunityEmail",
@@ -141,7 +141,7 @@
         {
           "name": "Coordinator",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         },
         {
           "name": "CoordinatorEmail",
@@ -166,7 +166,7 @@
         {
           "name": "Financer",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         },
         {
           "name": "FinancerEmail",
@@ -176,7 +176,7 @@
         {
           "name": "IT",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         },
         {
           "name": "ITEmail",
@@ -201,7 +201,7 @@
         {
           "name": "Media",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         },
         {
           "name": "MediaEmail",
@@ -211,7 +211,7 @@
         {
           "name": "Members",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         },
         {
           "name": "Name",
@@ -221,7 +221,7 @@
         {
           "name": "Outreach",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         },
         {
           "name": "OutreachEmail",
@@ -244,7 +244,7 @@
           "personal": null
         }
       ],
-      "personalCount": 12
+      "personalCount": 21
     },
     {
       "api": "event-attendance",
@@ -299,10 +299,10 @@
         {
           "name": "attendees",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         }
       ],
-      "personalCount": 1
+      "personalCount": 2
     },
     {
       "api": "exit-survey",
@@ -500,7 +500,7 @@
         {
           "name": "VatAmount",
           "type": "decimal",
-          "personal": "ΑΦΜ"
+          "personal": null
         },
         {
           "name": "Withholding",
@@ -508,7 +508,7 @@
           "personal": null
         }
       ],
-      "personalCount": 4
+      "personalCount": 3
     },
     {
       "api": "expense-claim",
@@ -533,7 +533,7 @@
         {
           "name": "BankName",
           "type": "string",
-          "personal": "τραπεζικός λογαριασμός"
+          "personal": "όνομα τράπεζας"
         },
         {
           "name": "ClaimNumber",
@@ -693,10 +693,10 @@
         {
           "name": "linkedMember",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         }
       ],
-      "personalCount": 7
+      "personalCount": 8
     },
     {
       "api": "income-record",
@@ -864,7 +864,7 @@
         {
           "name": "SubmittedBy",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         },
         {
           "name": "SubmittedByName",
@@ -897,7 +897,7 @@
           "personal": null
         }
       ],
-      "personalCount": 2
+      "personalCount": 3
     },
     {
       "api": "library-rejection",
@@ -1003,7 +1003,7 @@
         {
           "name": "AM",
           "type": "integer",
-          "personal": "αριθμός μητρώου"
+          "personal": null
         },
         {
           "name": "AccountHolder",
@@ -1028,7 +1028,7 @@
         {
           "name": "BankName",
           "type": "string",
-          "personal": "τραπεζικός λογαριασμός"
+          "personal": "όνομα τράπεζας"
         },
         {
           "name": "Bio",
@@ -1243,7 +1243,7 @@
         {
           "name": "ReceiptType",
           "type": "enumeration",
-          "personal": "παραστατικό"
+          "personal": null
         },
         {
           "name": "RegistrationYear",
@@ -1316,7 +1316,7 @@
           "personal": "διαπιστευτήριο"
         }
       ],
-      "personalCount": 22
+      "personalCount": 20
     },
     {
       "api": "membership-application",
@@ -1576,7 +1576,7 @@
         {
           "name": "ReceiptType",
           "type": "enumeration",
-          "personal": "παραστατικό"
+          "personal": null
         },
         {
           "name": "Reminder15SentAt",
@@ -1636,7 +1636,7 @@
         {
           "name": "linkedMember",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         }
       ],
       "personalCount": 19
@@ -2187,7 +2187,7 @@
         {
           "name": "assignees",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         },
         {
           "name": "board",
@@ -2195,7 +2195,7 @@
           "personal": null
         }
       ],
-      "personalCount": 0
+      "personalCount": 1
     },
     {
       "api": "oc-task-board",
@@ -2321,10 +2321,10 @@
         {
           "name": "member",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         }
       ],
-      "personalCount": 2
+      "personalCount": 3
     },
     {
       "api": "profile-change-log",
@@ -2638,10 +2638,10 @@
         {
           "name": "member",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         }
       ],
-      "personalCount": 5
+      "personalCount": 6
     },
     {
       "api": "supplier-alias",
@@ -2714,7 +2714,7 @@
         {
           "name": "Bank",
           "type": "decimal",
-          "personal": "τραπεζικός λογαριασμός"
+          "personal": null
         },
         {
           "name": "Cash",
@@ -2732,7 +2732,7 @@
           "personal": null
         }
       ],
-      "personalCount": 1
+      "personalCount": 0
     },
     {
       "api": "working-group",
@@ -2742,17 +2742,17 @@
         {
           "name": "Admin",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         },
         {
           "name": "Comms",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         },
         {
           "name": "Coordinator",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         },
         {
           "name": "Description",
@@ -2772,7 +2772,7 @@
         {
           "name": "IT",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         },
         {
           "name": "Image",
@@ -2792,7 +2792,7 @@
         {
           "name": "Members",
           "type": "relation",
-          "personal": null
+          "personal": "σύνδεση με μέλος"
         },
         {
           "name": "Name",
@@ -2810,7 +2810,7 @@
           "personal": null
         }
       ],
-      "personalCount": 4
+      "personalCount": 9
     }
   ]
 }
