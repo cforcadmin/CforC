@@ -21,6 +21,8 @@ export interface SubCheck {
   label: string
   state: HealthState
   detail: string
+  /** Τι να κάνει ο άνθρωπος γι' ΑΥΤΟ το αρχείο, όταν υπάρχει σαφής κίνηση */
+  action?: string
 }
 
 export interface HealthCheck {

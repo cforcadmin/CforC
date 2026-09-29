@@ -17,6 +17,7 @@ interface SubCheck {
   label: string
   state: HealthState
   detail: string
+  action?: string
 }
 
 interface Check {
@@ -137,11 +138,16 @@ export default function OcSecurity() {
                   {group && isOpen && (
                     <div className="mt-3 grid gap-1.5 pl-6">
                       {c.items!.map(it => (
-                        <div key={it.key} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
-                          <span aria-hidden="true" className={`w-2 h-2 rounded-full shrink-0 ${TONE[it.state].dot}`} />
-                          <span className="font-medium">{it.label}</span>
-                          <span className={`text-xs font-bold ${TONE[it.state].text}`}>{TONE[it.state].word}</span>
-                          <span className="text-gray-600 dark:text-gray-400">{it.detail}</span>
+                        <div key={it.key} className="text-sm">
+                          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                            <span aria-hidden="true" className={`w-2 h-2 rounded-full shrink-0 ${TONE[it.state].dot}`} />
+                            <span className="font-medium">{it.label}</span>
+                            <span className={`text-xs font-bold ${TONE[it.state].text}`}>{TONE[it.state].word}</span>
+                            <span className="text-gray-600 dark:text-gray-400">{it.detail}</span>
+                          </div>
+                          {it.action && (
+                            <p className="text-xs text-gray-600 dark:text-gray-300 pl-4 pt-0.5">→ {it.action}</p>
+                          )}
                         </div>
                       ))}
                     </div>
