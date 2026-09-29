@@ -5,8 +5,8 @@ import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import {
   guard, checkSecretsPresent, judgeDeployment, judgeCertificate, judgeStrapi,
-  judgeUnarchived, worstOf, summariseGroup, type HealthCheck, type SubCheck,
-  type VercelDeployment,
+  judgeUnarchived, worstOf, summariseGroup, DEFAULT_CHECK_TIMEOUT_MS,
+  type HealthCheck, type SubCheck, type VercelDeployment,
 } from '@/lib/ocHealth'
 import { getAccessToken, SCOPES, googleConfigured } from '@/lib/googleAuth'
 // Τα id έρχονται από τις ΙΔΙΕΣ τις βιβλιοθήκες που τα χρησιμοποιούν. Όσο τα
@@ -61,7 +61,9 @@ function certDaysLeft(host: string): Promise<number | null> {
       const t = Date.parse(cert.valid_to)
       resolve(Number.isFinite(t) ? Math.round((t - Date.now()) / 86400000) : null)
     })
-    socket.setTimeout(6000, () => { socket.destroy(); resolve(null) })
+    // Ίδια λογική με το DEFAULT_CHECK_TIMEOUT_MS: αργή χειραψία δεν σημαίνει
+    // χαλασμένο πιστοποιητικό, και η αναμονή κοστίζει μόνο όταν κάτι κρέμεται.
+    socket.setTimeout(15000, () => { socket.destroy(); resolve(null) })
     socket.on('error', () => resolve(null))
   })
 }
@@ -75,7 +77,7 @@ function certDaysLeft(host: string): Promise<number | null> {
  */
 async function sub(
   key: string, label: string, fn: () => Promise<Omit<SubCheck, 'key' | 'label'>>,
-  timeoutMs = 10000,
+  timeoutMs = DEFAULT_CHECK_TIMEOUT_MS,
 ): Promise<SubCheck> {
   try {
     const cutoff = new Promise<never>((_, rej) =>
@@ -276,7 +278,7 @@ export async function GET() {
           return r.state === 'ok' && ms > 8000
             ? { state: 'ok' as const, detail: `προσβάσιμο, αλλά αργά (${(ms / 1000).toFixed(1)}s)` }
             : r
-        }, 25000),
+        }),
 
         sub('calendar', 'Ημερολόγιο', async () => {
           const id = process.env.GOOGLE_CALENDAR_ID

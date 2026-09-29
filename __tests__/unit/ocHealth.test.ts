@@ -143,3 +143,31 @@ describe('Ομαδοποιημένος έλεγχος (αρχεία Google)', ()
     expect(EXPECTED_SECRETS).toContain('SHEET_WEBAPP_URL')
   })
 })
+
+describe('Όρια χρόνου — προθεσμία απάντησης, όχι μέτρηση επίδοσης', () => {
+  const { DEFAULT_CHECK_TIMEOUT_MS } = require('@/lib/ocHealth')
+
+  /**
+   * Το σφάλμα της 29/9/2026: το προεπιλεγμένο όριο ήταν 8s ενώ το judgeStrapi
+   * έχει κλάδο για «απαντά αργά (12s) — πιθανή ψυχρή εκκίνηση». Ο κλάδος ήταν
+   * νεκρός κώδικας: το όριο σκότωνε τον έλεγχο πρώτα και η οθόνη έλεγε
+   * «Άγνωστο» για το πιο συνηθισμένο γεγονός της ημέρας.
+   */
+  it('το προεπιλεγμένο όριο αφήνει την ψυχρή εκκίνηση του Strapi να ΦΑΝΕΙ', () => {
+    const coldStartMs = 12000
+    expect(judgeStrapi(true, coldStartMs).state).toBe('warn')
+    expect(DEFAULT_CHECK_TIMEOUT_MS).toBeGreaterThan(coldStartMs)
+  })
+
+  it('το όριο καλύπτει και τις ψυχρές εκκινήσεις του Strapi Cloud (10-30s δωρεάν πλάνο)', () => {
+    expect(DEFAULT_CHECK_TIMEOUT_MS).toBeGreaterThanOrEqual(25000)
+  })
+
+  it('ένας αργός αλλά επιτυχής έλεγχος ΔΕΝ αποτυγχάνει', async () => {
+    const r = await guard('x', 'Χ', async () => {
+      await new Promise(res => setTimeout(res, 120))
+      return { state: 'ok' as const, detail: 'άργησε αλλά απάντησε' }
+    }, 400)
+    expect(r.state).toBe('ok')
+  })
+})
