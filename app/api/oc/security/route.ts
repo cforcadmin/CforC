@@ -259,9 +259,24 @@ export async function GET() {
           googleGet(SCOPES.drive,
             `https://www.googleapis.com/drive/v3/files/${LIBRARY_FOLDER_ID}?fields=name&supportsAllDrives=true`)),
 
-        sub('agendaDoc', 'Ημερήσια διάταξη (Doc)', () =>
-          googleGet(SCOPES.documents,
-            `https://docs.googleapis.com/v1/documents/${AGENDA_DOC_ID}?fields=title`)),
+        /**
+         * Το API των Docs σερβίρει ΟΛΟΚΛΗΡΟ το έγγραφο ακόμη και με
+         * `fields=title`, και αυτό έχει δεκάδες συνεδριάσεις: μετρήθηκε 9-14s
+         * (29/9/2026). Με το προεπιλεγμένο όριο των 10s έβγαινε «Άγνωστο» στην
+         * παραγωγή ενώ το έγγραφο ήταν μια χαρά. Δεν αλλάζουμε σε Drive API —
+         * θα ελέγχαμε άλλη διαδρομή από αυτήν που τρέχει η λειτουργία.
+         */
+        sub('agendaDoc', 'Ημερήσια διάταξη (Doc)', async () => {
+          const t0 = Date.now()
+          const r = await googleGet(SCOPES.documents,
+            `https://docs.googleapis.com/v1/documents/${AGENDA_DOC_ID}?fields=title`)
+          const ms = Date.now() - t0
+          // Η αργοπορία δεν είναι βλάβη, είναι όμως ο λόγος που αργεί η οθόνη
+          // της Ημερήσιας διάταξης — αξίζει να φαίνεται αντί να κρύβεται.
+          return r.state === 'ok' && ms > 8000
+            ? { state: 'ok' as const, detail: `προσβάσιμο, αλλά αργά (${(ms / 1000).toFixed(1)}s)` }
+            : r
+        }, 25000),
 
         sub('calendar', 'Ημερολόγιο', async () => {
           const id = process.env.GOOGLE_CALENDAR_ID
