@@ -7,7 +7,10 @@ import { sendOcEmail, paymentClaimNoticeHtml, FINANCE_EMAIL } from '@/lib/ocEmai
  * σημειώνει PaymentClaimedAt στον φάκελο, αποθηκεύει το προαιρετικό
  * αποδεικτικό κατάθεσης (PaymentReceipt) και ειδοποιεί το finance@.
  * Auth: το signed payment-claim token — δεν απαιτεί λογαριασμό.
- * Body: multipart FormData { token, receipt? } (ή JSON { token }).
+ * Body: multipart FormData { token, receipt }.
+ *
+ * ΤΟ ΑΠΟΔΕΙΚΤΙΚΟ ΕΙΝΑΙ ΥΠΟΧΡΕΩΤΙΚΟ — ίδιος κανόνας με την ανανέωση. Το σκέτο
+ * κουμπί πατήθηκε καλόπιστα ενώ η τράπεζα είχε γυρίσει πίσω τα χρήματα.
  */
 
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
@@ -41,8 +44,20 @@ export async function POST(request: NextRequest) {
   if (!decoded || decoded.type !== 'payment-claim') {
     return NextResponse.json({ ok: false, error: 'invalid token' }, { status: 401 })
   }
-  if (receipt && (receipt.size > MAX_RECEIPT_BYTES || !ALLOWED_TYPES.includes(receipt.type))) {
-    return NextResponse.json({ ok: false, error: 'invalid receipt file' }, { status: 422 })
+  if (!receipt) {
+    return NextResponse.json(
+      { ok: false, error: 'receipt required', message: 'Χρειάζεται το αποδεικτικό της κατάθεσης' },
+      { status: 422 })
+  }
+  if (!ALLOWED_TYPES.includes(receipt.type)) {
+    return NextResponse.json(
+      { ok: false, error: 'bad type', message: 'Επιτρέπονται PDF ή εικόνες (JPG/PNG/WebP)' },
+      { status: 422 })
+  }
+  if (receipt.size > MAX_RECEIPT_BYTES) {
+    return NextResponse.json(
+      { ok: false, error: 'too large', message: 'Το αρχείο ξεπερνά τα 10MB' },
+      { status: 422 })
   }
 
   try {

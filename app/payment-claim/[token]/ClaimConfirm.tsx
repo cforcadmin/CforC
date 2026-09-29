@@ -7,7 +7,12 @@ const ALLOWED = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
 
 /**
  * Το επιβεβαιωτικό βήμα της δήλωσης πληρωμής (προστασία από mail scanners),
- * με προαιρετικό ανέβασμα του αποδεικτικού κατάθεσης (PDF/εικόνα).
+ * με ΥΠΟΧΡΕΩΤΙΚΟ αποδεικτικό κατάθεσης (PDF κατά προτίμηση, εικόνα δεκτή).
+ *
+ * Ήταν προαιρετικό. Το σκέτο κουμπί όμως δεν αποδεικνύει τίποτα: στην πράξη
+ * πατήθηκε καλόπιστα ενώ η τράπεζα είχε γυρίσει πίσω τα χρήματα. Ίδιος
+ * κανόνας με την ανανέωση συνδρομής — η διαδρομή της εγγραφής δεν έχει λόγο
+ * να είναι πιο χαλαρή.
  */
 export default function ClaimConfirm({ token, firstName }: { token: string; firstName: string }) {
   const [state, setState] = useState<'idle' | 'busy' | 'done' | 'error'>('idle')
@@ -78,17 +83,32 @@ export default function ClaimConfirm({ token, firstName }: { token: string; firs
         Επιβεβαίωση πληρωμής{firstName ? ` — ${firstName}` : ''}
       </h1>
       <p className="text-gray-600 dark:text-gray-300 mb-6">
-        Πάτησε το κουμπί για να ενημερώσεις την ομάδα οικονομικών του Culture For Change
-        ότι ολοκλήρωσες την καταβολή της συνδρομής εγγραφής.
+        Ανέβασε το αποδεικτικό της κατάθεσης και πάτησε το κουμπί, για να ενημερώσεις την ομάδα
+        οικονομικών του Culture For Change ότι ολοκλήρωσες την καταβολή της συνδρομής εγγραφής.
       </p>
+
+      {/* Η διάκριση παραστατικό / στιγμιότυπο στέκεται μόνη της: είναι ο λόγος
+          που το πεδίο έγινε υποχρεωτικό. */}
+      <div className="mb-6 rounded-2xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-900/20 p-4 text-left">
+        <p className="font-bold text-charcoal dark:text-amber-100 mb-1">
+          Το παραστατικό της τράπεζας — όχι στιγμιότυπο οθόνης
+        </p>
+        <p className="text-sm text-gray-700 dark:text-amber-100/90">
+          Από το e-banking, «Αποδεικτικό συναλλαγής» ή «Απόδειξη πληρωμής» σε <strong>PDF</strong>.
+          Ένα στιγμιότυπο δείχνει μόνο ότι η εντολή στάλθηκε· έχει συμβεί η τράπεζα να γυρίσει
+          πίσω τα χρήματα και η συνδρομή να μείνει απλήρωτη χωρίς να το ξέρει κανείς.
+        </p>
+        <p className="text-sm text-gray-700 dark:text-amber-100/90 mt-2">
+          Αν πλήρωσες σε κατάστημα, φωτογράφισε το χάρτινο παραστατικό — αυτό είναι μια χαρά.
+        </p>
+      </div>
 
       <div className="text-left bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-600 p-5 mb-6">
         <label htmlFor="receipt" className="block font-bold text-sm text-charcoal dark:text-gray-100 mb-1">
-          Αποδεικτικό κατάθεσης
+          Αποδεικτικό κατάθεσης <span className="text-red-600">*</span>
         </label>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-          Ανέβασε το αποδεικτικό της τράπεζας (PDF ή φωτογραφία, έως 10MB) — επιταχύνει την
-          επιβεβαίωση της πληρωμής σου.
+          PDF κατά προτίμηση · εικόνα δεκτή · έως 10MB
         </p>
         <input
           id="receipt"
@@ -105,15 +125,15 @@ export default function ClaimConfirm({ token, firstName }: { token: string; firs
 
       <button
         type="button"
-        disabled={state === 'busy'}
+        disabled={state === 'busy' || !file}
         onClick={confirm}
         className="bg-coral text-white font-bold rounded-full px-8 py-3 hover:bg-coral/90 transition-colors disabled:opacity-50"
       >
         {state === 'busy' ? 'Αποστολή…' : 'Έκανα την κατάθεση ✓'}
       </button>
       {!file && (
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">
-          Μπορείς να επιβεβαιώσεις και χωρίς αποδεικτικό — θα το ελέγξουμε απευθείας στην τράπεζα.
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+          Πρόσθεσε πρώτα το αποδεικτικό για να ενεργοποιηθεί το κουμπί.
         </p>
       )}
       {state === 'error' && (
