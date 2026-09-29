@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { canRejectPayment } from '@/lib/businessDays'
 
 /**
  * Popup ανεξόφλητων συνδρομών — ανοίγει από το tile «Πληρωμένο {έτος}»
@@ -212,11 +213,18 @@ export default function OcRenewalsPopup({ members, canIssue, canRemind, onClose,
                         </>
                       ) : confirmFail === m.docId ? (
                         <>
-                          <span className="text-xs text-charcoal dark:text-gray-200 max-w-56">
-                            Σίγουρα; Θυμήσου: Σ/Κ εκκαθαρίζονται Δευτέρα, διατραπεζικές έως 2 εργάσιμες.
+                          {/* Η δικλείδα φαίνεται ΠΡΙΝ το κλικ· ο server την
+                              επιβάλλει ούτως ή άλλως, αλλά μια άρνηση μετά το
+                              «Ναι» διαβάζεται σαν βλάβη, όχι σαν κανόνας. */}
+                          <span className="text-xs text-charcoal dark:text-gray-200 max-w-72">
+                            {canRejectPayment(m.renewalClaimedAt).allowed
+                              ? 'Σίγουρα; Θυμήσου: Σ/Κ εκκαθαρίζονται Δευτέρα, διατραπεζικές έως 2 εργάσιμες.'
+                              : canRejectPayment(m.renewalClaimedAt).message}
                           </span>
                           <button type="button" onClick={() => fail(m)}
-                            className="px-3 py-1.5 rounded-full bg-red-600 text-white text-xs font-bold hover:opacity-90">
+                            disabled={!canRejectPayment(m.renewalClaimedAt).allowed}
+                            title={canRejectPayment(m.renewalClaimedAt).message || undefined}
+                            className="px-3 py-1.5 rounded-full bg-red-600 text-white text-xs font-bold hover:opacity-90 disabled:opacity-40">
                             Ναι, αποστολή
                           </button>
                           <button type="button" onClick={() => setConfirmFail(null)}

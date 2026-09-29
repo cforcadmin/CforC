@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { canRejectPayment } from '@/lib/businessDays'
 
 // PDF + emails χρειάζονται χρόνο — μην αφήσεις το Vercel default (10s) να τα κόψει
 export const maxDuration = 60
@@ -97,6 +98,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'failed') {
+      // ΔΙΚΛΕΙΔΑ: όχι «αποτυχία» πριν περάσουν τρεις εργάσιμες από τη δήλωση
+      // του μέλους — η τράπεζα αργεί, και το άδικο γράμμα δεν ξεγράφεται.
+      const gate = canRejectPayment(app.PaymentClaimedAt)
+      if (!gate.allowed) {
+        return NextResponse.json({ error: gate.message, tooSoon: true, remaining: gate.remaining }, { status: 409 })
+      }
       // Θέματα πληρωμών: υπογράφει και απαντά ο/η Financer
       const signer = await getSeatHolder('financer')
       const signerName = signer?.engName || signer?.name || 'Culture for Change — Finance'

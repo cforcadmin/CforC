@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { canRejectPayment } from '@/lib/businessDays'
 
 export const maxDuration = 60
 import { cookies } from 'next/headers'
@@ -58,6 +59,18 @@ export async function POST(request: NextRequest) {
     if (!member) return NextResponse.json({ error: 'Το μέλος δεν βρέθηκε' }, { status: 404 })
     if (!member.RenewalClaimedAt) {
       return NextResponse.json({ error: 'Δεν υπάρχει ενεργή δήλωση πληρωμής' }, { status: 409 })
+    }
+
+    /**
+     * ΔΙΚΛΕΙΔΑ: όχι «αποτυχία» πριν περάσουν τρεις εργάσιμες.
+     *
+     * Η διατραπεζική εκκαθάριση αργεί — παρατηρημένο: υπενθύμιση Πέμπτη
+     * βράδυ, χρήματα στην τράπεζα Τρίτη πρωί. Ένα πρόωρο «δεν πληρώσατε»
+     * σε μέλος που πλήρωσε είναι λάθος που δεν ξεγράφεται με διόρθωση.
+     */
+    const gate = canRejectPayment(member.RenewalClaimedAt)
+    if (!gate.allowed) {
+      return NextResponse.json({ error: gate.message, tooSoon: true, remaining: gate.remaining }, { status: 409 })
     }
     const email = String(member.Email || '').trim()
     if (!email) return NextResponse.json({ error: 'Το μέλος δεν έχει email' }, { status: 422 })
