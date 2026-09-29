@@ -415,6 +415,7 @@ export function approvedEmailHtml(firstName: string, claimUrl: string, signerNam
   <tr>
     <td class="px" style="padding:24px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
       <p style="margin:0 0 20px 0;">Μόλις ολοκληρώσεις την κατάθεση, πάτησε το παρακάτω κουμπί για να ενημερωθεί αυτόματα η ομάδα οικονομικών και ανέβασε το αποδεικτικό της κατάθεσης στην πλατφόρμα μας — θα λάβεις απόδειξη είσπραξης ψηφιακά. Αν χρειάζεσαι το πρωτότυπο της απόδειξης είσπραξης, μας ενημερώνεις για να τη στείλουμε ταχυδρομικά.</p>
+      <p style="margin:0 0 20px 0;">📄 <strong>Κατέβασε το αποδεικτικό της συναλλαγής σε PDF</strong> από το e-banking σου (συνήθως «Αποδεικτικό συναλλαγής» ή «Απόδειξη πληρωμής») και ανέβασέ το με το κουμπί πιο πάνω. Στιγμιότυπο οθόνης γίνεται δεκτό, αλλά το PDF είναι προτιμότερο: δείχνει τον αριθμό συναλλαγής και βεβαιώνει ότι η μεταφορά ολοκληρώθηκε. Αν πλήρωσες σε κατάστημα, φωτογράφισε το χάρτινο παραστατικό.</p>
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 20px 0;border:1px solid #E0D8D0;border-radius:16px;">
         <tr><td style="padding:18px 20px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#2D2D2D;">
           <strong>Γιατί υπάρχει προθεσμία 30 ημερών</strong><br>
@@ -721,6 +722,7 @@ export function reminderEmailHtml(firstName: string, claimUrl: string, signerNam
   <tr>
     <td class="px" style="padding:24px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
       <p style="margin:0 0 20px 0;">Μόλις ολοκληρώσεις την κατάθεση, πάτησε το παρακάτω κουμπί για να ενημερωθεί αυτόματα η ομάδα οικονομικών και ανέβασε το αποδεικτικό της κατάθεσης στην πλατφόρμα μας — θα λάβεις απόδειξη είσπραξης ψηφιακά. Αν χρειάζεσαι το πρωτότυπο της απόδειξης είσπραξης, μας ενημερώνεις για να τη στείλουμε ταχυδρομικά.</p>
+      <p style="margin:0 0 20px 0;">📄 <strong>Κατέβασε το αποδεικτικό της συναλλαγής σε PDF</strong> από το e-banking σου (συνήθως «Αποδεικτικό συναλλαγής» ή «Απόδειξη πληρωμής») και ανέβασέ το με το κουμπί πιο πάνω. Στιγμιότυπο οθόνης γίνεται δεκτό, αλλά το PDF είναι προτιμότερο: δείχνει τον αριθμό συναλλαγής και βεβαιώνει ότι η μεταφορά ολοκληρώθηκε. Αν πλήρωσες σε κατάστημα, φωτογράφισε το χάρτινο παραστατικό.</p>
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td class="btn" align="center" bgcolor="#FF8B6A" style="background-color:#FF8B6A;border-radius:999px;">
@@ -901,6 +903,7 @@ export function paymentFailedEmailHtml(firstName: string, claimUrl: string, sign
   <tr>
     <td class="px" style="padding:24px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
       <p style="margin:0 0 20px 0;">Μόλις επιβεβαιώσεις ή επαναλάβεις την κατάθεση, πάτησε το παρακάτω κουμπί για να μας ενημερώσεις ξανά και ανέβασε το αποδεικτικό της κατάθεσης στην πλατφόρμα μας — έτσι μπορούμε να την εντοπίσουμε άμεσα.</p>
+      <p style="margin:0 0 20px 0;">📄 <strong>Κατέβασε το αποδεικτικό της συναλλαγής σε PDF</strong> από το e-banking σου (συνήθως «Αποδεικτικό συναλλαγής» ή «Απόδειξη πληρωμής») και ανέβασέ το με το κουμπί πιο πάνω. Στιγμιότυπο οθόνης γίνεται δεκτό, αλλά το PDF είναι προτιμότερο: δείχνει τον αριθμό συναλλαγής και βεβαιώνει ότι η μεταφορά ολοκληρώθηκε. Αν πλήρωσες σε κατάστημα, φωτογράφισε το χάρτινο παραστατικό.</p>
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td class="btn" align="center" bgcolor="#FF8B6A" style="background-color:#FF8B6A;border-radius:999px;">
@@ -1626,6 +1629,7 @@ export function renewalPaymentFailedEmailHtml(
           </td>
         </tr>
       </table>
+      <p style="margin:16px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#5A5A5A;">📄 <strong>Κατέβασε το αποδεικτικό της συναλλαγής σε PDF</strong> από το e-banking σου (συνήθως «Αποδεικτικό συναλλαγής» ή «Απόδειξη πληρωμής») και ανέβασέ το με το κουμπί πιο πάνω. Στιγμιότυπο οθόνης γίνεται δεκτό, αλλά το PDF είναι προτιμότερο: δείχνει τον αριθμό συναλλαγής και βεβαιώνει ότι η μεταφορά ολοκληρώθηκε. Αν πλήρωσες σε κατάστημα, φωτογράφισε το χάρτινο παραστατικό.</p>
       <p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#8A8A8A;">Αν είσαι σίγουρη/ος ότι η μεταφορά έχει ολοκληρωθεί, απάντησε σε αυτό το email για να το ελέγξουμε μαζί.</p>
     </td>
   </tr>
