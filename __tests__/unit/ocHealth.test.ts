@@ -171,3 +171,53 @@ describe('Όρια χρόνου — προθεσμία απάντησης, όχ�
     expect(r.state).toBe('ok')
   })
 })
+
+describe('Προγραμματισμένες εργασίες', () => {
+  const { judgeCronJob } = require('@/lib/ocHealth')
+  const HOUR = 3_600_000
+  const now = new Date('2026-09-29T12:00:00Z')
+  const ago = (h: number) => new Date(now.getTime() - h * HOUR).toISOString()
+
+  it('έτρεξε στην ώρα της και λέει ΤΙ έκανε', () => {
+    const r = judgeCronJob('Υπενθυμίσεις', { Outcome: 'ok', StartedAt: ago(3), Summary: '4 email' }, 0, now)
+    expect(r.state).toBe('ok')
+    expect(r.detail).toContain('4 email')
+  })
+
+  it('«έτρεξε χωρίς να έχει δουλειά» ΔΕΝ μοιάζει με «δεν έτρεξε»', () => {
+    const idle = judgeCronJob('Χ', { Outcome: 'ok', StartedAt: ago(3), Summary: 'καμία εκκρεμότητα' }, 0, now)
+    const missing = judgeCronJob('Χ', null, 5 * HOUR, now)
+    expect(idle.state).toBe('ok')
+    expect(missing.state).toBe('down')
+    expect(missing.detail).toContain('καμία εκτέλεση')
+  })
+
+  it('σφάλμα = βλάβη, με το μήνυμα ορατό', () => {
+    const r = judgeCronJob('Χ', { Outcome: 'error', StartedAt: ago(2), ErrorText: 'Strapi 502' }, 0, now)
+    expect(r.state).toBe('down')
+    expect(r.detail).toContain('Strapi 502')
+  })
+
+  it('ξεκίνησε και δεν τελείωσε ποτέ = βλάβη, ΞΕΧΩΡΙΣΤΗ από το σφάλμα', () => {
+    const r = judgeCronJob('Χ', { Outcome: 'running', StartedAt: ago(4) }, 0, now)
+    expect(r.state).toBe('down')
+    expect(r.detail).toMatch(/δεν τελείωσε/)
+  })
+
+  it('τρέχει ΑΥΤΗ ΤΗ ΣΤΙΓΜΗ = εντάξει, όχι κολλημένο', () => {
+    const r = judgeCronJob('Χ', { Outcome: 'running', StartedAt: new Date(now.getTime() - 20_000).toISOString() }, 0, now)
+    expect(r.state).toBe('ok')
+  })
+
+  it('πέρασε η προθεσμία παρότι η προηγούμενη πέτυχε = βλάβη', () => {
+    const r = judgeCronJob('Χ', { Outcome: 'ok', StartedAt: ago(50) }, 26 * HOUR, now)
+    expect(r.state).toBe('down')
+    expect(r.detail).toMatch(/αργεί/)
+    expect(r.action).toBeTruthy()
+  })
+
+  it('άδειο ημερολόγιο χωρίς καθυστέρηση = άγνωστο, ΟΧΙ βλάβη', () => {
+    // Τις πρώτες μέρες μετά την εγκατάσταση δεν υπάρχουν ακόμη εγγραφές
+    expect(judgeCronJob('Χ', null, 0, now).state).toBe('unknown')
+  })
+})

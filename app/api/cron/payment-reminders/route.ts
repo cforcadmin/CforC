@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { recordRun, cronAuthorized, triggerOf, type RunNote } from '@/lib/ocRunLog'
 import { generatePaymentClaimToken } from '@/lib/auth'
 import { getSeatHolder } from '@/lib/ocRoles'
 import {
@@ -50,7 +51,7 @@ async function strapi(path: string, method = 'GET', data?: any) {
 const daysSince = (iso: string) =>
   Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
 
-export async function GET(request: NextRequest) {
+async function runJob(request: NextRequest, log: RunNote) {
   // Το `!CRON_SECRET` ΔΕΝ είναι περιττό: αν λείψει η μεταβλητή, η σύγκριση
   // γίνεται με το κείμενο «Bearer undefined» και οποιοσδήποτε το στείλει
   // περνά. Χωρίς μυστικό, η διαδρομή κλείνει — δεν ανοίγει.
@@ -177,9 +178,19 @@ export async function GET(request: NextRequest) {
 
     console.log(`[PAYMENT-REMINDERS] sent ${sent.length}${sent.length ? ': ' + sent.join(', ') : ''}`)
     if (deleted.length) console.log(`[PAYMENT-REMINDERS] deleted ${deleted.length}: ${deleted.join(', ')}`)
+    log.note(`${sent.length} υπενθυμίσεις· ${skipped.length} παραλείφθηκαν· ${deleted.length} διαγραφές`)
     return NextResponse.json({ success: true, sent, skipped, deleted })
   } catch (err) {
     console.error('[PAYMENT-REMINDERS] error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+}
+
+/**
+ * Το περίβλημα καταγραφής. Ο έλεγχος μυστικού γίνεται ΠΡΙΝ από αυτό ώστε μια
+ * ανεπιτυχής κλήση να μη γράφει «εκτέλεση» στο ημερολόγιο.
+ */
+export async function GET(request: NextRequest) {
+  if (!cronAuthorized(request)) return runJob(request, { note: () => {} })
+  return recordRun('/api/cron/payment-reminders', log => runJob(request, log), { trigger: triggerOf(request) })
 }

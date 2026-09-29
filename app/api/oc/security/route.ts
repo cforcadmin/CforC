@@ -5,13 +5,15 @@ import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import {
   guard, checkSecretsPresent, judgeDeployment, judgeCertificate, judgeStrapi,
-  judgeUnarchived, worstOf, summariseGroup, DEFAULT_CHECK_TIMEOUT_MS,
+  judgeUnarchived, worstOf, summariseGroup, judgeCronJob, DEFAULT_CHECK_TIMEOUT_MS,
   type HealthCheck, type SubCheck, type VercelDeployment,
 } from '@/lib/ocHealth'
 import { getAccessToken, SCOPES, googleConfigured } from '@/lib/googleAuth'
 // Τα id έρχονται από τις ΙΔΙΕΣ τις βιβλιοθήκες που τα χρησιμοποιούν. Όσο τα
 // ξαναγράφαμε εδώ, ο έλεγχος μπορούσε να κοιτάζει άλλο αρχείο από τη λειτουργία
 // — και ακριβώς αυτό έγινε με την Ημερήσια διάταξη (29/9/2026).
+import { CRON_JOBS, fetchRunLog, latestPerJob } from '@/lib/ocRunLog'
+import { overdueMs } from '@/lib/cronSchedule'
 import { CONTRACTS_SHEET_ID } from '@/lib/contractsSheet'
 import { LIBRARY_SHEET_ID } from '@/lib/librarySheet'
 import { LIBRARY_FOLDER_ID } from '@/lib/googleDrive'
@@ -291,6 +293,27 @@ export async function GET() {
       // 45s: τα δύο Apps Script έχουν από 40s το καθένα ΚΑΙ τρέχουν παράλληλα,
       // άρα η γραμμή δεν περιμένει ποτέ 80. Κάτω από το maxDuration των 60.
     }, 45000),
+
+    /**
+     * ── Προγραμματισμένες εργασίες.
+     *
+     * Η πιο σιωπηλή βλάβη που έχουμε: η Vercel δεν δίνει ιστορικό cron από
+     * API, και μια εκτέλεση που ΔΕΝ έγινε δεν αφήνει ούτε log. Υπενθυμίσεις
+     * συνδρομών που σταμάτησαν να φεύγουν δεν θα τις έπαιρνε κανείς είδηση.
+     * Εδώ διαβάζουμε το δικό μας ημερολόγιο και το συγκρίνουμε με τις
+     * ΑΛΗΘΙΝΕΣ εκφράσεις του vercel.json.
+     */
+    guard('cron', 'Προγραμματισμένες εργασίες', async () => {
+      const rows = await fetchRunLog(7)
+      const latest = latestPerJob(rows)
+      const now = new Date()
+      const items = CRON_JOBS.map(j => {
+        const last = latest.get(j.path) || null
+        const overdue = overdueMs(j.schedule, last ? new Date(last.StartedAt) : null, now)
+        return { key: j.path, label: j.label, ...judgeCronJob(j.label, last, overdue, now) }
+      })
+      return summariseGroup(items)
+    }),
 
     // ── Resend: από εδώ φεύγει κάθε συναλλακτικό email
     guard('resend', 'Resend', async () => {

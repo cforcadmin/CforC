@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { recordRun, cronAuthorized, triggerOf, type RunNote } from '@/lib/ocRunLog'
 import { getSeatHolder } from '@/lib/ocRoles'
 import { sendOcEmail, treasuryReminderEmailHtml, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
 
@@ -117,7 +118,7 @@ const GREEK_MONTHS = [
   'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος',
 ]
 
-export async function GET(request: NextRequest) {
+async function runJob(request: NextRequest, log: RunNote) {
   try {
     // Verify cron secret. Without the `!CRON_SECRET` guard a missing env var
     // turns the check into `Bearer undefined` — which anyone can send.
@@ -175,6 +176,7 @@ export async function GET(request: NextRequest) {
 
     if (logs.length === 0 && newSubscribers.length === 0) {
       console.log('[MONTHLY-REPORT] No profile changes or new subscribers in previous month')
+      log.note(`${monthName} ${year}: καμία αλλαγή προφίλ`)
       return NextResponse.json({ message: 'No changes to report', month: `${monthName} ${year}` })
     }
 
@@ -341,6 +343,7 @@ export async function GET(request: NextRequest) {
     const snapshot = await captureListSnapshot()
     console.log(`[MONTHLY-REPORT] list snapshot: ${snapshot}`)
 
+    log.note(`${monthName} ${year}: ${logs.length} αλλαγές, ${newSubscribers.length} νέοι συνδρομητές`)
     return NextResponse.json({
       success: true,
       month: `${monthName} ${year}`,
@@ -353,4 +356,13 @@ export async function GET(request: NextRequest) {
     console.error('[MONTHLY-REPORT] Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+}
+
+/**
+ * Το περίβλημα καταγραφής. Ο έλεγχος μυστικού γίνεται ΠΡΙΝ από αυτό ώστε μια
+ * ανεπιτυχής κλήση να μη γράφει «εκτέλεση» στο ημερολόγιο.
+ */
+export async function GET(request: NextRequest) {
+  if (!cronAuthorized(request)) return runJob(request, { note: () => {} })
+  return recordRun('/api/admin/monthly-profile-report', log => runJob(request, log), { trigger: triggerOf(request) })
 }

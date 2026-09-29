@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { recordRun, cronAuthorized, triggerOf, type RunNote } from '@/lib/ocRunLog'
 import { sendOcEmail, financeMonthlyReminderEmailHtml } from '@/lib/ocEmails'
 import { getSeatHolder } from '@/lib/ocRoles'
 
@@ -34,7 +35,7 @@ function athensParts(offsetDays = 0) {
   return { year: get('year'), month: get('month'), day: get('day') }
 }
 
-export async function GET(request: NextRequest) {
+async function runJob(request: NextRequest, log: RunNote) {
   // Χωρίς μυστικό η διαδρομή κλείνει — δεν ανοίγει (βλ. payment-reminders)
   if (!CRON_SECRET || request.headers.get('authorization') !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -43,6 +44,7 @@ export async function GET(request: NextRequest) {
   const force = request.nextUrl.searchParams.get('force') === '1'
   const tomorrow = athensParts(1)
   if (!force && tomorrow.day !== 1) {
+    log.note('δεν ήταν η τελευταία μέρα του μήνα — καμία ενέργεια')
     return NextResponse.json({ sent: false, reason: 'not last day of month (Athens)' })
   }
 
@@ -59,5 +61,15 @@ export async function GET(request: NextRequest) {
   if (!ok) {
     return NextResponse.json({ sent: false, error: 'email send failed' }, { status: 500 })
   }
+  log.note(`υπενθύμιση κλεισίματος ${monthLabel}`)
   return NextResponse.json({ sent: true, to, monthLabel, test: force })
+}
+
+/**
+ * Το περίβλημα καταγραφής. Ο έλεγχος μυστικού γίνεται ΠΡΙΝ από αυτό ώστε μια
+ * ανεπιτυχής κλήση να μη γράφει «εκτέλεση» στο ημερολόγιο.
+ */
+export async function GET(request: NextRequest) {
+  if (!cronAuthorized(request)) return runJob(request, { note: () => {} })
+  return recordRun('/api/cron/finance-monthly-reminder', log => runJob(request, log), { trigger: triggerOf(request) })
 }

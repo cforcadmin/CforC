@@ -201,3 +201,75 @@ export function worstOf(checks: HealthCheck[]): HealthState {
   if (checks.some(c => c.state === 'unknown')) return 'unknown'
   return 'ok'
 }
+
+/**
+ * Κρίση για μία προγραμματισμένη εργασία.
+ *
+ * Τέσσερις καταστάσεις που ΔΕΝ πρέπει να μπερδευτούν, γιατί καθεμιά θέλει
+ * άλλη κίνηση:
+ *   · έτρεξε κανονικά                     → εντάξει
+ *   · έτρεξε και πέταξε σφάλμα            → βλάβη, με το μήνυμα
+ *   · ξεκίνησε και δεν τελείωσε ποτέ      → βλάβη (timeout/όριο μνήμης)
+ *   · δεν υπάρχει εγγραφή ενώ έπρεπε      → βλάβη, ΔΕΝ κλήθηκε καθόλου
+ *
+ * Η τέταρτη είναι ο λόγος ύπαρξης του ημερολογίου: η Vercel δεν γράφει τίποτα
+ * για μια εκτέλεση που δεν έγινε.
+ */
+export interface CronRunSummary {
+  Outcome: 'running' | 'ok' | 'error'
+  StartedAt: string
+  Summary?: string | null
+  ErrorText?: string | null
+}
+
+export function judgeCronJob(
+  label: string,
+  lastRun: CronRunSummary | null,
+  overdue: number | null,
+  now: Date = new Date(),
+): Omit<SubCheck, 'key' | 'label'> {
+  const late = overdue !== null && overdue > 0
+  const lateText = late ? `αργεί ${Math.round(overdue / 3_600_000)}h` : ''
+
+  if (!lastRun) {
+    // Πρώτες μέρες μετά την εγκατάσταση: κενό ημερολόγιο δεν είναι βλάβη
+    return late
+      ? { state: 'down', detail: `καμία εκτέλεση — ${lateText}`, action: 'Vercel → Settings → Cron Jobs → View Logs' }
+      : { state: 'unknown', detail: 'καμία καταγραφή ακόμη' }
+  }
+
+  const when = ago(lastRun.StartedAt)
+
+  if (lastRun.Outcome === 'error') {
+    return {
+      state: 'down',
+      detail: `απέτυχε ${when}: ${String(lastRun.ErrorText || '').slice(0, 80) || 'χωρίς μήνυμα'}`,
+      action: 'Vercel → Logs, φίλτρο στη διαδρομή της εργασίας',
+    }
+  }
+
+  if (lastRun.Outcome === 'running') {
+    const startedMsAgo = now.getTime() - Date.parse(lastRun.StartedAt)
+    // Καμία εργασία δεν κρατά πάνω από 60s (maxDuration)· η μισή ώρα είναι
+    // γενναιόδωρη και αποκλείει την περίπτωση «τρέχει αυτή τη στιγμή».
+    if (startedMsAgo > 30 * 60_000) {
+      return {
+        state: 'down',
+        detail: `ξεκίνησε ${when} και δεν τελείωσε ποτέ`,
+        action: 'Πιθανό timeout ή όριο μνήμης — δες το log της εκτέλεσης',
+      }
+    }
+    return { state: 'ok', detail: 'τρέχει αυτή τη στιγμή' }
+  }
+
+  if (late) {
+    return {
+      state: 'down',
+      detail: `${lateText} — τελευταία επιτυχία ${when}`,
+      action: 'Vercel → Settings → Cron Jobs: είναι ενεργό; Έχει περάσει deployment;',
+    }
+  }
+
+  const did = String(lastRun.Summary || '').trim()
+  return { state: 'ok', detail: did ? `${when} · ${did}` : when }
+}

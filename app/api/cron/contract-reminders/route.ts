@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { recordRun, cronAuthorized, triggerOf, type RunNote } from '@/lib/ocRunLog'
 import { sendOcEmail, contractsDigestEmailHtml, contractUrgentEmailHtml, FINANCE_FROM, FINANCE_EMAIL, ADMIN_EMAIL, type DigestBlock, type DigestLine } from '@/lib/ocEmails'
 import { SEAT_MAILBOX } from '@/lib/ocRoles'
 import { buildBuckets, findUrgent, isDigestDay, totalCount, active, type ReminderContract, type ReminderItem } from '@/lib/contractReminders'
@@ -62,7 +63,7 @@ const toLine = (i: ReminderItem): DigestLine => ({
   name: i.name, project: i.project, amount: eur(i.amount), date: grDate(i.date), days: i.days, note: i.note,
 })
 
-export async function GET(request: NextRequest) {
+async function runJob(request: NextRequest, log: RunNote) {
   if (!CRON_SECRET || request.headers.get('authorization') !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -170,9 +171,19 @@ export async function GET(request: NextRequest) {
     claims = { checked: list.length, reminded }
   }
 
+  log.note(`${sent.length} ειδοποιήσεις${digest ? ' + σύνοψη' : ''}${claims ? ` · εξοδολόγια: ${claims.reminded}/${claims.checked}` : ''}`)
   return NextResponse.json({
     ok: true, today, test, digest, claims, urgentSent: sent.filter(s => !s.startsWith('digest') && !s.startsWith('claim:')).length, sent,
     note: test ? `Δοκιμή — όλα στάλθηκαν μόνο στο ${SEAT_MAILBOX.it}` : undefined,
     adminMailbox: ADMIN_EMAIL,
   })
+}
+
+/**
+ * Το περίβλημα καταγραφής. Ο έλεγχος μυστικού γίνεται ΠΡΙΝ από αυτό ώστε μια
+ * ανεπιτυχής κλήση να μη γράφει «εκτέλεση» στο ημερολόγιο.
+ */
+export async function GET(request: NextRequest) {
+  if (!cronAuthorized(request)) return runJob(request, { note: () => {} })
+  return recordRun('/api/cron/contract-reminders', log => runJob(request, log), { trigger: triggerOf(request) })
 }

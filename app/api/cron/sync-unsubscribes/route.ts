@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { recordRun, cronAuthorized, triggerOf, type RunNote } from '@/lib/ocRunLog'
 import { syncUnsubscribes } from '@/lib/newsletterUnsubscribes'
 
 export const maxDuration = 300
@@ -16,7 +17,7 @@ export const maxDuration = 300
 
 const CRON_SECRET = process.env.CRON_SECRET
 
-export async function GET(request: NextRequest) {
+async function runJob(request: NextRequest, log: RunNote) {
   // Το `!CRON_SECRET` ΔΕΝ είναι περιττό: χωρίς τη μεταβλητή η σύγκριση γίνεται
   // με «Bearer undefined» και περνά όποιος το στείλει.
   if (!CRON_SECRET || request.headers.get('authorization') !== `Bearer ${CRON_SECRET}`) {
@@ -27,9 +28,20 @@ export async function GET(request: NextRequest) {
     const started = Date.now()
     const r = await syncUnsubscribes({ dryRun })
     if (!r.ok) console.error('[UNSUB-SYNC] σταμάτησε:', r.stopped)
+    const u = (r as { unsubscribed?: unknown })?.unsubscribed
+    log.note(`${typeof u === 'number' ? u : 0} απεγγραφές${dryRun ? ' (δοκιμή)' : ''}`)
     return NextResponse.json({ ...r, dryRun, seconds: Math.round((Date.now() - started) / 1000) })
   } catch (err) {
     console.error('[UNSUB-SYNC] error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+}
+
+/**
+ * Το περίβλημα καταγραφής. Ο έλεγχος μυστικού γίνεται ΠΡΙΝ από αυτό ώστε μια
+ * ανεπιτυχής κλήση να μη γράφει «εκτέλεση» στο ημερολόγιο.
+ */
+export async function GET(request: NextRequest) {
+  if (!cronAuthorized(request)) return runJob(request, { note: () => {} })
+  return recordRun('/api/cron/sync-unsubscribes', log => runJob(request, log), { trigger: triggerOf(request) })
 }
