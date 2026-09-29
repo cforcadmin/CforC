@@ -186,7 +186,11 @@ describe('Προγραμματισμένες εργασίες', () => {
 
   it('«έτρεξε χωρίς να έχει δουλειά» ΔΕΝ μοιάζει με «δεν έτρεξε»', () => {
     const idle = judgeCronJob('Χ', { Outcome: 'ok', StartedAt: ago(3), Summary: 'καμία εκκρεμότητα' }, 0, now)
-    const missing = judgeCronJob('Χ', null, 5 * HOUR, now)
+    // Η προθεσμία είναι ΜΕΤΑ το ξεκίνημα του ημερολογίου, άρα η απουσία μετράει
+    const missing = judgeCronJob('Χ', null, 5 * HOUR, now, {
+      dueAt: new Date(now.getTime() - 5 * HOUR),
+      loggingSince: new Date(now.getTime() - 30 * HOUR),
+    })
     expect(idle.state).toBe('ok')
     expect(missing.state).toBe('down')
     expect(missing.detail).toContain('καμία εκτέλεση')
@@ -216,8 +220,41 @@ describe('Προγραμματισμένες εργασίες', () => {
     expect(r.action).toBeTruthy()
   })
 
-  it('άδειο ημερολόγιο χωρίς καθυστέρηση = άγνωστο, ΟΧΙ βλάβη', () => {
-    // Τις πρώτες μέρες μετά την εγκατάσταση δεν υπάρχουν ακόμη εγγραφές
-    expect(judgeCronJob('Χ', null, 0, now).state).toBe('unknown')
+  /**
+   * Η ΠΡΩΤΗ ΜΕΡΑ. Το προηγούμενο τεστ εδώ περνούσε `overdue = 0` μαζί με
+   * `lastRun = null` — συνδυασμός που ΔΕΝ συμβαίνει ποτέ στην πραγματικότητα,
+   * γιατί μια εργασία χωρίς εγγραφή έχει πάντα περάσει την προθεσμία της.
+   * Περνούσε λοιπόν, ενώ στην παραγωγή και οι έξι εργασίες βγήκαν κόκκινες
+   * (29/9/2026). Ίδιο λάθος με το όριο των 8s: κλάδος που τον επιβεβαιώνει
+   * τεστ το οποίο δεν μπορεί να συμβεί.
+   */
+  describe('όταν το ημερολόγιο μόλις ξεκίνησε', () => {
+    const loggingSince = new Date('2026-09-29T10:45:00Z')
+
+    it('προθεσμία ΠΡΙΝ την πρώτη καταγραφή → άγνωστο, όχι βλάβη', () => {
+      const dueAt = new Date('2026-09-29T08:00:00Z')   // έτρεξε, απλώς δεν το γράφαμε
+      const r = judgeCronJob('Χ', null, 5 * HOUR, now, { dueAt, loggingSince })
+      expect(r.state).toBe('unknown')
+      expect(r.detail).toMatch(/δεν καταγραφόταν/)
+    })
+
+    it('μηνιαία εργασία με προθεσμία δύο εβδομάδες πριν → άγνωστο', () => {
+      // «Συγχρονισμός απεγγραφών — αργεί 411h» ήταν ακριβώς αυτό
+      const dueAt = new Date('2026-09-12T06:00:00Z')
+      expect(judgeCronJob('Χ', null, 411 * HOUR, now, { dueAt, loggingSince }).state).toBe('unknown')
+    })
+
+    it('προθεσμία ΜΕΤΑ την πρώτη καταγραφή και καμία εγγραφή → ΒΛΑΒΗ στ\' αλήθεια', () => {
+      const dueAt = new Date('2026-09-29T11:00:00Z')   // μετά το ξεκίνημα του ημερολογίου
+      const r = judgeCronJob('Χ', null, 2 * HOUR, now, { dueAt, loggingSince })
+      expect(r.state).toBe('down')
+      expect(r.action).toBeTruthy()
+    })
+
+    it('τελείως άδειο ημερολόγιο → άγνωστο για όλα', () => {
+      const r = judgeCronJob('Χ', null, 99 * HOUR, now, { dueAt: new Date('2026-09-01T09:00:00Z'), loggingSince: null })
+      expect(r.state).toBe('unknown')
+      expect(r.detail).toMatch(/μόλις ξεκίνησε/)
+    })
   })
 })

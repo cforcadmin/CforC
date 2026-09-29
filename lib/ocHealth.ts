@@ -227,12 +227,31 @@ export function judgeCronJob(
   lastRun: CronRunSummary | null,
   overdue: number | null,
   now: Date = new Date(),
+  /**
+   * ΤΟ ΗΜΕΡΟΛΟΓΙΟ ΕΧΕΙ ΓΕΝΕΘΛΙΑ. Πριν από την πρώτη του εγγραφή δεν ξέρουμε
+   * τίποτα — και «δεν ξέρω» δεν είναι «χάλασε».
+   *
+   * Χωρίς αυτό, την πρώτη μέρα και οι έξι εργασίες βγήκαν ΚΟΚΚΙΝΕΣ ενώ όλες
+   * είχαν τρέξει κανονικά (29/9/2026): «Συγχρονισμός απεγγραφών — αργεί 411h»
+   * σήμαινε απλώς ότι η μηνιαία θέση του ήταν στις 12/9, δύο εβδομάδες πριν
+   * αρχίσουμε να γράφουμε. Μια οθόνη που ξεκινά με πέντε ψεύτικες βλάβες
+   * διδάσκει αμέσως ότι το κόκκινο αγνοείται.
+   */
+  ctx: { dueAt?: Date | null; loggingSince?: Date | null } = {},
 ): Omit<SubCheck, 'key' | 'label'> {
   const late = overdue !== null && overdue > 0
   const lateText = late ? `αργεί ${Math.round(overdue / 3_600_000)}h` : ''
 
   if (!lastRun) {
-    // Πρώτες μέρες μετά την εγκατάσταση: κενό ημερολόγιο δεν είναι βλάβη
+    const { dueAt, loggingSince } = ctx
+    if (!loggingSince) {
+      return { state: 'unknown', detail: 'το ημερολόγιο μόλις ξεκίνησε — καμία καταγραφή ακόμη' }
+    }
+    // Η προθεσμία πέρασε ΠΡΙΝ αρχίσουμε να καταγράφουμε: δεν έχουμε στοιχεία,
+    // ούτε υπέρ ούτε κατά. Η επόμενη εκτέλεση θα δώσει την απάντηση.
+    if (dueAt && dueAt.getTime() < loggingSince.getTime()) {
+      return { state: 'unknown', detail: `δεν καταγραφόταν ακόμη — αναμονή για την επόμενη εκτέλεση` }
+    }
     return late
       ? { state: 'down', detail: `καμία εκτέλεση — ${lateText}`, action: 'Vercel → Settings → Cron Jobs → View Logs' }
       : { state: 'unknown', detail: 'καμία καταγραφή ακόμη' }

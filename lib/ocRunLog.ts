@@ -165,6 +165,21 @@ export async function fetchRunLog(days = RUN_LOG_RETENTION_DAYS): Promise<RunLog
   return (r.json?.data || []) as RunLogRow[]
 }
 
+/**
+ * Πότε ξεκίνησε να υπάρχει το ημερολόγιο — η παλιότερη εγγραφή του.
+ *
+ * Χωρίς αυτό δεν μπορούμε να ξεχωρίσουμε «δεν έτρεξε» από «δεν το γράφαμε
+ * ακόμη», και την πρώτη μέρα η οθόνη δείχνει ψεύτικες βλάβες. Δεν το κρατάμε
+ * σε σταθερά: αν κάποτε αδειάσει η συλλογή, η σταθερά θα έλεγε ψέματα ενώ
+ * αυτό διορθώνεται μόνο του.
+ */
+export async function fetchLoggingSince(): Promise<Date | null> {
+  const r = await strapi('/oc-run-logs?pagination[limit]=1&sort[0]=StartedAt:asc&fields[0]=StartedAt')
+  const iso = (r.json?.data || [])[0]?.StartedAt
+  const t = Date.parse(String(iso || ''))
+  return Number.isFinite(t) ? new Date(t) : null
+}
+
 /** Η τελευταία εγγραφή κάθε εργασίας */
 export function latestPerJob(rows: RunLogRow[]): Map<string, RunLogRow> {
   const out = new Map<string, RunLogRow>()
