@@ -1,34 +1,22 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
 import CombinedCtaSection from '@/components/CombinedCtaSection'
 import ScrollToTop from '@/components/ScrollToTop'
-import MembershipRegistrationModal from '@/components/MembershipRegistrationModal'
-import ThankYouModal from '@/components/ThankYouModal'
 import Link from 'next/link'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import Image from 'next/image'
 import { useNavMode } from '@/components/nav/useNavMode'
 
-// Google Form configuration
-const GOOGLE_FORM_BASE_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfZt1bKl2vOOnztzSozcd1C0SCLEifXlvzUQgsG6gnQESbgMw/viewform'
-const TRACKING_ID_ENTRY = 'entry.2144891364'
-
 function ParticipationContent() {
   const { mode } = useNavMode()
   const cool = mode === 'cool'
-  const [showRegistrationModal, setShowRegistrationModal] = useState(false)
-  const [showThankYouModal, setShowThankYouModal] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
-  const [isPolling, setIsPolling] = useState(false)
-  const [trackingId, setTrackingId] = useState<string | null>(null)
   const [accessibilityButtonScale, setAccessibilityButtonScale] = useState(1)
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const searchParams = useSearchParams()
   const router = useRouter()
 
   // Handle scroll for accessibility button fade
@@ -51,94 +39,6 @@ function ParticipationContent() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
-
-  // Generate a unique tracking ID
-  const generateTrackingId = useCallback(() => {
-    return `cforc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-  }, [])
-
-  // Check if form was submitted
-  const checkSubmission = useCallback(async (id: string) => {
-    try {
-      const response = await fetch(`/api/membership/check-submission?trackingId=${encodeURIComponent(id)}`)
-      const data = await response.json()
-      return data.submitted === true
-    } catch (error) {
-      console.error('Error checking submission:', error)
-      return false
-    }
-  }, [])
-
-  // Start polling for submission
-  const startPolling = useCallback((id: string) => {
-    setIsPolling(true)
-
-    // Poll every 3 seconds
-    pollingIntervalRef.current = setInterval(async () => {
-      const submitted = await checkSubmission(id)
-      if (submitted) {
-        // Stop polling and show thank you modal
-        if (pollingIntervalRef.current) {
-          clearInterval(pollingIntervalRef.current)
-          pollingIntervalRef.current = null
-        }
-        setIsPolling(false)
-        setTrackingId(null)
-        setShowRegistrationModal(false)
-        setShowThankYouModal(true)
-      }
-    }, 3000)
-  }, [checkSubmission])
-
-  // Stop polling
-  const stopPolling = useCallback(() => {
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current)
-      pollingIntervalRef.current = null
-    }
-    setIsPolling(false)
-  }, [])
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current)
-      }
-    }
-  }, [])
-
-  // Check for submitted query parameter on mount (fallback for redirect method)
-  useEffect(() => {
-    if (searchParams.get('submitted') === 'true') {
-      setShowThankYouModal(true)
-      router.replace('/participation', { scroll: false })
-    }
-  }, [searchParams, router])
-
-  const handleOpenForm = () => {
-    // Generate tracking ID and open form with pre-filled parameter
-    const newTrackingId = generateTrackingId()
-    setTrackingId(newTrackingId)
-
-    const formUrl = `${GOOGLE_FORM_BASE_URL}?${TRACKING_ID_ENTRY}=${encodeURIComponent(newTrackingId)}`
-    window.open(formUrl, '_blank')
-
-    // Start polling for submission
-    startPolling(newTrackingId)
-  }
-
-  const handleModalClose = () => {
-    setShowRegistrationModal(false)
-    // Keep polling active even if modal is closed - user might still submit
-  }
-
-  const handleManualConfirm = () => {
-    // User manually confirms they submitted - stop polling and show thank you
-    stopPolling()
-    setTrackingId(null)
-    setShowThankYouModal(true)
-  }
 
   return (
     <div className="min-h-screen">
@@ -384,21 +284,6 @@ function ParticipationContent() {
       <Footer />
       <CookieConsent />
       <ScrollToTop />
-
-      {/* Membership Registration Modal */}
-      <MembershipRegistrationModal
-        isOpen={showRegistrationModal}
-        onClose={handleModalClose}
-        onProceed={handleOpenForm}
-        onFormSubmitted={handleManualConfirm}
-        isPolling={isPolling}
-      />
-
-      {/* Thank You Modal - shown after form submission */}
-      <ThankYouModal
-        isOpen={showThankYouModal}
-        onClose={() => setShowThankYouModal(false)}
-      />
     </div>
   )
 }

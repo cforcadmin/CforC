@@ -103,3 +103,43 @@ describe('Ζωτικά — κρίση κατάστασης', () => {
     expect(ago('όχι ημερομηνία')).toBe('ποτέ')
   })
 })
+
+describe('Ομαδοποιημένος έλεγχος (αρχεία Google)', () => {
+  const s = (key: string, label: string, state: any) => ({ key, label, state, detail: '' })
+
+  it('η γραμμή παίρνει τη ΧΕΙΡΟΤΕΡΗ κατάσταση των αρχείων της', () => {
+    const { summariseGroup } = require('@/lib/ocHealth')
+    expect(summariseGroup([s('a', 'Α', 'ok'), s('b', 'Β', 'down')]).state).toBe('down')
+    expect(summariseGroup([s('a', 'Α', 'ok'), s('b', 'Β', 'warn')]).state).toBe('warn')
+    expect(summariseGroup([s('a', 'Α', 'ok'), s('b', 'Β', 'ok')]).state).toBe('ok')
+  })
+
+  it('ΟΝΟΜΑΤΙΖΕΙ τα προβληματικά — δεν χρειάζεται άνοιγμα για να μάθεις ποιο', () => {
+    const { summariseGroup } = require('@/lib/ocHealth')
+    const r = summariseGroup([
+      s('finance', 'ΕΣΟΔΑ-ΕΞΟΔΑ', 'ok'),
+      s('registry', 'CforC Μητρώο', 'down'),
+      s('cal', 'Ημερολόγιο', 'ok'),
+    ])
+    expect(r.detail).toContain('2/3 εντάξει')
+    expect(r.detail).toContain('CforC Μητρώο')
+  })
+
+  it('όλα καλά → σκέτος μετρητής χωρίς θόρυβο', () => {
+    const { summariseGroup } = require('@/lib/ocHealth')
+    expect(summariseGroup([s('a', 'Α', 'ok'), s('b', 'Β', 'ok')]).detail).toBe('2/2 εντάξει')
+  })
+
+  it('το «άγνωστο» μετράει ως πρόβλημα, όχι ως εντάξει', () => {
+    const { summariseGroup } = require('@/lib/ocHealth')
+    const r = summariseGroup([s('a', 'Α', 'ok'), s('b', 'Βήτα', 'unknown')])
+    expect(r.state).toBe('unknown')
+    expect(r.detail).toContain('Βήτα')
+  })
+
+  it('το αποσυρμένο MEMBERSHIP_WEBHOOK_SECRET δεν ζητείται πια', () => {
+    const { EXPECTED_SECRETS } = require('@/lib/ocHealth')
+    expect(EXPECTED_SECRETS).not.toContain('MEMBERSHIP_WEBHOOK_SECRET')
+    expect(EXPECTED_SECRETS).toContain('SHEET_WEBAPP_URL')
+  })
+})

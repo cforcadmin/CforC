@@ -12,6 +12,13 @@ import { useCallback, useEffect, useState } from 'react'
 
 type HealthState = 'ok' | 'warn' | 'down' | 'unknown'
 
+interface SubCheck {
+  key: string
+  label: string
+  state: HealthState
+  detail: string
+}
+
 interface Check {
   key: string
   label: string
@@ -19,6 +26,8 @@ interface Check {
   detail: string
   ms?: number
   action?: string
+  /** Ομαδοποιημένος έλεγχος (π.χ. τα αρχεία Google) — ανοίγει με κλικ */
+  items?: SubCheck[]
 }
 
 interface Payload {
@@ -47,6 +56,8 @@ const HEADLINE: Record<HealthState, string> = {
 
 export default function OcSecurity() {
   const [data, setData] = useState<Payload | null>(null)
+  /** Ποιες ομαδοποιημένες γραμμές είναι ανοιχτές */
+  const [open, setOpen] = useState<Record<string, boolean>>({})
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -93,21 +104,51 @@ export default function OcSecurity() {
 
         {data && (
           <div className="grid gap-2">
-            {data.checks.map(c => (
-              <div key={c.key}
-                className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-gray-200 dark:border-gray-600 px-4 py-3">
-                <span aria-hidden="true" className={`w-2.5 h-2.5 rounded-full shrink-0 ${TONE[c.state].dot}`} />
-                <span className="font-semibold min-w-0">{c.label}</span>
-                <span className={`text-xs font-bold ${TONE[c.state].text}`}>{TONE[c.state].word}</span>
-                <span className="text-sm text-gray-600 dark:text-gray-400 min-w-0">{c.detail}</span>
-                {typeof c.ms === 'number' && (
-                  <span className="text-xs text-gray-500 tabular-nums ml-auto">{c.ms} ms</span>
-                )}
-                {c.action && (
-                  <p className="w-full text-xs text-gray-600 dark:text-gray-300 pl-6">→ {c.action}</p>
-                )}
-              </div>
-            ))}
+            {data.checks.map(c => {
+              const group = !!c.items?.length
+              const isOpen = !!open[c.key]
+              return (
+                <div key={c.key}
+                  className="rounded-2xl border border-gray-200 dark:border-gray-600 px-4 py-3">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span aria-hidden="true" className={`w-2.5 h-2.5 rounded-full shrink-0 ${TONE[c.state].dot}`} />
+                    {group ? (
+                      <button type="button" onClick={() => setOpen(o => ({ ...o, [c.key]: !o[c.key] }))}
+                        aria-expanded={isOpen}
+                        className="font-semibold min-w-0 text-left hover:text-coral">
+                        {c.label}
+                        <span aria-hidden="true" className={`ml-1.5 inline-block text-coral transition-transform ${isOpen ? 'rotate-180' : ''}`}>▾</span>
+                      </button>
+                    ) : (
+                      <span className="font-semibold min-w-0">{c.label}</span>
+                    )}
+                    <span className={`text-xs font-bold ${TONE[c.state].text}`}>{TONE[c.state].word}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400 min-w-0">{c.detail}</span>
+                    {typeof c.ms === 'number' && (
+                      <span className="text-xs text-gray-500 tabular-nums ml-auto">{c.ms} ms</span>
+                    )}
+                  </div>
+                  {c.action && (
+                    <p className="text-xs text-gray-600 dark:text-gray-300 pl-6 pt-1">→ {c.action}</p>
+                  )}
+                  {/* Τα επιμέρους αρχεία: ανοίγουν με κλικ, αλλά ό,τι ΔΕΝ είναι
+                      εντάξει φαίνεται ήδη στη σύνοψη της γραμμής — κανείς δεν
+                      χρειάζεται να ανοίξει για να μάθει ότι κάτι έσπασε. */}
+                  {group && isOpen && (
+                    <div className="mt-3 grid gap-1.5 pl-6">
+                      {c.items!.map(it => (
+                        <div key={it.key} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
+                          <span aria-hidden="true" className={`w-2 h-2 rounded-full shrink-0 ${TONE[it.state].dot}`} />
+                          <span className="font-medium">{it.label}</span>
+                          <span className={`text-xs font-bold ${TONE[it.state].text}`}>{TONE[it.state].word}</span>
+                          <span className="text-gray-600 dark:text-gray-400">{it.detail}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
 

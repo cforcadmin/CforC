@@ -5,8 +5,10 @@ import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import {
   guard, checkSecretsPresent, judgeDeployment, judgeCertificate, judgeStrapi,
-  judgeUnarchived, worstOf, type HealthCheck, type VercelDeployment,
+  judgeUnarchived, worstOf, summariseGroup, type HealthCheck, type SubCheck,
+  type VercelDeployment,
 } from '@/lib/ocHealth'
+import { getAccessToken, SCOPES, googleConfigured } from '@/lib/googleAuth'
 
 export const maxDuration = 60
 
@@ -57,6 +59,32 @@ function certDaysLeft(host: string): Promise<number | null> {
   })
 }
 
+/** Υπο-έλεγχος που δεν ρίχνει ποτέ τους αδελφούς του */
+async function sub(
+  key: string, label: string, fn: () => Promise<Omit<SubCheck, 'key' | 'label'>>,
+): Promise<SubCheck> {
+  try { return { key, label, ...(await fn()) } } catch (err) {
+    return { key, label, state: 'unknown', detail: err instanceof Error ? err.message : 'σφάλμα' }
+  }
+}
+
+/** Ανάγνωση με τον λογαριασμό υπηρεσίας — ΜΟΝΟ μεταδεδομένα, ποτέ περιεχόμενο */
+async function googleGet(scope: string, url: string): Promise<Omit<SubCheck, 'key' | 'label'>> {
+  if (!googleConfigured()) return { state: 'down', detail: 'λείπει ο λογαριασμός υπηρεσίας' }
+  const token = await getAccessToken(scope)
+  if (!token) return { state: 'down', detail: 'δεν εκδόθηκε token — έλεγξε τον λογαριασμό υπηρεσίας' }
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+  if (r.ok) return { state: 'ok', detail: 'προσβάσιμο' }
+  if (r.status === 404) return { state: 'down', detail: 'δεν βρέθηκε — λάθος id ή δεν έχει διαμοιραστεί' }
+  if (r.status === 403) return { state: 'down', detail: 'χωρίς δικαίωμα — μοιράσου το με τον λογαριασμό υπηρεσίας' }
+  return { state: 'down', detail: `HTTP ${r.status}` }
+}
+
+/** Φύλλο Google: αρκεί ο τίτλος για να ξέρουμε ότι το βλέπουμε */
+const sheetSub = (key: string, label: string, id: string) =>
+  sub(key, label, () => googleGet(SCOPES.sheets,
+    `https://sheets.googleapis.com/v4/spreadsheets/${id}?fields=properties.title`))
+
 export async function GET() {
   const denied = await authorizeIt()
   if (denied) return denied
@@ -98,25 +126,76 @@ export async function GET() {
       return judgeDeployment(latest)
     }),
 
-    // ── ΕΣΟΔΑ-ΕΞΟΔΑ: το Apps Script που γράφει στο φύλλο και στο Drive
-    guard('sheet', 'ΕΣΟΔΑ-ΕΞΟΔΑ', async () => {
-      const url = process.env.FINANCE_SHEET_WEBAPP_URL
-      const secret = process.env.FINANCE_SHEET_WEBAPP_SECRET
-      if (!url || !secret) return { state: 'down' as const, detail: 'δεν έχει ρυθμιστεί' }
-      const r = await fetch(url, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ secret, action: 'checkYearStructure', year: new Date().getFullYear() }),
-        redirect: 'follow', cache: 'no-store',
-      })
-      const text = await r.text()
-      let j: any = null
-      try { j = JSON.parse(text) } catch { /* σελίδα σφάλματος του Apps Script */ }
-      if (j?.ok) return { state: 'ok' as const, detail: 'απαντά' }
-      const detail = String(j?.error || text.slice(0, 80))
-      return /unauthorized/i.test(detail)
-        ? { state: 'down' as const, detail: 'απορρίπτει το μυστικό', action: 'Σύγκρινε το FINANCE_SHEET_WEBAPP_SECRET με το Apps Script' }
-        : { state: 'down' as const, detail: detail || 'δεν απαντά' }
-    }),
+    // ── Google: ΟΛΑ τα αρχεία και οι υπηρεσίες, σε ΜΙΑ γραμμή που ανοίγει.
+    //    Επτά χωριστές γραμμές θα έπνιγαν τα υπόλοιπα· και ένα σπασμένο
+    //    Μητρώο είναι εξίσου σοβαρό με ένα σπασμένο ΕΣΟΔΑ-ΕΞΟΔΑ.
+    guard('google', 'Google — αρχεία & υπηρεσίες', async () => {
+      const items = await Promise.all([
+        // ΕΣΟΔΑ-ΕΞΟΔΑ: έχει ΑΛΗΘΙΝΟ έλεγχο μόνο για ανάγνωση
+        sub('finance', 'ΕΣΟΔΑ-ΕΞΟΔΑ (Apps Script)', async () => {
+          const url = process.env.FINANCE_SHEET_WEBAPP_URL
+          const secret = process.env.FINANCE_SHEET_WEBAPP_SECRET
+          if (!url || !secret) return { state: 'down' as const, detail: 'δεν έχει ρυθμιστεί' }
+          const r = await fetch(url, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ secret, action: 'checkYearStructure', year: new Date().getFullYear() }),
+            redirect: 'follow', cache: 'no-store',
+          })
+          const text = await r.text()
+          let j: any = null
+          try { j = JSON.parse(text) } catch { /* σελίδα σφάλματος */ }
+          if (j?.ok) return { state: 'ok' as const, detail: 'απαντά, μυστικό δεκτό' }
+          const detail = String(j?.error || text.slice(0, 60))
+          return /unauthorized/i.test(detail)
+            ? { state: 'down' as const, detail: 'απορρίπτει το μυστικό' }
+            : { state: 'down' as const, detail: detail || 'δεν απαντά' }
+        }),
+
+        /**
+         * CforC Μητρώο: το Apps Script εκθέτει ΜΟΝΟ ενέργειες ΕΓΓΡΑΦΗΣ
+         * (appendApplicant, removeMember, recordPayment). Καμία δεν επιτρέπεται
+         * ως δοκιμή. Άρα ελέγχουμε ΜΟΝΟ ότι η διεύθυνση ζει, με GET — δεν
+         * αγγίζει καθόλου τη doPost. Πιάνει την πιο συχνή βλάβη: νέο
+         * deployment, νέα διεύθυνση, παλιά μεταβλητή.
+         */
+        sub('registry', 'CforC Μητρώο (Apps Script)', async () => {
+          const url = process.env.SHEET_WEBAPP_URL
+          if (!url) return { state: 'down' as const, detail: 'δεν έχει ρυθμιστεί' }
+          const r = await fetch(url, { method: 'GET', redirect: 'follow', cache: 'no-store' })
+          if (r.status === 404) {
+            return { state: 'down' as const, detail: 'η διεύθυνση δεν υπάρχει — πιθανό νέο deployment' }
+          }
+          if (!r.ok) return { state: 'down' as const, detail: `HTTP ${r.status}` }
+          return { state: 'ok' as const, detail: 'η διεύθυνση ζει (το μυστικό δεν ελέγχεται με GET)' }
+        }),
+
+        sheetSub('contracts', 'Μητρώο Συμβάσεων',
+          process.env.CONTRACTS_SHEET_ID || '1xjl_u5pcFqYgmbYmhZV1Pw8VJXNDibOHC04mPcytxuU'),
+        sheetSub('librarySheet', 'Βιβλιοθήκη — Λίστα περιεχομένων',
+          process.env.GOOGLE_LIBRARY_SHEET_ID || '1lyOpSQ-NUSoaLWeMg8yo5uwjLsfQJxo9XmyGLcPoAko'),
+
+        sub('libraryFolder', 'Βιβλιοθήκη — φάκελος Drive', async () => {
+          const id = process.env.GOOGLE_LIBRARY_FOLDER_ID || '1QrZV0ixXvjITBsU95AHmoeg2Kqa2RJj9'
+          return googleGet(SCOPES.drive,
+            `https://www.googleapis.com/drive/v3/files/${id}?fields=name&supportsAllDrives=true`)
+        }),
+
+        sub('agendaDoc', 'Ημερήσια διάταξη (Doc)', async () => {
+          const id = process.env.GOOGLE_AGENDA_DOC_ID
+          if (!id) return { state: 'unknown' as const, detail: 'δεν έχει οριστεί GOOGLE_AGENDA_DOC_ID' }
+          return googleGet(SCOPES.documents,
+            `https://docs.googleapis.com/v1/documents/${id}?fields=title`)
+        }),
+
+        sub('calendar', 'Ημερολόγιο', async () => {
+          const id = process.env.GOOGLE_CALENDAR_ID
+          if (!id) return { state: 'unknown' as const, detail: 'δεν έχει οριστεί GOOGLE_CALENDAR_ID' }
+          return googleGet(SCOPES.calendar,
+            `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(id)}`)
+        }),
+      ])
+      return summariseGroup(items)
+    }, 20000),
 
     // ── Resend: από εδώ φεύγει κάθε συναλλακτικό email
     guard('resend', 'Resend', async () => {

@@ -15,12 +15,25 @@
 
 export type HealthState = 'ok' | 'warn' | 'down' | 'unknown'
 
+/** Ένα επιμέρους αρχείο/υπηρεσία μέσα σε ομαδοποιημένο έλεγχο */
+export interface SubCheck {
+  key: string
+  label: string
+  state: HealthState
+  detail: string
+}
+
 export interface HealthCheck {
   key: string
   label: string
   state: HealthState
   /** Μία γραμμή που εξηγεί ΓΙΑΤΙ — όχι σκέτο «σφάλμα» */
   detail: string
+  /**
+   * Ομαδοποιημένος έλεγχος: μία γραμμή στην οθόνη που ανοίγει και δείχνει
+   * κάθε αρχείο χωριστά. Επτά γραμμές Google θα έπνιγαν τα υπόλοιπα.
+   */
+  items?: SubCheck[]
   /** Χρόνος απόκρισης, όπου έχει νόημα */
   ms?: number
   /** Τι να κάνει ο άνθρωπος, όταν υπάρχει σαφής κίνηση */
@@ -67,7 +80,9 @@ export function ago(iso: string | null | undefined): string {
 export const EXPECTED_SECRETS = [
   'JWT_SECRET', 'STRAPI_API_TOKEN', 'RESEND_API_KEY', 'SENDER_API_KEY',
   'CRON_SECRET', 'FINANCE_SHEET_WEBAPP_SECRET', 'FINANCE_SHEET_WEBAPP_URL',
-  'SHEET_WEBAPP_SECRET', 'SHEET_WEBAPP_URL', 'MEMBERSHIP_WEBHOOK_SECRET',
+  'SHEET_WEBAPP_SECRET', 'SHEET_WEBAPP_URL',
+  // ΟΧΙ MEMBERSHIP_WEBHOOK_SECRET: η ροή της φόρμας Google αποσύρθηκε στις
+  // 20/9/2026 (η εγγραφή πάει στο /apply) και το webhook δεν έχει καλούντα.
   'GOOGLE_SERVICE_ACCOUNT_JSON',
 ] as const
 
@@ -146,6 +161,21 @@ export function judgeUnarchived(count: number): Omit<HealthCheck, 'key' | 'label
     detail: `${count} ${count === 1 ? 'εξοδολόγιο' : 'εξοδολόγια'} χωρίς φάκελο στο Drive`,
     action: 'Οικονομικά → Εξοδολόγια → «Επανάληψη» σε καθένα',
   }
+}
+
+/**
+ * Σύνοψη ομαδοποιημένου ελέγχου: η γραμμή παίρνει τη χειρότερη κατάσταση των
+ * παιδιών της και λέει ΠΟΣΑ είναι εντάξει — «5/7 εντάξει» διαβάζεται αμέσως,
+ * ενώ ένα σκέτο κόκκινο κρύβει ποιο έσπασε.
+ */
+export function summariseGroup(items: SubCheck[]): Omit<HealthCheck, 'key' | 'label'> {
+  const state = worstOf(items as HealthCheck[])
+  const ok = items.filter(i => i.state === 'ok').length
+  const bad = items.filter(i => i.state === 'down' || i.state === 'unknown')
+  const detail = bad.length === 0
+    ? `${ok}/${items.length} εντάξει`
+    : `${ok}/${items.length} εντάξει · πρόβλημα: ${bad.map(b => b.label).join(', ')}`
+  return { state, detail, items }
 }
 
 /** Η χειρότερη κατάσταση της λίστας — αυτή δείχνει η κεφαλίδα */
