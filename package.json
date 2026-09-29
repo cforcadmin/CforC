@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "data-map": "node scripts/generate-data-map.js",
     "test": "jest --forceExit",
     "test:unit": "jest --testPathPattern=__tests__/unit --forceExit",
     "test:api": "jest --testPathPattern=__tests__/api --forceExit",

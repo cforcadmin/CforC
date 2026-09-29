@@ -1,0 +1,2816 @@
+{
+  "generatedAt": "2026-09-29T11:04:22.428Z",
+  "note": "Παράγεται από scripts/generate-data-map.js — μην το επεξεργάζεσαι με το χέρι",
+  "collections": [
+    {
+      "api": "activity",
+      "plural": "activities",
+      "displayName": "Activity",
+      "fields": [
+        {
+          "name": "Category",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Date",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "Description",
+          "type": "blocks",
+          "personal": null
+        },
+        {
+          "name": "EngDescription",
+          "type": "blocks",
+          "personal": null
+        },
+        {
+          "name": "EngTitle",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Featured",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "ImageAltText",
+          "type": "string",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "Slug",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Tags",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Title",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Visuals",
+          "type": "media",
+          "personal": "εικόνα"
+        }
+      ],
+      "personalCount": 2
+    },
+    {
+      "api": "auth-token",
+      "plural": "auth-tokens",
+      "displayName": "AuthToken",
+      "fields": [
+        {
+          "name": "email",
+          "type": "email",
+          "personal": "email"
+        },
+        {
+          "name": "lastLoginAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "passwordHash",
+          "type": "text",
+          "personal": "διαπιστευτήριο"
+        },
+        {
+          "name": "tokenExpiry",
+          "type": "datetime",
+          "personal": "διαπιστευτήριο"
+        },
+        {
+          "name": "tokenHash",
+          "type": "string",
+          "personal": "διαπιστευτήριο"
+        },
+        {
+          "name": "tokenType",
+          "type": "enumeration",
+          "personal": "διαπιστευτήριο"
+        }
+      ],
+      "personalCount": 5
+    },
+    {
+      "api": "coordination-team",
+      "plural": "coordination-teams",
+      "displayName": "Coordination Team",
+      "fields": [
+        {
+          "name": "Admin",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "AdminEmail",
+          "type": "email",
+          "personal": "email"
+        },
+        {
+          "name": "Comms",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "CommsEmail",
+          "type": "email",
+          "personal": "email"
+        },
+        {
+          "name": "Community",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "CommunityEmail",
+          "type": "email",
+          "personal": "email"
+        },
+        {
+          "name": "Coordinator",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "CoordinatorEmail",
+          "type": "email",
+          "personal": "email"
+        },
+        {
+          "name": "Description",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "EngDescription",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "EngName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "Financer",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "FinancerEmail",
+          "type": "email",
+          "personal": "email"
+        },
+        {
+          "name": "IT",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "ITEmail",
+          "type": "email",
+          "personal": "email"
+        },
+        {
+          "name": "Image",
+          "type": "media",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "ImageAltText",
+          "type": "string",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "IsCurrent",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "Media",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "MediaEmail",
+          "type": "email",
+          "personal": "email"
+        },
+        {
+          "name": "Members",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "Name",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "Outreach",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "OutreachEmail",
+          "type": "email",
+          "personal": "email"
+        },
+        {
+          "name": "Period",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Slug",
+          "type": "uid",
+          "personal": null
+        },
+        {
+          "name": "SortOrder",
+          "type": "integer",
+          "personal": null
+        }
+      ],
+      "personalCount": 12
+    },
+    {
+      "api": "event-attendance",
+      "plural": "event-attendances",
+      "displayName": "Event Attendance",
+      "fields": [
+        {
+          "name": "EventCategory",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "EventDate",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "EventId",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "EventTitle",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "GuestNames",
+          "type": "text",
+          "personal": "όνομα"
+        },
+        {
+          "name": "NonMemberCount",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "Notes",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "RecordedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "RecordedBy",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "attendees",
+          "type": "relation",
+          "personal": null
+        }
+      ],
+      "personalCount": 1
+    },
+    {
+      "api": "exit-survey",
+      "plural": "exit-surveys",
+      "displayName": "Exit Survey",
+      "fields": [
+        {
+          "name": "AllowFollowUp",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "Anonymous",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "Barriers",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "FinalComment",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "KeepNewsletter",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "MemberDocId",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "MemberName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "MostUseful",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "ReasonOther",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Reasons",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "Satisfaction",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "SubmittedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "WouldChange",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "WouldReturn",
+          "type": "json",
+          "personal": null
+        }
+      ],
+      "personalCount": 1
+    },
+    {
+      "api": "expense",
+      "plural": "expenses",
+      "displayName": "Expense",
+      "fields": [
+        {
+          "name": "Aa",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "ApprovedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "ApprovedBy",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Category",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "DocNumber",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "DocRef",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "FileId",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "FileName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "IssueDate",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "Mark",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Month",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "NetAmount",
+          "type": "decimal",
+          "personal": null
+        },
+        {
+          "name": "Notes",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "PayableAmount",
+          "type": "decimal",
+          "personal": null
+        },
+        {
+          "name": "PaymentDate",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "PaymentMethod",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "ReconAcked",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "SheetSynced",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "State",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "SupplierName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "SupplierTaxId",
+          "type": "string",
+          "personal": "ΑΦΜ"
+        },
+        {
+          "name": "TransactionId",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "VatAmount",
+          "type": "decimal",
+          "personal": "ΑΦΜ"
+        },
+        {
+          "name": "Withholding",
+          "type": "decimal",
+          "personal": null
+        }
+      ],
+      "personalCount": 4
+    },
+    {
+      "api": "expense-claim",
+      "plural": "expense-claims",
+      "displayName": "Expense Claim",
+      "fields": [
+        {
+          "name": "AccountHolder",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Advance",
+          "type": "decimal",
+          "personal": null
+        },
+        {
+          "name": "Attachments",
+          "type": "media",
+          "personal": null
+        },
+        {
+          "name": "BankName",
+          "type": "string",
+          "personal": "τραπεζικός λογαριασμός"
+        },
+        {
+          "name": "ClaimNumber",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "CoTravellers",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "EventDays",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "EventEnd",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "EventName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "EventStart",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "EventType",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "FolderUrl",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Iban",
+          "type": "string",
+          "personal": "τραπεζικός λογαριασμός"
+        },
+        {
+          "name": "Lines",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "MemberEmail",
+          "type": "string",
+          "personal": "email"
+        },
+        {
+          "name": "MemberName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "MemberPhone",
+          "type": "string",
+          "personal": "τηλέφωνο"
+        },
+        {
+          "name": "Notes",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "PaidAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "PaidBy",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Payable",
+          "type": "decimal",
+          "personal": null
+        },
+        {
+          "name": "PaymentNote",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "PdfFileId",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "PdfUrl",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "ReminderLog",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "ReturnIncluded",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "Signature",
+          "type": "text",
+          "personal": "υπογραφή"
+        },
+        {
+          "name": "State",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "SubmittedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "SubmittedIp",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Total",
+          "type": "decimal",
+          "personal": null
+        },
+        {
+          "name": "TravelFrom",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "TravelLegs",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "TravelMode",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "TravelTo",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "linkedMember",
+          "type": "relation",
+          "personal": null
+        }
+      ],
+      "personalCount": 7
+    },
+    {
+      "api": "income-record",
+      "plural": "income-records",
+      "displayName": "Income Record",
+      "fields": [
+        {
+          "name": "Aa",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Amount",
+          "type": "decimal",
+          "personal": null
+        },
+        {
+          "name": "Category",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "CreatedBy",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Description",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "DocRef",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "FileId",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "FileName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "FunderType",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "Month",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Notes",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "PayerName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "PaymentDate",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "PaymentMethod",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "SheetSynced",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "TransactionId",
+          "type": "string",
+          "personal": null
+        }
+      ],
+      "personalCount": 2
+    },
+    {
+      "api": "library-item",
+      "plural": "library-items",
+      "displayName": "Library Item",
+      "fields": [
+        {
+          "name": "Description",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "DocType",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "DriveFileId",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "DuplicateOf",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "FileName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "FileSize",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "Language",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "MimeType",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "RejectionReason",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "ReviewedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "ReviewedBy",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "SecondaryThemes",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "SourceUrl",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "State",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "SubmittedBy",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "SubmittedByName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "Subthemes",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "Theme",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Title",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "TitleKey",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Year",
+          "type": "integer",
+          "personal": null
+        }
+      ],
+      "personalCount": 2
+    },
+    {
+      "api": "library-rejection",
+      "plural": "library-rejections",
+      "displayName": "Library Rejection",
+      "fields": [
+        {
+          "name": "DriveFileId",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "DuplicateOfTitle",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "RejectedBy",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "RejectionReason",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "SharedWords",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "SubmittedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "SubmittedByEmail",
+          "type": "string",
+          "personal": "email"
+        },
+        {
+          "name": "SubmittedByName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "Theme",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Title",
+          "type": "string",
+          "personal": null
+        }
+      ],
+      "personalCount": 2
+    },
+    {
+      "api": "list-snapshot",
+      "plural": "list-snapshots",
+      "displayName": "List Snapshot",
+      "fields": [
+        {
+          "name": "CapturedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "External",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "Media",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "Members",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "Month",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Paid",
+          "type": "integer",
+          "personal": null
+        }
+      ],
+      "personalCount": 0
+    },
+    {
+      "api": "member",
+      "plural": "members",
+      "displayName": "Member",
+      "fields": [
+        {
+          "name": "AM",
+          "type": "integer",
+          "personal": "αριθμός μητρώου"
+        },
+        {
+          "name": "AccountHolder",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "AddedToPaidGroup",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "AdminNotes",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "BAN",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "BankName",
+          "type": "string",
+          "personal": "τραπεζικός λογαριασμός"
+        },
+        {
+          "name": "Bio",
+          "type": "blocks",
+          "personal": "βιογραφικό"
+        },
+        {
+          "name": "BoardApprovalDate",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "City",
+          "type": "string",
+          "personal": "τόπος"
+        },
+        {
+          "name": "CommunityNotes",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "CompanyAddress",
+          "type": "string",
+          "personal": "διεύθυνση"
+        },
+        {
+          "name": "CompanyName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "CompanyTaxId",
+          "type": "string",
+          "personal": "ΑΦΜ"
+        },
+        {
+          "name": "Email",
+          "type": "email",
+          "personal": "email"
+        },
+        {
+          "name": "EngBio",
+          "type": "blocks",
+          "personal": "βιογραφικό"
+        },
+        {
+          "name": "EngName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "EngProject1Description",
+          "type": "blocks",
+          "personal": null
+        },
+        {
+          "name": "EngProject1Tags",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "EngProject1Title",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "EngProject2Description",
+          "type": "blocks",
+          "personal": null
+        },
+        {
+          "name": "EngProject2Tags",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "EngProject2Title",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "FatherName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "FieldsOfWork",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Gender",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "HideProfile",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "Iban",
+          "type": "string",
+          "personal": "τραπεζικός λογαριασμός"
+        },
+        {
+          "name": "Image",
+          "type": "media",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "IsLibrarian",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "LibrarianUntil",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "Name",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "OcPrefs",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "Payments",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "Phone",
+          "type": "string",
+          "personal": "τηλέφωνο"
+        },
+        {
+          "name": "ProfileImageAltText",
+          "type": "string",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "Project1Description",
+          "type": "blocks",
+          "personal": null
+        },
+        {
+          "name": "Project1Links",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "Project1Pictures",
+          "type": "media",
+          "personal": null
+        },
+        {
+          "name": "Project1PicturesAltText",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Project1Tags",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Project1Title",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Project2Description",
+          "type": "blocks",
+          "personal": null
+        },
+        {
+          "name": "Project2Links",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "Project2Pictures",
+          "type": "media",
+          "personal": null
+        },
+        {
+          "name": "Project2PicturesAltText",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Project2Tags",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Project2Title",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Province",
+          "type": "string",
+          "personal": "τόπος"
+        },
+        {
+          "name": "ReceiptType",
+          "type": "enumeration",
+          "personal": "παραστατικό"
+        },
+        {
+          "name": "RegistrationYear",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "ReminderLog",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "ReminderSentAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "RenewalClaimedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "RenewalReceipt",
+          "type": "media",
+          "personal": "παραστατικό"
+        },
+        {
+          "name": "Slug",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "SocialMediaPresented",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "StartFellow",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "TaxId",
+          "type": "string",
+          "personal": "ΑΦΜ"
+        },
+        {
+          "name": "Websites",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "lastLoginAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "magicLinkExpiry",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "magicLinkToken",
+          "type": "string",
+          "personal": "διαπιστευτήριο"
+        },
+        {
+          "name": "password",
+          "type": "string",
+          "personal": "διαπιστευτήριο"
+        }
+      ],
+      "personalCount": 22
+    },
+    {
+      "api": "membership-application",
+      "plural": "membership-applications",
+      "displayName": "Membership Application",
+      "fields": [
+        {
+          "name": "AcceptPrivacy",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "AcceptRegulation",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "AcceptStatute",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "ActionFormats",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "ActivityCityA",
+          "type": "string",
+          "personal": "τόπος"
+        },
+        {
+          "name": "ActivityCityB",
+          "type": "string",
+          "personal": "τόπος"
+        },
+        {
+          "name": "Address",
+          "type": "string",
+          "personal": "διεύθυνση"
+        },
+        {
+          "name": "AgeRange",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "ApplicationState",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "AssignedAM",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "AudienceGroups",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "AutoRemindersArmed",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "AutoRemindersArmedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "AutoRemindersArmedBy",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Bio",
+          "type": "text",
+          "personal": "βιογραφικό"
+        },
+        {
+          "name": "BioEn",
+          "type": "text",
+          "personal": "βιογραφικό"
+        },
+        {
+          "name": "BoschAlumni",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "BoschProfile",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "BoschPrograms",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "Challenges",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "CompanyAddress",
+          "type": "string",
+          "personal": "διεύθυνση"
+        },
+        {
+          "name": "CompanyName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "CompanyTaxId",
+          "type": "string",
+          "personal": "ΑΦΜ"
+        },
+        {
+          "name": "DecisionBy",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "DecisionDate",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "DecisionNote",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "Disability",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "Education",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "Email",
+          "type": "email",
+          "personal": "email"
+        },
+        {
+          "name": "EmploymentDetails",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "EmploymentStatus",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "Experience",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "Facebook",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "FatherName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "FieldsOfActivity",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "FirstName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "Gender",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "Instagram",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "LastName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "LinkedIn",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "NameLatin",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "NetworkContribution",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "NewsletterOptIn",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "PaymentClaimedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "PaymentReceipt",
+          "type": "media",
+          "personal": "παραστατικό"
+        },
+        {
+          "name": "Phone",
+          "type": "string",
+          "personal": "τηλέφωνο"
+        },
+        {
+          "name": "Photo",
+          "type": "media",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "Profession",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "ProposedSolutions",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "PublishConsent",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "ReceiptType",
+          "type": "enumeration",
+          "personal": "παραστατικό"
+        },
+        {
+          "name": "Reminder15SentAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "Reminder28SentAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "ResidenceCity",
+          "type": "string",
+          "personal": "τόπος"
+        },
+        {
+          "name": "ResidenceRegion",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "SheetSynced",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "StartFellow",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "SubmittedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "TaxId",
+          "type": "string",
+          "personal": "ΑΦΜ"
+        },
+        {
+          "name": "Themes",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "Votes",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "Website",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "linkedMember",
+          "type": "relation",
+          "personal": null
+        }
+      ],
+      "personalCount": 19
+    },
+    {
+      "api": "monthly-close",
+      "plural": "monthly-closes",
+      "displayName": "Monthly Close",
+      "fields": [
+        {
+          "name": "Month",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Notes",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "ReadyAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "ReadyBy",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "SentAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "SentBy",
+          "type": "string",
+          "personal": null
+        }
+      ],
+      "personalCount": 0
+    },
+    {
+      "api": "newsletter",
+      "plural": "newsletters",
+      "displayName": "Newsletter",
+      "fields": [
+        {
+          "name": "Audience",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "Date",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "DriveLink",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Html",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "Image",
+          "type": "media",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "Slug",
+          "type": "uid",
+          "personal": null
+        },
+        {
+          "name": "Title",
+          "type": "string",
+          "personal": null
+        }
+      ],
+      "personalCount": 1
+    },
+    {
+      "api": "newsletter-subscriber",
+      "plural": "newsletter-subscribers",
+      "displayName": "Newsletter Subscriber",
+      "fields": [
+        {
+          "name": "ConfirmedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "Email",
+          "type": "email",
+          "personal": "email"
+        },
+        {
+          "name": "FirstName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "LastName",
+          "type": "string",
+          "personal": "όνομα"
+        }
+      ],
+      "personalCount": 3
+    },
+    {
+      "api": "oc-campaign",
+      "plural": "oc-campaigns",
+      "displayName": "OC Campaign",
+      "fields": [
+        {
+          "name": "Archived",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "ArchivedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "Blocks",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "Cc",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "CompletedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "CreatedByName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "Desk",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "FailedCount",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "Footer",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "FooterLogo",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "FooterLook",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "FooterStyle",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "Groups",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "HeaderLogo",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "HeaderStyle",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "IsTemplate",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "Kind",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "LastRunAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "Notes",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "Preheader",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "QueuedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "Recipients",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "Selection",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "SenderCampaignId",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "SentCount",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "Signer",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "State",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "Subject",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "TemplateName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "TotalCount",
+          "type": "integer",
+          "personal": null
+        }
+      ],
+      "personalCount": 2
+    },
+    {
+      "api": "oc-contract",
+      "plural": "oc-contracts",
+      "displayName": "OC Contract",
+      "fields": [
+        {
+          "name": "Aa",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "Amount",
+          "type": "decimal",
+          "personal": null
+        },
+        {
+          "name": "Archived",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "BankIban",
+          "type": "string",
+          "personal": "τραπεζικός λογαριασμός"
+        },
+        {
+          "name": "ContractFile",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "ContractNotes",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "ContractStatus",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "ContractType",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "CreatedByName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "Email",
+          "type": "string",
+          "personal": "email"
+        },
+        {
+          "name": "EndDate",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "ExpenseDocsLink",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "ExpenseListLink",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Name",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "NextPaymentDate",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "NextPaymentStatus",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "NoReminders",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "PaymentFrequency",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "PaymentHistory",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "PaymentMethod",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "PaymentNotes",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "PaymentSchedule",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "PaymentStatus",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Phone",
+          "type": "string",
+          "personal": "τηλέφωνο"
+        },
+        {
+          "name": "Project",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "ReminderLog",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "Role",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "SortIndex",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "StartDate",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "TaxId",
+          "type": "string",
+          "personal": "ΑΦΜ"
+        },
+        {
+          "name": "UpdatedByName",
+          "type": "string",
+          "personal": "όνομα"
+        }
+      ],
+      "personalCount": 7
+    },
+    {
+      "api": "oc-run-log",
+      "plural": "oc-run-logs",
+      "displayName": "OC Run Log",
+      "fields": [
+        {
+          "name": "DurationMs",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "ErrorText",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "FinishedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "Job",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Outcome",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "StartedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "Summary",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "Trigger",
+          "type": "enumeration",
+          "personal": null
+        }
+      ],
+      "personalCount": 0
+    },
+    {
+      "api": "oc-task",
+      "plural": "oc-tasks",
+      "displayName": "OC Task",
+      "fields": [
+        {
+          "name": "Categories",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "Completed",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "CompletedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "CreatedBy",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Description",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "DueDate",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "LegacyAssignees",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "Links",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "Priority",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "SortIndex",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "Status",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "Title",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "assignees",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "board",
+          "type": "relation",
+          "personal": null
+        }
+      ],
+      "personalCount": 0
+    },
+    {
+      "api": "oc-task-board",
+      "plural": "oc-task-boards",
+      "displayName": "OC Task Board",
+      "fields": [
+        {
+          "name": "Archived",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "Description",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "Scope",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "Slug",
+          "type": "uid",
+          "personal": null
+        },
+        {
+          "name": "SortIndex",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "Title",
+          "type": "string",
+          "personal": null
+        }
+      ],
+      "personalCount": 0
+    },
+    {
+      "api": "open-call",
+      "plural": "open-calls",
+      "displayName": "Open Calls",
+      "fields": [
+        {
+          "name": "Category",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "Deadline",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "Description",
+          "type": "blocks",
+          "personal": null
+        },
+        {
+          "name": "EngDescription",
+          "type": "blocks",
+          "personal": null
+        },
+        {
+          "name": "EngTitle",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Image",
+          "type": "media",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "ImageAltText",
+          "type": "string",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "Link",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Title",
+          "type": "string",
+          "personal": null
+        }
+      ],
+      "personalCount": 2
+    },
+    {
+      "api": "payer-alias",
+      "plural": "payer-aliases",
+      "displayName": "Payer Alias",
+      "fields": [
+        {
+          "name": "AliasKey",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Confirmations",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "LastUsed",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "MemberName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "PayerName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "member",
+          "type": "relation",
+          "personal": null
+        }
+      ],
+      "personalCount": 2
+    },
+    {
+      "api": "profile-change-log",
+      "plural": "profile-change-logs",
+      "displayName": "Profile Change Log",
+      "fields": [
+        {
+          "name": "changedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "changedFields",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "memberEmail",
+          "type": "email",
+          "personal": "email"
+        },
+        {
+          "name": "memberName",
+          "type": "string",
+          "personal": "όνομα"
+        }
+      ],
+      "personalCount": 2
+    },
+    {
+      "api": "project",
+      "plural": "projects",
+      "displayName": "Project",
+      "fields": [
+        {
+          "name": "CforC_project_role",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "category",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "cover_image",
+          "type": "media",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "end_date",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "external_links",
+          "type": "component",
+          "personal": null
+        },
+        {
+          "name": "featured",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "full_description",
+          "type": "blocks",
+          "personal": null
+        },
+        {
+          "name": "partners",
+          "type": "component",
+          "personal": null
+        },
+        {
+          "name": "project_entries",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "project_images",
+          "type": "media",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "project_link",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "project_partners",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "project_status",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "slug",
+          "type": "uid",
+          "personal": null
+        },
+        {
+          "name": "sort_order",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "start_date",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "supporters_banner_dark",
+          "type": "media",
+          "personal": null
+        },
+        {
+          "name": "supporters_banner_light",
+          "type": "media",
+          "personal": null
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "personal": null
+        }
+      ],
+      "personalCount": 2
+    },
+    {
+      "api": "project-entry",
+      "plural": "project-entries",
+      "displayName": "Project Entry",
+      "fields": [
+        {
+          "name": "category",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "cover_image",
+          "type": "media",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "description",
+          "type": "blocks",
+          "personal": null
+        },
+        {
+          "name": "entry_link",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "expiration_date",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "images",
+          "type": "media",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "project",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "publication_date",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "slug",
+          "type": "uid",
+          "personal": null
+        },
+        {
+          "name": "tags",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "visibility",
+          "type": "enumeration",
+          "personal": null
+        }
+      ],
+      "personalCount": 2
+    },
+    {
+      "api": "receipt",
+      "plural": "receipts",
+      "displayName": "Receipt",
+      "fields": [
+        {
+          "name": "Aa",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Amount",
+          "type": "decimal",
+          "personal": null
+        },
+        {
+          "name": "CompanyAddress",
+          "type": "string",
+          "personal": "διεύθυνση"
+        },
+        {
+          "name": "CompanyName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "CompanyTaxId",
+          "type": "string",
+          "personal": "ΑΦΜ"
+        },
+        {
+          "name": "CreatedBy",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "IssueDate",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "MemberName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "Notes",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "Number",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "PayerName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "PaymentDate",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "PaymentMethod",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "RegistrationFee",
+          "type": "decimal",
+          "personal": null
+        },
+        {
+          "name": "RegistrySynced",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "SentAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "SheetSynced",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "SubscriptionFee",
+          "type": "decimal",
+          "personal": null
+        },
+        {
+          "name": "SubscriptionYear",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "TransactionId",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Type",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "member",
+          "type": "relation",
+          "personal": null
+        }
+      ],
+      "personalCount": 5
+    },
+    {
+      "api": "supplier-alias",
+      "plural": "supplier-aliases",
+      "displayName": "Supplier Alias",
+      "fields": [
+        {
+          "name": "AliasKey",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "AutoPaid",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "Category",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "ChargePattern",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Confirmations",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "DefaultDocPrefix",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "MonthlyConsolidated",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "Notes",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "SupplierName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "SupplierTaxId",
+          "type": "string",
+          "personal": "ΑΦΜ"
+        }
+      ],
+      "personalCount": 2
+    },
+    {
+      "api": "treasury-balance",
+      "plural": "treasury-balances",
+      "displayName": "Treasury Balance",
+      "fields": [
+        {
+          "name": "AsOf",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "Bank",
+          "type": "decimal",
+          "personal": "τραπεζικός λογαριασμός"
+        },
+        {
+          "name": "Cash",
+          "type": "decimal",
+          "personal": null
+        },
+        {
+          "name": "Notes",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "RecordedBy",
+          "type": "string",
+          "personal": null
+        }
+      ],
+      "personalCount": 1
+    },
+    {
+      "api": "working-group",
+      "plural": "working-groups",
+      "displayName": "Working Group",
+      "fields": [
+        {
+          "name": "Admin",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "Comms",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "Coordinator",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "Description",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "EngDescription",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "EngName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "IT",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "Image",
+          "type": "media",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "ImageAltText",
+          "type": "string",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "MaterialUrl",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Members",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "Name",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "Slug",
+          "type": "uid",
+          "personal": null
+        },
+        {
+          "name": "SortOrder",
+          "type": "integer",
+          "personal": null
+        }
+      ],
+      "personalCount": 4
+    }
+  ]
+}

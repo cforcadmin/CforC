@@ -39,6 +39,26 @@ interface Payload {
   notes?: string[]
 }
 
+interface MapRow {
+  api: string
+  displayName: string
+  personalFields: { name: string; kind: string }[]
+  purpose: string | null
+  retention: string | null
+  legalBasis: string | null
+  processors: { key: string; name: string; role: string; region: string }[]
+  note?: string
+  missing: string[]
+}
+
+interface DataMap {
+  generatedAt: string
+  summary: { collections: number; fields: number; incomplete: number }
+  processors: { key: string; name: string; role: string; region: string }[]
+  rows: MapRow[]
+  drift: { newFields: { api: string; fields: string[] }[]; unchecked: number; action: string | null }
+}
+
 const CARD = 'bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8 border border-gray-200 dark:border-gray-600'
 const EYEBROW = 'text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400'
 
@@ -59,6 +79,9 @@ const HEADLINE: Record<HealthState, string> = {
 
 export default function OcSecurity() {
   const [data, setData] = useState<Payload | null>(null)
+  const [map, setMap] = useState<DataMap | null>(null)
+  const [mapError, setMapError] = useState<string | null>(null)
+  const [openRow, setOpenRow] = useState<string | null>(null)
   /** Ποιες ομαδοποιημένες γραμμές είναι ανοιχτές */
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [busy, setBusy] = useState(false)
@@ -78,6 +101,20 @@ export default function OcSecurity() {
     }
   }, [])
   useEffect(() => { load() }, [load])
+
+  // Ο χάρτης φορτώνει ΧΩΡΙΣΤΑ: είναι πιο αργός (ελέγχει τη ζωντανή βάση για
+  // απόκλιση) και δεν πρέπει να κρατά πίσω τα Ζωτικά.
+  useEffect(() => {
+    let alive = true
+    fetch('/api/oc/data-map', { cache: 'no-store' })
+      .then(async r => {
+        const j = await r.json()
+        if (!r.ok) throw new Error(j?.error || 'Αποτυχία')
+        if (alive) setMap(j)
+      })
+      .catch(err => { if (alive) setMapError(err?.message || 'Κάτι πήγε στραβά') })
+    return () => { alive = false }
+  }, [])
 
   return (
     <div className="grid gap-6">
@@ -171,13 +208,125 @@ export default function OcSecurity() {
         )}
       </div>
 
+      {/* ── Χάρτης δεδομένων: το αρχείο δραστηριοτήτων επεξεργασίας (άρθρο 30) */}
+      <div className={CARD}>
+        <div className="flex flex-wrap items-baseline gap-3 mb-1">
+          <h3 className={EYEBROW}>ΧΑΡΤΗΣ ΔΕΔΟΜΕΝΩΝ</h3>
+          {map && (
+            <span className="text-sm font-bold text-charcoal dark:text-white">
+              {map.summary.collections} συλλογές · {map.summary.fields} προσωπικά πεδία
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Ποια προσωπικά δεδομένα κρατάμε, πού ζουν και ποιος τρίτος τα αγγίζει — το αρχείο
+          δραστηριοτήτων επεξεργασίας του ΓΚΠΔ (άρθρο 30). Ο κατάλογος των πεδίων παράγεται
+          από τα schema· ο σκοπός και ο χρόνος διατήρησης είναι ανθρώπινη απόφαση και όπου
+          λείπει, <strong>το λέμε</strong> αντί να το συμπληρώσουμε με εικασία.
+        </p>
+
+        {mapError && <p className="text-sm text-red-700 dark:text-red-300 mb-4">{mapError}</p>}
+        {!map && !mapError && <p className="text-sm text-gray-500">Φορτώνει…</p>}
+
+        {map && (
+          <>
+            {/* Η απόκλιση πρώτη: ένα νέο πεδίο που λείπει από τον χάρτη είναι
+                ακριβώς το πράγμα που δεν πρέπει να περάσει απαρατήρητο. */}
+            {map.drift.newFields.length > 0 && (
+              <div className="rounded-2xl border border-amber-400 bg-amber-50 dark:bg-amber-900/20 p-4 mb-4">
+                <p className="text-sm font-bold text-amber-800 dark:text-amber-200">
+                  Νέα πεδία στη βάση που λείπουν από τον χάρτη
+                </p>
+                <ul className="mt-1 text-sm text-amber-900 dark:text-amber-100 grid gap-0.5">
+                  {map.drift.newFields.map(d => (
+                    <li key={d.api}>· <strong>{d.api}</strong>: {d.fields.join(', ')}</li>
+                  ))}
+                </ul>
+                {map.drift.action && (
+                  <p className="mt-2 text-xs text-amber-800 dark:text-amber-200">→ {map.drift.action}</p>
+                )}
+              </div>
+            )}
+
+            {map.summary.incomplete > 0 && (
+              <p className="text-sm mb-4 text-amber-700 dark:text-amber-200">
+                <strong>{map.summary.incomplete}</strong> από {map.summary.collections} γραμμές είναι ατελείς —
+                λείπει κυρίως ο χρόνος διατήρησης, που είναι απόφαση του ΔΣ.
+              </p>
+            )}
+
+            <div className="grid gap-2">
+              {map.rows.map(r => {
+                const isOpen = openRow === r.api
+                return (
+                  <div key={r.api} className="rounded-2xl border border-gray-200 dark:border-gray-600 px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <button type="button" onClick={() => setOpenRow(isOpen ? null : r.api)}
+                        aria-expanded={isOpen}
+                        className="font-semibold min-w-0 text-left hover:text-coral">
+                        {r.displayName}
+                        <span aria-hidden="true" className={`ml-1.5 inline-block text-coral transition-transform ${isOpen ? 'rotate-180' : ''}`}>▾</span>
+                      </button>
+                      <span className="text-xs font-bold text-gray-600 dark:text-gray-300 tabular-nums">
+                        {r.personalFields.length} πεδία
+                      </span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400 min-w-0">
+                        {r.purpose || <em>χωρίς καταγεγραμμένο σκοπό</em>}
+                      </span>
+                      {r.missing.length > 0 && (
+                        <span className="text-xs font-bold text-amber-700 dark:text-amber-200 ml-auto">
+                          λείπει: {r.missing.join(', ')}
+                        </span>
+                      )}
+                    </div>
+
+                    {isOpen && (
+                      <div className="mt-3 pl-1 grid gap-2 text-sm">
+                        <div>
+                          <span className="font-medium">Πεδία: </span>
+                          <span className="text-gray-600 dark:text-gray-400">
+                            {r.personalFields.map(f => `${f.name} (${f.kind})`).join(' · ')}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="font-medium">Τρίτοι: </span>
+                          <span className="text-gray-600 dark:text-gray-400">
+                            {r.processors.map(p => `${p.name} [${p.region}]`).join(' · ')}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="font-medium">Νομική βάση: </span>
+                          <span className="text-gray-600 dark:text-gray-400">
+                            {r.legalBasis || 'εκκρεμεί απόφαση'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="font-medium">Διατήρηση: </span>
+                          <span className="text-gray-600 dark:text-gray-400">
+                            {r.retention || 'εκκρεμεί απόφαση του ΔΣ'}
+                          </span>
+                        </div>
+                        {r.note && <p className="text-gray-600 dark:text-gray-300">{r.note}</p>}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            <p className="mt-4 text-xs text-gray-500">
+              Κατάλογος πεδίων: {new Date(map.generatedAt).toLocaleDateString('el-GR')}
+              {map.drift.unchecked > 0 && ` · ${map.drift.unchecked} συλλογές δεν ελέγχθηκαν ζωντανά (άδειες ή χωρίς απάντηση)`}
+            </p>
+          </>
+        )}
+      </div>
+
       {/* Τα επόμενα κουτιά δηλώνονται εδώ ώστε να μη μοιάζει τελειωμένη η οθόνη */}
       <div className={CARD}>
         <h3 className={`${EYEBROW} mb-2`}>ΕΠΟΜΕΝΑ</h3>
         <ul className="text-sm text-gray-600 dark:text-gray-400 grid gap-1.5">
-          <li>· <strong>Χάρτης δεδομένων</strong> — ποια προσωπικά δεδομένα κρατάμε και ποιοι τρίτοι τα αγγίζουν</li>
           <li>· <strong>Πρόσβαση &amp; μυστικά</strong> — ποιος έχει πρόσβαση πού, ηλικία κλειδιών, συμφωνία με το Vercel</li>
-          <li>· <strong>Ιστορικό</strong> — πότε έτρεξε κάθε cron και τι απέτυχε, 90 ημέρες πίσω</li>
           <li>· <strong>AI &amp; δεδομένα</strong> — ανώνυμα δεδομένα ανάπτυξης, ώστε να μη χρειάζεται ερώτημα σε ζωντανά μέλη</li>
         </ul>
       </div>
