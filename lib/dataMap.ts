@@ -54,7 +54,7 @@ export const PROCESSORS: Record<string, Processor> = {
 export interface Annotation {
   /** Γιατί κρατάμε αυτά τα δεδομένα. `null` = δεν έχει καταγραφεί ακόμη. */
   purpose: string | null
-  /** Πόσο. `null` = εκκρεμεί απόφαση του ΔΣ — ΔΕΝ το μαντεύουμε. */
+  /** Πόσο. `null` = εκκρεμεί απόφαση της ΟΣ — ΔΕΝ το μαντεύουμε. */
   retention: string | null
   /** Άρθρο 6 ΓΚΠΔ. `null` = δεν έχει αποφασιστεί. */
   legalBasis: string | null
@@ -69,7 +69,7 @@ export interface Annotation {
  * Οι σημειώσεις ανά συλλογή.
  *
  * Όσα συμπληρώνονται εδώ είναι ΕΠΑΛΗΘΕΥΜΕΝΑ από τον κώδικα (διάρκειες token,
- * αυτόματες διαγραφές). Τα υπόλοιπα είναι πολιτική και ανήκουν στο ΔΣ.
+ * αυτόματες διαγραφές). Τα υπόλοιπα είναι πολιτική και ανήκουν στην ΟΣ.
  */
 export const ANNOTATIONS: Record<string, Annotation> = {
   member: {
@@ -121,7 +121,7 @@ export const ANNOTATIONS: Record<string, Annotation> = {
     processors: ['strapi', 'vercel', 'sender'],
   },
   'profile-change-log': {
-    purpose: 'Μηνιαία αναφορά αλλαγών προφίλ προς το ΔΣ',
+    purpose: 'Μηνιαία αναφορά αλλαγών προφίλ προς την ΟΣ',
     retention: null,
     legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)',
     processors: ['strapi', 'vercel', 'resend'],

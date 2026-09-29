@@ -251,7 +251,7 @@ export default function OcSecurity() {
             {map.summary.incomplete > 0 && (
               <p className="text-sm mb-4 text-amber-700 dark:text-amber-200">
                 <strong>{map.summary.incomplete}</strong> από {map.summary.collections} γραμμές είναι ατελείς —
-                λείπει κυρίως ο χρόνος διατήρησης, που είναι απόφαση του ΔΣ.
+                λείπει κυρίως ο χρόνος διατήρησης, που είναι απόφαση της ΟΣ.
               </p>
             )}
 
@@ -303,7 +303,7 @@ export default function OcSecurity() {
                         <div>
                           <span className="font-medium">Διατήρηση: </span>
                           <span className="text-gray-600 dark:text-gray-400">
-                            {r.retention || 'εκκρεμεί απόφαση του ΔΣ'}
+                            {r.retention || 'εκκρεμεί απόφαση της ΟΣ'}
                           </span>
                         </div>
                         {r.note && <p className="text-gray-600 dark:text-gray-300">{r.note}</p>}
