@@ -10,6 +10,7 @@ import OcRenewalsPopup from '@/components/oc/OcRenewalsPopup'
 import OcTreasuryPopup from '@/components/oc/OcTreasuryPopup'
 import OcMyTasks from '@/components/oc/OcMyTasks'
 import OcExportModal from '@/components/oc/OcExportModal'
+import OcPendingDeletions from '@/components/oc/OcPendingDeletions'
 import { useColumnWidths } from '@/components/oc/useColumnWidths'
 import OcTile from '@/components/oc/OcTile'
 import { daysUntil as calDaysUntil, untilLabel, type CalEvent } from '@/components/oc/OcCalendar'
@@ -782,6 +783,10 @@ export default function OcOverview({
 
   return (
     <div className="space-y-6">
+      {/* Εκκρεμείς χειροκίνητες διαγραφές — δεν εμφανίζεται όταν δεν υπάρχουν.
+          Μπαίνει ΠΑΝΩ από τα πλακίδια: είναι υποχρέωση με προθεσμία, όχι δείκτης. */}
+      <OcPendingDeletions />
+
       {/* KPI tiles */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <Tile value={data.activeMembers} label="Ενεργά μέλη" />
