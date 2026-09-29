@@ -22,7 +22,7 @@ const daysAgo = (n: number) => new Date(Date.now() - n * 86400000).toISOString()
 type App = Record<string, any>
 
 /** Καταγράφει κάθε κλήση ώστε τα tests να ελέγχουν μέθοδο + διεύθυνση */
-function mockCalls(apps: App[], overrides: { outcomeExists?: boolean; outcomeOk?: boolean } = {}) {
+function mockCalls(apps: App[], overrides: { outcomeExists?: boolean; outcomeOk?: boolean; spamApps?: App[] } = {}) {
   const calls: Array<{ method: string; url: string; body?: any }> = []
   jest.spyOn(global, 'fetch').mockImplementation(async (input: any, init?: any) => {
     const url = typeof input === 'string' ? input : input?.url ?? String(input)
@@ -38,7 +38,9 @@ function mockCalls(apps: App[], overrides: { outcomeExists?: boolean; outcomeOk?
         : new Response(JSON.stringify({ data: { documentId: 'o1' } }), { status: 200 })
     }
     if (url.includes('/api/membership-applications?')) {
-      return new Response(JSON.stringify({ data: apps }), { status: 200 })
+      // Το ερώτημα του ελέγχου ανεπιθύμητων έχει δικό του φίλτρο
+      const isSpamQuery = url.includes('filters[SpamCheckSentAt][$null]=true')
+      return new Response(JSON.stringify({ data: isSpamQuery ? (overrides.spamApps ?? []) : apps }), { status: 200 })
     }
     return new Response(JSON.stringify({ data: [], id: 'x' }), { status: 200 })
   })
@@ -136,5 +138,46 @@ describe('payment-reminders — λήξη προθεσμίας ΧΩΡΙΣ αυτ�
     const { json } = await run()
     expect(json.deletionDue).toHaveLength(0)
     expect(json.skipped.join(' ')).toMatch(/απόδειξη/)
+  })
+})
+
+describe('Ημέρα 7 — έλεγχος ανεπιθύμητων προς hello@', () => {
+  afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks() })
+
+  it('στέλνει την 7η ημέρα και σφραγίζει το SpamCheckSentAt', async () => {
+    const calls = mockCalls([], { spamApps: [{ ...base, DecisionDate: daysAgo(7) }] })
+    const { json } = await run()
+    expect(json.spamChecks).toHaveLength(1)
+    const stamp = calls.find(c => c.method === 'PUT' && c.url.includes('/api/membership-applications/'))
+    expect(stamp?.body.data.SpamCheckSentAt).toBeTruthy()
+  })
+
+  it('ΔΕΝ στέλνει πριν την 7η ημέρα', async () => {
+    mockCalls([], { spamApps: [{ ...base, DecisionDate: daysAgo(6) }] })
+    const { json } = await run()
+    expect(json.spamChecks).toHaveLength(0)
+  })
+
+  /**
+   * Η Vercel δηλώνει ρητά ότι μια εκτέλεση cron μπορεί να χαθεί. Με έλεγχο
+   * `days === 7` η υπενθύμιση δεν θα έφευγε ΠΟΤΕ σε εκείνη την περίπτωση.
+   */
+  it('στέλνει και αργότερα αν χάθηκε η εκτέλεση της 7ης ημέρας', async () => {
+    mockCalls([], { spamApps: [{ ...base, DecisionDate: daysAgo(11) }] })
+    const { json } = await run()
+    expect(json.spamChecks).toHaveLength(1)
+  })
+
+  it('ΔΕΝ στέλνει σε όποιον δήλωσε ήδη πληρωμή — το email προφανώς έφτασε', async () => {
+    mockCalls([], { spamApps: [{ ...base, DecisionDate: daysAgo(9), PaymentClaimedAt: daysAgo(1) }] })
+    const { json } = await run()
+    expect(json.spamChecks).toHaveLength(0)
+  })
+
+  it('ΔΕΝ εξαρτάται από την όπλιση — το ερώτημα δεν φιλτράρει AutoRemindersArmed', async () => {
+    const calls = mockCalls([], { spamApps: [{ ...base, DecisionDate: daysAgo(8) }] })
+    await run()
+    const q = calls.find(c => c.url.includes('filters[SpamCheckSentAt][$null]=true'))
+    expect(q?.url).not.toContain('AutoRemindersArmed')
   })
 })

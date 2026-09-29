@@ -4,8 +4,9 @@ import { recordOutcome, outcomeExists } from '@/lib/applicationOutcome'
 import { generatePaymentClaimToken } from '@/lib/auth'
 import { getSeatHolder } from '@/lib/ocRoles'
 import {
-  sendOcEmail, paymentReminderEmailHtml, applicationDeletionDueEmailHtml, paymentClaimUrl,
-  COMMUNITY_FROM, COMMUNITY_EMAIL,
+  sendOcEmail, paymentReminderEmailHtml, applicationDeletionDueEmailHtml,
+  spamCheckCallEmailHtml, paymentClaimUrl,
+  COMMUNITY_FROM, COMMUNITY_EMAIL, ADMIN_EMAIL,
 } from '@/lib/ocEmails'
 
 // 300s μένουν παρότι έφυγε η αυτόματη διαγραφή: η διαδρομή στέλνει email ένα
@@ -21,10 +22,14 @@ export const maxDuration = 300
  * Επισκόπηση. Ένα cron που ξυπνά και αρχίζει να στέλνει email σε ανθρώπους
  * χωρίς ανθρώπινη απόφαση είναι λάθος σχεδιασμός, όχι ευκολία.
  *
- *  Ημέρα 15 → υπενθύμιση
+ *  Ημέρα 7  → υπενθύμιση στο hello@: τηλεφώνησε, μήπως το email έγκρισης
+ *             έπεσε στα ανεπιθύμητα. ΔΕΝ θέλει όπλιση — το γράμμα έγκρισης
+ *             φεύγει με την ψήφο.
+ *  Ημέρα 15 → υπενθύμιση στον αιτούντα
  *  Ημέρα 28 → «απομένουν δύο μέρες»
  *  Ημέρα 30 → καμία αποστολή· το OC δείχνει «η προθεσμία έληξε»
- *  Ημέρα 31 → διαγραφή της αίτησης (GDPR) + ειδοποίηση στο ΔΣ
+ *  Ημέρα 31 → απόδειξη τήρησης της διαδικασίας + ΑΙΤΗΜΑ διαγραφής στην
+ *             community@. ΚΑΜΙΑ αυτόματη διαγραφή — σβήνει άνθρωπος.
  *
  * Αν έχει γίνει δήλωση πληρωμής (PaymentClaimedAt), δεν στέλνεται τίποτα.
  */
@@ -116,6 +121,52 @@ async function runJob(request: NextRequest, log: RunNote) {
     }
 
     /**
+     * ── Ημέρα 7: «τηλεφώνησε, μήπως έπεσε στα ανεπιθύμητα» ────────────────
+     *
+     * Πάει ΜΟΝΟ στο hello@ και αφορά το email ΕΓΚΡΙΣΗΣ που έφυγε από την
+     * community@ — όχι την πληρωμή. Ένα γράμμα στα ανεπιθύμητα σημαίνει ότι
+     * η προθεσμία των 30 ημερών τρέχει χωρίς ο άνθρωπος να ξέρει καν ότι
+     * εγκρίθηκε, γι' αυτό ο έλεγχος γίνεται ΜΕΣΑ στην προθεσμία.
+     *
+     * ΔΕΝ εξαρτάται από το AutoRemindersArmed: το email έγκρισης φεύγει με
+     * την ψήφο, ανεξάρτητα από το αν οπλίστηκαν οι υπενθυμίσεις.
+     *
+     * Η σφραγίδα SpamCheckSentAt είναι που το κρατά μία φορά. ΟΧΙ έλεγχος
+     * `days === 7`: η Vercel δηλώνει ρητά ότι μια εκτέλεση μπορεί να χαθεί,
+     * και τότε η υπενθύμιση δεν θα έφευγε ποτέ.
+     */
+    const spamChecks: string[] = []
+    const sc = await strapi(
+      '/membership-applications?filters[ApplicationState][$eq]=approved'
+      + '&filters[SpamCheckSentAt][$null]=true'
+      + '&pagination[limit]=100'
+      + '&fields[0]=FirstName&fields[1]=LastName&fields[2]=Email&fields[3]=Phone'
+      + '&fields[4]=DecisionDate&fields[5]=PaymentClaimedAt',
+    )
+    for (const app of sc.json?.data || []) {
+      if (!app.DecisionDate || app.PaymentClaimedAt) continue
+      const days = daysSince(app.DecisionDate)
+      if (days < 7) continue
+
+      const name = `${app.FirstName || ''} ${app.LastName || ''}`.trim() || '—'
+      const tpl = spamCheckCallEmailHtml({
+        name,
+        email: String(app.Email || '').trim(),
+        phone: app.Phone ? String(app.Phone).trim() : null,
+        decisionDate: app.DecisionDate,
+        days,
+      })
+      const ok = await sendOcEmail(ADMIN_EMAIL, tpl.subject, tpl.html, {
+        from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL,
+      })
+      if (!ok) { skipped.push(`${name}: αποτυχία υπενθύμισης τηλεφώνου`); continue }
+      // Η σφραγίδα μπαίνει ΜΟΝΟ αφού σταλεί, αλλιώς χάνεται σιωπηλά
+      await strapi(`/membership-applications/${app.documentId}`, 'PUT',
+        { SpamCheckSentAt: new Date().toISOString() })
+      spamChecks.push(`${name} (ημέρα ${days})`)
+    }
+
+    /**
      * ── Λήξη προθεσμίας: ΑΠΟΔΕΙΞΗ + ΑΙΤΗΜΑ, καμία διαγραφή ─────────────────
      *
      * ΤΟ ΥΠΟΨΗΦΙΟ ΜΕΛΟΣ ΔΕΝ ΔΙΑΓΡΑΦΕΤΑΙ ΠΟΤΕ ΑΥΤΟΜΑΤΑ (απόφαση ΟΣ, 29/9/2026,
@@ -174,8 +225,9 @@ async function runJob(request: NextRequest, log: RunNote) {
 
     console.log(`[PAYMENT-REMINDERS] sent ${sent.length}${sent.length ? ': ' + sent.join(', ') : ''}`)
     if (deletionDue.length) console.log(`[PAYMENT-REMINDERS] deletion requested ${deletionDue.length}: ${deletionDue.join(', ')}`)
-    log.note(`${sent.length} υπενθυμίσεις· ${skipped.length} παραλείφθηκαν· ${deletionDue.length} αιτήματα χειροκίνητης διαγραφής`)
-    return NextResponse.json({ success: true, sent, skipped, deletionDue })
+    log.note(`${sent.length} υπενθυμίσεις· ${spamChecks.length} έλεγχοι ανεπιθύμητων· `
+      + `${skipped.length} παραλείφθηκαν· ${deletionDue.length} αιτήματα χειροκίνητης διαγραφής`)
+    return NextResponse.json({ success: true, sent, spamChecks, skipped, deletionDue })
   } catch (err) {
     console.error('[PAYMENT-REMINDERS] error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

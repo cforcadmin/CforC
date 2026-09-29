@@ -3136,6 +3136,56 @@ export function paymentReminderEmailHtml(
  * χέρι — αν λείψουν από το γράμμα, δεν θα τα θυμηθεί κανείς.
  */
 /**
+ * Υπενθύμιση προς hello@: τηλεφώνησε να δεις αν έφτασε το email έγκρισης.
+ *
+ * Επτά ημέρες μετά το γράμμα έγκρισης από την community@. Ο λόγος δεν είναι η
+ * πληρωμή — είναι ότι το email μπορεί να κάθεται στα ανεπιθύμητα και ο
+ * άνθρωπος να μην ξέρει καν ότι εγκρίθηκε. Γι' αυτό φεύγει ΜΕΣΑ στην
+ * προθεσμία των 30 ημερών και όχι μετά: αν το ανακαλύψουμε στο τέλος, η
+ * προθεσμία έχει ήδη φάει τρεις εβδομάδες.
+ *
+ * Πάει ΜΟΝΟ στο hello@ — δεν είναι ανακοίνωση, είναι υπενθύμιση εργασίας.
+ */
+export function spamCheckCallEmailHtml(opts: {
+  name: string
+  email: string
+  phone: string | null
+  decisionDate: string | null
+  days: number
+}): { subject: string; html: string } {
+  const { name, email, phone, decisionDate, days } = opts
+  const dateLabel = decisionDate
+    ? new Date(decisionDate).toLocaleDateString('el-GR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '—'
+  const row = (k: string, v: string) => `
+      <tr>
+        <td style="padding:6px 16px 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#6B6B6B;white-space:nowrap;vertical-align:top;">${k}</td>
+        <td style="padding:6px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#2D2D2D;">${v}</td>
+      </tr>`
+  const body = `
+  <tr>
+    <td class="px" style="padding:36px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;">
+      <p style="margin:0 0 20px 0;">Πέρασαν <strong>${days} ημέρες</strong> από το email έγκρισης προς τον/την <strong>${escapeHtml(name)}</strong> και δεν έχει δηλωθεί πληρωμή.</p>
+      <p style="margin:0 0 20px 0;">Πάρ' τον/την <strong>τηλέφωνο</strong> για να επιβεβαιώσεις ότι το γράμμα έφτασε στα εισερχόμενα και δεν κάθεται στα ανεπιθύμητα. Αν δεν το έχει δει, η προθεσμία τρέχει χωρίς εκείνος/εκείνη να το ξέρει.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin:0 0 20px 0;">
+        ${row('Ονοματεπώνυμο', escapeHtml(name))}
+        ${row('Τηλέφωνο', phone ? `<a href="tel:${escapeHtml(phone.replace(/\s+/g, ''))}" style="color:#FF8B6A;text-decoration:none;font-weight:bold;">${escapeHtml(phone)}</a>` : '— δεν έχει δηλωθεί')}
+        ${row('Email', escapeHtml(email))}
+        ${row('Έγκριση ΟΣ', dateLabel)}
+        ${row('Απομένουν', `${Math.max(0, 30 - days)} ημέρες από τις 30`)}
+      </table>
+    </td>
+  </tr>`
+  return {
+    subject: `Τηλεφώνησε — ${name} (${days} ημέρες από την έγκριση, χωρίς πληρωμή)`,
+    html: shell('Τηλεφώνησε', 'ΕΛΕΓΧΟΣ ΑΝΕΠΙΘΥΜΗΤΩΝ',
+      `${name}: επιβεβαίωσε τηλεφωνικά ότι το email έγκρισης δεν έπεσε στα ανεπιθύμητα.`,
+      body, `${SITE_URL}/oc`, 'Άνοιγμα OC',
+      'Στέλνεται μία φορά, την 7η ημέρα από την έγκριση, μόνο εφόσον δεν έχει δηλωθεί πληρωμή.'),
+  }
+}
+
+/**
  * ΑΙΤΗΜΑ χειροκίνητης διαγραφής προς την community@.
  *
  * Απόφαση ΟΣ 29/9/2026: το υποψήφιο μέλος ΔΕΝ διαγράφεται ποτέ αυτόματα. Όταν
