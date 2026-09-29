@@ -35,6 +35,8 @@ interface Payload {
   checkedAt: string
   overall: HealthState
   checks: Check[]
+  /** Τι ΔΕΝ ελέγχθηκε και γιατί — π.χ. όσα αφορούν μόνο την παραγωγή */
+  notes?: string[]
 }
 
 const CARD = 'bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8 border border-gray-200 dark:border-gray-600'
@@ -157,6 +159,10 @@ export default function OcSecurity() {
             })}
           </div>
         )}
+
+        {data?.notes?.map(n => (
+          <p key={n} className="mt-3 text-xs text-gray-600 dark:text-gray-300">{n}</p>
+        ))}
 
         {data && (
           <p className="mt-4 text-xs text-gray-500">

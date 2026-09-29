@@ -13,7 +13,9 @@
  */
 import { getAccessToken, SCOPES } from '@/lib/googleAuth'
 
-const SHEET_ID = process.env.GOOGLE_LIBRARY_SHEET_ID || '1lyOpSQ-NUSoaLWeMg8yo5uwjLsfQJxo9XmyGLcPoAko'
+/** Εξάγεται ώστε ο έλεγχος υγείας να μη μπορεί να κοιτάζει άλλο φύλλο */
+export const LIBRARY_SHEET_ID = process.env.GOOGLE_LIBRARY_SHEET_ID || '1lyOpSQ-NUSoaLWeMg8yo5uwjLsfQJxo9XmyGLcPoAko'
+const SHEET_ID = LIBRARY_SHEET_ID
 const TAB = 'Καταγραφή'
 
 /** Στήλες A→M, στη σειρά του φύλλου */

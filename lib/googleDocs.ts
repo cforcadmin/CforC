@@ -25,8 +25,16 @@ export interface AgendaMeeting {
   items: AgendaItem[]
 }
 
-const DOC_ID = process.env.GOOGLE_AGENDA_DOC_ID
+/**
+ * Το id που χρησιμοποιεί ΟΝΤΩΣ η λειτουργία — εξάγεται ώστε ο έλεγχος υγείας
+ * να διαβάζει από εδώ. Στις 29/9/2026 η «Ασφάλεια++» έλεγε «δεν έχει οριστεί»
+ * ενώ η Ημερήσια διάταξη δούλευε μια χαρά: ο έλεγχος κοίταζε σκέτη μεταβλητή
+ * περιβάλλοντος και αγνοούσε την προεπιλογή. Ένας έλεγχος που ρωτάει άλλο
+ * πράγμα από αυτό που τρέχει, λέει ψέματα.
+ */
+export const AGENDA_DOC_ID = process.env.GOOGLE_AGENDA_DOC_ID
   || '1FB5tjSpwbJMQuH_8fKSyhmh6ssEguHqxKx2OnbtHXwk'
+const DOC_ID = AGENDA_DOC_ID
 
 export function agendaConfigured(): boolean {
   return googleConfigured() && !!DOC_ID

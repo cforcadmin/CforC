@@ -9,6 +9,13 @@ import {
   type VercelDeployment,
 } from '@/lib/ocHealth'
 import { getAccessToken, SCOPES, googleConfigured } from '@/lib/googleAuth'
+// Τα id έρχονται από τις ΙΔΙΕΣ τις βιβλιοθήκες που τα χρησιμοποιούν. Όσο τα
+// ξαναγράφαμε εδώ, ο έλεγχος μπορούσε να κοιτάζει άλλο αρχείο από τη λειτουργία
+// — και ακριβώς αυτό έγινε με την Ημερήσια διάταξη (29/9/2026).
+import { CONTRACTS_SHEET_ID } from '@/lib/contractsSheet'
+import { LIBRARY_SHEET_ID } from '@/lib/librarySheet'
+import { LIBRARY_FOLDER_ID } from '@/lib/googleDrive'
+import { AGENDA_DOC_ID } from '@/lib/googleDocs'
 
 export const maxDuration = 60
 
@@ -148,6 +155,15 @@ export async function GET() {
   const denied = await authorizeIt()
   if (denied) return denied
 
+  /**
+   * Δύο έλεγχοι αφορούν ΜΟΝΟ την παραγωγή και δεν έχουν νόημα στο localhost:
+   * το Deployment (τα VERCEL_* υπάρχουν μόνο στη Vercel) και το Πιστοποιητικό
+   * (το localhost δεν έχει κανένα). Τοπικά τους ΠΑΡΑΛΕΙΠΟΥΜΕ αντί να τους
+   * δείχνουμε «Άγνωστο»: μια οθόνη που γκρινιάζει κάθε μέρα για κάτι που δεν
+   * είναι πρόβλημα, παύει να διαβάζεται όταν εμφανιστεί το αληθινό πρόβλημα.
+   */
+  const onVercel = !!process.env.VERCEL
+
   const checks = await Promise.all([
     // ── Strapi: η μόνη βάση. Αν πέσει, δεν λειτουργεί τίποτα.
     guard('strapi', 'Strapi', async () => {
@@ -158,8 +174,8 @@ export async function GET() {
       return judgeStrapi(r.ok, Date.now() - t0)
     }),
 
-    // ── Το τελευταίο deployment παραγωγής
-    guard('deploy', 'Deployment', async () => {
+    // ── Το τελευταίο deployment παραγωγής (μόνο στην παραγωγή)
+    ...(onVercel ? [guard('deploy', 'Deployment', async () => {
       const token = process.env.VERCEL_API_TOKEN
       const projectId = process.env.VERCEL_PROJECT_ID
       if (!token || !projectId) {
@@ -183,7 +199,7 @@ export async function GET() {
         target: d.target,
       } : null
       return judgeDeployment(latest)
-    }),
+    })] : []),
 
     // ── Google: ΟΛΑ τα αρχεία και οι υπηρεσίες, σε ΜΙΑ γραμμή που ανοίγει.
     //    Επτά χωριστές γραμμές θα έπνιγαν τα υπόλοιπα· και ένα σπασμένο
@@ -236,23 +252,16 @@ export async function GET() {
           return googleColdFailure(status, text)
         }, 40000),
 
-        sheetSub('contracts', 'Μητρώο Συμβάσεων',
-          process.env.CONTRACTS_SHEET_ID || '1xjl_u5pcFqYgmbYmhZV1Pw8VJXNDibOHC04mPcytxuU'),
-        sheetSub('librarySheet', 'Βιβλιοθήκη — Λίστα περιεχομένων',
-          process.env.GOOGLE_LIBRARY_SHEET_ID || '1lyOpSQ-NUSoaLWeMg8yo5uwjLsfQJxo9XmyGLcPoAko'),
+        sheetSub('contracts', 'Μητρώο Συμβάσεων', CONTRACTS_SHEET_ID),
+        sheetSub('librarySheet', 'Βιβλιοθήκη — Λίστα περιεχομένων', LIBRARY_SHEET_ID),
 
-        sub('libraryFolder', 'Βιβλιοθήκη — φάκελος Drive', async () => {
-          const id = process.env.GOOGLE_LIBRARY_FOLDER_ID || '1QrZV0ixXvjITBsU95AHmoeg2Kqa2RJj9'
-          return googleGet(SCOPES.drive,
-            `https://www.googleapis.com/drive/v3/files/${id}?fields=name&supportsAllDrives=true`)
-        }),
+        sub('libraryFolder', 'Βιβλιοθήκη — φάκελος Drive', () =>
+          googleGet(SCOPES.drive,
+            `https://www.googleapis.com/drive/v3/files/${LIBRARY_FOLDER_ID}?fields=name&supportsAllDrives=true`)),
 
-        sub('agendaDoc', 'Ημερήσια διάταξη (Doc)', async () => {
-          const id = process.env.GOOGLE_AGENDA_DOC_ID
-          if (!id) return { state: 'unknown' as const, detail: 'δεν έχει οριστεί GOOGLE_AGENDA_DOC_ID' }
-          return googleGet(SCOPES.documents,
-            `https://docs.googleapis.com/v1/documents/${id}?fields=title`)
-        }),
+        sub('agendaDoc', 'Ημερήσια διάταξη (Doc)', () =>
+          googleGet(SCOPES.documents,
+            `https://docs.googleapis.com/v1/documents/${AGENDA_DOC_ID}?fields=title`)),
 
         sub('calendar', 'Ημερολόγιο', async () => {
           const id = process.env.GOOGLE_CALENDAR_ID
@@ -299,8 +308,10 @@ export async function GET() {
       return { state: 'ok' as const, detail: `${groups.length} ${groups.length === 1 ? 'λίστα' : 'λίστες'}` }
     }),
 
-    // ── Πιστοποιητικό του ιστότοπου
-    guard('tls', 'Πιστοποιητικό', async () => judgeCertificate(await certDaysLeft(SITE_HOST))),
+    // ── Πιστοποιητικό του ιστότοπου (μόνο στην παραγωγή)
+    ...(onVercel
+      ? [guard('tls', 'Πιστοποιητικό', async () => judgeCertificate(await certDaysLeft(SITE_HOST)))]
+      : []),
 
     // ── Εξοδολόγια που δεν έφτασαν ποτέ στο Drive (σιωπηλή αποτυχία, 28/9/2026)
     guard('claims', 'Αρχειοθέτηση εξοδολογίων', async () => {
@@ -320,5 +331,8 @@ export async function GET() {
     checkedAt: new Date().toISOString(),
     overall: worstOf(all),
     checks: all,
+    notes: onVercel ? [] : [
+      'Τοπικό περιβάλλον: το Deployment και το Πιστοποιητικό αφορούν μόνο την παραγωγή και δεν ελέγχονται εδώ.',
+    ],
   })
 }
