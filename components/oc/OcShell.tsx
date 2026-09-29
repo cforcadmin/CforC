@@ -13,6 +13,7 @@ import OcComms from '@/components/oc/OcComms'
 import OcAdmin from '@/components/oc/OcAdmin'
 import OcCampaigns from '@/components/oc/OcCampaigns'
 import OcIndicators from '@/components/oc/OcIndicators'
+import OcSecurity from '@/components/oc/OcSecurity'
 import OcCorrections from '@/components/oc/OcCorrections'
 import type { OcOverviewData } from '@/lib/ocOverview'
 import { useNavMode } from '@/components/nav/useNavMode'
@@ -30,6 +31,10 @@ const SECTIONS = [
   { key: 'settings', letter: 'Ρ', rest: 'ΥΘΜΙΣΕΙΣ', hue: '#8A8FA3', title: 'Ρυθμίσεις' },
   // Μόνο για τη θέση IT — ένα κουτί ανά σελίδα, με δικό του πίνακα εκκρεμοτήτων
   { key: 'corrections', letter: 'Π', rest: 'ΡΟΤΑΣΕΙΣ', hue: '#B34426', title: 'Διορθώσεις / Προτάσεις', itOnly: true },
+  // Υγεία συστήματος και προστασία δεδομένων — μόνο IT. Ψυχρή απόχρωση: η
+  // υπόλοιπη παλέτα είναι θερμή και αυτή η ενότητα δεν είναι «δουλειά», είναι
+  // παρατηρητήριο. Βλ. docs/OC-Asfaleia-Plus-Plus.md
+  { key: 'security', letter: 'Α', rest: 'ΣΦΑΛΕΙΑ++', hue: '#3D7A8C', title: 'Ασφάλεια++', itOnly: true },
 ] as const
 
 type SectionKey = (typeof SECTIONS)[number]['key']
@@ -149,6 +154,7 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
     (!('itOnly' in s && s.itOnly) || activeSeat === 'it') && canSeeSection(s.key, activeSeat))
   useEffect(() => {
     if (activeSection === 'corrections' && activeSeat !== 'it') { setActiveSection('admin'); return }
+    if (activeSection === 'security' && activeSeat !== 'it') { setActiveSection('admin'); return }
     // Αλλαγή ρόλου σε έδρα με περιορισμένη πρόσβαση: δεν μένουμε σε ενότητα
     // που δεν της ανήκει — ούτε σε λευκή οθόνη.
     if (!canSeeSection(activeSection, activeSeat)) {
@@ -699,6 +705,7 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
           {activeSection === 'reports' && <OcIndicators />}
 
           {activeSection === 'corrections' && activeSeat === 'it' && <OcCorrections />}
+          {activeSection === 'security' && activeSeat === 'it' && <OcSecurity />}
 
           {/* Το γραφείο αποστολής email της κάθε έδρας, στο τέλος της ενότητάς της.
               Ποια έδρα σε ποια ενότητα: OC_EMAIL_DESKS. Η θυρίδα αποστολής
@@ -713,7 +720,7 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
             </div>
           )}
 
-          {activeSection !== 'overview' && activeSection !== 'settings' && activeSection !== 'members' && activeSection !== 'finances' && activeSection !== 'admin' && activeSection !== 'comms' && activeSection !== 'reports' && activeSection !== 'corrections' && (
+          {activeSection !== 'overview' && activeSection !== 'settings' && activeSection !== 'members' && activeSection !== 'finances' && activeSection !== 'admin' && activeSection !== 'comms' && activeSection !== 'reports' && activeSection !== 'corrections' && activeSection !== 'security' && (
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-12 text-center">
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5"

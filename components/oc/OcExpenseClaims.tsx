@@ -139,6 +139,35 @@ export default function OcExpenseClaims() {
     }
   }
 
+  /**
+   * Επανάληψη αρχειοθέτησης στο Drive.
+   *
+   * Η αρχειοθέτηση στην υποβολή είναι best-effort: αν πέσει το Apps Script, το
+   * εξοδολόγιο περνά αλλά τα παραστατικά δεν φτάνουν ποτέ — και το email προς
+   * το finance@ φεύγει χωρίς τον σύνδεσμο. Τίποτα δεν χάνεται (τα συνημμένα
+   * μένουν στη Βιβλιοθήκη), οπότε η επανάληψη είναι πλήρης.
+   */
+  async function reArchive(id: string) {
+    setBusy(id)
+    setError(null)
+    try {
+      const res = await fetch('/api/oc/expense-claims', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, action: 'archive' }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error || 'Αποτυχία')
+      if (json?.missingAttachments) {
+        setError(`Αρχειοθετήθηκε, αλλά ${json.missingAttachments} συνημμένο/α δεν κατέβηκαν.`)
+      }
+      load()
+    } catch (err: any) {
+      setError(err?.message || 'Κάτι πήγε στραβά')
+    } finally {
+      setBusy(null)
+    }
+  }
+
   // Το πλακίδιο μένει πάντα στη θέση του: το «κανένα αυτόν τον μήνα» είναι
   // κι αυτό απάντηση, και ο/η Financer δεν χρειάζεται να αναρωτιέται αν
   // χάθηκε κάτι. Μόνο όσο φορτώνει δεν υπάρχει.
@@ -249,9 +278,25 @@ export default function OcExpenseClaims() {
                       <a href={c.pdfUrl} target="_blank" rel="noopener noreferrer"
                         className="text-sm font-bold text-coral dark:text-coral-light hover:underline">Το εξοδολόγιο ↗</a>
                     )}
-                    {c.folderUrl && (
+                    {c.folderUrl ? (
                       <a href={c.folderUrl} target="_blank" rel="noopener noreferrer"
                         className="text-sm font-bold text-coral dark:text-coral-light hover:underline">Παραστατικά ↗</a>
+                    ) : (
+                      /* Χωρίς φάκελο σημαίνει ότι η αρχειοθέτηση ΑΠΕΤΥΧΕ στην
+                         υποβολή — σιωπηλά. Χωρίς αυτή την ένδειξη, ο/η Financer
+                         πληρώνει εξοδολόγιο του οποίου τα παραστατικά δεν
+                         υπάρχουν πουθενά στο Drive. */
+                      <span className="inline-flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
+                        <span title="Τα παραστατικά δεν ανέβηκαν στο Drive κατά την υποβολή">
+                          Δεν αρχειοθετήθηκε
+                        </span>
+                        {data.canPay && (
+                          <button type="button" onClick={() => reArchive(c.id)} disabled={busy === c.id}
+                            className="rounded-full border border-amber-500 px-3 py-1 text-xs font-bold hover:bg-amber-500/10 disabled:opacity-50">
+                            {busy === c.id ? 'Ανεβαίνει…' : 'Επανάληψη'}
+                          </button>
+                        )}
+                      </span>
                     )}
                     {c.memberEmail && (
                       <a href={`mailto:${c.memberEmail}`}

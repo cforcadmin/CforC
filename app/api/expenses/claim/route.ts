@@ -9,7 +9,7 @@ import {
 } from '@/lib/expenseClaims'
 import { generateExpenseClaimPdf } from '@/lib/expenseClaimPdf'
 import { archiveExpenseClaim, type ArchiveAttachment } from '@/lib/expenseClaimArchive'
-import { sendOcEmail, expenseClaimSubmittedEmailHtml, FINANCE_FROM, FINANCE_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, expenseClaimSubmittedEmailHtml, expenseClaimReceivedEmailHtml, FINANCE_FROM, FINANCE_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
 
 // Ανέβασμα παραστατικών + δημιουργία φακέλου: πολύ πάνω από τα 10s
 export const maxDuration = 60
@@ -335,11 +335,40 @@ export async function POST(request: NextRequest) {
       lines: lines.map(l => ({ date: grDate(l.date), type: l.receiptType, amount: money(Number(l.amount) || 0) })),
       ocUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cultureforchange.net'}/oc?section=finances`,
     })
+    /**
+     * ΔΥΟ ΓΡΑΜΜΑΤΑ, όχι ένα με κοινοποίηση.
+     *
+     * Το εσωτερικό πάει στο finance@ (κοινοποίηση στη Διαχείριση) και μιλά για
+     * τη δουλειά του Ταμία. Το μέλος παίρνει ΔΙΚΟ ΤΟΥ γράμμα, χωρίς
+     * κοινοποιήσεις, με μόνο ό,τι υπέβαλε. Όσο ήταν ένα γράμμα με το μέλος σε
+     * cc, διάβαζε οδηγίες γραμμένες για άλλον — και ένα κουμπί προς σελίδα
+     * που δεν μπορεί να ανοίξει.
+     *
+     * Το κόστος σε email μένει ΙΔΙΟ: ήταν 1 παραλήπτης + 2 cc, τώρα είναι
+     * (1 + 1 cc) + 1.
+     */
+    const attach = pdfBase64 ? { attachments: [{ filename: pdfName, content: pdfBase64 }] } : {}
     await sendOcEmail(FINANCE_EMAIL, tpl.subject, tpl.html, {
       from: FINANCE_FROM,
       replyTo: member.email,
-      cc: [ADMIN_EMAIL, member.email],
-      ...(pdfBase64 ? { attachments: [{ filename: pdfName, content: pdfBase64 }] } : {}),
+      cc: [ADMIN_EMAIL],
+      ...attach,
+    })
+
+    const mine = expenseClaimReceivedEmailHtml({
+      claimNumber, memberName: member.name,
+      eventLabel: entry.EventName ? `${entry.EventType} — ${entry.EventName}` : entry.EventType,
+      eventDates: `${grDate(entry.EventStart)} – ${grDate(entry.EventEnd)}`,
+      route,
+      payable: money(payable), total: money(total), advance: advance > 0 ? money(advance) : null,
+      accountHolder: entry.AccountHolder, bankName: entry.BankName, iban: entry.Iban,
+      lines: lines.map(l => ({ date: grDate(l.date), type: l.receiptType, amount: money(Number(l.amount) || 0) })),
+    })
+    // Χωρίς cc — και απάντηση στο finance@, εκεί λύνονται οι απορίες
+    await sendOcEmail(member.email, mine.subject, mine.html, {
+      from: FINANCE_FROM,
+      replyTo: FINANCE_EMAIL,
+      ...attach,
     })
   } catch (e) {
     console.error('expense claim: notification email failed', e)

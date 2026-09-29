@@ -1450,16 +1450,17 @@ export function subscriptionReminderEmailHtml(
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="btn">
         <tr>
           <td style="background-color:#2D2D2D;border-radius:999px;">
-            <a href="${claimUrl}" style="display:inline-block;padding:15px 36px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:#FFFFFF;text-decoration:none;border-radius:999px;">Έκανα την κατάθεση ✓</a>
+            <a href="${claimUrl}" style="display:inline-block;padding:15px 36px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:#FFFFFF;text-decoration:none;border-radius:999px;">Έκανα την κατάθεση — ανέβασε το αποδεικτικό ✓</a>
           </td>
         </tr>
       </table>
-      <p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#8A8A8A;">Πάτησέ το μόλις κάνεις τη μεταφορά — έτσι η ομάδα οικονομικών ξέρει να την αναζητήσει και θα λάβεις την απόδειξή σου συντομότερα.</p>
+      <p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#8A8A8A;">Πάτησέ το μόλις κάνεις τη μεταφορά. Στη σελίδα που θα ανοίξει ζητείται το <strong>αποδεικτικό της συναλλαγής</strong> — έτσι η ομάδα οικονομικών μπορεί να το αντιπαραβάλει με την κίνηση του λογαριασμού και θα λάβεις την απόδειξή σου συντομότερα.</p>
     </td>
   </tr>
 
   <tr>
     <td class="px" style="padding:16px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#5A5A5A;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 12px 0;">📄 <strong>Κατέβασε το αποδεικτικό της συναλλαγής σε PDF</strong> από το e-banking σου (συνήθως «Αποδεικτικό συναλλαγής» ή «Απόδειξη πληρωμής») και ανέβασέ το με το κουμπί πιο πάνω. Στιγμιότυπο οθόνης γίνεται δεκτό, αλλά το PDF είναι προτιμότερο: δείχνει τον αριθμό συναλλαγής και βεβαιώνει ότι η μεταφορά ολοκληρώθηκε. Αν πλήρωσες σε κατάστημα, φωτογράφισε το χάρτινο παραστατικό.</p>
       <p style="margin:0 0 12px 0;">💡 Αν μεταφέρεις από άλλη τράπεζα, επίλεξε χρέωση εξόδων <strong>«OUR»</strong> ώστε να φτάσει ολόκληρο το ποσό.</p>
       <p style="margin:0 0 12px 0;">Μόλις καταχωρηθεί η πληρωμή σου θα λάβεις την απόδειξή σου με email. Αν έχεις ήδη πληρώσει τις τελευταίες ημέρες, αγνόησε αυτό το μήνυμα — ή απάντησέ μας για να το ελέγξουμε.</p>
     </td>
@@ -2615,6 +2616,15 @@ function escapeHtml(v: string): string {
  * και αφήνει το κείμενο σκούρο. Τα υπόλοιπα πρότυπα αυτού του αρχείου
  * περιμένουν ακόμη το ίδιο πέρασμα.
  */
+/**
+ * Υποβλήθηκε εξοδολόγιο.
+ *
+ * ΠΡΟΣΟΧΗ στο ποιος το διαβάζει: φεύγει προς finance@ αλλά με κοινοποίηση στο
+ * hello@ ΚΑΙ στο ίδιο το μέλος. Ό,τι γράφεται εδώ το διαβάζει και το μέλος,
+ * που δεν σημειώνει πληρωμές και δεν μπορεί καν να μπει στα Οικονομικά — γι'
+ * αυτό δεν μπαίνει καμία οδηγία προς τον/την Ταμία. Η υπενθύμιση «σημείωσε
+ * την κατάθεση» ζει στο ξεχωριστό email υπενθύμισης, που πάει μόνο σε εκείνον.
+ */
 export function expenseClaimSubmittedEmailHtml(opts: {
   claimNumber: string
   memberName: string
@@ -2707,7 +2717,7 @@ export function expenseClaimSubmittedEmailHtml(opts: {
   </tr>
   <tr>
     <td class="px ink" style="padding:24px 48px 32px 48px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">
-      <p style="margin:0 0 18px 0;" class="ink-soft">Το εξοδολόγιο είναι συνημμένο σε PDF. Μόλις γίνει η κατάθεση, σημείωσέ το στα Οικονομικά του OC ώστε να σταματήσουν οι υπενθυμίσεις.</p>
+      <p style="margin:0 0 18px 0;" class="ink-soft">Το εξοδολόγιο είναι συνημμένο σε PDF.</p>
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr><td align="center" bgcolor="#FF8B6A" style="background-color:#FF8B6A;border-radius:999px;">
           <a href="${opts.ocUrl}" style="display:block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#2D2D2D;text-decoration:none;border-radius:999px;">Άνοιγμα στα Οικονομικά&nbsp;→</a>
@@ -2726,6 +2736,127 @@ export function expenseClaimSubmittedEmailHtml(opts: {
 </body>
 </html>`
   return { subject: `Νέο εξοδολόγιο ${opts.claimNumber} — ${opts.memberName}, ${opts.payable}`, html }
+}
+
+/**
+ * Απόδειξη παραλαβής εξοδολογίου — ΠΡΟΣ ΤΟ ΜΕΛΟΣ.
+ *
+ * Ξεχωριστό γράμμα, χωρίς κοινοποιήσεις. Παλιά το μέλος έμπαινε απλώς σε cc
+ * στο εσωτερικό γράμμα προς το finance@ και διάβαζε πράγματα γραμμένα για τον
+ * Ταμία — οδηγία να σημειώσει την κατάθεση και κουμπί προς τα Οικονομικά, μια
+ * σελίδα που το μέλος δεν μπορεί καν να ανοίξει.
+ *
+ * Εδώ μπαίνει ΜΟΝΟ ό,τι υπέβαλε το ίδιο: τι δήλωσε, πόσο, και σε ποιον
+ * λογαριασμό — ώστε να πιάσει λάθος στο IBAN όσο προλαβαίνει. Κανένα κουμπί,
+ * καμία εσωτερική οδηγία.
+ */
+export function expenseClaimReceivedEmailHtml(opts: {
+  claimNumber: string
+  memberName: string
+  eventLabel: string
+  eventDates: string
+  route: string
+  payable: string
+  total: string
+  advance: string | null
+  accountHolder: string
+  bankName: string | null
+  iban: string
+  lines: Array<{ date: string; type: string; amount: string }>
+}): { subject: string; html: string } {
+  const rows = opts.lines.map(l => `
+    <tr>
+      <td style="padding:6px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#5A5A5A;">${escapeHtml(l.date)}</td>
+      <td style="padding:6px 8px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#2D2D2D;">${escapeHtml(l.type)}</td>
+      <td align="right" style="padding:6px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#2D2D2D;">${escapeHtml(l.amount)}</td>
+    </tr>`).join('')
+
+  const html = `<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>Λάβαμε το εξοδολόγιό σου — ${escapeHtml(opts.claimNumber)}</title>
+<style>
+  :root{color-scheme:light only;supported-color-schemes:light only;}
+  @media only screen and (max-width:620px){ .px{padding-left:24px !important;padding-right:24px !important;} }
+  @media (prefers-color-scheme: dark){
+    .paper{background-color:#FFFFFF !important;}
+    .ground{background-color:#F5F0EB !important;}
+    .ink, .ink *{color:#2D2D2D !important;}
+    .ink-soft, .ink-soft *{color:#5A5A5A !important;}
+  }
+</style>
+</head>
+<body class="ground" style="margin:0;padding:0;background-color:#F5F0EB;">
+<span style="display:none;font-size:1px;color:#F5F0EB;max-height:0;overflow:hidden;">${escapeHtml(opts.claimNumber)} — πληρωτέο ${escapeHtml(opts.payable)}</span>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="ground" style="background-color:#F5F0EB;">
+<tr><td align="center" style="padding:32px 12px 48px 12px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="paper" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #E5E7EB;">
+  <tr>
+    <td class="px" style="background-color:#FF8B6A;padding:36px 48px 32px 48px;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;letter-spacing:1.6px;color:#FFFFFF;font-weight:bold;">CULTURE FOR CHANGE</div>
+      <div style="height:20px;line-height:20px;font-size:0;">&nbsp;</div>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:34px;color:#2D2D2D;font-weight:bold;">ΛΑΒΑΜΕ ΤΟ ΕΞΟΔΟΛΟΓΙΟ ΣΟΥ</div>
+    </td>
+  </tr>
+  <tr>
+    <td class="px ink" style="padding:36px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;">
+      <p style="margin:0 0 20px 0;">${escapeHtml(opts.memberName)}, καταχωρήθηκε το εξοδολόγιο
+      <span style="color:#C9552F;font-weight:bold;">${escapeHtml(opts.claimNumber)}</span>
+      για ${escapeHtml(opts.eventLabel)}, ${escapeHtml(opts.eventDates)}.</p>
+      ${opts.route ? `<p style="margin:0 0 20px 0;" class="ink-soft">Διαδρομή: ${escapeHtml(opts.route)}</p>` : ''}
+    </td>
+  </tr>
+  <tr>
+    <td class="px" style="padding:8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;border-radius:16px;">
+        <tr><td style="padding:22px 24px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${rows}</table>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:12px;border-top:1px solid #E0D8D0;">
+            ${opts.advance ? `<tr>
+              <td style="padding-top:10px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#5A5A5A;">Σύνολο ${escapeHtml(opts.total)} · προκαταβολή −${escapeHtml(opts.advance)}</td>
+            </tr>` : ''}
+            <tr>
+              <td style="padding-top:10px;font-family:Arial,Helvetica,sans-serif;font-size:18px;color:#2D2D2D;font-weight:bold;">Πληρωτέο</td>
+              <td align="right" style="padding-top:10px;font-family:Arial,Helvetica,sans-serif;font-size:18px;color:#2D2D2D;font-weight:bold;">${escapeHtml(opts.payable)}</td>
+            </tr>
+          </table>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" style="padding:16px 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #E5E7EB;border-radius:16px;">
+        <tr><td style="padding:22px 24px;">
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:1.2px;color:#FF8B6A;font-weight:bold;">ΘΑ ΚΑΤΑΤΕΘΕΙ ΣΤΟΝ ΛΟΓΑΡΙΑΣΜΟ</div>
+          <div style="height:10px;font-size:0;">&nbsp;</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">${escapeHtml(opts.accountHolder)}${opts.bankName ? ` · ${escapeHtml(opts.bankName)}` : ''}</div>
+          <div style="font-family:'Courier New',Courier,monospace;font-size:16px;line-height:26px;color:#2D2D2D;font-weight:bold;word-break:break-all;">${escapeHtml(opts.iban)}</div>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td class="px ink" style="padding:24px 48px 32px 48px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;">
+      <p style="margin:0;" class="ink-soft">Το εξοδολόγιο είναι συνημμένο σε PDF. Θα ειδοποιηθείς μόλις γίνει η κατάθεση.
+      Αν κάτι από τα παραπάνω δεν είναι σωστό, απάντησε σε αυτό το μήνυμα.</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" align="center" style="background-color:#2D2D2D;padding:24px 48px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#A0A0A0;">
+      Δίκτυο Culture for Change — Αθήνα, Ελλάδα
+    </td>
+  </tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`
+  return { subject: `Λάβαμε το εξοδολόγιό σου — ${opts.claimNumber}`, html }
 }
 
 /**

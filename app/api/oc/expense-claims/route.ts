@@ -5,14 +5,16 @@ import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import { pendingClaims, pendingTotal, daysSince } from '@/lib/expenseClaimReminders'
 import { getSeatHolder } from '@/lib/ocRoles'
 import { sendOcEmail, expenseClaimPaidEmailHtml, FINANCE_FROM, FINANCE_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
+import { reArchiveExpenseClaim } from '@/lib/expenseClaimReArchive'
 
 export const maxDuration = 60
 
 /**
  * Εξοδολόγια στο OC.
  *
- *   GET                     → όσα περιμένουν πληρωμή (+ τα 20 τελευταία πληρωμένα)
- *   POST {id, action:'paid'} → σημειώνεται η πληρωμή, σταματούν οι υπενθυμίσεις
+ *   GET                        → όσα περιμένουν πληρωμή (+ τα 20 τελευταία πληρωμένα)
+ *   POST {id, action:'paid'}    → σημειώνεται η πληρωμή, σταματούν οι υπενθυμίσεις
+ *   POST {id, action:'archive'} → ξανα-ανεβάζει στο Drive ό,τι δεν έφτασε
  *
  * Βλέπουν Financer, Διαχείριση και IT· σημειώνει πληρωμή ΜΟΝΟ ο/η Financer —
  * αυτός/ή κάνει την κατάθεση, αυτός/ή το βεβαιώνει.
@@ -137,12 +139,46 @@ export async function POST(request: NextRequest) {
   const auth = await authorize()
   if ('error' in auth) return auth.error
   if (auth.activeSeat !== 'financer') {
-    return NextResponse.json({ error: 'Μόνο ο/η Financer σημειώνει πληρωμή' }, { status: 403 })
+    return NextResponse.json({ error: 'Μόνο ο/η Financer' }, { status: 403 })
   }
   const body = await request.json().catch(() => null)
   const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
-  if (!id || body?.action !== 'paid') {
+  const action = String(body?.action || '')
+  if (!id || (action !== 'paid' && action !== 'archive')) {
     return NextResponse.json({ error: 'Μη έγκυρο αίτημα' }, { status: 400 })
+  }
+
+  /**
+   * Επανάληψη αρχειοθέτησης.
+   *
+   * Η αρχειοθέτηση στην υποβολή είναι best-effort και αποτυγχάνει σιωπηλά. Εδώ
+   * ξαναχτίζεται το PDF και ξανακατεβαίνουν τα συνημμένα από τη Βιβλιοθήκη —
+   * τίποτα δεν ζητείται ξανά από το μέλος.
+   */
+  if (action === 'archive') {
+    const cur = await strapi(`/expense-claims/${id}?populate=Attachments`)
+    const c = cur.json?.data
+    if (!c) return NextResponse.json({ error: 'Το εξοδολόγιο δεν βρέθηκε' }, { status: 404 })
+    if (c.FolderUrl) {
+      return NextResponse.json({ ok: true, alreadyArchived: true, folderUrl: c.FolderUrl })
+    }
+    const r = await reArchiveExpenseClaim(c)
+    if (!r.ok) {
+      console.error('oc/expense-claims: re-archive failed', r.error)
+      return NextResponse.json({ error: `Η αρχειοθέτηση απέτυχε: ${r.error || 'άγνωστο σφάλμα'}` }, { status: 502 })
+    }
+    const saved = await strapi(`/expense-claims/${id}`, 'PUT', {
+      PdfUrl: r.pdfUrl || null, PdfFileId: r.pdfId || null, FolderUrl: r.folderUrl || null,
+    })
+    if (!saved.ok) {
+      // Το Drive έχει πια τα αρχεία· χάθηκε μόνο ο σύνδεσμος. Δεν ξανα-ανεβάζουμε.
+      console.error('oc/expense-claims: re-archive saved to Drive but Strapi write failed', saved.status)
+      return NextResponse.json({ error: 'Ανέβηκαν στο Drive αλλά δεν αποθηκεύτηκε ο σύνδεσμος' }, { status: 502 })
+    }
+    return NextResponse.json({
+      ok: true, folderUrl: r.folderUrl || null, pdfUrl: r.pdfUrl || null,
+      missingAttachments: r.missingAttachments || 0,
+    })
   }
 
   const current = await strapi(`/expense-claims/${id}`)
