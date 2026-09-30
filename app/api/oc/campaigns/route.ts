@@ -578,6 +578,49 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    /**
+     * Διπλότυπο ολόκληρης καμπάνιας, από τη λίστα.
+     *
+     * Γίνεται στον server και όχι στο πρόγραμμα περιήγησης: τα μπλοκ ενός
+     * newsletter φτάνουν τα 100 και δεν υπάρχει λόγος να κατέβουν και να
+     * ξανανέβουν για μια αντιγραφή.
+     *
+     * Οι ΕΙΚΟΝΕΣ μοιράζονται σκόπιμα — δεν αντιγράφονται. Η διαγραφή
+     * καμπάνιας ήδη σβήνει μόνο όσες εικόνες δεν κρατά άλλη καμπάνια, οπότε
+     * το αντίγραφο δεν μπορεί να μείνει με σπασμένες εικόνες.
+     *
+     * Το αντίγραφο γεννιέται ΠΑΝΤΑ ως προσχέδιο, χωρίς παραλήπτες και χωρίς
+     * ίχνος αποστολής: αλλιώς ένα διπλότυπο απεσταλμένου θα έμοιαζε σαν να
+     * στάλθηκε κι αυτό.
+     */
+    if (action === 'duplicate') {
+      const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
+      const subject = String(body?.subject || '').trim()
+      if (!id) return NextResponse.json({ error: 'Λείπει η καμπάνια' }, { status: 400 })
+      if (!subject) return NextResponse.json({ error: 'Λείπει το όνομα' }, { status: 400 })
+
+      const src = await strapi(`/oc-campaigns/${id}`)
+      const row = src.json?.data
+      if (!src.ok || !row) return NextResponse.json({ error: 'Δεν βρέθηκε η καμπάνια' }, { status: 404 })
+
+      const copy = await strapi('/oc-campaigns', 'POST', {
+        Subject: subject,
+        Kind: row.Kind || 'message',
+        Blocks: row.Blocks || [],
+        Desk: auth.activeSeat,
+        State: 'draft',
+        FooterStyle: row.FooterStyle ?? null,
+        FooterLook: row.FooterLook ?? null,
+        FooterLogo: row.FooterLogo ?? null,
+        HeaderStyle: row.HeaderStyle ?? null,
+        HeaderLogo: row.HeaderLogo ?? null,
+        Footer: row.Footer ?? null,
+        CreatedByName: await memberName(auth.memberId),
+      })
+      if (!copy.ok) return NextResponse.json({ error: 'Αποτυχία διπλοτύπου' }, { status: 502 })
+      return NextResponse.json({ ok: true, id: copy.json?.data?.documentId || null })
+    }
+
     if (action === 'archive') {
       const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
       if (!id) return NextResponse.json({ error: 'Λείπει η καμπάνια' }, { status: 400 })

@@ -181,7 +181,12 @@ export default function OcCampaigns({ desk }: { desk: string }) {
    * Δεν χρησιμοποιείται window.prompt: μπλοκάρει το παράθυρο, δεν στυλίζεται
    * και σε κάποιους browsers απενεργοποιείται μόνιμα από τον χρήστη.
    */
-  const [naming, setNaming] = useState<null | { mode: 'first-save' | 'duplicate'; value: string }>(null)
+  const [naming, setNaming] = useState<null | {
+    mode: 'first-save' | 'duplicate' | 'duplicate-row'
+    value: string
+    /** Μόνο στο 'duplicate-row': ποια καμπάνια της λίστας αντιγράφεται */
+    id?: string
+  }>(null)
   const [editingSubject, setEditingSubject] = useState('')
   const [confirming, setConfirming] = useState(false)
   const [finalTestAsk, setFinalTestAsk] = useState(false)
@@ -329,6 +334,28 @@ export default function OcCampaigns({ desk }: { desk: string }) {
    * @param opts.asName  αποθήκευση με ΑΥΤΟ το όνομα αντί του τρέχοντος θέματος
    * @param opts.asNew   αγνοεί το editingId ώστε να γεννηθεί ΝΕΑ εγγραφή
    */
+  /**
+   * Διπλότυπο καμπάνιας από τη ΛΙΣΤΑ — δεν αγγίζει τον συντάκτη.
+   *
+   * Η αντιγραφή γίνεται στον server: τα μπλοκ ενός newsletter φτάνουν τα 100
+   * και δεν υπάρχει λόγος να κατέβουν και να ξανανέβουν.
+   */
+  const duplicateRow = async (id: string, subject: string) => {
+    setBusy(true); setNotice(null)
+    try {
+      const res = await fetch('/api/oc/campaigns', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'duplicate', id, subject }),
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
+      setNotice({ kind: 'ok', text: `Το διπλότυπο «${subject}» δημιουργήθηκε στα Προσχέδια.` })
+      await load()
+    } catch (e: any) {
+      setNotice({ kind: 'err', text: e?.message || 'Αποτυχία' })
+    } finally { setBusy(false) }
+  }
+
   const send = async (action: 'save' | 'queue', opts: { asName?: string; asNew?: boolean } = {}) => {
     setBusy(true); setNotice(null)
     const outSubject = opts.asName ?? subject
@@ -641,20 +668,21 @@ export default function OcCampaigns({ desk }: { desk: string }) {
           onClick={() => setNaming(null)}>
           <div className="menu-glass rounded-3xl max-w-md w-full p-6 sm:p-8" onClick={e => e.stopPropagation()}>
             <h3 className="font-bold text-lg text-charcoal dark:text-gray-100 mb-1">
-              {naming.mode === 'duplicate' ? 'Όνομα για το διπλότυπο' : 'Με τι όνομα να αποθηκευτεί;'}
+              {naming.mode === 'first-save' ? 'Με τι όνομα να αποθηκευτεί;' : 'Όνομα για το διπλότυπο'}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              {naming.mode === 'duplicate'
-                ? 'Δημιουργείται νέο προσχέδιο με το ίδιο περιεχόμενο. Το τρέχον μένει όπως είναι.'
-                : 'Το όνομα γίνεται και το θέμα του μηνύματος — με αυτό θα το βρίσκεις στα Προσχέδια.'}
+              {naming.mode === 'first-save'
+                ? 'Το όνομα γίνεται και το θέμα του μηνύματος — με αυτό θα το βρίσκεις στα Προσχέδια.'
+                : 'Δημιουργείται νέο προσχέδιο με το ίδιο περιεχόμενο. Το πρωτότυπο μένει όπως είναι.'}
             </p>
             <form onSubmit={e => {
               e.preventDefault()
               const value = naming.value.trim()
               if (!value) return
-              const mode = naming.mode
+              const { mode, id } = naming
               setNaming(null)
-              send('save', { asName: value, asNew: mode === 'duplicate' })
+              if (mode === 'duplicate-row' && id) duplicateRow(id, value)
+              else send('save', { asName: value, asNew: mode === 'duplicate' })
             }}>
               <input autoFocus value={naming.value}
                 onChange={e => setNaming(n => (n ? { ...n, value: e.target.value } : n))}
@@ -667,7 +695,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
                 </button>
                 <button type="submit" disabled={!naming.value.trim()}
                   className="px-5 min-h-11 rounded-full bg-coral text-white text-sm font-bold disabled:opacity-50">
-                  {naming.mode === 'duplicate' ? 'Δημιουργία' : 'Αποθήκευση'}
+                  {naming.mode === 'first-save' ? 'Αποθήκευση' : 'Δημιουργία'}
                 </button>
               </div>
             </form>
@@ -689,7 +717,12 @@ export default function OcCampaigns({ desk }: { desk: string }) {
       )}
 
       {tab === 'queue' || tab === 'drafts' ? (
-        <QueueView campaigns={campaigns} onChanged={load} onEdit={openDraft} mode={tab} />
+        <QueueView campaigns={campaigns} onChanged={load} onEdit={openDraft} mode={tab}
+          onDuplicate={c => setNaming({
+            mode: 'duplicate-row',
+            id: c.documentId,
+            value: `${(c.Subject || 'Χωρίς θέμα').trim()} — αντίγραφο`,
+          })} />
       ) : (
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,30rem)] items-start">
           <div className="grid gap-6 min-w-0">
@@ -2651,8 +2684,10 @@ function CampaignDetail({ id }: { id: string }) {
   )
 }
 
-function QueueView({ campaigns, onChanged, onEdit, mode }: {
+function QueueView({ campaigns, onChanged, onEdit, onDuplicate, mode }: {
   campaigns: Campaign[]; onChanged: () => void; onEdit: (id: string) => void
+  /** Ανοίγει το παράθυρο ονόματος του γονέα — η αντιγραφή θέλει όνομα πρώτα */
+  onDuplicate: (c: Campaign) => void
   /** 'drafts' = ό,τι δεν έχει φύγει ακόμη · 'queue' = ό,τι έφυγε ή φεύγει */
   mode: 'drafts' | 'queue'
 }) {
@@ -2863,6 +2898,11 @@ function QueueView({ campaigns, onChanged, onEdit, mode }: {
                   aria-expanded={open === c.documentId}
                   className="px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-semibold">
                   {open === c.documentId ? 'Κλείσιμο' : 'Προβολή'}
+                </button>
+                <button type="button" disabled={working} onClick={() => onDuplicate(c)}
+                  title="Δημιουργεί νέο προσχέδιο με το ίδιο περιεχόμενο. Το πρωτότυπο μένει ανέπαφο."
+                  className="px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-semibold disabled:opacity-50">
+                  Διπλότυπο
                 </button>
                 <button type="button" disabled={working} onClick={() => archive(c, !c.Archived)}
                   className="px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-semibold disabled:opacity-50">
