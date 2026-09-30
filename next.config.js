@@ -51,16 +51,6 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'faithful-crystal-a2269c9fd9.strapiapp.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'faithful-crystal-a2269c9fd9.media.strapiapp.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
         hostname: 'helpful-wealth-0a46a9eabb.strapiapp.com',
         pathname: '/**',
       },

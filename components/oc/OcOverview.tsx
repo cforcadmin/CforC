@@ -26,7 +26,7 @@ const STATUS_META: Record<OcMemberStatus, { label: string; cls: string }> = {
 // Γρήγοροι σύνδεσμοι — συμπλήρωσε/άλλαξε URLs εδώ (κενό URL = δεν εμφανίζεται)
 const QUICK_LINKS: Array<{ label: string; href: string; external?: boolean }> = [
   { label: 'Μητρώο (Google Sheet)', href: '', external: true },
-  { label: 'Strapi Admin', href: 'https://faithful-crystal-a2269c9fd9.strapiapp.com/admin', external: true },
+  { label: 'Strapi Admin', href: 'https://helpful-wealth-0a46a9eabb.strapiapp.com/admin', external: true },
   { label: 'Sender (Newsletter)', href: 'https://app.sender.net', external: true },
   { label: 'Φόρμα αίτησης μέλους', href: '/apply' },
   { label: 'Δημόσια σελίδα μελών', href: '/members' },

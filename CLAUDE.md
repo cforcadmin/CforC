@@ -199,7 +199,10 @@ Run from project root: `node scripts/<script-name>.js`
 ## Image Handling
 
 Images served from Strapi Cloud CDN:
-- Domain: `faithful-crystal-a2269c9fd9.media.strapiapp.com`
+- Domain: `helpful-wealth-0a46a9eabb.media.strapiapp.com`
+  (the old `faithful-crystal-a2269c9fd9` project is gone — it answers 503.
+  Verified 30/9/26: all 377 stored member image URLs are on the new host,
+  zero on the old one.)
 - Next.js Image component configured for Strapi domains in `next.config.js`
 - Multiple formats available: thumbnail, small, medium, large (check `formats` object)
 
@@ -207,10 +210,18 @@ Images served from Strapi Cloud CDN:
 
 Strapi Cloud free tier sleeps after 10-15 minutes of inactivity.
 
-**Solution**: Use UptimeRobot (free) to ping API every 5 minutes:
-- Monitor URL: `https://faithful-crystal-a2269c9fd9.strapiapp.com/api/activities`
+**Solution**: Use UptimeRobot (free) to ping the instance every 5 minutes:
+- Monitor URL: `https://helpful-wealth-0a46a9eabb.strapiapp.com/_health`
 - Interval: 5 minutes
 - Prevents 10-30 second cold start delays
+
+Δύο παγίδες, και οι δύο επαληθευμένες στις 30/9/26 με curl:
+- **Ο παλιός host απαντά 503.** Αν το UptimeRobot δείχνει ακόμη στο
+  `faithful-crystal-a2269c9fd9`, ΔΕΝ κρατά τίποτα ζεστό — και οι κρύες
+  εκκινήσεις που περιγράφει αυτή η ενότητα συμβαίνουν κανονικά.
+- **ΟΧΙ `/api/activities`.** Χωρίς διακριτικό απαντά **403**, οπότε το
+  UptimeRobot θα το έβλεπε ως DOWN. Το `/_health` απαντά **204** χωρίς
+  καμία άδεια — αυτό είναι το σωστό σημείο ελέγχου.
 
 ## Code Style & Development Preferences
 

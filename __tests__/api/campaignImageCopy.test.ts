@@ -28,7 +28,7 @@ function signedInAs(seat: string) {
   })
 }
 
-const MEDIA = 'https://faithful-crystal-a2269c9fd9.media.strapiapp.com/photo_abc.png'
+const MEDIA = 'https://helpful-wealth-0a46a9eabb.media.strapiapp.com/photo_abc.png'
 
 const copy = async (src: string) => {
   const res = await POST(buildRequest('/api/oc/campaigns/image', {
