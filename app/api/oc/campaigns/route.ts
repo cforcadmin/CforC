@@ -862,7 +862,11 @@ async function allCampaignBlocks(): Promise<Array<{ documentId: string; Blocks: 
     const r = await strapi(
       `/oc-campaigns?pagination[page]=${page}&pagination[pageSize]=100&fields[0]=Blocks`)
     if (!r.ok) return null
-    out.push(...(r.json?.data || []))
+    const rows = r.json?.data
+    // Μη-πίνακας σημαίνει «δεν ξέρω τι γυρίζει το Strapi». Επιστρέφουμε null
+    // ώστε ο καλών να ΜΗ σβήσει, αντί να σκάσει σε spread μη-επαναληπτικού.
+    if (!Array.isArray(rows)) return null
+    out.push(...rows)
     const pc = r.json?.meta?.pagination?.pageCount
     if (!pc || page >= pc) return out
   }

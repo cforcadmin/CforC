@@ -879,8 +879,13 @@ describe('Αρχειοθέτηση και διαγραφή', () => {
       const url = typeof input === 'string' ? input : input?.url ?? ''
       const method = (init?.method || 'GET').toUpperCase()
       calls.push({ method, url, body: init?.body ? JSON.parse(init.body) : undefined })
-      if (url.includes('/api/oc-campaigns?pagination[limit]=200')) {
-        return new Response(JSON.stringify({ data: others }), { status: 200 })
+      // Σελιδοποιημένο ερώτημα: το Strapi κόβει στα 100 όσο μεγάλο κι αν
+      // είναι το limit, οπότε η διαγραφή διαβάζει σελίδα-σελίδα
+      if (url.includes('/api/oc-campaigns?pagination[page]=')) {
+        return new Response(JSON.stringify({
+          data: others,
+          meta: { pagination: { page: 1, pageCount: 1 } },
+        }), { status: 200 })
       }
       if (url.includes('/api/oc-campaigns/') && method === 'GET') {
         return new Response(JSON.stringify({ data: campaign }), { status: 200 })
@@ -943,5 +948,70 @@ describe('Αρχειοθέτηση και διαγραφή', () => {
     const { status, json } = await del('c1')
     expect(status).toBe(409)
     expect(json.error).toContain('σε εξέλιξη')
+  })
+})
+
+describe('Σελιδοποίηση στη διαγραφή — το Strapi κόβει στα 100', () => {
+  afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks() })
+
+  /**
+   * Το σφάλμα: ο έλεγχος «την κρατά άλλη καμπάνια;» διάβαζε με
+   * pagination[limit]=200 και έπαιρνε μόνο τις πρώτες 100. Μια εικόνα που
+   * κρατούσε η 101η φαινόταν αχρησιμοποίητη — και σβηνόταν.
+   */
+  it('διαβάζει ΟΛΕΣ τις σελίδες πριν κρίνει ότι μια εικόνα είναι αχρησιμοποίητη', async () => {
+    signedInAs('admin')
+    const pages: Record<string, any[]> = {
+      '1': Array.from({ length: 100 }, (_, i) => ({ documentId: `x${i}`, Blocks: [] })),
+      // Η εικόνα 11 ζει στη ΔΕΥΤΕΡΗ σελίδα — αόρατη με ένα μόνο αίτημα
+      '2': [{ documentId: 'x100', Blocks: [{ type: 'image', mediaId: 11 }] }],
+    }
+    const calls: string[] = []
+    jest.spyOn(global, 'fetch').mockImplementation(async (input: any, init?: any) => {
+      const url = typeof input === 'string' ? input : input?.url ?? ''
+      const method = (init?.method || 'GET').toUpperCase()
+      calls.push(`${method} ${url}`)
+      const m = /pagination\[page\]=(\d+)/.exec(url)
+      if (m) {
+        return new Response(JSON.stringify({
+          data: pages[m[1]] || [],
+          meta: { pagination: { page: Number(m[1]), pageCount: 2 } },
+        }), { status: 200 })
+      }
+      if (url.includes('/api/oc-campaigns/') && method === 'GET') {
+        return new Response(JSON.stringify({
+          data: { documentId: 'c1', State: 'sent', Subject: 'Θ', Blocks: [{ type: 'image', mediaId: 11 }] },
+        }), { status: 200 })
+      }
+      return new Response(JSON.stringify({ data: {} }), { status: 200 })
+    })
+
+    const res = await DELETE(buildRequest('/api/oc/campaigns?id=c1', { method: 'DELETE' }))
+    const json = await res.json()
+    expect(calls.some(c => c.includes('pagination[page]=2'))).toBe(true)
+    expect(json.imagesDeleted).toBe(0)
+    expect(json.imagesKept).toBe(1)
+    expect(calls.some(c => c.includes('DELETE') && c.includes('/upload/files/11'))).toBe(false)
+  })
+
+  it('αν αποτύχει ΟΠΟΙΑΔΗΠΟΤΕ σελίδα, δεν σβήνεται καμία εικόνα', async () => {
+    signedInAs('admin')
+    jest.spyOn(global, 'fetch').mockImplementation(async (input: any, init?: any) => {
+      const url = typeof input === 'string' ? input : input?.url ?? ''
+      const method = (init?.method || 'GET').toUpperCase()
+      if (/pagination\[page\]=2/.test(url)) return new Response('{}', { status: 502 })
+      if (/pagination\[page\]=1/.test(url)) {
+        return new Response(JSON.stringify({ data: [], meta: { pagination: { page: 1, pageCount: 2 } } }), { status: 200 })
+      }
+      if (url.includes('/api/oc-campaigns/') && method === 'GET') {
+        return new Response(JSON.stringify({
+          data: { documentId: 'c1', State: 'sent', Subject: 'Θ', Blocks: [{ type: 'image', mediaId: 77 }] },
+        }), { status: 200 })
+      }
+      return new Response(JSON.stringify({ data: {} }), { status: 200 })
+    })
+    const res = await DELETE(buildRequest('/api/oc/campaigns?id=c1', { method: 'DELETE' }))
+    const json = await res.json()
+    expect(json.imagesDeleted).toBe(0)
   })
 })
