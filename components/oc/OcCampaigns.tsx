@@ -1206,7 +1206,11 @@ function FullPreview({ html, onClose }: { html: string; onClose: () => void }) {
   }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 flex flex-col" role="dialog" aria-modal="true" aria-label="Προεπισκόπηση σε πλήρη οθόνη">
+    /* z-[60], ΟΧΙ z-50: η κύρια πλοήγηση είναι κι αυτή z-50 και —με ίδιο
+       z-index κερδίζει η σειρά στο DOM— ζωγραφιζόταν ΠΑΝΩ από τη λωρίδα
+       εργαλείων. Το «Κλείσιμο» φαινόταν αλλά τα κλικ τα έτρωγε η κεφαλίδα·
+       γι' αυτό το Escape δούλευε και το κουμπί όχι. */
+    <div className="fixed inset-0 z-[60] bg-black/70 flex flex-col" role="dialog" aria-modal="true" aria-label="Προεπισκόπηση σε πλήρη οθόνη">
       <div className="flex items-center gap-2 p-3">
         {[[PREVIEW_DESKTOP_WIDTH, 'Υπολογιστής'], [390, 'Κινητό']].map(([px, label]) => (
           <button key={px as number} type="button" onClick={() => setW(px as number)}

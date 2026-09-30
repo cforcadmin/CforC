@@ -844,6 +844,31 @@ export async function POST(request: NextRequest) {
   }
 }
 
+/**
+ * Όλες οι καμπάνιες, σε σελίδες — ΟΧΙ με μεγάλο `limit`.
+ *
+ * Το Strapi ΚΟΒΕΙ σιωπηλά στις 100 όσο μεγάλο κι αν είναι το `pagination[limit]`.
+ * Στη διαγραφή αυτό δεν ήταν απλώς ελλιπής ανάγνωση: ο έλεγχος «την κρατά
+ * άλλη καμπάνια;» θα έβγαζε ΟΧΙ για εικόνες που κρατούσε η 101η, και η εικόνα
+ * θα σβηνόταν ενώ κάποιο άλλο γράμμα τη δείχνει. Με τέσσερις καμπάνιες δεν
+ * φαινόταν· θα χτυπούσε σιωπηλά μόλις περνούσαμε τις 100.
+ *
+ * Επιστρέφει `null` αν ΟΠΟΙΑΔΗΠΟΤΕ σελίδα αποτύχει: μερική γνώση εδώ είναι
+ * χειρότερη από άγνοια, γιατί οδηγεί σε διαγραφή.
+ */
+async function allCampaignBlocks(): Promise<Array<{ documentId: string; Blocks: any }> | null> {
+  const out: Array<{ documentId: string; Blocks: any }> = []
+  for (let page = 1; page <= 50; page++) {
+    const r = await strapi(
+      `/oc-campaigns?pagination[page]=${page}&pagination[pageSize]=100&fields[0]=Blocks`)
+    if (!r.ok) return null
+    out.push(...(r.json?.data || []))
+    const pc = r.json?.meta?.pagination?.pageCount
+    if (!pc || page >= pc) return out
+  }
+  return out
+}
+
 /** Τα mediaId που κρατά μια καμπάνια — και τα πρωτότυπα πίσω από τα σημασμένα */
 function mediaIdsOf(blocks: any): number[] {
   const ids = new Set<number>()
@@ -882,10 +907,10 @@ export async function DELETE(request: NextRequest) {
 
     // Οι εικόνες φεύγουν ΜΟΝΟ αν δεν τις κρατά άλλη καμπάνια
     const mine = mediaIdsOf(row.Blocks)
-    const others = await strapi('/oc-campaigns?pagination[limit]=200&fields[0]=Blocks')
+    const others = await allCampaignBlocks()
     const usedElsewhere = new Set<number>()
-    if (others.ok) {
-      for (const c of others.json?.data || []) {
+    if (others) {
+      for (const c of others) {
         if (c.documentId === id) continue
         for (const m of mediaIdsOf(c.Blocks)) usedElsewhere.add(m)
       }
