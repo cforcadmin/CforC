@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import CampaignRichText from './CampaignRichText'
 import { moveUp, moveDown, moveToBottom, moveGroupTo, mergePaletteOrder, movePaletteChip } from '@/lib/blockOrder'
 import { PREVIEW_DESKTOP_WIDTH } from '@/lib/campaignBlocks'
-import { usePreviewSize, PV_MIN_W, PV_MIN_H, PV_EDGE_GAP } from './usePreviewSize'
+import { usePreviewSize, PV_MIN_W, PV_MIN_H, PV_EDGE_GAP, PV_BASE_TRACK, PV_STICKY_TOP } from './usePreviewSize'
 import type { NewsletterFooter } from '@/lib/campaignBlocks'
 
 /**
@@ -230,6 +230,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
    */
   const pv = usePreviewSize(520)
   const asideRef = useRef<HTMLElement>(null)
+  const sectionRef = useRef<HTMLElement>(null)
   const [maximized, setMaximized] = useState(false)
 
   /* Το ρυθμιζόμενο πλάτος ισχύει ΜΟΝΟ στη διάταξη δύο στηλών. Από κάτω η
@@ -259,13 +260,22 @@ export default function OcCampaigns({ desk }: { desk: string }) {
     if (!el) return PV_MIN_H
     // ΟΧΙ η τωρινή κορυφή: αν δεν έχεις κυλήσει ακόμη, το aside κάθεται
     // χαμηλά και η αφαίρεση θα έβγαζε μηδέν — η «Μεγέθυνση» θα ΜΙΚΡΑΙΝΕ την
-    // προεπισκόπηση. Μετράμε με την κορυφή που θα έχει ΚΟΛΛΗΜΕΝΟ (lg:top-24
-    // = 96px), δηλαδή με το ύψος που θα δει τελικά το μάτι.
-    const top = Math.min(el.getBoundingClientRect().top, 96)
+    // προεπισκόπηση. Μετράμε με την κορυφή που θα έχει ΚΟΛΛΗΜΕΝΟ, δηλαδή με
+    // το ύψος που θα δει τελικά το μάτι.
+    const top = Math.min(el.getBoundingClientRect().top, PV_STICKY_TOP)
     return Math.max(PV_MIN_H, Math.round(window.innerHeight - top - 150))
   }, [])
 
-  const dragPreview = useCallback((axis: 'w' | 'h') => (e: React.PointerEvent<HTMLElement>) => {
+  /** Πόσο ακόμη μπορεί να σπρωχτεί ο συνθέτης ΑΡΙΣΤΕΡΑ: όσο περιθώριο έχει
+   *  μείνει αχρησιμοποίητο στα αριστερά της σελίδας, με μια ανάσα. Στο
+   *  `rect.left` προστίθεται η ΤΩΡΙΝΗ σπρωξιά, γιατί το rect τη μετρά ήδη. */
+  const maxPreviewL = useCallback(() => {
+    const el = sectionRef.current
+    if (!el) return 0
+    return Math.max(0, Math.round(el.getBoundingClientRect().left + pv.l - PV_EDGE_GAP))
+  }, [pv.l])
+
+  const dragPreview = useCallback((axis: 'w' | 'h' | 'l') => (e: React.PointerEvent<HTMLElement>) => {
     e.preventDefault()
     e.stopPropagation()
     const el = asideRef.current
@@ -281,11 +291,23 @@ export default function OcCampaigns({ desk }: { desk: string }) {
     // Η τελευταία τιμή ταξιδεύει σε ΤΟΠΙΚΗ μεταβλητή και δίνεται ρητά στην
     // persist: το state της React δεν έχει προλάβει να ενημερωθεί όταν
     // σηκώνεται το δάχτυλο.
+    const startL = pv.l
+    const limL = maxPreviewL()
     let finalW = startW
     let finalH = startH
+    let finalL = startL
     const move = (ev: PointerEvent) => {
       if (axis === 'w') {
         finalW = Math.min(limW, Math.max(PV_MIN_W, startW + ev.clientX - startX))
+        pv.setW(finalW)
+        setMaximized(false)
+      } else if (axis === 'l') {
+        // Προς τα ΑΡΙΣΤΕΡΑ μεγαλώνει: το dx είναι αρνητικό, το γυρίζουμε.
+        finalL = Math.min(limL, Math.max(0, startL + (startX - ev.clientX)))
+        // Ό,τι κερδίζει ο συνθέτης αριστερά, το παίρνει η προεπισκόπηση —
+        // τα μπλοκ ΜΕΤΑΚΙΝΟΥΝΤΑΙ, δεν στενεύουν.
+        finalW = Math.max(PV_MIN_W, startW + (finalL - startL))
+        pv.setL(finalL)
         pv.setW(finalW)
         setMaximized(false)
       } else {
@@ -297,21 +319,33 @@ export default function OcCampaigns({ desk }: { desk: string }) {
       target.removeEventListener('pointermove', move)
       target.removeEventListener('pointerup', up)
       document.body.style.userSelect = ''
-      pv.persist(axis === 'w' ? { w: finalW } : { h: finalH })
+      pv.persist(
+        axis === 'w' ? { w: finalW }
+        : axis === 'l' ? { w: finalW, l: finalL }
+        : { h: finalH })
     }
     document.body.style.userSelect = 'none'
     target.addEventListener('pointermove', move)
     target.addEventListener('pointerup', up)
-  }, [pv, maxPreviewW])
+  }, [pv, maxPreviewW, maxPreviewL])
 
   /** Πληκτρολόγιο: τα βέλη αλλάζουν μέγεθος κατά 24px — χωρίς ποντίκι */
-  const keyPreview = useCallback((axis: 'w' | 'h') => (e: React.KeyboardEvent) => {
-    const dec = axis === 'w' ? 'ArrowLeft' : 'ArrowUp'
-    const inc = axis === 'w' ? 'ArrowRight' : 'ArrowDown'
+  const keyPreview = useCallback((axis: 'w' | 'h' | 'l') => (e: React.KeyboardEvent) => {
+    // Στη λαβή ΑΡΙΣΤΕΡΑ το «μεγαλώνει» είναι το ←, αντίστροφα από τη δεξιά
+    const dec = axis === 'h' ? 'ArrowUp' : axis === 'l' ? 'ArrowRight' : 'ArrowLeft'
+    const inc = axis === 'h' ? 'ArrowDown' : axis === 'l' ? 'ArrowLeft' : 'ArrowRight'
     if (e.key !== dec && e.key !== inc) return
     e.preventDefault()
     const step = e.key === inc ? 24 : -24
-    if (axis === 'w') {
+    if (axis === 'l') {
+      const nextL = Math.min(maxPreviewL(), Math.max(0, pv.l + step))
+      const curW = pv.w ?? Math.round(asideRef.current?.getBoundingClientRect().width ?? PV_MIN_W)
+      const nextW = Math.max(PV_MIN_W, curW + (nextL - pv.l))
+      pv.setL(nextL)
+      pv.setW(nextW)
+      setMaximized(false)
+      pv.persist({ w: nextW, l: nextL })
+    } else if (axis === 'w') {
       const cur = pv.w ?? Math.round(asideRef.current?.getBoundingClientRect().width ?? PV_MIN_W)
       const next = Math.min(maxPreviewW(), Math.max(PV_MIN_W, cur + step))
       pv.setW(next)
@@ -322,7 +356,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
       pv.setH(next)
       pv.persist({ h: next })
     }
-  }, [pv, maxPreviewW])
+  }, [pv, maxPreviewW, maxPreviewL])
 
   /** «Μεγέθυνση»: όσο πάει δεξιά και όσο πάει κάτω μέσα στην ορατή οθόνη.
    *  Δεύτερο πάτημα — πίσω στις προεπιλογές. */
@@ -332,25 +366,39 @@ export default function OcCampaigns({ desk }: { desk: string }) {
       pv.reset()
       return
     }
-    const w = maxPreviewW()
+    // Και τα ΔΥΟ περιθώρια: όσο πάει δεξιά (maxPreviewW) συν όσο μπορεί να
+    // σπρωχτεί ο συνθέτης αριστερά (maxPreviewL). Το όριο της σπρωξιάς
+    // κρατά τα μπλοκ μέσα στην οθόνη — δεν φεύγουν ποτέ έξω αριστερά.
+    const l = maxPreviewL()
+    const w = maxPreviewW() + l
     const h = maxPreviewH()
+    pv.setL(l)
     pv.setW(w)
     pv.setH(h)
     setMaximized(true)
-    pv.persist({ w, h })
-  }, [maximized, pv, maxPreviewW, maxPreviewH])
+    pv.persist({ w, h, l })
+  }, [maximized, pv, maxPreviewW, maxPreviewH, maxPreviewL])
 
   /* Αν στενέψει το παράθυρο, το αποθηκευμένο πλάτος μπορεί να ξεπερνά την
      οθόνη και να γεννήσει οριζόντια μπάρα κύλισης. Το μαζεύουμε. */
   useEffect(() => {
-    if (!twoCol || pv.w === undefined) return
+    if (!twoCol || (pv.w === undefined && pv.l === 0)) return
     const onResize = () => {
-      const lim = maxPreviewW()
+      // Πρώτα η σπρωξιά: σε στενό παράθυρο μπορεί να μην υπάρχει πια
+      // περιθώριο αριστερά, και τα μπλοκ θα έβγαιναν έξω από την οθόνη.
+      if (pv.l > 0) {
+        const limL = maxPreviewL()
+        if (pv.l > limL) {
+          pv.setW(Math.max(PV_MIN_W, (pv.w ?? PV_MIN_W) - (pv.l - limL)))
+          pv.setL(limL)
+        }
+      }
+      const lim = maxPreviewW() + pv.l
       if (pv.w !== undefined && pv.w > lim) pv.setW(lim)
     }
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
-  }, [twoCol, pv, maxPreviewW])
+  }, [twoCol, pv, maxPreviewW, maxPreviewL])
 
   const seen = useRef<Set<number>>(new Set())
   useEffect(() => {
@@ -862,7 +910,22 @@ export default function OcCampaigns({ desk }: { desk: string }) {
             value: `${(c.Subject || 'Χωρίς θέμα').trim()} — αντίγραφο`,
           })} />
       ) : (
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,30rem)] items-start">
+        <section ref={sectionRef}
+          style={twoCol && (pv.l || pv.w) ? {
+            marginLeft: pv.l ? -pv.l : undefined,
+            // Η ΤΡΙΤΗ ΓΡΑΜΜΗ ΤΟΥ ΠΛΕΓΜΑΤΟΣ ΑΚΟΛΟΥΘΕΙ ΤΟ ΠΛΑΤΟΣ.
+            // Χωρίς αυτό, το minmax(0,30rem) κρατούσε τη στήλη στα 480 και
+            // ό,τι κέρδιζε αριστερά το πλέγμα το ΡΟΥΦΟΥΣΕ η στήλη 1fr του
+            // συντάκτη: τα μπλοκ ΦΑΡΔΑΙΝΑΝ αντί να μετακινηθούν.
+            gridTemplateColumns: `minmax(0,1fr) auto ${Math.min(pv.w ?? PV_BASE_TRACK, PV_BASE_TRACK + pv.l)}px`,
+          } : undefined}
+          className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,30rem)] items-start">
+          {/* Δύο ξεχωριστοί τρόποι να μεγαλώσει η προεπισκόπηση:
+              ΑΡΙΣΤΕΡΑ, όπου ολόκληρος ο συνθέτης μετακινείται στο κενό
+              περιθώριο (αρνητικό margin-left) και η γραμμή του πλέγματος
+              μεγαλώνει μαζί — τα μπλοκ ΜΕΤΑΚΙΝΟΥΝΤΑΙ, κρατώντας το πλάτος
+              τους· και ΔΕΞΙΑ, όπου το aside ξεχειλίζει έξω από τη γραμμή
+              του, στο περιθώριο της σελίδας, χωρίς να πειράξει κανέναν. */}
           <div className="grid gap-6 min-w-0">
 
             <div className={CARD}>
@@ -1030,7 +1093,8 @@ export default function OcCampaigns({ desk }: { desk: string }) {
 
           <PositionRail count={blocks.length} cursor={cursor} here={hereSection} onGo={goToPosition} />
 
-          <aside ref={asideRef} className="relative lg:sticky lg:top-24 min-w-0" style={twoCol && pv.w ? { width: pv.w } : undefined}>
+          <aside ref={asideRef} className="relative lg:sticky min-w-0"
+            style={{ top: PV_STICKY_TOP, ...(twoCol && pv.w ? { width: pv.w } : {}) }}>
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-5 sm:p-6 border border-gray-200 dark:border-gray-600">
               <h3 className={`${EYEBROW} mb-3`}>ΠΡΟΕΠΙΣΚΟΠΗΣΗ</h3>
               {preview ? (
@@ -1050,6 +1114,14 @@ export default function OcCampaigns({ desk }: { desk: string }) {
                 της κάτω άκρης για ύψος. Διακριτικές αλλά ορατές — αν δεν
                 φαίνονται, δεν υπάρχουν. Μόνο σε lg: από κάτω η διάταξη είναι
                 μονόστηλη και το πλάτος το ορίζει η οθόνη. */}
+            {/* Η ΑΡΙΣΤΕΡΗ λαβή: μεγαλώνει την προεπισκόπηση προς τα αριστερά
+                σπρώχνοντας τα μπλοκ του γράμματος στο κενό περιθώριο. */}
+            <span role="separator" aria-orientation="vertical" aria-label="Πλάτος προεπισκόπησης προς τα αριστερά"
+              tabIndex={0} onPointerDown={dragPreview('l')} onKeyDown={keyPreview('l')}
+              className="hidden lg:flex justify-center absolute top-1/2 -left-1 h-16 w-3 -translate-y-1/2 cursor-ew-resize touch-none group"
+              style={{ touchAction: 'none' }}>
+              <span className="block h-full w-1 rounded-full bg-coral/40 group-hover:bg-coral group-focus-visible:bg-coral transition-colors" aria-hidden="true" />
+            </span>
             <span role="separator" aria-orientation="vertical" aria-label="Αλλαγή πλάτους προεπισκόπησης"
               tabIndex={0} onPointerDown={dragPreview('w')} onKeyDown={keyPreview('w')}
               className="hidden lg:flex justify-center absolute top-1/2 -right-1 h-16 w-3 -translate-y-1/2 cursor-ew-resize touch-none group"
@@ -1469,7 +1541,8 @@ function PositionRail({ count, cursor, here, onGo }: {
     <span className="text-[10px] tabular-nums text-gray-500 dark:text-gray-400">{at + 1}/{count}</span>
   )
   return (
-    <div className="hidden lg:flex sticky top-24 flex-col items-center gap-2 py-3 px-1 rounded-full border border-gray-200 dark:border-gray-600 bg-white/90 dark:bg-gray-800/90 backdrop-blur">
+    <div className="hidden lg:flex sticky flex-col items-center gap-2 py-3 px-1 rounded-full border border-gray-200 dark:border-gray-600 bg-white/90 dark:bg-gray-800/90 backdrop-blur"
+      style={{ top: PV_STICKY_TOP }}>
       <button type="button" onClick={() => onGo(0)} title="Στην αρχή του γράμματος" aria-label="Στην αρχή του γράμματος"
         className="w-7 h-7 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">⤒</button>
       <input type="range" min={0} max={count - 1} value={at}
