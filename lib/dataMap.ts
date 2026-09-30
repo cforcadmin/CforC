@@ -210,6 +210,16 @@ export const ANNOTATIONS: Record<string, Annotation> = {
     note: 'Αφορά κυρίως νομικά πρόσωπα· το ΑΦΜ ατομικής επιχείρησης παραμένει προσωπικό δεδομένο.',
   },
   'oc-campaign': { purpose: 'Email και newsletter του OC', retention: TEN_YEARS, legalBasis: 'Έννομο συμφέρον — άρθρο 6(1)(στ)', processors: ['strapi', 'vercel', 'resend', 'sender'], notPersonal: ['TemplateName'] },
+  'oc-application-outcome': {
+    purpose: 'Απόδειξη ότι η διαδικασία τηρήθηκε, ΑΦΟΥ σβηστεί η αίτηση: ότι έφυγαν οι υπενθυμίσεις 15 και 28 ημερών και ότι η προθεσμία πέρασε',
+    // Η ΟΣ δεν έχει αποφασίσει ακόμη — και ΔΕΝ το μαντεύουμε. Η συλλογή δεν
+    // κρατά προσωπικά δεδομένα, οπότε η διατήρηση είναι πολιτική του αρχείου
+    // της ΟΣ και όχι υποχρέωση του ΓΚΠΔ.
+    retention: null,
+    legalBasis: null,
+    processors: ['strapi', 'vercel'],
+    note: 'ΚΑΜΙΑ προσωπική πληροφορία, σκόπιμα: ούτε όνομα, ούτε email, ούτε hash τους — σε πληθυσμό λίγων εκατοντάδων ένα hash email αντιστρέφεται με απλή δοκιμή. Το ApplicationRef είναι το documentId της σβησμένης αίτησης, που πια δεν δείχνει πουθενά.',
+  },
   'treasury-balance': { purpose: 'Υπόλοιπα ταμείου', retention: null, legalBasis: null, processors: ['strapi', 'vercel'], notPersonal: ['Bank'] },
   activity: {
     purpose: 'Δράσεις — δημόσιο περιεχόμενο',

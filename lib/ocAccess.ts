@@ -28,6 +28,11 @@ export interface KeySpec {
   need: KeyNeed
   /** Σε μία φράση: τι εξυπηρετεί */
   what: string
+  /**
+   * Άλλη μεταβλητή που καλύπτει την απουσία αυτής (`X || Y` στον κώδικα).
+   * Λείπει ΜΟΝΟ όταν λείπουν ΚΑΙ ΟΙ ΔΥΟ.
+   */
+  alias?: string
 }
 
 /**
@@ -36,12 +41,25 @@ export interface KeySpec {
  * Η λίστα φτιάχτηκε με απαρίθμηση (grep σε process.env σε app/, lib/,
  * components/, scripts/) και ΟΧΙ από μνήμη — και κάθε «optional» σημαίνει
  * ότι βρέθηκε ΠΡΑΓΜΑΤΙΚΗ εφεδρική τιμή στον κώδικα, με το αρχείο δίπλα.
+ *
+ * ΠΡΟΣΟΧΗ ΣΕ ΟΠΟΙΟΝ ΤΗ ΣΥΝΤΗΡΕΙ — η παγίδα έχει χτυπήσει ΔΥΟ φορές:
+ * 29/9/2026 στην Ημερήσια διάταξη, και 30/9/2026 σε αυτόν εδώ τον κατάλογο.
+ * Η εφεδρική τιμή γράφεται συχνά στην ΕΠΟΜΕΝΗ γραμμή:
+ *
+ *     export const AGENDA_DOC_ID = process.env.GOOGLE_AGENDA_DOC_ID
+ *       || '1FB5tjSpwbJMQuH_8fKSyhmh6ssEguHqxKx2OnbtHXwk'
+ *
+ * Ένα grep μίας γραμμής βλέπει μόνο την πρώτη και βγάζει «λείπει» για κάτι
+ * που δουλεύει μια χαρά. Έλεγχος που ρωτάει άλλο πράγμα από αυτό που τρέχει,
+ * λέει ψέματα. Πριν γράψεις `required`, ΔΙΑΒΑΣΕ τη δήλωση ΟΛΟΚΛΗΡΗ.
  */
 export const KEY_CATALOGUE: KeySpec[] = [
   // ── Ταυτότητα και δεδομένα
   { key: 'JWT_SECRET', need: 'required', what: 'υπογραφή συνεδριών και μαγικών συνδέσμων' },
-  { key: 'STRAPI_API_TOKEN', need: 'required', what: 'ανάγνωση και γραφή στο Strapi' },
-  { key: 'STRAPI_URL', need: 'required', what: 'πού ζει το Strapi' },
+  { key: 'STRAPI_API_TOKEN', need: 'required', what: 'ανάγνωση και γραφή στο Strapi', alias: 'NEXT_PUBLIC_STRAPI_API_TOKEN' },
+  { key: 'STRAPI_URL', need: 'required', what: 'πού ζει το Strapi', alias: 'NEXT_PUBLIC_STRAPI_URL' },
+  // Εφεδρικά πέφτει σε localhost:1337 — που στην παραγωγή ΕΙΝΑΙ βλάβη,
+  // οπότε μένει «required» παρά την ύπαρξη προεπιλογής.
   { key: 'NEXT_PUBLIC_STRAPI_URL', need: 'required', what: 'το ίδιο, για τον browser' },
 
   // ── Επικοινωνία
@@ -49,13 +67,18 @@ export const KEY_CATALOGUE: KeySpec[] = [
   { key: 'SENDER_API_KEY', need: 'required', what: 'λίστες newsletter' },
   { key: 'SENDER_GROUP_ID', need: 'required', what: 'η λίστα των μελών' },
   { key: 'SENDER_PAID_GROUP_ID', need: 'required', what: 'η λίστα των ταμειακά εντάξει' },
-  { key: 'ACCOUNTANT_EMAIL', need: 'required', what: 'παραλήπτης των οικονομικών' },
+  { key: 'ACCOUNTANT_EMAIL', need: 'required', what: 'παραλήπτης των οικονομικών', alias: 'FINANCE_EMAIL' },
+  { key: 'FINANCE_EMAIL', need: 'optional', what: 'παλιό όνομα του ACCOUNTANT_EMAIL — το διαβάζει ακόμη ο κώδικας ως εφεδρεία' },
 
   // ── Google
   { key: 'GOOGLE_SERVICE_ACCOUNT_JSON', need: 'required', what: 'το κλειδί για ΟΛΑ τα Google' },
   { key: 'GOOGLE_IMPERSONATE_USER', need: 'required', what: 'ποιον υποδύεται ο λογαριασμός υπηρεσίας' },
   { key: 'GOOGLE_CALENDAR_ID', need: 'required', what: 'το ημερολόγιο του OC' },
-  { key: 'GOOGLE_AGENDA_DOC_ID', need: 'required', what: 'η Ημερήσια διάταξη — ΧΩΡΙΣ εφεδρική τιμή' },
+  // ΟΧΙ required: η εφεδρική τιμή είναι στη ΔΕΥΤΕΡΗ γραμμή της δήλωσης στο
+  // lib/googleDocs.ts. Στις 30/9/2026 αυτή η γραμμή έλεγε «ΧΩΡΙΣ εφεδρική
+  // τιμή» και η οθόνη φώναζε «νεκρή στην παραγωγή» ενώ η Ημερήσια διάταξη
+  // ενημερωνόταν ΚΑΝΟΝΙΚΑ μπροστά στα μάτια μας.
+  { key: 'GOOGLE_AGENDA_DOC_ID', need: 'optional', what: 'η Ημερήσια διάταξη (εφεδρική στο lib/googleDocs.ts)' },
   { key: 'CONTRACTS_SHEET_ID', need: 'optional', what: 'συμβάσεις (εφεδρική στο lib/contractsSheet.ts)' },
   { key: 'GOOGLE_LIBRARY_SHEET_ID', need: 'optional', what: 'Βιβλιοθήκη (εφεδρική στο lib/librarySheet.ts)' },
   { key: 'GOOGLE_LIBRARY_FOLDER_ID', need: 'optional', what: 'φάκελος Βιβλιοθήκης (εφεδρική στο lib/googleDrive.ts)' },
@@ -68,7 +91,7 @@ export const KEY_CATALOGUE: KeySpec[] = [
 
   // ── Λειτουργία
   { key: 'CRON_SECRET', need: 'required', what: 'ποιος επιτρέπεται να τρέξει τα cron' },
-  { key: 'NEXT_PUBLIC_SITE_URL', need: 'required', what: 'η δημόσια διεύθυνση του site' },
+  { key: 'NEXT_PUBLIC_SITE_URL', need: 'optional', what: 'η δημόσια διεύθυνση του site (εφεδρικά το ίδιο το cultureforchange.net)' },
   { key: 'NEXT_PUBLIC_BASE_URL', need: 'optional', what: 'μαγικοί σύνδεσμοι (εφεδρικά η origin του αιτήματος)' },
   { key: 'GA4_PROPERTY_ID', need: 'optional', what: 'στατιστικά επισκεψιμότητας' },
 
@@ -155,6 +178,10 @@ export function judgeAccess(
     if (spec.need === 'platform') continue
     const found = byKey.get(spec.key)
     const inProd = !!found?.targets.includes('production')
+    // Το αδελφάκι μετράει: `X || Y` στον κώδικα σημαίνει ότι το Y καλύπτει
+    // την απουσία του X. Χωρίς αυτό, η οθόνη φωνάζει για κάτι που δουλεύει.
+    const aliasInProd = !!(spec.alias && byKey.get(spec.alias)?.targets.includes('production'))
+    if (aliasInProd) continue
     if (!found) {
       findings.push({
         key: spec.key,

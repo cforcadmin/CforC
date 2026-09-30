@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-29T11:34:54.607Z",
+  "generatedAt": "2026-09-30T14:48:24.389Z",
   "note": "Παράγεται από scripts/generate-data-map.js — μην το επεξεργάζεσαι με το χέρι",
   "collections": [
     {
@@ -1604,6 +1604,11 @@
           "personal": null
         },
         {
+          "name": "SpamCheckSentAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
           "name": "StartFellow",
           "type": "enumeration",
           "personal": null
@@ -1749,6 +1754,59 @@
         }
       ],
       "personalCount": 3
+    },
+    {
+      "api": "oc-application-outcome",
+      "plural": "oc-application-outcomes",
+      "displayName": "OC Application Outcome",
+      "fields": [
+        {
+          "name": "ApplicationRef",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "DaysElapsed",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "DeadlineExpiredAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "DecisionDate",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "DeletionConfirmedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "DeletionRequestedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "Outcome",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "Reminder15SentAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "Reminder28SentAt",
+          "type": "datetime",
+          "personal": null
+        }
+      ],
+      "personalCount": 0
     },
     {
       "api": "oc-campaign",
