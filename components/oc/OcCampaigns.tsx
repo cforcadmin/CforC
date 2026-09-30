@@ -1,9 +1,11 @@
 'use client'
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import CampaignRichText from './CampaignRichText'
 import { moveUp, moveDown, moveToBottom, moveGroupTo, mergePaletteOrder, movePaletteChip } from '@/lib/blockOrder'
 import { PREVIEW_DESKTOP_WIDTH } from '@/lib/campaignBlocks'
+import { usePreviewSize, PV_MIN_W, PV_MIN_H, PV_EDGE_GAP } from './usePreviewSize'
 import type { NewsletterFooter } from '@/lib/campaignBlocks'
 
 /**
@@ -214,6 +216,142 @@ export default function OcCampaigns({ desk }: { desk: string }) {
    * στέκεται ανάμεσα στις δύο στήλες και κινεί και τις δύο.
    */
   const [cursor, setCursor] = useState(0)
+
+  /**
+   * ΜΕΓΕΘΟΣ ΤΗΣ ΠΡΟΕΠΙΣΚΟΠΗΣΗΣ — δύο λαβές και μία «Μεγέθυνση».
+   *
+   * Η στήλη της προεπισκόπησης είναι η ΤΡΙΤΗ και τελευταία του πλέγματος
+   * (grid-cols-[1fr_auto_minmax(0,30rem)]), δηλαδή ακουμπά τη δεξιά άκρη του
+   * max-w-7xl. Μεγαλώνοντας το πλάτος, το aside ΞΕΧΕΙΛΙΖΕΙ προς τα δεξιά —
+   * μέσα στο περιθώριο της σελίδας, όπου δεν υπάρχει τίποτα να σκεπαστεί —
+   * μέχρι PV_EDGE_GAP πριν την άκρη της οθόνης. Καμία επικάλυψη, καμία πύλη,
+   * καμία μάχη z-index: η γραμμή αποστολής (sticky bottom-3) μένει από πάνω
+   * από μόνη της, επειδή τίποτα δεν βγαίνει από τη ροή.
+   */
+  const pv = usePreviewSize(520)
+  const asideRef = useRef<HTMLElement>(null)
+  const [maximized, setMaximized] = useState(false)
+
+  /* Το ρυθμιζόμενο πλάτος ισχύει ΜΟΝΟ στη διάταξη δύο στηλών. Από κάτω η
+     σελίδα είναι μονόστηλη και το πλάτος το ορίζει η οθόνη — ένα inline
+     width θα κόλλαγε τη στήλη σε μέγεθος υπολογιστή μέσα σε κινητό. */
+  const [twoCol, setTwoCol] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)')
+    const sync = () => setTwoCol(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
+
+  /** Μέχρι πού φτάνει δεξιά: ό,τι μένει ως την άκρη της οθόνης, με μια ανάσα */
+  const maxPreviewW = useCallback(() => {
+    const el = asideRef.current
+    if (!el) return PV_MIN_W
+    const left = el.getBoundingClientRect().left
+    return Math.max(PV_MIN_W, Math.round(window.innerWidth - left - PV_EDGE_GAP))
+  }, [])
+
+  /** Μέχρι πού φτάνει κάτω: ως το τέλος της ΟΡΑΤΗΣ οθόνης, αφήνοντας τη
+   *  γραμμή αποστολής και τη λεζάντα να χωρέσουν από κάτω. */
+  const maxPreviewH = useCallback(() => {
+    const el = asideRef.current
+    if (!el) return PV_MIN_H
+    // ΟΧΙ η τωρινή κορυφή: αν δεν έχεις κυλήσει ακόμη, το aside κάθεται
+    // χαμηλά και η αφαίρεση θα έβγαζε μηδέν — η «Μεγέθυνση» θα ΜΙΚΡΑΙΝΕ την
+    // προεπισκόπηση. Μετράμε με την κορυφή που θα έχει ΚΟΛΛΗΜΕΝΟ (lg:top-24
+    // = 96px), δηλαδή με το ύψος που θα δει τελικά το μάτι.
+    const top = Math.min(el.getBoundingClientRect().top, 96)
+    return Math.max(PV_MIN_H, Math.round(window.innerHeight - top - 150))
+  }, [])
+
+  const dragPreview = useCallback((axis: 'w' | 'h') => (e: React.PointerEvent<HTMLElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const el = asideRef.current
+    if (!el) return
+    const startX = e.clientX
+    const startY = e.clientY
+    const startW = Math.round(el.getBoundingClientRect().width)
+    const startH = pv.h
+    const limW = maxPreviewW()
+    const target = e.currentTarget
+    target.setPointerCapture(e.pointerId)
+
+    // Η τελευταία τιμή ταξιδεύει σε ΤΟΠΙΚΗ μεταβλητή και δίνεται ρητά στην
+    // persist: το state της React δεν έχει προλάβει να ενημερωθεί όταν
+    // σηκώνεται το δάχτυλο.
+    let finalW = startW
+    let finalH = startH
+    const move = (ev: PointerEvent) => {
+      if (axis === 'w') {
+        finalW = Math.min(limW, Math.max(PV_MIN_W, startW + ev.clientX - startX))
+        pv.setW(finalW)
+        setMaximized(false)
+      } else {
+        finalH = Math.max(PV_MIN_H, startH + ev.clientY - startY)
+        pv.setH(finalH)
+      }
+    }
+    const up = () => {
+      target.removeEventListener('pointermove', move)
+      target.removeEventListener('pointerup', up)
+      document.body.style.userSelect = ''
+      pv.persist(axis === 'w' ? { w: finalW } : { h: finalH })
+    }
+    document.body.style.userSelect = 'none'
+    target.addEventListener('pointermove', move)
+    target.addEventListener('pointerup', up)
+  }, [pv, maxPreviewW])
+
+  /** Πληκτρολόγιο: τα βέλη αλλάζουν μέγεθος κατά 24px — χωρίς ποντίκι */
+  const keyPreview = useCallback((axis: 'w' | 'h') => (e: React.KeyboardEvent) => {
+    const dec = axis === 'w' ? 'ArrowLeft' : 'ArrowUp'
+    const inc = axis === 'w' ? 'ArrowRight' : 'ArrowDown'
+    if (e.key !== dec && e.key !== inc) return
+    e.preventDefault()
+    const step = e.key === inc ? 24 : -24
+    if (axis === 'w') {
+      const cur = pv.w ?? Math.round(asideRef.current?.getBoundingClientRect().width ?? PV_MIN_W)
+      const next = Math.min(maxPreviewW(), Math.max(PV_MIN_W, cur + step))
+      pv.setW(next)
+      setMaximized(false)
+      pv.persist({ w: next })
+    } else {
+      const next = Math.max(PV_MIN_H, pv.h + step)
+      pv.setH(next)
+      pv.persist({ h: next })
+    }
+  }, [pv, maxPreviewW])
+
+  /** «Μεγέθυνση»: όσο πάει δεξιά και όσο πάει κάτω μέσα στην ορατή οθόνη.
+   *  Δεύτερο πάτημα — πίσω στις προεπιλογές. */
+  const toggleMaximize = useCallback(() => {
+    if (maximized) {
+      setMaximized(false)
+      pv.reset()
+      return
+    }
+    const w = maxPreviewW()
+    const h = maxPreviewH()
+    pv.setW(w)
+    pv.setH(h)
+    setMaximized(true)
+    pv.persist({ w, h })
+  }, [maximized, pv, maxPreviewW, maxPreviewH])
+
+  /* Αν στενέψει το παράθυρο, το αποθηκευμένο πλάτος μπορεί να ξεπερνά την
+     οθόνη και να γεννήσει οριζόντια μπάρα κύλισης. Το μαζεύουμε. */
+  useEffect(() => {
+    if (!twoCol || pv.w === undefined) return
+    const onResize = () => {
+      const lim = maxPreviewW()
+      if (pv.w !== undefined && pv.w > lim) pv.setW(lim)
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [twoCol, pv, maxPreviewW])
+
   const seen = useRef<Set<number>>(new Set())
   useEffect(() => {
     if (typeof IntersectionObserver === 'undefined') return
@@ -892,11 +1030,12 @@ export default function OcCampaigns({ desk }: { desk: string }) {
 
           <PositionRail count={blocks.length} cursor={cursor} here={hereSection} onGo={goToPosition} />
 
-          <aside className="lg:sticky lg:top-24 min-w-0">
+          <aside ref={asideRef} className="relative lg:sticky lg:top-24 min-w-0" style={twoCol && pv.w ? { width: pv.w } : undefined}>
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-5 sm:p-6 border border-gray-200 dark:border-gray-600">
               <h3 className={`${EYEBROW} mb-3`}>ΠΡΟΕΠΙΣΚΟΠΗΣΗ</h3>
               {preview ? (
-                <PreviewFrame html={preview} onPick={focusBlock} goTo={goTo} />
+                <PreviewFrame html={preview} onPick={focusBlock} goTo={goTo}
+                  height={pv.h} maximized={maximized} onToggleMaximize={toggleMaximize} />
               ) : (
                 <div className="h-[32rem] rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 grid place-items-center text-sm text-gray-500">
                   Γράψε θέμα και πρόσθεσε ένα μπλοκ
@@ -906,6 +1045,23 @@ export default function OcCampaigns({ desk }: { desk: string }) {
                 Έτσι θα φτάσει. Το email είναι πάντα φωτεινό, ανεξάρτητα από το θέμα του OC.
               </p>
             </div>
+
+            {/* Οι δύο λαβές: στη ΜΕΣΗ της δεξιάς άκρης για πλάτος, στη ΜΕΣΗ
+                της κάτω άκρης για ύψος. Διακριτικές αλλά ορατές — αν δεν
+                φαίνονται, δεν υπάρχουν. Μόνο σε lg: από κάτω η διάταξη είναι
+                μονόστηλη και το πλάτος το ορίζει η οθόνη. */}
+            <span role="separator" aria-orientation="vertical" aria-label="Αλλαγή πλάτους προεπισκόπησης"
+              tabIndex={0} onPointerDown={dragPreview('w')} onKeyDown={keyPreview('w')}
+              className="hidden lg:flex justify-center absolute top-1/2 -right-1 h-16 w-3 -translate-y-1/2 cursor-ew-resize touch-none group"
+              style={{ touchAction: 'none' }}>
+              <span className="block h-full w-1 rounded-full bg-coral/40 group-hover:bg-coral group-focus-visible:bg-coral transition-colors" aria-hidden="true" />
+            </span>
+            <span role="separator" aria-orientation="horizontal" aria-label="Αλλαγή ύψους προεπισκόπησης"
+              tabIndex={0} onPointerDown={dragPreview('h')} onKeyDown={keyPreview('h')}
+              className="hidden lg:flex items-center absolute left-1/2 -bottom-1 w-16 h-3 -translate-x-1/2 cursor-ns-resize touch-none group"
+              style={{ touchAction: 'none' }}>
+              <span className="block w-full h-1 rounded-full bg-coral/40 group-hover:bg-coral group-focus-visible:bg-coral transition-colors" aria-hidden="true" />
+            </span>
           </aside>
         </section>
       )}
@@ -1030,12 +1186,16 @@ export default function OcCampaigns({ desk }: { desk: string }) {
  * με transform, οπότε βλέπεις τη διάταξη υπολογιστή· ο διακόπτης δείχνει και
  * τη μορφή κινητού, που είναι υπαρκτή και σκόπιμη.
  */
-function PreviewFrame({ html, onPick, goTo }: {
+function PreviewFrame({ html, onPick, goTo, height = 520, maximized, onToggleMaximize }: {
   html: string
   onPick?: (i: number) => void
   /** Εντολή «πήγαινε σε αυτό το μπλοκ». Το n αλλάζει σε κάθε κλικ, ώστε δύο
    *  διαδοχικά κλικ στο ΙΔΙΟ μπλοκ να ξαναστείλουν την εντολή. */
   goTo?: { i: number; n: number } | null
+  /** Ύψος του ΟΡΑΤΟΥ κουτιού σε px — το ορίζει η λαβή της κάτω άκρης */
+  height?: number
+  maximized?: boolean
+  onToggleMaximize?: () => void
 }) {
   const wrap = useRef<HTMLDivElement>(null)
   const frame = useRef<HTMLIFrameElement>(null)
@@ -1105,7 +1265,10 @@ function PreviewFrame({ html, onPick, goTo }: {
     frame.current.contentWindow.postMessage({ source: 'oc-editor', index: goTo.i }, '*')
   }, [goTo])
 
-  const height = 520
+  // Το ΟΡΑΤΟ κουτί έχει ύψος `height`· το πλαίσιο μέσα του είναι σμικρυμένο
+  // κατά `scale`, οπότε για να γεμίσει το κουτί χρειάζεται height/scale δικά
+  // του pixel. Φρουρά για scale 0: πριν το πρώτο μέτρημα το πλάτος είναι 0.
+  const frameHeight = scale > 0 ? Math.round(height / scale) : height
   return (
     <div>
       <div className="flex gap-1 mb-2 items-center">
@@ -1118,8 +1281,18 @@ function PreviewFrame({ html, onPick, goTo }: {
         ))}
         {/* Πλήρης οθόνη: το πλαίσιο των 520px κόβει κάθε γράμμα στη μέση και
             δεν μπορείς να κρίνεις ρυθμό και αποστάσεις από ένα απόσπασμα. */}
+        {onToggleMaximize && (
+          <button type="button" onClick={onToggleMaximize}
+            title={maximized ? 'Πίσω στο κανονικό μέγεθος' : 'Όσο πάει δεξιά και κάτω, μέσα στην οθόνη'}
+            className={`ml-auto px-3 py-1 rounded-full text-xs font-semibold border ${
+              maximized
+                ? 'border-coral bg-coral/10 text-charcoal dark:text-gray-100'
+                : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'}`}>
+            {maximized ? 'Σμίκρυνση' : 'Μεγέθυνση'}
+          </button>
+        )}
         <button type="button" onClick={() => setFull(true)}
-          className="ml-auto px-3 py-1 rounded-full text-xs font-semibold border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400">
+          className={`${onToggleMaximize ? '' : 'ml-auto '}px-3 py-1 rounded-full text-xs font-semibold border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400`}>
           Πλήρης οθόνη
         </button>
       </div>
@@ -1127,11 +1300,11 @@ function PreviewFrame({ html, onPick, goTo }: {
       <div ref={wrap} onClick={onPick ? undefined : () => setFull(true)}
         title={onPick ? 'Κλικ σε στοιχείο για επεξεργασία' : 'Κλικ για πλήρη οθόνη'}
         className={`overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-600 bg-white relative ${onPick ? '' : 'cursor-zoom-in'}`}
-        style={{ height: height * scale }}>
+        style={{ height }}>
         <iframe ref={frame} title="Προεπισκόπηση" srcDoc={doc}
           sandbox={onPick ? 'allow-scripts' : ''}
           style={{
-            width: frameWidth, height, border: 0,
+            width: frameWidth, height: frameHeight, border: 0,
             transform: `scale(${scale})`, transformOrigin: 'top left',
           }} />
       </div>
@@ -1205,11 +1378,25 @@ function FullPreview({ html, onClose }: { html: string; onClose: () => void }) {
     return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
   }, [onClose])
 
-  return (
-    /* z-[60], ΟΧΙ z-50: η κύρια πλοήγηση είναι κι αυτή z-50 και —με ίδιο
-       z-index κερδίζει η σειρά στο DOM— ζωγραφιζόταν ΠΑΝΩ από τη λωρίδα
-       εργαλείων. Το «Κλείσιμο» φαινόταν αλλά τα κλικ τα έτρωγε η κεφαλίδα·
-       γι' αυτό το Escape δούλευε και το κουμπί όχι. */
+  /* ΠΥΛΗ ΣΤΟ <body>, και όχι απλώς μεγαλύτερο z-index.
+   *
+   * Η προεπισκόπηση ζει μέσα στο <aside className="lg:sticky"> της δεξιάς
+   * στήλης. Το `position: sticky` φτιάχνει ΜΟΝΟ ΤΟΥ πλαίσιο επιστοίβαξης
+   * (stacking context) — χωρίς να χρειάζεται z-index. Άρα το z-[60] του
+   * καλύμματος έμενε ΚΛΕΙΔΩΜΕΝΟ μέσα στο aside, και το aside συμμετέχει
+   * στο ριζικό πλαίσιο με z-index: auto. Η κύρια πλοήγηση (fixed z-50)
+   * ζωγραφιζόταν πάνω από ΟΛΟΚΛΗΡΟ το υποδέντρο του aside, όσο ψηλό
+   * z-index κι αν έβαζες εδώ μέσα.
+   *
+   * Δύο συμπτώματα, μία αιτία: η κεφαλίδα σκέπαζε τη λωρίδα εργαλείων και
+   * έτρωγε τα κλικ στο «Κλείσιμο» — ενώ το Escape δούλευε, επειδή το
+   * πληκτρολόγιο δεν περνά από έλεγχο θέσης (hit-test).
+   *
+   * Με την πύλη το κάλυμμα γίνεται παιδί του <body>, στο ριζικό πλαίσιο,
+   * όπου το z-[60] νικά πραγματικά το z-50 της πλοήγησης.
+   */
+  if (typeof document === 'undefined') return null
+  return createPortal(
     <div className="fixed inset-0 z-[60] bg-black/70 flex flex-col" role="dialog" aria-modal="true" aria-label="Προεπισκόπηση σε πλήρη οθόνη">
       <div className="flex items-center gap-2 p-3">
         {[[PREVIEW_DESKTOP_WIDTH, 'Υπολογιστής'], [390, 'Κινητό']].map(([px, label]) => (
@@ -1229,7 +1416,8 @@ function FullPreview({ html, onClose }: { html: string; onClose: () => void }) {
           className="mx-auto bg-white rounded-2xl"
           style={{ width: w, maxWidth: '100%', height: '100%', minHeight: '80vh', border: 0 }} />
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
