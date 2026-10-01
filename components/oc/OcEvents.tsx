@@ -199,6 +199,7 @@ export default function OcEvents() {
                                 {show('phone') && <th className="py-2 pr-4 font-medium">Τηλέφωνο</th>}
                                 {show('sessions') && <th className="py-2 pr-4 font-medium">Συνεδρίες</th>}
                                 {show('travel') && <th className="py-2 pr-4 font-medium">Μετακίνηση</th>}
+                                {show('transport') && <th className="py-2 pr-4 font-medium">Μέσο</th>}
                                 {show('accommodation') && <th className="py-2 pr-4 font-medium">Διαμονή</th>}
                                 {show('meals') && <th className="py-2 pr-4 font-medium">Γεύματα</th>}
                                 {show('dietary') && <th className="py-2 pr-4 font-medium text-amber-800 dark:text-amber-200">Διατροφικά</th>}
@@ -226,6 +227,9 @@ export default function OcEvents() {
                                   </td>}
                                   {show('travel') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
                                     {travelSummary(r.OptionAnswers)}
+                                  </td>}
+                                  {show('transport') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
+                                    {transportLabel(r.OptionAnswers?.transport)}
                                   </td>}
                                   {show('accommodation') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
                                     {r.OptionAnswers?.accommodation || '—'}
@@ -255,6 +259,14 @@ export default function OcEvents() {
     </div>
   )
 }
+
+/** Οι ετικέτες ζουν στη ΔΡΑΣΗ (Choices)· εδώ μόνο ό,τι χρειάζεται ο πίνακας.
+ *  Ο οδηγός ξεχωρίζει από τον συνεπιβάτη: αυτό δείχνει ποιος έχει θέσεις. */
+const TRANSPORT_LABELS: Record<string, string> = {
+  bus: 'ΚΤΕΛ', train: 'Τρένο', plane: 'Αεροπλάνο', boat: 'Πλοίο',
+  'car-driver': 'ΙΧ — οδηγός', 'car-passenger': 'ΙΧ — συνεπιβάτης', other: 'Άλλο',
+}
+const transportLabel = (v?: string) => (v ? TRANSPORT_LABELS[v] || v : '—')
 
 /** «3 δια ζώσης · 1 online» — ο αριθμός που χρειάζεται για να κλείσεις αίθουσα */
 function sessionSummary(choices: Record<string, string>): string {

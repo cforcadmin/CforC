@@ -9,6 +9,7 @@ import { OC_TABLE_COLUMNS, OC_TABLE_DEFAULT_COLS } from '@/components/oc/ocPrefs
 import OcRenewalsPopup from '@/components/oc/OcRenewalsPopup'
 import OcTreasuryPopup from '@/components/oc/OcTreasuryPopup'
 import OcMyTasks from '@/components/oc/OcMyTasks'
+import OcEvents from '@/components/oc/OcEvents'
 import OcExportModal from '@/components/oc/OcExportModal'
 import OcPendingDeletions from '@/components/oc/OcPendingDeletions'
 import { useColumnWidths } from '@/components/oc/useColumnWidths'
@@ -1208,6 +1209,10 @@ export default function OcOverview({
           </div>
         </div>
       </div>
+
+      {/* ΔΡΑΣΕΙΣ — πλήρους πλάτους, ανάμεσα στο «Προφίλ ιστοσελίδας» και το
+          Newsletter. Φέρνει τα δικά της δεδομένα, δεν περιμένει το overview. */}
+      <OcEvents />
 
       {/* Newsletter: 2 σειρές/μήνα — Μελών (Paid, ~10) και Κοινού (External, ~15),
           καθεμία με το τρέχον τεύχος + ιστορικό 3 προηγούμενων. Οι δοκιμαστικές

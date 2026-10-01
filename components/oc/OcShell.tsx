@@ -7,7 +7,6 @@ import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import { OC_SEAT_LABELS, OC_SEAT_SHORT, canSendEmailFrom, canSeeSection } from '@/components/oc/ocPrefs'
 import OcSeatChoiceModal from '@/components/oc/OcSeatChoiceModal'
 import OcOverview from '@/components/oc/OcOverview'
-import OcEvents from '@/components/oc/OcEvents'
 import OcFinances from '@/components/oc/OcFinances'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
 import OcComms from '@/components/oc/OcComms'
@@ -476,15 +475,6 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
             μόνο το σήμα πάνω αριστερά και οι οθόνες κρατούσαν ό,τι είχαν
             φέρει με την ΠΡΟΗΓΟΥΜΕΝΗ έδρα. */}
         <div key={activeSeat || 'no-seat'} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          {/* ΔΡΑΣΕΙΣ — πλήρους πλάτους, ΠΑΝΩ από την υπόλοιπη Επισκόπηση.
-              Δεν είναι πλακίδιο: όταν τρέχει εγγραφή για δράση, ο αριθμός
-              των δηλώσεων είναι το πρώτο που θέλει να δει η ΟΣ. */}
-          {activeSection === 'overview' && (
-            <div className="mb-6">
-              <OcEvents />
-            </div>
-          )}
-
           {activeSection === 'overview' && (
             overview ? (
               <OcOverview

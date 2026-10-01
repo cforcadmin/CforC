@@ -35,6 +35,7 @@ export const OC_EVENT_COLUMNS: Array<{ key: string; label: string }> = [
   { key: 'phone', label: 'Τηλέφωνο' },
   { key: 'sessions', label: 'Συνεδρίες' },
   { key: 'travel', label: 'Μετακίνηση' },
+  { key: 'transport', label: 'Μέσο' },
   { key: 'accommodation', label: 'Διαμονή' },
   { key: 'meals', label: 'Γεύματα' },
   // ΑΡΘΡΟ 9 (υγεία/θρησκεία). Υπάρχει γιατί χωρίς αυτό δεν παραγγέλνεις
@@ -44,7 +45,7 @@ export const OC_EVENT_COLUMNS: Array<{ key: string; label: string }> = [
   { key: 'agenda', label: 'Θέμα ατζέντας' },
   { key: 'submitted', label: 'Υποβλήθηκε' },
 ]
-export const OC_EVENT_DEFAULT_COLS = ['capacity', 'email', 'sessions', 'travel', 'accommodation']
+export const OC_EVENT_DEFAULT_COLS = ['capacity', 'email', 'sessions', 'travel', 'transport', 'accommodation']
 
 export const OC_SEAT_LABELS: Record<string, string> = {
   coordinator: 'Συντονισμός',
