@@ -26,6 +26,26 @@ export const OC_TABLE_COLUMNS: Array<{ key: string; label: string }> = [
 ]
 export const OC_TABLE_DEFAULT_COLS = ['city', 'year', 'status']
 
+/* ── Δράσεις: οι στήλες των συμμετεχόντων ──────────────────────────────── */
+export const OC_EVENT_COLS_COOKIE = 'oc-event-cols'
+
+export const OC_EVENT_COLUMNS: Array<{ key: string; label: string }> = [
+  { key: 'capacity', label: 'Ιδιότητα' },
+  { key: 'email', label: 'Email' },
+  { key: 'phone', label: 'Τηλέφωνο' },
+  { key: 'sessions', label: 'Συνεδρίες' },
+  { key: 'travel', label: 'Μετακίνηση' },
+  { key: 'accommodation', label: 'Διαμονή' },
+  { key: 'meals', label: 'Γεύματα' },
+  // ΑΡΘΡΟ 9 (υγεία/θρησκεία). Υπάρχει γιατί χωρίς αυτό δεν παραγγέλνεις
+  // φαγητό — αλλά είναι ΕΚΤΟΣ προεπιλογής: δεν στέκεται στην οθόνη όποτε
+  // ανοίγει κανείς τη λίστα για άλλο λόγο.
+  { key: 'dietary', label: 'Διατροφικά (άρθρο 9)' },
+  { key: 'agenda', label: 'Θέμα ατζέντας' },
+  { key: 'submitted', label: 'Υποβλήθηκε' },
+]
+export const OC_EVENT_DEFAULT_COLS = ['capacity', 'email', 'sessions', 'travel', 'accommodation']
+
 export const OC_SEAT_LABELS: Record<string, string> = {
   coordinator: 'Συντονισμός',
   admin: 'Γραμματεία',

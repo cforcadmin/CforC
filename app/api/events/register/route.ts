@@ -7,6 +7,9 @@ import { eventRegisterLimiter, getRateLimitErrorMessage } from '@/lib/rateLimite
 import { resolveEventAccess } from '@/lib/eventAccess'
 import { validateRegistration, offeredCapacities, visibleOptions } from '@/lib/eventForm'
 import type { CforcEvent } from '@/lib/types'
+import { sendOcEmail, COMMUNITY_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
+import { eventConfirmEmailHtml, eventRegisteredEmailHtml } from '@/lib/eventEmails'
+import { dateRangeLabel } from '@/lib/events'
 
 export const maxDuration = 60
 
@@ -168,8 +171,31 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Η δήλωση δεν αποθηκεύτηκε' }, { status: 502 })
   }
 
-  // Το email επιβεβαίωσης φεύγει στη μονάδα 7 — εδώ επιστρέφεται η κατάσταση
-  // ώστε η οθόνη να πει την αλήθεια: «καταχωρήθηκε» ή «ένα βήμα ακόμη».
+  // ── Το email ──
+  // ΑΝΑΜΕΝΕΤΑΙ πριν την απάντηση: μια μη αναμενόμενη αποστολή πεθαίνει όταν
+  // παγώσει η συνάρτηση (δες το περιστατικό με το email αποχώρησης).
+  const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cultureforchange.net'
+  const dates = dateRangeLabel(ev.StartDate, ev.EndDate)
+  const venue = [ev.Venue, ev.City].filter(Boolean).join(', ') || undefined
+  try {
+    if (isMember) {
+      const tpl = eventRegisteredEmailHtml({
+        firstName: draft.FirstName.trim(), eventTitle: ev.Title, dates, venue,
+        isMember: true, eventUrl: `${site}/events/${ev.Slug}`,
+      })
+      await sendOcEmail(draft.Email, tpl.subject, tpl.html, { from: COMMUNITY_FROM, replyTo: ADMIN_EMAIL })
+    } else {
+      const tpl = eventConfirmEmailHtml({
+        firstName: draft.FirstName.trim(), eventTitle: ev.Title, dates, venue,
+        confirmUrl: `${site}/api/events/confirm?token=${encodeURIComponent(rawToken!)}`,
+      })
+      await sendOcEmail(draft.Email, tpl.subject, tpl.html, { from: COMMUNITY_FROM, replyTo: ADMIN_EMAIL })
+    }
+  } catch (err) {
+    // Η δήλωση ΕΧΕΙ αποθηκευτεί· ένα email που δεν έφυγε δεν τη σβήνει.
+    console.error('events/register: email failed', err)
+  }
+
   return NextResponse.json({
     status: isMember ? 'confirmed' : 'pending',
     documentId: created.json?.data?.documentId || null,
