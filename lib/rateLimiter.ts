@@ -111,11 +111,23 @@ export const applyLimiter = new RateLimiter(
   60 * 60 * 1000 // per hour per IP
 )
 
+// Δηλώσεις συμμετοχής σε δράση. ΔΗΜΟΣΙΑ διαδρομή, χωρίς σύνδεση: ο έλεγχος
+// CSRF αφήνει επίτηδες να περνούν αιτήματα χωρίς Origin (lib/csrf.ts:28),
+// με τη ρητή παραδοχή ότι «rate limiting + auth» καλύπτουν την κατάχρηση.
+// Εδώ δεν υπάρχει auth — άρα το όριο είναι ΟΛΗ η προστασία.
+// Πιο γενναιόδωρο από το applyLimiter: μια οικογένεια πίσω από το ίδιο IP
+// δηλώνει νόμιμα 3-4 φορές.
+export const eventRegisterLimiter = new RateLimiter(
+  6, // 6 δηλώσεις
+  60 * 60 * 1000 // ανά ώρα ανά IP
+)
+
 // Clean up expired entries every 10 minutes
 setInterval(() => {
   magicLinkLimiter.cleanup()
   loginLimiter.cleanup()
   newsletterLimiter.cleanup()
+  eventRegisterLimiter.cleanup()
   verifyMagicLinkLimiter.cleanup()
   setPasswordLimiter.cleanup()
   feedbackLimiter.cleanup()

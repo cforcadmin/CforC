@@ -17,6 +17,7 @@ import OpenCallsContent from '@/components/OpenCallsContent'
 import NewslettersContent from '@/components/NewslettersContent'
 import LibraryContent from '@/components/library/LibraryContent'
 import MyExpenseClaims from '@/components/expenses/MyExpenseClaims'
+import MyEvents from '@/components/events/MyEvents'
 import { useNavMode } from '@/components/nav/useNavMode'
 import EducationalMaterialContent from '@/components/EducationalMaterialContent'
 import NetworksContent from '@/components/NetworksContent'
@@ -39,6 +40,7 @@ const DASHBOARD_SECTIONS = [
   { key: 'pocket-guide', label: 'Οδηγός Τσέπης', heroTitle: 'ΟΔΗΓΟΣ ΤΣΕΠΗΣ' },
   { key: 'newsletters', label: 'Newsletters', heroTitle: 'NEWSLETTERS' },
   { key: 'library', label: 'Ανοιχτή Βιβλιοθήκη', heroTitle: 'ΑΝΟΙΧΤΗ ΒΙΒΛΙΟΘΗΚΗ' },
+  { key: 'events', label: 'Δράσεις', heroTitle: 'ΔΡΑΣΕΙΣ' },
   { key: 'expenses', label: 'Εξοδολόγια', heroTitle: 'ΕΞΟΔΟΛΟΓΙΑ' },
 ] as const
 
@@ -54,7 +56,7 @@ type SectionKey = (typeof DASHBOARD_SECTIONS)[number]['key']
  */
 const IMPLEMENTED_SECTIONS = new Set<SectionKey>([
   'profile', 'open-calls', 'newsletters', 'educational',
-  'networks', 'working-groups', 'pocket-guide', 'library', 'expenses',
+  'networks', 'working-groups', 'pocket-guide', 'library', 'events', 'expenses',
 ])
 
 
@@ -1650,6 +1652,12 @@ export default function ProfilePage() {
         {activeSection === 'open-calls' && (
           <div className={coolMode ? 'pt-10 cool-flush' : 'pt-20'}>
             <OpenCallsContent />
+          </div>
+        )}
+
+        {activeSection === 'events' && (
+          <div className={coolMode ? 'pt-10 cool-flush' : 'pt-20'}>
+            <MyEvents />
           </div>
         )}
 
