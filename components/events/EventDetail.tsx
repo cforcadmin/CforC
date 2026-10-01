@@ -5,6 +5,7 @@ import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
 import CookieConsent from '@/components/CookieConsent'
+import { useAuth } from '@/components/AuthProvider'
 import type { CforcEvent } from '@/lib/types'
 import {
   eventPhase, dateRangeLabel, registrationClosed, athensToday, sortSessions, grDate,
@@ -18,6 +19,13 @@ import {
  * μπορεί να μοιραστεί ούτε να βρεθεί — και το πρόγραμμα δεν είναι μυστικό.
  */
 export default function EventDetail({ ev }: { ev: CforcEvent }) {
+  /* Ο σύνδεσμος «Όλες οι δράσεις» ΜΟΝΟ για συνδεδεμένους.
+     Η σελίδα μοιράζεται δημόσια — όποιος έρχεται από το γράμμα ήρθε για
+     ΑΥΤΗ τη δράση, και δεν τον στέλνουμε να περιηγηθεί σε λίστα που τον
+     αφορά μόνο εν μέρει. Ο έλεγχος γίνεται στον browser ΕΠΙΤΗΔΕΣ: η
+     σελίδα μένει έτσι στην κρυφή μνήμη (revalidate 3600) αντί να γίνει
+     δυναμική για ένα σύνδεσμο. */
+  const { isAuthenticated, isLoading } = useAuth()
   const today = athensToday()
   const phase = eventPhase(ev, today)
   const closed = registrationClosed(ev, today)
@@ -28,9 +36,13 @@ export default function EventDetail({ ev }: { ev: CforcEvent }) {
     <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
       <Navigation />
       <main id="main-content" className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
-        <Link href="/events" className="text-sm font-bold text-coral dark:text-coral-light hover:underline">
-          ← Όλες οι δράσεις
-        </Link>
+        {/* isLoading: δεν δείχνουμε σύνδεσμο που θα εξαφανιστεί μπροστά
+            στα μάτια του αναγνώστη μόλις λυθεί η συνεδρία. */}
+        {!isLoading && isAuthenticated && (
+          <Link href="/events" className="text-sm font-bold text-coral dark:text-coral-light hover:underline">
+            ← Όλες οι δράσεις
+          </Link>
+        )}
 
         <header className="mt-4 mb-8">
           <p className="text-sm font-bold text-coral dark:text-coral-light mb-2">
