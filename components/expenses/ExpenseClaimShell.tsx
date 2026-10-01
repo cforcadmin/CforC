@@ -14,7 +14,8 @@ import { useAuth } from '@/components/AuthProvider'
 import {
   EVENT_TYPES, EVENT_NEEDS_NAME, EXPENSE_CATEGORIES, RECEIPT_TYPES, receiptSpec,
   BANKS, BANK_OTHER, TRAVEL_MODES, buildReturnLegs, allLegs, missingTravelLines, computeTotals, eventDays,
-  ibanLooksValid, validateClaim, type ClaimLine, type TravelLeg,
+  ibanLooksValid, validateClaim, MIDTERM_2026, eventCap, countCoTravellers,
+  type ClaimLine, type TravelLeg,
 } from '@/lib/expenseClaims'
 
 /**
@@ -95,10 +96,37 @@ export default function ExpenseClaimShell() {
     () => missingTravelLines(allLegs(legs, returnIncluded), lines),
     [legs, returnIncluded, lines],
   )
-  const totals = useMemo(
-    () => computeTotals(lines.map(l => ({ ...l, amount: Number(l.amount) || 0, files: [] })), Number(advance) || 0),
-    [lines, advance],
+  /* ── MIDTERM_2026 ── Ο διακόπτης ΟΛΟΚΛΗΡΗΣ της παραμετροποίησης.
+     Όσο είναι false, η φόρμα συμπεριφέρεται ακριβώς όπως πάντα. */
+  const isMidterm2026 = eventType === MIDTERM_2026.label
+  const midtermCap = useMemo(
+    () => eventCap(eventType, countCoTravellers(coTravellers)),
+    [eventType, coTravellers],
   )
+
+  const totals = useMemo(
+    () => computeTotals(
+      lines.map(l => ({ ...l, amount: Number(l.amount) || 0, files: [] })),
+      Number(advance) || 0,
+      midtermCap,
+    ),
+    [lines, advance, midtermCap],
+  )
+
+  /* Οι κλειδωμένες τιμές μπαίνουν ΜΟΛΙΣ διαλεγεί η δράση, και φεύγουν
+     μόλις αλλάξει — ώστε να μη μείνουν «κολλημένα» 20/11 σε άλλη δράση. */
+  useEffect(() => {
+    if (!isMidterm2026) return
+    setEventStart(MIDTERM_2026.start)
+    setEventEnd(MIDTERM_2026.end)
+    setLegs(prev => {
+      const first = prev[0] || { from: '', to: '', mode: '', direction: 'outbound' as const }
+      return [{ ...first, from: first.from || MIDTERM_2026.defaultFrom, to: MIDTERM_2026.lockedTo }]
+    })
+    setLines(prev => prev.map(l => (
+      l.category === MIDTERM_2026.lockedCategory ? l : { ...l, category: MIDTERM_2026.lockedCategory, receiptType: '' }
+    )))
+  }, [isMidterm2026])
 
   function patchLeg(i: number, changes: Partial<TravelLeg>) {
     setLegs(prev => prev.map((l, idx) => (idx === i ? { ...l, ...changes } : l)))
@@ -282,10 +310,18 @@ export default function ExpenseClaimShell() {
           )}
           <div className="grid sm:grid-cols-3 gap-x-6 gap-y-5 items-end">
             <Field label="Από" required tip="Οι ημερομηνίες της ΔΡΑΣΗΣ, όχι των εξόδων σου. Αν ταξίδεψες μια μέρα νωρίτερα, το έξοδο μπαίνει με τη δική του ημερομηνία πιο κάτω.">
-              <input type="date" value={eventStart} onChange={e => setEventStart(e.target.value)} className={inputClass} />
+              {isMidterm2026 ? (
+                <LockedValue title={LOCKED_DATES_TIP}>{grDate(eventStart)}</LockedValue>
+              ) : (
+                <input type="date" value={eventStart} onChange={e => setEventStart(e.target.value)} className={inputClass} />
+              )}
             </Field>
             <Field label="Έως" required>
-              <input type="date" value={eventEnd} min={eventStart || undefined} onChange={e => setEventEnd(e.target.value)} className={inputClass} />
+              {isMidterm2026 ? (
+                <LockedValue title={LOCKED_DATES_TIP}>{grDate(eventEnd)}</LockedValue>
+              ) : (
+                <input type="date" value={eventEnd} min={eventStart || undefined} onChange={e => setEventEnd(e.target.value)} className={inputClass} />
+              )}
             </Field>
             <div className="pb-2">
               <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -304,7 +340,13 @@ export default function ExpenseClaimShell() {
                   <CityField value={leg.from} onChange={v => patchLeg(i, { from: v })} placeholder="π.χ. Θεσσαλονίκη" />
                 </Field>
                 <Field label="Προς">
-                  <CityField value={leg.to} onChange={v => patchLeg(i, { to: v })} placeholder="π.χ. Πάτρα" />
+                  {isMidterm2026 && i === 0 ? (
+                    // Ο προορισμός δεν αλλάζει: η δράση γίνεται στη Θεσσαλονίκη.
+                    // Η ΑΦΕΤΗΡΙΑ μένει ελεύθερη — δεν ξεκινούν όλοι από την Αθήνα.
+                    <LockedValue title="Η δράση γίνεται στη Θεσσαλονίκη">{MIDTERM_2026.lockedTo}</LockedValue>
+                  ) : (
+                    <CityField value={leg.to} onChange={v => patchLeg(i, { to: v })} placeholder="π.χ. Πάτρα" />
+                  )}
                 </Field>
                 <Field label="Μέσο" tip="Με τι έγινε αυτό το σκέλος. Το ίδιο θα ανεβάσεις και ως παραστατικό — και η φόρμα θα σου θυμίσει αν λείπει.">
                   <select value={leg.mode} onChange={e => patchLeg(i, { mode: e.target.value })} className={inputClass}>
@@ -324,11 +366,14 @@ export default function ExpenseClaimShell() {
             ))}
           </div>
 
-          <button type="button"
-            onClick={() => setLegs(prev => [...prev, { from: prev[prev.length - 1]?.to || '', to: '', mode: '', direction: 'outbound' }])}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-coral text-coral dark:text-coral-light font-bold text-sm hover:bg-coral hover:text-white transition-colors">
-            + Ενδιάμεση στάση
-          </button>
+          {/* Χωρίς ενδιάμεσες στάσεις στο Midterm 2026: η διαδρομή είναι μία */}
+          {!isMidterm2026 && (
+            <button type="button"
+              onClick={() => setLegs(prev => [...prev, { from: prev[prev.length - 1]?.to || '', to: '', mode: '', direction: 'outbound' }])}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-coral text-coral dark:text-coral-light font-bold text-sm hover:bg-coral hover:text-white transition-colors">
+              + Ενδιάμεση στάση
+            </button>
+          )}
 
           <label className="flex items-start gap-3 cursor-pointer">
             <input type="checkbox" checked={returnIncluded} onChange={e => setReturnIncluded(e.target.checked)}
@@ -353,6 +398,11 @@ export default function ExpenseClaimShell() {
           )}
 
           <Field label="Μετακίνηση μαζί με μέλη" tip="Ποια μέλη ταξίδεψαν μαζί σου. Έτσι φαίνεται ότι ένα έξοδο — π.χ. βενζίνη ή διόδια — κάλυψε περισσότερους από έναν.">
+            {isMidterm2026 && (
+              <p role="note" className="mb-3 rounded-2xl bg-amber-50 dark:bg-amber-900/25 border border-amber-300 dark:border-amber-700 px-4 py-3 text-sm font-bold text-amber-900 dark:text-amber-100">
+                {MIDTERM_2026.coTravellerWarning}
+              </p>
+            )}
             <MemberPicker value={coTravellers} onChange={setCoTravellers} options={memberNames} />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
               Γράψε τα πρώτα γράμματα και διάλεξε από το μητρώο. Μπορείς να προσθέσεις και όνομα
@@ -386,9 +436,14 @@ export default function ExpenseClaimShell() {
                   </div>
                   <div className="grid sm:grid-cols-2 gap-x-6 gap-y-5">
                     <Field label="Κατηγορία" required>
-                      <select value={line.category} onChange={e => patch(i, { category: e.target.value, receiptType: '' })} className={inputClass}>
-                        {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
+                      {/* Midterm 2026: αποζημιώνονται ΜΟΝΟ έξοδα ταξιδιού */}
+                      {isMidterm2026 ? (
+                        <LockedValue title="Αποζημιώνονται μόνο έξοδα ταξιδιού">{MIDTERM_2026.lockedCategory}</LockedValue>
+                      ) : (
+                        <select value={line.category} onChange={e => patch(i, { category: e.target.value, receiptType: '' })} className={inputClass}>
+                          {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      )}
                     </Field>
                     <Field label="Είδος παραστατικού" required>
                       <select value={line.receiptType} onChange={e => patch(i, { receiptType: e.target.value, file2: null })} className={inputClass}>
@@ -463,11 +518,23 @@ export default function ExpenseClaimShell() {
           </Field>
           <div className="rounded-2xl bg-[#F5F0EB] dark:bg-gray-700 p-5 space-y-2">
             <Row label="Σύνολο εξόδων" value={`${money(totals.total)} €`} />
+            {/* Η γραμμή του ορίου μπαίνει ΜΟΝΟ όταν έκοψε κάτι — αλλιώς είναι
+                θόρυβος, και όποιος ξόδεψε λιγότερα παίρνει ακριβώς όσα έδωσε. */}
+            {totals.capped && totals.cap !== null && (
+              <Row label={`Όριο κάλυψης (${countCoTravellers(coTravellers) + 1} × ${MIDTERM_2026.capPerPerson} €)`}
+                value={`${money(totals.cap)} €`} />
+            )}
             <Row label="Προκαταβολή" value={`− ${money(totals.advance)} €`} />
             <div className="border-t border-gray-300 dark:border-gray-600 pt-2">
               <Row label="Πληρωτέο" value={`${money(totals.payable)} €`} strong />
             </div>
           </div>
+          {isMidterm2026 && (
+            <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">
+              {MIDTERM_2026.capNote}
+              {totals.capped && ' Τα έξοδα πάνω από το όριο δεν αποζημιώνονται.'}
+            </p>
+          )}
         </Card>
 
         {/* ── Τραπεζικά ── */}
@@ -541,6 +608,36 @@ export default function ExpenseClaimShell() {
 // ── Μικρά δομικά ──────────────────────────────────────────────────
 const inputClass = 'w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral'
 const fileClass = 'w-full text-sm py-1 text-gray-600 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-coral/10 file:text-coral dark:file:bg-coral/20 dark:file:text-coral-light hover:file:bg-coral/20 cursor-pointer'
+
+/**
+ * Κλειδωμένη τιμή — ΚΕΙΜΕΝΟ, όχι disabled πεδίο.
+ *
+ * ΔΥΟ αποτυχημένες προσπάθειες πριν από αυτή, 1/10/2026:
+ *   1. `opacity-60` — σε σκούρο θέμα το κείμενο έγινε φάντασμα.
+ *   2. `-webkit-text-fill-color: currentColor` — ΔΕΝ βοήθησε, γιατί το
+ *      UA stylesheet του Chrome βάφει το ΙΔΙΟ το `color` των disabled
+ *      γκρι· το `currentColor` έδειχνε ακριβώς σε αυτό το γκρι.
+ *
+ * Ένα `<div>` δεν έχει καμία τέτοια πολιτική του browser: διαβάζεται στο
+ * κανονικό χρώμα, δεν ανοίγει picker με τίποτα, και δεν στέλνεται στη
+ * φόρμα (η τιμή ζει ήδη στο state). Επιπλέον κερδίζουμε τη σωστή ελληνική
+ * μορφή ημερομηνίας — το native input έδειχνε 11/20/2026.
+ *
+ * Ένα πεδίο που δεν διαβάζεται δεν είναι κλειδωμένο· είναι σπασμένο.
+ */
+function LockedValue({ children, title }: { children: React.ReactNode; title?: string }) {
+  return (
+    <div title={title} aria-readonly="true"
+      className="w-full rounded-xl border border-dashed border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-700/60 px-4 py-2.5 text-charcoal dark:text-gray-100 cursor-not-allowed select-none">
+      {children}
+    </div>
+  )
+}
+
+/** 2026-11-20 → 20/11/2026 */
+const grDate = (iso: string) => (/^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso.split('-').reverse().join('/') : '—')
+
+const LOCKED_DATES_TIP = 'Οι ημερομηνίες της δράσης είναι σταθερές και δεν αλλάζουν'
 
 function Page({ children }: { children: React.ReactNode }) {
   return (

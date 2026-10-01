@@ -5,7 +5,7 @@ import { checkCsrf } from '@/lib/csrf'
 import {
   validateClaim, computeTotals, eventDays, formatClaimNumber, normaliseIban, allLegs,
   buildAttachmentName, buildClaimPdfName, receiptSpec, MAX_FILE_BYTES, MAX_TOTAL_BYTES,
-  ALLOWED_FILE_TYPES, MAX_LINES, type ClaimLine,
+  ALLOWED_FILE_TYPES, MAX_LINES, eventCap, countCoTravellers, type ClaimLine,
 } from '@/lib/expenseClaims'
 import { generateExpenseClaimPdf } from '@/lib/expenseClaimPdf'
 import { archiveExpenseClaim, type ArchiveAttachment } from '@/lib/expenseClaimArchive'
@@ -175,7 +175,11 @@ export async function POST(request: NextRequest) {
   if (error) return NextResponse.json({ error }, { status: 400 })
 
   const legs = allLegs(Array.isArray(input.travelLegs) ? input.travelLegs : [], !!input.returnIncluded)
-  const { total, advance, payable } = computeTotals(lines, input.advance)
+  // Το όριο της δράσης επιβάλλεται ΕΔΩ, όχι μόνο στην οθόνη: ο server
+  // ξαναϋπολογίζει τα σύνολα, οπότε ένα όριο μόνο στη φόρμα θα ήταν
+  // διακοσμητικό και θα αποθηκευόταν ακάλυπτο ποσό.
+  const cap = eventCap(String(input.eventType || ''), countCoTravellers(input.coTravellers))
+  const { total, advance, payable } = computeTotals(lines, input.advance, cap)
   const year = new Date().getFullYear()
   const claimNumber = await nextClaimNumber(year)
 

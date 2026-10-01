@@ -24,6 +24,13 @@ say so.
 - [ ] **Enumerate the full option space, never two.** If exactly two options are
       about to be offered — especially "do the risky thing" vs "give up" — stop
       and keep looking. There is almost always a cheaper third.
+- [ ] **Every option carries its time, and the fastest adequate one goes first.**
+      Each alternative states how long it takes and **how many steps the user
+      performs** — a login, a dashboard click, an interactive prompt each cost
+      several times a step that can be run here. Anything >50% slower than the
+      fastest adequate option is flagged as slower, with the reason it is still
+      worth it. Never bury the quick option as a "fallback" beneath the one that
+      seems more correct.
 - [ ] **Check what already exists before building new.** The preview size went
       into the existing `colWidths` of `OcPrefs`, so «Επαναφορά διάταξης παντού»
       already resets it: no new endpoint, no new storage, no new reset button.

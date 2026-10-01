@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-30T14:48:24.389Z",
+  "generatedAt": "2026-10-01T12:34:32.147Z",
   "note": "Παράγεται από scripts/generate-data-map.js — μην το επεξεργάζεσαι με το χέρι",
   "collections": [
     {
@@ -247,6 +247,119 @@
       "personalCount": 21
     },
     {
+      "api": "event",
+      "plural": "events",
+      "displayName": "Event",
+      "fields": [
+        {
+          "name": "Audience",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "Capacities",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "City",
+          "type": "string",
+          "personal": "τόπος"
+        },
+        {
+          "name": "ConsentText",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "ConsentVersion",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Cover",
+          "type": "media",
+          "personal": null
+        },
+        {
+          "name": "Description",
+          "type": "richtext",
+          "personal": null
+        },
+        {
+          "name": "DescriptionEn",
+          "type": "richtext",
+          "personal": null
+        },
+        {
+          "name": "DietaryPurgeDays",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "EndDate",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "HostedBy",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Options",
+          "type": "component",
+          "personal": null
+        },
+        {
+          "name": "PersonalDataMonths",
+          "type": "integer",
+          "personal": null
+        },
+        {
+          "name": "RegistrationDeadline",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "RegistrationOpen",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "Sessions",
+          "type": "component",
+          "personal": null
+        },
+        {
+          "name": "Slug",
+          "type": "uid",
+          "personal": null
+        },
+        {
+          "name": "StartDate",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "Subtitle",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Title",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Venue",
+          "type": "string",
+          "personal": null
+        }
+      ],
+      "personalCount": 1
+    },
+    {
       "api": "event-attendance",
       "plural": "event-attendances",
       "displayName": "Event Attendance",
@@ -303,6 +416,149 @@
         }
       ],
       "personalCount": 2
+    },
+    {
+      "api": "event-registration",
+      "plural": "event-registrations",
+      "displayName": "Event Registration",
+      "fields": [
+        {
+          "name": "AgendaTopic",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "CancelledAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "Capacity",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "CapacityOther",
+          "type": "string",
+          "personal": "τόπος"
+        },
+        {
+          "name": "ConfirmTokenExpiresAt",
+          "type": "datetime",
+          "personal": "διαπιστευτήριο"
+        },
+        {
+          "name": "ConfirmTokenHash",
+          "type": "string",
+          "personal": "διαπιστευτήριο"
+        },
+        {
+          "name": "ConfirmedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "ConsentAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "ConsentText",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "ConsentVersion",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "Dietary",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "DietaryConsentAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "DietaryPurgeAfter",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "DietaryPurgedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "Email",
+          "type": "string",
+          "personal": "email"
+        },
+        {
+          "name": "FirstName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "GeneralComments",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "LastName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "OptionAnswers",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "PersonalDataPurgeAfter",
+          "type": "date",
+          "personal": null
+        },
+        {
+          "name": "Phone",
+          "type": "string",
+          "personal": "τηλέφωνο"
+        },
+        {
+          "name": "SessionChoices",
+          "type": "json",
+          "personal": null
+        },
+        {
+          "name": "Status",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "SubmittedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "SubmittedIp",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "event",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "linkedMember",
+          "type": "relation",
+          "personal": "σύνδεση με μέλος"
+        }
+      ],
+      "personalCount": 8
     },
     {
       "api": "exit-survey",

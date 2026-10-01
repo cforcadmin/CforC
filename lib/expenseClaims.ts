@@ -7,9 +7,62 @@
  */
 
 /** Αφορμές μετακίνησης. Οι τρεις τελευταίες θέλουν όνομα δράσης/έργου. */
+/**
+ * ──────────────────────────────────────────────────────────────────────
+ *  MIDTERM 2026 — ΟΛΟΚΛΗΡΟΣ ο κανόνας της δράσης, σε ΕΝΑ σημείο.
+ *
+ *  ΓΙΑ ΝΑ ΦΥΓΕΙ ΜΕΤΑ ΤΗ ΔΡΑΣΗ: `grep -rn MIDTERM_2026` και σβήσε ό,τι
+ *  βρεις, μαζί με αυτό το μπλοκ και το label από τα EVENT_TYPES. Τίποτα
+ *  άλλο δεν χρειάζεται επαναφορά — καμία άλλη δράση δεν το ακουμπά.
+ *
+ *  Απαντήσεις Γιώργου, 1/10/2026:
+ *   · 40 € ανά άτομο ΣΤΑΘΕΡΑ, ανεξαρτήτως αφετηρίας. Από Λάρισα με
+ *     εισιτήριο 35 € παίρνει 35· με 45 € παίρνει 40.
+ *   · Χωρίς ανώτατο πλήθος συνταξιδιωτών: «τα μέλη δεν μας κοροϊδεύουν,
+ *     και θα βρεθούμε ούτως ή άλλως».
+ *   · Το σκέτο «Midterm» ΜΕΝΕΙ για τα επόμενα.
+ * ──────────────────────────────────────────────────────────────────────
+ */
+export const MIDTERM_2026 = {
+  label: 'Midterm 2026 - Θεσσαλονίκη/Goethe Institut',
+  /** Οι ημερομηνίες της ΔΡΑΣΗΣ — κλειδωμένες, δεν τις ορίζει το μέλος */
+  start: '2026-11-20',
+  end: '2026-11-22',
+  /** Η αφετηρία αλλάζει (κάποιοι έρχονται από αλλού)· ο προορισμός όχι */
+  defaultFrom: 'Αθήνα',
+  lockedTo: 'Θεσσαλονίκη',
+  /** Αποζημιώνονται ΜΟΝΟ έξοδα ταξιδιού */
+  lockedCategory: 'Ταξίδι',
+  /** Ανά άτομο — ο αιτών συν όσοι δηλωθούν στη «Μετακίνηση μαζί με μέλη» */
+  capPerPerson: 40,
+  coTravellerWarning: 'Μόνο 1 άτομο ανά όχημα κάνει το εξοδολόγιο!',
+  capNote: 'Η κάλυψη του CforC για αυτή τη δράση είναι 50% του ΚΤΕΛ Αθήνα–Θεσσαλονίκη, δηλαδή 40 € ανά άτομο.',
+} as const
+
+/**
+ * Πόσοι συνταξίδεψαν — ΜΙΑ συνάρτηση για οθόνη και διαδρομή.
+ *
+ * Η οθόνη κρατά πίνακα και τον στέλνει με `join(', ')`· ο server παίρνει
+ * τη συμβολοσειρά. Αν ο καθένας μετρούσε μόνος του, θα απόκλιναν σιωπηλά
+ * και το όριο θα έβγαινε αλλιώς στα δύο άκρα.
+ */
+export function countCoTravellers(value: string | string[] | null | undefined): number {
+  if (Array.isArray(value)) return value.filter(v => String(v).trim()).length
+  return String(value || '').split(',').map(s => s.trim()).filter(Boolean).length
+}
+
+/** Το όριο κάλυψης για μια δράση, ή null αν δεν έχει. */
+export function eventCap(eventType: string, coTravellers: number): number | null {
+  if (eventType !== MIDTERM_2026.label) return null
+  // +1 ο ίδιος ο αιτών. Μη αρνητικό, ακόμη κι αν έρθει σκουπίδι.
+  const people = Math.max(0, Math.floor(coTravellers)) + 1
+  return MIDTERM_2026.capPerPerson * people
+}
+
 export const EVENT_TYPES = [
   'Γενική Συνέλευση',
   'Midterm',
+  MIDTERM_2026.label,
   'ΟΣ meetup',
   'Δράση εσωτερικού',
   'Δράση εξωτερικού',
@@ -204,10 +257,29 @@ export const ALLOWED_FILE_TYPES = [
 /** Στρογγυλοποίηση σε λεπτά — ποτέ αθροίσματα με δεκαδικά σκουπίδια */
 export const round2 = (n: number) => Math.round((Number(n) + Number.EPSILON) * 100) / 100
 
-export function computeTotals(lines: ClaimLine[], advance: number) {
+/**
+ * Σύνολα, με προαιρετικό ΑΝΩΤΑΤΟ ΟΡΙΟ κάλυψης.
+ *
+ * Σειρά πράξεων, απόφαση Γιώργου 1/10/2026: ΠΡΩΤΑ κόβει το όριο, ΜΕΤΑ
+ * αφαιρείται η προκαταβολή. Έξοδα 100 €, προκαταβολή 30 €, όριο 40 € →
+ * πληρωτέο 10 €, όχι 40 €. Το όριο είναι ό,τι πληρώνει συνολικά το CforC
+ * γι' αυτό το άτομο, και η προκαταβολή είναι ΜΕΡΟΣ του.
+ *
+ * Χωρίς `cap` η συμπεριφορά είναι ακριβώς η παλιά — καμία άλλη δράση δεν
+ * αλλάζει.
+ */
+export function computeTotals(lines: ClaimLine[], advance: number, cap?: number | null) {
   const total = round2(lines.reduce((s, l) => s + (Number(l.amount) || 0), 0))
   const adv = round2(Math.max(0, Number(advance) || 0))
-  return { total, advance: adv, payable: round2(total - adv) }
+  const covered = typeof cap === 'number' && cap >= 0 ? Math.min(total, cap) : total
+  return {
+    total,
+    advance: adv,
+    payable: round2(covered - adv),
+    /** Κόπηκε από το όριο; Το χρειάζεται η οθόνη για να εξηγήσει γιατί */
+    capped: covered < total,
+    cap: typeof cap === 'number' ? cap : null,
+  }
 }
 
 /** Ημέρες διεξαγωγής, με τις δύο άκρες να μετράνε (1η–3η = 3 ημέρες) */
@@ -294,9 +366,12 @@ export function validateClaim(input: ClaimInput): string | null {
     }
   }
 
-  const { total, payable } = computeTotals(lines, input.advance)
+  // Με το ΙΔΙΟ όριο που θα αποθηκευτεί — αλλιώς ο έλεγχος κρίνει άλλο ποσό
+  // από αυτό που γράφεται, και περνά αίτηση που μετά βγαίνει μηδενική.
+  const capForCheck = eventCap(String(input.eventType || ''), countCoTravellers(input.coTravellers))
+  const { total, payable } = computeTotals(lines, input.advance, capForCheck)
   if (total <= 0) return 'Το σύνολο πρέπει να είναι μεγαλύτερο από 0'
-  if (payable < 0) return 'Η προκαταβολή δεν μπορεί να ξεπερνά το σύνολο των εξόδων'
+  if (payable < 0) return 'Η προκαταβολή δεν μπορεί να ξεπερνά το ποσό που καλύπτεται'
   if (payable === 0) return 'Το πληρωτέο είναι 0 — δεν χρειάζεται εξοδολόγιο'
 
   if (!String(input.accountHolder || '').trim()) return 'Συμπλήρωσε το όνομα δικαιούχου'
