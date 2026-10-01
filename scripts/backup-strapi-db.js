@@ -9,8 +9,11 @@
  *
  * Destinations:
  *   1. Local:  Website/_Database_Backup/strapi-backup-DATE/  (JSON + media)
- *   2. GitHub: StrapiDBforCforC/backups/DATE/       (JSON + manifest only, no media)
- *   3. Google Drive: CforC-Backups/DATE/            (JSON + media, via rclone if configured)
+ *   2. Google Drive: CforC-Backups/DATE/            (JSON + media, via rclone if configured)
+ *
+ * ΟΧΙ GitHub. Ως τις 30/9/2026 έσπρωχνε τη βάση στο repo StrapiDBforCforC,
+ * που ήταν ΔΗΜΟΣΙΟ — 116 μέλη με Email, Phone, TaxId, FatherName και hashes
+ * κωδικών, αναγνώσιμα από οποιονδήποτε, από 21/5 ως 30/9/2026.
  *
  * Notifications:
  *   Sends email to it@cultureforchange.net on success or failure via Resend.
@@ -222,6 +225,54 @@ function safeFilename(url) {
 /**
  * Send email notification via Resend
  */
+/**
+ * Ειδοποίηση ΧΩΡΙΣ δίκτυο.
+ *
+ * Την 1/9/2026 το αντίγραφο απέτυχε επειδή ο Mac δεν είχε δίκτυο — και η
+ * ειδοποίηση αποτυχίας ταξίδευε από το ΙΔΙΟ δίκτυο, οπότε δεν έφυγε ποτέ.
+ * Ένα σύστημα που σου λέει ότι χάλασε μέσω αυτού που χάλασε, δεν σου λέει
+ * τίποτα. Αυτή η ειδοποίηση ζει στο μηχάνημα και δουλεύει χωρίς γραμμή.
+ */
+function notifyLocally(title, message) {
+  try {
+    const esc = (s) => String(s).replace(/[\\"]/g, '').replace(/[\r\n]+/g, ' ').slice(0, 200);
+    execSync(
+      `osascript -e 'display notification "${esc(message)}" with title "${esc(title)}" sound name "Basso"'`,
+      { stdio: 'pipe', timeout: 10000 }
+    );
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * Περίμενε το δίκτυο αντί να τα παρατήσεις αμέσως.
+ *
+ * Ο Mac στις 10:00 μπορεί να μόλις ξύπνησε και το wifi να μην έχει πιάσει.
+ * Την 1/9 όλες οι συλλογές απέτυχαν με ENOTFOUND μέσα σε 91 χιλιοστά του
+ * δευτερολέπτου — δηλαδή ούτε καν προσπάθησε δεύτερη φορά. Συνολική
+ * αναμονή ~30 λεπτά, που δεν κοστίζει τίποτα όταν όλα πάνε καλά.
+ */
+async function waitForNetwork(host, log) {
+  const dns = require('dns').promises;
+  const waitsSec = [0, 60, 300, 600, 900];
+  for (const wait of waitsSec) {
+    if (wait) {
+      log(`Network: waiting ${wait}s before retry...`);
+      await new Promise((r) => setTimeout(r, wait * 1000));
+    }
+    try {
+      await dns.lookup(host);
+      if (wait) log('Network: back — continuing');
+      return true;
+    } catch (err) {
+      log(`Network: ${host} does not resolve (${err.code || err.message})`);
+    }
+  }
+  return false;
+}
+
 async function sendEmail(subject, htmlBody) {
   if (!RESEND_API_KEY) {
     console.log('WARN: No RESEND_API_KEY — skipping email notification');
@@ -266,71 +317,6 @@ async function sendEmail(subject, htmlBody) {
   });
 }
 
-/**
- * Push JSON data + manifest to GitHub (StrapiDBforCforC repo)
- */
-function pushToGitHub(backupDir, dateStr) {
-  const githubBackupDir = path.join(STRAPI_REPO_DIR, 'backups', dateStr);
-
-  if (!fs.existsSync(STRAPI_REPO_DIR)) {
-    console.log('WARN: StrapiDBforCforC repo not found — skipping GitHub push');
-    return false;
-  }
-
-  try {
-    // Create backup folder in Strapi repo
-    fs.mkdirSync(githubBackupDir, { recursive: true });
-
-    // Copy JSON data files
-    const dataDir = path.join(backupDir, 'data');
-    const ghDataDir = path.join(githubBackupDir, 'data');
-    fs.mkdirSync(ghDataDir, { recursive: true });
-
-    for (const file of fs.readdirSync(dataDir)) {
-      fs.copyFileSync(path.join(dataDir, file), path.join(ghDataDir, file));
-    }
-
-    // Copy manifest and summary
-    for (const file of ['manifest.json', 'summary.txt']) {
-      const src = path.join(backupDir, file);
-      if (fs.existsSync(src)) {
-        fs.copyFileSync(src, path.join(githubBackupDir, file));
-      }
-    }
-
-    // Keep only last 5 backups in the repo too
-    const ghBackupsRoot = path.join(STRAPI_REPO_DIR, 'backups');
-    if (fs.existsSync(ghBackupsRoot)) {
-      const dirs = fs.readdirSync(ghBackupsRoot)
-        .filter(d => fs.statSync(path.join(ghBackupsRoot, d)).isDirectory())
-        .sort()
-        .reverse();
-
-      for (let i = MAX_LOCAL_BACKUPS; i < dirs.length; i++) {
-        fs.rmSync(path.join(ghBackupsRoot, dirs[i]), { recursive: true, force: true });
-      }
-    }
-
-    // Git add, commit, push
-    execSync('git add backups/', { cwd: STRAPI_REPO_DIR, stdio: 'pipe' });
-
-    // Check if there are changes to commit
-    const status = execSync('git status --porcelain backups/', { cwd: STRAPI_REPO_DIR }).toString().trim();
-    if (!status) {
-      console.log('GitHub: No changes to commit');
-      return true;
-    }
-
-    execSync(`git commit -m "Automated backup ${dateStr}"`, { cwd: STRAPI_REPO_DIR, stdio: 'pipe' });
-    execSync('git push origin main', { cwd: STRAPI_REPO_DIR, stdio: 'pipe', timeout: 60000 });
-
-    console.log('GitHub: Backup pushed successfully');
-    return true;
-  } catch (err) {
-    console.log(`GitHub push failed: ${err.message}`);
-    return false;
-  }
-}
 
 /**
  * Sync full backup (with media) to Google Drive via rclone
@@ -418,6 +404,22 @@ async function main() {
   let totalEntries = 0;
   let successCollections = 0;
 
+  // ── Phase 0: υπάρχει δίκτυο; ──
+  // Πριν χτυπήσουμε επτά φορές τον ίδιο τοίχο, ρωτάμε μία φορά και
+  // περιμένουμε. Αν δεν έρθει ποτέ, η ειδοποίηση είναι ΤΟΠΙΚΗ — το email
+  // θα ταξίδευε από τη γραμμή που λείπει.
+  const strapiHost = new URL(STRAPI_URL).hostname;
+  if (!(await waitForNetwork(strapiHost, log))) {
+    log('ERROR: No network after ~30 minutes of retries. Backup aborted.');
+    notifyLocally(
+      'CforC backup FAILED',
+      'Χωρίς δίκτυο μετά από 30 λεπτά. Δεν πάρθηκε αντίγραφο. Τρέξε το χειροκίνητα όταν συνδεθείς.'
+    );
+    const logFile = path.join(BACKUP_ROOT, 'backup.log');
+    fs.appendFileSync(logFile, logLines.join('\n') + '\n---\n');
+    process.exit(1);
+  }
+
   for (const col of COLLECTIONS) {
     try {
       log(`Fetching ${col.name}...`);
@@ -479,6 +481,9 @@ async function main() {
 
   if (successCollections === 0) {
     log('ERROR: All collection downloads failed. Strapi may be down.');
+    // ΠΡΩΤΑ η τοπική ειδοποίηση: αν φταίει το δίκτυο, το email δεν θα φύγει
+    // και θα μείνεις να νομίζεις ότι όλα πήγαν καλά.
+    notifyLocally('CforC backup FAILED', 'Καμία συλλογή δεν κατέβηκε. Δες το _Database_Backup/cron.log.');
 
     await sendEmail(
       '🔴 CforC Backup FAILED — Strapi is down',
@@ -596,9 +601,17 @@ async function main() {
     }
   }
 
-  // ── Phase 5: Push to GitHub (JSON + manifest only) ──
-  log('Pushing to GitHub...');
-  const githubOk = pushToGitHub(backupDir, dateStr);
+  // ── Phase 5: ΚΑΤΑΡΓΗΘΗΚΕ — καμία ώθηση σε GitHub ──
+  //
+  // Ως τις 30/9/2026 αυτό το βήμα έσπρωχνε ΟΛΟΚΛΗΡΗ τη βάση στο repo
+  // StrapiDBforCforC, που ήταν ΔΗΜΟΣΙΟ: πέντε ημερομηνίες, 116 μέλη με
+  // Email, Phone, TaxId, FatherName και hashes κωδικών, αναγνώσιμα από
+  // οποιονδήποτε. Το repo έγινε ιδιωτικό και τα αρχεία αφαιρέθηκαν.
+  //
+  // Δεν ξαναμπαίνει. Το ιστορικό ενός repo είναι για πάντα και ένα repo
+  // μοιράζεται με συνεργάτες — είναι λάθος θέση για μητρώο μελών. Τα δύο
+  // αντίγραφα που μένουν (τοπικό + Google Drive) είναι ΠΛΗΡΕΣΤΕΡΑ: έχουν
+  // και τα ~1.977 αρχεία πολυμέσων, που στο GitHub δεν πήγαιναν ποτέ.
 
   // ── Phase 6: Sync to Google Drive (full backup with media) ──
   log('Syncing to Google Drive...');
@@ -619,10 +632,11 @@ async function main() {
 
   const destinations = [];
   destinations.push('Local: ✅');
-  destinations.push(`GitHub: ${githubOk ? '✅' : '⚠️ Failed'}`);
   destinations.push(`Google Drive: ${gdriveOk ? '✅' : '⚠️ Not configured or failed'}`);
 
-  const hasErrors = errors.length > 0 || mediaFailed > 0 || !githubOk;
+  // Το Google Drive είναι πλέον το ΜΟΝΟ αντίγραφο εκτός αυτού του Mac —
+  // άρα η αποτυχία του είναι σφάλμα, όχι υποσημείωση.
+  const hasErrors = errors.length > 0 || mediaFailed > 0 || !gdriveOk;
   const emailSubject = hasErrors
     ? `⚠️ CforC Backup completed with warnings — ${now.toISOString().slice(0, 10)}`
     : `✅ CforC Backup successful — ${now.toISOString().slice(0, 10)}`;

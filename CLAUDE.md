@@ -308,6 +308,17 @@ Strapi Cloud free tier sleeps after 10-15 minutes of inactivity.
 
 @/Users/yoryosstyl/soul/projects/cforc-website.md
 
+## Workflow checklist
+
+Before/during/after EVERY change, work through `docs/AI-Workflow-Checklist.md`.
+It turns the principles above into steps with a command attached to each, so
+they fail loudly instead of being agreed with and skipped. The short version:
+plan before coding · the code is the small part, sweep the siblings · execute
+and validate in one loop · produce evidence, not output · keep the change
+reviewable by construction.
+
+@docs/AI-Workflow-Checklist.md
+
 ## Architecture Lessons (post-mortems)
 
 1. **Never chain synchronous webhooks A→B→A** (Vercel → Apps Script → back

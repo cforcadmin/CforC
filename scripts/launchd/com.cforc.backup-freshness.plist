@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Φύλακας φρεσκάδας αντιγράφων — ΚΑΘΕ ΜΕΡΑ στις 11:00.
+
+  Ξεχωριστός από το ίδιο το backup ΕΠΙΤΗΔΕΣ: το backup δεν μπορεί να
+  αναφέρει ότι δεν έτρεξε. Αν ο Mac κοιμάται στις 11:00, το launchd το
+  τρέχει μόλις ξυπνήσει (RunAtLoad + η προεπιλεγμένη συμπεριφορά του
+  StartCalendarInterval), οπότε μια χαμένη μέρα δεν κρύβει το κενό.
+
+  Εγκατάσταση:
+    cp scripts/launchd/com.cforc.backup-freshness.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.cforc.backup-freshness.plist
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.cforc.backup-freshness</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/yoryosstyl/miniconda3/bin/node</string>
+    <string>/Users/yoryosstyl/Documents/Projects/Projects (active)/CforC/Website/scripts/check-backup-freshness.js</string>
+  </array>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>11</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/Users/yoryosstyl/Documents/Projects/Projects (active)/CforC/Website/_Database_Backup/freshness.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/yoryosstyl/Documents/Projects/Projects (active)/CforC/Website/_Database_Backup/freshness.log</string>
+</dict>
+</plist>
