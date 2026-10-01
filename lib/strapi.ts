@@ -320,14 +320,14 @@ export async function getMemberBySlugOrId(slugOrId: string) {
 
 /** Όλες οι δράσεις, νεότερη πρώτη. fetchStrapiAll: το Strapi κόβει στα 100. */
 export async function getEvents() {
-  return fetchStrapiAll('/events?populate[Sessions]=true&populate[Options]=true&populate[Cover]=true&sort=StartDate:desc');
+  return fetchStrapiAll('/events?populate[Sessions]=true&populate[Options]=true&populate[Resources][populate]=File&populate[Cover]=true&sort=StartDate:desc');
 }
 
 /** Μία δράση από το slug — για τη σελίδα της */
 export async function getEventBySlug(slug: string) {
   const res = await fetchStrapi(
     `/events?filters[Slug][$eq]=${encodeURIComponent(slug)}`
-    + '&populate[Sessions]=true&populate[Options]=true&populate[Cover]=true&pagination[limit]=1'
+    + '&populate[Sessions]=true&populate[Options]=true&populate[Resources][populate]=File&populate[Cover]=true&pagination[limit]=1'
   );
   return res?.data?.[0] || null;
 }

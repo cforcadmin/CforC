@@ -316,12 +316,21 @@ export interface EventSession {
 
 export interface EventOptionBlock {
   id: number;
-  Key: 'travel' | 'accommodation' | 'dietary' | 'lunch' | 'dinner' | 'agenda';
+  Key: 'travel' | 'transport' | 'accommodation' | 'dietary' | 'lunch' | 'dinner' | 'agenda';
   Title: string;
   Description?: string;
   Required?: boolean;
   Choices?: Array<{ value: string; label: string }> | null;
   VisibleFor?: EventCapacity[] | null;
+  SortOrder?: number;
+}
+
+/** Υλικό της δράσης: σύνδεσμος Ή αρχείο. Ένα από τα δύο αρκεί. */
+export interface EventResource {
+  id: number;
+  Label: string;
+  Url?: string;
+  File?: StrapiMediaObject | StrapiMediaArray;
   SortOrder?: number;
 }
 
@@ -343,6 +352,7 @@ export interface CforcEvent extends StrapiData<CforcEvent> {
   Capacities?: EventCapacity[] | null;
   Sessions?: EventSession[];
   Options?: EventOptionBlock[];
+  Resources?: EventResource[];
   RegistrationOpen?: boolean;
   ConsentText?: string;
   ConsentVersion?: string;

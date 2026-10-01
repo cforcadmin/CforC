@@ -119,6 +119,41 @@ export default function EventDetail({ ev }: { ev: CforcEvent }) {
           </section>
         )}
 
+        {/* ── Το υλικό ── */}
+        {Array.isArray(ev.Resources) && ev.Resources.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400 mb-4">ΥΛΙΚΟ</h2>
+            <ul className="grid gap-2">
+              {[...ev.Resources]
+                .sort((a, b) => (a.SortOrder ?? 0) - (b.SortOrder ?? 0))
+                .map(r => {
+                  const file: any = Array.isArray(r.File) ? r.File[0] : r.File
+                  const href = r.Url || file?.url || ''
+                  if (!href) return null
+                  return (
+                    <li key={r.id}>
+                      <a href={href} target="_blank" rel="noopener noreferrer"
+                        className="flex flex-wrap items-baseline gap-2 rounded-2xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-5 py-3 hover:border-coral transition-colors">
+                        <span className="font-bold text-charcoal dark:text-white">{r.Label}</span>
+                        {/* Το μέγεθος φαίνεται ΕΠΙΤΗΔΕΣ: το όριο των 5MB είναι
+                            σύμβαση, όχι επιβολή — ένα βαρύ αρχείο πρέπει να
+                            φαίνεται, και σε όποιον κατεβάζει με δεδομένα κινητού. */}
+                        {file?.size && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+                            {fileLabel(file)}
+                          </span>
+                        )}
+                        {!file && r.Url && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">σύνδεσμος ↗</span>
+                        )}
+                      </a>
+                    </li>
+                  )
+                })}
+            </ul>
+          </section>
+        )}
+
         {/* ── Η πρόσκληση ── */}
         {ev.Description && (
           <section className="mb-10">
@@ -144,6 +179,14 @@ export default function EventDetail({ ev }: { ev: CforcEvent }) {
       <CookieConsent />
     </div>
   )
+}
+
+/** «PDF · 1,2 MB» — το Strapi δίνει το μέγεθος σε KB */
+function fileLabel(file: { ext?: string; size?: number }): string {
+  const ext = String(file.ext || '').replace('.', '').toUpperCase()
+  const mb = typeof file.size === 'number' ? file.size / 1024 : 0
+  const size = mb >= 1 ? `${mb.toFixed(1).replace('.', ',')} MB` : `${Math.round((file.size || 0))} KB`
+  return [ext, size].filter(Boolean).join(' · ')
 }
 
 /** «Παρασκευή 20 Νοεμβρίου, 18:00–21:00» */
