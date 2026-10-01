@@ -8,6 +8,7 @@ import ScrollToTop from '@/components/ScrollToTop'
 import CookieConsent from '@/components/CookieConsent'
 import type { CforcEvent } from '@/lib/types'
 import { eventPhase, dateRangeLabel, registrationClosed, athensToday } from '@/lib/events'
+import { upperGreek } from '@/lib/campaignBlocks'
 
 /**
  * Η λίστα των δράσεων — δημόσια.
@@ -95,7 +96,7 @@ export default function EventsContent({ events }: { events: CforcEvent[] }) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mb-12">
-      <h2 className="text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400 mb-4">{title.toUpperCase()}</h2>
+      <h2 className="text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400 mb-4">{upperGreek(title)}</h2>
       <div className="grid gap-4">{children}</div>
     </section>
   )

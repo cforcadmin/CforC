@@ -7,6 +7,7 @@ import Footer from '@/components/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
 import type { CforcEvent, EventCapacity } from '@/lib/types'
 import { dateRangeLabel, grDate } from '@/lib/events'
+import { upperGreek } from '@/lib/campaignBlocks'
 import {
   CAPACITY_LABELS, MEMBER_CAPACITIES, offeredCapacities, visibleSessions, visibleOptions, sessionChoices,
   validateRegistration, emptyDraft, type RegistrationDraft, type SessionChoice,
@@ -321,7 +322,7 @@ const inputCls = 'w-full rounded-xl border border-gray-300 dark:border-gray-600 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="rounded-3xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 p-6 sm:p-8">
-      <h2 className="text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400 mb-4">{title.toUpperCase()}</h2>
+      <h2 className="text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400 mb-4">{upperGreek(title)}</h2>
       {children}
     </section>
   )
