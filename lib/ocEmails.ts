@@ -194,8 +194,8 @@ export function applicationReceivedEmailHtml(firstName: string, signerName = 'Cu
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>Λάβαμε την αίτησή σου — Culture for Change</title>
 <!--[if mso]>
 <style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
@@ -312,8 +312,8 @@ export function approvedEmailHtml(firstName: string, claimUrl: string, signerNam
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>Έγκριση αιτήματος εγγραφής — Culture for Change</title>
 <!--[if mso]>
 <style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
@@ -620,8 +620,8 @@ export function reminderEmailHtml(firstName: string, claimUrl: string, signerNam
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>Υπενθύμιση συνδρομής — Culture for Change</title>
 <!--[if mso]>
 <style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
@@ -796,8 +796,8 @@ export function paymentFailedEmailHtml(firstName: string, claimUrl: string, sign
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>Σχετικά με την πληρωμή σου — Culture for Change</title>
 <!--[if mso]>
 <style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
@@ -977,8 +977,8 @@ export function welcomeEmailHtml(firstName: string, signerName = 'Culture for Ch
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>Καλώς ήρθες — Culture for Change</title>
 <!--[if mso]>
 <style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
@@ -1155,8 +1155,8 @@ export function financeWelcomeEmailHtml(firstName: string, signerName = 'Culture
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>Απόδειξη είσπραξης — Culture for Change</title>
 <!--[if mso]>
 <style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
@@ -1264,8 +1264,8 @@ export function manualReceiptEmailHtml(firstName: string, detail: string, signer
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>Η απόδειξή σου — Culture for Change</title>
 <!--[if mso]>
 <style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
@@ -1387,8 +1387,8 @@ export function subscriptionReminderEmailHtml(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>Υπενθύμιση συνδρομής — Culture for Change</title>
 <!--[if mso]>
 <style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
@@ -1542,8 +1542,8 @@ export function renewalPaymentFailedEmailHtml(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>Σχετικά με την πληρωμή σου — Culture for Change</title>
 <!--[if mso]>
 <style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
@@ -1724,8 +1724,8 @@ export function monthlyDispatchEmailHtml(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>Μηνιαία εικόνα — Culture for Change</title>
 <!--[if mso]>
 <style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
@@ -1906,7 +1906,8 @@ export function treasuryReminderEmailHtml(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>Ενημέρωση ταμείου — Culture for Change</title>
 <style>
   @media only screen and (max-width:620px){
@@ -1994,7 +1995,8 @@ export function monthReadyEmailHtml(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>Ο ${monthLabel} είναι έτοιμος — Culture for Change</title>
 <style>
   @media only screen and (max-width:620px){
@@ -2131,7 +2133,8 @@ function shell(title: string, heading: string, preheader: string, body: string, 
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>${title}</title>
 <style>
   @media only screen and (max-width:620px){
@@ -2263,8 +2266,8 @@ export function departureEmailHtml(firstName: string, signerName = 'Culture for 
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>Σε αποχαιρετούμε — Culture for Change</title>
 <!--[if mso]>
 <style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
@@ -2382,8 +2385,8 @@ export function paymentClaimNoticeHtml(name: string, email: string, applicationI
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>Δήλωση πληρωμής — Culture for Change OC</title>
 <!--[if mso]>
 <style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
@@ -2494,8 +2497,8 @@ export function financeMonthlyReminderEmailHtml(monthLabel: string, adminName?: 
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>Μηνιαίος οικονομικός απολογισμός — Culture for Change</title>
 <!--[if mso]>
 <style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>

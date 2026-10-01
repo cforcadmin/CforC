@@ -97,10 +97,16 @@ async function sendTreasuryReminder(): Promise<string> {
       firstName, monthLabel, last,
       `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cultureforchange.net'}/oc`,
     )
-    const sent = await sendOcEmail(financer.email, tpl.subject, tpl.html, {
+    // ΣΤΗ ΘΥΡΙΔΑ ΤΗΣ ΕΔΡΑΣ, ΟΧΙ στο προσωπικό email του ανθρώπου.
+    //
+    // Ως την 1/10/2026 πήγαινε στο `financer.email`. Μια υπενθύμιση της
+    // ΘΕΣΗΣ που φτάνει σε προσωπικό γραμματοκιβώτιο χάνεται μόλις αλλάξει
+    // ο κάτοχος, και κανείς άλλος δεν μπορεί να την πιάσει. Το όνομα μένει
+    // στον χαιρετισμό — η θυρίδα είναι ούτως ή άλλως δική του/της.
+    const sent = await sendOcEmail(FINANCE_EMAIL, tpl.subject, tpl.html, {
       from: FINANCE_FROM, replyTo: FINANCE_EMAIL,
     })
-    return sent ? `sent to ${financer.email}` : 'send failed'
+    return sent ? `sent to ${FINANCE_EMAIL}` : 'send failed'
   } catch (err) {
     console.error('[MONTHLY-REPORT] treasury reminder failed:', err)
     return 'error'

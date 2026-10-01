@@ -310,3 +310,24 @@ export async function getMemberBySlugOrId(slugOrId: string) {
     throw new Error('Member not found');
   }
 }
+
+/* ── Δράσεις (events) ──────────────────────────────────────────────────────
+ *
+ * Διαβάζονται ΠΑΝΤΑ από τον server με το διακριτικό, όπως κάθε άλλη συλλογή
+ * εδώ μέσα — ο ρόλος Public του Strapi ΔΕΝ χρησιμοποιείται και δεν πρέπει να
+ * ανοίξει: θα έδινε απευθείας πρόσβαση στα δεδομένα, παρακάμπτοντας το site.
+ */
+
+/** Όλες οι δράσεις, νεότερη πρώτη. fetchStrapiAll: το Strapi κόβει στα 100. */
+export async function getEvents() {
+  return fetchStrapiAll('/events?populate[Sessions]=true&populate[Options]=true&populate[Cover]=true&sort=StartDate:desc');
+}
+
+/** Μία δράση από το slug — για τη σελίδα της */
+export async function getEventBySlug(slug: string) {
+  const res = await fetchStrapi(
+    `/events?filters[Slug][$eq]=${encodeURIComponent(slug)}`
+    + '&populate[Sessions]=true&populate[Options]=true&populate[Cover]=true&pagination[limit]=1'
+  );
+  return res?.data?.[0] || null;
+}

@@ -289,3 +289,66 @@ interface MediaFormat {
   size: number;
   url: string;
 }
+
+/* ── Δράσεις (events) ───────────────────────────────────────────────────── */
+
+/** Οι ιδιότητες που μπορεί να δηλώσει κάποιος. Ορίζουν ΤΙ βλέπει παρακάτω. */
+export type EventCapacity =
+  | 'member'          // Μέλος CforC μόνο
+  | 'member-ban'      // Μέλος CforC & υπότροφος START/BAN
+  | 'non-member-ban'  // Υπότροφος START/BAN, όχι μέλος
+  | 'non-member'      // Ούτε μέλος ούτε υπότροφος
+  | 'other';          // Δεσμευμένο για μελλοντικές δράσεις
+
+export interface EventSession {
+  id: number;
+  Title: string;
+  Subtitle?: string;
+  StartsAt: string;
+  EndsAt?: string;
+  AllowInPerson: boolean;
+  /** Η 1.β του Midterm 2026 δεν έχει διαδικτυακή επιλογή — εδώ φαίνεται */
+  AllowOnline: boolean;
+  /** Κενό ή απόν = όλες οι ιδιότητες */
+  VisibleFor?: EventCapacity[] | null;
+  SortOrder?: number;
+}
+
+export interface EventOptionBlock {
+  id: number;
+  Key: 'travel' | 'accommodation' | 'dietary' | 'lunch' | 'dinner' | 'agenda';
+  Title: string;
+  Description?: string;
+  Required?: boolean;
+  Choices?: Array<{ value: string; label: string }> | null;
+  VisibleFor?: EventCapacity[] | null;
+  SortOrder?: number;
+}
+
+export interface CforcEvent extends StrapiData<CforcEvent> {
+  Title: string;
+  Slug: string;
+  Subtitle?: string;
+  Description?: string;
+  DescriptionEn?: string;
+  StartDate: string;
+  EndDate: string;
+  RegistrationDeadline?: string;
+  Venue?: string;
+  City?: string;
+  HostedBy?: string;
+  Cover?: StrapiMediaObject | StrapiMediaArray;
+  /** ΠΥΛΗ: 'member' = μόνο συνδεδεμένα μέλη· ο server το επιβάλλει */
+  Audience: 'member' | 'non-member';
+  Capacities?: EventCapacity[] | null;
+  Sessions?: EventSession[];
+  Options?: EventOptionBlock[];
+  RegistrationOpen?: boolean;
+  ConsentText?: string;
+  ConsentVersion?: string;
+  PersonalDataMonths?: number;
+  DietaryPurgeDays?: number;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
