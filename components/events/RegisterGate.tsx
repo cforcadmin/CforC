@@ -57,12 +57,10 @@ export default function RegisterGate({
           </div>
         )}
 
-        {access.allowed && (
-          <Link href={`/events/${ev.Slug}/info`}
-            className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-coral text-coral dark:text-coral-light font-bold text-sm hover:bg-coral/10 transition">
-            Περισσότερες πληροφορίες για τη δράση →
-          </Link>
-        )}
+        {/* ΟΧΙ κουμπί πληροφοριών εδώ: η πύλη έχει ΜΙΑ δουλειά, να ρωτήσει
+            «μέλος ή όχι;». Ένα τρίτο κουμπί δίπλα στις δύο κάρτες μοιάζει με
+            τρίτη επιλογή και σπάει την ερώτηση. Το ενημερωτικό το βρίσκει
+            κανείς στην κορυφή της φόρμας, όποιον δρόμο κι αν διαλέξει. */}
 
         {access.allowed && access.mode === 'member' && (
           <div className="mt-8 rounded-3xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 p-6 sm:p-8">
