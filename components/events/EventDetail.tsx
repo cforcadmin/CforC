@@ -79,6 +79,27 @@ export default function EventDetail({ ev }: { ev: CforcEvent }) {
           </details>
         )}
 
+        {/* ── Το πρόγραμμα ── */}
+        {sessions.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400 mb-4">ΠΡΟΓΡΑΜΜΑ</h2>
+            <ul className="grid gap-3">
+              {sessions.map(s => (
+                <li key={s.id} className="rounded-2xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+                  <p className="font-bold text-charcoal dark:text-white">{s.Title}</p>
+                  {s.Subtitle && <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">{s.Subtitle}</p>}
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    {sessionWhen(s.StartsAt, s.EndsAt)}
+                    {/* Λέγεται ΕΔΩ γιατί δεν είναι ίδιο παντού: κάποιες συνεδρίες
+                        δεν έχουν διαδικτυακή παρακολούθηση. */}
+                    {s.AllowOnline ? ' · δια ζώσης ή διαδικτυακά' : ' · μόνο δια ζώσης'}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {/* ── Η δήλωση ── */}
         <div className="rounded-3xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 p-6 sm:p-8 mb-10">
           {phase === 'past' ? (
@@ -118,26 +139,6 @@ export default function EventDetail({ ev }: { ev: CforcEvent }) {
           )}
         </div>
 
-        {/* ── Το πρόγραμμα ── */}
-        {sessions.length > 0 && (
-          <section className="mb-10">
-            <h2 className="text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400 mb-4">ΠΡΟΓΡΑΜΜΑ</h2>
-            <ul className="grid gap-3">
-              {sessions.map(s => (
-                <li key={s.id} className="rounded-2xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
-                  <p className="font-bold text-charcoal dark:text-white">{s.Title}</p>
-                  {s.Subtitle && <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">{s.Subtitle}</p>}
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    {sessionWhen(s.StartsAt, s.EndsAt)}
-                    {/* Λέγεται ΕΔΩ γιατί δεν είναι ίδιο παντού: κάποιες συνεδρίες
-                        δεν έχουν διαδικτυακή παρακολούθηση. */}
-                    {s.AllowOnline ? ' · δια ζώσης ή διαδικτυακά' : ' · μόνο δια ζώσης'}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
 
         {/* ── Το υλικό ── */}
         {Array.isArray(ev.Resources) && ev.Resources.length > 0 && (
