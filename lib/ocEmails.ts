@@ -1080,6 +1080,9 @@ export function welcomeEmailHtml(firstName: string, signerName = 'Culture for Ch
 <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;padding:0 0 10px 0;">•&nbsp;&nbsp;<strong>Ομάδες Εργασίας</strong> — πληροφορίες σχετικές με τις ΟΕ</td></tr>
 <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;padding:0 0 10px 0;">•&nbsp;&nbsp;<strong>Οδηγός Τσέπης</strong> — πρακτικός οδηγός για μέλη</td></tr>
 <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;padding:0 0 10px 0;">•&nbsp;&nbsp;<strong>Newsletters</strong> — τα newsletter που λαμβάνεις και μέσω email</td></tr>
+<tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;padding:0 0 10px 0;">•&nbsp;&nbsp;<strong>Ανοιχτή Βιβλιοθήκη</strong> — ο κοινός κατάλογος τεκμηρίων του δικτύου· μπορείς και να προσθέσεις δικά σου</td></tr>
+<tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;padding:0 0 10px 0;">•&nbsp;&nbsp;<strong>Δράσεις</strong> — οι συναντήσεις του δικτύου και οι δηλώσεις συμμετοχής σου</td></tr>
+<tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;padding:0 0 10px 0;">•&nbsp;&nbsp;<strong>Εξοδολόγια</strong> — υποβολή εξόδων μετακίνησης και η πορεία τους</td></tr>
       </table>
     </td>
   </tr>
@@ -1088,7 +1091,6 @@ export function welcomeEmailHtml(firstName: string, signerName = 'Culture for Ch
   <tr>
     <td class="px" style="padding:12px 48px 8px 48px;">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;padding:0 0 10px 0;">•&nbsp;&nbsp;Η συμπλήρωση πρέπει να γίνει <strong>εντός μίας εβδομάδας</strong> για λόγους logistics και εύρυθμης λειτουργίας του CforC.</td></tr>
 <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;padding:0 0 10px 0;">•&nbsp;&nbsp;Είσαι υπεύθυνη/ος για την ενημέρωση του προφίλ σου. Φρόντισε να κάνεις μια ενημέρωση κάθε φορά που αλλάζει κάτι στο βιογραφικό ή στα projects σου, ή τουλάχιστον κάθε λίγους μήνες.</td></tr>
       </table>
     </td>
