@@ -168,9 +168,31 @@ ${opts.expensesUrl ? `
       Μέσα σε αυτό το διάστημα η εκκαθάριση γίνεται με μία κίνηση για όλους — γι' αυτό
       σε παρακαλούμε να μην το αφήσεις για μετά. Αν χρειαστείς περισσότερο χρόνο, γράψε
       στο <a href="mailto:finance@cultureforchange.net" style="color:#C2410C;">finance@cultureforchange.net</a>.<br>
-      Αν έχεις λογαριασμό στο cultureforchange.net, συνδέσου. Αν όχι, θα σου στείλουμε
-      σύνδεσμο μιας χρήσης σε αυτό εδώ το email.
+      Αν δεν είσαι ήδη συνδεδεμένος/η στο προφίλ σου, συνδέσου πρώτα.
     </span>
+    <p style="margin:14px 0 6px;font-size:15px;line-height:22px;color:#2D2D2D;">
+      Συμπληρώνεις τη φόρμα και επισυνάπτεις τα απαραίτητα δικαιολογητικά:
+    </p>
+    <ul style="margin:0 0 10px;padding-left:20px;font-size:15px;line-height:22px;color:#2D2D2D;">
+      <li>αποδεικτικά διαμονής</li>
+      <li>εισιτήρια</li>
+      <li>boarding passes (αν ταξιδέψεις με αεροπλάνο)</li>
+      <li>αποδείξεις βενζίνης και διοδίων (αν ταξιδέψεις με αυτοκίνητο)</li>
+      <li>οποιοδήποτε άλλο δικαιολογητικό κριθεί απαραίτητο</li>
+    </ul>
+    <p style="margin:0 0 10px;font-size:15px;line-height:22px;color:#2D2D2D;">
+      Αν ταξιδέψετε ομαδικά με αυτοκίνητο (carpooling), το εξοδολόγιο κατατίθεται
+      <strong>συνολικά από ένα άτομο</strong>.
+    </p>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#FFF4E5;border:2px solid #E8A33D;border-radius:12px;">
+      <tr><td style="padding:14px 16px;font-size:15px;line-height:22px;color:#6B4A15;">
+        <strong style="display:block;margin-bottom:4px;">Προσοχή</strong>
+        Για την κάλυψη των εξόδων είναι απαραίτητη η συμμετοχή στις δράσεις του
+        5ου Midterm-ReStart Reunion.<br>
+        Χωρίς κατάθεση εξοδολογίου και όλων των απαραίτητων δικαιολογητικών
+        <strong>δεν αποζημιώνεται καμία δαπάνη</strong>.
+      </td></tr>
+    </table>
   </td></tr>
 </table>` : ''}
 <p style="margin:0 0 20px 0;font-size:14px;color:#666666;">
