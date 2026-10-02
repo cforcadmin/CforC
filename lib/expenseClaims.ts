@@ -48,7 +48,7 @@ export const MIDTERM_2026 = {
    */
   banTravelSeats: 14,
   banTravelCapacity: 'non-member-ban',
-  banTravelNote: 'Η κάλυψη εξόδων μετακίνησης για υποτρόφους START / BAN αφορά έως 14 άτομα. Θα ενημερωθείτε γι’ αυτό με email.',
+  banTravelNote: 'Η κάλυψη εξόδων μετακίνησης για υποτρόφους START αφορά έως 14 άτομα. Θα ενημερωθείτε γι’ αυτό με email.',
   /**
    * Ως πότε δέχεται εξοδολόγια η γραμματεία χωρίς συνεννόηση.
    *

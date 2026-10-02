@@ -296,8 +296,8 @@ interface MediaFormat {
 /** Οι ιδιότητες που μπορεί να δηλώσει κάποιος. Ορίζουν ΤΙ βλέπει παρακάτω. */
 export type EventCapacity =
   | 'member'          // Μέλος CforC μόνο
-  | 'member-ban'      // Μέλος CforC & υπότροφος START/BAN
-  | 'non-member-ban'  // Υπότροφος START/BAN, όχι μέλος
+  | 'member-ban'      // Μέλος CforC & υπότροφος START
+  | 'non-member-ban'  // Υπότροφος START, όχι μέλος
   | 'non-member'      // Ούτε μέλος ούτε υπότροφος
   | 'other';          // Δεσμευμένο για μελλοντικές δράσεις
 

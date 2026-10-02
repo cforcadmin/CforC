@@ -1786,6 +1786,41 @@ function newsletterFooterHtml(cfg: NewsletterFooter): string {
   }
 }
 
+/**
+ * Το ΙΔΙΟ γράμμα, αλλά για σελίδα: κεφαλίδα, μπλοκ, υποσέλιδο.
+ *
+ * ΓΙΑΤΙ ΔΕΝ ΧΡΗΣΙΜΟΠΟΙΕΙΤΑΙ ΤΟ campaignEmailHtml: εκείνο παράγει ΟΛΟΚΛΗΡΟ
+ * έγγραφο HTML — <html>, <head>, metas — που δεν μπαίνει μέσα σε σελίδα.
+ * Εδώ βγαίνει μόνο το περιεχόμενο, με την ίδια ακριβώς κεφαλίδα και
+ * υπογραφή που βλέπουν τα μέλη στα email τους. Αντιγραφή της μορφής θα
+ * σήμαινε δύο ταυτότητες που αποκλίνουν στην πρώτη αλλαγή χρώματος.
+ */
+export function renderDocumentHtml(opts: {
+  title: string
+  blocks: Block[]
+  headerStyle?: HeaderStyle
+  headerLogo?: boolean
+  footerStyle?: FooterStyle
+  footerLook?: FooterLook
+  footerLogo?: boolean
+  signer?: CampaignSigner
+}): string {
+  const signer = opts.signer || {
+    name: 'Ομάδα Συντονισμού', role: 'Culture for Change', email: 'hello@cultureforchange.net',
+  }
+  return [
+    headerHtml(opts.headerStyle || 'coral', opts.title, opts.headerLogo !== false),
+    renderCampaignBody(opts.blocks),
+    footerHtml(
+      opts.footerStyle || 'organisation',
+      opts.footerLook || 'cream',
+      signer,
+      new Date().getFullYear(),
+      opts.footerLogo !== false,
+    ),
+  ].join('\n')
+}
+
 export function campaignEmailHtml(opts: {
   subject: string
   blocks: Block[]

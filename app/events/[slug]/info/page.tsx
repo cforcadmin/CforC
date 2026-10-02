@@ -8,7 +8,7 @@ import type { CforcEvent } from '@/lib/types'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
-import { renderCampaignBody, PREVIEW_DESKTOP_WIDTH } from '@/lib/campaignBlocks'
+import { renderDocumentHtml } from '@/lib/campaignBlocks'
 import { infoDocFor } from '@/lib/eventInfoDoc'
 import { dateRangeLabel } from '@/lib/events'
 
@@ -45,12 +45,16 @@ export default async function EventInfoPage({ params }: { params: Promise<{ slug
   const decoded = token ? verifyToken(token) : null
   const isMember = !!(decoded && decoded.type === 'session')
 
-  const html = renderCampaignBody(infoDocFor(isMember))
+  // Ίδια κεφαλίδα και υπογραφή με τα email των μελών — όχι αντίγραφό τους
+  const html = renderDocumentHtml({
+    title: `${ev.Title} — Πληροφορίες`,
+    blocks: infoDocFor(isMember),
+  })
 
   return (
     <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
       <Navigation />
-      <main id="main-content" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
+      <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
         <Link href={`/events/${ev.Slug}`} className="text-sm font-bold text-coral dark:text-coral-light hover:underline">
           ← {ev.Title}
         </Link>
@@ -64,8 +68,13 @@ export default async function EventInfoPage({ params }: { params: Promise<{ slug
         {/* Λευκό ΠΑΝΤΑ, και στο σκοτεινό θέμα: το περιεχόμενο κουβαλά τα
             δικά του χρώματα από τα μπλοκ των email, φτιαγμένα για λευκό
             φόντο. Σε σκούρα κάρτα θα έβγαινε μαύρο σε μαύρο. */}
+        {/* ΠΙΟ ΠΛΑΤΙΑ ΑΠΟ ΓΡΑΜΜΑ: τα μπλοκ είναι φτιαγμένα για τα 640px ενός
+            email, όπου ο αναγνώστης σαρώνει. Εδώ είναι ΕΓΓΡΑΦΟ που διαβάζεται,
+            και στο στενό πλάτος οι παράγραφοι στοιβάζονταν. Οι πίνακες είναι
+            width=100%, οπότε απλώνουν· κρατάμε όριο για να μη γίνει η γραμμή
+            τόσο μακριά που να χάνεται το μάτι στην επιστροφή. */}
         <div className="mx-auto rounded-3xl bg-white shadow-sm overflow-hidden"
-          style={{ maxWidth: PREVIEW_DESKTOP_WIDTH }}>
+          style={{ maxWidth: 900 }}>
           <div dangerouslySetInnerHTML={{ __html: html }} />
         </div>
 

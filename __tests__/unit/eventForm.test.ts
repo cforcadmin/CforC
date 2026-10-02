@@ -1,6 +1,6 @@
 import {
   offeredCapacities, visibleSessions, visibleOptions, sessionChoices,
-  validateRegistration, agendaWanted, isReimbursed, MEMBER_CAPACITIES, capacitiesForPath,
+  validateRegistration, agendaWanted, isReimbursed, MEMBER_CAPACITIES, capacitiesForPath, CAPACITY_LABELS,
   emptyDraft, type RegistrationDraft, type SessionChoice,
 } from '@/lib/eventForm'
 
@@ -175,5 +175,22 @@ describe('capacitiesForPath', () => {
     const none = { Capacities: null } as any
     expect(capacitiesForPath(none, true)).toEqual(['member'])
     expect(capacitiesForPath(none, false)).toEqual([])
+  })
+})
+
+/* Οι ετικέτες είναι ΜΙΑ πηγή — τις διαβάζει και η φόρμα και ο πίνακας της ΟΣ.
+   Απόφαση 2/10/2026: η ιδιότητα λέει «START», χωρίς «/ BAN». */
+describe('CAPACITY_LABELS', () => {
+  it('καμία ιδιότητα δεν αναφέρει πια BAN', () => {
+    for (const label of Object.values(CAPACITY_LABELS)) expect(label).not.toMatch(/BAN/)
+  })
+  it('οι δύο ιδιότητες υποτρόφου λένε START', () => {
+    expect(CAPACITY_LABELS['member-ban']).toBe('Μέλος CforC & υπότροφος START')
+    expect(CAPACITY_LABELS['non-member-ban']).toBe('Υπότροφος START (όχι μέλος CforC)')
+  })
+  it('κάθε ιδιότητα έχει ετικέτα — καμία δεν εμφανίζεται ως κλειδί', () => {
+    for (const c of ['member', 'member-ban', 'non-member-ban', 'non-member', 'other'] as const) {
+      expect(CAPACITY_LABELS[c]).toBeTruthy()
+    }
   })
 })

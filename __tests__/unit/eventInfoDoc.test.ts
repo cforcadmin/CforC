@@ -1,5 +1,5 @@
 import { infoDocFor, MIDTERM_INFO_A, MEMBERS_ONLY_SECTIONS } from '@/lib/eventInfoDoc'
-import { renderCampaignBody } from '@/lib/campaignBlocks'
+import { renderCampaignBody, renderDocumentHtml } from '@/lib/campaignBlocks'
 
 const titles = (blocks: typeof MIDTERM_INFO_A) =>
   blocks.filter(b => b.type === 'section').map(b => (b as any).title)
@@ -51,5 +51,41 @@ describe('infoDocFor', () => {
     for (const m of [true, false]) {
       expect(renderCampaignBody(infoDocFor(m)).length).toBeGreaterThan(500)
     }
+  })
+})
+
+/* Η σελίδα φοράει την ΙΔΙΑ κεφαλίδα και υπογραφή με τα email — όχι αντίγραφο */
+describe('renderDocumentHtml', () => {
+  const doc = (isMember: boolean) =>
+    renderDocumentHtml({ title: 'Midterm — Πληροφορίες', blocks: infoDocFor(isMember) })
+
+  it('βάζει κεφαλίδα με τον τίτλο', () => {
+    expect(doc(true)).toContain('Midterm — Πληροφορίες')
+  })
+  it('βάζει υπογραφή του δικτύου', () => {
+    expect(doc(true)).toMatch(/Culture for Change/)
+  })
+  it('το σώμα παραμένει ΜΕΣΑ στο έγγραφο', () => {
+    expect(doc(true)).toContain('Goethe-Institut Thessaloniki')
+  })
+  /* Η κεφαλίδα δεν πρέπει να ξαναφέρει τις ενότητες των μελών στο Β */
+  it('το έγγραφο Β δεν αποκτά ενότητες μελών από το περιτύλιγμα', () => {
+    expect(doc(false)).not.toContain('OPEN CALL')
+    expect(doc(false)).not.toContain('ΔΙΑΜΟΡΦΩΣΗ ΑΤΖΕΝΤΑΣ')
+  })
+})
+
+/* Τα πεδία του agenda ΔΙΑΦΕΥΓΟΥΝ μόνα τους: ένα γραμμένο &amp; έβγαινε
+   αυτούσιο στην οθόνη (2/10/2026). */
+describe('διπλό escaping', () => {
+  it('κανένα &amp; δεν φτάνει στον αναγνώστη', () => {
+    for (const m of [true, false]) {
+      expect(renderCampaignBody(infoDocFor(m))).not.toContain('&amp;amp;')
+      expect(renderCampaignBody(infoDocFor(m))).not.toMatch(/Stories &amp;amp;/)
+    }
+  })
+  it('το «&» των τίτλων φαίνεται ως σύμβολο', () => {
+    const html = renderCampaignBody(infoDocFor(true))
+    expect(html).toMatch(/Stories &amp; Experiences/)
   })
 })

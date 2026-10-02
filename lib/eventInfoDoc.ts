@@ -25,7 +25,7 @@ export const MEMBERS_ONLY_SECTIONS = [
 ] as const
 
 const P = (html: string): Block => ({ type: 'text', html })
-const H = (title: string): Block => ({ type: 'section', title, variant: 'modern', look: 'coral', logo: false })
+const H = (title: string): Block => ({ type: 'section', title, variant: 'modern', look: 'coral', logo: true, logoSide: 'left' })
 
 /** ΤΟ ΠΛΗΡΕΣ ΕΓΓΡΑΦΟ — έγγραφο Α, για τα μέλη */
 export const MIDTERM_INFO_A: Block[] = [
@@ -35,25 +35,31 @@ export const MIDTERM_INFO_A: Block[] = [
     + '&amp; 5ο CforC Midterm<br><br>'
     + '<strong>20–22 Νοεμβρίου 2026 · Θεσσαλονίκη</strong>' },
 
-  P('Με μεγάλη χαρά σας προσκαλούμε στη μεγάλη φθινοπωρινή μας συνάντηση στη Θεσσαλονίκη!'),
-  P('Φέτος, η συνάντησή μας είναι διπλή: γιορτάζουμε το 5ο CforC Midterm (την ετήσια συνάντηση '
-    + 'των μελών μας) και παράλληλα αναζητούμε τις ρίζες του Δικτύου μας, συνδιοργανώνοντας το '
-    + 'ReStart Reunion, σε συνεργασία με το μέλος μας Ίρις Περουλιού Σεργάκη.'),
-  P('Σας περιμένουμε, μέλη του CforC και υποτρόφους START, για ένα τριήμερο δικτύωσης, '
-    + 'επανασύνδεσης και συν-διαμόρφωσης!'),
-  P('Ανυπομονούμε να σμίξουμε ξανά!<br><br>Με εκτίμηση,<br>Η Ομάδα Συντονισμού του CforC'),
+  P('<p style="margin:0 0 16px 0;">Με μεγάλη χαρά σας προσκαλούμε στη μεγάλη φθινοπωρινή μας '
+    + 'συνάντηση στη Θεσσαλονίκη!</p>'
+    + '<p style="margin:0 0 16px 0;">Φέτος, η συνάντησή μας είναι διπλή: γιορτάζουμε το 5ο CforC '
+    + 'Midterm (την ετήσια συνάντηση των μελών μας) και παράλληλα αναζητούμε τις ρίζες του Δικτύου '
+    + 'μας, συνδιοργανώνοντας το ReStart Reunion, σε συνεργασία με το μέλος μας Ίρις Περουλιού '
+    + 'Σεργάκη.</p>'
+    + '<p style="margin:0 0 16px 0;">Σας περιμένουμε, μέλη του CforC και υποτρόφους START, για ένα '
+    + 'τριήμερο δικτύωσης, επανασύνδεσης και συν-διαμόρφωσης!</p>'
+    + '<p style="margin:0 0 16px 0;">Ανυπομονούμε να σμίξουμε ξανά!</p>'
+    + '<p style="margin:0;">Με εκτίμηση,<br>Η Ομάδα Συντονισμού του CforC</p>'),
+  { type: 'spacer', size: 'small' },
 
   { type: 'text', tone: 'soft', html:
     'Η δράση υλοποιείται με τη συγχρηματοδότηση του <strong>Bosch Alumni Network</strong> — μια '
     + 'συνεργασία μεταξύ του Robert Bosch Stiftung και του iac Berlin — και την υποστήριξη του '
     + '<strong>Goethe-Institut Thessaloniki</strong> που μας φιλοξενεί στους χώρους του.' },
 
+  { type: 'spacer', size: 'medium' },
   H('ΤΟ ΠΡΟΓΡΑΜΜΑ ΜΕ ΜΙΑ ΜΑΤΙΑ'),
+  { type: 'spacer', size: 'small' },
   { type: 'box', tone: 'cream', title: 'Goethe-Institut Thessaloniki',
     html: 'Βασ. Όλγας 66, 54642 Θεσσαλονίκη' },
   { type: 'agenda', rows: [
     { date: 'Παρασκευή 20/11, 18:00–21:00',
-      title: 'ReStart: Από το START στο CforC (Reconnecting START Circle — Stories &amp; Experiences)',
+      title: 'ReStart: Από το START στο CforC (Reconnecting START Circle — Stories & Experiences)',
       place: 'Υποδοχή, βιωματικές ομιλίες και παρεμβάσεις ανθρώπων που συνδέονται με τη διαδρομή του START, ανοιχτή συζήτηση, networking drinks.' },
     { date: 'Σάββατο 21/11, 10:00–14:00',
       title: 'ReStart: Από το START στο CforC (From Experience to Collective Learning)',
@@ -66,7 +72,9 @@ export const MIDTERM_INFO_A: Block[] = [
   P('Ακόμη και αν δεν καταφέρετε να έρθετε, υπάρχει δυνατότητα διαδικτυακής παρακολούθησης για '
     + 'συγκεκριμένες ενότητες. Ο σύνδεσμος θα σταλεί προς όλα τα μέλη.'),
 
+  { type: 'spacer', size: 'medium' },
   H('LOGISTICS, ΜΕΤΑΚΙΝΗΣΗ & ΔΙΑΜΟΝΗ'),
+  { type: 'spacer', size: 'small' },
   P('<strong>Μετακίνηση.</strong> Ανεξάρτητα από τον τόπο μετακίνησής σας, το δίκτυο καλύπτει ως '
     + 'και το 50% του κόστους εισιτηρίου ΚΤΕΛ (με επιστροφή) από τον τόπο διαμονής σας για '
     + 'μετακινήσεις εντός Ελλάδας.'),
@@ -92,7 +100,9 @@ export const MIDTERM_INFO_A: Block[] = [
     + 'καλύπτεται εξ ολοκλήρου από το CforC. Για το δείπνο του Σαββάτου θα οργανωθεί κοινή έξοδος '
     + '(με ατομική κάλυψη εξόδων) για όσα μέλη ενδιαφέρονται — δήλωση συμμετοχής στη φόρμα.'),
 
+  { type: 'spacer', size: 'medium' },
   H(MEMBERS_ONLY_SECTIONS[0]),
+  { type: 'spacer', size: 'small' },
   P('Η ατζέντα των συζητήσεων του Midterm διαμορφώνεται συλλογικά από όλα τα μέλη του CforC, '
     + 'ενσωματώνοντας τις δικές σας προτάσεις. Στη φόρμα συμμετοχής μπορείτε να καταθέσετε θέματα, '
     + 'ερωτήματα, προβληματισμούς ή ιδέες για τη ροή και το περιεχόμενο της συνάντησης.'),
@@ -106,7 +116,9 @@ export const MIDTERM_INFO_A: Block[] = [
     + '<a href="mailto:hello@cultureforchange.net" style="color:#C9552F;">hello@cultureforchange.net</a>. '
     + 'Η αναλυτική ατζέντα θα οριστικοποιηθεί μετά τις 20 Οκτωβρίου, αφού συντεθούν οι προτάσεις.'),
 
+  { type: 'spacer', size: 'medium' },
   H(MEMBERS_ONLY_SECTIONS[1]),
+  { type: 'spacer', size: 'small' },
   P('Το απόγευμα ή βράδυ του Σαββάτου 21 Νοεμβρίου ή το πρωί της Κυριακής 22 Νοεμβρίου 2026 θα '
     + 'ενταχθεί στο πρόγραμμα τουλάχιστον μία πολιτιστική δράση (παράσταση, ξενάγηση, δρώμενο, '
     + 'δράση bonding κ.λπ.). Μπορείτε να προτείνετε:'),
@@ -118,7 +130,9 @@ export const MIDTERM_INFO_A: Block[] = [
   { type: 'box', tone: 'cream', title: 'Πώς υποβάλλετε πρόταση',
     html: 'Κατευθείαν στη φόρμα συμμετοχής, ως την <strong>Παρασκευή 23 Οκτωβρίου 2026</strong>.' },
 
+  { type: 'spacer', size: 'medium' },
   H('ΔΗΛΩΣΗ ΣΥΜΜΕΤΟΧΗΣ'),
+  { type: 'spacer', size: 'small' },
   P('Για τον προγραμματισμό της διοργάνωσης, δηλώστε συμμετοχή εγκαίρως.'),
   { type: 'box', tone: 'cream', html:
     '<strong>Προθεσμία υποβολής: Παρασκευή 23 Οκτωβρίου 2026</strong><br>'

@@ -11,8 +11,8 @@ import { visibleForCapacity, sortSessions, sortOptions } from '@/lib/events'
 
 export const CAPACITY_LABELS: Record<EventCapacity, string> = {
   'member': 'Μέλος CforC',
-  'member-ban': 'Μέλος CforC & υπότροφος START / BAN',
-  'non-member-ban': 'Υπότροφος START / BAN (όχι μέλος CforC)',
+  'member-ban': 'Μέλος CforC & υπότροφος START',
+  'non-member-ban': 'Υπότροφος START (όχι μέλος CforC)',
   'non-member': 'Ούτε μέλος ούτε υπότροφος',
   'other': 'Άλλο',
 }

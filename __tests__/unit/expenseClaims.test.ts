@@ -276,7 +276,7 @@ describe('MIDTERM_2026.banTravelNote', () => {
     expect(MIDTERM_2026.banTravelNote).toContain(String(MIDTERM_2026.banTravelSeats))
   })
   it('δεν υπόσχεται κάλυψη σε μέλη', () => {
-    expect(MIDTERM_2026.banTravelNote).toMatch(/START \/ BAN/)
+    expect(MIDTERM_2026.banTravelNote).toMatch(/υποτρόφους START/)
   })
   it('λέει ΚΑΙ ότι θα ακολουθήσει email — αλλιώς το όριο μοιάζει με άρνηση', () => {
     expect(MIDTERM_2026.banTravelNote).toMatch(/email/)
