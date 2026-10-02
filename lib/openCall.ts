@@ -32,6 +32,8 @@ export interface ProposalDraft {
   /** '' = αναπάντητη. Η ερώτηση είναι υποχρεωτική όταν φαίνεται. */
   wants: '' | 'yes' | 'no'
   EventProposalTitle: string
+  /** Πού θα γίνει — ΕΛΕΥΘΕΡΟ ΚΕΙΜΕΝΟ: μπορεί να μην είναι ο χώρος της συνάντησης */
+  EventLocation: string
   TimeSlot: string
   TypeOfEvent: string
   ProposalCost: string
@@ -44,7 +46,7 @@ export interface ProposalDraft {
 
 export const emptyProposal = (): ProposalDraft => ({
   wants: '',
-  EventProposalTitle: '', TimeSlot: '', TypeOfEvent: '',
+  EventProposalTitle: '', EventLocation: '', TimeSlot: '', TypeOfEvent: '',
   ProposalCost: '', ProposalDuration: '', ProposalLink: '',
   ProposalPromoImage: '', ProposalPromoImageId: '',
 })
@@ -123,8 +125,10 @@ export function costApplies(oc: EventOpenCall | null | undefined, type: string):
  * Τι λείπει από την πρόταση.
  *
  * Υποχρεωτικά όταν απαντήσει «Ναι»: τίτλος, πότε, είδος, διάρκεια, εικόνα.
- * Ο σύνδεσμος μένει προαιρετικός — δεν έχουν όλοι ιστοσελίδα. Το κόστος
- * ζητείται μόνο όταν η δράση δεν είναι δωρεάν.
+ * Ο σύνδεσμος μένει προαιρετικός — δεν έχουν όλοι ιστοσελίδα. Ο ΤΟΠΟΣ επίσης:
+ * κάποιος μπορεί να προτείνει δράση και να ΖΗΤΑΕΙ χώρο από εμάς, και ένα
+ * υποχρεωτικό πεδίο θα τον ανάγκαζε να γράψει «δεν ξέρω». Το κόστος ζητείται
+ * μόνο όταν η δράση δεν είναι δωρεάν.
  */
 export function validateProposal(
   oc: EventOpenCall | null | undefined,

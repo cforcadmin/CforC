@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T08:10:38.181Z",
+  "generatedAt": "2026-10-02T10:19:51.152Z",
   "note": "Παράγεται από scripts/generate-data-map.js — μην το επεξεργάζεσαι με το χέρι",
   "collections": [
     {
@@ -433,6 +433,11 @@
       "displayName": "Event Proposal",
       "fields": [
         {
+          "name": "EventLocation",
+          "type": "string",
+          "personal": null
+        },
+        {
           "name": "EventProposalTitle",
           "type": "string",
           "personal": null
@@ -536,6 +541,21 @@
           "personal": "τόπος"
         },
         {
+          "name": "ClaimTokenExpiresAt",
+          "type": "datetime",
+          "personal": "διαπιστευτήριο"
+        },
+        {
+          "name": "ClaimTokenHash",
+          "type": "string",
+          "personal": "διαπιστευτήριο"
+        },
+        {
+          "name": "ClaimTokenUsedAt",
+          "type": "datetime",
+          "personal": "διαπιστευτήριο"
+        },
+        {
           "name": "ConfirmTokenExpiresAt",
           "type": "datetime",
           "personal": "διαπιστευτήριο"
@@ -589,6 +609,11 @@
           "name": "Email",
           "type": "string",
           "personal": "email"
+        },
+        {
+          "name": "EventLocation",
+          "type": "string",
+          "personal": null
         },
         {
           "name": "EventProposalTitle",
@@ -696,7 +721,7 @@
           "personal": null
         }
       ],
-      "personalCount": 9
+      "personalCount": 12
     },
     {
       "api": "exit-survey",

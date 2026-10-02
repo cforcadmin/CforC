@@ -21,6 +21,7 @@ const full = (over: Partial<ProposalDraft> = {}): ProposalDraft => ({
   TimeSlot: 'Κυριακή 22/11, πρωί',
   TypeOfEvent: 'Δωρεάν δράση',
   ProposalDuration: 'περίπου 90 λεπτά',
+  EventLocation: 'Μονή Λαζαριστών',
   ProposalPromoImage: 'https://media.example/pic.jpg',
   ...over,
 })
@@ -177,5 +178,19 @@ describe('stripOpenCall', () => {
     const ev = { Title: 'Midterm', OpenCall: OC }
     stripOpenCall(ev)
     expect(ev.OpenCall).toBe(OC)
+  })
+})
+
+/* Ο τόπος είναι ΕΛΕΥΘΕΡΟ και ΠΡΟΑΙΡΕΤΙΚΟ: κάποιος μπορεί να προτείνει δράση
+   και να ζητάει χώρο από εμάς — υποχρεωτικό πεδίο θα γέμιζε με «δεν ξέρω». */
+describe('EventLocation', () => {
+  it('πρόταση χωρίς τόπο περνά', () => {
+    expect(validateProposal(OC, full({ EventLocation: '' }), 'member', DAY)).toBeNull()
+  })
+  it('πρόταση με τόπο περνά', () => {
+    expect(validateProposal(OC, full({ EventLocation: 'Μονή Λαζαριστών' }), 'member', DAY)).toBeNull()
+  })
+  it('το κενό προσχέδιο το έχει ως κενό κείμενο, όχι undefined', () => {
+    expect(emptyProposal().EventLocation).toBe('')
   })
 })

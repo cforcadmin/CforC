@@ -65,6 +65,7 @@ export async function GET() {
   const proposals = (res.json?.data || []).map((p: any) => ({
     documentId: p.documentId,
     EventProposalTitle: p.EventProposalTitle,
+    EventLocation: p.EventLocation,
     TimeSlot: p.TimeSlot,
     TypeOfEvent: p.TypeOfEvent,
     ProposalCost: p.ProposalCost,

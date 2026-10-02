@@ -163,6 +163,7 @@ export async function POST(request: NextRequest) {
     ProposalSubmitted: proposes,
     ...(proposes ? {
       EventProposalTitle: proposal.EventProposalTitle.trim(),
+      EventLocation: proposal.EventLocation.trim() || null,
       ProposalTimeSlot: proposal.TimeSlot,
       ProposalType: proposal.TypeOfEvent,
       ProposalCost: costValue(ev.OpenCall, proposal),
@@ -217,6 +218,7 @@ export async function POST(request: NextRequest) {
       ProposerName: `${draft.FirstName.trim()} ${draft.LastName.trim()}`.trim(),
       ProposerEmail: draft.Email,
       EventProposalTitle: proposal.EventProposalTitle.trim(),
+      EventLocation: proposal.EventLocation.trim() || null,
       TimeSlot: proposal.TimeSlot,
       TypeOfEvent: proposal.TypeOfEvent,
       ProposalCost: costValue(ev.OpenCall, proposal),

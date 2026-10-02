@@ -15,6 +15,7 @@ import { grDate } from '@/lib/events'
 type Proposal = {
   documentId: string
   EventProposalTitle: string
+  EventLocation?: string
   TimeSlot?: string
   TypeOfEvent?: string
   ProposalCost?: number | null
@@ -152,6 +153,7 @@ export default function OcEventProposals() {
                   {open === p.documentId && (
                     <div className="border-t border-gray-200 dark:border-gray-600 p-4 grid gap-4 sm:grid-cols-[1fr_auto]">
                       <div className="grid gap-2 text-sm min-w-0">
+                        <Row label="Πού" value={p.EventLocation} />
                         <Row label="Πότε" value={p.TimeSlot} />
                         <Row label="Είδος" value={p.TypeOfEvent} />
                         <Row label="Διάρκεια" value={p.ProposalDuration} />

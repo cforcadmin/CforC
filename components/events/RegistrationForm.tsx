@@ -294,6 +294,12 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
                           <Input label="Τίτλος της δράσης *" value={p.EventProposalTitle}
                             onChange={v => setProp({ EventProposalTitle: v })} />
 
+                          {/* ΕΛΕΥΘΕΡΟ ΚΕΙΜΕΝΟ, όχι επιλογές: ο χώρος της
+                              δράσης μπορεί να μην είναι ο χώρος της συνάντησης,
+                              και δεν ξέρουμε εμείς τι θα προτείνει κανείς. */}
+                          <Input label="Πού θα γίνει;" value={p.EventLocation}
+                            onChange={v => setProp({ EventLocation: v })} />
+
                           <Select label="Πότε μπορεί να γίνει; *" value={p.TimeSlot}
                             options={parseLines(oc.TimeSlots)}
                             onChange={v => setProp({ TimeSlot: v })} />
