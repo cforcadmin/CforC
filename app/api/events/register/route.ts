@@ -6,6 +6,7 @@ import { checkCsrf } from '@/lib/csrf'
 import { eventRegisterLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 import { resolveEventAccess } from '@/lib/eventAccess'
 import { validateRegistration, offeredCapacities, visibleOptions } from '@/lib/eventForm'
+import { validateProposal, costValue, openCallVisible, collectsInForm, emptyProposal, type ProposalDraft } from '@/lib/openCall'
 import type { CforcEvent } from '@/lib/types'
 import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { eventConfirmEmailHtml, eventRegisteredEmailHtml } from '@/lib/eventEmails'
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
 
   const evRes = await strapi(
     `/events?filters[Slug][$eq]=${encodeURIComponent(String(body.slug))}`
-    + '&populate[Sessions]=true&populate[Options]=true&pagination[limit]=1')
+    + '&populate[Sessions]=true&populate[Options]=true&populate[OpenCall]=true&pagination[limit]=1')
   const ev: CforcEvent | null = evRes.json?.data?.[0] || null
   if (!ev) return NextResponse.json({ error: 'Η δράση δεν βρέθηκε' }, { status: 404 })
 
@@ -107,6 +108,16 @@ export async function POST(request: NextRequest) {
   }
   const problem = validateRegistration(ev, draft as any, isMember)
   if (problem) return NextResponse.json({ error: problem }, { status: 400 })
+
+  // Η πρόταση δράσης: ΟΙ ΙΔΙΟΙ κανόνες με τη φόρμα, ξανά εδώ.
+  const proposal: ProposalDraft = { ...emptyProposal(), ...(body.Proposal || {}) }
+  const proposalProblem = validateProposal(ev.OpenCall, proposal, draft.Capacity as any)
+  if (proposalProblem) return NextResponse.json({ error: proposalProblem }, { status: 400 })
+  // Προτείνει ΜΟΝΟ όποιος βλέπει την πρόσκληση: αλλιώς ένα χειροποίητο αίτημα
+  // θα έγραφε πρόταση σε δράση που δεν έχει καν ανοιχτή πρόσκληση.
+  const proposes = proposal.wants === 'yes'
+    && collectsInForm(ev.OpenCall)
+    && openCallVisible(ev.OpenCall, draft.Capacity as any)
 
   // Μια ιδιότητα ΜΕΛΟΥΣ δεν δηλώνεται από ανώνυμο: θα έδινε σε οποιονδήποτε
   // την οθόνη και τα δικαιώματα του μέλους χωρίς να αποδείξει τίποτα.
@@ -146,6 +157,19 @@ export async function POST(request: NextRequest) {
     OptionAnswers: draft.OptionAnswers,
     AgendaTopic: draft.AgendaTopic.trim() || null,
     GeneralComments: draft.GeneralComments.trim() || null,
+    // Η πρόταση ΜΕΣΑ στη δήλωση είναι το αποδεικτικό: ό,τι έστειλε, όπως το
+    // έστειλε. Η εργάσιμη εγγραφή (event-proposal) φτιάχνεται αμέσως μετά και
+    // μπορεί να αλλάξει — αυτή εδώ όχι.
+    ProposalSubmitted: proposes,
+    ...(proposes ? {
+      EventProposalTitle: proposal.EventProposalTitle.trim(),
+      ProposalTimeSlot: proposal.TimeSlot,
+      ProposalType: proposal.TypeOfEvent,
+      ProposalCost: costValue(ev.OpenCall, proposal),
+      ProposalDuration: proposal.ProposalDuration.trim(),
+      ProposalLink: proposal.ProposalLink.trim() || null,
+      ...(proposal.ProposalPromoImageId ? { ProposalPromoImage: proposal.ProposalPromoImageId } : {}),
+    } : {}),
     Status: isMember ? 'confirmed' : 'pending',
     ...(isMember ? { ConfirmedAt: now } : {
       // ΠΟΤΕ το ίδιο το διακριτικό στη βάση — μόνο η σύνοψή του
@@ -169,6 +193,49 @@ export async function POST(request: NextRequest) {
   if (!created.ok) {
     console.error('events/register: create failed', created.status, JSON.stringify(created.json?.error || {}))
     return NextResponse.json({ error: 'Η δήλωση δεν αποθηκεύτηκε' }, { status: 502 })
+  }
+
+  /**
+   * Η ΔΕΥΤΕΡΗ ΕΓΓΡΑΦΗ: η πρόταση ως δικό της αντικείμενο.
+   *
+   * Η δήλωση κρατά το αποδεικτικό· αυτή εδώ είναι η εργάσιμη εγγραφή — εδώ
+   * κρίνεται, εδώ σημειώνει η ΟΣ, εδώ επιβιώνει όταν η δήλωση καθαριστεί.
+   *
+   * Το ProposalMember δεν φτάνει ΠΟΤΕ από τη φόρμα: γράφεται από τη συνεδρία.
+   * Ένα πεδίο που το στέλνει ο browser είναι πεδίο που ο browser μπορεί να πει
+   * ψέματα, και εδώ θα σήμαινε πρόταση χρεωμένη σε άλλο μέλος.
+   *
+   * ΔΕΝ ΑΚΥΡΩΝΕΙ ΤΗ ΔΗΛΩΣΗ ΑΝ ΑΠΟΤΥΧΕΙ: η δήλωση έχει ήδη αποθηκευτεί μαζί με
+   * την πρόταση μέσα της, άρα τίποτα δεν χάνεται — φτιάχνεται ξανά από εκεί.
+   */
+  let proposalId: string | null = null
+  if (proposes) {
+    const prop = await strapi('/event-proposals', 'POST', {
+      event: ev.documentId,
+      registration: created.json?.data?.documentId,
+      ...(isMember && decoded ? { ProposalMember: decoded.memberId } : {}),
+      ProposerName: `${draft.FirstName.trim()} ${draft.LastName.trim()}`.trim(),
+      ProposerEmail: draft.Email,
+      EventProposalTitle: proposal.EventProposalTitle.trim(),
+      TimeSlot: proposal.TimeSlot,
+      TypeOfEvent: proposal.TypeOfEvent,
+      ProposalCost: costValue(ev.OpenCall, proposal),
+      ProposalDuration: proposal.ProposalDuration.trim(),
+      ProposalLink: proposal.ProposalLink.trim() || null,
+      ...(proposal.ProposalPromoImageId ? { ProposalPromoImage: proposal.ProposalPromoImageId } : {}),
+      Status: 'new',
+      SubmittedAt: now,
+    })
+    if (prop.ok) {
+      proposalId = prop.json?.data?.documentId || null
+      // Ο σύνδεσμος και από τη μεριά της δήλωσης — η ΟΣ πηγαίνει και στις δύο φορές
+      if (proposalId && created.json?.data?.documentId) {
+        await strapi(`/event-registrations/${created.json.data.documentId}`, 'PUT', { proposal: proposalId })
+      }
+    } else {
+      console.error('events/register: proposal create failed', prop.status,
+        JSON.stringify(prop.json?.error || {}).slice(0, 400))
+    }
   }
 
   // ── Το email ──
@@ -203,5 +270,6 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     status: isMember ? 'confirmed' : 'pending',
     documentId: created.json?.data?.documentId || null,
+    proposal: proposes ? { saved: !!proposalId, title: proposal.EventProposalTitle.trim() } : null,
   })
 }

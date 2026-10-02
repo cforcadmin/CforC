@@ -1,3 +1,4 @@
+import type { EventOpenCall } from '@/lib/openCall'
 /**
  * TypeScript Types for Strapi API Responses
  */
@@ -353,6 +354,8 @@ export interface CforcEvent extends StrapiData<CforcEvent> {
   Sessions?: EventSession[];
   Options?: EventOptionBlock[];
   Resources?: EventResource[];
+  /** Η ανοιχτή πρόσκληση — μία ανά δράση, συμπληρώνεται ΜΕΣΑ στη φόρμα */
+  OpenCall?: EventOpenCall | null;
   RegistrationOpen?: boolean;
   ConsentText?: string;
   ConsentVersion?: string;

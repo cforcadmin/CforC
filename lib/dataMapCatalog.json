@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-01T12:34:32.147Z",
+  "generatedAt": "2026-10-02T08:10:38.181Z",
   "note": "Παράγεται από scripts/generate-data-map.js — μην το επεξεργάζεσαι με το χέρι",
   "collections": [
     {
@@ -307,6 +307,11 @@
           "personal": null
         },
         {
+          "name": "OpenCall",
+          "type": "component",
+          "personal": null
+        },
+        {
           "name": "Options",
           "type": "component",
           "personal": null
@@ -324,6 +329,11 @@
         {
           "name": "RegistrationOpen",
           "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "Resources",
+          "type": "component",
           "personal": null
         },
         {
@@ -418,6 +428,89 @@
       "personalCount": 2
     },
     {
+      "api": "event-proposal",
+      "plural": "event-proposals",
+      "displayName": "Event Proposal",
+      "fields": [
+        {
+          "name": "EventProposalTitle",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "ProposalCost",
+          "type": "decimal",
+          "personal": null
+        },
+        {
+          "name": "ProposalDuration",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "ProposalLink",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "ProposalMember",
+          "type": "relation",
+          "personal": "σύνδεση με μέλος"
+        },
+        {
+          "name": "ProposalNotes",
+          "type": "text",
+          "personal": null
+        },
+        {
+          "name": "ProposalPromoImage",
+          "type": "media",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "ProposerEmail",
+          "type": "string",
+          "personal": "email"
+        },
+        {
+          "name": "ProposerName",
+          "type": "string",
+          "personal": "όνομα"
+        },
+        {
+          "name": "Status",
+          "type": "enumeration",
+          "personal": null
+        },
+        {
+          "name": "SubmittedAt",
+          "type": "datetime",
+          "personal": null
+        },
+        {
+          "name": "TimeSlot",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "TypeOfEvent",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "event",
+          "type": "relation",
+          "personal": null
+        },
+        {
+          "name": "registration",
+          "type": "relation",
+          "personal": null
+        }
+      ],
+      "personalCount": 4
+    },
+    {
       "api": "event-registration",
       "plural": "event-registrations",
       "displayName": "Event Registration",
@@ -498,6 +591,11 @@
           "personal": "email"
         },
         {
+          "name": "EventProposalTitle",
+          "type": "string",
+          "personal": null
+        },
+        {
           "name": "FirstName",
           "type": "string",
           "personal": "όνομα"
@@ -528,6 +626,41 @@
           "personal": "τηλέφωνο"
         },
         {
+          "name": "ProposalCost",
+          "type": "decimal",
+          "personal": null
+        },
+        {
+          "name": "ProposalDuration",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "ProposalLink",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "ProposalPromoImage",
+          "type": "media",
+          "personal": "εικόνα"
+        },
+        {
+          "name": "ProposalSubmitted",
+          "type": "boolean",
+          "personal": null
+        },
+        {
+          "name": "ProposalTimeSlot",
+          "type": "string",
+          "personal": null
+        },
+        {
+          "name": "ProposalType",
+          "type": "string",
+          "personal": null
+        },
+        {
           "name": "SessionChoices",
           "type": "json",
           "personal": null
@@ -556,9 +689,14 @@
           "name": "linkedMember",
           "type": "relation",
           "personal": "σύνδεση με μέλος"
+        },
+        {
+          "name": "proposal",
+          "type": "relation",
+          "personal": null
         }
       ],
-      "personalCount": 8
+      "personalCount": 9
     },
     {
       "api": "exit-survey",
