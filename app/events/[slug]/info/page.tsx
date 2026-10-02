@@ -1,9 +1,8 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
-import { getEventBySlug } from '@/lib/strapi'
+import { loadEvent } from '@/lib/loadEvent'
 import type { CforcEvent } from '@/lib/types'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
@@ -36,9 +35,7 @@ export const dynamic = 'force-dynamic'
 export default async function EventInfoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
 
-  let ev: CforcEvent | null = null
-  try { ev = (await getEventBySlug(slug)) as CforcEvent | null } catch { /* κάτω */ }
-  if (!ev) notFound()
+  const ev = await loadEvent(slug)
 
   const store = await cookies()
   const token = store.get('session')?.value

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
-import { notFound, redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
-import { getEventBySlug } from '@/lib/strapi'
+import { loadEvent } from '@/lib/loadEvent'
 import { resolveEventAccess } from '@/lib/eventAccess'
 import type { CforcEvent } from '@/lib/types'
 import RegisterGate from '@/components/events/RegisterGate'
@@ -19,9 +19,7 @@ export const dynamic = 'force-dynamic'
 export default async function RegisterPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
 
-  let ev: CforcEvent | null = null
-  try { ev = (await getEventBySlug(slug)) as CforcEvent | null } catch { /* κάτω */ }
-  if (!ev) notFound()
+  const ev = await loadEvent(slug)
 
   // Η ΠΥΛΗ στον SERVER. Η οθόνη δεν αποφασίζει ποιος περνά· το μόνο που
   // κάνει είναι να δείξει το αποτέλεσμα αυτής της απόφασης.

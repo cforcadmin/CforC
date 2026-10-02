@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
-import { notFound, redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
-import { getEventBySlug } from '@/lib/strapi'
+import { loadEvent } from '@/lib/loadEvent'
 import { resolveEventAccess } from '@/lib/eventAccess'
 import type { CforcEvent } from '@/lib/types'
 import RegistrationForm from '@/components/events/RegistrationForm'
@@ -38,9 +38,7 @@ async function memberPrefill(memberId: string) {
 export default async function RegistrationFormPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
 
-  let ev: CforcEvent | null = null
-  try { ev = (await getEventBySlug(slug)) as CforcEvent | null } catch { /* κάτω */ }
-  if (!ev) notFound()
+  const ev = await loadEvent(slug)
 
   const store = await cookies()
   const token = store.get('session')?.value
