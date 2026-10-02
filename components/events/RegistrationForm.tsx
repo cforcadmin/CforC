@@ -8,7 +8,7 @@ import ScrollToTop from '@/components/ScrollToTop'
 import type { CforcEvent, EventCapacity } from '@/lib/types'
 import { dateRangeLabel, grDate } from '@/lib/events'
 import { upperGreek } from '@/lib/campaignBlocks'
-import { MIDTERM_2026 } from '@/lib/expenseClaims'
+import { MIDTERM_2026, banSeatNote } from '@/lib/expenseClaims'
 import {
   CAPACITY_LABELS, MEMBER_CAPACITIES, capacitiesForPath, visibleSessions, visibleOptions, sessionChoices,
   validateRegistration, agendaWanted, emptyDraft, type RegistrationDraft, type SessionChoice,
@@ -209,9 +209,9 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
                       περισσότερες. Το VisibleFor κρύβει ΟΛΟΚΛΗΡΟ το μπλοκ και
                       δεν μπορεί να κάνει αυτή τη διάκριση — η περιγραφή είναι
                       μία και κοινή. */}
-                  {o.Key === 'travel' && d.Capacity === MIDTERM_2026.banTravelCapacity && (
+                  {d.Capacity === MIDTERM_2026.banCapacity && banSeatNote(o.Key) && (
                     <p role="note" className="mb-3 rounded-2xl bg-amber-50 dark:bg-amber-900/25 border border-amber-300 dark:border-amber-700 px-4 py-3 text-sm font-bold text-amber-900 dark:text-amber-100">
-                      {MIDTERM_2026.banTravelNote}
+                      {banSeatNote(o.Key)}
                     </p>
                   )}
 

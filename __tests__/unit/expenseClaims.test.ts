@@ -2,7 +2,7 @@ import {
   computeTotals, eventDays, ibanLooksValid, normaliseIban, validateClaim,
   buildAttachmentName, buildClaimPdfName, formatClaimNumber, receiptSpec,
   buildReturnLegs, allLegs, missingTravelLines, TRAVEL_MODES, RECEIPT_TYPES,
-  type ClaimLine, eventFromSlug, claimWindowOpen, claimWindow, MIDTERM_2026 } from '@/lib/expenseClaims'
+  type ClaimLine, eventFromSlug, claimWindowOpen, claimWindow, banSeatNote, MIDTERM_2026 } from '@/lib/expenseClaims'
 
 /** Μια έγκυρη γραμμή εξόδου — οι δοκιμές χαλάνε ένα πράγμα τη φορά */
 const line = (over: Partial<ClaimLine> = {}): ClaimLine => ({
@@ -268,18 +268,31 @@ describe('claimWindowOpen', () => {
 })
 
 /* Η σημείωση των 14 θέσεων: ΜΙΑ ιδιότητα, όχι όλες όσες βλέπουν το μπλοκ */
-describe('MIDTERM_2026.banTravelNote', () => {
-  it('αφορά τους υποτρόφους BAN που ΔΕΝ είναι μέλη', () => {
-    expect(MIDTERM_2026.banTravelCapacity).toBe('non-member-ban')
+describe('banSeatNote', () => {
+  it('αφορά τους υποτρόφους START που ΔΕΝ είναι μέλη', () => {
+    expect(MIDTERM_2026.banCapacity).toBe('non-member-ban')
   })
-  it('ο αριθμός λέγεται και στο κείμενο — δεν αποκλίνουν σιωπηλά', () => {
-    expect(MIDTERM_2026.banTravelNote).toContain(String(MIDTERM_2026.banTravelSeats))
+  it('εμφανίζεται ΚΑΙ στη μετακίνηση ΚΑΙ στη διαμονή', () => {
+    expect(banSeatNote('travel')).toMatch(/εξόδων μετακίνησης/)
+    expect(banSeatNote('accommodation')).toMatch(/διαμονής/)
+  })
+  it('σε κανένα άλλο μπλοκ', () => {
+    for (const k of ['transport', 'lunch', 'dinner', 'dietary', 'agenda', '']) {
+      expect(banSeatNote(k)).toBeNull()
+    }
+  })
+  /* Ο αριθμός ζει ΜΙΑ φορά: δύο χειρόγραφες προτάσεις θα απέκλιναν την πρώτη
+     φορά που άλλαζε, σε ένα μόνο από τα δύο σημεία. */
+  it('ο ίδιος αριθμός και στις δύο, από τη σταθερά', () => {
+    for (const k of ['travel', 'accommodation']) {
+      expect(banSeatNote(k)).toContain(String(MIDTERM_2026.banSeats))
+    }
   })
   it('δεν υπόσχεται κάλυψη σε μέλη', () => {
-    expect(MIDTERM_2026.banTravelNote).toMatch(/υποτρόφους START/)
+    expect(banSeatNote('travel')).toMatch(/υποτρόφους START/)
   })
   it('λέει ΚΑΙ ότι θα ακολουθήσει email — αλλιώς το όριο μοιάζει με άρνηση', () => {
-    expect(MIDTERM_2026.banTravelNote).toMatch(/email/)
+    expect(banSeatNote('accommodation')).toMatch(/email/)
   })
 })
 

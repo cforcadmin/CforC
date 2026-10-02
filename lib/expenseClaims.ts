@@ -46,9 +46,8 @@ export const MIDTERM_2026 = {
    * το μάθει ΜΕΤΑ τη δήλωση το μαθαίνει αργά. Φαίνεται μόνο στην ιδιότητα
    * που αφορά: ένα μέλος που το διάβαζε θα νόμιζε ότι ισχύει και για εκείνο.
    */
-  banTravelSeats: 14,
-  banTravelCapacity: 'non-member-ban',
-  banTravelNote: 'Η κάλυψη εξόδων μετακίνησης για υποτρόφους START αφορά έως 14 άτομα. Θα ενημερωθείτε γι’ αυτό με email.',
+  banSeats: 14,
+  banCapacity: 'non-member-ban',
   /**
    * Ως πότε δέχεται εξοδολόγια η γραμματεία χωρίς συνεννόηση.
    *
@@ -58,6 +57,25 @@ export const MIDTERM_2026 = {
    */
   claimsCloseOn: '2026-11-30',
 } as const
+
+/**
+ * Η σημείωση των θέσεων, για το μπλοκ που τη χρειάζεται.
+ *
+ * ΠΑΡΑΓΕΤΑΙ, δεν αντιγράφεται: το όριο ισχύει και για τη μετακίνηση και για
+ * τη διαμονή, και δύο χειρόγραφες προτάσεις με τον ίδιο αριθμό θα απέκλιναν
+ * την πρώτη φορά που αλλάξει ο αριθμός — σε ένα μόνο από τα δύο σημεία.
+ */
+export const BAN_SEAT_NOTE_FOR: Record<string, string> = {
+  travel: 'εξόδων μετακίνησης',
+  accommodation: 'διαμονής',
+}
+
+export function banSeatNote(key: string): string | null {
+  const what = BAN_SEAT_NOTE_FOR[key]
+  if (!what) return null
+  return `Η κάλυψη ${what} για υποτρόφους START αφορά έως ${MIDTERM_2026.banSeats} άτομα. `
+    + 'Θα ενημερωθείτε γι\u2019 αυτό με email.'
+}
 
 /**
  * Από τη διεύθυνση στην αφορμή.
