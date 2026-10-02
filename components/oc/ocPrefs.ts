@@ -35,6 +35,7 @@ export const OC_EVENT_COLUMNS: Array<{ key: string; label: string }> = [
   { key: 'phone', label: 'Τηλέφωνο' },
   { key: 'sessions', label: 'Συνεδρίες' },
   { key: 'travel', label: 'Μετακίνηση' },
+  { key: 'fromCity', label: 'Από' },
   { key: 'transport', label: 'Μέσο' },
   { key: 'proposal', label: 'Πρόταση' },
   { key: 'accommodation', label: 'Διαμονή' },
@@ -46,7 +47,7 @@ export const OC_EVENT_COLUMNS: Array<{ key: string; label: string }> = [
   { key: 'agenda', label: 'Θέμα ατζέντας' },
   { key: 'submitted', label: 'Υποβλήθηκε' },
 ]
-export const OC_EVENT_DEFAULT_COLS = ['capacity', 'email', 'sessions', 'travel', 'transport', 'accommodation']
+export const OC_EVENT_DEFAULT_COLS = ['capacity', 'email', 'sessions', 'travel', 'fromCity', 'transport', 'accommodation']
 
 export const OC_SEAT_LABELS: Record<string, string> = {
   coordinator: 'Συντονισμός',

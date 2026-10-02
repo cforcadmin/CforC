@@ -236,8 +236,12 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
                     <Input label="" value={d.OptionAnswers[o.Key] || ''} onChange={v => setOption(o.Key, v)} />
                   )}
 
-                  {/* Η μετακίνηση έχει συνέχεια: από πού ξεκινάς */}
-                  {o.Key === 'travel' && d.OptionAnswers.travel && d.OptionAnswers.travel !== 'no' && (
+                  {/* Η μετακίνηση έχει συνέχεια: από πού ξεκινάς.
+                      ΧΩΡΙΣ ΟΡΟ, επίτηδες. Ήταν δεμένο με το «θα χρειαστώ
+                      κάλυψη», σαν να ήταν λογιστική πληροφορία — είναι όμως
+                      πληροφορία ΤΑΞΙΔΙΟΥ: χωρίς αυτήν δεν ξέρουμε ποιοι
+                      έρχονται από πού, ούτε ποιοι μπορούν να πάνε μαζί. */}
+                  {o.Key === 'travel' && (
                     <div className="mt-4">
                       <Input label="Από ποια πόλη θα μετακινηθείς;"
                         value={d.OptionAnswers.travelFromCity || ''}

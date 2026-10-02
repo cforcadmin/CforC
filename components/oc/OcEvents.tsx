@@ -201,6 +201,7 @@ export default function OcEvents() {
                                 {show('phone') && <th className="py-2 pr-4 font-medium">Τηλέφωνο</th>}
                                 {show('sessions') && <th className="py-2 pr-4 font-medium">Συνεδρίες</th>}
                                 {show('travel') && <th className="py-2 pr-4 font-medium">Μετακίνηση</th>}
+                                {show('fromCity') && <th className="py-2 pr-4 font-medium">Από</th>}
                                 {show('transport') && <th className="py-2 pr-4 font-medium">Μέσο</th>}
                                 {show('proposal') && <th className="py-2 pr-4 font-medium">Πρόταση</th>}
                                 {show('accommodation') && <th className="py-2 pr-4 font-medium">Διαμονή</th>}
@@ -230,6 +231,9 @@ export default function OcEvents() {
                                   </td>}
                                   {show('travel') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
                                     {travelSummary(r.OptionAnswers)}
+                                  </td>}
+                                  {show('fromCity') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
+                                    {r.OptionAnswers?.travelFromCity || '—'}
                                   </td>}
                                   {show('transport') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
                                     {transportLabel(r.OptionAnswers?.transport)}
