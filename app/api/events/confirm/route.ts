@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'node:crypto'
-import { sendOcEmail, COMMUNITY_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { eventRegisteredEmailHtml } from '@/lib/eventEmails'
 import { dateRangeLabel } from '@/lib/events'
 
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
     // Κοινοποίηση στο hello@ ΕΔΩ, στη στιγμή που η δήλωση γίνεται πραγματική
     // — όχι στο email με τον σύνδεσμο επιβεβαίωσης που στάλθηκε πριν.
     await sendOcEmail(String(reg.Email), tpl.subject, tpl.html,
-      { from: COMMUNITY_FROM, replyTo: ADMIN_EMAIL, cc: [ADMIN_EMAIL] })
+      { from: ADMIN_FROM, replyTo: ADMIN_EMAIL, cc: [ADMIN_EMAIL] })
   } catch (err) {
     console.error('events/confirm: email failed', err)
   }

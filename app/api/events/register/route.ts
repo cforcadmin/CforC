@@ -7,7 +7,7 @@ import { eventRegisterLimiter, getRateLimitErrorMessage } from '@/lib/rateLimite
 import { resolveEventAccess } from '@/lib/eventAccess'
 import { validateRegistration, offeredCapacities, visibleOptions } from '@/lib/eventForm'
 import type { CforcEvent } from '@/lib/types'
-import { sendOcEmail, COMMUNITY_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { eventConfirmEmailHtml, eventRegisteredEmailHtml } from '@/lib/eventEmails'
 import { dateRangeLabel } from '@/lib/events'
 
@@ -186,14 +186,14 @@ export async function POST(request: NextRequest) {
       // Κοινοποίηση στο hello@: η ΟΣ θέλει να βλέπει τη δήλωση μόλις γίνει.
       // Μπαίνει ΜΟΝΟ εδώ, όχι στο email επιβεβαίωσης — εκείνο κουβαλά token.
       await sendOcEmail(draft.Email, tpl.subject, tpl.html, {
-        from: COMMUNITY_FROM, replyTo: ADMIN_EMAIL, cc: [ADMIN_EMAIL],
+        from: ADMIN_FROM, replyTo: ADMIN_EMAIL, cc: [ADMIN_EMAIL],
       })
     } else {
       const tpl = eventConfirmEmailHtml({
         firstName: draft.FirstName.trim(), eventTitle: ev.Title, dates, venue,
         confirmUrl: `${site}/api/events/confirm?token=${encodeURIComponent(rawToken!)}`,
       })
-      await sendOcEmail(draft.Email, tpl.subject, tpl.html, { from: COMMUNITY_FROM, replyTo: ADMIN_EMAIL })
+      await sendOcEmail(draft.Email, tpl.subject, tpl.html, { from: ADMIN_FROM, replyTo: ADMIN_EMAIL })
     }
   } catch (err) {
     // Η δήλωση ΕΧΕΙ αποθηκευτεί· ένα email που δεν έφυγε δεν τη σβήνει.

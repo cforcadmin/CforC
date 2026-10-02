@@ -19,8 +19,9 @@ say so.
       «Add a slider» was really «I want to see the email bigger». The second has
       more solutions than the first.
 - [ ] **Name the constraint that eliminates options.** Budget, licence, missing
-      data, disk, the freeze window (mid-Oct → 20 Dec 2026). A solution that
-      ignores a constraint is not a solution.
+      data, disk. A solution that ignores a constraint is not a solution.
+      **Το παράθυρο παγώματος ΔΕΝ ισχύει εδώ** (οδηγία 2/10/2026): αφορά τα
+      έργα του Inside Spaceman, όχι το CforC. Δεν αναφέρεται ως περιορισμός.
 - [ ] **Enumerate the full option space, never two.** If exactly two options are
       about to be offered — especially "do the risky thing" vs "give up" — stop
       and keep looking. There is almost always a cheaper third.
