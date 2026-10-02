@@ -22,10 +22,11 @@ type Ev = {
   StartDate: string; EndDate: string; RegistrationDeadline?: string
   City?: string; Venue?: string; Audience?: string
   Sessions: Array<{ id: number; Title: string }>
-  counts: { confirmed: number; pending: number }
+  counts: { confirmed: number; pending: number; proposals: number }
 }
 type Reg = {
   documentId: string; FirstName: string; LastName: string; Email: string; Phone?: string
+  proposal?: { documentId: string; Title: string; Status: string } | null
   Capacity: string; CapacityOther?: string; Status: 'pending' | 'confirmed' | 'cancelled'
   SessionChoices: Record<string, string>; OptionAnswers: Record<string, string>
   Dietary?: string; AgendaTopic?: string; GeneralComments?: string; SubmittedAt?: string
@@ -141,6 +142,7 @@ export default function OcEvents() {
                     <span className="ml-auto flex items-center gap-2 text-xs tabular-nums">
                       <Tag tone="green">{e.counts.confirmed} δηλώσεις</Tag>
                       {e.counts.pending > 0 && <Tag tone="amber">{e.counts.pending} εκκρεμείς</Tag>}
+                      {e.counts.proposals > 0 && <Tag tone="grey">{e.counts.proposals} προτάσεις</Tag>}
                       <span aria-hidden="true" className={`transition-transform ${openSlug === e.Slug ? 'rotate-180' : ''}`}>▾</span>
                     </span>
                   </button>
@@ -200,6 +202,7 @@ export default function OcEvents() {
                                 {show('sessions') && <th className="py-2 pr-4 font-medium">Συνεδρίες</th>}
                                 {show('travel') && <th className="py-2 pr-4 font-medium">Μετακίνηση</th>}
                                 {show('transport') && <th className="py-2 pr-4 font-medium">Μέσο</th>}
+                                {show('proposal') && <th className="py-2 pr-4 font-medium">Πρόταση</th>}
                                 {show('accommodation') && <th className="py-2 pr-4 font-medium">Διαμονή</th>}
                                 {show('meals') && <th className="py-2 pr-4 font-medium">Γεύματα</th>}
                                 {show('dietary') && <th className="py-2 pr-4 font-medium text-amber-800 dark:text-amber-200">Διατροφικά</th>}
@@ -230,6 +233,9 @@ export default function OcEvents() {
                                   </td>}
                                   {show('transport') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
                                     {transportLabel(r.OptionAnswers?.transport)}
+                                  </td>}
+                                  {show('proposal') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
+                                    {r.proposal?.Title || '—'}
                                   </td>}
                                   {show('accommodation') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
                                     {r.OptionAnswers?.accommodation || '—'}

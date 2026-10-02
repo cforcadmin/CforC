@@ -1,6 +1,6 @@
 import {
   offeredCapacities, visibleSessions, visibleOptions, sessionChoices,
-  validateRegistration, agendaWanted, emptyDraft, type RegistrationDraft,
+  validateRegistration, agendaWanted, emptyDraft, type RegistrationDraft, type SessionChoice,
 } from '@/lib/eventForm'
 
 const S = (id: number, Title: string, extra: any = {}) =>
@@ -87,7 +87,7 @@ describe('validateRegistration', () => {
      μένουν προαιρετικά — υποχρεωτικά θα γέμιζαν με παύλες. */
   const memberBase = {
     Capacity: 'member' as const,
-    SessionChoices: { '1': 'online', '2': 'absent', '3': 'in-person' },
+    SessionChoices: { '1': 'online', '2': 'absent', '3': 'in-person' } as Record<string, SessionChoice>,
   }
   it('«Ναι» στην ατζέντα χωρίς θέμα απορρίπτεται', () =>
     expect(validateRegistration(ev, good({

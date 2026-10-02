@@ -55,15 +55,16 @@ export async function GET(request: NextRequest) {
     const [evRes, regRes] = await Promise.all([
       strapi('/events?populate[Sessions]=true&sort=StartDate:desc&pagination[limit]=200'),
       // Μόνο ό,τι χρειάζεται ο μετρητής — ΟΧΙ ολόκληρες οι δηλώσεις
-      strapi('/event-registrations?fields[0]=Status&populate[event][fields][0]=Slug&pagination[limit]=1000'),
+      strapi('/event-registrations?fields[0]=Status&fields[1]=ProposalSubmitted&populate[event][fields][0]=Slug&pagination[limit]=1000'),
     ])
-    const counts = new Map<string, { confirmed: number; pending: number }>()
+    const counts = new Map<string, { confirmed: number; pending: number; proposals: number }>()
     for (const r of regRes.json?.data || []) {
       const s = r.event?.Slug
       if (!s) continue
-      const c = counts.get(s) || { confirmed: 0, pending: 0 }
+      const c = counts.get(s) || { confirmed: 0, pending: 0, proposals: 0 }
       if (r.Status === 'confirmed') c.confirmed++
       else if (r.Status === 'pending') c.pending++
+      if (r.ProposalSubmitted) c.proposals++
       counts.set(s, c)
     }
     const events = (evRes.json?.data || []).map((e: any) => ({
@@ -71,13 +72,14 @@ export async function GET(request: NextRequest) {
       StartDate: e.StartDate, EndDate: e.EndDate, RegistrationDeadline: e.RegistrationDeadline,
       City: e.City, Venue: e.Venue, Audience: e.Audience,
       Sessions: (e.Sessions || []).map((s: any) => ({ id: s.id, Title: s.Title })),
-      counts: counts.get(e.Slug) || { confirmed: 0, pending: 0 },
+      counts: counts.get(e.Slug) || { confirmed: 0, pending: 0, proposals: 0 },
     }))
     return NextResponse.json({ events })
   }
 
   const regRes = await strapi(
     `/event-registrations?filters[event][Slug][$eq]=${encodeURIComponent(slug)}`
+    + '&populate[proposal][fields][0]=EventProposalTitle&populate[proposal][fields][1]=Status'
     + '&sort=createdAt:asc&pagination[limit]=1000')
   const registrations = (regRes.json?.data || []).map((r: any) => ({
     documentId: r.documentId,
@@ -90,6 +92,10 @@ export async function GET(request: NextRequest) {
     Dietary: r.Dietary || '',
     AgendaTopic: r.AgendaTopic || '',
     GeneralComments: r.GeneralComments || '',
+    // Ο σύνδεσμος προς την εργάσιμη εγγραφή: από τη δήλωση στην πρόταση
+    proposal: r.proposal
+      ? { documentId: r.proposal.documentId, Title: r.proposal.EventProposalTitle, Status: r.proposal.Status }
+      : null,
     SubmittedAt: r.SubmittedAt,
   }))
   return NextResponse.json({ registrations })

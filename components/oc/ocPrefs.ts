@@ -36,6 +36,7 @@ export const OC_EVENT_COLUMNS: Array<{ key: string; label: string }> = [
   { key: 'sessions', label: 'Συνεδρίες' },
   { key: 'travel', label: 'Μετακίνηση' },
   { key: 'transport', label: 'Μέσο' },
+  { key: 'proposal', label: 'Πρόταση' },
   { key: 'accommodation', label: 'Διαμονή' },
   { key: 'meals', label: 'Γεύματα' },
   // ΑΡΘΡΟ 9 (υγεία/θρησκεία). Υπάρχει γιατί χωρίς αυτό δεν παραγγέλνεις
