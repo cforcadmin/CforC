@@ -8,6 +8,7 @@ import ScrollToTop from '@/components/ScrollToTop'
 import type { CforcEvent, EventCapacity } from '@/lib/types'
 import { dateRangeLabel, grDate } from '@/lib/events'
 import { upperGreek } from '@/lib/campaignBlocks'
+import { MIDTERM_2026 } from '@/lib/expenseClaims'
 import {
   CAPACITY_LABELS, MEMBER_CAPACITIES, offeredCapacities, visibleSessions, visibleOptions, sessionChoices,
   validateRegistration, agendaWanted, emptyDraft, type RegistrationDraft, type SessionChoice,
@@ -194,6 +195,16 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
                 <Card key={o.Key} title={o.Title}>
                   {o.Description && (
                     <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 whitespace-pre-line">{o.Description}</p>
+                  )}
+
+                  {/* Σημείωση για ΜΙΑ ιδιότητα μέσα σε μπλοκ που το βλέπουν
+                      περισσότερες. Το VisibleFor κρύβει ΟΛΟΚΛΗΡΟ το μπλοκ και
+                      δεν μπορεί να κάνει αυτή τη διάκριση — η περιγραφή είναι
+                      μία και κοινή. */}
+                  {o.Key === 'travel' && d.Capacity === MIDTERM_2026.banTravelCapacity && (
+                    <p role="note" className="mb-3 rounded-2xl bg-amber-50 dark:bg-amber-900/25 border border-amber-300 dark:border-amber-700 px-4 py-3 text-sm font-bold text-amber-900 dark:text-amber-100">
+                      {MIDTERM_2026.banTravelNote}
+                    </p>
                   )}
 
                   {o.Key === 'dietary' ? (

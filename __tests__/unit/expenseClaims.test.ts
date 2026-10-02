@@ -266,3 +266,16 @@ describe('claimWindowOpen', () => {
     expect(claimWindowOpen('άγνωστο', '2026-01-01')).toBe(true)
   })
 })
+
+/* Η σημείωση των 14 θέσεων: ΜΙΑ ιδιότητα, όχι όλες όσες βλέπουν το μπλοκ */
+describe('MIDTERM_2026.banTravelNote', () => {
+  it('αφορά τους υποτρόφους BAN που ΔΕΝ είναι μέλη', () => {
+    expect(MIDTERM_2026.banTravelCapacity).toBe('non-member-ban')
+  })
+  it('ο αριθμός λέγεται και στο κείμενο — δεν αποκλίνουν σιωπηλά', () => {
+    expect(MIDTERM_2026.banTravelNote).toContain(String(MIDTERM_2026.banTravelSeats))
+  })
+  it('δεν υπόσχεται κάλυψη σε μέλη', () => {
+    expect(MIDTERM_2026.banTravelNote).toMatch(/START \/ BAN/)
+  })
+})
