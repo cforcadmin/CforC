@@ -191,30 +191,62 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Uint8Array>
   tracked('ΣΤΟΙΧΕΙΑ ΜΕΛΟΥΣ', colL, y, 7.8, semibold)
   tracked('ΣΤΟΙΧΕΙΑ ΠΑΡΑΣΤΑΤΙΚΟΥ', colR, y, 7.8, semibold)
   y -= 21
-  const kv = (x: number, yy: number, label: string, value: string, strong = false) => {
+  /**
+   * Ετικέτα + τιμή, ΜΕΣΑ στο πλάτος της στήλης.
+   *
+   * Η τιμή γραφόταν χωρίς όριο πλάτους: μια επωνυμία σαν «Αλεξάνδρα
+   * Πρόδρομος Ακανθοπούλου - Spookville» περνούσε ΚΑΤΩ από τη δεξιά στήλη και
+   * τα δύο κείμενα τυπώνονταν το ένα πάνω στο άλλο (απόδειξη 381, 3/10/2026).
+   * Πρώτα σμικραίνει το μέγεθος· αν δεν φτάνει, σπάει σε γραμμές — και
+   * επιστρέφει πόσες, ώστε ο καλών να κατεβάσει ανάλογα το y.
+   */
+  const VALUE_X = 96
+  const colLW = colR - colL - VALUE_X - 10
+  const colRW = right - colR - VALUE_X
+  const kv = (x: number, yy: number, label: string, value: string, strong = false): number => {
     text(label, x, yy, 9, regular, MUTED)
-    text(value, x + 96, yy, 9.4, strong ? semibold : regular, strong ? INK : VALUE)
+    const font = strong ? semibold : regular
+    const color = strong ? INK : VALUE
+    const maxW = x === colL ? colLW : colRW
+    let size = 9.4
+    while (size > 7.6 && font.widthOfTextAtSize(value, size) > maxW) size -= 0.2
+    if (font.widthOfTextAtSize(value, size) <= maxW) {
+      text(value, x + VALUE_X, yy, size, font, color)
+      return 1
+    }
+    const lines: string[] = []
+    let cur = ''
+    for (const w of value.split(' ')) {
+      const t = cur ? `${cur} ${w}` : w
+      if (font.widthOfTextAtSize(t, size) <= maxW) cur = t
+      else { if (cur) lines.push(cur); cur = w }
+    }
+    if (cur) lines.push(cur)
+    lines.forEach((ln, i) => text(ln, x + VALUE_X, yy - i * 11, size, font, color))
+    return lines.length
   }
+  /** Το ύψος μιας σειράς, με τις επιπλέον γραμμές του wrap */
+  const rowH = (lines: number) => 18 + (lines - 1) * 11
   let yl = y, yr = y
   if (data.companyName) {
     // Απόδειξη σε εταιρεία: Επωνυμία / ΑΦΜ / Διεύθυνση εταιρείας
-    kv(colL, yl, 'Επωνυμία', data.companyName, true); yl -= 18
-    if (data.companyTaxId) { kv(colL, yl, 'ΑΦΜ', String(data.companyTaxId)); yl -= 18 }
-    if (data.companyAddress) { kv(colL, yl, 'Διεύθυνση', String(data.companyAddress)); yl -= 18 }
-    kv(colL, yl, 'Μέλος (ΑΜ)', `${data.name} (${data.am})`); yl -= 18
-    kv(colL, yl, 'Email', data.email); yl -= 18
+    yl -= rowH(kv(colL, yl, 'Επωνυμία', data.companyName, true))
+    if (data.companyTaxId) { yl -= rowH(kv(colL, yl, 'ΑΦΜ', String(data.companyTaxId))) }
+    if (data.companyAddress) { yl -= rowH(kv(colL, yl, 'Διεύθυνση', String(data.companyAddress))) }
+    yl -= rowH(kv(colL, yl, 'Μέλος (ΑΜ)', `${data.name} (${data.am})`))
+    yl -= rowH(kv(colL, yl, 'Email', data.email))
   } else {
-    kv(colL, yl, 'Ονοματεπώνυμο', data.name, true); yl -= 18
+    yl -= rowH(kv(colL, yl, 'Ονοματεπώνυμο', data.name, true))
     if (data.am !== '' && data.am !== null && data.am !== undefined) {
-      kv(colL, yl, 'Αριθμός μητρώου', String(data.am)); yl -= 18
+      yl -= rowH(kv(colL, yl, 'Αριθμός μητρώου', String(data.am)))
     }
-    if (data.taxId) { kv(colL, yl, 'ΑΦΜ', String(data.taxId)); yl -= 18 }
-    if (data.city) { kv(colL, yl, 'Πόλη', String(data.city)); yl -= 18 }
-    kv(colL, yl, 'Email', data.email); yl -= 18
+    if (data.taxId) { yl -= rowH(kv(colL, yl, 'ΑΦΜ', String(data.taxId))) }
+    if (data.city) { yl -= rowH(kv(colL, yl, 'Πόλη', String(data.city))) }
+    yl -= rowH(kv(colL, yl, 'Email', data.email))
   }
-  kv(colR, yr, 'Είδος', 'Απόδειξη είσπραξης'); yr -= 18
-  kv(colR, yr, 'Τρόπος πληρωμής', data.paymentMethod || 'Τραπεζική κατάθεση', true); yr -= 18
-  kv(colR, yr, 'Περίοδος', data.periodLabel || `Έτος ${data.year}`); yr -= 18
+  yr -= rowH(kv(colR, yr, 'Είδος', 'Απόδειξη είσπραξης'))
+  yr -= rowH(kv(colR, yr, 'Τρόπος πληρωμής', data.paymentMethod || 'Τραπεζική κατάθεση', true))
+  yr -= rowH(kv(colR, yr, 'Περίοδος', data.periodLabel || `Έτος ${data.year}`))
   // «✓» δεν υπάρχει στη Liberation Sans — σχεδιάζεται ως διάνυσμα
   kv(colR, yr, 'Κατάσταση', '     Εξοφλήθη', true)
   page.drawLine({ start: { x: colR + 96, y: yr + 3 }, end: { x: colR + 99, y: yr }, thickness: 1.4, color: INK })

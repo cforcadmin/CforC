@@ -4,6 +4,7 @@ import {
   IT_FROM, IT_EMAIL, WELCOME_CC, FINANCE_FROM, FINANCE_EMAIL, RECEIPT_CC,
 } from '@/lib/ocEmails'
 import { generateReceiptPdf } from '@/lib/receiptPdf'
+import { resolveReceiptParty } from '@/lib/receiptParty'
 import { createReceipt, markReceiptSent, syncReceiptToSheet, athensToday } from '@/lib/receipts'
 import { formatAmountForName } from '@/lib/invoiceFilename'
 import { enrolMemberInNewsletter } from '@/lib/newsletterMembers'
@@ -253,7 +254,20 @@ export async function processPaymentCompletion(input: PaymentCompletionInput): P
       return { ok: true, member: memberDocId, memberWas, application, welcomeSent, receiptSent: false }
     }
 
-    const isCompany = app?.ReceiptType === 'Εταιρεία'
+    // Τα εταιρικά στοιχεία από το ΜΗΤΡΩΟ όταν υπάρχουν — η αίτηση είναι
+    // στιγμιότυπο της ημέρας που γράφτηκε και παλιώνει (βλ. lib/receiptParty).
+    const memberRec = memberDocId
+      ? (await strapi(`/members/${memberDocId}`)).json?.data || null
+      : null
+    const party = resolveReceiptParty(app, memberRec)
+    if (party.mismatch) {
+      // ΔΕΝ αποφασίζουμε σιωπηλά: η επιλογή «φυσικό πρόσωπο ή εταιρεία»
+      // ανήκει στο μέλος. Αλλά δεν περνά απαρατήρητο.
+      console.warn(`payment completion: ΠΡΟΣΟΧΗ — το μέλος ${fullName} έχει επωνυμία και ΑΦΜ `
+        + 'στο μητρώο, αλλά η αίτηση ζήτησε απόδειξη σε φυσικό πρόσωπο. '
+        + 'Η απόδειξη εκδίδεται ΟΠΩΣ ΤΟ ΖΗΤΗΣΕ Η ΑΙΤΗΣΗ.')
+    }
+    const isCompany = party.isCompany
     // Επίσημος αριθμός από την ενιαία σειρά — αν η σειρά δεν έχει
     // αρχικοποιηθεί (πριν το seeding), ΔΕΝ εκδίδουμε απόδειξη· το welcome
     // έχει ήδη φύγει και το receiptSent:false το δείχνει στο αποτέλεσμα.
@@ -268,9 +282,9 @@ export async function processPaymentCompletion(input: PaymentCompletionInput): P
       paymentMethod: 'bank',
       createdBy: 'payment-completion',
       ...(isCompany && {
-        companyName: app.CompanyName || null,
-        companyAddress: app.CompanyAddress || null,
-        companyTaxId: app.CompanyTaxId || null,
+        companyName: party.companyName,
+        companyAddress: party.companyAddress,
+        companyTaxId: party.companyTaxId,
       }),
     })
     const finSigner = await getSeatHolder('financer')
@@ -288,9 +302,9 @@ export async function processPaymentCompletion(input: PaymentCompletionInput): P
       city: app?.ResidenceCity || String(input.city || '').trim() || null,
       financerName: finSigner?.name || null,
       ...(isCompany && {
-        companyName: app.CompanyName || null,
-        companyAddress: app.CompanyAddress || null,
-        companyTaxId: app.CompanyTaxId || null,
+        companyName: party.companyName,
+        companyAddress: party.companyAddress,
+        companyTaxId: party.companyTaxId,
       }),
     })
     receiptSent = await sendOcEmail(email, fTpl.subject, fTpl.html, {
