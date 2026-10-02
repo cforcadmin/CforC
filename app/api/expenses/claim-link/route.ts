@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'node:crypto'
 import { eventRegisterLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 import { eventFromSlug, claimWindow, CLAIMS_LATE_CONTACT } from '@/lib/expenseClaims'
+import { isReimbursed } from '@/lib/eventForm'
 import { athensToday } from '@/lib/events'
 import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { claimLinkEmailHtml } from '@/lib/eventEmails'
@@ -82,6 +83,12 @@ export async function POST(request: NextRequest) {
     + '&filters[Status][$eq]=confirmed&pagination[limit]=1')
   const row = reg.json?.data?.[0]
   if (!row) return SAME_ANSWER()
+
+  // Ο ΙΔΙΟΣ κανόνας με το email: σύνδεσμος μόνο σε όποιον αποζημιώνεται.
+  // Χωρίς αυτό, κάποιος που δεν καλύπτεται αλλά ξέρει τη διεύθυνση θα
+  // μπορούσε να ζητήσει σύνδεσμο μόνος του — και το φράγμα θα ήταν απλώς
+  // «δεν του το στείλαμε», δηλαδή κανένα φράγμα.
+  if (!isReimbursed(row.Capacity)) return SAME_ANSWER()
 
   const raw = crypto.randomBytes(32).toString('hex')
   const saved = await strapi(`/event-registrations/${row.documentId}`, 'PUT', {
