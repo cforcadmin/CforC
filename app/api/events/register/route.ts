@@ -183,7 +183,11 @@ export async function POST(request: NextRequest) {
         firstName: draft.FirstName.trim(), eventTitle: ev.Title, dates, venue,
         isMember: true, eventUrl: `${site}/events/${ev.Slug}`,
       })
-      await sendOcEmail(draft.Email, tpl.subject, tpl.html, { from: COMMUNITY_FROM, replyTo: ADMIN_EMAIL })
+      // Κοινοποίηση στο hello@: η ΟΣ θέλει να βλέπει τη δήλωση μόλις γίνει.
+      // Μπαίνει ΜΟΝΟ εδώ, όχι στο email επιβεβαίωσης — εκείνο κουβαλά token.
+      await sendOcEmail(draft.Email, tpl.subject, tpl.html, {
+        from: COMMUNITY_FROM, replyTo: ADMIN_EMAIL, cc: [ADMIN_EMAIL],
+      })
     } else {
       const tpl = eventConfirmEmailHtml({
         firstName: draft.FirstName.trim(), eventTitle: ev.Title, dates, venue,
