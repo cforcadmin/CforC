@@ -9,6 +9,7 @@ import type { CforcEvent, EventCapacity } from '@/lib/types'
 import { dateRangeLabel, grDate } from '@/lib/events'
 import { upperGreek } from '@/lib/campaignBlocks'
 import { MIDTERM_2026, banSeatNote } from '@/lib/expenseClaims'
+import CampaignRichText from '@/components/oc/CampaignRichText'
 import {
   CAPACITY_LABELS, MEMBER_CAPACITIES, capacitiesForPath, visibleSessions, visibleOptions, sessionChoices,
   validateRegistration, agendaWanted, emptyDraft, type RegistrationDraft, type SessionChoice,
@@ -301,6 +302,22 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
                         <div className="mt-5 grid gap-4 border-t border-gray-200 dark:border-gray-600 pt-5">
                           <Input label="Τίτλος της δράσης *" value={p.EventProposalTitle}
                             onChange={v => setProp({ EventProposalTitle: v })} />
+
+                          {/* Ο ΙΔΙΟΣ επεξεργαστής με τα μπλοκ κειμένου των email:
+                              έντονα, πλάγια, υπογράμμιση, σύνδεσμος, λίστες — ό,τι
+                              επιβιώνει και στο sanitizeInline του server. Καμία
+                              γραμματοσειρά, μέγεθος ή χρώμα: αυτά ανήκουν στο
+                              πρότυπο, όχι σε όποιον γράφει. */}
+                          <label className="block">
+                            <span className="block text-sm font-bold text-charcoal dark:text-gray-200 mb-1.5">
+                              Περιγραφή δράσης
+                            </span>
+                            <CampaignRichText
+                              value={p.ProposalDescription}
+                              onChange={v => setProp({ ProposalDescription: v })}
+                              placeholder="Τι είναι η δράση, πώς εξελίσσεται, τι χρειάζεται…"
+                            />
+                          </label>
 
                           {/* ΕΛΕΥΘΕΡΟ ΚΕΙΜΕΝΟ, όχι επιλογές: ο χώρος της
                               δράσης μπορεί να μην είναι ο χώρος της συνάντησης,

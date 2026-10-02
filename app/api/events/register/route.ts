@@ -6,7 +6,7 @@ import { checkCsrf } from '@/lib/csrf'
 import { eventRegisterLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 import { resolveEventAccess } from '@/lib/eventAccess'
 import { validateRegistration, offeredCapacities, visibleOptions, isReimbursed } from '@/lib/eventForm'
-import { validateProposal, costValue, openCallVisible, collectsInForm, emptyProposal, type ProposalDraft } from '@/lib/openCall'
+import { validateProposal, costValue, openCallVisible, collectsInForm, emptyProposal, cleanProposalDescription, type ProposalDraft } from '@/lib/openCall'
 import type { CforcEvent } from '@/lib/types'
 import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { eventConfirmEmailHtml, eventRegisteredEmailHtml } from '@/lib/eventEmails'
@@ -119,6 +119,10 @@ export async function POST(request: NextRequest) {
     && collectsInForm(ev.OpenCall)
     && openCallVisible(ev.OpenCall, draft.Capacity as any)
 
+  // ΚΑΘΑΡΙΣΜΟΣ ΣΤΟΝ SERVER, μία φορά, πριν γραφτεί οπουδήποτε. Ό,τι φτιάχνει
+  // ο επεξεργαστής μπορεί να το φτιάξει και ένα χειροποίητο αίτημα.
+  const descriptionHtml = proposes ? cleanProposalDescription(proposal.ProposalDescription) : ''
+
   // Μια ιδιότητα ΜΕΛΟΥΣ δεν δηλώνεται από ανώνυμο: θα έδινε σε οποιονδήποτε
   // την οθόνη και τα δικαιώματα του μέλους χωρίς να αποδείξει τίποτα.
   if (!isMember && ['member', 'member-ban'].includes(String(draft.Capacity))) {
@@ -163,6 +167,7 @@ export async function POST(request: NextRequest) {
     ProposalSubmitted: proposes,
     ...(proposes ? {
       EventProposalTitle: proposal.EventProposalTitle.trim(),
+      ProposalDescription: descriptionHtml || null,
       EventLocation: proposal.EventLocation.trim() || null,
       ProposalTimeSlot: proposal.TimeSlot,
       ProposalType: proposal.TypeOfEvent,
@@ -218,6 +223,7 @@ export async function POST(request: NextRequest) {
       ProposerName: `${draft.FirstName.trim()} ${draft.LastName.trim()}`.trim(),
       ProposerEmail: draft.Email,
       EventProposalTitle: proposal.EventProposalTitle.trim(),
+      ProposalDescription: descriptionHtml || null,
       EventLocation: proposal.EventLocation.trim() || null,
       TimeSlot: proposal.TimeSlot,
       TypeOfEvent: proposal.TypeOfEvent,

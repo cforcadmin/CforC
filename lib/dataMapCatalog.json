@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T10:19:51.152Z",
+  "generatedAt": "2026-10-02T14:47:27.204Z",
   "note": "Παράγεται από scripts/generate-data-map.js — μην το επεξεργάζεσαι με το χέρι",
   "collections": [
     {
@@ -448,6 +448,11 @@
           "personal": null
         },
         {
+          "name": "ProposalDescription",
+          "type": "text",
+          "personal": null
+        },
+        {
           "name": "ProposalDuration",
           "type": "string",
           "personal": null
@@ -653,6 +658,11 @@
         {
           "name": "ProposalCost",
           "type": "decimal",
+          "personal": null
+        },
+        {
+          "name": "ProposalDescription",
+          "type": "text",
           "personal": null
         },
         {

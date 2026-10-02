@@ -14,6 +14,7 @@
 
 import type { EventCapacity } from '@/lib/types'
 import { athensToday } from '@/lib/events'
+import { sanitizeInline } from '@/lib/campaignBlocks'
 
 export interface EventOpenCall {
   Title: string
@@ -32,6 +33,8 @@ export interface ProposalDraft {
   /** '' = αναπάντητη. Η ερώτηση είναι υποχρεωτική όταν φαίνεται. */
   wants: '' | 'yes' | 'no'
   EventProposalTitle: string
+  /** Περιγραφή της δράσης — HTML από τον επεξεργαστή, ΠΕΡΙΟΡΙΣΜΕΝΟ */
+  ProposalDescription: string
   /** Πού θα γίνει — ΕΛΕΥΘΕΡΟ ΚΕΙΜΕΝΟ: μπορεί να μην είναι ο χώρος της συνάντησης */
   EventLocation: string
   TimeSlot: string
@@ -46,7 +49,7 @@ export interface ProposalDraft {
 
 export const emptyProposal = (): ProposalDraft => ({
   wants: '',
-  EventProposalTitle: '', EventLocation: '', TimeSlot: '', TypeOfEvent: '',
+  EventProposalTitle: '', ProposalDescription: '', EventLocation: '', TimeSlot: '', TypeOfEvent: '',
   ProposalCost: '', ProposalDuration: '', ProposalLink: '',
   ProposalPromoImage: '', ProposalPromoImageId: '',
 })
@@ -165,6 +168,33 @@ export function validateProposal(
   if (link && !/^https?:\/\/\S+$/i.test(link)) return 'Ο σύνδεσμος πρέπει να ξεκινά με http:// ή https://'
 
   return null
+}
+
+/**
+ * Η περιγραφή, καθαρισμένη και με όριο.
+ *
+ * Ο επεξεργαστής είναι ο ΙΔΙΟΣ με των email, άρα και ο καθαριστής ο ίδιος:
+ * το sanitizeInline κρατά έντονα, πλάγια, υπογράμμιση, λίστες, επικεφαλίδες
+ * και ΑΠΟΛΥΤΟΥΣ συνδέσμους, και πετά κάθε άλλο attribute. Ο έλεγχος γίνεται
+ * ΣΤΟΝ SERVER: ό,τι φτιάχνει ο browser μπορεί να το φτιάξει και χέρι.
+ *
+ * Το όριο δεν είναι αισθητικό — είναι φράγμα: χωρίς αυτό ένα αίτημα μπορεί
+ * να γράψει μεγαμπάιτ σε μία εγγραφή.
+ */
+export const PROPOSAL_DESCRIPTION_MAX = 20000
+
+export function cleanProposalDescription(html: string | null | undefined): string {
+  const safe = sanitizeInline(String(html ?? '')).slice(0, PROPOSAL_DESCRIPTION_MAX)
+  // Ο Tiptap αφήνει «<p></p>» σε άδειο πεδίο — αυτό ΔΕΝ είναι περιεχόμενο
+  return descriptionIsEmpty(safe) ? '' : safe
+}
+
+/** Κενό σημαίνει «χωρίς λέξεις», όχι «χωρίς χαρακτήρες» */
+export function descriptionIsEmpty(html: string | null | undefined): boolean {
+  return !String(html ?? '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;|\u00a0/g, ' ')
+    .trim()
 }
 
 /** Το κόστος σε αριθμό για το Strapi — κενό όταν δεν ζητήθηκε */

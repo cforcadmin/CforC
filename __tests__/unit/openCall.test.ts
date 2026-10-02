@@ -1,6 +1,7 @@
 import {
   parseLines, openCallClosed, openCallVisible, collectsInForm, costApplies,
-  validateProposal, costValue, emptyProposal, stripOpenCall, type EventOpenCall, type ProposalDraft,
+  validateProposal, costValue, emptyProposal, stripOpenCall, cleanProposalDescription,
+  descriptionIsEmpty, PROPOSAL_DESCRIPTION_MAX, type EventOpenCall, type ProposalDraft,
 } from '@/lib/openCall'
 
 const OC: EventOpenCall = {
@@ -192,5 +193,61 @@ describe('EventLocation', () => {
   })
   it('το κενό προσχέδιο το έχει ως κενό κείμενο, όχι undefined', () => {
     expect(emptyProposal().EventLocation).toBe('')
+  })
+})
+
+/* Η περιγραφή γράφεται σε επεξεργαστή, αλλά φτάνει ως HTML — και ό,τι
+   φτιάχνει ο browser μπορεί να το φτιάξει και χειροποίητο αίτημα. */
+describe('cleanProposalDescription', () => {
+  it('κρατά τη μορφοποίηση που επιτρέπουμε', () => {
+    const out = cleanProposalDescription('<p><strong>Έντονα</strong> και <em>πλάγια</em></p>')
+    expect(out).toContain('<strong>Έντονα</strong>')
+    expect(out).toContain('<em>πλάγια</em>')
+  })
+  it('κρατά λίστες', () => {
+    expect(cleanProposalDescription('<ul><li>ένα</li><li>δύο</li></ul>')).toContain('<li>ένα</li>')
+  })
+
+  /* ΤΟ ΚΡΙΣΙΜΟ: η καρτέλα της ΟΣ αποδίδει αυτό το HTML */
+  it('πετά <script>', () => {
+    const out = cleanProposalDescription('<p>γεια</p><script>alert(1)</script>')
+    expect(out).not.toMatch(/script/i)
+    expect(out).toContain('γεια')
+  })
+  it('πετά χειριστές συμβάντων', () => {
+    expect(cleanProposalDescription('<p onclick="alert(1)">κείμενο</p>')).not.toMatch(/onclick/i)
+  })
+  it('πετά εικόνες και iframe', () => {
+    const out = cleanProposalDescription('<img src=x onerror=alert(1)><iframe src="evil"></iframe>')
+    expect(out).not.toMatch(/img|iframe|onerror/i)
+  })
+  it('πετά συνδέσμους javascript:', () => {
+    expect(cleanProposalDescription('<a href="javascript:alert(1)">κλικ</a>')).not.toMatch(/javascript:/i)
+  })
+  it('κρατά κανονικούς συνδέσμους', () => {
+    expect(cleanProposalDescription('<a href="https://a.gr">κλικ</a>')).toContain('href="https://a.gr"')
+  })
+
+  it('το άδειο του επεξεργαστή δεν είναι περιεχόμενο', () => {
+    for (const empty of ['', '<p></p>', '<p><br></p>', '<p>   </p>']) {
+      expect(cleanProposalDescription(empty)).toBe('')
+    }
+  })
+  it('κόβει στο όριο — μία εγγραφή δεν γίνεται μεγαμπάιτ', () => {
+    const huge = '<p>' + 'α'.repeat(PROPOSAL_DESCRIPTION_MAX * 2) + '</p>'
+    expect(cleanProposalDescription(huge).length).toBeLessThanOrEqual(PROPOSAL_DESCRIPTION_MAX)
+  })
+  it('null και undefined δίνουν κενό, όχι σφάλμα', () => {
+    expect(cleanProposalDescription(null)).toBe('')
+    expect(cleanProposalDescription(undefined)).toBe('')
+  })
+})
+
+describe('descriptionIsEmpty', () => {
+  it.each(['', '<p></p>', '<p><br></p>', '<p>&nbsp;</p>'])('κενό: %s', h => {
+    expect(descriptionIsEmpty(h)).toBe(true)
+  })
+  it('με λέξεις δεν είναι κενό', () => {
+    expect(descriptionIsEmpty('<p>μια λέξη</p>')).toBe(false)
   })
 })

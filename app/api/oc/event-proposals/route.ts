@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess } from '@/lib/ocRoles'
+import { cleanProposalDescription } from '@/lib/openCall'
 
 export const maxDuration = 60
 
@@ -66,6 +67,8 @@ export async function GET() {
     documentId: p.documentId,
     EventProposalTitle: p.EventProposalTitle,
     EventLocation: p.EventLocation,
+    // Καθαρίζεται ΚΑΙ στην ανάγνωση: η εγγραφή μπορεί να γράφτηκε από αλλού
+    ProposalDescription: cleanProposalDescription(p.ProposalDescription),
     TimeSlot: p.TimeSlot,
     TypeOfEvent: p.TypeOfEvent,
     ProposalCost: p.ProposalCost,

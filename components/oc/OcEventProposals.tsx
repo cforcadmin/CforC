@@ -15,6 +15,7 @@ import { grDate } from '@/lib/events'
 type Proposal = {
   documentId: string
   EventProposalTitle: string
+  ProposalDescription?: string
   EventLocation?: string
   TimeSlot?: string
   TypeOfEvent?: string
@@ -153,6 +154,15 @@ export default function OcEventProposals() {
                   {open === p.documentId && (
                     <div className="border-t border-gray-200 dark:border-gray-600 p-4 grid gap-4 sm:grid-cols-[1fr_auto]">
                       <div className="grid gap-2 text-sm min-w-0">
+                        {/* Καθαρισμένο ΔΥΟ φορές πριν φτάσει εδώ — στην εγγραφή
+                            και στην ανάγνωση — με τον ίδιο καθαριστή που
+                            φυλάει τα γράμματα. */}
+                        {p.ProposalDescription && (
+                          <div className="mb-1 rounded-xl bg-gray-50 dark:bg-gray-900/40 px-3 py-2
+                            text-charcoal dark:text-gray-200 [&_a]:text-coral [&_a]:underline
+                            [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+                            dangerouslySetInnerHTML={{ __html: p.ProposalDescription }} />
+                        )}
                         <Row label="Πού" value={p.EventLocation} />
                         <Row label="Πότε" value={p.TimeSlot} />
                         <Row label="Είδος" value={p.TypeOfEvent} />
