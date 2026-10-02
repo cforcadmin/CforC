@@ -32,6 +32,54 @@ export const DAILY_EMAIL_BUDGET = 80
  * Οι διευθύνσεις είναι ΟΙ ΙΔΙΕΣ με το SEAT_MAILBOX του lib/ocRoles — μία πηγή
  * αλήθειας, που χρησιμοποιούν ήδη οι προσκλήσεις του ημερολογίου.
  */
+/**
+ * «Σε ποιον πήγε;» — μία φράση για τη λίστα Απεσταλμένων και το Αρχείο.
+ *
+ * Η λίστα έδειχνε μόνο θέμα, πλήθος και συντάκτη: για να θυμηθείς ΣΕ ΠΟΙΟΝ
+ * στάλθηκε κάτι έπρεπε να το ανοίξεις. Σε ένα αρχείο που μεγαλώνει, αυτό
+ * σημαίνει να ανοίγεις τα πάντα.
+ *
+ * ΜΙΑ συνάρτηση, ώστε η λίστα και η καρτέλα να μη μιλούν διαφορετικά για το
+ * ίδιο κοινό. Δέχεται ονόματα μελών απ' έξω — ο καλών τα έχει ήδη.
+ */
+export function describeAudience(
+  selection: RecipientSelection | null | undefined,
+  opts: { total?: number | null; nameOf?: (docId: string) => string | undefined; groups?: string[] } = {},
+): string {
+  const sel = selection || {}
+  const parts: string[] = []
+
+  if (sel.allMembers) parts.push('Όλα τα μέλη')
+  if (sel.paymentStatus) {
+    parts.push(sel.paymentStatus.paid
+      ? `Πληρωμένοι ${sel.paymentStatus.year}`
+      : `Απλήρωτοι ${sel.paymentStatus.year}`)
+  }
+  for (const id of sel.seats || []) {
+    parts.push(SEAT_AUDIENCES.find(s => s.id === id)?.label || id)
+  }
+  parts.push(...(sel.groups || []))
+
+  const people = (sel.memberDocIds || []).map(d => opts.nameOf?.(d) || null).filter(Boolean) as string[]
+  // Δύο ονόματα χωράνε σε μια γραμμή· τρία και πάνω γίνονται αριθμός
+  if (people.length) {
+    parts.push(people.length <= 2 ? people.join(', ') : `${people[0]} + ${people.length - 1} ακόμη`)
+  } else if ((sel.memberDocIds || []).length) {
+    parts.push(`${sel.memberDocIds!.length} μέλη`)
+  }
+
+  const ext = sel.external || []
+  if (ext.length) parts.push(ext.length <= 2 ? ext.join(', ') : `${ext.length} εξωτερικές διευθύνσεις`)
+
+  // Τεύχος χωρίς επιλογή μελών: πάει σε λίστες του Sender
+  if (!parts.length && opts.groups?.length) {
+    parts.push(opts.groups.map(g => (g === 'paid' ? 'Μέλη' : g === 'external' ? 'Κοινό' : g)).join(' + '))
+  }
+  if (!parts.length && opts.total) parts.push(`${opts.total} παραλήπτες`)
+
+  return parts.join(' · ')
+}
+
 export const SEAT_AUDIENCES: Array<{ id: string; label: string; email: string }> = [
   { id: 'admin', label: 'Admin', email: 'hello@cultureforchange.net' },
   { id: 'comms', label: 'Επικοινωνία', email: 'communication@cultureforchange.net' },

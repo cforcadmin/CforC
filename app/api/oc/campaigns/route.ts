@@ -7,8 +7,7 @@ import { drainCampaigns } from '@/lib/campaignDrain'
 import {
   resolveRecipients, toQueue, validateCampaign, daysNeeded, recipientSummary,
   firstNameOf, DAILY_EMAIL_BUDGET, SEAT_AUDIENCES, SEAT_LABEL_SET,
-  type CampaignMember, type RecipientSelection,
-} from '@/lib/campaignRecipients'
+  type CampaignMember, type RecipientSelection, describeAudience } from '@/lib/campaignRecipients'
 import { OC_EMAIL_SEATS, OC_DESK_LABELS, canSendEmailFrom, canNewsletterFrom, deskOfSeat, isEmailDesk } from '@/components/oc/ocPrefs'
 import {
   NEWSLETTER_AUDIENCES, senderGroupId, normaliseAudiences,
@@ -219,7 +218,11 @@ const CAMPAIGN_FIELDS_ARCHIVE = CAMPAIGN_FIELDS_SIGNER + '&fields[13]=Archived&f
 const CAMPAIGN_FIELDS_DESK = CAMPAIGN_FIELDS_ARCHIVE + '&fields[15]=Desk'
 // Το είδος: η λίστα πρέπει να ξεχωρίζει μήνυμα από τεύχος, αλλιώς ανοίγεις
 // ένα προσχέδιο και ο συνθέτης δεν ξέρει σε ποια από τις δύο διαδρομές ανήκει.
-const CAMPAIGN_FIELDS = CAMPAIGN_FIELDS_DESK + '&fields[16]=Kind'
+const CAMPAIGN_FIELDS_KIND = CAMPAIGN_FIELDS_DESK + '&fields[16]=Kind'
+// Η ΕΠΙΛΟΓΗ παραληπτών: η λίστα δείχνει ΣΕ ΠΟΙΟΝ πήγε το καθένα. Τελευταίο
+// σκαλί, με την ίδια λογική κλιμάκωσης — αν λείπει, η λίστα απλώς δεν δείχνει
+// παραλήπτη, δεν αδειάζει.
+const CAMPAIGN_FIELDS = CAMPAIGN_FIELDS_KIND + '&fields[17]=Selection&fields[18]=Groups'
 
 /**
  * Θυρίδα → γραφείο. Χτίζεται από τις ΙΔΙΕΣ πηγές που ορίζουν ποιος στέλνει
@@ -365,6 +368,7 @@ export async function GET(request: NextRequest) {
     // ακόμη. Χωρίς αυτό δουλεύουμε με τη θυρίδα του υπογράφοντα — ο
     // διαχωρισμός των γραφείων ΔΕΝ περιμένει το deploy του Strapi.
     let list = await strapi(listUrl(CAMPAIGN_FIELDS))
+    if (!list.ok) list = await strapi(listUrl(CAMPAIGN_FIELDS_KIND))
     if (!list.ok) list = await strapi(listUrl(CAMPAIGN_FIELDS_DESK))
     if (!list.ok) list = await strapi(listUrl(CAMPAIGN_FIELDS_ARCHIVE))
     if (!list.ok) list = await strapi(listUrl(CAMPAIGN_FIELDS_SIGNER))
@@ -373,7 +377,17 @@ export async function GET(request: NextRequest) {
     // Χωρίς ούτε Signer δεν ξέρουμε πού ανήκει τίποτα· τότε δείχνουμε τα πάντα
     // αντί για τίποτα — η λίστα είναι αρχείο, όχι μυστικό.
     const rows: any[] = list.json?.data || []
-    const campaigns = scoped && desk ? rows.filter(c => deskOfCampaign(c) === desk) : rows
+    const campaigns = (scoped && desk ? rows.filter(c => deskOfCampaign(c) === desk) : rows)
+      // «Σε ποιον πήγε» — υπολογίζεται ΕΔΩ, όπου υπάρχουν ήδη τα ονόματα των
+      // μελών· η οθόνη δεν χρειάζεται να μάθει ποτέ διευθύνσεις.
+      .map((c: any) => ({
+        ...c,
+        audience: describeAudience(c.Selection, {
+          total: c.TotalCount,
+          groups: Array.isArray(c.Groups) ? c.Groups : [],
+          nameOf: (id: string) => members.find(m => m.docId === id)?.name,
+        }),
+      }))
     return NextResponse.json({
       campaigns,
       desk,

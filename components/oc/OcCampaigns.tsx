@@ -49,6 +49,8 @@ type Campaign = {
   Archived?: boolean; ArchivedAt?: string | null
   /** Λείπει σε παλιές εγγραφές και όσο το πεδίο δεν έχει βγει στο Strapi */
   Kind?: 'message' | 'newsletter' | null
+  /** «Σε ποιον πήγε» — φτιάχνεται στον server (describeAudience) */
+  audience?: string | null
 }
 type Meta = {
   memberCount: number
@@ -3163,7 +3165,7 @@ function QueueView({ campaigns, onChanged, onEdit, onDuplicate, mode, bulk }: {
       }
       if (q.trim()) {
         const needle = q.trim().toLowerCase()
-        const hay = `${c.Subject} ${c.CreatedByName || ''}`.toLowerCase()
+        const hay = `${c.Subject} ${c.CreatedByName || ''} ${c.audience || ''}`.toLowerCase()
         if (!hay.includes(needle)) return false
       }
       return true
@@ -3228,7 +3230,7 @@ function QueueView({ campaigns, onChanged, onEdit, onDuplicate, mode, bulk }: {
 
       <div className="flex flex-wrap items-center gap-2">
         <input type="search" value={q} onChange={e => setQ(e.target.value)}
-          placeholder="Αναζήτηση σε θέμα ή συντάκτη"
+          placeholder="Αναζήτηση σε θέμα, συντάκτη ή παραλήπτη"
           className={`${CONTROL} flex-1 min-w-52`} />
         {mode === 'queue' && (
           <select value={state} onChange={e => setState(e.target.value)} className={CONTROL}>
@@ -3305,7 +3307,15 @@ function QueueView({ campaigns, onChanged, onEdit, onDuplicate, mode, bulk }: {
                 {c.Kind === 'newsletter' ? bulk : 'Μήνυμα'}
               </span>
               <span className="font-semibold min-w-0">{c.Subject}</span>
-              <span className="ml-auto text-xs px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-900">{STATE_LABELS[c.State] || c.State}</span>
+              {/* ΣΕ ΠΟΙΟΝ πήγε, δίπλα στο θέμα: χωρίς αυτό έπρεπε να ανοίξεις
+                  κάθε γραμμή για να θυμηθείς — σε αρχείο που μεγαλώνει,
+                  σημαίνει να ανοίγεις τα πάντα. */}
+              {c.audience && (
+                <span className="text-sm text-gray-500 dark:text-gray-400 truncate" title={c.audience}>
+                  → {c.audience}
+                </span>
+              )}
+              <span className="ml-auto text-xs px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-900 shrink-0">{STATE_LABELS[c.State] || c.State}</span>
             </div>
             {c.State !== 'draft' && (
               <div className="mt-2 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
