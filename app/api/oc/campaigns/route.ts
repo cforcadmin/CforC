@@ -9,7 +9,7 @@ import {
   firstNameOf, DAILY_EMAIL_BUDGET, SEAT_AUDIENCES, SEAT_LABEL_SET,
   type CampaignMember, type RecipientSelection,
 } from '@/lib/campaignRecipients'
-import { OC_EMAIL_SEATS, OC_DESK_LABELS, canSendEmailFrom, deskOfSeat, isEmailDesk } from '@/components/oc/ocPrefs'
+import { OC_EMAIL_SEATS, OC_DESK_LABELS, canSendEmailFrom, canNewsletterFrom, deskOfSeat, isEmailDesk } from '@/components/oc/ocPrefs'
 import {
   NEWSLETTER_AUDIENCES, senderGroupId, normaliseAudiences,
   validateNewsletter, applySenderTags, unsupportedTags, SEAT_TEST_GROUPS,
@@ -397,8 +397,8 @@ export async function GET(request: NextRequest) {
       signer: await signerFor(auth.activeSeat),
       dailyBudget: DAILY_EMAIL_BUDGET,
       tocDefaultTitle: TOC_DEFAULT_TITLE,
-      // Μόνο η Επικοινωνία στέλνει newsletter — αλλού η οθόνη δεν το δείχνει
-      newsletterLists: desk === 'comms' ? await newsletterLists() : [],
+      // Μαζική αποστολή: Επικοινωνία (Newsletter) και Διαχείριση (Bulk email)
+      newsletterLists: canNewsletterFrom(desk) ? await newsletterLists() : [],
       seat: auth.activeSeat,
     })
   } catch (err) {
@@ -475,9 +475,9 @@ export async function POST(request: NextRequest) {
       const sendAt = action === 'queue' ? scheduledFor(body?.scheduleAtIso) : null
       const payload: Record<string, any> = {
         Desk: desk,
-        // Το είδος καθορίζει ΟΛΗ τη διαδρομή αποστολής. Newsletter μόνο από
-        // την Επικοινωνία — αλλού η οθόνη δεν το προσφέρει καν.
-        Kind: body?.kind === 'newsletter' && desk === 'comms' ? 'newsletter' : 'message',
+        // Το είδος καθορίζει ΟΛΗ τη διαδρομή αποστολής. Μαζική αποστολή μόνο
+        // από τα γραφεία του NEWSLETTER_DESKS — αλλού η οθόνη δεν την προσφέρει.
+        Kind: body?.kind === 'newsletter' && canNewsletterFrom(desk) ? 'newsletter' : 'message',
         Groups: normaliseAudiences(body?.audiences),
         Subject: subject || '(χωρίς θέμα)',
         Preheader: String(body?.preheader || '').trim() || null,
@@ -752,8 +752,8 @@ export async function POST(request: NextRequest) {
         if (denied) return denied
       }
       const desk = deskOfRequest(body?.desk, auth.activeSeat)
-      if (desk !== 'comms') {
-        return NextResponse.json({ error: 'Το newsletter στέλνεται από την Επικοινωνία' }, { status: 403 })
+      if (!canNewsletterFrom(desk)) {
+        return NextResponse.json({ error: 'Η μαζική αποστολή γίνεται από την Επικοινωνία ή τη Διαχείριση' }, { status: 403 })
       }
       const blocks: Block[] = Array.isArray(body?.blocks) ? body.blocks : []
       const subject = String(body?.subject || '').trim()
@@ -807,7 +807,9 @@ export async function POST(request: NextRequest) {
 
       const name = await memberName(auth.memberId)
       const record: Record<string, any> = {
-        Desk: 'comms', Kind: 'newsletter', Groups: audiences,
+        // ΤΟ ΓΡΑΦΕΙΟ ΠΟΥ ΕΣΤΕΙΛΕ, όχι σταθερά: αλλιώς το τεύχος της Διαχείρισης
+        // θα γραφόταν στο αρχείο της Επικοινωνίας και δεν θα το ξανάβρισκε.
+        Desk: desk, Kind: 'newsletter', Groups: audiences,
         Subject: tpl.subject, Preheader: String(body?.preheader || '').trim() || null,
         Blocks: blocks, Recipients: [], Selection: {}, Cc: null,
         FooterStyle: String(body?.footerStyle || 'signature'),

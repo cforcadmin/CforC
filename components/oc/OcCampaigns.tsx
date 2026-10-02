@@ -6,6 +6,7 @@ import CampaignRichText from './CampaignRichText'
 import { moveUp, moveDown, moveToBottom, moveGroupTo, mergePaletteOrder, movePaletteChip } from '@/lib/blockOrder'
 import { PREVIEW_DESKTOP_WIDTH } from '@/lib/campaignBlocks'
 import { usePreviewSize, PV_MIN_W, PV_MIN_H, PV_EDGE_GAP, PV_BASE_TRACK, PV_STICKY_TOP } from './usePreviewSize'
+import { canNewsletterFrom, bulkLabel } from '@/components/oc/ocPrefs'
 import type { NewsletterFooter } from '@/lib/campaignBlocks'
 
 /**
@@ -778,7 +779,9 @@ export default function OcCampaigns({ desk }: { desk: string }) {
   // Το αρχειοθετημένο δεν μετράει σε καμία από τις δύο: ζει στο Αρχείο
   // Το newsletter ανήκει στην Επικοινωνία: εκεί ζουν οι λίστες και τα
   // στατιστικά του Sender. Τα άλλα γραφεία στέλνουν μηνύματα.
-  const canNewsletter = desk === 'comms'
+  const canNewsletter = canNewsletterFrom(desk)
+  /** «Newsletter» στην Επικοινωνία, «Bulk email» στη Διαχείριση — ίδια διαδρομή */
+  const BULK = bulkLabel(desk)
   // Πόσοι θα λάβουν το newsletter, από τα μεγέθη των λιστών του Sender
   const newsletterCount = (meta?.newsletterLists || [])
     .filter(l => audiences.includes(l.id))
@@ -831,7 +834,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
           <div className="flex gap-1 p-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600" role="tablist">
             {([
               { id: 'message', label: 'Μήνυμα' },
-              { id: 'newsletter', label: 'Newsletter' },
+              { id: 'newsletter', label: BULK },
             ] as const).map(k => (
               <button key={k.id} type="button" role="tab" aria-selected={kind === k.id}
                 onClick={() => switchKind(k.id)}
@@ -903,7 +906,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
       )}
 
       {tab === 'queue' || tab === 'drafts' ? (
-        <QueueView campaigns={campaigns} onChanged={load} onEdit={openDraft} mode={tab}
+        <QueueView campaigns={campaigns} onChanged={load} onEdit={openDraft} mode={tab} bulk={BULK}
           onDuplicate={c => setNaming({
             mode: 'duplicate-row',
             id: c.documentId,
@@ -1027,7 +1030,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
               <div className={CARD}>
                 <h3 className={`${EYEBROW} mb-1`}>ΛΙΣΤΕΣ</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Το newsletter φεύγει σε ΛΙΣΤΕΣ, ποτέ σε διευθύνσεις που γράφει κάποιος με το χέρι —
+                  {BULK} φεύγει σε ΛΙΣΤΕΣ, ποτέ σε διευθύνσεις που γράφει κάποιος με το χέρι —
                   έτσι δεν φτάνει σε ανθρώπους που δεν το ζήτησαν. Οι λίστες συντηρούνται από τις
                   εγγραφές και τις απεγγραφές.
                 </p>
@@ -1219,7 +1222,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
         <ConfirmDialog
           subject={subject} count={newsletterCount} emailCost={newsletterCount} days={1}
           cc={[]} recipients={[]} busy={busy} compact
-          title={scheduleAt ? 'Προγραμματισμός newsletter' : 'Αποστολή newsletter'}
+          title={scheduleAt ? `Προγραμματισμός — ${BULK}` : `Αποστολή — ${BULK}`}
           body={(scheduleAt
             ? `Θα φύγει αυτόματα στις ${new Date(scheduleAt).toLocaleString('el-GR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}, από τον Sender, `
             : 'Θα ξεκινήσει αμέσως η αποστολή από τον Sender, ')
@@ -2949,12 +2952,14 @@ function CampaignDetail({ id }: { id: string }) {
   )
 }
 
-function QueueView({ campaigns, onChanged, onEdit, onDuplicate, mode }: {
+function QueueView({ campaigns, onChanged, onEdit, onDuplicate, mode, bulk }: {
   campaigns: Campaign[]; onChanged: () => void; onEdit: (id: string) => void
   /** Ανοίγει το παράθυρο ονόματος του γονέα — η αντιγραφή θέλει όνομα πρώτα */
   onDuplicate: (c: Campaign) => void
   /** 'drafts' = ό,τι δεν έχει φύγει ακόμη · 'queue' = ό,τι έφυγε ή φεύγει */
   mode: 'drafts' | 'queue'
+  /** Πώς λέγεται η μαζική αποστολή σε ΑΥΤΟ το γραφείο — η λίστα είναι ήδη δική του */
+  bulk: string
 }) {
   const [box, setBox] = useState<'active' | 'archived'>('active')
   const [busy, setBusy] = useState<string | null>(null)
@@ -3131,7 +3136,7 @@ function QueueView({ campaigns, onChanged, onEdit, onDuplicate, mode }: {
                 c.Kind === 'newsletter'
                   ? 'bg-coral text-charcoal'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}>
-                {c.Kind === 'newsletter' ? 'Newsletter' : 'Μήνυμα'}
+                {c.Kind === 'newsletter' ? bulk : 'Μήνυμα'}
               </span>
               <span className="font-semibold min-w-0">{c.Subject}</span>
               <span className="ml-auto text-xs px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-900">{STATE_LABELS[c.State] || c.State}</span>

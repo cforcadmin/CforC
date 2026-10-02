@@ -90,6 +90,29 @@ export const OC_EMAIL_DESKS: Record<string, string[]> = {
   admin: ['admin'],
 }
 
+/**
+ * Ποια γραφεία στέλνουν ΜΑΖΙΚΑ, μέσω Sender και σε λίστες.
+ *
+ * Η Επικοινωνία το λέει «Newsletter»: εκεί ζουν οι λίστες, τα τεύχη και τα
+ * στατιστικά. Η Διαχείριση το λέει «Bulk email» — ίδια ακριβώς διαδρομή,
+ * άλλη αφορμή: ανακοίνωση προς όλο το δίκτυο, όχι περιοδικό τεύχος.
+ *
+ * ΜΙΑ πηγή αλήθειας: ο έλεγχος `desk === 'comms'` ήταν γραμμένος σε πέντε
+ * σημεία (οθόνη + τέσσερα στη διαδρομή). Ένα ξεχασμένο σημείο σημαίνει
+ * κουμπί που φαίνεται και 403 όταν πατηθεί.
+ */
+export const NEWSLETTER_DESKS: readonly string[] = ['comms', 'admin']
+
+/** Στέλνει αυτό το γραφείο μαζικά; */
+export function canNewsletterFrom(desk: string | null | undefined): boolean {
+  return !!desk && NEWSLETTER_DESKS.includes(desk)
+}
+
+/** Πώς λέγεται η μαζική αποστολή στο κάθε γραφείο */
+export function bulkLabel(desk: string | null | undefined): string {
+  return desk === 'admin' ? 'Bulk email' : 'Newsletter'
+}
+
 /** Βλέπει η τρέχουσα έδρα το γραφείο αποστολής αυτής της ενότητας; */
 export function canSendEmailFrom(section: string, seat: string | null | undefined): boolean {
   if (!seat) return false
