@@ -113,6 +113,14 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
           {ev.RegistrationDeadline && <> · προθεσμία {grDate(ev.RegistrationDeadline)}</>}
         </p>
 
+        {/* Το ενημερωτικό στην ΚΟΡΥΦΗ: όποιος φτάσει εδώ χωρίς να το έχει
+            διαβάσει δεν πρέπει να το ανακαλύψει αφού συμπληρώσει. Η σελίδα
+            δίνει μόνη της τη σωστή έκδοση ανάλογα με τη συνεδρία. */}
+        <Link href={`/events/${ev.Slug}/info`}
+          className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-coral text-coral dark:text-coral-light font-bold text-sm hover:bg-coral/10 transition">
+          Περισσότερες πληροφορίες για τη δράση →
+        </Link>
+
         <form onSubmit={submit} className="mt-8 grid gap-6">
           {/* ── Ιδιότητα: ΠΡΩΤΗ, γιατί ορίζει τα υπόλοιπα ── */}
           <Card title="Η ιδιότητά σου">

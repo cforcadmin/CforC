@@ -57,6 +57,13 @@ export default function RegisterGate({
           </div>
         )}
 
+        {access.allowed && (
+          <Link href={`/events/${ev.Slug}/info`}
+            className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-coral text-coral dark:text-coral-light font-bold text-sm hover:bg-coral/10 transition">
+            Περισσότερες πληροφορίες για τη δράση →
+          </Link>
+        )}
+
         {access.allowed && access.mode === 'member' && (
           <div className="mt-8 rounded-3xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 p-6 sm:p-8">
             <p className="text-gray-600 dark:text-gray-300 mb-4">
