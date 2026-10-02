@@ -59,6 +59,26 @@ export default function EventDetail({ ev }: { ev: CforcEvent }) {
           )}
         </header>
 
+        {/* ── Η πρόσκληση ── */}
+        {ev.Description && (
+          <section className="mb-10">
+            <h2 className="text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400 mb-4">Η ΠΡΟΣΚΛΗΣΗ</h2>
+            <div className="prose prose-lg dark:prose-invert max-w-none whitespace-pre-line text-charcoal dark:text-gray-200">
+              {ev.Description}
+            </div>
+          </section>
+        )}
+        {ev.DescriptionEn && (
+          <details className="mb-10">
+            <summary className="text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400 cursor-pointer">
+              ENGLISH VERSION
+            </summary>
+            <div className="prose prose-lg dark:prose-invert max-w-none whitespace-pre-line mt-4 text-charcoal dark:text-gray-200">
+              {ev.DescriptionEn}
+            </div>
+          </details>
+        )}
+
         {/* ── Η δήλωση ── */}
         <div className="rounded-3xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 p-6 sm:p-8 mb-10">
           {phase === 'past' ? (
@@ -154,25 +174,6 @@ export default function EventDetail({ ev }: { ev: CforcEvent }) {
           </section>
         )}
 
-        {/* ── Η πρόσκληση ── */}
-        {ev.Description && (
-          <section className="mb-10">
-            <h2 className="text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400 mb-4">Η ΠΡΟΣΚΛΗΣΗ</h2>
-            <div className="prose prose-lg dark:prose-invert max-w-none whitespace-pre-line text-charcoal dark:text-gray-200">
-              {ev.Description}
-            </div>
-          </section>
-        )}
-        {ev.DescriptionEn && (
-          <details className="mb-10">
-            <summary className="text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400 cursor-pointer">
-              ENGLISH VERSION
-            </summary>
-            <div className="prose prose-lg dark:prose-invert max-w-none whitespace-pre-line mt-4 text-charcoal dark:text-gray-200">
-              {ev.DescriptionEn}
-            </div>
-          </details>
-        )}
       </main>
       <Footer />
       <ScrollToTop />
