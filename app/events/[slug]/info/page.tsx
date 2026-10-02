@@ -80,7 +80,11 @@ export default async function EventInfoPage({ params }: { params: Promise<{ slug
         <div className="cforc-doc drop-shadow-sm" dangerouslySetInnerHTML={{ __html: html }} />
 
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link href={`/events/${ev.Slug}/register`}
+          {/* Ο συνδεδεμένος πάει ΚΑΤΕΥΘΕΙΑΝ στη φόρμα — η πύλη ρωτά «είσαι
+              μέλος;» και σε κάποιον που μόλις διάβασε το έγγραφο ΤΩΝ ΜΕΛΩΝ
+              η ερώτηση είναι ένα κλικ χωρίς νόημα. Ίδιος κανόνας με το
+              κουμπί στη σελίδα της δράσης. */}
+          <Link href={`/events/${ev.Slug}/register${isMember ? '/form' : ''}`}
             className="inline-flex items-center px-6 py-3 rounded-full bg-coral text-charcoal font-bold hover:brightness-105 transition">
             Δήλωση συμμετοχής
           </Link>
