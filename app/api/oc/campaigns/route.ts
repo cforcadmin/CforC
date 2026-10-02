@@ -380,6 +380,19 @@ export async function GET(request: NextRequest) {
       deskLabel: desk ? OC_DESK_LABELS[desk] || '' : '',
       // Ό,τι χρειάζεται η οθόνη για να χτίσει τον επιλογέα, χωρίς δεύτερη κλήση
       memberCount: members.filter(m => m.am != null && m.email).length,
+      /**
+       * Ο κατάλογος για τον επιλογέα συγκεκριμένων μελών.
+       *
+       * ΧΩΡΙΣ φίλτρο ΑΜ, σκόπιμα: ο resolveRecipients δεν φιλτράρει κι εκείνος
+       * όταν κάποιος διαλέγει ΡΗΤΑ ένα άτομο («αν το διάλεξε, το εννοεί»).
+       * Ένας επιλογέας που κρύβει μέλη τα οποία ο server θα δεχόταν, είναι
+       * επιλογέας που λέει ψέματα. Χωρίς email ΔΕΝ μπαίνει: δεν υπάρχει πού
+       * να σταλεί. Το ίδιο το email δεν ταξιδεύει — φτάνει το docId.
+       */
+      memberList: members
+        .filter(m => m.email)
+        .map(m => ({ docId: m.docId, name: m.name, am: m.am ?? null }))
+        .sort((a, b) => String(a.name).localeCompare(String(b.name), 'el')),
       groups,
       seats: SEAT_AUDIENCES,
       blockLabels: BLOCK_LABELS,

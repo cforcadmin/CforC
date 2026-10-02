@@ -52,6 +52,8 @@ type Campaign = {
 }
 type Meta = {
   memberCount: number
+  /** Για τον επιλογέα συγκεκριμένων μελών — χωρίς email, φτάνει το docId */
+  memberList?: Array<{ docId: string; name: string; am: number | null }>
   groups: string[]
   seats?: Array<{ id: string; label: string; email: string }>
   blockLabels: Record<string, string>
@@ -2831,10 +2833,85 @@ function RecipientPicker({ meta, selection, setSelection }: { meta: Meta; select
         </div>
       )}
 
+      {/* Συγκεκριμένα μέλη — ΠΑΝΩ από τις εξωτερικές διευθύνσεις: πρώτα το
+          μητρώο, μετά ό,τι γράφεται με το χέρι. */}
+      <div>
+        <h4 className="text-sm font-semibold mb-2">Συγκεκριμένα μέλη</h4>
+        <MemberAdder
+          people={meta.memberList || []}
+          values={selection.memberDocIds || []}
+          onChange={v => setSelection({ ...selection, memberDocIds: v })} />
+      </div>
+
       <div>
         <h4 className="text-sm font-semibold mb-2">Εξωτερικές διευθύνσεις</h4>
         <EmailAdder values={selection.external || []} onChange={v => setSelection({ ...selection, external: v })}
           placeholder="όνομα@παράδειγμα.gr" />
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Επιλογή ΣΥΓΚΕΚΡΙΜΕΝΩΝ μελών από το μητρώο.
+ *
+ * Κρατά documentId, όχι email: η επίλυση γίνεται στον server (resolveRecipients,
+ * via:'individual') και έτσι μια διεύθυνση που αλλάζει στο μητρώο δεν μένει
+ * παγωμένη μέσα σε προσχέδιο. Η λίστα δεν ανοίγει ολόκληρη — 114 ονόματα δεν
+ * διαβάζονται· γράφεις δύο γράμματα και διαλέγεις.
+ */
+function MemberAdder({ people, values, onChange }: {
+  people: Array<{ docId: string; name: string; am: number | null }>
+  values: string[]
+  onChange: (v: string[]) => void
+}) {
+  const [q, setQ] = useState('')
+  const byId = useMemo(() => new Map(people.map(p => [p.docId, p])), [people])
+  const matches = useMemo(() => {
+    const t = q.trim().toLowerCase()
+    if (!t) return []
+    return people
+      .filter(p => !values.includes(p.docId))
+      .filter(p => p.name.toLowerCase().includes(t) || String(p.am ?? '').includes(t))
+      .slice(0, 8)
+  }, [q, people, values])
+
+  const add = (docId: string) => { onChange([...values, docId]); setQ('') }
+
+  if (!people.length) {
+    return <p className="text-sm text-gray-500 dark:text-gray-400">Ο κατάλογος μελών δεν φορτώθηκε.</p>
+  }
+
+  return (
+    <div>
+      <div className="relative">
+        <input type="text" value={q} onChange={e => setQ(e.target.value)}
+          placeholder="Γράψε όνομα ή ΑΜ…"
+          onKeyDown={e => { if (e.key === 'Enter' && matches[0]) { e.preventDefault(); add(matches[0].docId) } }}
+          className={`w-full ${FIELD}`} />
+        {matches.length > 0 && (
+          <ul className="absolute z-20 mt-1 w-full max-h-64 overflow-auto rounded-2xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg">
+            {matches.map(p => (
+              <li key={p.docId}>
+                <button type="button" onClick={() => add(p.docId)}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
+                  {p.name}
+                  {p.am != null && <span className="ml-2 text-xs text-gray-500 tabular-nums">ΑΜ {p.am}</span>}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-2 mt-2">
+        {values.map(id => (
+          <span key={id} className={`${CHIP} border-gray-300 dark:border-gray-600`}>
+            {byId.get(id)?.name || id}
+            <button type="button" onClick={() => onChange(values.filter(x => x !== id))}
+              aria-label={`Αφαίρεση ${byId.get(id)?.name || id}`}
+              className="text-gray-500 hover:text-red-600">✕</button>
+          </span>
+        ))}
       </div>
     </div>
   )
