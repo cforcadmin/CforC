@@ -8,6 +8,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-export default function ExpensesPage() {
-  return <ExpenseClaimShell />
+/**
+ * `?event=midterm-2026` προεπιλέγει την αφορμή και ανοίγει την πύλη της
+ * δράσης. Χωρίς παράμετρο, η φόρμα είναι ακριβώς ό,τι ήταν.
+ */
+export default async function ExpensesPage(
+  { searchParams }: { searchParams: Promise<{ event?: string; t?: string }> },
+) {
+  const sp = await searchParams
+  return <ExpenseClaimShell eventSlug={sp?.event || null} claimToken={sp?.t || null} />
 }

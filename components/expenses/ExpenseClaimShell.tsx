@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useId, useMemo, useState } from 'react'
+import { athensToday } from '@/lib/events'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navigation from '@/components/Navigation'
@@ -15,6 +16,7 @@ import {
   EVENT_TYPES, EVENT_NEEDS_NAME, EXPENSE_CATEGORIES, RECEIPT_TYPES, receiptSpec,
   BANKS, BANK_OTHER, TRAVEL_MODES, buildReturnLegs, allLegs, missingTravelLines, computeTotals, eventDays,
   ibanLooksValid, validateClaim, MIDTERM_2026, eventCap, countCoTravellers,
+  eventFromSlug, claimWindowOpen,
   type ClaimLine, type TravelLeg,
 } from '@/lib/expenseClaims'
 
@@ -34,11 +36,90 @@ const emptyLine = (): Draft => ({
   file1: null, file2: null,
 })
 
+/** Η επομένη μιας ISO ημερομηνίας — «ανοίγει από τις 23/11» αντί «μετά τις 22/11» */
+function nextDay(iso: string): string {
+  const d = new Date(`${iso}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + 1)
+  return d.toISOString().slice(0, 10)
+}
+
+/**
+ * «Στείλε μου σύνδεσμο μιας χρήσης».
+ *
+ * Η ΑΠΑΝΤΗΣΗ ΕΙΝΑΙ ΠΑΝΤΑ Η ΙΔΙΑ, βρέθηκε η εγγραφή ή όχι. Διαφορετικό
+ * μήνυμα στις δύο περιπτώσεις θα έλεγε σε οποιονδήποτε περαστικό ποιος
+ * δήλωσε συμμετοχή στη δράση, γράφοντας απλώς διευθύνσεις στο κουτί.
+ */
+function OneTimeLinkForm({ eventSlug }: { eventSlug: string }) {
+  const [email, setEmail] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [err, setErr] = useState('')
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErr(''); setBusy(true)
+    try {
+      const res = await fetch('/api/expenses/claim-link', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: eventSlug, email }),
+      })
+      const j = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(j?.error || 'Κάτι πήγε στραβά')
+      setSent(true)
+    } catch (e: any) {
+      setErr(e?.message || 'Κάτι πήγε στραβά')
+    } finally { setBusy(false) }
+  }
+
+  if (sent) {
+    return (
+      <p className="mt-6 rounded-2xl bg-[#F5F0EB] dark:bg-gray-800 border border-gray-200 dark:border-gray-600 p-5 text-sm text-charcoal dark:text-gray-200 text-left">
+        Αν βρήκαμε την εγγραφή σου, θα λάβεις μέσα σε λίγα λεπτά email με τον σύνδεσμο.
+        Αν δεν έρθει, έλεγξε το email που έγραψες και ξαναπροσπάθησε — ή γράψε μας στο{' '}
+        <a href="mailto:hello@cultureforchange.net" className="text-coral dark:text-coral-light hover:underline">
+          hello@cultureforchange.net
+        </a>.
+      </p>
+    )
+  }
+
+  return (
+    <form onSubmit={submit} className="mt-6 text-left grid gap-3">
+      <label className="block">
+        <span className="block text-sm font-bold text-charcoal dark:text-gray-200 mb-1.5">
+          Το email με το οποίο δήλωσες συμμετοχή
+        </span>
+        <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-charcoal dark:text-gray-100" />
+      </label>
+      <button type="submit" disabled={busy || !email.trim()}
+        className="justify-self-start px-6 py-3 rounded-full bg-coral text-charcoal font-bold disabled:opacity-50 hover:brightness-105 transition">
+        {busy ? 'Αποστολή…' : 'Στείλε μου τον σύνδεσμο'}
+      </button>
+      {err && <p role="alert" className="text-sm text-red-700 dark:text-red-300">{err}</p>}
+    </form>
+  )
+}
+
 const money = (n: number) => n.toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-export default function ExpenseClaimShell() {
+export default function ExpenseClaimShell(
+  { eventSlug = null, claimToken = null }: { eventSlug?: string | null; claimToken?: string | null } = {},
+) {
   const { user, isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
+
+  /* Η δράση της διεύθυνσης — null όταν δεν αναγνωρίζεται, και τότε τίποτα
+     από τα παρακάτω δεν ισχύει: η φόρμα ανοίγει όπως πάντα. */
+  const [askLink, setAskLink] = useState(false)
+  /* Ο σύνδεσμος μιας χρήσης: null = δεν ελέγχθηκε ακόμη, false = απορρίφθηκε */
+  const [tokenIdentity, setTokenIdentity] = useState<
+    { name: string; email: string; phone: string } | null>(null)
+  const [tokenError, setTokenError] = useState<string | null>(null)
+  const [tokenChecked, setTokenChecked] = useState(!claimToken)
+  const urlEvent = useMemo(() => eventFromSlug(eventSlug), [eventSlug])
+  const windowOpen = useMemo(() => claimWindowOpen(eventSlug, athensToday()), [eventSlug])
 
   const [prefill, setPrefill] = useState<{ name: string; email: string; phone: string; bankName: string; accountHolder: string; iban: string } | null>(null)
   const [phone, setPhone] = useState('')
@@ -63,6 +144,25 @@ export default function ExpenseClaimShell() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState<{ claimNumber: string; payable: number } | null>(null)
+
+  /* Με διακριτικό στη διεύθυνση, το ποιος είναι ο άνθρωπος το λέει ο SERVER:
+     η οθόνη δεν αποφασίζει ποτέ μόνη της ότι κάποιος δικαιούται να υποβάλει. */
+  useEffect(() => {
+    if (!claimToken || !eventSlug) return
+    let alive = true
+    fetch(`/api/expenses/claim-token?event=${encodeURIComponent(eventSlug)}&t=${encodeURIComponent(claimToken)}`)
+      .then(async r => {
+        const j = await r.json().catch(() => null)
+        if (!alive) return
+        if (!r.ok) { setTokenError(j?.error || 'Ο σύνδεσμος δεν είναι έγκυρος.'); return }
+        setTokenIdentity({ name: j.name, email: j.email, phone: j.phone || '' })
+        setPhone(j.phone || '')
+        setAccountHolder(j.name || '')
+      })
+      .catch(() => { if (alive) setTokenError('Δεν μπορέσαμε να ελέγξουμε τον σύνδεσμο. Δοκίμασε ξανά.') })
+      .finally(() => { if (alive) setTokenChecked(true) })
+    return () => { alive = false }
+  }, [claimToken, eventSlug])
 
   useEffect(() => {
     if (!isAuthenticated) return
@@ -96,6 +196,13 @@ export default function ExpenseClaimShell() {
     () => missingTravelLines(allLegs(legs, returnIncluded), lines),
     [legs, returnIncluded, lines],
   )
+  /* Η διεύθυνση προεπιλέγει την αφορμή — ΜΙΑ φορά, και μόνο όσο ο χρήστης
+     δεν έχει διαλέξει κάτι άλλος μόνος του. */
+  useEffect(() => {
+    if (urlEvent && !eventType) setEventType(urlEvent.label)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlEvent])
+
   /* ── MIDTERM_2026 ── Ο διακόπτης ΟΛΟΚΛΗΡΗΣ της παραμετροποίησης.
      Όσο είναι false, η φόρμα συμπεριφέρεται ακριβώς όπως πάντα. */
   const isMidterm2026 = eventType === MIDTERM_2026.label
@@ -173,6 +280,12 @@ export default function ExpenseClaimShell() {
         ],
       })),
     }
+    // Ο server ξαναελέγχει το διακριτικό και ΞΑΝΑΓΡΑΦΕΙ όνομα, email και
+    // αφορμή από τη δήλωση — ό,τι στέλνεται από εδώ είναι μόνο πρόταση.
+    if (claimToken && eventSlug) {
+      ;(payload as any).claimToken = claimToken
+      ;(payload as any).eventSlug = eventSlug
+    }
     const problem = validateClaim(payload as any)
     if (problem) { setError(problem); return }
 
@@ -202,19 +315,101 @@ export default function ExpenseClaimShell() {
       <Page><p className="text-gray-500 dark:text-gray-400 text-center py-20">Φόρτωση…</p></Page>
     )
   }
-  if (!isAuthenticated) {
+  /* ── ΠΟΛΥ ΝΩΡΙΣ ──
+     Πριν ο έλεγχος σύνδεσης: ισχύει για ΟΛΟΥΣ. Ένα μέλος που μπαίνει τον
+     Οκτώβριο δεν πρέπει να δει φόρμα που δεν έχει νόημα να συμπληρώσει. */
+  if (urlEvent && !windowOpen) {
     return (
       <Page>
         <div className="max-w-lg mx-auto text-center py-16">
           <h1 className="text-3xl font-bold text-charcoal dark:text-coral mb-4">ΕΞΟΔΟΛΟΓΙΟ</h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-8">
-            Η υποβολή εξοδολογίου γίνεται μόνο από συνδεδεμένα μέλη — έτσι ξέρουμε με βεβαιότητα
-            ποιος υποβάλλει και δεν χρειάζεται να συμπληρώσεις ξανά τα στοιχεία σου.
+          <p className="text-gray-600 dark:text-gray-300 mb-3">
+            Είναι νωρίς ακόμη. Τα εξοδολόγια για τη δράση{' '}
+            <strong className="text-charcoal dark:text-gray-100">{urlEvent.title}</strong>{' '}
+            ανοίγουν μετά τη λήξη της, από τις{' '}
+            <strong className="notranslate">{grDate(nextDay(urlEvent.end))}</strong>.
           </p>
-          <Link href="/login?redirect=/expenses"
-            className="inline-block bg-coral text-white font-bold rounded-full px-8 py-3 hover:bg-coral/90 transition-colors">
-            Σύνδεση
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-8">
+            Κράτησε αυτόν τον σύνδεσμο — θα τον χρειαστείς τότε, με τις αποδείξεις σου.
+          </p>
+          <Link href="/" className="inline-block border border-gray-300 dark:border-gray-600 font-bold rounded-full px-8 py-3">
+            Στην αρχική
           </Link>
+        </div>
+      </Page>
+    )
+  }
+
+  /* ── Η ΠΥΛΗ ──
+     Με δράση στη διεύθυνση, δύο δρόμοι: σύνδεση για όσους έχουν λογαριασμό,
+     σύνδεσμος μιας χρήσης για όσους δεν έχουν. Το δίκτυο αποζημιώνει και μη
+     μέλη — όρος του συγχρηματοδότη — και εκείνοι δεν έχουν πού να συνδεθούν. */
+  /* Με διακριτικό: περιμένουμε την ετυμηγορία του server πριν δείξουμε
+     οτιδήποτε — ούτε φόρμα, ούτε πύλη. */
+  if (claimToken && !tokenChecked) {
+    return <Page><p className="text-gray-500 dark:text-gray-400 text-center py-20">Έλεγχος συνδέσμου…</p></Page>
+  }
+  if (claimToken && tokenError) {
+    return (
+      <Page>
+        <div className="max-w-lg mx-auto text-center py-16">
+          <h1 className="text-3xl font-bold text-charcoal dark:text-coral mb-4">ΕΞΟΔΟΛΟΓΙΟ</h1>
+          <p role="alert" className="text-gray-600 dark:text-gray-300 mb-8">{tokenError}</p>
+          <Link href={`/expenses${eventSlug ? `?event=${encodeURIComponent(eventSlug)}` : ''}`}
+            className="inline-block bg-coral text-charcoal font-bold rounded-full px-8 py-3 hover:brightness-105 transition">
+            Ζήτα νέο σύνδεσμο
+          </Link>
+        </div>
+      </Page>
+    )
+  }
+
+  if (!isAuthenticated && !tokenIdentity) {
+    const back = `/expenses${eventSlug ? `?event=${encodeURIComponent(eventSlug)}` : ''}`
+    return (
+      <Page>
+        <div className="max-w-lg mx-auto text-center py-16">
+          <h1 className="text-3xl font-bold text-charcoal dark:text-coral mb-4">ΕΞΟΔΟΛΟΓΙΟ</h1>
+          {urlEvent ? (
+            <>
+              <p className="text-gray-600 dark:text-gray-300 mb-8">
+                Για να υποβάλεις εξοδολόγιο για τη δράση{' '}
+                <strong className="text-charcoal dark:text-gray-100">{urlEvent.title}</strong>,
+                διάλεξε έναν από τους δύο τρόπους.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2 text-left">
+                <Link href={`/login?returnTo=${encodeURIComponent(back)}`}
+                  className="rounded-2xl bg-coral text-charcoal font-bold px-6 py-4 hover:brightness-105 transition">
+                  Είμαι μέλος — Σύνδεση
+                  <span className="block text-sm font-normal mt-1 opacity-80">
+                    Τα στοιχεία σου συμπληρώνονται μόνα τους.
+                  </span>
+                </Link>
+                <button type="button" onClick={() => setAskLink(true)}
+                  className="rounded-2xl border border-gray-300 dark:border-gray-600 font-bold px-6 py-4 text-charcoal dark:text-gray-100 hover:border-coral transition">
+                  Δεν είμαι μέλος
+                  <span className="block text-sm font-normal mt-1 text-gray-600 dark:text-gray-400">
+                    Στείλε μου σύνδεσμο μιας χρήσης στο email μου.
+                  </span>
+                </button>
+              </div>
+              {askLink && <OneTimeLinkForm eventSlug={eventSlug!} />}
+            </>
+          ) : (
+            <>
+              <p className="text-gray-600 dark:text-gray-300 mb-8">
+                Η υποβολή εξοδολογίου γίνεται μόνο από συνδεδεμένα μέλη — έτσι ξέρουμε με βεβαιότητα
+                ποιος υποβάλλει και δεν χρειάζεται να συμπληρώσεις ξανά τα στοιχεία σου.
+              </p>
+              {/* returnTo, ΟΧΙ redirect: η σελίδα σύνδεσης διαβάζει μόνο το πρώτο
+                  (app/login/page.tsx:32) και αγνοεί σιωπηλά το δεύτερο — το μέλος
+                  συνδεόταν και προσγειωνόταν στο /profile, μακριά από τη φόρμα. */}
+              <Link href="/login?returnTo=%2Fexpenses"
+                className="inline-block bg-coral text-white font-bold rounded-full px-8 py-3 hover:bg-coral/90 transition-colors">
+                Σύνδεση
+              </Link>
+            </>
+          )}
         </div>
       </Page>
     )
@@ -246,7 +441,10 @@ export default function ExpenseClaimShell() {
     )
   }
 
-  const memberName = prefill?.name || user?.Name || ''
+  /* Το όνομα και το email στη φόρμα: από τη συνεδρία ή από τη ΔΗΛΩΣΗ — ποτέ
+     από πληκτρολόγηση. Ο server τα ξαναγράφει έτσι κι αλλιώς. */
+  const memberName = prefill?.name || tokenIdentity?.name || user?.Name || ''
+  const memberEmail = prefill?.email || tokenIdentity?.email || user?.Email || ''
 
   return (
     <Page>
@@ -285,7 +483,7 @@ export default function ExpenseClaimShell() {
           </Field>
           <div className="grid sm:grid-cols-2 gap-x-6 gap-y-5">
             <Field label="Email">
-              <input type="email" value={prefill?.email || user?.Email || ''} readOnly disabled
+              <input type="email" value={memberEmail} readOnly disabled
                 className="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 px-4 py-2.5 text-charcoal dark:text-gray-200 cursor-not-allowed" />
             </Field>
             <Field label="Τηλέφωνο">

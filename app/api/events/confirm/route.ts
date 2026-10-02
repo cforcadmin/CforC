@@ -103,6 +103,7 @@ export async function GET(request: NextRequest) {
       venue: [ev?.Venue, ev?.City].filter(Boolean).join(', ') || undefined,
       isMember: false,
       eventUrl: `${SITE}/events/${ev?.Slug || ''}`,
+      expensesUrl: ev?.Slug ? `${SITE}/expenses?event=${encodeURIComponent(ev.Slug)}` : undefined,
     })
     // Κοινοποίηση στο hello@ ΕΔΩ, στη στιγμή που η δήλωση γίνεται πραγματική
     // — όχι στο email με τον σύνδεσμο επιβεβαίωσης που στάλθηκε πριν.

@@ -106,9 +106,44 @@ ${CTA_HTML}`
   return { subject: `Επιβεβαίωσε τη συμμετοχή σου — ${opts.eventTitle}`, html: shell('Επιβεβαίωση συμμετοχής', inner) }
 }
 
+/**
+ * Ο σύνδεσμος μιας χρήσης για το εξοδολόγιο.
+ *
+ * Φεύγει ΜΟΝΟ προς τη διεύθυνση της δήλωσης, κατά παραγγελία και μετά τη
+ * λήξη της δράσης — ποτέ μαζί με το email επιβεβαίωσης, που φεύγει εβδομάδες
+ * νωρίτερα: ένα διακριτικό δύο μηνών σε γραμματοκιβώτιο είναι διαπιστευτήριο
+ * που περιμένει, και μέχρι να χρειαστεί θα είχε ούτως ή άλλως λήξει.
+ */
+export function claimLinkEmailHtml(opts: {
+  firstName: string; eventTitle: string; url: string; hours: number
+}) {
+  const inner = `
+<p style="margin:0 0 16px 0;">${esc(opts.firstName)},</p>
+<p style="margin:0 0 16px 0;">
+  ο σύνδεσμος για να υποβάλεις το εξοδολόγιό σου για τη δράση
+  <strong>${esc(opts.eventTitle)}</strong> είναι έτοιμος.
+</p>
+${button(opts.url, 'Υποβολή εξοδολογίου')}
+<p style="margin:0 0 12px 0;">
+  Θα χρειαστείς τις <strong>αποδείξεις ή τα εισιτήριά σου</strong> σε αρχείο ή φωτογραφία,
+  και τα στοιχεία του τραπεζικού σου λογαριασμού (IBAN).
+</p>
+<p style="margin:0 0 20px 0;font-size:14px;color:#666666;">
+  Ο σύνδεσμος ισχύει για ${opts.hours} ώρες και χρησιμοποιείται ΜΙΑ φορά. Αν λήξει, ζήτα
+  καινούργιον από την ίδια σελίδα. Αν δεν τον ζήτησες εσύ, αγνόησε αυτό το μήνυμα.
+</p>
+${GDPR_NOTICE_HTML}`
+  return {
+    subject: `Το εξοδολόγιό σου — ${opts.eventTitle}`,
+    html: shell('Υποβολή εξοδολογίου', inner),
+  }
+}
+
 /** Μετά το κλικ — ή αμέσως, για συνδεδεμένο μέλος */
 export function eventRegisteredEmailHtml(opts: {
-  firstName: string; eventTitle: string; dates: string; venue?: string; isMember: boolean; eventUrl: string
+  firstName: string; eventTitle: string; dates: string; venue?: string
+  /** Η σελίδα του εξοδολογίου για ΑΥΤΗ τη δράση — κενό όταν δεν καλύπτονται έξοδα */
+  expensesUrl?: string; isMember: boolean; eventUrl: string
 }) {
   const inner = `
 <p style="margin:0 0 16px 0;">${esc(opts.firstName)},</p>
@@ -121,6 +156,19 @@ export function eventRegisteredEmailHtml(opts: {
   για διαδικτυακή παρακολούθηση — πιο κοντά στην ημερομηνία.
 </p>
 ${button(opts.eventUrl, 'Δες τη δράση')}
+${opts.expensesUrl ? `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;border-radius:12px;margin:0 0 20px 0;">
+  <tr><td style="padding:16px 20px;font-size:15px;line-height:22px;color:#2D2D2D;">
+    <strong style="display:block;margin-bottom:6px;">Έξοδα μετακίνησης — ΜΕΤΑ τη δράση</strong>
+    Κράτησε αυτή τη διεύθυνση· θα τη χρειαστείς όταν τελειώσει η δράση, με τις αποδείξεις
+    ή τα εισιτήριά σου και τον IBAN σου:<br>
+    <a href="${opts.expensesUrl}" style="color:#C2410C;word-break:break-all;">${opts.expensesUrl}</a><br>
+    <span style="font-size:14px;color:#666666;">
+      Αν έχεις λογαριασμό στο cultureforchange.net, συνδέσου. Αν όχι, θα σου στείλουμε
+      σύνδεσμο μιας χρήσης σε αυτό εδώ το email.
+    </span>
+  </td></tr>
+</table>` : ''}
 <p style="margin:0 0 20px 0;font-size:14px;color:#666666;">
   Αν αλλάξει κάτι, γράψε μας στο
   <a href="mailto:hello@cultureforchange.net" style="color:#C2410C;">hello@cultureforchange.net</a>.

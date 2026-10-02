@@ -37,7 +37,45 @@ export const MIDTERM_2026 = {
   capPerPerson: 40,
   coTravellerWarning: 'Μόνο 1 άτομο ανά όχημα κάνει το εξοδολόγιο!',
   capNote: 'Η κάλυψη του CforC για αυτή τη δράση είναι 50% του ΚΤΕΛ Αθήνα–Θεσσαλονίκη, δηλαδή 40 € ανά άτομο.',
+  /** Το κομμάτι της διεύθυνσης: /expenses?event=midterm-2026 */
+  slug: 'midterm-2026',
 } as const
+
+/**
+ * Από τη διεύθυνση στην αφορμή.
+ *
+ * Κλειστός χάρτης, ΟΧΙ ελεύθερη αντιστοίχιση: ό,τι δεν αναγνωρίζεται
+ * αγνοείται και η φόρμα ανοίγει κανονικά. Έτσι μια χαλασμένη διεύθυνση δεν
+ * κλειδώνει κανέναν έξω — απλώς δεν προεπιλέγει τίποτα.
+ */
+const EVENT_SLUGS: Record<string, { label: string; end: string; title: string }> = {
+  [MIDTERM_2026.slug]: {
+    label: MIDTERM_2026.label,
+    end: MIDTERM_2026.end,
+    title: '5ο CforC Midterm & ReStart 2026',
+  },
+}
+
+export function eventFromSlug(slug: string | null | undefined) {
+  const k = String(slug || '').trim().toLowerCase()
+  return (k && Object.prototype.hasOwnProperty.call(EVENT_SLUGS, k)) ? EVENT_SLUGS[k] : null
+}
+
+/**
+ * Άνοιξαν τα εξοδολόγια αυτής της δράσης;
+ *
+ * ΜΕΤΑ τη λήξη, όχι πριν και όχι κατά τη διάρκεια: τα έξοδα της επιστροφής
+ * δεν έχουν γίνει ακόμη, και ένα εξοδολόγιο που υποβάλλεται στα μισά θα
+ * ξαναερχόταν δεύτερη φορά. Η σύγκριση είναι συμβολοσειρών, σε ώρα Αθήνας.
+ *
+ * Η λήξη ΜΕΤΡΑΕΙ ΜΕΣΑ: η δράση τελειώνει στις 22/11 και το εξοδολόγιο
+ * ανοίγει την επομένη, 23/11.
+ */
+export function claimWindowOpen(slug: string | null | undefined, today: string): boolean {
+  const ev = eventFromSlug(slug)
+  if (!ev) return true        // χωρίς αναγνωρισμένη δράση, η φόρμα είναι πάντα ανοιχτή
+  return today > ev.end
+}
 
 /**
  * Πόσοι συνταξίδεψαν — ΜΙΑ συνάρτηση για οθόνη και διαδρομή.

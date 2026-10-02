@@ -7,6 +7,7 @@ import {
   buildAttachmentName, buildClaimPdfName, receiptSpec, MAX_FILE_BYTES, MAX_TOTAL_BYTES,
   ALLOWED_FILE_TYPES, MAX_LINES, eventCap, countCoTravellers, type ClaimLine,
 } from '@/lib/expenseClaims'
+import { resolveClaimToken } from '@/lib/claimToken'
 import { generateExpenseClaimPdf } from '@/lib/expenseClaimPdf'
 import { archiveExpenseClaim, type ArchiveAttachment } from '@/lib/expenseClaimArchive'
 import { sendOcEmail, expenseClaimSubmittedEmailHtml, expenseClaimReceivedEmailHtml, FINANCE_FROM, FINANCE_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
@@ -44,6 +45,35 @@ async function strapi(path: string, method: string = 'GET', data?: any) {
   let json: any = null
   try { json = await res.json() } catch { /* 204 */ }
   return { ok: res.ok, status: res.status, json }
+}
+
+/**
+ * Ποιος υποβάλλει — ΔΥΟ ισοδύναμα αυστηρές πηγές ταυτότητας.
+ *
+ * 1. Συνεδρία: το μέλος, όπως πάντα.
+ * 2. Σύνδεσμος μιας χρήσης: κάποιος που δήλωσε συμμετοχή με επιβεβαιωμένο
+ *    email. Το δίκτυο αποζημιώνει και μη μέλη (όρος του συγχρηματοδότη) και
+ *    εκείνοι δεν έχουν λογαριασμό για να συνδεθούν.
+ *
+ * Η δεύτερη ΔΕΝ χαλαρώνει την πρώτη: το όνομα και το email έρχονται από τη
+ * ΔΗΛΩΣΗ, όχι από ό,τι πληκτρολογήθηκε, και δεν υπάρχει `id` μέλους — άρα
+ * τίποτα δεν γράφεται ποτέ σε προφίλ μέλους από αυτή τη διαδρομή.
+ */
+type Claimant = {
+  id: number | null
+  documentId: string | null
+  name: string; email: string; phone: string
+  bankName: string; accountHolder: string
+  /** Η δήλωση που έδωσε το δικαίωμα — καίγεται στο τέλος */
+  registrationId?: string
+}
+
+/** Η δήλωση πίσω από ένα διακριτικό — ΜΟΝΟ με τη σύνοψη, ποτέ με το ίδιο */
+async function lookupClaimRegistration(hash: string, slug: string) {
+  const r = await strapi(
+    `/event-registrations?filters[ClaimTokenHash][$eq]=${encodeURIComponent(hash)}`
+    + `&filters[event][Slug][$eq]=${encodeURIComponent(slug)}&pagination[limit]=1`)
+  return r.json?.data?.[0] || null
 }
 
 /** Το μέλος της τρέχουσας συνεδρίας — ή null */
@@ -138,9 +168,6 @@ export async function POST(request: NextRequest) {
   const csrfError = checkCsrf(request)
   if (csrfError) return NextResponse.json({ error: csrfError }, { status: 403 })
 
-  const member = await currentMember()
-  if (!member) return NextResponse.json({ error: 'Απαιτείται σύνδεση' }, { status: 401 })
-
   const form = await request.formData().catch(() => null)
   if (!form) return NextResponse.json({ error: 'Μη έγκυρη υποβολή' }, { status: 400 })
 
@@ -148,6 +175,24 @@ export async function POST(request: NextRequest) {
   try { input = JSON.parse(String(form.get('data') || '')) } catch {
     return NextResponse.json({ error: 'Μη έγκυρη υποβολή' }, { status: 400 })
   }
+
+  const sessionMember = await currentMember()
+  let member: Claimant | null = sessionMember
+
+  if (!member && input?.claimToken) {
+    const tok = await resolveClaimToken(
+      String(input.eventSlug || ''), String(input.claimToken || ''), lookupClaimRegistration)
+    if (!tok.ok) return NextResponse.json({ error: tok.message }, { status: 403 })
+    member = {
+      id: null, documentId: null,
+      name: tok.identity.name, email: tok.identity.email, phone: tok.identity.phone,
+      bankName: '', accountHolder: '',
+      registrationId: tok.identity.registrationId,
+    }
+    // Η αφορμή ΔΕΝ είναι ό,τι έστειλε η φόρμα: είναι η δράση του συνδέσμου.
+    input.eventType = tok.identity.eventLabel
+  }
+  if (!member) return NextResponse.json({ error: 'Απαιτείται σύνδεση' }, { status: 401 })
 
   // ── Τα αρχεία: κάθε γραμμή δηλώνει ποια «κουτάκια» της ανήκουν (line-θέση)
   const lines: ClaimLine[] = Array.isArray(input?.lines) ? input.lines.slice(0, MAX_LINES) : []
@@ -260,11 +305,23 @@ export async function POST(request: NextRequest) {
   // Strapi δεν συμπεριφέρεται σταθερά με null σε string πεδία, ενώ το κενό
   // είναι ψευδές και στις δύο περιπτώσεις — η προσυμπλήρωση σβήνει έτσι κι αλλιώς.
   const remember = !!input.rememberBank
-  const r = await strapi(`/members/${member.id}`, 'PUT', {
-    BankName: remember ? String(input.bankName || '').trim() : '',
-    AccountHolder: remember ? String(input.accountHolder || '').trim() : '',
-  })
-  if (!r.ok) console.error('expense claim: bank preference not saved on member', r.status)
+  if (member.id != null) {
+    const r = await strapi(`/members/${member.id}`, 'PUT', {
+      BankName: remember ? String(input.bankName || '').trim() : '',
+      AccountHolder: remember ? String(input.accountHolder || '').trim() : '',
+    })
+    if (!r.ok) console.error('expense claim: bank preference not saved on member', r.status)
+  }
+
+  // ΜΙΑΣ ΧΡΗΣΗΣ: καίγεται ΜΟΝΟ αφού το εξοδολόγιο αποθηκευτεί. Νωρίτερα, μια
+  // αποτυχία στην αποθήκευση θα άφηνε τον άνθρωπο χωρίς εξοδολόγιο ΚΑΙ χωρίς
+  // σύνδεσμο.
+  if (member.registrationId) {
+    const used = await strapi(`/event-registrations/${member.registrationId}`, 'PUT', {
+      ClaimTokenUsedAt: new Date().toISOString(),
+    })
+    if (!used.ok) console.error('expense claim: claim token not marked used', used.status)
+  }
 
   const documentId = created.json?.data?.documentId || null
 

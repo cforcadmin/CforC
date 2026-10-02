@@ -249,6 +249,7 @@ export async function POST(request: NextRequest) {
       const tpl = eventRegisteredEmailHtml({
         firstName: draft.FirstName.trim(), eventTitle: ev.Title, dates, venue,
         isMember: true, eventUrl: `${site}/events/${ev.Slug}`,
+        expensesUrl: `${site}/expenses?event=${encodeURIComponent(ev.Slug)}`,
       })
       // Κοινοποίηση στο hello@: η ΟΣ θέλει να βλέπει τη δήλωση μόλις γίνει.
       // Μπαίνει ΜΟΝΟ εδώ, όχι στο email επιβεβαίωσης — εκείνο κουβαλά token.

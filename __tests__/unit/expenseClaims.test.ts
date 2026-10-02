@@ -2,8 +2,7 @@ import {
   computeTotals, eventDays, ibanLooksValid, normaliseIban, validateClaim,
   buildAttachmentName, buildClaimPdfName, formatClaimNumber, receiptSpec,
   buildReturnLegs, allLegs, missingTravelLines, TRAVEL_MODES, RECEIPT_TYPES,
-  type ClaimLine,
-} from '@/lib/expenseClaims'
+  type ClaimLine, eventFromSlug, claimWindowOpen, MIDTERM_2026 } from '@/lib/expenseClaims'
 
 /** Μια έγκυρη γραμμή εξόδου — οι δοκιμές χαλάνε ένα πράγμα τη φορά */
 const line = (over: Partial<ClaimLine> = {}): ClaimLine => ({
@@ -225,5 +224,45 @@ describe('εξοδολόγια — τι λείπει από τη διαδρομ�
 
   it('αγνοεί μισοσυμπληρωμένα σκέλη και σκέλη χωρίς μέσο', () => {
     expect(missingTravelLines([leg('Αθήνα', '', 'Αεροπορικό εισιτήριο'), leg('Αθήνα', 'Πάτρα', '')], [])).toHaveLength(0)
+  })
+})
+
+describe('eventFromSlug', () => {
+  it('αναγνωρίζει το midterm-2026', () => {
+    expect(eventFromSlug('midterm-2026')?.label).toBe(MIDTERM_2026.label)
+  })
+  it('αγνοεί πεζά/κεφαλαία και κενά', () => {
+    expect(eventFromSlug('  Midterm-2026 ')?.label).toBe(MIDTERM_2026.label)
+  })
+  it('άγνωστο ή κενό δίνει null', () => {
+    expect(eventFromSlug('κάτι-άλλο')).toBeNull()
+    expect(eventFromSlug('')).toBeNull()
+    expect(eventFromSlug(null)).toBeNull()
+  })
+  /* Κλειστός χάρτης: ένα κλειδί του prototype δεν πρέπει να περάσει ποτέ
+     για συνάρτηση — το ίδιο φρένο με το OC_EMAIL_DESKS. */
+  it('δεν επιστρέφει κλειδιά του prototype', () => {
+    expect(eventFromSlug('toString')).toBeNull()
+    expect(eventFromSlug('constructor')).toBeNull()
+  })
+})
+
+describe('claimWindowOpen', () => {
+  it('κλειστό πριν τη δράση', () => {
+    expect(claimWindowOpen('midterm-2026', '2026-10-02')).toBe(false)
+  })
+  it('κλειστό ΚΑΤΑ τη διάρκεια', () => {
+    expect(claimWindowOpen('midterm-2026', '2026-11-21')).toBe(false)
+  })
+  /* Η τελευταία μέρα μετράει ΜΕΣΑ: τα έξοδα της επιστροφής δεν έχουν γίνει */
+  it('κλειστό την ΤΕΛΕΥΤΑΙΑ μέρα', () => {
+    expect(claimWindowOpen('midterm-2026', MIDTERM_2026.end)).toBe(false)
+  })
+  it('ανοιχτό την επομένη', () => {
+    expect(claimWindowOpen('midterm-2026', '2026-11-23')).toBe(true)
+  })
+  it('χωρίς αναγνωρισμένη δράση η φόρμα μένει ανοιχτή', () => {
+    expect(claimWindowOpen(null, '2026-01-01')).toBe(true)
+    expect(claimWindowOpen('άγνωστο', '2026-01-01')).toBe(true)
   })
 })
