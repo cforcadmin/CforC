@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'node:crypto'
 import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { eventRegisteredEmailHtml } from '@/lib/eventEmails'
+import { isReimbursed } from '@/lib/eventForm'
 import { dateRangeLabel } from '@/lib/events'
 
 export const maxDuration = 60
@@ -103,7 +104,9 @@ export async function GET(request: NextRequest) {
       venue: [ev?.Venue, ev?.City].filter(Boolean).join(', ') || undefined,
       isMember: false,
       eventUrl: `${SITE}/events/${ev?.Slug || ''}`,
-      expensesUrl: ev?.Slug ? `${SITE}/expenses?event=${encodeURIComponent(ev.Slug)}` : undefined,
+      // Ίδιος κανόνας με την εγγραφή — η ιδιότητα βγαίνει από τη δήλωση
+      expensesUrl: ev?.Slug && isReimbursed(reg.Capacity)
+        ? `${SITE}/expenses?event=${encodeURIComponent(ev.Slug)}` : undefined,
     })
     // Κοινοποίηση στο hello@ ΕΔΩ, στη στιγμή που η δήλωση γίνεται πραγματική
     // — όχι στο email με τον σύνδεσμο επιβεβαίωσης που στάλθηκε πριν.

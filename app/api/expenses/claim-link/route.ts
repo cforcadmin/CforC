@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'node:crypto'
 import { eventRegisterLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
-import { eventFromSlug, claimWindowOpen } from '@/lib/expenseClaims'
+import { eventFromSlug, claimWindow, CLAIMS_LATE_CONTACT } from '@/lib/expenseClaims'
 import { athensToday } from '@/lib/events'
 import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { claimLinkEmailHtml } from '@/lib/eventEmails'
@@ -63,9 +63,15 @@ export async function POST(request: NextRequest) {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return NextResponse.json({ error: 'Το email δεν είναι έγκυρο' }, { status: 400 })
   }
-  // Πριν τη λήξη της δράσης δεν εκδίδεται σύνδεσμος — δεν υπάρχει τι να δηλωθεί
-  if (!claimWindowOpen(slug, athensToday())) {
+  // Δύο διαφορετικά «όχι», με διαφορετική συνέχεια για τον άνθρωπο
+  const phase = claimWindow(slug, athensToday())
+  if (phase === 'early') {
     return NextResponse.json({ error: 'Τα εξοδολόγια δεν έχουν ανοίξει ακόμη' }, { status: 409 })
+  }
+  if (phase === 'late') {
+    return NextResponse.json({
+      error: `Η προθεσμία υποβολής έκλεισε. Γράψε στο ${CLAIMS_LATE_CONTACT} για να το τακτοποιήσουμε.`,
+    }, { status: 409 })
   }
 
   // ΜΟΝΟ επιβεβαιωμένη δήλωση: μια εκκρεμής σημαίνει ότι η διεύθυνση δεν

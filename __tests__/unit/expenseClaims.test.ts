@@ -2,7 +2,7 @@ import {
   computeTotals, eventDays, ibanLooksValid, normaliseIban, validateClaim,
   buildAttachmentName, buildClaimPdfName, formatClaimNumber, receiptSpec,
   buildReturnLegs, allLegs, missingTravelLines, TRAVEL_MODES, RECEIPT_TYPES,
-  type ClaimLine, eventFromSlug, claimWindowOpen, MIDTERM_2026 } from '@/lib/expenseClaims'
+  type ClaimLine, eventFromSlug, claimWindowOpen, claimWindow, MIDTERM_2026 } from '@/lib/expenseClaims'
 
 /** Μια έγκυρη γραμμή εξόδου — οι δοκιμές χαλάνε ένα πράγμα τη φορά */
 const line = (over: Partial<ClaimLine> = {}): ClaimLine => ({
@@ -277,5 +277,38 @@ describe('MIDTERM_2026.banTravelNote', () => {
   })
   it('δεν υπόσχεται κάλυψη σε μέλη', () => {
     expect(MIDTERM_2026.banTravelNote).toMatch(/START \/ BAN/)
+  })
+})
+
+/* ΤΡΕΙΣ φάσεις, όχι δύο: το «κλειστό» σημαίνει δύο διαφορετικά πράγματα για
+   τον άνθρωπο — «κράτα τον σύνδεσμο» και «μίλα με τη γραμματεία». */
+describe('claimWindow', () => {
+  it.each([
+    ['πριν τη δράση', '2026-10-02', 'early'],
+    ['κατά τη διάρκεια', '2026-11-21', 'early'],
+    ['την τελευταία μέρα της δράσης', MIDTERM_2026.end, 'early'],
+    ['την επομένη — ανοίγει', '2026-11-23', 'open'],
+    ['μέσα στο παράθυρο', '2026-11-27', 'open'],
+    ['την τελευταία μέρα του παραθύρου', MIDTERM_2026.claimsCloseOn, 'open'],
+    ['την επομένη του κλεισίματος', '2026-12-01', 'late'],
+    ['πολύ αργότερα', '2027-03-01', 'late'],
+  ] as const)('%s → %s', (_l, day, expected) => {
+    expect(claimWindow('midterm-2026', day)).toBe(expected)
+  })
+
+  it('χωρίς αναγνωρισμένη δράση η φόρμα είναι πάντα ανοιχτή', () => {
+    expect(claimWindow(null, '2030-01-01')).toBe('open')
+  })
+
+  /* Το boolean μένει συμβατό με τις διαδρομές που δεν χρειάζονται τη φάση */
+  it('το claimWindowOpen συμφωνεί με τη φάση', () => {
+    for (const d of ['2026-10-02', '2026-11-23', '2026-12-01']) {
+      expect(claimWindowOpen('midterm-2026', d)).toBe(claimWindow('midterm-2026', d) === 'open')
+    }
+  })
+
+  it('το παράθυρο ανοίγει ΜΕΤΑ τη δράση και κλείνει μέσα στον ίδιο μήνα', () => {
+    expect(MIDTERM_2026.claimsCloseOn > MIDTERM_2026.end).toBe(true)
+    expect(MIDTERM_2026.claimsCloseOn.startsWith('2026-11')).toBe(true)
   })
 })

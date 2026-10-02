@@ -49,6 +49,14 @@ export const MIDTERM_2026 = {
   banTravelSeats: 14,
   banTravelCapacity: 'non-member-ban',
   banTravelNote: 'Η κάλυψη εξόδων μετακίνησης για υποτρόφους START / BAN αφορά έως 14 άτομα.',
+  /**
+   * Ως πότε δέχεται εξοδολόγια η γραμματεία χωρίς συνεννόηση.
+   *
+   * Δεν είναι προθεσμία δικαιώματος — είναι ροή εργασίας: μετά από αυτό το
+   * σημείο η εκκαθάριση έχει κλείσει και η υποβολή θέλει άνθρωπο. Γι' αυτό
+   * η οθόνη ΔΕΝ λέει «έχασες», λέει «γράψε στο finance@».
+   */
+  claimsCloseOn: '2026-11-30',
 } as const
 
 /**
@@ -58,10 +66,11 @@ export const MIDTERM_2026 = {
  * αγνοείται και η φόρμα ανοίγει κανονικά. Έτσι μια χαλασμένη διεύθυνση δεν
  * κλειδώνει κανέναν έξω — απλώς δεν προεπιλέγει τίποτα.
  */
-const EVENT_SLUGS: Record<string, { label: string; end: string; title: string }> = {
+const EVENT_SLUGS: Record<string, { label: string; end: string; closes: string; title: string }> = {
   [MIDTERM_2026.slug]: {
     label: MIDTERM_2026.label,
     end: MIDTERM_2026.end,
+    closes: MIDTERM_2026.claimsCloseOn,
     title: '5ο CforC Midterm & ReStart 2026',
   },
 }
@@ -72,20 +81,33 @@ export function eventFromSlug(slug: string | null | undefined) {
 }
 
 /**
- * Άνοιξαν τα εξοδολόγια αυτής της δράσης;
+ * Σε ποια φάση βρίσκεται το παράθυρο υποβολής.
  *
- * ΜΕΤΑ τη λήξη, όχι πριν και όχι κατά τη διάρκεια: τα έξοδα της επιστροφής
- * δεν έχουν γίνει ακόμη, και ένα εξοδολόγιο που υποβάλλεται στα μισά θα
- * ξαναερχόταν δεύτερη φορά. Η σύγκριση είναι συμβολοσειρών, σε ώρα Αθήνας.
+ * ΤΡΕΙΣ καταστάσεις, όχι δύο, γιατί το «κλειστό» σημαίνει δύο τελείως
+ * διαφορετικά πράγματα για τον άνθρωπο μπροστά στην οθόνη: «δεν ήρθε η ώρα,
+ * κράτα τον σύνδεσμο» και «πέρασε η ώρα, μίλα με τη γραμματεία». Ένα
+ * boolean θα τα έλεγε και τα δύο «όχι».
  *
- * Η λήξη ΜΕΤΡΑΕΙ ΜΕΣΑ: η δράση τελειώνει στις 22/11 και το εξοδολόγιο
- * ανοίγει την επομένη, 23/11.
+ * Και τα δύο άκρα ΜΕΤΡΑΝΕ ΜΕΣΑ: η δράση τελειώνει 22/11 και η υποβολή
+ * ανοίγει 23/11· κλείνει στο τέλος της 30/11.
  */
-export function claimWindowOpen(slug: string | null | undefined, today: string): boolean {
+export type ClaimWindow = 'early' | 'open' | 'late'
+
+export function claimWindow(slug: string | null | undefined, today: string): ClaimWindow {
   const ev = eventFromSlug(slug)
-  if (!ev) return true        // χωρίς αναγνωρισμένη δράση, η φόρμα είναι πάντα ανοιχτή
-  return today > ev.end
+  if (!ev) return 'open'      // χωρίς αναγνωρισμένη δράση, η φόρμα είναι πάντα ανοιχτή
+  if (today <= ev.end) return 'early'
+  if (ev.closes && today > ev.closes) return 'late'
+  return 'open'
 }
+
+/** Συντομογραφία για τις διαδρομές που θέλουν μόνο «περνά ή όχι» */
+export function claimWindowOpen(slug: string | null | undefined, today: string): boolean {
+  return claimWindow(slug, today) === 'open'
+}
+
+/** Πού στέλνουμε όποιον άργησε — άνθρωπος, όχι φόρμα */
+export const CLAIMS_LATE_CONTACT = 'finance@cultureforchange.net'
 
 /**
  * Πόσοι συνταξίδεψαν — ΜΙΑ συνάρτηση για οθόνη και διαδρομή.

@@ -1,6 +1,7 @@
 import {
   offeredCapacities, visibleSessions, visibleOptions, sessionChoices,
-  validateRegistration, agendaWanted, emptyDraft, type RegistrationDraft, type SessionChoice,
+  validateRegistration, agendaWanted, isReimbursed, REIMBURSED_CAPACITIES,
+  emptyDraft, type RegistrationDraft, type SessionChoice,
 } from '@/lib/eventForm'
 
 const S = (id: number, Title: string, extra: any = {}) =>
@@ -118,4 +119,30 @@ describe('agendaWanted', () => {
      μπλόκαρε την υποβολή για ερώτηση που δεν φαίνεται πουθενά. */
   it('ιδιότητα που δεν βλέπει το μπλοκ: ποτέ', () =>
     expect(agendaWanted(ev, d({ agenda: 'yes' }, 'non-member'))).toBe(false))
+})
+
+/* Ο σύνδεσμος του εξοδολογίου ακολουθεί ΑΥΤΟ: υπόσχεση που δεν υπάρχει είναι
+   χειρότερη από σιωπή, και ανακαλείται πάνω σε κάποιον που αγόρασε εισιτήριο. */
+describe('isReimbursed', () => {
+  it('τα μέλη του CforC', () => {
+    expect(isReimbursed('member')).toBe(true)
+    expect(isReimbursed('member-ban')).toBe(true)
+  })
+  it('οι υπότροφοι BAN που δεν είναι μέλη', () => {
+    expect(isReimbursed('non-member-ban')).toBe(true)
+  })
+  it('ΟΧΙ όποιος δεν είναι τίποτα από τα δύο', () => {
+    expect(isReimbursed('non-member')).toBe(false)
+  })
+  it('ΟΧΙ η «άλλη» ιδιότητα — δεν ξέρουμε τι είναι', () => {
+    expect(isReimbursed('other')).toBe(false)
+  })
+  it('κενή ιδιότητα δεν αποζημιώνεται', () => {
+    expect(isReimbursed('')).toBe(false)
+    expect(isReimbursed(null)).toBe(false)
+    expect(isReimbursed(undefined)).toBe(false)
+  })
+  it('τρεις ιδιότητες, όχι περισσότερες', () => {
+    expect(REIMBURSED_CAPACITIES).toHaveLength(3)
+  })
 })

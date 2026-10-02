@@ -163,7 +163,11 @@ ${opts.expensesUrl ? `
     Κράτησε αυτή τη διεύθυνση· θα τη χρειαστείς όταν τελειώσει η δράση, με τις αποδείξεις
     ή τα εισιτήριά σου και τον IBAN σου:<br>
     <a href="${opts.expensesUrl}" style="color:#C2410C;word-break:break-all;">${opts.expensesUrl}</a><br>
+    <strong style="display:block;margin-top:10px;">Από τις 23 έως τις 30 Νοεμβρίου 2026.</strong>
     <span style="font-size:14px;color:#666666;">
+      Μέσα σε αυτό το διάστημα η εκκαθάριση γίνεται με μία κίνηση για όλους — γι' αυτό
+      σε παρακαλούμε να μην το αφήσεις για μετά. Αν χρειαστείς περισσότερο χρόνο, γράψε
+      στο <a href="mailto:finance@cultureforchange.net" style="color:#C2410C;">finance@cultureforchange.net</a>.<br>
       Αν έχεις λογαριασμό στο cultureforchange.net, συνδέσου. Αν όχι, θα σου στείλουμε
       σύνδεσμο μιας χρήσης σε αυτό εδώ το email.
     </span>

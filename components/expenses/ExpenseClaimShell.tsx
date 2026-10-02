@@ -16,7 +16,7 @@ import {
   EVENT_TYPES, EVENT_NEEDS_NAME, EXPENSE_CATEGORIES, RECEIPT_TYPES, receiptSpec,
   BANKS, BANK_OTHER, TRAVEL_MODES, buildReturnLegs, allLegs, missingTravelLines, computeTotals, eventDays,
   ibanLooksValid, validateClaim, MIDTERM_2026, eventCap, countCoTravellers,
-  eventFromSlug, claimWindowOpen,
+  eventFromSlug, claimWindow, CLAIMS_LATE_CONTACT,
   type ClaimLine, type TravelLeg,
 } from '@/lib/expenseClaims'
 
@@ -119,7 +119,7 @@ export default function ExpenseClaimShell(
   const [tokenError, setTokenError] = useState<string | null>(null)
   const [tokenChecked, setTokenChecked] = useState(!claimToken)
   const urlEvent = useMemo(() => eventFromSlug(eventSlug), [eventSlug])
-  const windowOpen = useMemo(() => claimWindowOpen(eventSlug, athensToday()), [eventSlug])
+  const phase = useMemo(() => claimWindow(eventSlug, athensToday()), [eventSlug])
 
   const [prefill, setPrefill] = useState<{ name: string; email: string; phone: string; bankName: string; accountHolder: string; iban: string } | null>(null)
   const [phone, setPhone] = useState('')
@@ -318,7 +318,34 @@ export default function ExpenseClaimShell(
   /* ── ΠΟΛΥ ΝΩΡΙΣ ──
      Πριν ο έλεγχος σύνδεσης: ισχύει για ΟΛΟΥΣ. Ένα μέλος που μπαίνει τον
      Οκτώβριο δεν πρέπει να δει φόρμα που δεν έχει νόημα να συμπληρώσει. */
-  if (urlEvent && !windowOpen) {
+  /* ── ΠΕΡΑΣΕ Η ΩΡΑ ──
+     ΔΕΝ λέει «έχασες»: το δικαίωμα δεν χάθηκε, η εκκαθάριση έκλεισε. Η
+     απάντηση είναι άνθρωπος, όχι φόρμα. */
+  if (urlEvent && phase === 'late') {
+    return (
+      <Page>
+        <div className="max-w-lg mx-auto text-center py-16">
+          <h1 className="text-3xl font-bold text-charcoal dark:text-coral mb-4">ΕΞΟΔΟΛΟΓΙΟ</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-3">
+            Η προθεσμία υποβολής για τη δράση{' '}
+            <strong className="text-charcoal dark:text-gray-100">{urlEvent.title}</strong>{' '}
+            έκλεισε στις <strong className="notranslate">{grDate(urlEvent.closes)}</strong>.
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-8">
+            Αν δεν πρόλαβες, γράψε στο{' '}
+            <a href={`mailto:${CLAIMS_LATE_CONTACT}`} className="text-coral dark:text-coral-light hover:underline">
+              {CLAIMS_LATE_CONTACT}
+            </a>{' '}— δεν χάθηκε τίποτα, απλώς χρειάζεται συνεννόηση.
+          </p>
+          <Link href="/" className="inline-block border border-gray-300 dark:border-gray-600 font-bold rounded-full px-8 py-3">
+            Στην αρχική
+          </Link>
+        </div>
+      </Page>
+    )
+  }
+
+  if (urlEvent && phase === 'early') {
     return (
       <Page>
         <div className="max-w-lg mx-auto text-center py-16">
@@ -331,6 +358,7 @@ export default function ExpenseClaimShell(
           </p>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-8">
             Κράτησε αυτόν τον σύνδεσμο — θα τον χρειαστείς τότε, με τις αποδείξεις σου.
+            Το παράθυρο κλείνει στις <strong className="notranslate">{grDate(urlEvent.closes)}</strong>.
           </p>
           <Link href="/" className="inline-block border border-gray-300 dark:border-gray-600 font-bold rounded-full px-8 py-3">
             Στην αρχική

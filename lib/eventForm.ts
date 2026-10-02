@@ -20,6 +20,19 @@ export const CAPACITY_LABELS: Record<EventCapacity, string> = {
 /** Ποιες ιδιότητες θεωρούνται ΜΕΛΟΣ — ορίζουν και τι επιτρέπεται να δηλώσει */
 export const MEMBER_CAPACITIES: EventCapacity[] = ['member', 'member-ban']
 
+/**
+ * Ποιοι αποζημιώνονται — και άρα ποιοι παίρνουν τον σύνδεσμο του εξοδολογίου.
+ *
+ * Τα μέλη του CforC και οι υπότροφοι START / BAN. Όποιος δεν είναι τίποτα
+ * από τα δύο δεν καλύπτεται, και ΔΕΝ πρέπει να λάβει σύνδεσμο: μια υπόσχεση
+ * που δεν υπάρχει είναι χειρότερη από σιωπή, και η ανάκλησή της πέφτει πάνω
+ * σε κάποιον που έχει ήδη αγοράσει εισιτήριο.
+ */
+export const REIMBURSED_CAPACITIES: EventCapacity[] = ['member', 'member-ban', 'non-member-ban']
+
+export const isReimbursed = (c: EventCapacity | '' | null | undefined): boolean =>
+  !!c && REIMBURSED_CAPACITIES.includes(c as EventCapacity)
+
 export type SessionChoice = 'in-person' | 'online' | 'absent'
 
 export interface RegistrationDraft {

@@ -5,7 +5,7 @@ import { verifyToken } from '@/lib/auth'
 import { checkCsrf } from '@/lib/csrf'
 import { eventRegisterLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 import { resolveEventAccess } from '@/lib/eventAccess'
-import { validateRegistration, offeredCapacities, visibleOptions } from '@/lib/eventForm'
+import { validateRegistration, offeredCapacities, visibleOptions, isReimbursed } from '@/lib/eventForm'
 import { validateProposal, costValue, openCallVisible, collectsInForm, emptyProposal, type ProposalDraft } from '@/lib/openCall'
 import type { CforcEvent } from '@/lib/types'
 import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
@@ -251,7 +251,10 @@ export async function POST(request: NextRequest) {
       const tpl = eventRegisteredEmailHtml({
         firstName: draft.FirstName.trim(), eventTitle: ev.Title, dates, venue,
         isMember: true, eventUrl: `${site}/events/${ev.Slug}`,
-        expensesUrl: `${site}/expenses?event=${encodeURIComponent(ev.Slug)}`,
+        // ΟΧΙ σε όποιον δεν καλύπτεται: σύνδεσμος για αποζημίωση που δεν
+        // δικαιούται είναι υπόσχεση που θα πρέπει μετά να ανακληθεί.
+        expensesUrl: isReimbursed(draft.Capacity as any)
+          ? `${site}/expenses?event=${encodeURIComponent(ev.Slug)}` : undefined,
       })
       // Κοινοποίηση στο hello@: η ΟΣ θέλει να βλέπει τη δήλωση μόλις γίνει.
       // Μπαίνει ΜΟΝΟ εδώ, όχι στο email επιβεβαίωσης — εκείνο κουβαλά token.
