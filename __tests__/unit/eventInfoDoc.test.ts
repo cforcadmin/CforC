@@ -89,3 +89,31 @@ describe('διπλό escaping', () => {
     expect(html).toMatch(/Stories &amp; Experiences/)
   })
 })
+
+/* Ο έλεγχος που ΕΛΕΙΠΕ: τα τεστ κοίταζαν αν υπάρχει το κείμενο, ποτέ αν
+   στέκεται σε δομή που ο browser μπορεί να αποδώσει. Κάθε μπλοκ βγαίνει ως
+   <tr> — χωρίς <table> γύρω του χάνονται όλα τα περιθώρια και οι ζώνες. */
+describe('δομή του εγγράφου', () => {
+  const doc = renderDocumentHtml({ title: 'Δοκιμή', blocks: infoDocFor(true) })
+
+  it('ξεκινά με <table>, όχι με ορφανό <tr>', () => {
+    expect(doc.trim()).toMatch(/^<table/)
+  })
+  it('κλείνει τον πίνακα', () => {
+    expect(doc.trim()).toMatch(/<\/table>$/)
+  })
+  it('κάθε <tr> είναι μέσα σε πίνακα — ισοζύγιο ανοιγμάτων/κλεισιμάτων', () => {
+    const open = (doc.match(/<table/g) || []).length
+    const close = (doc.match(/<\/table>/g) || []).length
+    expect(open).toBe(close)
+  })
+  it('η κεφαλίδα φέρνει τη ζώνη και το σήμα της', () => {
+    expect(doc).toContain('CULTURE FOR CHANGE')
+    expect(doc).toMatch(/alt="Culture for Change"/)
+  })
+  it('τα πλαϊνά περιθώρια των 48px φτάνουν στο αποτέλεσμα', () => {
+    // Οι παραλλαγές διαφέρουν («0 48px», «16px 48px 0 48px») — σημασία έχει
+    // ότι ΥΠΑΡΧΕΙ πλαϊνό περιθώριο, όχι η ακριβής σύνταξή του.
+    expect(doc).toMatch(/padding:[^;"]*48px/)
+  })
+})

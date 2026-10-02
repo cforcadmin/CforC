@@ -1808,7 +1808,17 @@ export function renderDocumentHtml(opts: {
   const signer = opts.signer || {
     name: 'Ομάδα Συντονισμού', role: 'Culture for Change', email: 'hello@cultureforchange.net',
   }
-  return [
+  /**
+   * ΤΟ ΠΕΡΙΤΥΛΙΓΜΑ ΔΕΝ ΕΙΝΑΙ ΔΙΑΚΟΣΜΗΣΗ — ΕΙΝΑΙ Η ΔΟΜΗ.
+   *
+   * Κάθε μπλοκ βγαίνει ως <tr>. Χωρίς <table> γύρω του, ο browser πετάει τα
+   * tr/td και κρατά μόνο το περιεχόμενο: χάνονται ΟΛΑ τα περιθώρια των 48px
+   * (το κείμενο κολλάει στις άκρες), εξαφανίζεται η ζώνη της κεφαλίδας, και
+   * μένουν όρθιοι μόνο όσοι εσωτερικοί πίνακες στέκονται μόνοι τους.
+   * (Διαπιστώθηκε 2/10/2026, από στιγμιότυπα — όχι από τεστ: ο έλεγχος
+   * κοίταζε ΑΝ υπάρχει το κείμενο, ποτέ πού κάθεται.)
+   */
+  const inner = [
     headerHtml(opts.headerStyle || 'coral', opts.title, opts.headerLogo !== false),
     renderCampaignBody(opts.blocks),
     footerHtml(
@@ -1819,6 +1829,11 @@ export function renderDocumentHtml(opts: {
       opts.footerLogo !== false,
     ),
   ].join('\n')
+
+  return `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${CONTENT_WIDTH}" style="width:100%;max-width:${CONTENT_WIDTH}px;margin:0 auto;background-color:${BRAND.white};border-radius:24px;overflow:hidden;">
+${inner}
+</table>`
 }
 
 export function campaignEmailHtml(opts: {

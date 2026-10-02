@@ -54,7 +54,7 @@ export default async function EventInfoPage({ params }: { params: Promise<{ slug
   return (
     <div className="min-h-screen bg-[#F5F0EB] dark:bg-gray-900">
       <Navigation />
-      <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
+      <main id="main-content" className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
         <Link href={`/events/${ev.Slug}`} className="text-sm font-bold text-coral dark:text-coral-light hover:underline">
           ← {ev.Title}
         </Link>
@@ -65,18 +65,19 @@ export default async function EventInfoPage({ params }: { params: Promise<{ slug
           {dateRangeLabel(ev.StartDate, ev.EndDate)}{ev.City ? ` · ${ev.City}` : ''}
         </p>
 
-        {/* Λευκό ΠΑΝΤΑ, και στο σκοτεινό θέμα: το περιεχόμενο κουβαλά τα
-            δικά του χρώματα από τα μπλοκ των email, φτιαγμένα για λευκό
-            φόντο. Σε σκούρα κάρτα θα έβγαινε μαύρο σε μαύρο. */}
-        {/* ΠΙΟ ΠΛΑΤΙΑ ΑΠΟ ΓΡΑΜΜΑ: τα μπλοκ είναι φτιαγμένα για τα 640px ενός
-            email, όπου ο αναγνώστης σαρώνει. Εδώ είναι ΕΓΓΡΑΦΟ που διαβάζεται,
-            και στο στενό πλάτος οι παράγραφοι στοιβάζονταν. Οι πίνακες είναι
-            width=100%, οπότε απλώνουν· κρατάμε όριο για να μη γίνει η γραμμή
-            τόσο μακριά που να χάνεται το μάτι στην επιστροφή. */}
-        <div className="mx-auto rounded-3xl bg-white shadow-sm overflow-hidden"
-          style={{ maxWidth: 900 }}>
-          <div dangerouslySetInnerHTML={{ __html: html }} />
-        </div>
+        {/* Καμία δική μας κάρτα: ο πίνακας του εγγράφου φέρνει μόνος του
+            λευκό φόντο, στρογγυλές γωνίες και τα περιθώριά του — ακριβώς
+            όπως φτάνει ένα γράμμα στο γραμματοκιβώτιο.
+
+            ΤΟ border-collapse ΕΙΝΑΙ ΑΠΑΡΑΙΤΗΤΟ: το preflight του Tailwind
+            ορίζει `border-collapse: collapse` σε ΚΑΘΕ πίνακα του ιστότοπου
+            (preflight.css:158), και ένας συμπτυγμένος πίνακας αγνοεί το
+            border-radius — γι' αυτό τα κουτιά έβγαιναν με ορθές γωνίες εδώ
+            ενώ στα email είναι στρογγυλά: εκεί δεν υπάρχει Tailwind.
+            Ο κανόνας μένει ΜΕΣΑ στο έγγραφο, όχι καθολικός: οι υπόλοιποι
+            πίνακες του ιστότοπου δεν έχουν λόγο να αλλάξουν. */}
+        <style>{`.cforc-doc table { border-collapse: separate; border-spacing: 0; }`}</style>
+        <div className="cforc-doc drop-shadow-sm" dangerouslySetInnerHTML={{ __html: html }} />
 
         <div className="mt-8 flex flex-wrap gap-3">
           <Link href={`/events/${ev.Slug}/register`}
