@@ -278,6 +278,9 @@ describe('MIDTERM_2026.banTravelNote', () => {
   it('δεν υπόσχεται κάλυψη σε μέλη', () => {
     expect(MIDTERM_2026.banTravelNote).toMatch(/START \/ BAN/)
   })
+  it('λέει ΚΑΙ ότι θα ακολουθήσει email — αλλιώς το όριο μοιάζει με άρνηση', () => {
+    expect(MIDTERM_2026.banTravelNote).toMatch(/email/)
+  })
 })
 
 /* ΤΡΕΙΣ φάσεις, όχι δύο: το «κλειστό» σημαίνει δύο διαφορετικά πράγματα για

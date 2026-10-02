@@ -1,6 +1,6 @@
 import {
   offeredCapacities, visibleSessions, visibleOptions, sessionChoices,
-  validateRegistration, agendaWanted, isReimbursed, REIMBURSED_CAPACITIES,
+  validateRegistration, agendaWanted, isReimbursed, MEMBER_CAPACITIES,
   emptyDraft, type RegistrationDraft, type SessionChoice,
 } from '@/lib/eventForm'
 
@@ -128,8 +128,10 @@ describe('isReimbursed', () => {
     expect(isReimbursed('member')).toBe(true)
     expect(isReimbursed('member-ban')).toBe(true)
   })
-  it('οι υπότροφοι BAN που δεν είναι μέλη', () => {
-    expect(isReimbursed('non-member-ban')).toBe(true)
+  /* Απόφαση 2/10/2026: από τη ΦΟΡΜΑ υποβάλλουν μόνο μέλη. Ο υπότροφος BAN
+     που δεν είναι μέλος δεν μένει ακάλυπτος — τον ειδοποιεί η γραμματεία. */
+  it('ΟΧΙ οι υπότροφοι BAN που δεν είναι μέλη — τους αναλαμβάνει άνθρωπος', () => {
+    expect(isReimbursed('non-member-ban')).toBe(false)
   })
   it('ΟΧΙ όποιος δεν είναι τίποτα από τα δύο', () => {
     expect(isReimbursed('non-member')).toBe(false)
@@ -142,7 +144,10 @@ describe('isReimbursed', () => {
     expect(isReimbursed(null)).toBe(false)
     expect(isReimbursed(undefined)).toBe(false)
   })
-  it('τρεις ιδιότητες, όχι περισσότερες', () => {
-    expect(REIMBURSED_CAPACITIES).toHaveLength(3)
+  /* ΜΙΑ πηγή: δεν υπάρχει δεύτερη λίστα που θα μπορούσε να αποκλίνει */
+  it('ταυτίζεται με το «είναι μέλος», όχι αντίγραφό του', () => {
+    for (const c of ['member', 'member-ban', 'non-member-ban', 'non-member', 'other'] as const) {
+      expect(isReimbursed(c)).toBe(MEMBER_CAPACITIES.includes(c as any))
+    }
   })
 })

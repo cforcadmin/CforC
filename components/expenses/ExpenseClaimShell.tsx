@@ -43,65 +43,6 @@ function nextDay(iso: string): string {
   return d.toISOString().slice(0, 10)
 }
 
-/**
- * «Στείλε μου σύνδεσμο μιας χρήσης».
- *
- * Η ΑΠΑΝΤΗΣΗ ΕΙΝΑΙ ΠΑΝΤΑ Η ΙΔΙΑ, βρέθηκε η εγγραφή ή όχι. Διαφορετικό
- * μήνυμα στις δύο περιπτώσεις θα έλεγε σε οποιονδήποτε περαστικό ποιος
- * δήλωσε συμμετοχή στη δράση, γράφοντας απλώς διευθύνσεις στο κουτί.
- */
-function OneTimeLinkForm({ eventSlug }: { eventSlug: string }) {
-  const [email, setEmail] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [sent, setSent] = useState(false)
-  const [err, setErr] = useState('')
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setErr(''); setBusy(true)
-    try {
-      const res = await fetch('/api/expenses/claim-link', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event: eventSlug, email }),
-      })
-      const j = await res.json().catch(() => null)
-      if (!res.ok) throw new Error(j?.error || 'Κάτι πήγε στραβά')
-      setSent(true)
-    } catch (e: any) {
-      setErr(e?.message || 'Κάτι πήγε στραβά')
-    } finally { setBusy(false) }
-  }
-
-  if (sent) {
-    return (
-      <p className="mt-6 rounded-2xl bg-[#F5F0EB] dark:bg-gray-800 border border-gray-200 dark:border-gray-600 p-5 text-sm text-charcoal dark:text-gray-200 text-left">
-        Αν βρήκαμε την εγγραφή σου, θα λάβεις μέσα σε λίγα λεπτά email με τον σύνδεσμο.
-        Αν δεν έρθει, έλεγξε το email που έγραψες και ξαναπροσπάθησε — ή γράψε μας στο{' '}
-        <a href="mailto:hello@cultureforchange.net" className="text-coral dark:text-coral-light hover:underline">
-          hello@cultureforchange.net
-        </a>.
-      </p>
-    )
-  }
-
-  return (
-    <form onSubmit={submit} className="mt-6 text-left grid gap-3">
-      <label className="block">
-        <span className="block text-sm font-bold text-charcoal dark:text-gray-200 mb-1.5">
-          Το email με το οποίο δήλωσες συμμετοχή
-        </span>
-        <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-charcoal dark:text-gray-100" />
-      </label>
-      <button type="submit" disabled={busy || !email.trim()}
-        className="justify-self-start px-6 py-3 rounded-full bg-coral text-charcoal font-bold disabled:opacity-50 hover:brightness-105 transition">
-        {busy ? 'Αποστολή…' : 'Στείλε μου τον σύνδεσμο'}
-      </button>
-      {err && <p role="alert" className="text-sm text-red-700 dark:text-red-300">{err}</p>}
-    </form>
-  )
-}
-
 const money = (n: number) => n.toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 export default function ExpenseClaimShell(
@@ -112,7 +53,6 @@ export default function ExpenseClaimShell(
 
   /* Η δράση της διεύθυνσης — null όταν δεν αναγνωρίζεται, και τότε τίποτα
      από τα παρακάτω δεν ισχύει: η φόρμα ανοίγει όπως πάντα. */
-  const [askLink, setAskLink] = useState(false)
   /* Ο σύνδεσμος μιας χρήσης: null = δεν ελέγχθηκε ακόμη, false = απορρίφθηκε */
   const [tokenIdentity, setTokenIdentity] = useState<
     { name: string; email: string; phone: string } | null>(null)
@@ -405,23 +345,21 @@ export default function ExpenseClaimShell(
                 <strong className="text-charcoal dark:text-gray-100">{urlEvent.title}</strong>,
                 διάλεξε έναν από τους δύο τρόπους.
               </p>
-              <div className="grid gap-3 sm:grid-cols-2 text-left">
-                <Link href={`/login?returnTo=${encodeURIComponent(back)}`}
-                  className="rounded-2xl bg-coral text-charcoal font-bold px-6 py-4 hover:brightness-105 transition">
-                  Είμαι μέλος — Σύνδεση
-                  <span className="block text-sm font-normal mt-1 opacity-80">
-                    Τα στοιχεία σου συμπληρώνονται μόνα τους.
-                  </span>
-                </Link>
-                <button type="button" onClick={() => setAskLink(true)}
-                  className="rounded-2xl border border-gray-300 dark:border-gray-600 font-bold px-6 py-4 text-charcoal dark:text-gray-100 hover:border-coral transition">
-                  Δεν είμαι μέλος
-                  <span className="block text-sm font-normal mt-1 text-gray-600 dark:text-gray-400">
-                    Στείλε μου σύνδεσμο μιας χρήσης στο email μου.
-                  </span>
-                </button>
-              </div>
-              {askLink && <OneTimeLinkForm eventSlug={eventSlug!} />}
+              <Link href={`/login?returnTo=${encodeURIComponent(back)}`}
+                className="inline-block rounded-full bg-coral text-charcoal font-bold px-8 py-3 hover:brightness-105 transition">
+                Σύνδεση
+              </Link>
+              {/* ΟΧΙ κουμπί «δεν είμαι μέλος»: η υποβολή από τη φόρμα είναι
+                  μόνο για μέλη (απόφαση 2/10/2026). Οι υπόλοιποι δεν μένουν
+                  ακάλυπτοι — τους ειδοποιεί η γραμματεία. Ένα κουμπί που θα
+                  έστελνε σιωπηλά τίποτα θα ήταν χειρότερο από καθόλου. */}
+              <p className="mt-6 text-sm text-gray-600 dark:text-gray-400">
+                Δεν είσαι μέλος του CforC; Η αποζημίωση τακτοποιείται ξεχωριστά — θα λάβεις
+                email από τη γραμματεία. Αν έχεις απορία, γράψε στο{' '}
+                <a href={`mailto:${CLAIMS_LATE_CONTACT}`} className="text-coral dark:text-coral-light hover:underline">
+                  {CLAIMS_LATE_CONTACT}
+                </a>.
+              </p>
             </>
           ) : (
             <>
