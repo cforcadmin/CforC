@@ -131,10 +131,26 @@ export default function EventDetail({ ev }: { ev: CforcEvent }) {
                   Η δράση είναι για τα μέλη του δικτύου — θα χρειαστεί να συνδεθείς.
                 </p>
               )}
-              <Link href={`/events/${ev.Slug}/register`}
-                className="inline-flex items-center px-6 py-3 rounded-full bg-coral text-charcoal font-bold hover:brightness-105 transition">
-                Δήλωση συμμετοχής
-              </Link>
+              {/* ΣΥΝΔΕΔΕΜΕΝΟΣ: κατευθείαν στη φόρμα. Η πύλη ρωτά «είσαι μέλος;»
+                  και σε κάποιον που έχει ήδη συνδεθεί η ερώτηση είναι φόρος.
+                  ΑΠΟΣΥΝΔΕΔΕΜΕΝΟΣ: περνά από την πύλη, που δίνει ΚΑΙ τις
+                  πληροφορίες — γι' αυτό το κουμπί δεν λέει μόνο «δήλωση». */}
+              {!isLoading && isAuthenticated ? (
+                <Link href={`/events/${ev.Slug}/register/form`}
+                  className="inline-flex items-center px-6 py-3 rounded-full bg-coral text-charcoal font-bold hover:brightness-105 transition">
+                  Δήλωση συμμετοχής
+                </Link>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                    Για περισσότερες πληροφορίες και για να δηλώσεις συμμετοχή, πάτησε εδώ.
+                  </p>
+                  <Link href={`/events/${ev.Slug}/register`}
+                    className="inline-flex items-center px-6 py-3 rounded-full bg-coral text-charcoal font-bold hover:brightness-105 transition">
+                    Πληροφορίες και δήλωση συμμετοχής
+                  </Link>
+                </>
+              )}
             </>
           )}
         </div>

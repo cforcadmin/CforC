@@ -64,6 +64,26 @@ export const emptyDraft = (): RegistrationDraft => ({
 })
 
 /** Οι ιδιότητες που προσφέρει ΑΥΤΗ η δράση — ποτέ όλες από προεπιλογή */
+/**
+ * Οι ιδιότητες που ταιριάζουν στον ΔΡΟΜΟ απ' όπου ήρθε κάποιος.
+ *
+ * Ο συνδεδεμένος βλέπει μόνο τις ιδιότητες μέλους· όποιος πέρασε από το «δεν
+ * είμαι μέλος» βλέπει μόνο τις υπόλοιπες. Πριν από αυτό, ένας ανώνυμος
+ * μπορούσε να διαλέξει «Μέλος CforC», να συμπληρώσει ολόκληρη τη φόρμα και να
+ * μάθει στην υποβολή ότι έπρεπε να συνδεθεί — αδιέξοδο στο τέλος της δουλειάς
+ * αντί για απουσία επιλογής στην αρχή.
+ *
+ * Το «other» μένει όπου το έβαλε η δράση: δεν ξέρουμε τι είναι, και δεν το
+ * χρεώνουμε σε καμία από τις δύο πλευρές χωρίς λόγο.
+ */
+export function capacitiesForPath(
+  ev: Pick<CforcEvent, 'Capacities'>,
+  isMember: boolean,
+): EventCapacity[] {
+  const offered = offeredCapacities(ev)
+  return offered.filter(c => (isMember ? MEMBER_CAPACITIES.includes(c) : !MEMBER_CAPACITIES.includes(c)))
+}
+
 export function offeredCapacities(ev: Pick<CforcEvent, 'Capacities'>): EventCapacity[] {
   const list = ev.Capacities
   if (!Array.isArray(list) || list.length === 0) {

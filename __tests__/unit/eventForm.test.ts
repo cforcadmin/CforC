@@ -1,6 +1,6 @@
 import {
   offeredCapacities, visibleSessions, visibleOptions, sessionChoices,
-  validateRegistration, agendaWanted, isReimbursed, MEMBER_CAPACITIES,
+  validateRegistration, agendaWanted, isReimbursed, MEMBER_CAPACITIES, capacitiesForPath,
   emptyDraft, type RegistrationDraft, type SessionChoice,
 } from '@/lib/eventForm'
 
@@ -149,5 +149,31 @@ describe('isReimbursed', () => {
     for (const c of ['member', 'member-ban', 'non-member-ban', 'non-member', 'other'] as const) {
       expect(isReimbursed(c)).toBe(MEMBER_CAPACITIES.includes(c as any))
     }
+  })
+})
+
+/* Ο δρόμος ορίζει τις επιλογές: ο ανώνυμος δεν βλέπει καν ιδιότητα μέλους,
+   αντί να τη διαλέγει και να μαθαίνει στην υποβολή ότι δεν επιτρεπόταν. */
+describe('capacitiesForPath', () => {
+  const four = { Capacities: ['member', 'member-ban', 'non-member-ban', 'non-member'] } as any
+  it('συνδεδεμένος: μόνο ιδιότητες μέλους', () => {
+    expect(capacitiesForPath(four, true)).toEqual(['member', 'member-ban'])
+  })
+  it('ανώνυμος: μόνο οι υπόλοιπες', () => {
+    expect(capacitiesForPath(four, false)).toEqual(['non-member-ban', 'non-member'])
+  })
+  it('οι δύο δρόμοι μαζί δίνουν ό,τι προσφέρει η δράση — τίποτα δεν χάνεται', () => {
+    expect([...capacitiesForPath(four, true), ...capacitiesForPath(four, false)].sort())
+      .toEqual([...four.Capacities].sort())
+  })
+  it('σέβεται τη δράση: ό,τι δεν προσφέρεται δεν εμφανίζεται', () => {
+    const onlyMembers = { Capacities: ['member'] } as any
+    expect(capacitiesForPath(onlyMembers, true)).toEqual(['member'])
+    expect(capacitiesForPath(onlyMembers, false)).toEqual([])
+  })
+  it('δράση χωρίς δήλωση ιδιοτήτων: ασφαλής προεπιλογή μόνο μέλη', () => {
+    const none = { Capacities: null } as any
+    expect(capacitiesForPath(none, true)).toEqual(['member'])
+    expect(capacitiesForPath(none, false)).toEqual([])
   })
 })

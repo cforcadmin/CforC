@@ -30,7 +30,7 @@ export default function RegisterGate({
         </Link>
 
         <h1 className="mt-4 text-3xl sm:text-4xl font-bold text-charcoal dark:text-white">
-          Δήλωση συμμετοχής
+          Δήλωση συμμετοχής / Περισσότερες πληροφορίες
         </h1>
         <p className="mt-2 text-gray-600 dark:text-gray-300">
           {dateRangeLabel(ev.StartDate, ev.EndDate)}{ev.City ? ` · ${ev.City}` : ''}

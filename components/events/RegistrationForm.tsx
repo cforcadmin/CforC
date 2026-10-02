@@ -10,7 +10,7 @@ import { dateRangeLabel, grDate } from '@/lib/events'
 import { upperGreek } from '@/lib/campaignBlocks'
 import { MIDTERM_2026 } from '@/lib/expenseClaims'
 import {
-  CAPACITY_LABELS, MEMBER_CAPACITIES, offeredCapacities, visibleSessions, visibleOptions, sessionChoices,
+  CAPACITY_LABELS, MEMBER_CAPACITIES, capacitiesForPath, visibleSessions, visibleOptions, sessionChoices,
   validateRegistration, agendaWanted, emptyDraft, type RegistrationDraft, type SessionChoice,
 } from '@/lib/eventForm'
 import {
@@ -37,7 +37,7 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState<{ status: 'confirmed' | 'pending'; email: string } | null>(null)
 
-  const capacities = useMemo(() => offeredCapacities(ev), [ev])
+  const capacities = useMemo(() => capacitiesForPath(ev, isMember), [ev, isMember])
   const sessions = useMemo(() => visibleSessions(ev, d.Capacity), [ev, d.Capacity])
   const options = useMemo(() => visibleOptions(ev, d.Capacity), [ev, d.Capacity])
   const oc = ev.OpenCall || null
