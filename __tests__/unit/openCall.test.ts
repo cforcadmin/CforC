@@ -1,6 +1,6 @@
 import {
   parseLines, openCallClosed, openCallVisible, collectsInForm, costApplies,
-  validateProposal, costValue, emptyProposal, type EventOpenCall, type ProposalDraft,
+  validateProposal, costValue, emptyProposal, stripOpenCall, type EventOpenCall, type ProposalDraft,
 } from '@/lib/openCall'
 
 const OC: EventOpenCall = {
@@ -158,5 +158,24 @@ describe('costValue', () => {
   })
   it('κενό όταν δεν προτείνει', () => {
     expect(costValue(OC, { ...full(), wants: 'no' })).toBeNull()
+  })
+})
+
+describe('stripOpenCall', () => {
+  it('βγάζει την πρόσκληση και αφήνει τα υπόλοιπα', () => {
+    const ev = { Title: 'Midterm', Slug: 'midterm-2026', OpenCall: OC }
+    const out = stripOpenCall(ev)
+    expect('OpenCall' in out).toBe(false)
+    expect(out.Title).toBe('Midterm')
+    expect(out.Slug).toBe('midterm-2026')
+  })
+  it('δράση χωρίς πρόσκληση μένει ίδια', () => {
+    const ev = { Title: 'Άλλη', OpenCall: null }
+    expect(stripOpenCall(ev)).toBe(ev)
+  })
+  it('δεν πειράζει το πρωτότυπο — ο καλών μπορεί να το ξαναχρησιμοποιήσει', () => {
+    const ev = { Title: 'Midterm', OpenCall: OC }
+    stripOpenCall(ev)
+    expect(ev.OpenCall).toBe(OC)
   })
 })

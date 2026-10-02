@@ -87,6 +87,22 @@ export function openCallVisible(
   return true
 }
 
+/**
+ * Βγάζει την πρόσκληση από τη δράση ΠΡΙΝ φύγει για τον browser.
+ *
+ * Το να την κρύβει η οθόνη ΔΕΝ αρκεί: η δράση ταξιδεύει ολόκληρη μέσα στο
+ * φορτίο της σελίδας, οπότε όποιος κοιτάξει τον πηγαίο κώδικα τη διαβάζει
+ * κανονικά — συνδεδεμένος ή όχι. «Δεν φαίνεται» σημαίνει «δεν στάλθηκε».
+ *
+ * Επαληθεύτηκε ζωντανά στις 2/10/2026: το κείμενο της πρόσκλησης υπήρχε στον
+ * πηγαίο κώδικα και των δύο δημόσιων σελίδων για ανώνυμο επισκέπτη.
+ */
+export function stripOpenCall<T extends { OpenCall?: unknown }>(ev: T): T {
+  if (!ev || ev.OpenCall == null) return ev
+  const { OpenCall, ...rest } = ev
+  return rest as T
+}
+
 /** Μαζεύει πεδία πρότασης ή είναι μόνο ανακοίνωση; */
 export const collectsInForm = (oc: EventOpenCall | null | undefined): boolean =>
   !!oc && oc.CollectInForm !== false

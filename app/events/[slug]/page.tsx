@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { getEventBySlug } from '@/lib/strapi'
 import type { CforcEvent } from '@/lib/types'
 import EventDetail from '@/components/events/EventDetail'
+import { stripOpenCall } from '@/lib/openCall'
 
 export const revalidate = 3600
 
@@ -23,5 +24,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   let ev: CforcEvent | null = null
   try { ev = (await getEventBySlug(slug)) as CforcEvent | null } catch { /* κάτω */ }
   if (!ev) notFound()
-  return <EventDetail ev={ev} />
+  // Σελίδα δημόσια ΚΑΙ στην κρυφή μνήμη για μία ώρα: ό,τι μπει εδώ το
+  // διαβάζει οποιοσδήποτε. Η πρόσκληση ζει μόνο μέσα στη φόρμα.
+  return <EventDetail ev={stripOpenCall(ev)} />
 }

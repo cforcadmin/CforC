@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getEvents } from '@/lib/strapi'
 import type { CforcEvent } from '@/lib/types'
 import EventsContent from '@/components/events/EventsContent'
+import { stripOpenCall } from '@/lib/openCall'
 
 export const metadata: Metadata = {
   title: 'Δράσεις | Culture for Change',
@@ -19,7 +20,8 @@ export default async function EventsPage() {
   let events: CforcEvent[] = []
   try {
     const res = await getEvents()
-    events = (res?.data || []) as CforcEvent[]
+    // Η πρόσκληση δεν φαίνεται ΠΟΤΕ εδώ — άρα δεν έχει λόγο να σταλεί
+    events = ((res?.data || []) as CforcEvent[]).map(stripOpenCall)
   } catch {
     // Η σελίδα δείχνει το άδειο μήνυμα· δεν σπάει επειδή δεν απάντησε το Strapi
   }
