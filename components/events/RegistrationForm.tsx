@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
@@ -10,8 +10,12 @@ import { dateRangeLabel, grDate } from '@/lib/events'
 import { upperGreek } from '@/lib/campaignBlocks'
 import {
   CAPACITY_LABELS, MEMBER_CAPACITIES, offeredCapacities, visibleSessions, visibleOptions, sessionChoices,
-  validateRegistration, emptyDraft, type RegistrationDraft, type SessionChoice,
+  validateRegistration, agendaWanted, emptyDraft, type RegistrationDraft, type SessionChoice,
 } from '@/lib/eventForm'
+import {
+  openCallVisible, collectsInForm, costApplies, parseLines, validateProposal,
+  emptyProposal, type ProposalDraft,
+} from '@/lib/openCall'
 
 type Prefill = { FirstName: string; LastName: string; Email: string; Phone: string } | null
 
@@ -26,13 +30,21 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
   ev: CforcEvent; isMember: boolean; prefill: Prefill
 }) {
   const [d, setD] = useState<RegistrationDraft>(() => ({ ...emptyDraft(), ...(prefill || {}) }))
+  const [p, setP] = useState<ProposalDraft>(emptyProposal)
   const [busy, setBusy] = useState(false)
+  const [imgBusy, setImgBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState<{ status: 'confirmed' | 'pending'; email: string } | null>(null)
 
   const capacities = useMemo(() => offeredCapacities(ev), [ev])
   const sessions = useMemo(() => visibleSessions(ev, d.Capacity), [ev, d.Capacity])
   const options = useMemo(() => visibleOptions(ev, d.Capacity), [ev, d.Capacity])
+  const oc = ev.OpenCall || null
+  /* Η πρόσκληση θέλει ΚΑΙ ιδιότητα που τη βλέπει ΚΑΙ προθεσμία που δεν πέρασε.
+     Ό,τι δεν φαίνεται δεν απαιτείται — ο κανόνας ζει στο lib/openCall και
+     ισχύει αυτούσιος και στον server. */
+  const showOpenCall = useMemo(() => openCallVisible(oc, d.Capacity), [oc, d.Capacity])
+  const askAgenda = agendaWanted(ev, d)
 
   /* Αλλάζοντας ιδιότητα, οι απαντήσεις σε ΚΡΥΜΜΕΝΑ πλέον στοιχεία φεύγουν:
      αλλιώς θα στελνόταν απάντηση σε ερώτηση που ο άνθρωπος δεν είδε ποτέ. */
@@ -46,6 +58,9 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
       SessionChoices: Object.fromEntries(Object.entries(prev.SessionChoices).filter(([k]) => okS.has(k))),
       OptionAnswers: Object.fromEntries(Object.entries(prev.OptionAnswers).filter(([k]) => okO.has(k))),
     }))
+    // Το ίδιο και για την πρόταση: αλλάζοντας σε ιδιότητα που δεν βλέπει την
+    // πρόσκληση, δεν ταξιδεύει πρόταση που ο άνθρωπος δεν βλέπει πια.
+    if (!openCallVisible(ev.OpenCall || null, d.Capacity)) setP(emptyProposal())
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [d.Capacity])
 
@@ -53,18 +68,26 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
   const setSession = (id: number, v: SessionChoice) =>
     setD(prev => ({ ...prev, SessionChoices: { ...prev.SessionChoices, [String(id)]: v } }))
   const setOption = (key: string, v: string) =>
-    setD(prev => ({ ...prev, OptionAnswers: { ...prev.OptionAnswers, [key]: v } }))
+    setD(prev => ({
+      ...prev,
+      OptionAnswers: { ...prev.OptionAnswers, [key]: v },
+      // «Όχι» στην ατζέντα: ό,τι γράφτηκε πριν φεύγει μαζί με τα πεδία, αλλιώς
+      // θα υποβαλλόταν θέμα που ο άνθρωπος αποφάσισε να μη στείλει.
+      ...(key === 'agenda' && v !== 'yes' ? { AgendaTopic: '', GeneralComments: '' } : {}),
+    }))
+  const setProp = (patch: Partial<ProposalDraft>) => setP(prev => ({ ...prev, ...patch }))
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     const problem = validateRegistration(ev, d, isMember)
+      || validateProposal(oc, p, d.Capacity)
     if (problem) { setError(problem); return }
     setBusy(true)
     try {
       const res = await fetch('/api/events/register', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: ev.Slug, ...d }),
+        body: JSON.stringify({ slug: ev.Slug, ...d, Proposal: showOpenCall ? p : undefined }),
       })
       const j = await res.json()
       if (!res.ok) throw new Error(j?.error || 'Κάτι πήγε στραβά')
@@ -213,12 +236,101 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
                 </Card>
               ))}
 
-              <Card title="Θέματα και σχόλια">
-                <Textarea label="Θέμα που προτείνεις για την ατζέντα" value={d.AgendaTopic}
-                  onChange={v => set({ AgendaTopic: v })} />
-                <Textarea label="Γενικά σχόλια ή ιδέες" value={d.GeneralComments}
-                  onChange={v => set({ GeneralComments: v })} />
-              </Card>
+              {/* Ανοίγει ΜΟΝΟ με «Ναι» στην ερώτηση της ατζέντας: δύο κουτιά
+                  που περιμένουν χωρίς λόγο είναι δύο κουτιά που αγνοούνται. */}
+              {askAgenda && (
+                <Card title="Θέματα και σχόλια">
+                  <Textarea label="Θέμα που προτείνεις για την ατζέντα *" value={d.AgendaTopic}
+                    onChange={v => set({ AgendaTopic: v })} />
+                  <Textarea label="Γενικά σχόλια ή ιδέες" value={d.GeneralComments}
+                    onChange={v => set({ GeneralComments: v })} />
+                </Card>
+              )}
+
+              {/* ── Η ανοιχτή πρόσκληση ──
+                  Ίδια λογική με την ατζέντα: υποχρεωτική ερώτηση, πεδία μόνο
+                  στο «Ναι». Η ερώτηση είναι υποχρεωτική ΕΠΙΤΗΔΕΣ — έτσι
+                  ξέρουμε ότι την είδαν, αντί να μαντεύουμε από τη σιωπή. */}
+              {showOpenCall && oc && (
+                <Card title={oc.Title}>
+                  {oc.Intro && (
+                    <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line mb-4">
+                      {oc.Intro}
+                    </p>
+                  )}
+                  {oc.Deadline && (
+                    <p className="text-sm text-charcoal dark:text-gray-200 mb-4">
+                      Προθεσμία: <strong className="notranslate">{grDate(oc.Deadline)}</strong>
+                    </p>
+                  )}
+
+                  {collectsInForm(oc) ? (
+                    <>
+                      <p className="font-semibold text-charcoal dark:text-white mb-2">{oc.Question}</p>
+                      <div className="grid gap-2">
+                        <Radio name="oc-wants" checked={p.wants === 'yes'}
+                          onChange={() => setProp({ wants: 'yes' })} label="Ναι" />
+                        <Radio name="oc-wants" checked={p.wants === 'no'}
+                          onChange={() => setProp({ wants: 'no' })} label="Όχι" />
+                      </div>
+
+                      {p.wants === 'yes' && (
+                        <div className="mt-5 grid gap-4 border-t border-gray-200 dark:border-gray-600 pt-5">
+                          <Input label="Τίτλος της δράσης *" value={p.EventProposalTitle}
+                            onChange={v => setProp({ EventProposalTitle: v })} />
+
+                          <Select label="Πότε μπορεί να γίνει; *" value={p.TimeSlot}
+                            options={parseLines(oc.TimeSlots)}
+                            onChange={v => setProp({ TimeSlot: v })} />
+
+                          <Select label="Είδος δράσης *" value={p.TypeOfEvent}
+                            options={parseLines(oc.TypeOptions)}
+                            onChange={v => setProp({ TypeOfEvent: v, ...(costApplies(oc, v) ? {} : { ProposalCost: '' }) })} />
+
+                          {/* Το κόστος εμφανίζεται μόνο όταν έχει νόημα: ένα
+                              υποχρεωτικό «0» στη δωρεάν δράση δεν λέει τίποτα. */}
+                          {costApplies(oc, p.TypeOfEvent) && (
+                            <Input label="Συνολικό κόστος σε ευρώ *" value={p.ProposalCost}
+                              onChange={v => setProp({ ProposalCost: v })} />
+                          )}
+
+                          <Input label="Διάρκεια *" value={p.ProposalDuration}
+                            onChange={v => setProp({ ProposalDuration: v })} />
+
+                          <Input label="Σύνδεσμος (ιστοσελίδα, παρουσίαση, βίντεο)" value={p.ProposalLink}
+                            onChange={v => setProp({ ProposalLink: v })} />
+
+                          <PromoImageField
+                            url={p.ProposalPromoImage}
+                            busy={imgBusy}
+                            onBusy={setImgBusy}
+                            onError={setError}
+                            onChange={(url, id) => setProp({ ProposalPromoImage: url, ProposalPromoImageId: id })}
+                          />
+
+                          {oc.ContactEmail && (
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                              Κάτι που δεν χωρά στα παραπάνω; Γράψε μας στο{' '}
+                              <a href={`mailto:${oc.ContactEmail}`} className="text-coral dark:text-coral-light hover:underline">
+                                {oc.ContactEmail}
+                              </a>.
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    oc.ContactEmail && (
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        Στείλε μας την πρότασή σου στο{' '}
+                        <a href={`mailto:${oc.ContactEmail}`} className="text-coral dark:text-coral-light hover:underline">
+                          {oc.ContactEmail}
+                        </a>.
+                      </p>
+                    )
+                  )}
+                </Card>
+              )}
 
               {!isMember && (
                 <Card title="Τα δεδομένα σου">
@@ -242,7 +354,7 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
                 </p>
               )}
 
-              <button type="submit" disabled={busy}
+              <button type="submit" disabled={busy || imgBusy}
                 className="px-6 py-3 rounded-full bg-coral text-charcoal font-bold hover:brightness-105 disabled:opacity-50 transition">
                 {busy ? 'Υποβολή…' : 'Υποβολή δήλωσης'}
               </button>
@@ -349,6 +461,73 @@ function Textarea({ label, value, onChange }: { label: string; value: string; on
       <span className="block text-sm font-bold text-charcoal dark:text-gray-200 mb-1.5">{label}</span>
       <textarea rows={3} value={value} onChange={e => onChange(e.target.value)} className={inputCls} />
     </label>
+  )
+}
+
+function Select({ label, value, options, onChange }: {
+  label: string; value: string; options: string[]; onChange: (v: string) => void
+}) {
+  return (
+    <label className="block">
+      <span className="block text-sm font-bold text-charcoal dark:text-gray-200 mb-1.5">{label}</span>
+      <select value={value} onChange={e => onChange(e.target.value)} className={inputCls}>
+        <option value="">— διάλεξε —</option>
+        {options.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </label>
+  )
+}
+
+/**
+ * Η εικόνα προβολής της πρότασης.
+ *
+ * Ανεβαίνει ΑΜΕΣΩΣ, πριν υποβληθεί η φόρμα, και μένει μια διεύθυνση. Μέσα στο
+ * JSON της δήλωσης θα ταξίδευε σε base64 και μια κομμένη σύνδεση θα έπαιρνε
+ * μαζί της ΟΛΗ τη δήλωση αντί για ένα αρχείο.
+ */
+function PromoImageField({ url, busy, onBusy, onError, onChange }: {
+  url: string
+  busy: boolean
+  onBusy: (v: boolean) => void
+  onError: (v: string | null) => void
+  onChange: (url: string, id: string) => void
+}) {
+  const ref = useRef<HTMLInputElement>(null)
+
+  const upload = async (f: File) => {
+    onError(null); onBusy(true)
+    try {
+      const fd = new FormData(); fd.append('file', f)
+      const res = await fetch('/api/events/proposal-image', { method: 'POST', body: fd })
+      const j = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(j?.error || 'Η εικόνα δεν ανέβηκε')
+      onChange(j.url, j.id)
+    } catch (e: any) {
+      onError(e?.message || 'Η εικόνα δεν ανέβηκε')
+    } finally {
+      onBusy(false)
+      if (ref.current) ref.current.value = ''
+    }
+  }
+
+  return (
+    <div>
+      <span className="block text-sm font-bold text-charcoal dark:text-gray-200 mb-1.5">
+        Εικόνα για την προβολή της δράσης *
+      </span>
+      {url && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img src={url} alt="Η εικόνα που ανέβασες"
+          className="mb-2 max-h-40 rounded-xl border border-gray-200 dark:border-gray-600" />
+      )}
+      <input ref={ref} type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
+        onChange={e => { const f = e.target.files?.[0]; if (f) upload(f) }} />
+      <button type="button" disabled={busy} onClick={() => ref.current?.click()}
+        className="px-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-semibold disabled:opacity-50">
+        {busy ? 'Ανεβαίνει…' : url ? 'Αλλαγή εικόνας' : 'Επιλογή εικόνας'}
+      </button>
+      <p className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">JPG, PNG ή WebP — μέχρι 5 MB.</p>
+    </div>
   )
 }
 

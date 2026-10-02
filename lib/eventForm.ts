@@ -85,6 +85,22 @@ const emailLooksValid = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(Stri
  * `isMember` = η δήλωση γίνεται από συνδεδεμένο μέλος. Τότε δεν ζητάμε
  * συγκατάθεση διπλής επιβεβαίωσης: η ταυτότητα είναι ήδη αποδεδειγμένη.
  */
+/**
+ * Απάντησε «Ναι» στην ερώτηση της ατζέντας;
+ *
+ * Η ερώτηση ζει σε option-block με Key 'agenda'. Όταν ΔΕΝ υπάρχει τέτοιο
+ * μπλοκ σε αυτή τη δράση — ή δεν το βλέπει αυτή η ιδιότητα — τα πεδία των
+ * θεμάτων δεν έχουν λόγο να εμφανιστούν και τίποτα δεν απαιτείται.
+ */
+export function agendaWanted(
+  ev: Pick<CforcEvent, 'Options'>,
+  d: Pick<RegistrationDraft, 'Capacity' | 'OptionAnswers'>,
+): boolean {
+  const block = visibleOptions(ev as any, d.Capacity).find(o => o.Key === 'agenda')
+  if (!block) return false
+  return d.OptionAnswers?.agenda === 'yes'
+}
+
 export function validateRegistration(
   ev: Pick<CforcEvent, 'Capacities' | 'Sessions' | 'Options'>,
   d: RegistrationDraft,
@@ -115,6 +131,13 @@ export function validateRegistration(
     if (!o.Required) continue
     if (o.Key === 'dietary') continue // τα διατροφικά δεν είναι ΠΟΤΕ υποχρεωτικά
     if (!String(d.OptionAnswers?.[o.Key] || '').trim()) return `Απάντησε: ${o.Title}`
+  }
+
+  // Το «Ναι» στην ατζέντα ΥΠΟΣΧΕΤΑΙ θέμα — αλλιώς δεν σημαίνει τίποτα.
+  // Τα γενικά σχόλια μένουν προαιρετικά: υποχρεωτικά θα γέμιζαν με παύλες
+  // από ανθρώπους που έχουν θέμα αλλά τίποτα άλλο να πουν.
+  if (agendaWanted(ev, d) && !String(d.AgendaTopic || '').trim()) {
+    return 'Γράψε το θέμα που προτείνεις για την ατζέντα'
   }
 
   // ΑΡΘΡΟ 9: διατροφικά χωρίς ρητή συγκατάθεση δεν αποθηκεύονται ΠΟΤΕ.

@@ -1,6 +1,6 @@
 import {
   offeredCapacities, visibleSessions, visibleOptions, sessionChoices,
-  validateRegistration, emptyDraft, type RegistrationDraft,
+  validateRegistration, agendaWanted, emptyDraft, type RegistrationDraft,
 } from '@/lib/eventForm'
 
 const S = (id: number, Title: string, extra: any = {}) =>
@@ -82,4 +82,40 @@ describe('validateRegistration', () => {
   it('ΜΕΛΟΣ δεν χρειάζεται το ίδιο τσεκ — η σύνδεση αποδεικνύει ταυτότητα', () =>
     expect(validateRegistration(ev, good({ Consent: false, Capacity: 'member',
       SessionChoices: { '1': 'online', '2': 'absent', '3': 'in-person' } }), true)).toBeNull())
+
+  /* Η ερώτηση της ατζέντας: το «Ναι» ΥΠΟΣΧΕΤΑΙ θέμα. Τα γενικά σχόλια
+     μένουν προαιρετικά — υποχρεωτικά θα γέμιζαν με παύλες. */
+  const memberBase = {
+    Capacity: 'member' as const,
+    SessionChoices: { '1': 'online', '2': 'absent', '3': 'in-person' },
+  }
+  it('«Ναι» στην ατζέντα χωρίς θέμα απορρίπτεται', () =>
+    expect(validateRegistration(ev, good({
+      ...memberBase, OptionAnswers: { travel: 'no', agenda: 'yes' },
+    }), true)).toMatch(/θέμα/))
+  it('«Ναι» με θέμα περνά, χωρίς γενικά σχόλια', () =>
+    expect(validateRegistration(ev, good({
+      ...memberBase, OptionAnswers: { travel: 'no', agenda: 'yes' },
+      AgendaTopic: 'Χρηματοδοτήσεις', GeneralComments: '',
+    }), true)).toBeNull())
+  it('«Όχι» δεν ζητά τίποτα', () =>
+    expect(validateRegistration(ev, good({
+      ...memberBase, OptionAnswers: { travel: 'no', agenda: 'no' },
+    }), true)).toBeNull())
+})
+
+describe('agendaWanted', () => {
+  const d = (answers: Record<string, string>, cap: any = 'member') =>
+    ({ Capacity: cap, OptionAnswers: answers }) as any
+  it('«Ναι» από ιδιότητα που βλέπει το μπλοκ', () =>
+    expect(agendaWanted(ev, d({ agenda: 'yes' }))).toBe(true))
+  it('«Όχι»', () =>
+    expect(agendaWanted(ev, d({ agenda: 'no' }))).toBe(false))
+  it('αναπάντητο', () =>
+    expect(agendaWanted(ev, d({}))).toBe(false))
+  /* ΤΟ ΚΡΙΣΙΜΟ: ιδιότητα που ΔΕΝ βλέπει το μπλοκ δεν μπορεί να «θέλει»
+     ατζέντα — αλλιώς μια τιμή που έμεινε από προηγούμενη επιλογή θα
+     μπλόκαρε την υποβολή για ερώτηση που δεν φαίνεται πουθενά. */
+  it('ιδιότητα που δεν βλέπει το μπλοκ: ποτέ', () =>
+    expect(agendaWanted(ev, d({ agenda: 'yes' }, 'non-member'))).toBe(false))
 })
