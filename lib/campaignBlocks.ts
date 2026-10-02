@@ -235,6 +235,21 @@ export type LogosBlock = { type: 'logos'; items: Array<{ src: string; alt: strin
 export type ButtonBlock = { type: 'button'; label: string; href: string; style?: 'coral' | 'outline' | 'dark' }
 export type BoxBlock = { type: 'box'; title?: string; html: string; tone?: 'cream' | 'neutral' | 'warning' | 'alert' }
 export type DividerBlock = { type: 'divider'; style?: 'line' | 'space' }
+/**
+ * Συνημμένα.
+ *
+ * ΤΟ ΙΔΙΟ ΜΠΛΟΚ, ΔΥΟ ΣΥΜΠΕΡΙΦΟΡΕΣ — και η διαφορά δεν είναι επιλογή μας:
+ *  · Μήνυμα (Resend): τα αρχεία φεύγουν ΚΑΙ ως πραγματικά συνημμένα.
+ *  · Newsletter / Bulk email (Sender): το create-campaign του Sender ΔΕΝ έχει
+ *    πεδίο συνημμένου — μόνο html. Άρα φεύγουν ως κουμπιά λήψης.
+ * Η λίστα τυπώνεται και στις δύο περιπτώσεις: ένα φίλτρο που κόβει συνημμένα
+ * αφήνει τότε τον σύνδεσμο ζωντανό αντί για ένα γράμμα που δεν εξηγεί τίποτα.
+ */
+export type AttachmentBlock = {
+  type: 'attachment'
+  items: Array<{ name: string; url: string; size: number; ext?: string }>
+  note?: string
+}
 export type AmountsBlock = { type: 'amounts'; rows: Array<{ label: string; amount: string }>; total?: string }
 /**
  * Το μονόστοιχο κουτί — IBAN, κωδικοί, ό,τι αντιγράφεται.
@@ -311,7 +326,7 @@ export type BlockCommon = { hidden?: boolean }
 
 export type Block = (
   | SectionBlock | TextBlock | ImageBlock | ImageTextBlock | CardBlock | PersonBlock
-  | LogosBlock | ButtonBlock | BoxBlock | DividerBlock | AmountsBlock | MonoBlock | TocBlock
+  | LogosBlock | ButtonBlock | BoxBlock | DividerBlock | AttachmentBlock | AmountsBlock | MonoBlock | TocBlock
   | GreetingBlock | GridBlock | AgendaBlock | QuoteBlock | StatsBlock | SocialBlock | SpacerBlock
   | BrowserViewBlock | MastheadBlock
 ) & BlockCommon
@@ -330,6 +345,7 @@ export const BLOCK_LABELS: Record<Block['type'], string> = {
   button: 'Κουμπί',
   box: 'Κουτί',
   divider: 'Διαχωριστικό',
+  attachment: 'Συνημμένα',
   amounts: 'Πίνακας ποσών',
   mono: 'Μονόστοιχο κουτί',
   toc: 'Πίνακας περιεχομένων',
@@ -442,6 +458,13 @@ export const BLOCK_VARIANTS: Partial<Record<Block['type'], { key: string; option
 }
 
 // ── Απόδοση σε HTML email ───────────────────────────────────────────────────
+
+/** «1,2 MB» — σε bytes, με ελληνική υποδιαστολή */
+export function fileSizeLabel(bytes: number): string {
+  const n = Number(bytes) || 0
+  if (n >= 1024 * 1024) return `${(n / 1048576).toFixed(1).replace('.', ',')} MB`
+  return `${Math.max(1, Math.round(n / 1024))} KB`
+}
 
 const row = (inner: string, pad = '0 48px') => `
   <tr><td class="px" style="padding:${pad};">${inner}</td></tr>`
@@ -737,6 +760,24 @@ function renderBlock(b: Block, i: number): string {
 
     case 'button':
       return row(buttonHtml(b.label, b.href, b.style || 'coral', true), '20px 48px 0 48px')
+
+    case 'attachment': {
+      const items = (b.items || []).filter(it => it && it.url && it.name)
+      if (!items.length) return ''
+      const rows = items.map(it => `
+        <tr><td style="padding:8px 0;border-bottom:1px solid ${BRAND.hairline};">
+          <a href="${escapeHtml(it.url)}" style="font-family:${FONT};font-size:15px;line-height:22px;color:${BRAND.coralDeep};text-decoration:underline;font-weight:bold;">${escapeHtml(it.name)}</a>
+          <span style="font-family:${FONT};font-size:13px;color:${BRAND.inkMuted};">&nbsp;·&nbsp;${escapeHtml(fileSizeLabel(it.size))}</span>
+        </td></tr>`).join('')
+      return row(`
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${BRAND.cream};border-radius:16px;">
+        <tr><td style="padding:20px;">
+          <strong style="display:block;font-family:${FONT};font-size:13px;letter-spacing:.06em;color:${BRAND.inkMuted};margin-bottom:8px;">ΣΥΝΗΜΜΕΝΑ</strong>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${rows}</table>
+          ${b.note ? `<p style="margin:12px 0 0;font-family:${FONT};font-size:13px;line-height:20px;color:${BRAND.inkSoft};">${escapeHtml(b.note)}</p>` : ''}
+        </td></tr>
+      </table>`, '20px 48px 0 48px')
+    }
 
     case 'box': {
       const tone = b.tone || 'cream'
@@ -1105,6 +1146,7 @@ export function renderCampaignText(blocks: Block[]): string {
       case 'person': out.push(`${b.name}${b.role ? ` — ${b.role}` : ''}\n${strip(b.html)}`); break
       case 'imageText': out.push(strip(b.html)); break
       case 'button': out.push(`${b.label}: ${b.href}`); break
+      case 'attachment': out.push((b.items || []).map(it => `${it.name} (${fileSizeLabel(it.size)}): ${it.url}`).join('\n')); break
       case 'amounts': out.push(b.rows.map(r => `${r.label}: ${r.amount}`).join('\n') + (b.total ? `\nΣύνολο: ${b.total}` : '')); break
       case 'mono': out.push(`${b.label ? `${b.label}: ` : ''}${b.value}`); break
       case 'image': out.push(b.alt ? `[${b.alt}]` : ''); break

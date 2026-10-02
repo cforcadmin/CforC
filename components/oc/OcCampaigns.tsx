@@ -4,7 +4,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { createPortal } from 'react-dom'
 import CampaignRichText from './CampaignRichText'
 import { moveUp, moveDown, moveToBottom, moveGroupTo, mergePaletteOrder, movePaletteChip } from '@/lib/blockOrder'
-import { PREVIEW_DESKTOP_WIDTH } from '@/lib/campaignBlocks'
+import { PREVIEW_DESKTOP_WIDTH, fileSizeLabel } from '@/lib/campaignBlocks'
 import { usePreviewSize, PV_MIN_W, PV_MIN_H, PV_EDGE_GAP, PV_BASE_TRACK, PV_STICKY_TOP } from './usePreviewSize'
 import { canNewsletterFrom, bulkLabel } from '@/components/oc/ocPrefs'
 import type { NewsletterFooter } from '@/lib/campaignBlocks'
@@ -2062,6 +2062,7 @@ function newBlock(type: string, tocDefault = ''): Block {
     case 'card': return { type, title: '', html: '', imgPos: 'top', imgSize: 'full', imgAlign: 'center', tone: 'cream', width: 'inset' }
     case 'person': return { type, name: '', role: '', html: '' }
     case 'logos': return { type, items: [] }
+    case 'attachment': return { type, items: [] }
     // Προσυμπληρωμένος, ώστε να φαίνεται τι θα δει ο παραλήπτης αν δεν αλλάξει τίποτα
     case 'toc': return { type, title: tocDefault }
     case 'greeting': return { type, html: '<p>Αγαπητό μέλος,</p>' }
@@ -2222,6 +2223,7 @@ function BlockFields({ block: b, onChange, tocDefault = '' }: {
     case 'box': return <div className="grid gap-2">{line('Τίτλος (προαιρετικό)', 'title')}{rich('Κείμενο')}</div>
     case 'mono': return <div className="grid gap-2">{line('Ετικέτα', 'label', 'π.χ. IBAN')}{line('Τιμή', 'value')}</div>
     case 'logos': return <LogosFields items={b.items || []} onChange={items => onChange({ items })} />
+    case 'attachment': return <AttachmentFields items={b.items || []} note={b.note || ''} onChange={onChange} />
     case 'amounts': return <AmountsFields rows={b.rows || []} total={b.total || ''} onChange={onChange} />
     case 'greeting': return rich('Χαιρετισμός')
     case 'browserView': return (
@@ -2532,6 +2534,93 @@ function LogosFields({ items, onChange }: {
         className="justify-self-start px-3 py-1.5 text-sm rounded-full border border-gray-300 dark:border-gray-600">
         + Λογότυπο
       </button>
+    </div>
+  )
+}
+
+/**
+ * Συνημμένα.
+ *
+ * Η ΛΙΣΤΑ ΤΩΝ ΔΕΚΤΩΝ ΤΥΠΩΝ ζει ΚΑΙ στη διαδρομή — εκεί είναι το φράγμα, εδώ
+ * είναι η διευκόλυνση του διαλόγου αρχείων. Αν διαφωνήσουν, κερδίζει η
+ * διαδρομή: ο χρήστης θα δει μήνυμα αντί για σιωπηλή αποτυχία.
+ */
+const ATTACH_ACCEPT = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/vnd.oasis.opendocument.text',
+  'application/vnd.oasis.opendocument.spreadsheet',
+  'application/vnd.oasis.opendocument.presentation',
+  'text/csv', 'text/plain', 'image/png', 'image/jpeg',
+].join(',')
+
+function AttachmentFields({ items, note, onChange }: {
+  items: Array<{ name: string; url: string; size: number; ext?: string; id?: string }>
+  note: string
+  onChange: (p: any) => void
+}) {
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+
+  const add = async (f: File) => {
+    setErr(''); setBusy(true)
+    try {
+      const fd = new FormData(); fd.append('file', f)
+      const res = await fetch('/api/oc/campaigns/file', { method: 'POST', body: fd })
+      const j = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(j?.error || 'Το αρχείο δεν ανέβηκε')
+      onChange({ items: [...items, { name: j.name, url: j.url, size: j.size, ext: j.ext, id: j.id }] })
+    } catch (e: any) {
+      setErr(e?.message || 'Το αρχείο δεν ανέβηκε')
+    } finally {
+      setBusy(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  return (
+    <div className="grid gap-3">
+      {items.map((it, i) => (
+        <div key={i} className="flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-600 px-3 py-2">
+          <span className="flex-1 min-w-0">
+            <span className="block truncate font-semibold text-charcoal dark:text-gray-100">{it.name}</span>
+            <span className="text-xs text-gray-600 dark:text-gray-400 tabular-nums">
+              {(it.ext || '').toUpperCase()} · {fileSizeLabel(it.size)}
+            </span>
+          </span>
+          <button type="button" onClick={() => onChange({ items: items.filter((_, j) => j !== i) })}
+            aria-label={`Αφαίρεση ${it.name}`}
+            className="px-3 py-1.5 rounded-lg text-red-700 dark:text-red-300">✕</button>
+        </div>
+      ))}
+
+      <input ref={fileRef} type="file" accept={ATTACH_ACCEPT} className="hidden"
+        onChange={e => { const f = e.target.files?.[0]; if (f) add(f) }} />
+      <button type="button" disabled={busy} onClick={() => fileRef.current?.click()}
+        className="justify-self-start px-3 py-1.5 text-sm rounded-full border border-gray-300 dark:border-gray-600 disabled:opacity-50">
+        {busy ? 'Ανεβαίνει…' : '+ Αρχείο'}
+      </button>
+      {err && <p className="text-sm text-red-700 dark:text-red-300">{err}</p>}
+
+      <label className="grid gap-1">
+        <span className="text-sm font-semibold text-charcoal dark:text-gray-100">Σημείωση (προαιρετικό)</span>
+        <input value={note} onChange={e => onChange({ note: e.target.value })}
+          placeholder="π.χ. Το πρακτικό της συνεδρίασης"
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm" />
+      </label>
+
+      {/* Η διαφορά δεν είναι ρύθμιση που ξέχασε κάποιος — είναι ο πάροχος. */}
+      <p className="text-xs text-gray-600 dark:text-gray-400">
+        Στο <strong>Μήνυμα</strong> τα αρχεία φεύγουν ως πραγματικά συνημμένα, και ο σύνδεσμος
+        μένει ως εφεδρεία. Στο <strong>Newsletter / Bulk email</strong> φεύγουν μόνο ως σύνδεσμοι
+        λήψης: ο Sender δεν δέχεται συνημμένα. Όριο 5 MB ανά αρχείο.
+      </p>
     </div>
   )
 }

@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
-import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
-import { OC_EMAIL_SEATS } from '@/components/oc/ocPrefs'
+import { authorizeOcUpload as authorize } from '@/lib/ocUploadAuth'
 import sharp from 'sharp'
 import path from 'path'
 import { readFile } from 'fs/promises'
@@ -27,8 +24,6 @@ export const maxDuration = 60
 
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
-// Ίδιο φράγμα με τη διαδρομή των καμπανιών: όποια έδρα στέλνει, ανεβάζει
-const ALLOWED_SEATS = OC_EMAIL_SEATS as OcSeat[]
 const MAX_BYTES = 5 * 1024 * 1024
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 
@@ -50,24 +45,6 @@ function isOwnMedia(raw: string): boolean {
   } catch { return false }
 }
 
-async function authorize() {
-  const cookieStore = await cookies()
-  const sessionCookie = cookieStore.get('session')
-  const decoded = sessionCookie ? verifyToken(sessionCookie.value) : null
-  if (!decoded || decoded.type !== 'session') {
-    return { error: NextResponse.json({ error: 'Απαιτείται σύνδεση' }, { status: 401 }) }
-  }
-  const access = await resolveOcAccess(decoded.memberId)
-  if (!access.isBoard) return { error: NextResponse.json({ error: 'Δεν επιτρέπεται' }, { status: 403 }) }
-  const seatCookie = cookieStore.get('oc-last-seat')?.value as OcSeat | undefined
-  const activeSeat: OcSeat | null =
-    seatCookie && access.seats.includes(seatCookie) ? seatCookie
-      : access.seats.length === 1 ? access.seats[0] : null
-  if (!activeSeat || !ALLOWED_SEATS.includes(activeSeat)) {
-    return { error: NextResponse.json({ error: 'Η έδρα σου δεν στέλνει email από το OC' }, { status: 403 }) }
-  }
-  return { memberId: decoded.memberId }
-}
 
 /**
  * Το σήμα CforC «καίγεται» μέσα στην εικόνα.

@@ -51,6 +51,44 @@ interface CampaignRow {
   Signer?: CampaignSigner | null
 }
 
+/**
+ * Τα συνημμένα, κατεβασμένα ΜΙΑ φορά ανά καμπάνια.
+ *
+ * Μέσα στον βρόχο των παραληπτών θα κατέβαιναν ξανά για τον καθένα: 5 MB επί
+ * 300 μέλη είναι 1,5 GB κίνησης για ένα αρχείο — και 300 ευκαιρίες να
+ * αποτύχει κάτι που είχε ήδη πετύχει.
+ *
+ * Το όριο του Resend είναι 40 MB ΜΕΤΑ την κωδικοποίηση Base64, που φουσκώνει
+ * τα bytes κατά ~4/3. Κόβουμε στα 28 MB ωμά (~37,3 MB κωδικοποιημένα) και
+ * αφήνουμε περιθώριο για το ίδιο το γράμμα.
+ */
+const ATTACH_RAW_LIMIT = 28 * 1024 * 1024
+
+async function collectAttachments(blocks: Block[]): Promise<{
+  files: Array<{ filename: string; content: string }>
+  skipped: string[]
+}> {
+  const items = (blocks || [])
+    .filter((b): b is Extract<Block, { type: 'attachment' }> => b?.type === 'attachment' && !b.hidden)
+    .flatMap(b => b.items || [])
+    .filter(it => it?.url && it?.name)
+  const files: Array<{ filename: string; content: string }> = []
+  const skipped: string[] = []
+  let total = 0
+  for (const it of items) {
+    if (total + (Number(it.size) || 0) > ATTACH_RAW_LIMIT) { skipped.push(it.name); continue }
+    try {
+      const res = await fetch(it.url, { cache: 'no-store' })
+      if (!res.ok) { skipped.push(it.name); continue }
+      const buf = Buffer.from(await res.arrayBuffer())
+      total += buf.byteLength
+      if (total > ATTACH_RAW_LIMIT) { skipped.push(it.name); continue }
+      files.push({ filename: it.name, content: buf.toString('base64') })
+    } catch { skipped.push(it.name) }
+  }
+  return { files, skipped }
+}
+
 /** Ξαναδοκιμάζουμε μόνο όσους απέτυχαν λιγότερες από MAX_ATTEMPTS φορές */
 const isPending = (r: QueuedRecipient) =>
   r.status === 'pending' || (r.status === 'failed' && (r.attempts || 0) < MAX_ATTEMPTS)
@@ -160,6 +198,14 @@ export async function drainCampaigns(opts: {
 
     if (c.State !== 'sending') await strapi(`/oc-campaigns/${c.documentId}`, 'PUT', { State: 'sending' })
 
+    // ΠΡΙΝ τον βρόχο: τα ίδια bytes για όλους τους παραλήπτες
+    const { files: attachments, skipped } = await collectAttachments(Array.isArray(c.Blocks) ? c.Blocks : [])
+    if (skipped.length) {
+      // Δεν σταματά την αποστολή: ο σύνδεσμος λήψης είναι μέσα στο γράμμα και
+      // παραμένει ο δρόμος προς το αρχείο. Αλλά ΛΕΓΕΤΑΙ στην αναφορά.
+      report.push(`${c.Subject}: δεν επισυνάφθηκαν — ${skipped.join(', ')}`)
+    }
+
     let sentHere = 0
     for (let i = 0; i < recipients.length; i++) {
       const r = recipients[i]
@@ -187,6 +233,7 @@ export async function drainCampaigns(opts: {
         from: `Culture for Change <${signer.email}>`,
         replyTo: signer.email,
         ...(cc.length && { cc }),
+        ...(attachments.length && { attachments }),
       })
 
       recipients[i] = res.ok
