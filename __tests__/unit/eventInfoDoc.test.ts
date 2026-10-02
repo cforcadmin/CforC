@@ -117,3 +117,23 @@ describe('δομή του εγγράφου', () => {
     expect(doc).toMatch(/padding:[^;"]*48px/)
   })
 })
+
+/* Η σειρά ΜΕΣΑ στην ενότητα δεν είναι διακόσμηση: η «Κάλυψη εξόδων» είναι
+   η ερώτηση που κουβαλά όποιος φτάνει εκεί. */
+describe('σειρά στην ενότητα LOGISTICS', () => {
+  const kinds = (m: boolean) => infoDocFor(m).map((b: any) =>
+    b.type === 'section' ? `Σ:${b.title}` : b.type === 'box' ? `Κ:${b.title || ''}` : b.type)
+
+  it.each([[true], [false]])('η Κάλυψη εξόδων έρχεται ΠΡΙΝ τη Μετακίνηση (μέλος=%s)', m => {
+    const k = kinds(m)
+    const band = k.findIndex(x => String(x).includes('LOGISTICS'))
+    const cover = k.findIndex(x => x === 'Κ:Κάλυψη εξόδων')
+    const exception = k.findIndex(x => x === 'Κ:')     // το κουτί «Εξαίρεση», χωρίς τίτλο
+    expect(band).toBeGreaterThan(-1)
+    expect(cover).toBeGreaterThan(band)
+    expect(cover).toBeLessThan(exception)
+  })
+  it('το κουτί υπάρχει ΜΙΑ φορά — δεν αντιγράφηκε στη μετακίνηση', () => {
+    expect(kinds(true).filter(x => x === 'Κ:Κάλυψη εξόδων')).toHaveLength(1)
+  })
+})
