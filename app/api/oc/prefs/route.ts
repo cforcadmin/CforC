@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess } from '@/lib/ocRoles'
+import { OC_SEAT_MODE_COOKIE, parseSeatMode, canWearSeats } from '@/lib/ocSeatMode'
 import {
   OC_LANDING_COOKIE, OC_LAST_SEAT_COOKIE, OC_HERO_COMPACT_COOKIE,
   OC_TABLE_COLS_COOKIE, OC_TABLE_DENSITY_COOKIE, OC_TABLE_COLUMNS,
@@ -17,7 +18,7 @@ const COOKIE_OPTS = {
 
 // Persists OC preferences server-side (httpOnly cookies) because client
 // storage is unreliable under content blockers/private browsing.
-// Body: { landing?: 'oc' | 'members' | 'ask', seat?: string }
+// Body: { landing?: 'oc' | 'members' | 'ask', seat?: string, seatMode?: 'έδρα:view'|'έδρα:act'|null }
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies()
@@ -37,8 +38,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}))
-    const { landing, seat, tableCols, tableDensity, heroCompact } = body as {
-      landing?: string; seat?: string; tableCols?: string; tableDensity?: string
+    const { landing, seat, seatMode, tableCols, tableDensity, heroCompact } = body as {
+      landing?: string; seat?: string; seatMode?: string | null; tableCols?: string; tableDensity?: string
       heroCompact?: boolean
     }
 
@@ -66,6 +67,24 @@ export async function POST(request: NextRequest) {
         cookieStore.set(OC_LANDING_COOKIE, landing, COOKIE_OPTS)
       } else {
         return NextResponse.json({ error: 'Invalid landing value' }, { status: 400 })
+      }
+    }
+
+    if (seatMode !== undefined) {
+      // ΜΟΝΟ το IT φοράει άλλες έδρες — και μόνο έδρα που δεν κατέχει ήδη.
+      // Ο έλεγχος ΕΔΩ και όχι μόνο στην ανάγνωση: ένα cookie που δεν γράφτηκε
+      // ποτέ δεν χρειάζεται να απορριφθεί αργότερα.
+      if (!canWearSeats(access.seats as any)) {
+        return NextResponse.json({ error: 'Μόνο το IT' }, { status: 403 })
+      }
+      if (seatMode === null || seatMode === '') {
+        cookieStore.delete(OC_SEAT_MODE_COOKIE)
+      } else {
+        const parsed = parseSeatMode(seatMode)
+        if (!parsed || access.seats.includes(parsed.seat as any)) {
+          return NextResponse.json({ error: 'Μη έγκυρη έδρα' }, { status: 400 })
+        }
+        cookieStore.set(OC_SEAT_MODE_COOKIE, seatMode, COOKIE_OPTS)
       }
     }
 

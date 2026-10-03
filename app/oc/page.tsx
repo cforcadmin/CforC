@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess } from '@/lib/ocRoles'
+import { canWearSeats } from '@/lib/ocSeatMode'
+import { seatContextOf } from '@/lib/ocSeatServer'
 import { fetchOcOverview } from '@/lib/ocOverview'
 import OcShell from '@/components/oc/OcShell'
 import {
@@ -81,6 +83,9 @@ export default async function OcPage({ searchParams }: { searchParams: Promise<{
   // αυτά σερβίρονται ΜΟΝΟ εδώ, πίσω από το board gate — ποτέ μέσω του public proxy.
   const overview = await fetchOcOverview()
 
+  // Ποια έδρα «φοράει» η συνεδρία, και με ποια κατάσταση
+  const seatCtx = await seatContextOf(decoded.memberId)
+
   // Μητρώο μελών table view prefs (per-browser, httpOnly cookies)
   const validCols = new Set(OC_TABLE_COLUMNS.map(c => c.key))
   const colsRaw = cookieStore.get(OC_TABLE_COLS_COOKIE)?.value
@@ -93,7 +98,12 @@ export default async function OcPage({ searchParams }: { searchParams: Promise<{
   return (
     <OcShell
       seats={access.seats}
-      initialSeat={initialSeat}
+      initialSeat={seatCtx.activeSeat || initialSeat}
+      /* Η φορεμένη έδρα και η κατάσταση — η οθόνη ζωγραφίζει σαν εκείνη,
+         ο server ΟΧΙ: τα δικαιώματα μένουν του πραγματικού ανθρώπου. */
+      wearingSeat={seatCtx.wearing}
+      seatMode={seatCtx.mode}
+      canWear={canWearSeats(access.seats as any)}
       initialHeroCompact={initialHeroCompact}
       initialLandingPref={landingPref || 'ask'}
       applications={applications}

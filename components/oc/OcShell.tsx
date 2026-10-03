@@ -57,6 +57,11 @@ export interface OcApplicationSummary {
 
 interface OcShellProps {
   seats: string[]
+  /** Η έδρα που «φοράει» το IT — null όταν δουλεύει στη δική του */
+  wearingSeat?: string | null
+  seatMode?: 'own' | 'view' | 'act'
+  /** Μόνο το IT φοράει έδρες */
+  canWear?: boolean
   /** Last-used seat from the server-stored cookie (null = none stored) */
   initialSeat: string | null
   /** Καρφιτσωμένο συμπαγές hero (από το httpOnly cookie) */
@@ -117,7 +122,7 @@ function useIsNarrow(): boolean {
 
 // Preferences persist via /api/oc/prefs (httpOnly cookies) — client web
 // storage is unreliable under content blockers, so it is not used at all.
-async function persistPrefs(prefs: { landing?: string; seat?: string; heroCompact?: boolean }): Promise<boolean> {
+async function persistPrefs(prefs: { landing?: string; seat?: string; seatMode?: string | null; heroCompact?: boolean }): Promise<boolean> {
   try {
     const res = await fetch('/api/oc/prefs', {
       method: 'POST',
@@ -132,7 +137,7 @@ async function persistPrefs(prefs: { landing?: string; seat?: string; heroCompac
   }
 }
 
-export default function OcShell({ seats, initialSeat, initialHeroCompact = false, initialLandingPref, applications = [], overview = null, tableCols, tableDensity, exitSurveys = [], initialOpenRenewals = false }: OcShellProps) {
+export default function OcShell({ seats, initialSeat, wearingSeat = null, seatMode = 'own', canWear = false, initialHeroCompact = false, initialLandingPref, applications = [], overview = null, tableCols, tableDensity, exitSurveys = [], initialOpenRenewals = false }: OcShellProps) {
   const pending = applications.filter(a => a.state === 'submitted')
   // Κάθε ρόλος προσγειώνεται εκεί που δουλεύει — όχι σε γενική επισκόπηση
   const [activeSection, setActiveSection] = useState<SectionKey>(
@@ -147,6 +152,7 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
   const [showSeatModal, setShowSeatModal] = useState(!initialSeat && seats.length > 1)
   /** Η αλλαγή έδρας δεν έφτασε στον server — το λέμε αντί να το κρύψουμε */
   const [seatError, setSeatError] = useState<string | null>(null)
+  const [showWearPanel, setShowWearPanel] = useState(false)
   // Καθολική επαναφορά διάταξης (Ρυθμίσεις): null → 'ask' → 'busy' → 'done'
   const [layoutReset, setLayoutReset] = useState<null | 'ask' | 'busy' | 'done'>(null)
   // Οι ενότητες που βλέπει η τρέχουσα θέση (η «Διορθώσεις / Προτάσεις» μόνο το IT)
@@ -235,6 +241,23 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
    * Αν το γράψιμο αποτύχει, η οθόνη ΔΕΝ αλλάζει: μια ψεύτικη έδρα είναι
    * χειρότερη από μια έδρα που δεν άλλαξε.
    */
+  /**
+   * Φοράει άλλη έδρα — ή τη βγάζει.
+   *
+   * ΔΥΟ ΚΑΤΑΣΤΑΣΕΙΣ, χωριστά κουμπιά: «Προεπισκόπηση» αλλάζει μόνο την οθόνη,
+   * «Ενεργώ ως» εκτελεί και καταγράφεται ονομαστικά. Δεν κρύβεται το δεύτερο
+   * πίσω από το πρώτο.
+   */
+  async function wearSeat(seat: string | null, mode: 'view' | 'act' = 'view') {
+    const value = seat ? `${seat}:${mode}` : null
+    if (!(await persistPrefs({ seatMode: value }))) {
+      setSeatError('Η αλλαγή δεν αποθηκεύτηκε. Δοκίμασε ξανά.')
+      return
+    }
+    // Πλήρης επαναφόρτωση: οι ενότητες και τα δεδομένα έρχονται από τον server
+    window.location.reload()
+  }
+
   async function applySeat(seat: string) {
     if (!(await persistPrefs({ seat }))) {
       setSeatError('Η αλλαγή έδρας δεν αποθηκεύτηκε. Δοκίμασε ξανά.')
@@ -418,6 +441,16 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
                 {OC_SEAT_SHORT[activeSeat] || activeSeat}
               </button>
             )}
+            {/* Το IT βλέπει τα πάντα — αλλά όχι με τα ΜΑΤΙΑ της κάθε έδρας.
+                Από εδώ τα φοράει. */}
+            {canWear && (
+              <button type="button" onClick={() => setShowWearPanel(true)}
+                title="Δες το OC ως άλλη έδρα"
+                aria-label="Δες το OC ως άλλη έδρα"
+                className="flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-bold border border-black/15 dark:border-white/25 bg-black/5 dark:bg-white/10 text-charcoal dark:text-gray-100 hover:bg-coral/20 hover:border-coral/50">
+                έδρες
+              </button>
+            )}
             {/* Χωρίς διακόπτη στο κινητό: δεν υπάρχει πλήρης προβολή να
                 επαναφέρεις, και ένα κουμπί που δεν κάνει τίποτα είναι χειρότερο
                 από κανένα κουμπί. */}
@@ -474,6 +507,37 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
             (θυρίδα, γραφείο, δικαιώματα). Χωρίς αυτό, η αλλαγή έδρας άλλαζε
             μόνο το σήμα πάνω αριστερά και οι οθόνες κρατούσαν ό,τι είχαν
             φέρει με την ΠΡΟΗΓΟΥΜΕΝΗ έδρα. */}
+        {/* Όσο φοριέται άλλη έδρα, ΔΕΝ ξεχνιέται: η μπάρα μένει στην κορυφή
+            και λέει ποια κατάσταση ισχύει. Μια προεπισκόπηση που μοιάζει με
+            κανονική συνεδρία είναι ο τρόπος να νομίσεις ότι κάτι χάλασε. */}
+        {wearingSeat && (
+          <div className={`sticky top-0 z-40 px-4 py-2.5 text-sm font-bold flex flex-wrap items-center gap-x-3 gap-y-1 ${
+            seatMode === 'act'
+              ? 'bg-red-600 text-white'
+              : 'bg-amber-400 text-amber-950'}`}>
+            <span>
+              {seatMode === 'act' ? '● ΕΝΕΡΓΕΙΣ ΩΣ' : '◍ ΠΡΟΕΠΙΣΚΟΠΗΣΗ ΩΣ'}{' '}
+              {OC_SEAT_LABELS[wearingSeat] || wearingSeat}
+            </span>
+            <span className="font-normal">
+              {seatMode === 'act'
+                ? 'Ό,τι κάνεις καταγράφεται στο όνομά σου ως IT.'
+                : 'Οι ενέργειες αυτής της έδρας είναι απενεργοποιημένες.'}
+            </span>
+            <span className="ml-auto flex gap-2">
+              <button type="button"
+                onClick={() => wearSeat(wearingSeat, seatMode === 'act' ? 'view' : 'act')}
+                className="px-3 py-1 rounded-full bg-white/25 hover:bg-white/40 transition-colors">
+                {seatMode === 'act' ? 'Μόνο προεπισκόπηση' : 'Ενεργώ ως'}
+              </button>
+              <button type="button" onClick={() => wearSeat(null)}
+                className="px-3 py-1 rounded-full bg-white/25 hover:bg-white/40 transition-colors">
+                Έξοδος
+              </button>
+            </span>
+          </div>
+        )}
+
         <div key={activeSeat || 'no-seat'} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           {activeSection === 'overview' && (
             overview ? (
@@ -746,6 +810,45 @@ export default function OcShell({ seats, initialSeat, initialHeroCompact = false
           {seatError}
           <button type="button" onClick={() => setSeatError(null)}
             className="ml-3 underline">Κλείσιμο</button>
+        </div>
+      )}
+
+      {/* ΓΙΑ ΤΟ IT: κάθε έδρα, με δύο ξεχωριστές πράξεις. Δεν είναι «ακόμη μία
+          έδρα δική μου» — γι' αυτό ζει σε δικό του πάνελ, όχι στον κύκλο
+          εναλλαγής των εδρών που όντως κατέχει. */}
+      {canWear && showWearPanel && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+          role="dialog" aria-modal="true" aria-label="Έδρες">
+          <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-gray-800 p-6 sm:p-8 max-h-[85vh] overflow-auto">
+            <h2 className="text-xl font-bold text-charcoal dark:text-gray-100">Δες το OC ως άλλη έδρα</h2>
+            <p className="mt-1 mb-5 text-sm text-gray-600 dark:text-gray-400">
+              <strong>Προεπισκόπηση</strong>: αλλάζει μόνο η οθόνη, καμία ενέργεια δεν εκτελείται.{' '}
+              <strong>Ενεργώ ως</strong>: οι ενέργειες γίνονται και καταγράφονται στο όνομά σου.
+            </p>
+            <ul className="grid gap-2">
+              {Object.keys(OC_SEAT_LABELS)
+                .filter(s2 => !seats.includes(s2))
+                .map(s2 => (
+                  <li key={s2} className="flex flex-wrap items-center gap-2 rounded-2xl border border-gray-200 dark:border-gray-600 px-4 py-3">
+                    <span className="font-semibold text-charcoal dark:text-gray-100">{OC_SEAT_LABELS[s2]}</span>
+                    <span className="ml-auto flex gap-2">
+                      <button type="button" onClick={() => wearSeat(s2, 'view')}
+                        className="px-4 py-1.5 rounded-full text-sm font-bold bg-amber-400 text-amber-950 hover:brightness-105">
+                        Προεπισκόπηση
+                      </button>
+                      <button type="button" onClick={() => wearSeat(s2, 'act')}
+                        className="px-4 py-1.5 rounded-full text-sm font-bold border border-red-500 text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30">
+                        Ενεργώ ως
+                      </button>
+                    </span>
+                  </li>
+                ))}
+            </ul>
+            <button type="button" onClick={() => setShowWearPanel(false)}
+              className="mt-5 px-5 py-2 rounded-full border border-gray-300 dark:border-gray-600 font-semibold text-charcoal dark:text-gray-100">
+              Κλείσιμο
+            </button>
+          </div>
         </div>
       )}
 
