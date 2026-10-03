@@ -11,7 +11,7 @@ export const maxDuration = 300
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
-import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
+import { effectiveSeat, isActingAsOtherSeat, RECEIPT_WEARING_REFUSAL, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { nextReceiptNumber, createReceipt, markReceiptSent, syncReceiptToSheet, type ReceiptType } from '@/lib/receipts'
 import { recordSubscriptionYearInSheet, sheetsConfigured } from '@/lib/googleSheets'
 import { athensToday } from '@/lib/receipts'
@@ -77,6 +77,10 @@ async function authorize(needFinancer: boolean) {
       effectiveSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
     if (activeSeat !== 'financer') {
       return { error: NextResponse.json({ error: 'Μόνο ο/η Financer μπορεί να εκδώσει αποδείξεις' }, { status: 403 }) }
+    }
+    // Η ΜΙΑ εξαίρεση του «ενεργώ ως»: ο αριθμός απόδειξης δεν παίρνεται πίσω.
+    if (isActingAsOtherSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)) {
+      return { error: NextResponse.json({ error: RECEIPT_WEARING_REFUSAL }, { status: 403 }) }
     }
   }
   return { memberId: decoded.memberId }

@@ -6,7 +6,7 @@ export const maxDuration = 60
 import { cookies } from 'next/headers'
 import { verifyToken, generatePaymentClaimToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
-import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
+import { effectiveSeat, isActingAsOtherSeat, RECEIPT_WEARING_REFUSAL, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { sendPaymentToSheet, sheetsConfigured } from '@/lib/googleSheets'
 import { sendOcEmail, reminderEmailHtml, paymentFailedEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
 import { processPaymentCompletion } from '@/lib/paymentCompletion'
@@ -52,6 +52,12 @@ export async function POST(request: NextRequest) {
     effectiveSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
   if (activeSeat !== 'financer') {
     return NextResponse.json({ error: 'Μόνο ο/η Financer μπορεί να καταχωρήσει πληρωμές' }, { status: 403 })
+  }
+  // Η ΔΕΥΤΕΡΗ πόρτα για απόδειξη: το «Πληρώθηκε» εκδίδει μία μέσω του
+  // paymentCompletion. Φράγμα μόνο στο /api/oc/receipts θα άφηνε αυτή εδώ να
+  // βγάζει σιωπηλά αριθμούς φορώντας την έδρα.
+  if (isActingAsOtherSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)) {
+    return NextResponse.json({ error: RECEIPT_WEARING_REFUSAL }, { status: 403 })
   }
 
   let body: any

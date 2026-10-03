@@ -1,6 +1,6 @@
 import {
   resolveSeatContext, maySeatAct, canWearSeats, parseSeatMode,
-  seatRefusalMessage, attributionFor,
+  seatRefusalMessage, attributionFor, effectiveSeat, isActingAsOtherSeat,
 } from '@/lib/ocSeatMode'
 import type { OcSeat } from '@/lib/ocRoles'
 
@@ -91,7 +91,6 @@ describe('seatRefusalMessage', () => {
 
 /* Η έδρα ΤΩΝ ΕΝΕΡΓΕΙΩΝ — διαφέρει από αυτήν της οθόνης, επίτηδες */
 describe('effectiveSeat', () => {
-  const { effectiveSeat } = require('@/lib/ocSeatMode')
 
   it('δική του έδρα: η ίδια', () => {
     expect(effectiveSeat(IT_FIN, 'financer', null)).toBe('financer')
@@ -117,5 +116,28 @@ describe('effectiveSeat', () => {
   })
   it('χωρίς έδρες: null', () => {
     expect(effectiveSeat([], null, null)).toBeNull()
+  })
+})
+
+/**
+ * Η εξαίρεση της απόδειξης. Ο αριθμός παίρνεται από ακολουθία και δεν
+ * γυρίζει πίσω — δύο πόρτες τον βγάζουν (/api/oc/receipts και το «Πληρώθηκε»
+ * στο /api/oc/applications/payment) και οι δύο ρωτούν ΑΥΤΟ.
+ */
+describe('isActingAsOtherSeat', () => {
+  it('«ενεργώ ως» ξένη έδρα: ναι', () => {
+    expect(isActingAsOtherSeat(IT, 'it', 'financer:act')).toBe(true)
+  })
+  it('προεπισκόπηση: όχι — εκεί απορρίπτει ήδη το φράγμα του Ταμία', () => {
+    expect(isActingAsOtherSeat(IT, 'it', 'financer:view')).toBe(false)
+  })
+  it('η ΔΙΚΗ σου έδρα δεν είναι «φορεμένη», ακόμη κι αν το cookie λέει act', () => {
+    expect(isActingAsOtherSeat(['it', 'financer'], 'financer', 'financer:act')).toBe(false)
+  })
+  it('καμία φορεμένη έδρα: όχι', () => {
+    expect(isActingAsOtherSeat(IT_FIN, 'financer', null)).toBe(false)
+  })
+  it('μη-IT με πλαστό cookie: όχι — δεν φόρεσε ποτέ τίποτα', () => {
+    expect(isActingAsOtherSeat(COMMS, 'comms', 'financer:act')).toBe(false)
   })
 })
