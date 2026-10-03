@@ -326,6 +326,17 @@ export default function OcShell({ seats, initialSeat, wearingSeat = null, seatMo
                       {OC_SEAT_SHORT[activeSeat] || activeSeat}
                     </button>
                   )}
+                  {/* ΚΑΙ στην πλήρη κεφαλίδα, όχι μόνο στη συμπτυγμένη: το
+                      κουμπί υπήρχε σε ένα από τα δύο σημεία που δείχνουν την
+                      έδρα, και στην πλήρη προβολή έλειπε. */}
+                  {canWear && (
+                    <button type="button" onClick={() => setShowWearPanel(true)}
+                      title="Δες το OC ως άλλη έδρα"
+                      aria-label="Δες το OC ως άλλη έδρα"
+                      className="notranslate flex-shrink-0 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-charcoal/60 dark:bg-white/10 text-white dark:text-gray-300 hover:bg-charcoal/80 dark:hover:bg-white/20 transition-colors">
+                      έδρες
+                    </button>
+                  )}
                   <Link
                     href="/profile"
                     className="bg-charcoal/60 dark:bg-white/10 text-white dark:text-gray-300 hover:bg-charcoal/80 dark:hover:bg-white/20 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap"
