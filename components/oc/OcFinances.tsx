@@ -43,6 +43,8 @@ interface SeriesState {
   nextNumber: number | null
   recent: RecentReceipt[]
   total: number
+  /** Μέλη-εταιρείες στο μητρώο με απόδειξη σε φυσικό πρόσωπο (βλ. ΑΠ. ΕΙΣ. 381) */
+  companyMismatches?: Array<{ name: string; numbers: number[] }>
 }
 
 const TYPES = [
@@ -504,6 +506,32 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
         <div className="mt-6">
         {loadError && (
           <p className="mb-3 text-sm text-red-600 dark:text-red-400">Αποτυχία φόρτωσης — δοκίμασε ανανέωση.</p>
+        )}
+        {/* Η ασυμφωνία της ΑΠ. ΕΙΣ. 381: τα εταιρικά στοιχεία μπήκαν στο
+            μητρώο ΜΕΤΑ την έκδοση, οπότε τη στιγμή του κουμπιού δεν υπήρχε
+            τίποτα να προειδοποιήσει. Γι' αυτό η ένδειξη ζει εδώ και
+            ξανακοιτάζει κάθε φορά που ανοίγεις τα Οικονομικά. */}
+        {(series?.companyMismatches?.length ?? 0) > 0 && (
+          <div className="mb-5 rounded-2xl border-2 border-amber-400/70 bg-amber-50 dark:bg-amber-500/10 p-5">
+            <p className="text-sm font-bold text-amber-900 dark:text-amber-200 mb-1">
+              Εταιρικά στοιχεία στο μητρώο, απόδειξη σε φυσικό πρόσωπο
+            </p>
+            <p className="text-sm text-amber-900/80 dark:text-amber-200/80 mb-3">
+              Το μέλος έχει επωνυμία και ΑΦΜ στο μητρώο, αλλά η απόδειξη εκδόθηκε σε φυσικό
+              πρόσωπο — όπως το ζήτησε η αίτηση. Συνήθως σημαίνει ότι τα στοιχεία μπήκαν
+              αργότερα. Αν χρειάζεται εταιρική απόδειξη, εκδίδεται ξανά με τον ίδιο αριθμό.
+            </p>
+            <ul className="space-y-1 text-sm">
+              {series!.companyMismatches!.map(m => (
+                <li key={m.name} className="text-amber-900 dark:text-amber-100">
+                  <span className="font-medium">{m.name}</span>
+                  <span className="notranslate text-amber-900/70 dark:text-amber-200/70">
+                    {' — '}ΑΠ. ΕΙΣ. {m.numbers.join(', ')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
         {series && !series.seeded && (
           <div className="mb-5 rounded-2xl border-2 border-dashed border-[#6A994E]/50 p-5">

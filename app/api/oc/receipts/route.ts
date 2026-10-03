@@ -86,6 +86,43 @@ async function authorize(needFinancer: boolean) {
   return { memberId: decoded.memberId }
 }
 
+/**
+ * Μέλη που είναι ΕΤΑΙΡΕΙΑ στο μητρώο, αλλά πήραν απόδειξη σε φυσικό πρόσωπο.
+ *
+ * ΓΙΑΤΙ ΕΚ ΤΩΝ ΥΣΤΕΡΩΝ και όχι προειδοποίηση πριν την έκδοση: έτσι ακριβώς
+ * συνέβη στην ΑΠ. ΕΙΣ. 381. Η αίτηση έλεγε «Φυσικό πρόσωπο», η απόδειξη
+ * εκδόθηκε σωστά ΓΙ' ΑΥΤΟ ΠΟΥ ΖΗΤΗΘΗΚΕ, και τα εταιρικά στοιχεία μπήκαν στο
+ * μητρώο ΑΡΓΟΤΕΡΑ. Τη στιγμή του κουμπιού δεν υπήρχε τίποτα να δει κανείς —
+ * η ασυμφωνία γεννήθηκε μετά. Άρα ο έλεγχος πρέπει να ξανακοιτάζει.
+ *
+ * Σιωπηλή σε κάθε αποτυχία: είναι βοήθημα, δεν δικαιούται να ρίξει την οθόνη
+ * των Οικονομικών.
+ */
+async function companyMismatches(): Promise<Array<{ name: string; numbers: number[] }>> {
+  try {
+    const m = await strapi(
+      '/members?filters[CompanyName][$notNull]=true&filters[CompanyTaxId][$notNull]=true' +
+      '&fields[0]=Name&fields[1]=CompanyName&fields[2]=CompanyTaxId&pagination[limit]=100'
+    )
+    const companies = (m.json?.data || []).filter(
+      (x: any) => String(x.CompanyName || '').trim() && String(x.CompanyTaxId || '').trim()
+    )
+    if (companies.length === 0) return []
+    const out: Array<{ name: string; numbers: number[] }> = []
+    for (const c of companies) {
+      const r = await strapi(
+        `/receipts?filters[member][documentId][$eq]=${c.documentId}` +
+        '&filters[CompanyName][$null]=true&fields[0]=Number&sort=Number:desc&pagination[limit]=20'
+      )
+      const numbers = (r.json?.data || []).map((x: any) => x.Number).filter((n: any) => Number.isInteger(n))
+      if (numbers.length) out.push({ name: String(c.Name || '').trim() || '—', numbers })
+    }
+    return out
+  } catch {
+    return []
+  }
+}
+
 export async function GET(request: NextRequest) {
   const auth = await authorize(false)
   if ('error' in auth) return auth.error
@@ -101,9 +138,10 @@ export async function GET(request: NextRequest) {
     // Το RegistrySynced ζητείται προαιρετικά: όσο δεν έχει βγει στο Strapi
     // Cloud, το query γυρίζει 400 «Invalid key» και η λίστα θα ερχόταν ΚΕΝΗ —
     // ένα νέο πεδίο δεν πρέπει να σβήνει το μητρώο αποδείξεων από την οθόνη.
-    const [next, firstTry] = await Promise.all([
+    const [next, firstTry, mismatches] = await Promise.all([
       nextReceiptNumber(),
       list(baseFields + '&fields[9]=RegistrySynced'),
+      companyMismatches(),
     ])
     const recentRes = firstTry.ok ? firstTry : await list(baseFields)
     const recent = (recentRes.json?.data || []).map((r: any) => ({
@@ -124,6 +162,7 @@ export async function GET(request: NextRequest) {
       nextNumber: next,
       recent,
       total: recentRes.json?.meta?.pagination?.total ?? recent.length,
+      companyMismatches: mismatches,
     })
   } catch (err) {
     console.error('oc/receipts GET failed:', err)
