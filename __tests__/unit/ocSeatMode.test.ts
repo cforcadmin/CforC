@@ -88,3 +88,34 @@ describe('seatRefusalMessage', () => {
     expect(seatRefusalMessage(ctx, 'financer', 'Ταμίας')).toMatch(/Ενεργώ ως Ταμίας/)
   })
 })
+
+/* Η έδρα ΤΩΝ ΕΝΕΡΓΕΙΩΝ — διαφέρει από αυτήν της οθόνης, επίτηδες */
+describe('effectiveSeat', () => {
+  const { effectiveSeat } = require('@/lib/ocSeatMode')
+
+  it('δική του έδρα: η ίδια', () => {
+    expect(effectiveSeat(IT_FIN, 'financer', null)).toBe('financer')
+  })
+  it('μία μόνο έδρα, χωρίς cookie', () => {
+    expect(effectiveSeat(COMMS, null, null)).toBe('comms')
+  })
+
+  /* ΤΟ ΚΡΙΣΙΜΟ: στην προεπισκόπηση οι ενέργειες κρίνονται με τη ΔΙΚΗ του */
+  it('προεπισκόπηση: επιστρέφει τη ΔΙΚΗ του, ώστε να απορρίπτονται οι ξένες', () => {
+    expect(effectiveSeat(IT, 'it', 'financer:view')).toBe('it')
+  })
+  it('ενεργώ ως: επιστρέφει τη ΦΟΡΕΜΕΝΗ', () => {
+    expect(effectiveSeat(IT, 'it', 'financer:act')).toBe('financer')
+  })
+
+  /* Το φράγμα του πλαστού cookie μένει */
+  it('μη-IT με cookie «act»: αγνοείται', () => {
+    expect(effectiveSeat(COMMS, 'comms', 'financer:act')).toBe('comms')
+  })
+  it('κακοσχηματισμένο cookie: αγνοείται', () => {
+    expect(effectiveSeat(IT, 'it', 'financer:delete')).toBe('it')
+  })
+  it('χωρίς έδρες: null', () => {
+    expect(effectiveSeat([], null, null)).toBeNull()
+  })
+})

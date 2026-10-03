@@ -4,6 +4,7 @@ export const maxDuration = 60
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
+import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { parseInvoiceFilename, type ParsedInvoiceName } from '@/lib/invoiceFilename'
 import { getSupplierAliases, lookupAlias, upsertSupplierAlias, type ExpenseCategory } from '@/lib/supplierAliases'
 import { buildApprovedFilename } from '@/lib/invoiceFilename'
@@ -99,8 +100,7 @@ export async function POST(request: NextRequest) {
   if (!access.isBoard) return NextResponse.json({ error: 'Δεν επιτρέπεται' }, { status: 403 })
   const seatCookie = cookieStore.get('oc-last-seat')?.value as OcSeat | undefined
   const activeSeat: OcSeat | null =
-    seatCookie && access.seats.includes(seatCookie) ? seatCookie
-      : access.seats.length === 1 ? access.seats[0] : null
+    effectiveSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
   // Financer: όλη η ροή. IT: ΜΟΝΟ έγκριση χειροκίνητων γραμμών (χωρίς
   // αρχείο) — αφού ελέγξει τι έχει ήδη καταχωρηθεί και συνεννοηθεί με
   // τον/την Financer. Ο έλεγχος γίνεται εδώ, όχι μόνο στην οθόνη.

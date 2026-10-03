@@ -4,6 +4,7 @@ export const maxDuration = 60
 import { cookies } from 'next/headers'
 import { verifyToken, generateRenewalClaimToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
+import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { sendOcEmail, subscriptionReminderEmailHtml, renewalClaimUrl, FINANCE_FROM, FINANCE_EMAIL, COMMUNITY_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
 
 /**
@@ -36,8 +37,7 @@ export async function POST(request: NextRequest) {
   }
   const seatCookie = cookieStore.get('oc-last-seat')?.value as OcSeat | undefined
   const activeSeat: OcSeat | null =
-    seatCookie && access.seats.includes(seatCookie) ? seatCookie
-      : access.seats.length === 1 ? access.seats[0] : null
+    effectiveSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
   if (activeSeat !== 'financer' && activeSeat !== 'community') {
     return NextResponse.json({ error: 'Μόνο Financer ή Community μπορούν να στείλουν υπενθυμίσεις' }, { status: 403 })
   }

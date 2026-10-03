@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHoldersWithEmail, type OcSeat } from '@/lib/ocRoles'
+import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import {
   fetchEvents, createEvent, updateEvent, deleteEvent,
   calendarConfigured, type EventInput,
@@ -36,8 +37,7 @@ async function authorize(needWrite: boolean) {
   if (needWrite) {
     const seatCookie = cookieStore.get('oc-last-seat')?.value as OcSeat | undefined
     const activeSeat: OcSeat | null =
-      seatCookie && access.seats.includes(seatCookie) ? seatCookie
-        : access.seats.length === 1 ? access.seats[0] : null
+      effectiveSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
     if (!activeSeat || !WRITERS.includes(activeSeat)) {
       return { error: NextResponse.json({ error: 'Το ημερολόγιο το ενημερώνουν Γραμματεία/IT και Επικοινωνία' }, { status: 403 }) }
     }

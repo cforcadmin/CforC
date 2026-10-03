@@ -4,6 +4,7 @@ export const maxDuration = 60
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, SEAT_MAILBOX, type OcSeat } from '@/lib/ocRoles'
+import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { type ReceiptType } from '@/lib/receipts'
 import { sendOcEmail, sendOcEmailResult, monthlyDispatchEmailHtml, monthReadyEmailHtml, ADMIN_FROM, ADMIN_EMAIL, FINANCE_EMAIL, FINANCE_FROM } from '@/lib/ocEmails'
 
@@ -90,8 +91,7 @@ async function authorize(gate: Gate) {
   if (gate !== 'board') {
     const seatCookie = cookieStore.get('oc-last-seat')?.value as OcSeat | undefined
     const activeSeat: OcSeat | null =
-      seatCookie && access.seats.includes(seatCookie) ? seatCookie
-        : access.seats.length === 1 ? access.seats[0] : null
+      effectiveSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
     if (gate === 'financer' && activeSeat !== 'financer') {
       return { error: NextResponse.json({ error: 'Μόνο ο/η Financer' }, { status: 403 }) }
     }

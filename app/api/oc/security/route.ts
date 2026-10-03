@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import tls from 'node:tls'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
+import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import {
   guard, checkSecretsPresent, judgeDeployment, judgeCertificate, judgeStrapi,
   judgeUnarchived, worstOf, summariseGroup, judgeCronJob, judgeApplicationsNeedingHand,
@@ -47,8 +48,7 @@ async function authorizeIt() {
   if (!access.isBoard) return NextResponse.json({ error: 'Δεν επιτρέπεται' }, { status: 403 })
   const seatCookie = cookieStore.get('oc-last-seat')?.value as OcSeat | undefined
   const activeSeat: OcSeat | null =
-    seatCookie && access.seats.includes(seatCookie) ? seatCookie
-      : access.seats.length === 1 ? access.seats[0] : null
+    effectiveSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
   // Η ενότητα είναι IT-only και στην οθόνη· εδώ ο έλεγχος γίνεται ΞΑΝΑ
   if (activeSeat !== 'it') return NextResponse.json({ error: 'Μόνο το IT' }, { status: 403 })
   return null

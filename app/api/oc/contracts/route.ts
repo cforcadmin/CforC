@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
+import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { mirrorContractsToSheet, fetchFieldOptions, type ContractRecord } from '@/lib/contractsSheet'
 
 export const maxDuration = 60
@@ -59,8 +60,7 @@ async function authorize() {
   if (!access.isBoard) return { error: NextResponse.json({ error: 'Δεν επιτρέπεται' }, { status: 403 }) }
   const seatCookie = cookieStore.get('oc-last-seat')?.value as OcSeat | undefined
   const activeSeat: OcSeat | null =
-    seatCookie && access.seats.includes(seatCookie) ? seatCookie
-      : access.seats.length === 1 ? access.seats[0] : null
+    effectiveSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
   if (!activeSeat || !ALLOWED_SEATS.includes(activeSeat)) {
     return { error: NextResponse.json({ error: 'Το μητρώο συμβάσεων ανήκει σε Οικονομικά, Διαχείριση και IT' }, { status: 403 }) }
   }

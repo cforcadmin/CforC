@@ -95,6 +95,13 @@ export async function POST(request: NextRequest) {
   // όχι όλοι οι ρόλοι που κατέχει. Ένα μέλος με IT+Financer που ενεργεί ως
   // Financer ψηφίζει σαν Financer· το override ισχύει ΜΟΝΟ όταν ενεργεί
   // ρητά ως IT ή Γραμματεία.
+  //
+  // ΔΕΝ ΠΕΡΝΑ ΑΠΟ ΤΟ effectiveSeat — ΕΠΙΤΗΔΕΣ, και είναι η μόνη εξαίρεση.
+  // Όλες οι άλλες διαδρομές τιμούν το «ενεργώ ως»: το IT μπορεί να εκδώσει
+  // απόδειξη ή να στείλει γράμμα φορώντας άλλη έδρα, γιατί αυτά είναι ΕΡΓΑΣΙΕΣ
+  // της έδρας. Η ψήφος δεν είναι εργασία, είναι ΚΡΙΣΗ ΠΡΟΣΩΠΟΥ — και μια
+  // ψηφοφορία πέντε ψηφοφόρων με βαρύτητες δεν αντέχει να ψηφίσει ο ένας για
+  // τον άλλο, ούτε «με καταγραφή». Οπότε εδώ μετράει μόνο έδρα που ΚΑΤΕΧΕΙ.
   const seatCookie = cookieStore.get(OC_LAST_SEAT_COOKIE)?.value as OcSeat | undefined
   const activeSeat: OcSeat | null =
     seatCookie && access.seats.includes(seatCookie) ? seatCookie

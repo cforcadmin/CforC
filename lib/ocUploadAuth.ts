@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
+import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { OC_EMAIL_SEATS } from '@/components/oc/ocPrefs'
 
 /**
@@ -29,8 +30,7 @@ export async function authorizeOcUpload(): Promise<OcUploadAuth> {
   if (!access.isBoard) return { error: NextResponse.json({ error: 'Δεν επιτρέπεται' }, { status: 403 }) }
   const seatCookie = cookieStore.get('oc-last-seat')?.value as OcSeat | undefined
   const activeSeat: OcSeat | null =
-    seatCookie && access.seats.includes(seatCookie) ? seatCookie
-      : access.seats.length === 1 ? access.seats[0] : null
+    effectiveSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
   if (!activeSeat || !ALLOWED_SEATS.includes(activeSeat)) {
     return { error: NextResponse.json({ error: 'Η έδρα σου δεν στέλνει email από το OC' }, { status: 403 }) }
   }

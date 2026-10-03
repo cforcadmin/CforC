@@ -11,6 +11,7 @@ export const maxDuration = 300
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
+import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { nextReceiptNumber, createReceipt, markReceiptSent, syncReceiptToSheet, type ReceiptType } from '@/lib/receipts'
 import { recordSubscriptionYearInSheet, sheetsConfigured } from '@/lib/googleSheets'
 import { athensToday } from '@/lib/receipts'
@@ -73,8 +74,7 @@ async function authorize(needFinancer: boolean) {
   if (needFinancer) {
     const seatCookie = cookieStore.get('oc-last-seat')?.value as OcSeat | undefined
     const activeSeat: OcSeat | null =
-      seatCookie && access.seats.includes(seatCookie) ? seatCookie
-        : access.seats.length === 1 ? access.seats[0] : null
+      effectiveSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
     if (activeSeat !== 'financer') {
       return { error: NextResponse.json({ error: 'Μόνο ο/η Financer μπορεί να εκδώσει αποδείξεις' }, { status: 403 }) }
     }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, SEAT_LABELS, SEAT_MAILBOX, type OcSeat } from '@/lib/ocRoles'
+import { effectiveSeat, resolveSeatContext, attributionFor, OC_SEAT_MODE_COOKIE, type SeatContext } from '@/lib/ocSeatMode'
 import { campaignEmailHtml, PRESETS, NEWSLETTER_PRESETS, TOC_DEFAULT_TITLE, visibleBlocks, BLOCK_LABELS, BLOCK_VARIANTS, MERGE_FIELDS, FOOTER_STYLES, FOOTER_LOOKS, HEADER_STYLES, NEWSLETTER_FOOTERS, NEWSLETTER_FOOTER_DEFAULTS, normaliseNewsletterFooter, applyMergeFields, type Block, type FooterStyle, type FooterLook, type HeaderStyle, type CampaignSigner } from '@/lib/campaignBlocks'
 import { drainCampaigns } from '@/lib/campaignDrain'
 import {
@@ -83,13 +84,30 @@ async function authorize() {
   const access = await resolveOcAccess(decoded.memberId)
   if (!access.isBoard) return { error: NextResponse.json({ error: 'Δεν επιτρέπεται' }, { status: 403 }) }
   const seatCookie = cookieStore.get('oc-last-seat')?.value as OcSeat | undefined
+  const seatModeCookie = cookieStore.get(OC_SEAT_MODE_COOKIE)?.value
   const activeSeat: OcSeat | null =
-    seatCookie && access.seats.includes(seatCookie) ? seatCookie
-      : access.seats.length === 1 ? access.seats[0] : null
+    effectiveSeat(access.seats as OcSeat[], seatCookie, seatModeCookie)
   if (!activeSeat || !ALLOWED_SEATS.includes(activeSeat)) {
     return { error: NextResponse.json({ error: 'Η έδρα σου δεν στέλνει email από το OC' }, { status: 403 }) }
   }
-  return { memberId: decoded.memberId, activeSeat }
+  return {
+    memberId: decoded.memberId,
+    activeSeat,
+    seatCtx: resolveSeatContext(access.seats as OcSeat[], seatCookie, seatModeCookie),
+  }
+}
+
+/**
+ * Ποιος ΟΝΤΩΣ το έγραψε — όχι ποια έδρα το υπογράφει.
+ *
+ * Το γράμμα φεύγει υπογεγραμμένο από τον κάτοχο της έδρας (signerFor): αυτό
+ * είναι το νόημα του «ενεργώ ως». Το μητρώο όμως πρέπει να λέει την αλήθεια,
+ * αλλιώς μια καμπάνια που έστειλε το IT φοράει το όνομα της Ταμία και κανένα
+ * αρχείο δεν δείχνει ποιος πάτησε το κουμπί.
+ */
+async function authorName(auth: { memberId: string; seatCtx: SeatContext; activeSeat: OcSeat }): Promise<string> {
+  const real = await memberName(auth.memberId)
+  return attributionFor(auth.seatCtx, real, SEAT_LABELS[auth.activeSeat] || auth.activeSeat)
 }
 
 /**
@@ -494,7 +512,7 @@ export async function POST(request: NextRequest) {
         if (!v.ok) return NextResponse.json({ error: v.errors.join(' · '), errors: v.errors }, { status: 400 })
       }
 
-      const name = await memberName(auth.memberId)
+      const name = await authorName(auth)
       // Το γραφείο γράφεται ΜΙΑ φορά, τη στιγμή της σύνθεσης. Δεν βγαίνει από
       // τη θυρίδα του υπογράφοντα, γιατί το IT υπογράφει πάντα it@ ανεξάρτητα
       // από το τραπέζι στο οποίο κάθεται.
@@ -642,7 +660,7 @@ export async function POST(request: NextRequest) {
         HeaderStyle: row.HeaderStyle ?? null,
         HeaderLogo: row.HeaderLogo ?? null,
         Footer: row.Footer ?? null,
-        CreatedByName: await memberName(auth.memberId),
+        CreatedByName: await authorName(auth),
       })
       if (!copy.ok) return NextResponse.json({ error: 'Αποτυχία διπλοτύπου' }, { status: 502 })
       return NextResponse.json({ ok: true, id: copy.json?.data?.documentId || null })
@@ -832,7 +850,7 @@ export async function POST(request: NextRequest) {
         }, { status: 502 })
       }
 
-      const name = await memberName(auth.memberId)
+      const name = await authorName(auth)
       const record: Record<string, any> = {
         // ΤΟ ΓΡΑΦΕΙΟ ΠΟΥ ΕΣΤΕΙΛΕ, όχι σταθερά: αλλιώς το τεύχος της Διαχείρισης
         // θα γραφόταν στο αρχείο της Επικοινωνίας και δεν θα το ξανάβρισκε.

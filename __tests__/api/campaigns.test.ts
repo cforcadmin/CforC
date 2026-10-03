@@ -141,6 +141,77 @@ describe('Θυρίδα ανά έδρα', () => {
   })
 })
 
+/**
+ * Το IT που φοράει άλλη έδρα. Το γράμμα φεύγει υπογεγραμμένο από τον κάτοχο
+ * της έδρας — αυτό είναι το νόημα του «ενεργώ ως» — ΑΛΛΑ το μητρώο λέει ποιος
+ * πάτησε το κουμπί. Και στην ΠΡΟΕΠΙΣΚΟΠΗΣΗ δεν φεύγει τίποτα από ξένη θυρίδα.
+ */
+describe('Φορεμένη έδρα', () => {
+  afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks() })
+
+  function wearing(worn: string, mode: 'view' | 'act') {
+    verifyToken.mockReturnValue({ type: 'session', memberId: 'me' })
+    resolveOcAccess.mockResolvedValue({ isBoard: true, seats: ['it'] })
+    ;(cookies as jest.Mock).mockResolvedValue({
+      get: (n: string) =>
+        n === 'session' ? { value: 'tok' }
+          : n === 'oc-last-seat' ? { value: 'it' }
+            : n === 'oc-seat-mode' ? { value: `${worn}:${mode}` } : undefined,
+      set: jest.fn(), delete: jest.fn(),
+    })
+  }
+
+  function captureSave() {
+    const box: { data: any } = { data: null }
+    jest.spyOn(global, 'fetch').mockImplementation(async (input: any, init: any) => {
+      const url = typeof input === 'string' ? input : input?.url ?? ''
+      if (url.includes('/api/members?')) return new Response(JSON.stringify({ data: members }), { status: 200 })
+      if (url.includes('/api/members/me')) return new Response(JSON.stringify({ data: { Name: 'Γιώργος Στυλ' } }), { status: 200 })
+      if (url.includes('/api/working-groups')) return new Response(JSON.stringify({ data: [] }), { status: 200 })
+      if (url.includes('/api/oc-campaigns') && init?.method === 'POST') {
+        box.data = JSON.parse(init.body).data
+        return new Response(JSON.stringify({ data: { documentId: 'new1' } }), { status: 200 })
+      }
+      return new Response(JSON.stringify({ data: {} }), { status: 200 })
+    })
+    return box
+  }
+
+  const draft = { action: 'save', subject: 'Δ', blocks: [{ type: 'text', html: '<p>γεια</p>' }], selection: { allMembers: true } }
+
+  it('«ενεργώ ως»: υπογράφει η έδρα, αλλά το μητρώο γράφει ποιος το έκανε', async () => {
+    wearing('financer', 'act')
+    const box = captureSave()
+    await post(draft)
+    expect(box.data.Signer.email).toBe('finance@cultureforchange.net')
+    expect(box.data.Desk).toBe('finances')
+    expect(box.data.CreatedByName).toBe('Γιώργος Στυλ (IT ως Ταμίας)')
+  })
+
+  it('«προεπισκόπηση»: τίποτα δεν φεύγει από ξένη θυρίδα', async () => {
+    wearing('financer', 'view')
+    const box = captureSave()
+    await post(draft)
+    expect(box.data.Signer.email).toBe('it@cultureforchange.net')
+    expect(box.data.CreatedByName).toBe('Γιώργος Στυλ')
+  })
+
+  it('πλαστό cookie: έδρα που δεν κατέχεις δεν φοριέται χωρίς IT', async () => {
+    verifyToken.mockReturnValue({ type: 'session', memberId: 'me' })
+    resolveOcAccess.mockResolvedValue({ isBoard: true, seats: ['community'] })
+    ;(cookies as jest.Mock).mockResolvedValue({
+      get: (n: string) =>
+        n === 'session' ? { value: 'tok' }
+          : n === 'oc-last-seat' ? { value: 'community' }
+            : n === 'oc-seat-mode' ? { value: 'financer:act' } : undefined,
+      set: jest.fn(), delete: jest.fn(),
+    })
+    const box = captureSave()
+    await post(draft)
+    expect(box.data.Signer.email).toBe('community@cultureforchange.net')
+  })
+})
+
 describe('Προσχέδια που μοιράζονται δύο έδρες', () => {
   afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks() })
 

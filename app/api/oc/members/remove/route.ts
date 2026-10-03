@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken, generateExitSurveyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
+import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { sendMemberRemovalToSheet, sheetsConfigured } from '@/lib/googleSheets'
 import { OC_LAST_SEAT_COOKIE } from '@/components/oc/ocPrefs'
 import { sendOcEmail, departureEmailHtml, farewellUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, DEPARTURE_CC } from '@/lib/ocEmails'
@@ -52,8 +53,7 @@ export async function POST(request: NextRequest) {
   // το override της ψηφοφορίας)
   const seatCookie = cookieStore.get(OC_LAST_SEAT_COOKIE)?.value as OcSeat | undefined
   const activeSeat: OcSeat | null =
-    seatCookie && access.seats.includes(seatCookie) ? seatCookie
-      : access.seats.length === 1 ? access.seats[0] : null
+    effectiveSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
   if (activeSeat !== 'it' && activeSeat !== 'admin') {
     return NextResponse.json({ error: 'Μόνο IT/Γραμματεία μπορούν να διαγράψουν μέλος' }, { status: 403 })
   }

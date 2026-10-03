@@ -81,6 +81,34 @@ export function resolveSeatContext(
 }
 
 /**
+ * Η έδρα με την οποία ΚΡΙΝΟΝΤΑΙ ΟΙ ΕΝΕΡΓΕΙΕΣ — όχι αυτή που ζωγραφίζει η οθόνη.
+ *
+ * Αντικαθιστά τον υπολογισμό που ήταν αντιγραμμένος σε 23 σημεία (22 διαδρομές
+ * του OC και το ocUploadAuth):
+ *
+ *     seatCookie && access.seats.includes(seatCookie) ? seatCookie
+ *       : access.seats.length === 1 ? access.seats[0] : null
+ *
+ * ΔΙΑΦΟΡΑ ΑΠΟ ΤΗΝ ΟΘΟΝΗ: στην ΠΡΟΕΠΙΣΚΟΠΗΣΗ επιστρέφει τη ΔΙΚΗ του έδρα, όχι
+ * τη φορεμένη — έτσι κάθε έλεγχος «activeSeat !== 'financer'» απορρίπτει, που
+ * είναι ακριβώς το νόημα του «βλέπω χωρίς να πειράζω». Μόνο στο «ενεργώ ως»
+ * επιστρέφει τη φορεμένη.
+ *
+ * Το φράγμα του πλαστού cookie μένει ανέπαφο: περνά από το resolveSeatContext,
+ * που δέχεται φορεμένη έδρα ΜΟΝΟ για το IT.
+ */
+export function effectiveSeat(
+  realSeats: OcSeat[],
+  lastSeatCookie: string | null | undefined,
+  seatModeCookie: string | null | undefined,
+): OcSeat | null {
+  const ctx = resolveSeatContext(realSeats, lastSeatCookie, seatModeCookie)
+  if (ctx.mode === 'act') return ctx.activeSeat
+  return lastSeatCookie && realSeats.includes(lastSeatCookie as OcSeat) ? (lastSeatCookie as OcSeat)
+    : realSeats.length === 1 ? realSeats[0] : null
+}
+
+/**
  * Επιτρέπεται ενέργεια που απαιτεί ΑΥΤΗ την έδρα;
  *
  * Στην προεπισκόπηση ΟΧΙ — αυτό ακριβώς είναι το νόημά της. Στο «ενεργώ ως»
