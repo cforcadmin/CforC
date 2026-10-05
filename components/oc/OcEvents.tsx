@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { OC_EVENT_COLUMNS, OC_EVENT_DEFAULT_COLS } from '@/components/oc/ocPrefs'
 import { eventPhase, dateRangeLabel, athensToday, grDate } from '@/lib/events'
 import { CAPACITY_LABELS } from '@/lib/eventForm'
+import OcEventEditor from '@/components/oc/OcEventEditor'
 
 /**
  * ΔΡΑΣΕΙΣ — πλήρους πλάτους στην Επισκόπηση.
@@ -36,7 +37,8 @@ type Filter = 'all' | 'running' | 'upcoming' | 'past'
 const CARD = 'bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8 border border-gray-200 dark:border-gray-600'
 const EYEBROW = 'text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400'
 
-export default function OcEvents() {
+/** Γραμματεία και IT γράφουν δράσεις· όλοι οι άλλοι μόνο διαβάζουν. */
+export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
   const [events, setEvents] = useState<Ev[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -46,6 +48,9 @@ export default function OcEvents() {
   const [regsBusy, setRegsBusy] = useState(false)
   const [cols, setCols] = useState<string[]>(OC_EVENT_DEFAULT_COLS)
   const [showCols, setShowCols] = useState(false)
+  // null = κλειστός· '' = νέα δράση· documentId = επεξεργασία
+  const [editing, setEditing] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
   const today = athensToday()
 
   useEffect(() => {
@@ -59,7 +64,7 @@ export default function OcEvents() {
       .catch(err => { if (alive) setError(err?.message || 'Κάτι πήγε στραβά') })
       .finally(() => { if (alive) setLoading(false) })
     return () => { alive = false }
-  }, [])
+  }, [reloadKey])
 
   useEffect(() => {
     if (!openSlug) { setRegs([]); return }
@@ -99,6 +104,12 @@ export default function OcEvents() {
           <span className="text-sm text-gray-600 dark:text-gray-400">
             {events.length} {events.length === 1 ? 'δράση' : 'δράσεις'}
           </span>
+        )}
+        {canEdit && (
+          <button type="button" onClick={() => setEditing('')}
+            className="ml-auto px-4 py-1.5 rounded-full text-xs font-bold bg-coral text-charcoal hover:bg-coral/90 transition-colors">
+            + Νέα δράση
+          </button>
         )}
       </div>
 
@@ -146,6 +157,15 @@ export default function OcEvents() {
                       <span aria-hidden="true" className={`transition-transform ${openSlug === e.Slug ? 'rotate-180' : ''}`}>▾</span>
                     </span>
                   </button>
+
+                  {canEdit && (
+                    <div className="px-4 pb-2 -mt-1">
+                      <button type="button" onClick={() => setEditing(e.documentId)}
+                        className="text-xs font-bold text-coral hover:underline">
+                        Επεξεργασία
+                      </button>
+                    </div>
+                  )}
 
                   {openSlug === e.Slug && (
                     <div className="border-t border-gray-200 dark:border-gray-600 p-4">
@@ -265,6 +285,17 @@ export default function OcEvents() {
             </div>
           )}
         </>
+      )}
+
+      {/* Η φόρμα ζει ΕΔΩ και όχι μέσα στη λίστα: είναι overlay σε όλη την
+          οθόνη, και φωλιασμένη μέσα στις γραμμές θα κληρονομούσε το overflow
+          του πίνακα συμμετεχόντων. */}
+      {canEdit && editing !== null && (
+        <OcEventEditor
+          documentId={editing || undefined}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); setReloadKey(k => k + 1) }}
+        />
       )}
     </div>
   )

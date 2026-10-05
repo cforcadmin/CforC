@@ -682,6 +682,8 @@ interface OcOverviewProps {
   canRecordPayments?: boolean
   /** Ενεργός ρόλος financer/community → υπενθυμίσεις συνδρομής */
   canRemind?: boolean
+  /** Γραμματεία + IT: δημιουργία και αλλαγή δράσεων */
+  canEditEvents?: boolean
   /** Deep link /oc?open=renewals → popup δηλώσεων ανοιχτό στο φόρτωμα */
   initialShowRenewals?: boolean
   tableCols?: string[]
@@ -690,7 +692,7 @@ interface OcOverviewProps {
 
 export default function OcOverview({
   data, applications, canDeleteMembers = false, canRecordPayments = false,
-  canRemind = false, initialShowRenewals = false, tableCols, tableDensity,
+  canRemind = false, canEditEvents = false, initialShowRenewals = false, tableCols, tableDensity,
 }: OcOverviewProps) {
   const router = useRouter()
   const [payConfirm, setPayConfirm] = useState<string | null>(null)
@@ -1213,7 +1215,7 @@ export default function OcOverview({
 
       {/* ΔΡΑΣΕΙΣ — πλήρους πλάτους, ανάμεσα στο «Προφίλ ιστοσελίδας» και το
           Newsletter. Φέρνει τα δικά της δεδομένα, δεν περιμένει το overview. */}
-      <OcEvents />
+      <OcEvents canEdit={canEditEvents} />
 
       {/* Οι προτάσεις ακριβώς κάτω από τις δράσεις: γεννιούνται μέσα στις
           δηλώσεις τους και διαβάζονται μαζί τους. */}
