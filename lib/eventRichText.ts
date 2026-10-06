@@ -93,14 +93,29 @@ export function sanitizeDescription(html: string): string {
   return out
 }
 
+/**
+ * Η ΚΕΝΗ ΠΑΡΑΓΡΑΦΟΣ ΠΡΕΠΕΙ ΝΑ ΠΙΑΝΕΙ ΧΩΡΟ.
+ *
+ * Ο επεξεργαστής δίνει «<p></p>» (ή «<p><br></p>») για κάθε Enter σε άδεια
+ * γραμμή, και ο καθαριστής σωστά τα κρατά. Μια παράγραφος χωρίς περιεχόμενο
+ * όμως έχει ύψος μηδέν, και τα περιθώριά της ΣΥΜΠΤΥΣΣΟΝΤΑΙ με των γειτόνων
+ * της — άρα δύο κενές γραμμές στον επεξεργαστή έδιναν ΜΗΔΕΝ επιπλέον κενό
+ * στη σελίδα. Ένα &nbsp; τους δίνει ύψος γραμμής.
+ *
+ * Ίδια λύση με το γράμμα (richText του campaignBlocks), για τον ίδιο λόγο:
+ * εκεί γράφτηκε πρώτα, όταν εξαφανίζονταν τα κενά μέσα στα email.
+ */
+const fillEmptyParagraphs = (html: string): string =>
+  html.replace(/<p>\s*(?:<br\s*\/?>)?\s*<\/p>/gi, '<p>&nbsp;</p>')
+
 /** Το HTML που μπαίνει στη σελίδα, από όποια από τις δύο μορφές κι αν ήρθε. */
 export function descriptionHtml(value: string | null | undefined): string {
   const raw = String(value ?? '').trim()
   if (!raw) return ''
-  return looksLikeHtml(raw) ? sanitizeDescription(raw) : plainToHtml(raw)
+  return looksLikeHtml(raw) ? fillEmptyParagraphs(sanitizeDescription(raw)) : plainToHtml(raw)
 }
 
 /** Έχει πραγματικό περιεχόμενο; Κενό <p> από τον επεξεργαστή δεν μετράει. */
 export function hasDescription(value: string | null | undefined): boolean {
-  return descriptionHtml(value).replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0
+  return descriptionHtml(value).replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim().length > 0
 }
