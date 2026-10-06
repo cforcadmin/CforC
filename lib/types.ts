@@ -298,7 +298,7 @@ export type EventCapacity =
   | 'member'          // Μέλος CforC μόνο
   | 'member-ban'      // Μέλος CforC & υπότροφος START
   | 'non-member-ban'  // Υπότροφος START, όχι μέλος
-  | 'non-member'      // Ούτε μέλος ούτε υπότροφος
+  | 'non-member'      // Ούτε μέλος CforC ούτε υπότροφος START
   | 'other';          // Δεσμευμένο για μελλοντικές δράσεις
 
 export interface EventSession {

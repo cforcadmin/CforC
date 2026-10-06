@@ -13,7 +13,7 @@ export const CAPACITY_LABELS: Record<EventCapacity, string> = {
   'member': 'Μέλος CforC',
   'member-ban': 'Μέλος CforC & υπότροφος START',
   'non-member-ban': 'Υπότροφος START (όχι μέλος CforC)',
-  'non-member': 'Ούτε μέλος ούτε υπότροφος',
+  'non-member': 'Ούτε μέλος CforC ούτε υπότροφος START',
   'other': 'Άλλο',
 }
 
