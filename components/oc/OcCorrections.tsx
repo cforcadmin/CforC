@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import OcTasks from '@/components/oc/OcTasks'
+import OcSiteRequests from '@/components/oc/OcSiteRequests'
 
 export const IT_BOARD_PREFIX = 'it-corrections-'
 
@@ -58,6 +59,23 @@ export default function OcCorrections() {
           καταγράφεται στον δικό της πίνακα — με ανάδοχο, προτεραιότητα, προθεσμία και κατάσταση, όπως οι
           Εκκρεμότητες της Διαχείρισης. Οι πίνακες αυτοί δεν εμφανίζονται σε καμία άλλη θέση.
         </p>
+      </div>
+
+      {/* ΑΠ' ΕΞΩ ΠΡΟΣ ΤΑ ΜΕΣΑ: πρώτα ό,τι έστειλαν ΑΝΘΡΩΠΟΙ μέσα από τον
+          ιστότοπο, μετά οι δικές μας σημειώσεις ανά σελίδα. Τα δεύτερα τα
+          γράφει το IT για τον εαυτό του· τα πρώτα περιμένουν απάντηση. */}
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
+        <div className="flex flex-wrap items-baseline gap-3 mb-1">
+          <h3 className="text-lg font-bold text-charcoal dark:text-gray-100">Αιτήματα ιστότοπου</h3>
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            από το κουμπί «Αναφορά / Πρόταση»
+          </span>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-5 max-w-3xl">
+          Ό,τι στέλνουν μέλη και επισκέπτες μέσα από τον ιστότοπο. Φτάνει και με email στο it@·
+          εδώ αποκτά κατάσταση και κλείνει. Στην ολοκλήρωση ειδοποιείται ο αποστολέας, αν άφησε email.
+        </p>
+        <OcSiteRequests canManage />
       </div>
 
       {OC_PAGES.map(p => {

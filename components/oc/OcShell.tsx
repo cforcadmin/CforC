@@ -558,7 +558,6 @@ export default function OcShell({ seats, initialSeat, wearingSeat = null, seatMo
                 canDeleteMembers={activeSeat === 'it' || activeSeat === 'admin'}
                 // Δράσεις: γράφουν Γραμματεία και IT — ίδιο φράγμα με τη διαδρομή
                 canEditEvents={activeSeat === 'it' || activeSeat === 'admin'}
-                canManageRequests={activeSeat === 'it'}
                 canRecordPayments={activeSeat === 'financer'}
                 canRemind={activeSeat === 'financer' || activeSeat === 'community'}
                 initialShowRenewals={initialOpenRenewals}
