@@ -62,7 +62,8 @@ export function senderGroupId(id: NewsletterAudienceId): string | undefined {
 export const SEAT_TEST_GROUPS: Record<string, string> = {
   media: 'dPp8Xw',   // Δοκιμές — Media
   comms: 'aQqRZl',   // Δοκιμές — Επικοινωνία
-  it: 'aOX8wR',      // Test group (it@cultureforchange.net)
+  it: 'aOX8wR',      // Δοκιμές - ΙΤ (it@cultureforchange.net)
+  admin: 'ep6121',   // Δοκιμές - Admin (hello@cultureforchange.net)
 }
 
 export interface NewsletterValidation { ok: boolean; errors: string[] }

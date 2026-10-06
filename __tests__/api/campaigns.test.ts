@@ -34,6 +34,7 @@ jest.mock('@/lib/ocEmails', () => ({
 const verifyToken = jest.fn()
 jest.mock('@/lib/auth', () => ({ get verifyToken() { return verifyToken } }))
 
+import { SEAT_TEST_GROUPS } from '@/lib/newsletterAudiences'
 import { GET, POST, DELETE } from '@/app/api/oc/campaigns/route'
 import { cookies } from 'next/headers'
 
@@ -614,10 +615,32 @@ describe('Τελική δοκιμή μέσω Sender', () => {
     expect(r.json.seatStatus).toBe('unsubscribed')
   })
 
+  /**
+   * Το φράγμα, ΟΧΙ μια συγκεκριμένη έδρα.
+   *
+   * Ως τις 6/10/2026 το τεστ χρησιμοποιούσε τη Γραμματεία ως παράδειγμα έδρας
+   * «χωρίς ομάδα» — και έσπασε τη μέρα που η Γραμματεία απέκτησε ομάδα, όπως
+   * έπρεπε. Πλέον ΚΑΘΕ έδρα που στέλνει μαζικά έχει ομάδα (το κλειδώνει το
+   * newsletterAudiences.test), οπότε η έλλειψη προσομοιώνεται ρητά: ο
+   * έλεγχος πρέπει να κρατά και για την επόμενη έδρα που θα προστεθεί χωρίς
+   * να της φτιαχτεί ομάδα.
+   */
   it('έδρα χωρίς ομάδα δοκιμών δεν στέλνει τελική δοκιμή', async () => {
+    const saved = SEAT_TEST_GROUPS.admin
+    delete SEAT_TEST_GROUPS.admin
+    try {
+      signedInAs('admin'); const seen = stub()
+      expect((await test1()).status).toBe(400)
+      expect(seen.created).toBeNull()
+    } finally {
+      SEAT_TEST_GROUPS.admin = saved
+    }
+  })
+
+  it('η Γραμματεία ΣΤΕΛΝΕΙ τελική δοκιμή — έχει ομάδα', async () => {
     signedInAs('admin'); const seen = stub()
-    expect((await test1()).status).toBe(400)
-    expect(seen.created).toBeNull()
+    expect((await test1()).status).toBe(200)
+    expect(seen.created).not.toBeNull()
   })
 })
 

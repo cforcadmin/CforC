@@ -1,7 +1,5 @@
-import {
-  NEWSLETTER_AUDIENCES, normaliseAudiences, validateNewsletter,
-  applySenderTags, unsupportedTags,
-} from '@/lib/newsletterAudiences'
+import { NEWSLETTER_DESKS, OC_EMAIL_DESKS } from '@/components/oc/ocPrefs'
+import { NEWSLETTER_AUDIENCES, normaliseAudiences, validateNewsletter, applySenderTags, unsupportedTags, SEAT_TEST_GROUPS } from '@/lib/newsletterAudiences'
 
 /**
  * Το newsletter φεύγει σε ΛΙΣΤΕΣ, ποτέ σε διευθύνσεις που πληκτρολόγησε
@@ -88,5 +86,29 @@ describe('Περιγραφές λιστών', () => {
       expect(a.label).toBeTruthy()
       expect(a.hint.length).toBeGreaterThan(10)
     }
+  })
+})
+
+/**
+ * Η ΤΕΛΙΚΗ ΔΟΚΙΜΗ ΠΡΕΠΕΙ ΝΑ ΔΟΥΛΕΥΕΙ ΓΙΑ ΚΑΘΕ ΕΔΡΑ ΠΟΥ ΣΤΕΛΝΕΙ ΜΑΖΙΚΑ.
+ *
+ * 6/10/2026: η Γραμματεία πήρε «Η έδρα σου δεν έχει ομάδα δοκιμών στον
+ * Sender» ενώ συνέθετε αληθινή πρόσκληση — το Bulk email είχε ανοίξει για τη
+ * Διαχείριση, η ομάδα δοκιμών όμως δεν είχε ακολουθήσει. Το τεστ κλειδώνει
+ * τη ΣΧΕΣΗ, όχι τα ids: αν αύριο ανοίξει τρίτο γραφείο, σπάει εδώ.
+ */
+describe('ομάδες δοκιμών ανά έδρα', () => {
+  it('κάθε έδρα των γραφείων που στέλνουν μαζικά έχει ομάδα', () => {
+    const seats = NEWSLETTER_DESKS.flatMap(d => OC_EMAIL_DESKS[d] || [])
+    const missing = seats.filter(s => !SEAT_TEST_GROUPS[s])
+    expect(missing).toEqual([])
+  })
+  it('η Γραμματεία και η Επικοινωνία έχουν ομάδα', () => {
+    expect(SEAT_TEST_GROUPS.admin).toBeTruthy()
+    expect(SEAT_TEST_GROUPS.comms).toBeTruthy()
+  })
+  it('καμία ομάδα δεν μοιράζεται id με άλλη — αλλιώς δοκιμή πάει σε ξένη θυρίδα', () => {
+    const ids = Object.values(SEAT_TEST_GROUPS)
+    expect(new Set(ids).size).toBe(ids.length)
   })
 })
