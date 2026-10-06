@@ -5,6 +5,7 @@ import { OC_EVENT_COLUMNS, OC_EVENT_DEFAULT_COLS } from '@/components/oc/ocPrefs
 import { eventPhase, dateRangeLabel, athensToday, grDate } from '@/lib/events'
 import { CAPACITY_LABELS } from '@/lib/eventForm'
 import { buildCsv, downloadCsv, datedFilename } from '@/lib/csv'
+import { useColumnWidths } from '@/components/oc/useColumnWidths'
 import OcEventEditor from '@/components/oc/OcEventEditor'
 
 /**
@@ -49,6 +50,7 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
   const [regsBusy, setRegsBusy] = useState(false)
   const [cols, setCols] = useState<string[]>(OC_EVENT_DEFAULT_COLS)
   const [showCols, setShowCols] = useState(false)
+  const { width, ResizeHandle, resetWidths, hasCustom } = useColumnWidths('event-registrations')
   // null = κλειστός· '' = νέα δράση· documentId = επεξεργασία
   const [editing, setEditing] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
@@ -90,6 +92,11 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
 
   const openEvent = events.find(e => e.Slug === openSlug) || null
   const show = (k: string) => cols.includes(k)
+  // Το ονοματεπώνυμο πρώτο και πάντα — οι υπόλοιπες όπως τις διάλεξε ο χρήστης
+  const tableCols = [
+    { key: 'name', label: 'Ονοματεπώνυμο' },
+    ...OC_EVENT_COLUMNS.filter(c => cols.includes(c.key)),
+  ]
 
   /**
    * Εξαγωγή σε CSV — ΟΤΙ ΒΛΕΠΕΙΣ, με τη σειρά που το βλέπεις.
@@ -216,6 +223,13 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
                             className="text-xs font-bold px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-coral disabled:opacity-40">
                             Εξαγωγή CSV
                           </button>
+                          {hasCustom && (
+                            <button type="button" onClick={resetWidths}
+                              title="Επαναφορά των πλατών που έχεις σύρει"
+                              className="text-xs font-bold px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-coral">
+                              Πλάτη
+                            </button>
+                          )}
                           <button type="button" onClick={() => setShowCols(v => !v)}
                             className="text-xs font-bold px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-coral">
                             Στήλες
@@ -256,74 +270,47 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
                         <p className="text-sm text-gray-500 dark:text-gray-400">Καμία δήλωση ακόμη.</p>
                       ) : (
                         <div className="overflow-x-auto min-w-0 max-w-full">
-                          <table className="w-full text-sm">
+                          {/* Κεφαλίδα ΚΑΙ σώμα από την ΙΔΙΑ λίστα στηλών: έτσι
+                              μια νέα στήλη μπαίνει σε ένα σημείο, και το πλάτος
+                              που σύρθηκε αντιστοιχεί πάντα στο σωστό κελί. */}
+                          <table className="w-full text-sm"
+                            style={{ tableLayout: hasCustom ? 'fixed' : 'auto', minWidth: '100%' }}>
+                            <colgroup>
+                              {tableCols.map(c => (
+                                <col key={c.key} style={width(c.key) ? { width: `${width(c.key)}px` } : undefined} />
+                              ))}
+                            </colgroup>
                             <thead>
                               <tr className="text-left text-xs text-gray-500 dark:text-gray-400">
-                                <th className="py-2 pr-4 font-medium">Ονοματεπώνυμο</th>
-                                {show('capacity') && <th className="py-2 pr-4 font-medium">Ιδιότητα</th>}
-                                {show('email') && <th className="py-2 pr-4 font-medium">Email</th>}
-                                {show('phone') && <th className="py-2 pr-4 font-medium">Τηλέφωνο</th>}
-                                {show('sessions') && <th className="py-2 pr-4 font-medium">Συνεδρίες</th>}
-                                {show('travel') && <th className="py-2 pr-4 font-medium">Μετακίνηση</th>}
-                                {show('fromCity') && <th className="py-2 pr-4 font-medium">Από</th>}
-                                {show('transport') && <th className="py-2 pr-4 font-medium">Μέσο</th>}
-                                {show('proposal') && <th className="py-2 pr-4 font-medium">Πρόταση</th>}
-                                {show('accommodation') && <th className="py-2 pr-4 font-medium">Διαμονή</th>}
-                                {show('meals') && <th className="py-2 pr-4 font-medium">Γεύματα</th>}
-                                {show('dietary') && <th className="py-2 pr-4 font-medium text-amber-800 dark:text-amber-200">Διατροφικά</th>}
-                                {show('agenda') && <th className="py-2 pr-4 font-medium">Ατζέντα</th>}
-                                {show('submitted') && <th className="py-2 font-medium">Υποβλήθηκε</th>}
+                                {tableCols.map(c => (
+                                  <th key={c.key}
+                                    className={`relative py-2 pr-4 font-medium whitespace-nowrap ${
+                                      c.key === 'dietary' ? 'text-amber-800 dark:text-amber-200' : ''}`}>
+                                    <span className="block max-w-full truncate">{c.label}</span>
+                                    <ResizeHandle colKey={c.key} />
+                                  </th>
+                                ))}
                               </tr>
                             </thead>
                             <tbody>
                               {regs.map(r => (
                                 <tr key={r.documentId} className="border-t border-gray-100 dark:border-gray-700">
-                                  <td className="py-2 pr-4">
-                                    <span className="flex items-center gap-2">
-                                      <span className="text-charcoal dark:text-gray-100">{eventCellValue(r, 'name')}</span>
-                                      {r.Status === 'pending' && <Tag tone="amber">εκκρεμεί</Tag>}
-                                      {r.Status === 'cancelled' && <Tag tone="grey">άκυρη</Tag>}
-                                    </span>
-                                  </td>
-                                  {show('capacity') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {eventCellValue(r, 'capacity') || '—'}
-                                  </td>}
-                                  {show('email') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {eventCellValue(r, 'email') || '—'}
-                                  </td>}
-                                  {show('phone') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {eventCellValue(r, 'phone') || '—'}
-                                  </td>}
-                                  {show('sessions') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {eventCellValue(r, 'sessions') || '—'}
-                                  </td>}
-                                  {show('travel') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {eventCellValue(r, 'travel') || '—'}
-                                  </td>}
-                                  {show('fromCity') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {eventCellValue(r, 'fromCity') || '—'}
-                                  </td>}
-                                  {show('transport') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {eventCellValue(r, 'transport') || '—'}
-                                  </td>}
-                                  {show('proposal') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {eventCellValue(r, 'proposal') || '—'}
-                                  </td>}
-                                  {show('accommodation') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {eventCellValue(r, 'accommodation') || '—'}
-                                  </td>}
-                                  {show('meals') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {eventCellValue(r, 'meals') || '—'}
-                                  </td>}
-                                  {show('dietary') && <td className="py-2 pr-4 text-amber-900 dark:text-amber-100">
-                                    {eventCellValue(r, 'dietary') || '—'}
-                                  </td>}
-                                  {show('agenda') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {eventCellValue(r, 'agenda') || '—'}
-                                  </td>}
-                                  {show('submitted') && <td className="py-2 text-gray-500 dark:text-gray-400 tabular-nums">
-                                    {eventCellValue(r, 'submitted') || '—'}
-                                  </td>}
+                                  {tableCols.map(c => (
+                                    <td key={c.key}
+                                      className={`py-2 pr-4 align-top ${
+                                        c.key === 'name' ? 'text-charcoal dark:text-gray-100'
+                                          : c.key === 'dietary' ? 'text-amber-900 dark:text-amber-100'
+                                            : c.key === 'submitted' ? 'text-gray-500 dark:text-gray-400 tabular-nums'
+                                              : 'text-gray-600 dark:text-gray-300'}`}>
+                                      {c.key === 'name' ? (
+                                        <span className="flex items-center gap-2">
+                                          <span>{eventCellValue(r, 'name')}</span>
+                                          {r.Status === 'pending' && <Tag tone="amber">εκκρεμεί</Tag>}
+                                          {r.Status === 'cancelled' && <Tag tone="grey">άκυρη</Tag>}
+                                        </span>
+                                      ) : (eventCellValue(r, c.key) || '—')}
+                                    </td>
+                                  ))}
                                 </tr>
                               ))}
                             </tbody>

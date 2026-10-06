@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { grDate } from '@/lib/events'
+import { buildCsv, downloadCsv, datedFilename } from '@/lib/csv'
 
 /**
  * ΠΡΟΤΑΣΕΙΣ ΔΡΑΣΕΩΝ — πλήρους πλάτους στην Επισκόπηση.
@@ -35,6 +36,55 @@ type Status = 'new' | 'shortlisted' | 'accepted' | 'declined'
 
 const CARD = 'bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8 border border-gray-200 dark:border-gray-600'
 const EYEBROW = 'text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400'
+
+/**
+ * Οι στήλες της εξαγωγής, με τη σειρά που βγαίνουν.
+ *
+ * Η ΠΕΡΙΓΡΑΦΗ μπαίνει ΟΛΟΚΛΗΡΗ: το κουτί τη δείχνει κομμένη για να χωρέσει,
+ * αλλά όποιος κατεβάζει το αρχείο το κάνει ακριβώς για να τη διαβάσει.
+ * Οι αλλαγές γραμμής γίνονται κενά — το «;»-CSV με εισαγωγικά τις αντέχει,
+ * αλλά μια πολυγραμμική τιμή καταστρέφει κάθε γρήγορη ματιά σε φύλλο.
+ */
+export const PROPOSAL_EXPORT_COLUMNS: Array<{ key: string; label: string }> = [
+  { key: 'title', label: 'Τίτλος' },
+  { key: 'status', label: 'Κατάσταση' },
+  { key: 'proposer', label: 'Πρότεινε' },
+  { key: 'email', label: 'Email' },
+  { key: 'event', label: 'Δράση' },
+  { key: 'type', label: 'Είδος' },
+  { key: 'timeSlot', label: 'Χρονικό πλαίσιο' },
+  { key: 'location', label: 'Τόπος' },
+  { key: 'duration', label: 'Διάρκεια' },
+  { key: 'cost', label: 'Κόστος (€)' },
+  { key: 'link', label: 'Σύνδεσμος' },
+  { key: 'description', label: 'Περιγραφή' },
+  { key: 'notes', label: 'Σημειώσεις ΟΣ' },
+  { key: 'submitted', label: 'Υποβλήθηκε' },
+]
+
+const flat = (v: unknown): string => String(v ?? '').replace(/\s*\n+\s*/g, ' ').trim()
+
+export function proposalCellValue(p: any, key: string): string {
+  switch (key) {
+    case 'title': return flat(p.EventProposalTitle)
+    case 'status': return STATUS_META[p.Status as Status]?.label || String(p.Status || '')
+    case 'proposer': return flat(p.ProposerName)
+    case 'email': return flat(p.ProposerEmail)
+    case 'event': return flat(p.event?.Title)
+    case 'type': return flat(p.TypeOfEvent)
+    case 'timeSlot': return flat(p.TimeSlot)
+    case 'location': return flat(p.EventLocation)
+    case 'duration': return flat(p.ProposalDuration)
+    // Το 0 είναι ΤΙΜΗ (δωρεάν δράση), όχι κενό — γι' αυτό έλεγχος σε null
+    case 'cost': return p.ProposalCost === null || p.ProposalCost === undefined
+      ? '' : String(p.ProposalCost)
+    case 'link': return flat(p.ProposalLink)
+    case 'description': return flat(p.ProposalDescription)
+    case 'notes': return flat(p.ProposalNotes)
+    case 'submitted': return p.SubmittedAt ? grDate(String(p.SubmittedAt)) : ''
+    default: return ''
+  }
+}
 
 const STATUS_META: Record<Status, { label: string; cls: string }> = {
   new: { label: 'Νέα', cls: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200' },
@@ -73,6 +123,15 @@ export default function OcEventProposals() {
 
   const shown = filter === 'all' ? rows : rows.filter(r => r.Status === filter)
 
+  /** Εξάγει ΟΣΕΣ δείχνει το φίλτρο — «Νέα» σημαίνει αρχείο μόνο με τις νέες */
+  function exportCsv() {
+    const csv = buildCsv(shown, PROPOSAL_EXPORT_COLUMNS.map(c => ({
+      header: c.label, value: (p: Proposal) => proposalCellValue(p, c.key),
+    })))
+    const tag = filter === 'all' ? 'ολες' : STATUS_META[filter as Status].label.toLowerCase()
+    downloadCsv(csv, datedFilename(`CforC-προτάσεις-δράσεων-${tag}`))
+  }
+
   /** Η αλλαγή φαίνεται ΑΜΕΣΩΣ και επαναφέρεται αν αποτύχει — όχι σιωπηλά */
   async function save(id: string, patch: { Status?: Status; ProposalNotes?: string }) {
     const before = rows
@@ -99,6 +158,13 @@ export default function OcEventProposals() {
           <span className="text-sm text-gray-600 dark:text-gray-400">
             {rows.length} {rows.length === 1 ? 'πρόταση' : 'προτάσεις'}
           </span>
+        )}
+        {!loading && rows.length > 0 && (
+          <button type="button" onClick={exportCsv}
+            title="Κατέβασε τις προτάσεις του φίλτρου σε CSV"
+            className="ml-auto text-xs font-bold px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-coral">
+            Εξαγωγή CSV
+          </button>
         )}
       </div>
 
