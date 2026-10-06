@@ -65,12 +65,15 @@ export default function EventDetail({ ev }: { ev: CforcEvent }) {
             αποθηκεύεται ως HTML. Οι ΠΑΛΙΕΣ περιγραφές είναι απλό κείμενο και
             περνούν από την ίδια συνάρτηση — βγαίνουν παράγραφοι, ακριβώς όπως
             τις έδειχνε το whitespace-pre-line. Ο καθαριστής είναι του
-            ΙΣΤΟΤΟΠΟΥ, όχι του γράμματος: δεν καρφώνει χρώμα, ώστε το
-            dark:prose-invert να δουλέψει. */}
+            ΙΣΤΟΤΟΠΟΥ, όχι του γράμματος: δεν καρφώνει χρώμα. Το ντύσιμο το
+            κάνει το .rich-text-body του globals.css — ΟΧΙ το «prose», που σε
+            αυτό το έργο είναι κλάση χωρίς κανόνες (δεν υπάρχει το
+            @tailwindcss/typography) και άφηνε τις παραγράφους κολλημένες και
+            τις λίστες χωρίς κουκκίδες. */}
         {hasDescription(ev.Description) && (
           <section className="mb-10">
             <h2 className="text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400 mb-4">Η ΠΡΟΣΚΛΗΣΗ</h2>
-            <div className="prose prose-lg dark:prose-invert max-w-none text-charcoal dark:text-gray-200"
+            <div className="rich-text-body text-lg leading-relaxed text-charcoal dark:text-gray-200"
               dangerouslySetInnerHTML={{ __html: descriptionHtml(ev.Description) }} />
           </section>
         )}
@@ -79,7 +82,7 @@ export default function EventDetail({ ev }: { ev: CforcEvent }) {
             <summary className="text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400 cursor-pointer">
               ENGLISH VERSION
             </summary>
-            <div className="prose prose-lg dark:prose-invert max-w-none mt-4 text-charcoal dark:text-gray-200"
+            <div className="rich-text-body text-lg leading-relaxed mt-4 text-charcoal dark:text-gray-200"
               dangerouslySetInnerHTML={{ __html: descriptionHtml(ev.DescriptionEn) }} />
           </details>
         )}

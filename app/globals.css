@@ -2326,3 +2326,74 @@ select.glass-control {
   width: 20px;
   height: 14rem;
 }
+
+/* ========================================
+   ΠΛΟΥΣΙΟ ΚΕΙΜΕΝΟ ΣΕ ΣΕΛΙΔΑ (όχι σε επεξεργαστή)
+   ========================================
+
+   Αδελφό του «.rich-text-editor .tiptap», για HTML που ΑΠΟΔΙΔΕΤΑΙ — π.χ. η
+   περιγραφή μιας δράσης.
+
+   ΓΙΑΤΙ ΔΕΝ ΑΡΚΕΙ ΤΟ «prose»: το @tailwindcss/typography ΔΕΝ είναι
+   εγκατεστημένο σε αυτό το έργο, οπότε κάθε «prose» είναι κλάση χωρίς
+   κανόνες. Το preflight του Tailwind μηδενίζει τα περιθώρια των <p> και
+   σβήνει τις κουκκίδες των <ul> — άρα χωρίς αυτό εδώ, οι παράγραφοι
+   κολλάνε και οι λίστες χάνουν τα σημάδια τους. Το ίδιο λάθος είχε γίνει
+   και στον επεξεργαστή των καμπανιών· είναι γραμμένο στο CampaignRichText.
+
+   Τα ΧΡΩΜΑΤΑ ΚΕΙΜΕΝΟΥ δεν ορίζονται εδώ: τα δίνει το δοχείο με τις κλάσεις
+   του (text-charcoal dark:text-gray-200), ώστε να μη χρειάζεται δεύτερος
+   κανόνας για το σκούρο θέμα. */
+
+.rich-text-body > *:first-child { margin-top: 0; }
+.rich-text-body > *:last-child { margin-bottom: 0; }
+
+.rich-text-body p {
+  margin-bottom: 1rem;
+}
+
+.rich-text-body h2 {
+  font-size: 1.375rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+  margin: 2rem 0 0.75rem 0;
+}
+
+.rich-text-body h3 {
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem 0;
+}
+
+.rich-text-body ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.rich-text-body ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.rich-text-body li {
+  margin-bottom: 0.375rem;
+}
+
+/* Οι εμφωλιασμένες λίστες δεν ξαναπιάνουν το κάτω περιθώριο του γονέα */
+.rich-text-body li > ul,
+.rich-text-body li > ol {
+  margin-top: 0.375rem;
+  margin-bottom: 0;
+}
+
+.rich-text-body a {
+  color: var(--coral);
+  text-decoration: underline;
+}
+
+.rich-text-body strong { font-weight: 700; }
+.rich-text-body em { font-style: italic; }
+.rich-text-body u { text-decoration: underline; }
