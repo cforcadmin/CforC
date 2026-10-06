@@ -50,6 +50,7 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
   const [regsBusy, setRegsBusy] = useState(false)
   const [cols, setCols] = useState<string[]>(OC_EVENT_DEFAULT_COLS)
   const [showCols, setShowCols] = useState(false)
+  const [full, setFull] = useState<{ title: string; who: string; text: string } | null>(null)
   const { width, ResizeHandle, resetWidths, hasCustom } = useColumnWidths('event-registrations')
   // null = κλειστός· '' = νέα δράση· documentId = επεξεργασία
   const [editing, setEditing] = useState<string | null>(null)
@@ -297,7 +298,7 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
                                 <tr key={r.documentId} className="border-t border-gray-100 dark:border-gray-700">
                                   {tableCols.map(c => (
                                     <td key={c.key}
-                                      className={`py-2 pr-4 align-top ${
+                                      className={`py-2 pr-4 align-top max-w-[22rem] ${
                                         c.key === 'name' ? 'text-charcoal dark:text-gray-100'
                                           : c.key === 'dietary' ? 'text-amber-900 dark:text-amber-100'
                                             : c.key === 'submitted' ? 'text-gray-500 dark:text-gray-400 tabular-nums'
@@ -308,7 +309,16 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
                                           {r.Status === 'pending' && <Tag tone="amber">εκκρεμεί</Tag>}
                                           {r.Status === 'cancelled' && <Tag tone="grey">άκυρη</Tag>}
                                         </span>
-                                      ) : (eventCellValue(r, c.key) || '—')}
+                                      ) : (
+                                        <LongCell
+                                          text={eventCellValue(r, c.key)}
+                                          onOpen={() => setFull({
+                                            title: c.label,
+                                            who: eventCellValue(r, 'name'),
+                                            text: eventCellValue(r, c.key),
+                                          })}
+                                        />
+                                      )}
                                     </td>
                                   ))}
                                 </tr>
@@ -329,6 +339,10 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
       {/* Η φόρμα ζει ΕΔΩ και όχι μέσα στη λίστα: είναι overlay σε όλη την
           οθόνη, και φωλιασμένη μέσα στις γραμμές θα κληρονομούσε το overflow
           του πίνακα συμμετεχόντων. */}
+      {full && (
+        <FullTextModal title={full.title} who={full.who} text={full.text} onClose={() => setFull(null)} />
+      )}
+
       {canEdit && editing !== null && (
         <OcEventEditor
           documentId={editing || undefined}
@@ -378,6 +392,80 @@ export function eventCellValue(r: Reg, key: string): string {
     case 'submitted': return r.SubmittedAt ? grDate(String(r.SubmittedAt)) : ''
     default: return ''
   }
+}
+
+/** Πάνω από αυτό, το κελί κόβεται και ανοίγει με κλικ */
+const LONG_TEXT = 90
+
+/**
+ * ΚΕΛΙ ΜΕ ΜΑΚΡΥ ΚΕΙΜΕΝΟ.
+ *
+ * Μια ελεύθερη απάντηση 1.300 χαρακτήρων (θέμα ατζέντας, διατροφικά) έκανε τη
+ * ΓΡΑΜΜΗ ψηλότερη από την οθόνη και έσπρωχνε όλες τις άλλες στήλες σε μια
+ * λωρίδα πλάτους μιας λέξης.
+ *
+ * ΟΧΙ TOOLTIP ΣΤΟ HOVER: μακρύ κείμενο δεν κυλά μέσα σε tooltip, χάνεται
+ * μόλις κουνηθεί ο δείκτης, δεν υπάρχει καθόλου σε οθόνη αφής και διαβάζεται
+ * άσχημα από αναγνώστες οθόνης. Κόβουμε στις δύο γραμμές με «…» (κανόνας UI
+ * του έργου) και το πλήρες κείμενο ανοίγει με ΚΛΙΚ — επιλέξιμο, με δυνατότητα
+ * αντιγραφής, και με πληκτρολόγιο.
+ */
+function LongCell({ text, onOpen }: { text: string; onOpen: () => void }) {
+  if (!text) return <>—</>
+  if (text.length <= LONG_TEXT) return <>{text}</>
+  return (
+    <button type="button" onClick={onOpen}
+      title="Δες ολόκληρο το κείμενο"
+      className="text-left w-full group">
+      <span className="line-clamp-2 group-hover:text-coral transition-colors">{text}</span>
+      <span className="text-[11px] font-bold text-coral opacity-80 group-hover:opacity-100">
+        Δες ολόκληρο
+      </span>
+    </button>
+  )
+}
+
+/** Το πλήρες κείμενο — Esc για κλείσιμο, και κουμπί αντιγραφής */
+function FullTextModal({ title, who, text, onClose }: {
+  title: string; who: string; text: string; onClose: () => void
+}) {
+  const [copied, setCopied] = useState(false)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+      onClick={onClose} role="dialog" aria-modal="true" aria-label={`${title} — ${who}`}>
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col"
+        onClick={e => e.stopPropagation()}>
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+          <div className="min-w-0">
+            <p className="text-xs font-bold tracking-wider text-gray-500 dark:text-gray-400">{title}</p>
+            <p className="font-bold text-charcoal dark:text-gray-100 truncate">{who}</p>
+          </div>
+          <button type="button"
+            onClick={() => {
+              navigator.clipboard?.writeText(text).then(() => {
+                setCopied(true); setTimeout(() => setCopied(false), 1500)
+              }).catch(() => { /* χωρίς πρόχειρο: το κείμενο είναι ούτως ή άλλως επιλέξιμο */ })
+            }}
+            className="ml-auto text-xs font-bold px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-coral">
+            {copied ? 'Αντιγράφηκε ✓' : 'Αντιγραφή'}
+          </button>
+          <button type="button" onClick={onClose}
+            className="text-xs font-bold px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-charcoal dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+            Κλείσιμο
+          </button>
+        </div>
+        <div className="overflow-y-auto px-6 py-5">
+          <p className="text-sm leading-relaxed text-charcoal dark:text-gray-200 whitespace-pre-line">{text}</p>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function sessionSummary(choices: Record<string, string>): string {
