@@ -139,11 +139,20 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
             <div className="grid gap-2">
               {shown.map(({ e, phase }) => (
                 <div key={e.documentId}
-                  className="rounded-2xl border border-gray-200 dark:border-gray-600 overflow-hidden">
+                  /* ΟΧΙ overflow-hidden: ΕΚΟΒΕ το μενού «Στήλες», που είναι
+                     absolute μέσα στη γραμμή — καμία τιμή z-index δεν σώζει
+                     στοιχείο μέσα σε κλεισμένο overflow. Τις στρογγυλές γωνίες
+                     τις κρατά πλέον το ίδιο το κουμπί της κεφαλίδας.
+                     Το `relative z-20` όταν η γραμμή είναι ανοιχτή τη σηκώνει
+                     πάνω από τις ΕΠΟΜΕΝΕΣ γραμμές — αλλιώς το μενού θα
+                     περνούσε από κάτω τους. */
+                  className={`rounded-2xl border border-gray-200 dark:border-gray-600 ${
+                    openSlug === e.Slug ? 'relative z-20' : ''}`}>
                   <button type="button"
                     onClick={() => setOpenSlug(openSlug === e.Slug ? null : e.Slug)}
                     aria-expanded={openSlug === e.Slug}
-                    className="w-full text-left px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-1 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    className={`w-full text-left px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-1 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded-t-2xl ${
+                      openSlug === e.Slug || canEdit ? '' : 'rounded-b-2xl'}`}>
                     <span className="font-bold text-charcoal dark:text-gray-100">{e.Title}</span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
                       {dateRangeLabel(e.StartDate, e.EndDate)}{e.City ? ` · ${e.City}` : ''}

@@ -358,6 +358,43 @@ function deskOfRequest(asked: string | null | undefined, seat: OcSeat): string |
   return deskOfSeat(seat) || (seat === 'it' ? 'admin' : null)
 }
 
+/**
+ * ΤΑ ΝΟΥΜΕΡΑ ΤΗΣ ΜΑΖΙΚΗΣ ΑΠΟΣΤΟΛΗΣ ΖΟΥΝ ΣΤΟΝ SENDER, ΟΧΙ ΣΕ ΕΜΑΣ.
+ *
+ * Το «Bulk email» δεν στέλνει ένα-ένα: παραδίδει μια καμπάνια στον Sender και
+ * φεύγει. Τα SentCount/TotalCount, που γεμίζει η διαδρομή του Resend, μένουν
+ * στο μηδέν — γι' αυτό το αρχείο έδειχνε «0/0 στάλθηκαν» για ένα τεύχος που
+ * είχε φτάσει σε 114 ανθρώπους (6/10/2026).
+ *
+ * Τα ΓΡΑΦΟΥΜΕ πίσω αντί να τα δείχνουμε μόνο: έτσι η επόμενη φόρτωση δεν
+ * ξαναρωτά τον Sender, και το αρχείο παραμένει σωστό ακόμη κι αν κάποτε χαθεί
+ * η πρόσβαση στο API του.
+ *
+ * ΜΟΝΟ όσες το χρειάζονται: τεύχος με SenderCampaignId που δεν έχει ακόμη
+ * αριθμούς, το πολύ 8 ανά φόρτωση, όλα παράλληλα. Η αποτυχία είναι σιωπηλή —
+ * το αρχείο ανοίγει και χωρίς στατιστικά.
+ */
+async function refreshSenderCounts(rows: any[]): Promise<void> {
+  const need = rows.filter(c =>
+    c?.SenderCampaignId && !(Number(c.SentCount) > 0)
+    && (c.State === 'sent' || c.State === 'sending'))
+  if (!need.length) return
+  await Promise.all(need.slice(0, 8).map(async c => {
+    try {
+      const st = await getSenderCampaignStats(String(c.SenderCampaignId))
+      if (!st || !(st.sent > 0)) return
+      // Στη μνήμη, για ΑΥΤΗ την απάντηση…
+      c.SentCount = st.sent
+      c.TotalCount = st.recipients || st.sent
+      c.FailedCount = st.bounces || 0
+      // …και στον δίσκο, ώστε να μη ξαναρωτηθεί
+      await strapi(`/oc-campaigns/${c.documentId}`, 'PUT', {
+        SentCount: c.SentCount, TotalCount: c.TotalCount, FailedCount: c.FailedCount,
+      })
+    } catch { /* σιωπηλά: το αρχείο ανοίγει και χωρίς αριθμούς */ }
+  }))
+}
+
 export async function GET(request: NextRequest) {
   const auth = await authorize()
   if ('error' in auth) return auth.error
@@ -395,6 +432,7 @@ export async function GET(request: NextRequest) {
     // Χωρίς ούτε Signer δεν ξέρουμε πού ανήκει τίποτα· τότε δείχνουμε τα πάντα
     // αντί για τίποτα — η λίστα είναι αρχείο, όχι μυστικό.
     const rows: any[] = list.json?.data || []
+    await refreshSenderCounts(rows)
     const campaigns = (scoped && desk ? rows.filter(c => deskOfCampaign(c) === desk) : rows)
       // «Σε ποιον πήγε» — υπολογίζεται ΕΔΩ, όπου υπάρχουν ήδη τα ονόματα των
       // μελών· η οθόνη δεν χρειάζεται να μάθει ποτέ διευθύνσεις.
