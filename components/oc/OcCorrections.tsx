@@ -49,18 +49,6 @@ export default function OcCorrections() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Διορθώσεις / Προτάσεις</h2>
-          <span className="px-3 py-1 rounded-full bg-coral/15 text-coral text-xs font-bold tracking-wide">ΜΟΝΟ IT</span>
-        </div>
-        <p className="text-base text-gray-600 dark:text-gray-300 mt-2 max-w-3xl">
-          Ένα κουτί για κάθε σελίδα του OC. Ό,τι πρέπει να διορθωθεί ή προτείνεται να αλλάξει σε μια σελίδα
-          καταγράφεται στον δικό της πίνακα — με ανάδοχο, προτεραιότητα, προθεσμία και κατάσταση, όπως οι
-          Εκκρεμότητες της Διαχείρισης. Οι πίνακες αυτοί δεν εμφανίζονται σε καμία άλλη θέση.
-        </p>
-      </div>
-
       {/* ΑΠ' ΕΞΩ ΠΡΟΣ ΤΑ ΜΕΣΑ: πρώτα ό,τι έστειλαν ΑΝΘΡΩΠΟΙ μέσα από τον
           ιστότοπο, μετά οι δικές μας σημειώσεις ανά σελίδα. Τα δεύτερα τα
           γράφει το IT για τον εαυτό του· τα πρώτα περιμένουν απάντηση. */}
