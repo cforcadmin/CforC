@@ -5,7 +5,7 @@ import { verifyToken } from '@/lib/auth'
 import { checkCsrf } from '@/lib/csrf'
 import { eventRegisterLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 import { resolveEventAccess } from '@/lib/eventAccess'
-import { validateRegistration, offeredCapacities, visibleOptions, isReimbursed } from '@/lib/eventForm'
+import { validateRegistration, offeredCapacities, visibleOptions, getsExpensesNotice } from '@/lib/eventForm'
 import { validateProposal, costValue, openCallVisible, collectsInForm, emptyProposal, cleanProposalDescription, type ProposalDraft } from '@/lib/openCall'
 import type { CforcEvent } from '@/lib/types'
 import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
@@ -258,8 +258,9 @@ export async function POST(request: NextRequest) {
         firstName: draft.FirstName.trim(), eventTitle: ev.Title, dates, venue,
         isMember: true, eventUrl: `${site}/events/${ev.Slug}`,
         // ΟΧΙ σε όποιον δεν καλύπτεται: ειδοποίηση για αποζημίωση που δεν
-        // δικαιούται είναι υπόσχεση που θα πρέπει μετά να ανακληθεί.
-        mayClaimExpenses: isReimbursed(draft.Capacity as any),
+        // δικαιούται είναι υπόσχεση που θα πρέπει μετά να ανακληθεί. Οι
+        // υπότροφοι START/BAN ΕΝΗΜΕΡΩΝΟΝΤΑΙ — απλώς δεν υποβάλλουν από τη φόρμα.
+        mayClaimExpenses: getsExpensesNotice(draft.Capacity as any),
       })
       // Κοινοποίηση στο hello@: η ΟΣ θέλει να βλέπει τη δήλωση μόλις γίνει.
       // Μπαίνει ΜΟΝΟ εδώ, όχι στο email επιβεβαίωσης — εκείνο κουβαλά token.

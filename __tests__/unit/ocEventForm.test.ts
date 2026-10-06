@@ -188,3 +188,50 @@ describe('περιγραφή σε πλούσιο κείμενο', () => {
     expect(ok({ DescriptionEn: '<p><br></p>' }).payload!.DescriptionEn).toBeNull()
   })
 })
+
+/**
+ * 6/10/2026 — Η ΖΗΜΙΑ ΠΟΥ ΔΕΝ ΞΑΝΑΓΙΝΕΤΑΙ.
+ *
+ * Οι επιλογές ήταν αντικείμενα {value,label}· ο έλεγχος τις περνούσε από
+ * String() και τις έκανε «[object Object]». Η φόρμα της ζωντανής δράσης
+ * εμφάνισε κουμπάκια ΧΩΡΙΣ ΚΕΙΜΕΝΟ, με ανοιχτή δήλωση συμμετοχής.
+ *
+ * Η ΤΙΜΗ είναι ό,τι αποθηκεύεται στη δήλωση του μέλους («yes», «plane»):
+ * αν αλλάξει, οι ήδη υποβληθείσες δηλώσεις δείχνουν στο πουθενά.
+ */
+describe('επιλογές μπλοκ — τιμή και ετικέτα', () => {
+  const opt = (Choices: any) => ok({ Options: [{ Key: 'lunch', Title: 'Γεύμα', Choices }] })
+
+  it('τα αντικείμενα περνούν ΑΥΤΟΥΣΙΑ — καμία απώλεια τιμής', () => {
+    const c = opt([{ value: 'yes', label: 'Ναι' }, { value: 'no', label: 'Όχι' }])
+      .payload!.Options[0].Choices
+    expect(c).toEqual([{ value: 'yes', label: 'Ναι' }, { value: 'no', label: 'Όχι' }])
+  })
+
+  it('«τιμή | ετικέτα» αναλύεται σωστά', () => {
+    expect(opt(['plane | Αεροπλάνο', 'bus | ΚΤΕΛ / λεωφορείο']).payload!.Options[0].Choices)
+      .toEqual([{ value: 'plane', label: 'Αεροπλάνο' }, { value: 'bus', label: 'ΚΤΕΛ / λεωφορείο' }])
+  })
+
+  it('σκέτη ετικέτα: η τιμή παράγεται από αυτήν', () => {
+    expect(opt(['Αεροπλάνο']).payload!.Options[0].Choices)
+      .toEqual([{ value: 'aeroplano', label: 'Αεροπλάνο' }])
+  })
+
+  /* ΤΟ ΚΡΙΣΙΜΟ: τίποτα δεν αποθηκεύεται στοιχειοποιημένο, ποτέ */
+  it('«[object Object]» ΑΠΟΡΡΙΠΤΕΤΑΙ — δεν γράφεται πάνω στα καλά δεδομένα', () => {
+    const r = opt(['[object Object]', '[object Object]'])
+    expect(r.ok).toBe(false)
+    expect(r.errors.join(' ')).toMatch(/λάθος μορφή/)
+  })
+
+  it('καμία επιλογή: null, όχι κενός πίνακας', () => {
+    expect(opt([]).payload!.Options[0].Choices).toBeNull()
+    expect(opt(null).payload!.Options[0].Choices).toBeNull()
+  })
+
+  it('η ετικέτα με κάθετο στο κείμενό της δεν κόβεται λάθος', () => {
+    expect(opt(['bus | ΚΤΕΛ / λεωφορείο | εντός Ελλάδας']).payload!.Options[0].Choices)
+      .toEqual([{ value: 'bus', label: 'ΚΤΕΛ / λεωφορείο | εντός Ελλάδας' }])
+  })
+})

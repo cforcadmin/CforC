@@ -44,12 +44,24 @@ export interface EventSessionDraft {
   SortOrder?: number
 }
 
+/**
+ * Η ΕΠΙΛΟΓΗ ΕΧΕΙ ΔΥΟ ΜΕΡΗ, ΚΑΙ ΜΟΝΟ ΤΟ ΕΝΑ ΦΑΙΝΕΤΑΙ.
+ *
+ * Η ΤΙΜΗ (`value`) είναι ό,τι αποθηκεύεται στη δήλωση του μέλους — «yes»,
+ * «plane», «host». Η ΕΤΙΚΕΤΑ (`label`) είναι ό,τι διαβάζει ο άνθρωπος.
+ *
+ * Αν αλλάξει η τιμή, οι ΗΔΗ υποβληθείσες δηλώσεις δείχνουν σε επιλογή που δεν
+ * υπάρχει πια. Γι' αυτό η φόρμα του OC κουβαλά ΚΑΙ ΤΑ ΔΥΟ, και η τιμή
+ * διατηρείται αυτούσια όταν η επιλογή προϋπάρχει.
+ */
+export interface EventChoice { value: string; label: string }
+
 export interface EventOptionDraft {
   Key: OptionKey
   Title: string
   Description?: string | null
   Required?: boolean
-  Choices?: string[] | null
+  Choices?: EventChoice[] | null
   VisibleFor?: EventCapacity[] | null
   SortOrder?: number
 }
@@ -190,6 +202,45 @@ function sessions(list: unknown, errors: string[]): any[] {
   })
 }
 
+/**
+ * Οι επιλογές, από ΟΠΟΙΑ μορφή κι αν έρθουν.
+ *
+ * ΤΟ ΛΑΘΟΣ ΠΟΥ ΔΕΝ ΕΠΑΝΑΛΑΜΒΑΝΕΤΑΙ (6/10/2026): εδώ έγραφε
+ * `o.Choices.map(c => String(c))`. Οι αποθηκευμένες επιλογές ήταν αντικείμενα
+ * `{value,label}`, οπότε το String() τις έκανε κυριολεκτικά «[object Object]»
+ * — και η φόρμα της δράσης εμφάνισε κουμπάκια ΧΩΡΙΣ ΚΕΙΜΕΝΟ, στη ζωντανή
+ * σελίδα, σε ανοιχτή δήλωση συμμετοχής.
+ *
+ * Δέχεται αντικείμενα (αυτούσια) και γραμμές «τιμή | ετικέτα». Όταν λείπει η
+ * τιμή, παράγεται από την ετικέτα — ΠΟΤΕ δεν αλλάζει τιμή που ήρθε έτοιμη.
+ */
+function parseChoices(raw: unknown, errors: string[], i: number): EventChoice[] | null {
+  if (!Array.isArray(raw)) return null
+  const out: EventChoice[] = []
+  for (const c of raw) {
+    if (c && typeof c === 'object') {
+      const value = str((c as any).value)
+      const label = str((c as any).label)
+      if (!label) { errors.push(`Μπλοκ ${i + 1}: επιλογή χωρίς ετικέτα`); continue }
+      out.push({ value: value || slugify(label) || label, label })
+      continue
+    }
+    const line = str(c)
+    if (!line) continue
+    // Η ΔΙΚΛΕΙΔΑ: αν ποτέ ξαναφτάσει στοιχειοποιημένο αντικείμενο, σταματά εδώ
+    if (line === '[object Object]') {
+      errors.push(`Μπλοκ ${i + 1}: οι επιλογές ήρθαν σε λάθος μορφή — δεν αποθηκεύτηκαν`)
+      return null
+    }
+    const cut = line.indexOf('|')
+    const label = cut >= 0 ? line.slice(cut + 1).trim() : line
+    const value = cut >= 0 ? line.slice(0, cut).trim() : ''
+    if (!label) { errors.push(`Μπλοκ ${i + 1}: επιλογή χωρίς ετικέτα`); continue }
+    out.push({ value: value || slugify(label) || label, label })
+  }
+  return out.length ? out : null
+}
+
 function options(list: unknown, errors: string[]): any[] {
   if (!Array.isArray(list)) return []
   const seen = new Set<string>()
@@ -206,14 +257,13 @@ function options(list: unknown, errors: string[]): any[] {
       seen.add(key)
     }
     if (!title) errors.push(`Μπλοκ ${i + 1}: λείπει ο τίτλος`)
-    const choices = Array.isArray(o?.Choices)
-      ? o.Choices.map((c: unknown) => str(c)).filter(Boolean) : []
+    const choices = parseChoices(o?.Choices, errors, i)
     return {
       Key: key,
       Title: title,
       Description: nullable(o?.Description),
       Required: !!o?.Required,
-      Choices: choices.length ? choices : null,
+      Choices: choices,
       VisibleFor: capacities(o?.VisibleFor),
       SortOrder: Number.isFinite(Number(o?.SortOrder)) ? Number(o.SortOrder) : i,
     }

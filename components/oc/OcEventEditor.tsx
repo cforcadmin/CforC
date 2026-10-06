@@ -174,7 +174,11 @@ export default function OcEventEditor({ documentId, onClose, onSaved }: {
           Options: (e.Options || []).map((o: any) => ({
             Key: o.Key || '', Title: o.Title || '', Description: o.Description || '',
             Required: !!o.Required,
-            Choices: Array.isArray(o.Choices) ? o.Choices.join('\n') : '',
+            // «τιμή | ετικέτα» ΑΝΑ ΓΡΑΜΜΗ. Το σκέτο join() έγραφε
+            // «[object Object]» και έσβηνε τα κείμενα των επιλογών (6/10/2026).
+            Choices: Array.isArray(o.Choices)
+              ? o.Choices.map((c: any) => typeof c === 'string' ? c : `${c?.value ?? ''} | ${c?.label ?? ''}`).join('\n')
+              : '',
             VisibleFor: Array.isArray(o.VisibleFor) ? o.VisibleFor : [],
           })),
           OpenCall: e.OpenCall ? {
@@ -216,7 +220,7 @@ export default function OcEventEditor({ documentId, onClose, onSaved }: {
         ...d,
         Slug: d.Slug || slugify(d.Title),
         Options: d.Options.map(o => ({
-          ...o, Choices: o.Choices.split('\n').map(s => s.trim()).filter(Boolean),
+          ...o, Choices: o.Choices.split('\n').map(s => s.trim()).filter(Boolean),  // τις αναλύει το lib/ocEventForm
         })),
         // Κενή ανοιχτή πρόσκληση δεν στέλνεται καθόλου
         OpenCall: d.OpenCall.Title.trim() || d.OpenCall.Question.trim() ? d.OpenCall : null,
@@ -468,7 +472,8 @@ export default function OcEventEditor({ documentId, onClose, onSaved }: {
                   <textarea rows={2} className={input} value={o.Description}
                     onChange={e => patchOption(i, { Description: e.target.value })} />
                 </Field>
-                <Field k="Επιλογές" note="Μία ανά γραμμή. Κενό = ελεύθερο κείμενο.">
+                <Field k="Επιλογές"
+                  note="Μία ανά γραμμή, στη μορφή «τιμή | ετικέτα». Η ΤΙΜΗ αποθηκεύεται στις δηλώσεις — μην την αλλάξεις σε επιλογή που χρησιμοποιείται ήδη. Κενό = ελεύθερο κείμενο.">
                   <textarea rows={3} className={input} value={o.Choices}
                     onChange={e => patchOption(i, { Choices: e.target.value })} />
                 </Field>

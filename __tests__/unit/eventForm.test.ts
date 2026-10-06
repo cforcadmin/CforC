@@ -1,8 +1,4 @@
-import {
-  offeredCapacities, visibleSessions, visibleOptions, sessionChoices,
-  validateRegistration, agendaWanted, isReimbursed, MEMBER_CAPACITIES, capacitiesForPath, CAPACITY_LABELS,
-  emptyDraft, type RegistrationDraft, type SessionChoice,
-} from '@/lib/eventForm'
+import { offeredCapacities, visibleSessions, visibleOptions, sessionChoices, validateRegistration, agendaWanted, isReimbursed, MEMBER_CAPACITIES, capacitiesForPath, CAPACITY_LABELS, emptyDraft, type RegistrationDraft, type SessionChoice, getsExpensesNotice } from '@/lib/eventForm'
 
 const S = (id: number, Title: string, extra: any = {}) =>
   ({ id, Title, StartsAt: '2026-11-20T18:00', AllowInPerson: true, AllowOnline: true, ...extra })
@@ -192,5 +188,32 @@ describe('CAPACITY_LABELS', () => {
     for (const c of ['member', 'member-ban', 'non-member-ban', 'non-member', 'other'] as const) {
       expect(CAPACITY_LABELS[c]).toBeTruthy()
     }
+  })
+})
+
+/**
+ * ΔΥΟ ΕΡΩΤΗΣΕΙΣ, ΔΥΟ ΣΥΝΑΡΤΗΣΕΙΣ. Ποιος υποβάλλει μόνος του ≠ ποιος πρέπει
+ * να ξέρει ότι μπορεί να καλυφθεί. Οι υπότροφοι START/BAN που δεν είναι μέλη
+ * τακτοποιούνται χειροκίνητα από τη γραμματεία — αλλά ενημερώνονται.
+ */
+describe('getsExpensesNotice', () => {
+  it('τα μέλη ενημερώνονται', () => {
+    expect(getsExpensesNotice('member')).toBe(true)
+    expect(getsExpensesNotice('member-ban')).toBe(true)
+  })
+  it('ο υπότροφος START/BAN χωρίς ιδιότητα μέλους ΕΝΗΜΕΡΩΝΕΤΑΙ', () => {
+    expect(getsExpensesNotice('non-member-ban')).toBe(true)
+  })
+  it('…αλλά ΔΕΝ υποβάλλει από τη φόρμα — το φράγμα δεν άλλαξε', () => {
+    expect(isReimbursed('non-member-ban')).toBe(false)
+  })
+  it('ούτε μέλος ούτε υπότροφος: καμία υπόσχεση', () => {
+    expect(getsExpensesNotice('non-member')).toBe(false)
+    expect(isReimbursed('non-member')).toBe(false)
+  })
+  it('κενό ή άγνωστο: όχι', () => {
+    expect(getsExpensesNotice('')).toBe(false)
+    expect(getsExpensesNotice(null)).toBe(false)
+    expect(getsExpensesNotice('other')).toBe(false)
   })
 })

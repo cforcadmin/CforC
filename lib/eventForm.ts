@@ -36,6 +36,25 @@ export const MEMBER_CAPACITIES: EventCapacity[] = ['member', 'member-ban']
 export const isReimbursed = (c: EventCapacity | '' | null | undefined): boolean =>
   !!c && MEMBER_CAPACITIES.includes(c as EventCapacity)
 
+/**
+ * Ποιος ΕΝΗΜΕΡΩΝΕΤΑΙ για πιθανή κάλυψη εξόδων — ευρύτερο από το isReimbursed.
+ *
+ * ΔΥΟ ΔΙΑΦΟΡΕΤΙΚΕΣ ΕΡΩΤΗΣΕΙΣ, ΔΥΟ ΣΥΝΑΡΤΗΣΕΙΣ:
+ *   isReimbursed        — ποιος υποβάλλει εξοδολόγιο ΜΟΝΟΣ του, από τη φόρμα
+ *   getsExpensesNotice  — ποιος πρέπει να ΞΕΡΕΙ ότι μπορεί να καλυφθεί
+ *
+ * Οι υπότροφοι START/BAN που δεν είναι μέλη CforC καλύπτονται από τον όρο του
+ * συγχρηματοδότη, αλλά η αποζημίωσή τους τακτοποιείται χειροκίνητα από τη
+ * γραμματεία (απόφαση 2/10/2026). Η φόρμα παραμένει κλειστή γι' αυτούς — η
+ * ΕΝΗΜΕΡΩΣΗ όμως δεν έχει λόγο να λείπει: το γράμμα λέει ακριβώς ότι θα
+ * επικοινωνήσουμε εμείς, που είναι και η αλήθεια της διαδικασίας.
+ *
+ * ΕΞΩ μένει μόνο ο «ούτε μέλος ούτε υπότροφος», που όντως δεν καλύπτεται —
+ * και δεν του υποσχόμαστε κάλυψη που δεν θα δοθεί.
+ */
+export const getsExpensesNotice = (c: EventCapacity | '' | null | undefined): boolean =>
+  isReimbursed(c) || c === 'non-member-ban'
+
 export type SessionChoice = 'in-person' | 'online' | 'absent'
 
 export interface RegistrationDraft {
