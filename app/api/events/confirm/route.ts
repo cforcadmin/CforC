@@ -105,8 +105,7 @@ export async function GET(request: NextRequest) {
       isMember: false,
       eventUrl: `${SITE}/events/${ev?.Slug || ''}`,
       // Ίδιος κανόνας με την εγγραφή — η ιδιότητα βγαίνει από τη δήλωση
-      expensesUrl: ev?.Slug && isReimbursed(reg.Capacity)
-        ? `${SITE}/expenses?event=${encodeURIComponent(ev.Slug)}` : undefined,
+      mayClaimExpenses: isReimbursed(reg.Capacity),
     })
     // Κοινοποίηση στο hello@ ΕΔΩ, στη στιγμή που η δήλωση γίνεται πραγματική
     // — όχι στο email με τον σύνδεσμο επιβεβαίωσης που στάλθηκε πριν.

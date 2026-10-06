@@ -142,8 +142,16 @@ ${GDPR_NOTICE_HTML}`
 /** Μετά το κλικ — ή αμέσως, για συνδεδεμένο μέλος */
 export function eventRegisteredEmailHtml(opts: {
   firstName: string; eventTitle: string; dates: string; venue?: string
-  /** Η σελίδα του εξοδολογίου για ΑΥΤΗ τη δράση — κενό όταν δεν καλύπτονται έξοδα */
-  expensesUrl?: string; isMember: boolean; eventUrl: string
+  /**
+   * Δικαιούται κάλυψη εξόδων μετακίνησης;
+   *
+   * Ήταν η ΔΙΕΥΘΥΝΣΗ του εξοδολογίου και ολόκληρες οδηγίες μέσα στο γράμμα.
+   * Έγινε σημαία: οι οδηγίες φεύγουν ΜΕΤΑ τη δράση, όταν θα ισχύουν — ένα
+   * email του Οκτωβρίου που εξηγεί τι να κάνεις τον Νοέμβριο διαβάζεται
+   * μία φορά και ξεχνιέται, και ο σύνδεσμος μένει να παλιώνει στο
+   * γραμματοκιβώτιο.
+   */
+  mayClaimExpenses?: boolean; isMember: boolean; eventUrl: string
 }) {
   const inner = `
 <p style="margin:0 0 16px 0;">${esc(opts.firstName)},</p>
@@ -156,43 +164,12 @@ export function eventRegisteredEmailHtml(opts: {
   για διαδικτυακή παρακολούθηση — πιο κοντά στην ημερομηνία.
 </p>
 ${button(opts.eventUrl, 'Δες τη δράση')}
-${opts.expensesUrl ? `
+${opts.mayClaimExpenses ? `
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;border-radius:12px;margin:0 0 20px 0;">
   <tr><td style="padding:16px 20px;font-size:15px;line-height:22px;color:#2D2D2D;">
-    <strong style="display:block;margin-bottom:6px;">Έξοδα μετακίνησης — ΜΕΤΑ τη δράση</strong>
-    Κράτησε αυτή τη διεύθυνση· θα τη χρειαστείς όταν τελειώσει η δράση, με τις αποδείξεις
-    ή τα εισιτήριά σου και τον IBAN σου:<br>
-    <a href="${opts.expensesUrl}" style="color:#C2410C;word-break:break-all;">${opts.expensesUrl}</a><br>
-    <strong style="display:block;margin-top:10px;">Από τις 23 έως τις 30 Νοεμβρίου 2026.</strong>
-    <span style="font-size:14px;color:#666666;">
-      Μέσα σε αυτό το διάστημα η εκκαθάριση γίνεται με μία κίνηση για όλους — γι' αυτό
-      σε παρακαλούμε να μην το αφήσεις για μετά. Αν χρειαστείς περισσότερο χρόνο, γράψε
-      στο <a href="mailto:finance@cultureforchange.net" style="color:#C2410C;">finance@cultureforchange.net</a>.<br>
-      Αν δεν είσαι ήδη συνδεδεμένος/η στο προφίλ σου, συνδέσου πρώτα.
-    </span>
-    <p style="margin:14px 0 6px;font-size:15px;line-height:22px;color:#2D2D2D;">
-      Συμπληρώνεις τη φόρμα και επισυνάπτεις τα απαραίτητα δικαιολογητικά:
-    </p>
-    <ul style="margin:0 0 10px;padding-left:20px;font-size:15px;line-height:22px;color:#2D2D2D;">
-      <li>αποδεικτικά διαμονής</li>
-      <li>εισιτήρια</li>
-      <li>boarding passes (αν ταξιδέψεις με αεροπλάνο)</li>
-      <li>αποδείξεις βενζίνης και διοδίων (αν ταξιδέψεις με αυτοκίνητο)</li>
-      <li>οποιοδήποτε άλλο δικαιολογητικό κριθεί απαραίτητο</li>
-    </ul>
-    <p style="margin:0 0 10px;font-size:15px;line-height:22px;color:#2D2D2D;">
-      Αν ταξιδέψετε ομαδικά με αυτοκίνητο (carpooling), το εξοδολόγιο κατατίθεται
-      <strong>συνολικά από ένα άτομο</strong>.
-    </p>
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#FFF4E5;border:2px solid #E8A33D;border-radius:12px;">
-      <tr><td style="padding:14px 16px;font-size:15px;line-height:22px;color:#6B4A15;">
-        <strong style="display:block;margin-bottom:4px;">Προσοχή</strong>
-        Για την κάλυψη των εξόδων είναι απαραίτητη η συμμετοχή στις δράσεις του
-        5ου Midterm-ReStart Reunion.<br>
-        Χωρίς κατάθεση εξοδολογίου και όλων των απαραίτητων δικαιολογητικών
-        <strong>δεν αποζημιώνεται καμία δαπάνη</strong>.
-      </td></tr>
-    </table>
+    <strong style="display:block;margin-bottom:6px;">Έξοδα μετακίνησης</strong>
+    Για την πιθανή κάλυψη των εξόδων μετακίνησής σου θα επικοινωνήσουμε μαζί σου
+    με αναλυτικές οδηγίες. <strong>Δεν χρειάζεται να κάνεις κάτι τώρα.</strong>
   </td></tr>
 </table>` : ''}
 <p style="margin:0 0 20px 0;font-size:14px;color:#666666;">

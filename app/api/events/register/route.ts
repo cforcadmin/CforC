@@ -257,10 +257,9 @@ export async function POST(request: NextRequest) {
       const tpl = eventRegisteredEmailHtml({
         firstName: draft.FirstName.trim(), eventTitle: ev.Title, dates, venue,
         isMember: true, eventUrl: `${site}/events/${ev.Slug}`,
-        // ΟΧΙ σε όποιον δεν καλύπτεται: σύνδεσμος για αποζημίωση που δεν
+        // ΟΧΙ σε όποιον δεν καλύπτεται: ειδοποίηση για αποζημίωση που δεν
         // δικαιούται είναι υπόσχεση που θα πρέπει μετά να ανακληθεί.
-        expensesUrl: isReimbursed(draft.Capacity as any)
-          ? `${site}/expenses?event=${encodeURIComponent(ev.Slug)}` : undefined,
+        mayClaimExpenses: isReimbursed(draft.Capacity as any),
       })
       // Κοινοποίηση στο hello@: η ΟΣ θέλει να βλέπει τη δήλωση μόλις γίνει.
       // Μπαίνει ΜΟΝΟ εδώ, όχι στο email επιβεβαίωσης — εκείνο κουβαλά token.
