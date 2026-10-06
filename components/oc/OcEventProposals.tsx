@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { grDate } from '@/lib/events'
 import { buildCsv, downloadCsv, datedFilename } from '@/lib/csv'
+import OcSiteRequests from '@/components/oc/OcSiteRequests'
 
 /**
  * ΠΡΟΤΑΣΕΙΣ ΔΡΑΣΕΩΝ — πλήρους πλάτους στην Επισκόπηση.
@@ -94,7 +95,8 @@ const STATUS_META: Record<Status, { label: string; cls: string }> = {
 }
 const ORDER: Status[] = ['new', 'shortlisted', 'accepted', 'declined']
 
-export default function OcEventProposals() {
+export default function OcEventProposals({ canManageRequests = false }: { canManageRequests?: boolean }) {
+  const [tab, setTab] = useState<'proposals' | 'requests'>('proposals')
   const [rows, setRows] = useState<Proposal[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -152,6 +154,22 @@ export default function OcEventProposals() {
 
   return (
     <div className={CARD}>
+      {/* ΔΥΟ ΚΑΡΤΕΛΕΣ, ΕΝΑ ΚΟΥΤΙ: και οι δύο είναι «κάτι που έστειλε άνθρωπος
+          απ' έξω και περιμένει απάντηση». Οι Προτάσεις γεννιούνται μέσα στις
+          δηλώσεις, τα Αιτήματα από το feedback widget του ιστότοπου. */}
+      <div className="flex flex-wrap items-center gap-2 mb-5">
+        {([['proposals', 'Προτάσεις δράσεων'], ['requests', 'Αιτήματα ιστότοπου']] as const).map(([k, label]) => (
+          <button key={k} type="button" onClick={() => setTab(k)}
+            aria-pressed={tab === k}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
+              tab === k ? 'bg-coral text-charcoal'
+                : 'border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-coral'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'requests' ? <OcSiteRequests canManage={canManageRequests} /> : (<>
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 mb-4">
         <h3 className={EYEBROW}>ΠΡΟΤΑΣΕΙΣ ΔΡΑΣΕΩΝ</h3>
         {!loading && (
@@ -297,6 +315,7 @@ export default function OcEventProposals() {
           )}
         </>
       )}
+      </>)}
     </div>
   )
 }

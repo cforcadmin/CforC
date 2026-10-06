@@ -99,6 +99,42 @@ export async function POST(request: Request) {
       )
     }
 
+    /**
+     * ΚΑΙ ΣΤΟ ΜΗΤΡΩΟ, ΟΧΙ ΜΟΝΟ ΣΤΟ ΓΡΑΜΜΑΤΟΚΙΒΩΤΙΟ.
+     *
+     * Το email στο it@ μένει ακριβώς όπως ήταν — είναι η ειδοποίηση. Η
+     * εγγραφή είναι η ΕΚΚΡΕΜΟΤΗΤΑ, που αποκτά κατάσταση και κλείνει από το OC.
+     *
+     * ΜΕΤΑ την αποστολή και ΠΟΤΕ μπλοκάροντάς την: αν το Strapi κοιμάται ή
+     * απαντήσει 500, ο επισκέπτης δεν φταίει σε τίποτα και το μήνυμά του έχει
+     * ήδη φύγει. Αποτυχία εδώ γράφεται στα logs και τελειώνει.
+     */
+    try {
+      const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
+      const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
+      if (STRAPI_URL && STRAPI_API_TOKEN) {
+        const res = await fetch(`${STRAPI_URL}/api/site-requests`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
+          body: JSON.stringify({
+            data: {
+              Message: String(message).trim(),
+              SenderName: String(senderName || '').trim() || null,
+              SenderEmail: String(senderEmail || '').trim() || null,
+              PageUrl: String(pageUrl || '').trim() || null,
+              Source: 'feedback',
+              Status: 'not-started',
+              Archived: false,
+              SubmittedAt: new Date().toISOString(),
+            },
+          }),
+        })
+        if (!res.ok) console.error('feedback: δεν καταγράφηκε στο Strapi —', res.status)
+      }
+    } catch (e) {
+      console.error('feedback: δεν καταγράφηκε στο Strapi —', e instanceof Error ? e.message : e)
+    }
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Feedback submission error:', error)

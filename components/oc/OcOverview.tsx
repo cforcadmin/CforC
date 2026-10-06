@@ -684,6 +684,8 @@ interface OcOverviewProps {
   canRemind?: boolean
   /** Γραμματεία + IT: δημιουργία και αλλαγή δράσεων */
   canEditEvents?: boolean
+  /** ΜΟΝΟ το IT αλλάζει κατάσταση στα αιτήματα του ιστότοπου */
+  canManageRequests?: boolean
   /** Deep link /oc?open=renewals → popup δηλώσεων ανοιχτό στο φόρτωμα */
   initialShowRenewals?: boolean
   tableCols?: string[]
@@ -692,7 +694,8 @@ interface OcOverviewProps {
 
 export default function OcOverview({
   data, applications, canDeleteMembers = false, canRecordPayments = false,
-  canRemind = false, canEditEvents = false, initialShowRenewals = false, tableCols, tableDensity,
+  canRemind = false, canEditEvents = false, canManageRequests = false,
+  initialShowRenewals = false, tableCols, tableDensity,
 }: OcOverviewProps) {
   const router = useRouter()
   const [payConfirm, setPayConfirm] = useState<string | null>(null)
@@ -1219,7 +1222,7 @@ export default function OcOverview({
 
       {/* Οι προτάσεις ακριβώς κάτω από τις δράσεις: γεννιούνται μέσα στις
           δηλώσεις τους και διαβάζονται μαζί τους. */}
-      <OcEventProposals />
+      <OcEventProposals canManageRequests={canManageRequests} />
 
       {/* Newsletter: 2 σειρές/μήνα — Μελών (Paid, ~10) και Κοινού (External, ~15),
           καθεμία με το τρέχον τεύχος + ιστορικό 3 προηγούμενων. Οι δοκιμαστικές
