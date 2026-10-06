@@ -166,3 +166,25 @@ describe('όρια διατήρησης', () => {
     expect(ok({ PersonalDataMonths: 24, DietaryPurgeDays: 30 }).ok).toBe(true)
   })
 })
+
+/**
+ * Η περιγραφή γράφεται πλέον σε επεξεργαστή πλούσιου κειμένου, που δίνει
+ * «<p></p>» μόλις τον αδειάσεις. Οπτικά κενό = null.
+ */
+describe('περιγραφή σε πλούσιο κείμενο', () => {
+  it('κρατά πραγματικό HTML', () => {
+    expect(ok({ Description: '<p>Με <strong>έντονα</strong></p>' }).payload!.Description)
+      .toBe('<p>Με <strong>έντονα</strong></p>')
+  })
+  it('οπτικά κενό γίνεται null', () => {
+    expect(ok({ Description: '<p></p>' }).payload!.Description).toBeNull()
+    expect(ok({ Description: '<p>&nbsp;</p>' }).payload!.Description).toBeNull()
+    expect(ok({ Description: '   ' }).payload!.Description).toBeNull()
+  })
+  it('το παλιό απλό κείμενο περνά αυτούσιο', () => {
+    expect(ok({ Description: 'Σκέτο κείμενο' }).payload!.Description).toBe('Σκέτο κείμενο')
+  })
+  it('ισχύει και για τα αγγλικά', () => {
+    expect(ok({ DescriptionEn: '<p><br></p>' }).payload!.DescriptionEn).toBeNull()
+  })
+})

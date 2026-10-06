@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { CAPACITY_LABELS } from '@/lib/eventForm'
 import { OPTION_KEYS, OPTION_KEY_LABELS, slugify, type OptionKey } from '@/lib/ocEventForm'
+import CampaignRichText from '@/components/oc/CampaignRichText'
 
 /**
  * ΝΕΑ / ΕΠΕΞΕΡΓΑΣΙΑ ΔΡΑΣΗΣ — η φόρμα του OC.
@@ -361,13 +362,20 @@ export default function OcEventEditor({ documentId, onClose, onSaved }: {
           {/* ── Περιγραφή ── */}
           <section className="space-y-4">
             <h3 className="text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400">ΠΕΡΙΓΡΑΦΗ</h3>
+            {/* Ο ΙΔΙΟΣ επεξεργαστής με τα μπλοκ κειμένου της μαζικής
+                αποστολής — έντονα, πλάγια, υπογράμμιση, επικεφαλίδες, λίστες,
+                σύνδεσμος, στοίχιση. Δεν φτιάχτηκε δεύτερος: μία γραμμή
+                εργαλείων σημαίνει μία συμπεριφορά να συντηρηθεί, και η
+                περιγραφή καθαρίζεται με την ίδια λίστα ετικετών. */}
             <Field k="Ελληνικά">
-              <textarea rows={5} className={input} value={d.Description}
-                onChange={e => set('Description', e.target.value)} />
+              <CampaignRichText value={d.Description}
+                onChange={html => set('Description', html)}
+                placeholder="Η πρόσκληση προς τα μέλη…" />
             </Field>
             <Field k="Αγγλικά">
-              <textarea rows={4} className={input} value={d.DescriptionEn}
-                onChange={e => set('DescriptionEn', e.target.value)} />
+              <CampaignRichText value={d.DescriptionEn}
+                onChange={html => set('DescriptionEn', html)}
+                placeholder="English version (optional)…" />
             </Field>
           </section>
 

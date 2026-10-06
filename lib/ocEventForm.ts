@@ -110,6 +110,20 @@ export interface ValidationResult {
 const str = (v: unknown): string => String(v ?? '').trim()
 const nullable = (v: unknown): string | null => str(v) || null
 const isDate = (v: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(v)
+
+/**
+ * Πλούσιο κείμενο που είναι ΟΠΤΙΚΑ κενό αποθηκεύεται ως null.
+ *
+ * Ο επεξεργαστής δίνει «<p></p>» μόλις τον ακουμπήσεις και τον αδειάσεις.
+ * Χωρίς αυτό, η στήλη γεμίζει με ετικέτες χωρίς περιεχόμενο — που μετρούν ως
+ * «υπάρχει περιγραφή» σε κάθε έλεγχο αλήθειας.
+ */
+const nullableRich = (v: unknown): string | null => {
+  const raw = String(v ?? '').trim()
+  if (!raw) return null
+  const text = raw.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim()
+  return text ? raw : null
+}
 const isDateTime = (v: string): boolean => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v)
 
 /**
@@ -311,8 +325,8 @@ export function validateEventDraft(input: any): ValidationResult {
       Title: title,
       Slug: slug,
       Subtitle: nullable(input?.Subtitle),
-      Description: nullable(input?.Description),
-      DescriptionEn: nullable(input?.DescriptionEn),
+      Description: nullableRich(input?.Description),
+      DescriptionEn: nullableRich(input?.DescriptionEn),
       StartDate: startDate,
       EndDate: endDate,
       RegistrationDeadline: deadline || null,
