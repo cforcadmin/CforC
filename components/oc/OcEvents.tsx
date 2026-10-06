@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { OC_EVENT_COLUMNS, OC_EVENT_DEFAULT_COLS } from '@/components/oc/ocPrefs'
 import { eventPhase, dateRangeLabel, athensToday, grDate } from '@/lib/events'
 import { CAPACITY_LABELS } from '@/lib/eventForm'
+import { buildCsv, downloadCsv, datedFilename } from '@/lib/csv'
 import OcEventEditor from '@/components/oc/OcEventEditor'
 
 /**
@@ -89,6 +90,27 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
 
   const openEvent = events.find(e => e.Slug === openSlug) || null
   const show = (k: string) => cols.includes(k)
+
+  /**
+   * Εξαγωγή σε CSV — ΟΤΙ ΒΛΕΠΕΙΣ, με τη σειρά που το βλέπεις.
+   *
+   * Ακολουθεί τις επιλεγμένες στήλες επίτηδες: αν κάποιος έκρυψε τα
+   * διατροφικά (άρθρο 9) για να δείξει την οθόνη, δεν θέλει να φύγουν κιόλας
+   * σε αρχείο. Όνομα και κατάσταση μπαίνουν πάντα — χωρίς αυτά η γραμμή δεν
+   * λέει ποιανού είναι.
+   */
+  function exportCsv(ev: Ev) {
+    const keys = ['name', 'status', ...OC_EVENT_COLUMNS.map(c => c.key).filter(k => cols.includes(k))]
+    const labels: Record<string, string> = {
+      name: 'Ονοματεπώνυμο', status: 'Κατάσταση',
+      ...Object.fromEntries(OC_EVENT_COLUMNS.map(c => [c.key, c.label])),
+    }
+    const csv = buildCsv(regs, keys.map(k => ({
+      header: labels[k] || k,
+      value: (r: Reg) => eventCellValue(r, k),
+    })))
+    downloadCsv(csv, datedFilename(`CforC-${ev.Slug}-συμμετέχοντες`))
+  }
 
   const counts = useMemo(() => {
     const c = { all: events.length, running: 0, upcoming: 0, past: 0 }
@@ -188,10 +210,17 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
                         <p className="text-xs font-bold text-gray-500 dark:text-gray-400">
                           ΣΥΜΜΕΤΕΧΟΝΤΕΣ {regsBusy ? '…' : `(${regs.length})`}
                         </p>
-                        <button type="button" onClick={() => setShowCols(v => !v)}
-                          className="text-xs font-bold px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-coral">
-                          Στήλες
-                        </button>
+                        <span className="flex items-center gap-2">
+                          <button type="button" onClick={() => exportCsv(e)} disabled={regs.length === 0}
+                            title="Κατέβασε τις ορατές στήλες σε CSV"
+                            className="text-xs font-bold px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-coral disabled:opacity-40">
+                            Εξαγωγή CSV
+                          </button>
+                          <button type="button" onClick={() => setShowCols(v => !v)}
+                            className="text-xs font-bold px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-coral">
+                            Στήλες
+                          </button>
+                        </span>
                         {showCols && (
                           <>
                             <div className="fixed inset-0 z-30" onClick={() => setShowCols(false)} aria-hidden="true" />
@@ -251,41 +280,49 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
                                 <tr key={r.documentId} className="border-t border-gray-100 dark:border-gray-700">
                                   <td className="py-2 pr-4">
                                     <span className="flex items-center gap-2">
-                                      <span className="text-charcoal dark:text-gray-100">{r.FirstName} {r.LastName}</span>
+                                      <span className="text-charcoal dark:text-gray-100">{eventCellValue(r, 'name')}</span>
                                       {r.Status === 'pending' && <Tag tone="amber">εκκρεμεί</Tag>}
                                       {r.Status === 'cancelled' && <Tag tone="grey">άκυρη</Tag>}
                                     </span>
                                   </td>
                                   {show('capacity') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {r.Capacity === 'other' ? (r.CapacityOther || 'Άλλο') : (CAPACITY_LABELS as any)[r.Capacity] || r.Capacity}
+                                    {eventCellValue(r, 'capacity') || '—'}
                                   </td>}
-                                  {show('email') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">{r.Email}</td>}
-                                  {show('phone') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">{r.Phone || '—'}</td>}
-                                  {show('sessions') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300 tabular-nums">
-                                    {sessionSummary(r.SessionChoices)}
+                                  {show('email') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
+                                    {eventCellValue(r, 'email') || '—'}
+                                  </td>}
+                                  {show('phone') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
+                                    {eventCellValue(r, 'phone') || '—'}
+                                  </td>}
+                                  {show('sessions') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
+                                    {eventCellValue(r, 'sessions') || '—'}
                                   </td>}
                                   {show('travel') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {travelSummary(r.OptionAnswers)}
+                                    {eventCellValue(r, 'travel') || '—'}
                                   </td>}
                                   {show('fromCity') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {r.OptionAnswers?.travelFromCity || '—'}
+                                    {eventCellValue(r, 'fromCity') || '—'}
                                   </td>}
                                   {show('transport') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {transportLabel(r.OptionAnswers?.transport)}
+                                    {eventCellValue(r, 'transport') || '—'}
                                   </td>}
                                   {show('proposal') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {r.proposal?.Title || '—'}
+                                    {eventCellValue(r, 'proposal') || '—'}
                                   </td>}
                                   {show('accommodation') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {r.OptionAnswers?.accommodation || '—'}
+                                    {eventCellValue(r, 'accommodation') || '—'}
                                   </td>}
                                   {show('meals') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                                    {[r.OptionAnswers?.lunch, r.OptionAnswers?.dinner].filter(Boolean).join(' · ') || '—'}
+                                    {eventCellValue(r, 'meals') || '—'}
                                   </td>}
-                                  {show('dietary') && <td className="py-2 pr-4 text-amber-900 dark:text-amber-100">{r.Dietary || '—'}</td>}
-                                  {show('agenda') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">{r.AgendaTopic || '—'}</td>}
+                                  {show('dietary') && <td className="py-2 pr-4 text-amber-900 dark:text-amber-100">
+                                    {eventCellValue(r, 'dietary') || '—'}
+                                  </td>}
+                                  {show('agenda') && <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
+                                    {eventCellValue(r, 'agenda') || '—'}
+                                  </td>}
                                   {show('submitted') && <td className="py-2 text-gray-500 dark:text-gray-400 tabular-nums">
-                                    {r.SubmittedAt ? grDate(String(r.SubmittedAt)) : '—'}
+                                    {eventCellValue(r, 'submitted') || '—'}
                                   </td>}
                                 </tr>
                               ))}
@@ -325,6 +362,37 @@ const TRANSPORT_LABELS: Record<string, string> = {
 const transportLabel = (v?: string) => (v ? TRANSPORT_LABELS[v] || v : '—')
 
 /** «3 δια ζώσης · 1 online» — ο αριθμός που χρειάζεται για να κλείσεις αίθουσα */
+/**
+ * Η ΤΙΜΗ ΚΑΘΕ ΣΤΗΛΗΣ, ΜΙΑ ΦΟΡΑ.
+ *
+ * Η εξαγωγή ΔΕΝ ξαναγράφει τη λογική των κελιών: ένα δεύτερο αντίγραφο θα
+ * απέκλινε σιωπηλά, και το αρχείο που κατεβάζει κανείς για να στείλει στο
+ * ξενοδοχείο θα έλεγε άλλα από την οθόνη.
+ */
+export function eventCellValue(r: Reg, key: string): string {
+  switch (key) {
+    case 'name': return `${r.FirstName} ${r.LastName}`.trim()
+    case 'status': return r.Status === 'pending' ? 'εκκρεμεί'
+      : r.Status === 'cancelled' ? 'άκυρη' : 'επιβεβαιωμένη'
+    case 'capacity': return r.Capacity === 'other'
+      ? (r.CapacityOther || 'Άλλο')
+      : (CAPACITY_LABELS as any)[r.Capacity] || r.Capacity
+    case 'email': return r.Email || ''
+    case 'phone': return r.Phone || ''
+    case 'sessions': return sessionSummary(r.SessionChoices)
+    case 'travel': return travelSummary(r.OptionAnswers)
+    case 'fromCity': return r.OptionAnswers?.travelFromCity || ''
+    case 'transport': return transportLabel(r.OptionAnswers?.transport)
+    case 'proposal': return r.proposal?.Title || ''
+    case 'accommodation': return r.OptionAnswers?.accommodation || ''
+    case 'meals': return [r.OptionAnswers?.lunch, r.OptionAnswers?.dinner].filter(Boolean).join(' · ')
+    case 'dietary': return r.Dietary || ''
+    case 'agenda': return r.AgendaTopic || ''
+    case 'submitted': return r.SubmittedAt ? grDate(String(r.SubmittedAt)) : ''
+    default: return ''
+  }
+}
+
 function sessionSummary(choices: Record<string, string>): string {
   const vals = Object.values(choices || {})
   const inP = vals.filter(v => v === 'in-person').length
