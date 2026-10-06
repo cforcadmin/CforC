@@ -5,7 +5,8 @@ import { grDate } from '@/lib/events'
 import { buildCsv, downloadCsv, datedFilename } from '@/lib/csv'
 import {
   REQUEST_STATUSES, REQUEST_STATUS_LABELS, canArchive, requestPreview,
-  type RequestStatus,
+  REQUEST_KIND_LABELS, REQUEST_CATEGORY_LABELS, REQUEST_CATEGORIES,
+  type RequestStatus, type RequestKind, type RequestCategory,
 } from '@/lib/siteRequests'
 
 /**
@@ -24,6 +25,8 @@ type Req = {
   SenderEmail?: string | null
   PageUrl?: string | null
   Source: 'feedback' | 'contact'
+  Kind?: RequestKind
+  Category?: RequestCategory
   Status: RequestStatus
   Notes?: string | null
   Archived?: boolean
@@ -48,6 +51,7 @@ export default function OcSiteRequests({ canManage = false }: { canManage?: bool
   const [error, setError] = useState<string | null>(null)
   const [unavailable, setUnavailable] = useState(false)
   const [filter, setFilter] = useState<RequestStatus | 'all' | 'archived'>('all')
+  const [cat, setCat] = useState<RequestCategory | 'all'>('all')
   const [open, setOpen] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
@@ -79,9 +83,10 @@ export default function OcSiteRequests({ canManage = false }: { canManage?: bool
     return c
   }, [rows, live])
 
-  const shown = filter === 'archived' ? rows.filter(r => r.Archived)
+  const byStatus = filter === 'archived' ? rows.filter(r => r.Archived)
     : filter === 'all' ? live
       : live.filter(r => r.Status === filter)
+  const shown = cat === 'all' ? byStatus : byStatus.filter(r => r.Category === cat)
 
   async function patch(id: string, body: Record<string, unknown>, okMsg: string) {
     setBusy(id); setError(null); setNote(null)
@@ -107,6 +112,8 @@ export default function OcSiteRequests({ canManage = false }: { canManage?: bool
     const csv = buildCsv(shown, [
       { header: 'Ημερομηνία', value: (r: Req) => r.SubmittedAt || r.createdAt ? grDate(String(r.SubmittedAt || r.createdAt)) : '' },
       { header: 'Κατάσταση', value: (r: Req) => REQUEST_STATUS_LABELS[r.Status] || r.Status },
+      { header: 'Είδος', value: (r: Req) => (r.Kind ? REQUEST_KIND_LABELS[r.Kind] : '') },
+      { header: 'Αφορά', value: (r: Req) => (r.Category ? REQUEST_CATEGORY_LABELS[r.Category] : '') },
       { header: 'Αρχειοθετημένο', value: (r: Req) => (r.Archived ? 'Ναι' : 'Όχι') },
       { header: 'Από', value: (r: Req) => String(r.SenderName || '').trim() },
       { header: 'Email', value: (r: Req) => String(r.SenderEmail || '').trim() },
@@ -153,6 +160,23 @@ export default function OcSiteRequests({ canManage = false }: { canManage?: bool
         )}
       </div>
 
+      {/* Δεύτερος άξονας: η κατηγορία φιλτράρει ΜΕΣΑ στην καρτέλα που βλέπεις */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Αφορά:</span>
+        <button type="button" onClick={() => setCat('all')}
+          className={`${CHIP} ${cat === 'all' ? 'bg-charcoal text-white dark:bg-gray-600'
+            : 'border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-coral'}`}>
+          Όλες
+        </button>
+        {REQUEST_CATEGORIES.filter(c => rows.some(r => r.Category === c)).map(c => (
+          <button key={c} type="button" onClick={() => setCat(c)}
+            className={`${CHIP} ${cat === c ? 'bg-charcoal text-white dark:bg-gray-600'
+              : 'border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-coral'}`}>
+            {REQUEST_CATEGORY_LABELS[c]}
+          </button>
+        ))}
+      </div>
+
       {error && <p role="alert" className="text-sm text-red-700 dark:text-red-300 mb-3">{error}</p>}
       {note && <p className="text-sm text-green-700 dark:text-green-300 mb-3">{note}</p>}
 
@@ -174,6 +198,16 @@ export default function OcSiteRequests({ canManage = false }: { canManage?: bool
                   <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${STATUS_CLS[r.Status]}`}>
                     {REQUEST_STATUS_LABELS[r.Status]}
                   </span>
+                  {r.Kind && (
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                      {REQUEST_KIND_LABELS[r.Kind]}
+                    </span>
+                  )}
+                  {r.Category && (
+                    <span className="text-[11px] px-2 py-0.5 rounded-full border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400">
+                      {REQUEST_CATEGORY_LABELS[r.Category]}
+                    </span>
+                  )}
                   <span className="text-charcoal dark:text-gray-100">{requestPreview(r.Message)}</span>
                   <span className="ml-auto flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                     {r.SenderName || 'Ανώνυμος'}

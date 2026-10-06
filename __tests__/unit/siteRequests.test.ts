@@ -1,5 +1,5 @@
 import {
-  canArchive, shouldNotify, statusPatch, requestPreview, isRequestStatus, isValidEmail,
+  canArchive, shouldNotify, statusPatch, requestPreview, isRequestStatus, isValidEmail, isRequestKind, isRequestCategory, guessCategory,
 } from '@/lib/siteRequests'
 
 describe('isRequestStatus', () => {
@@ -87,5 +87,44 @@ describe('requestPreview', () => {
     const out = requestPreview('λ'.repeat(300))
     expect(out).toHaveLength(120)
     expect(out.endsWith('…')).toBe(true)
+  })
+})
+
+describe('είδος και κατηγορία', () => {
+  it('δέχονται μόνο γνωστές τιμές', () => {
+    expect(isRequestKind('bug')).toBe(true)
+    expect(isRequestKind('σφάλμα')).toBe(false)
+    expect(isRequestCategory('oc')).toBe(true)
+    expect(isRequestCategory('κάτι')).toBe(false)
+  })
+})
+
+/**
+ * Ο άνθρωπος που αναφέρει πρόβλημα δεν ταξινομεί το σύστημά μας — ξέρουμε
+ * ήδη πού βρισκόταν.
+ */
+describe('guessCategory', () => {
+  it.each([
+    ['/oc', 'oc'],
+    ['/oc/applications/abc', 'oc'],
+    ['/profile', 'profile'],
+    ['/members/maria', 'profile'],
+    ['/events/midterm-2026', 'events'],
+    ['/events/midterm-2026/register', 'events'],
+    ['/expenses?event=midterm-2026', 'events'],
+    ['/apply', 'finance'],
+    ['/', 'site'],
+    ['/about', 'site'],
+  ])('%s → %s', (path, expected) => {
+    expect(guessCategory(path)).toBe(expected)
+  })
+
+  it('δέχεται και πλήρη διεύθυνση, όχι μόνο διαδρομή', () => {
+    expect(guessCategory('https://www.cultureforchange.net/oc?tab=x')).toBe('oc')
+  })
+
+  it('σκουπίδια πέφτουν στο «Ιστότοπος», δεν σκάνε', () => {
+    expect(guessCategory(null)).toBe('site')
+    expect(guessCategory('')).toBe('site')
   })
 })

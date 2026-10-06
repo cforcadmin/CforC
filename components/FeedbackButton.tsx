@@ -1,6 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import {
+  REQUEST_KINDS, REQUEST_KIND_LABELS, REQUEST_CATEGORIES, REQUEST_CATEGORY_LABELS,
+  guessCategory, type RequestKind, type RequestCategory,
+} from '@/lib/siteRequests'
 import { useAuth } from '@/components/AuthProvider'
 
 const PROPOSALS_DOC_MEMBER = 'https://docs.google.com/document/d/1yhxZ--puZuLGIYS9-xZDbujoe250P7xyvLcZKcg1bj0/edit?usp=share_link'
@@ -11,11 +15,21 @@ export default function FeedbackButton() {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolledPastViewport, setScrolledPastViewport] = useState(false)
   const [message, setMessage] = useState('')
+  const [kind, setKind] = useState<RequestKind>('bug')
+  // Η κατηγορία ΜΑΝΤΕΥΕΤΑΙ από τη σελίδα και μένει επεξεργάσιμη: ξέρουμε ήδη
+  // πού βρισκόταν ο άνθρωπος — δεν τον βάζουμε να ταξινομήσει το σύστημά μας.
+  const [category, setCategory] = useState<RequestCategory>('site')
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
   // Track scroll to match ScrollToTop visibility threshold
+  // Κάθε φορά που ανοίγει: ξαναμαντεύουμε από την ΤΡΕΧΟΥΣΑ σελίδα — ο χρήστης
+  // μπορεί να έχει πλοηγηθεί αφότου φορτώθηκε το component.
+  useEffect(() => {
+    if (isOpen) setCategory(guessCategory(window.location.pathname))
+  }, [isOpen])
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolledPastViewport(window.scrollY > window.innerHeight)
@@ -60,6 +74,8 @@ export default function FeedbackButton() {
           senderName: user?.Name || null,
           senderEmail: user?.Email || null,
           pageUrl: window.location.href,
+          kind,
+          category,
         }),
       })
 
@@ -118,6 +134,32 @@ export default function FeedbackButton() {
                 </p>
               </div>
             )}
+
+            {/* Είδος και κατηγορία — δύο άξονες: ΤΙ ζητά και ΠΟΥ αφορά */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label htmlFor="feedback-kind" className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                  Είδος
+                </label>
+                <select id="feedback-kind" value={kind}
+                  onChange={e => setKind(e.target.value as RequestKind)}
+                  disabled={sending || result?.type === 'success'}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-coral focus:border-transparent dark:bg-gray-700 dark:text-gray-200 text-sm disabled:opacity-60">
+                  {REQUEST_KINDS.map(k => <option key={k} value={k}>{REQUEST_KIND_LABELS[k]}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="feedback-category" className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                  Αφορά
+                </label>
+                <select id="feedback-category" value={category}
+                  onChange={e => setCategory(e.target.value as RequestCategory)}
+                  disabled={sending || result?.type === 'success'}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-coral focus:border-transparent dark:bg-gray-700 dark:text-gray-200 text-sm disabled:opacity-60">
+                  {REQUEST_CATEGORIES.map(c => <option key={c} value={c}>{REQUEST_CATEGORY_LABELS[c]}</option>)}
+                </select>
+              </div>
+            </div>
 
             {/* Message input */}
             <div>

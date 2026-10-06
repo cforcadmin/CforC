@@ -60,6 +60,7 @@ const FIELDS =
   'fields[0]=Message&fields[1]=SenderName&fields[2]=SenderEmail&fields[3]=PageUrl'
   + '&fields[4]=Source&fields[5]=Status&fields[6]=Notes&fields[7]=Archived'
   + '&fields[8]=ArchivedAt&fields[9]=CompletedAt&fields[10]=NotifiedAt&fields[11]=SubmittedAt'
+  + '&fields[12]=Kind&fields[13]=Category'
 
 export async function GET() {
   const auth = await authorize(false)

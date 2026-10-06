@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { feedbackLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 import { checkCsrf } from '@/lib/csrf'
+import { isRequestKind, isRequestCategory, guessCategory } from '@/lib/siteRequests'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const { message, senderName, senderEmail, pageUrl } = await request.json()
+    const { message, senderName, senderEmail, pageUrl, kind, category } = await request.json()
 
     if (!message || !message.trim()) {
       return NextResponse.json(
@@ -123,6 +124,10 @@ export async function POST(request: Request) {
               SenderEmail: String(senderEmail || '').trim() || null,
               PageUrl: String(pageUrl || '').trim() || null,
               Source: 'feedback',
+              // Ό,τι δεν αναγνωρίζεται πέφτει σε ασφαλή προεπιλογή: μια
+              // αναφορά δεν χάνεται επειδή ήρθε άγνωστη τιμή από τη φόρμα.
+              Kind: isRequestKind(kind) ? kind : 'bug',
+              Category: isRequestCategory(category) ? category : guessCategory(pageUrl),
               Status: 'not-started',
               Archived: false,
               SubmittedAt: new Date().toISOString(),
