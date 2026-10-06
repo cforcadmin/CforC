@@ -136,7 +136,7 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
           {shown.length === 0 ? (
             <p className="text-sm text-gray-500 dark:text-gray-400">Καμία δράση σε αυτό το φίλτρο.</p>
           ) : (
-            <div className="grid gap-2">
+            <div className="grid gap-2 min-w-0">
               {shown.map(({ e, phase }) => (
                 <div key={e.documentId}
                   /* ΟΧΙ overflow-hidden: ΕΚΟΒΕ το μενού «Στήλες», που είναι
@@ -145,8 +145,14 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
                      τις κρατά πλέον το ίδιο το κουμπί της κεφαλίδας.
                      Το `relative z-20` όταν η γραμμή είναι ανοιχτή τη σηκώνει
                      πάνω από τις ΕΠΟΜΕΝΕΣ γραμμές — αλλιώς το μενού θα
-                     περνούσε από κάτω τους. */
-                  className={`rounded-2xl border border-gray-200 dark:border-gray-600 ${
+                     περνούσε από κάτω τους.
+
+                     Το `min-w-0` (εδώ, στο πλέγμα και στον κύλινδρο) είναι το
+                     αντίβαρο: τα στοιχεία πλέγματος έχουν min-width:auto, οπότε
+                     χωρίς αυτό ο φαρδύς πίνακας συμμετεχόντων ΦΟΥΣΚΩΝΕΙ τη
+                     γραμμή έξω από την κάρτα αντί να κυλήσει μέσα της. Παλιά
+                     το έκρυβε το overflow-hidden· τώρα διορθώνεται στη ρίζα. */
+                  className={`rounded-2xl border border-gray-200 dark:border-gray-600 min-w-0 ${
                     openSlug === e.Slug ? 'relative z-20' : ''}`}>
                   <button type="button"
                     onClick={() => setOpenSlug(openSlug === e.Slug ? null : e.Slug)}
@@ -220,7 +226,7 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
                       ) : regs.length === 0 ? (
                         <p className="text-sm text-gray-500 dark:text-gray-400">Καμία δήλωση ακόμη.</p>
                       ) : (
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto min-w-0 max-w-full">
                           <table className="w-full text-sm">
                             <thead>
                               <tr className="text-left text-xs text-gray-500 dark:text-gray-400">
