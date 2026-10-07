@@ -31,6 +31,8 @@ interface IntakeRow {
   payerBank: string | null
   kind: 'registration' | 'subscription' | 'grant-like' | 'unknown'
   existingNumber: number | null
+  /** ΟΛΕΣ οι αποδείξεις αυτής της κατάθεσης — 70€ = δύο έτη = δύο αποδείξεις */
+  existingNumbers?: number[]
   suggestion: { source: 'alias' | 'match'; docId: string | null; name: string; am: number | null; email: string; confidence?: string; confirmations?: number } | null
   candidates: Array<{ docId: string; name: string; am: number; score: number; confidence: string }>
 }
@@ -139,7 +141,7 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
         const isSub = r.kind === 'subscription'
         init[r.txnId] = {
           // Προεπιλογή: όλα εκτός των εγγραφών (που περνούν από τις αιτήσεις)
-          include: r.kind !== 'registration' && !r.existingNumber,
+          include: r.kind !== 'registration' && !(r.existingNumbers?.length || r.existingNumber),
           type: r.kind === 'grant-like' ? 'record-grant' : 'subscription',
           funderType: '',
           year: String(new Date(r.date).getFullYear()),
@@ -424,7 +426,7 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
                       const st = state[r.txnId]
                       if (!st) return null
                       const isReg = r.kind === 'registration'
-                      const locked = st.status === 'done' || !!r.existingNumber || issuing
+                      const locked = st.status === 'done' || !!(r.existingNumbers?.length || r.existingNumber) || issuing
                       return (
                         <tr key={r.txnId} className={`border-b border-gray-100 dark:border-gray-700 align-top ${st.status === 'done' ? 'opacity-60' : ''}`}>
                           <td className="py-2.5 pr-2">
@@ -528,8 +530,11 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
                             )}
                           </td>
                           <td className="py-2.5 whitespace-nowrap">
-                            {r.existingNumber ? (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 notranslate">✓ ΑΠ. ΕΙΣ. {r.existingNumber}</span>
+                            {(r.existingNumbers?.length || r.existingNumber) ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 notranslate"
+                                title={(r.existingNumbers?.length || 0) > 1 ? 'Μία κατάθεση, πολλές αποδείξεις — π.χ. δύο έτη συνδρομής' : undefined}>
+                                ✓ ΑΠ. ΕΙΣ. {(r.existingNumbers?.length ? r.existingNumbers : [r.existingNumber]).join(', ')}
+                              </span>
                             ) : st.status === 'done' ? (
                               <span className="text-green-700 dark:text-green-300 font-bold notranslate">{st.resultText}</span>
                             ) : st.status === 'error' ? (

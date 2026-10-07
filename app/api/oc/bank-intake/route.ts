@@ -95,13 +95,26 @@ export async function POST(request: NextRequest) {
       '&fields[3]=PaymentDate&fields[4]=MemberName&fields[5]=PayerName' +
       '&fields[6]=Type&fields[7]=SubscriptionYear')
     const allReceipts: any[] = allRes.json?.data || []
-    const existingByTxn = new Map<string, number>()
+    /**
+     * ΜΙΑ ΚΑΤΑΘΕΣΗ ΜΠΟΡΕΙ ΝΑ ΕΧΕΙ ΠΟΛΛΕΣ ΑΠΟΔΕΙΞΕΙΣ.
+     *
+     * 70€ σημαίνει δύο έτη συνδρομής — και το σωματείο κόβει ΜΙΑ απόδειξη ανά
+     * έτος, άρα δύο των 35€ με τον ίδιο Αρ. Συναλλαγής. Ο χάρτης ήταν
+     * `Map<string, number>` και η δεύτερη ΕΣΒΗΝΕ την πρώτη: η οθόνη έδειχνε
+     * μία απόδειξη και ξεχνούσε την άλλη. Χειρότερα, όταν το ταίριασμα
+     * γινόταν με ΙΣΟ ποσό (70 ≠ 35) δεν έβρισκε καμία — και η γραμμή
+     * εμφανιζόταν ως «—», έτοιμη να κόψει ΤΡΙΤΗ απόδειξη (7/10/2026).
+     */
+    const existingByTxn = new Map<string, number[]>()
     for (const e of allReceipts) {
-      if (e.TransactionId) existingByTxn.set(e.TransactionId, e.Number)
+      if (!e.TransactionId) continue
+      const list = existingByTxn.get(e.TransactionId) || []
+      list.push(e.Number)
+      existingByTxn.set(e.TransactionId, list)
     }
     const NAME_OK = 0.72
     const claimed = new Set<string>()          // documentIds που δέθηκαν σε πίστωση αυτού του run
-    const fallbackMatches = new Map<string, { number: number; docId: string; stamp: boolean }>()
+    const fallbackMatches = new Map<string, Array<{ number: number; docId: string }>>()
     const untagged = allReceipts.filter(e => !e.TransactionId)
     for (const c of joined.credits) {
       if (!c.txnId || existingByTxn.has(c.txnId)) continue
@@ -143,14 +156,41 @@ export async function POST(request: NextRequest) {
       }
       if (hit) {
         claimed.add(hit.documentId)
-        fallbackMatches.set(c.txnId, { number: hit.Number, docId: hit.documentId, stamp: true })
+        fallbackMatches.set(c.txnId, [{ number: hit.Number, docId: hit.documentId }])
+        continue
+      }
+      /**
+       * (δ) ΑΘΡΟΙΣΜΑ: η πίστωση καλύπτει ΠΟΛΛΕΣ αποδείξεις του ίδιου ανθρώπου.
+       *
+       * Δύο έτη συνδρομής σε μία κατάθεση των 70€ = 35 + 35. Κανένα από τα
+       * προηγούμενα βήματα δεν το πιάνει, γιατί όλα ψάχνουν απόδειξη ΙΣΟΥ
+       * ποσού. Εδώ μαζεύουμε τις αταύτιστες αποδείξεις του ίδιου ονόματος
+       * μέσα στο παράθυρο ημερών και ελέγχουμε αν ΑΘΡΟΙΖΟΥΝ στο ποσό.
+       *
+       * ΜΟΝΟ με όνομα και ΜΟΝΟ όταν το άθροισμα βγαίνει ακριβώς: ένα
+       * «περίπου» εδώ θα έδενε αποδείξεις άσχετων ανθρώπων σε μία κατάθεση.
+       */
+      if (c.payerName) {
+        const sameName = untagged.filter(e =>
+          !claimed.has(e.documentId) &&
+          dayDiff(e.PaymentDate, c.date) <= 2 &&
+          ((e.MemberName && nameSimilarity(c.payerName!, e.MemberName) >= NAME_OK) ||
+           (e.PayerName && nameSimilarity(c.payerName!, e.PayerName) >= NAME_OK)))
+        if (sameName.length > 1) {
+          const total = sameName.reduce((t, e) => t + Number(e.Amount || 0), 0)
+          if (Math.abs(total - c.amount) < 0.005) {
+            for (const e of sameName) claimed.add(e.documentId)
+            fallbackMatches.set(c.txnId, sameName.map(e => ({ number: e.Number, docId: e.documentId })))
+          }
+        }
       }
     }
     // self-healing: σφράγισε τα σίγουρα ταιριάσματα με το txn id τους
-    for (const [txnId, m] of fallbackMatches) {
-      if (!m.stamp) continue
-      const upd = await strapi(`/receipts/${m.docId}`, 'PUT', { TransactionId: txnId })
-      if (!upd.ok) console.error('bank-intake: txn stamp failed for', m.number, upd.status)
+    for (const [txnId, list] of fallbackMatches) {
+      for (const m of list) {
+        const upd = await strapi(`/receipts/${m.docId}`, 'PUT', { TransactionId: txnId })
+        if (!upd.ok) console.error('bank-intake: txn stamp failed for', m.number, upd.status)
+      }
     }
 
     // Μέλη για τον matcher — ΣΕΛΙΔΟΠΟΙΗΜΕΝΑ. Με σκέτο limit=1000 το Strapi
@@ -166,7 +206,9 @@ export async function POST(request: NextRequest) {
     const aliases = await getAliasesFor(joined.credits.map(c => c.payerName || ''))
 
     const rows = joined.credits.map(c => {
-      const existingNumber = existingByTxn.get(c.txnId) ?? fallbackMatches.get(c.txnId)?.number ?? null
+      const existingNumbers = existingByTxn.get(c.txnId)
+        ?? fallbackMatches.get(c.txnId)?.map(m => m.number)
+        ?? []
       let suggestion: any = null
       let candidates: any[] = []
       if (c.payerName) {
@@ -197,7 +239,8 @@ export async function POST(request: NextRequest) {
         payerName: c.payerName,
         payerBank: c.payerBank,
         kind: c.kind,
-        existingNumber,
+        existingNumbers,
+        existingNumber: existingNumbers[0] ?? null,
         suggestion,
         candidates,
       }
@@ -208,7 +251,7 @@ export async function POST(request: NextRequest) {
       warnings,
       stats: {
         credits: rows.length,
-        alreadyIssued: rows.filter(r => r.existingNumber).length,
+        alreadyIssued: rows.filter(r => r.existingNumbers.length).length,
         identified: rows.filter(r => r.payerName).length,
         suggested: rows.filter(r => r.suggestion).length,
         debits: joined.debits.length,
