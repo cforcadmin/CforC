@@ -463,11 +463,17 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
                             {r.payerBank && <span className="block text-gray-400 dark:text-gray-500 truncate notranslate">{r.payerBank}</span>}
                           </td>
                           <td className="py-2.5 pr-3 min-w-[13rem] relative">
-                            {isReg ? (
-                              <span className="text-gray-500 dark:text-gray-400">
-                                Πιθανή εγγραφή — μέσω «Πληρώθηκε» στις <a href="/oc" className="text-coral hover:underline">αιτήσεις</a>
+                            {isReg && (
+                              /* Η εγγραφή ΕΚΔΙΔΕΤΑΙ από τις αιτήσεις — εδώ μένει
+                                 υπενθύμιση, όχι φράγμα. Τα πεδία παραμένουν
+                                 επεξεργάσιμα: το τσεκ έκδοσης είναι ήδη κλειστό
+                                 για τις εγγραφές, άρα δεύτερη διαδρομή δεν ανοίγει. */
+                              <span className="block text-[11px] text-gray-500 dark:text-gray-400 mb-1">
+                                Εγγραφή — εκδίδεται μέσω «Πληρώθηκε» στις{' '}
+                                <a href="/oc" className="text-coral hover:underline">αιτήσεις</a>
                               </span>
-                            ) : (
+                            )}
+                            {(
                               <>
                                 <input type="text" className={inputCls}
                                   value={st.memberDocId || !st.query ? st.memberName : st.query}
@@ -505,9 +511,10 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
                             )}
                           </td>
                           <td className="py-2.5 pr-3">
-                            {isReg ? (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">{KIND_LABEL[r.kind]}</span>
-                            ) : (
+                            {isReg && (
+                              <span className="block mb-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 w-fit">{KIND_LABEL[r.kind]}</span>
+                            )}
+                            {(
                               <select className={inputCls} value={st.type}
                                 onChange={e => {
                                   const t = e.target.value as RowState['type']
@@ -522,7 +529,7 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
                                 <option value="other">Άλλο</option>
                               </select>
                             )}
-                            {!isReg && st.type === 'record-grant' && (
+                            {st.type === 'record-grant' && (
                               <select className={`${inputCls} mt-1`} value={st.funderType}
                                 onChange={e => patch(r.txnId, { funderType: e.target.value })}
                                 disabled={locked || !canIssue}
@@ -530,7 +537,7 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
                                 {FUNDER_TYPES.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
                               </select>
                             )}
-                            {!isReg && st.type === 'subscription' && (
+                            {st.type === 'subscription' && (
                               <input type="number" className={`${inputCls} mt-1`} value={st.year}
                                 onChange={e => patch(r.txnId, { year: e.target.value })}
                                 disabled={locked || !canIssue}
@@ -539,7 +546,7 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
                             )}
                           </td>
                           <td className="py-2.5 pr-3">
-                            {!isReg && (
+                            {(
                               <input type="checkbox" className="w-4 h-4 accent-coral mt-1" checked={st.sendEmail}
                                 onChange={e => patch(r.txnId, { sendEmail: e.target.checked })}
                                 disabled={cannotIssue || !canIssue} aria-label="Αποστολή απόδειξης με email" />
