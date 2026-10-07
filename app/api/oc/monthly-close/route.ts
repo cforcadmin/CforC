@@ -52,6 +52,30 @@ const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
 }
 
 /** «9.10» > «9.2»: το Α/Α του φύλλου είναι μήνας.σειρά, όχι δεκαδικός */
+/**
+ * ΤΟ Α/Α ΟΤΑΝ ΤΟ ΦΥΛΛΟ ΔΕΝ ΜΑΣ ΤΟ ΕΠΕΣΤΡΕΨΕ.
+ *
+ * Το Α/Α («9.1») το δίνει το Apps Script των ΕΣΟΔΑ και το κρατάμε στην
+ * απόδειξη. Σε κρύα εκκίνηση όμως το script ΓΡΑΦΕΙ τη γραμμή και ΧΑΝΕΙ την
+ * απάντηση — μετρημένο 25/9/2026, και η ίδια αιτία που άφησε τις 366 και 367
+ * με SheetSynced:false ενώ οι γραμμές τους υπήρχαν. Το ίδιο έπαθαν οι 373,
+ * 374 και 378: υπάρχουν κανονικά στο φύλλο με 9.9, 9.10 και 9.14, αλλά εμείς
+ * δεν μάθαμε ποτέ τον αριθμό.
+ *
+ * Το Α/Α όμως ΔΕΝ είναι αυθαίρετο: μέσα στον μήνα ακολουθεί τη σειρά του
+ * αριθμού απόδειξης — 365 → 9.1, 380 → 9.16. Άρα υπολογίζεται, αντί να
+ * εμφανίζεται «—» για κάτι που υπάρχει.
+ *
+ * ΔΕΝ γράφεται πίσω στην απόδειξη: το φύλλο παραμένει η πηγή αλήθειας, και
+ * μια υπολογισμένη τιμή δεν πρέπει να μεταμφιέζεται σε επιβεβαιωμένη.
+ */
+function withDerivedAa(receipts: any[], month: string): any[] {
+  const monthNo = Number(String(month).split('-')[1] || 0)
+  return [...receipts]
+    .sort((a, b) => a.Number - b.Number)
+    .map((r, i) => ({ ...r, Aa: r.Aa || `${monthNo}.${i + 1}` }))
+}
+
 function aaOrder(aa: string | null | undefined): number {
   const m = /^(\d+)\.(\d+)$/.exec(String(aa || ''))
   if (!m) return Number.MAX_SAFE_INTEGER
@@ -263,7 +287,7 @@ export async function GET(request: NextRequest) {
     // Τα «δέλτα» μετρούν από την ΑΠΟΣΤΟΛΗ (ό,τι έλαβε το λογιστήριο)
     const closeTime = !backfilled && close?.SentAt ? Date.parse(close.SentAt) : null
 
-    const receipts = (recRes.json?.data || []).map((r: any) => {
+    const receipts = withDerivedAa(recRes.json?.data || [], month).map((r: any) => {
       const isDelta = closeTime !== null && r.createdAt && Date.parse(r.createdAt) > closeTime
       return {
         number: r.Number,
@@ -459,7 +483,8 @@ export async function POST(request: NextRequest) {
       strapi(`/income-records?filters[Month][$eq]=${month}&sort=Aa:asc&pagination[limit]=500`),
       strapi(`/expenses?filters[Month][$eq]=${month}&filters[State][$eq]=approved&sort[0]=IssueDate:asc&pagination[limit]=500`),
     ])
-    const receipts = (recRes.json?.data || []).sort((a: any, b: any) => aaOrder(a.Aa) - aaOrder(b.Aa) || a.Number - b.Number)
+    const receipts = withDerivedAa(recRes.json?.data || [], month)
+      .sort((a: any, b: any) => aaOrder(a.Aa) - aaOrder(b.Aa) || a.Number - b.Number)
     const incomeRecords = (incRes2.json?.data || []).sort((a: any, b: any) => aaOrder(a.Aa) - aaOrder(b.Aa))
     const expenses = (expRes2.json?.data || []).sort((a: any, b: any) => aaOrder(a.Aa) - aaOrder(b.Aa))
     const money = (n: any) => (Number(n) || 0).toFixed(2).replace('.', ',')
