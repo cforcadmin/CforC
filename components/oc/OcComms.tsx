@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import OcCalendar, { type CalEvent } from '@/components/oc/OcCalendar'
 import OcEventForm, { type SeatHolder } from '@/components/oc/OcEventForm'
+import OcCommsSheet from '@/components/oc/OcCommsSheet'
 
 /**
  * ΕΠΙΚΟΙΝΩΝΙΑ — μία οθόνη για τον ρυθμό της επικοινωνίας:
@@ -333,6 +334,8 @@ export default function OcComms() {
       )}
 
       {/* Έγγραφα */}
+      <OcCommsSheet />
+
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
         <h2 className="text-xl font-bold text-charcoal dark:text-gray-100 mb-4">Έγγραφα εργασίας</h2>
         <ul className="space-y-2">

@@ -58,6 +58,11 @@ export interface GanttData {
   cells: Record<number, Record<number, string>>
 }
 
+const GREEK_MONTHS = [
+  'ΙΑΝΟΥΑΡΙΟΣ', 'ΦΕΒΡΟΥΑΡΙΟΣ', 'ΜΑΡΤΙΟΣ', 'ΑΠΡΙΛΙΟΣ', 'ΜΑΪΟΣ', 'ΙΟΥΝΙΟΣ',
+  'ΙΟΥΛΙΟΣ', 'ΑΥΓΟΥΣΤΟΣ', 'ΣΕΠΤΕΜΒΡΙΟΣ', 'ΟΚΤΩΒΡΙΟΣ', 'ΝΟΕΜΒΡΙΟΣ', 'ΔΕΚΕΜΒΡΙΟΣ',
+]
+
 const api = (path: string) => `https://sheets.googleapis.com/v4/spreadsheets/${COMMS_SHEET_ID}${path}`
 
 export function commsSheetConfigured(): boolean {
@@ -206,12 +211,25 @@ export async function readGantt(): Promise<GanttData> {
   const monthRow = grid[0] || []
   const dayRow = grid[1] || []
 
+  /**
+   * Ο ΜΗΝΑΣ ΒΓΑΙΝΕΙ ΑΠΟ ΤΗΝ ΙΔΙΑ ΤΗΝ ΗΜΕΡΟΜΗΝΙΑ, όχι από τη γραμμή 1.
+   *
+   * Η γραμμή 1 γράφει τον μήνα ΜΙΑ φορά και μετά τον αφήνει κενό, οπότε μια
+   * «μεταφορά της τελευταίας τιμής» μοιάζει σωστή — και δεν είναι: το φύλλο
+   * έχει στήλες μέχρι «Τετ 17/06» ενώ η γραμμή 1 σταματά στον ΑΠΡΙΛΙΟ, άρα
+   * Μάιος και Ιούνιος κατέληγαν κάτω από την καρτέλα «ΑΠΡΙΛΙΟΣ» (μετρημένο
+   * 7/10/2026 στο πραγματικό φύλλο). Η ετικέτα «Δευ 16/02» λέει τον μήνα της
+   * μόνη της· η γραμμή 1 μένει μόνο ως εφεδρεία.
+   */
   const days: GanttData['days'] = []
-  let month = ''
+  let carried = ''
   for (let i = 1; i < dayRow.length; i++) {
-    if (String(monthRow[i] ?? '').trim()) month = String(monthRow[i]).trim()
+    if (String(monthRow[i] ?? '').trim()) carried = String(monthRow[i]).trim()
     const label = String(dayRow[i] ?? '').trim()
     if (!label) continue
+    const m = /(\d{1,2})\s*\/\s*(\d{1,2})/.exec(label)
+    const monthNo = m ? Number(m[2]) : 0
+    const month = monthNo >= 1 && monthNo <= 12 ? GREEK_MONTHS[monthNo - 1] : carried
     days.push({ col: i + 1, colLetter: colLetter(i + 1), month, label })
   }
 
