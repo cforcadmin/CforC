@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { getWorkingGroups } from '@/lib/strapi'
 import type { StrapiResponse, WorkingGroup, WorkingGroupMemberRef } from '@/lib/types'
@@ -10,8 +11,8 @@ import LocalizedText from '@/components/LocalizedText'
 import LoadingIndicator from '@/components/LoadingIndicator'
 import ViewToggle from '@/components/shared/ViewToggle'
 import { useNavMode } from '@/components/nav/useNavMode'
+import WorkingGroupProposalModal from '@/components/WorkingGroupProposalModal'
 
-const PROPOSE_GROUP_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSe6vrAA7jPT4n6NH4FUIoKrYOs38drzBNR80paQz_gqLObWQg/viewform?usp=share_link&ouid=104930524495740710113'
 
 function getImageUrl(image: WorkingGroupMemberRef['Image'] | WorkingGroup['Image']): string | null {
   if (!image) return null
@@ -34,12 +35,15 @@ function visibleMembers(members?: WorkingGroupMemberRef[]): WorkingGroupMemberRe
 
 export default function WorkingGroupsContent() {
   const { user } = useAuth()
+  const router = useRouter()
+  const pathname = usePathname()
   const [groups, setGroups] = useState<WorkingGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   // Join modal state
   const [joinModalGroup, setJoinModalGroup] = useState<WorkingGroup | null>(null)
+  const [proposeOpen, setProposeOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const { mode } = useNavMode()
   const cool = mode === 'cool'
@@ -155,10 +159,15 @@ export default function WorkingGroupsContent() {
     <>
         {/* Propose New Group CTA */}
         <div className="mt-10">
-          <a
-            href={PROPOSE_GROUP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={() => {
+              // Μη συνδεδεμένος: το modal δεν θα εμφανιζόταν ΠΟΤΕ (ο user είναι
+              // null), οπότε το κλικ θα έμοιαζε χαλασμένο. Πάει στη σύνδεση
+              // και γυρίζει εδώ.
+              if (user) setProposeOpen(true)
+              else router.push(`/login?returnTo=${encodeURIComponent(pathname || '/working-groups')}`)
+            }}
             className={cool
               ? 'group flex items-center gap-4 menu-glass rounded-2xl border-2 border-coral dark:border-coral-light hover:shadow-lg transition-all duration-200 p-6'
               : 'group flex items-center gap-4 bg-coral/10 dark:bg-coral/20 rounded-2xl border-2 border-coral dark:border-coral-light hover:shadow-lg transition-all duration-200 p-6'}
@@ -176,10 +185,17 @@ export default function WorkingGroupsContent() {
                 />
               </h3>
               <p className="text-gray-600 dark:text-gray-300 text-xs">
-                <LocalizedText
-                  text="Συμπλήρωσε τη φόρμα πρότασης"
-                  engText="Fill in the proposal form"
-                />
+                {user ? (
+                  <LocalizedText
+                    text="Συμπλήρωσε τη φόρμα πρότασης"
+                    engText="Fill in the proposal form"
+                  />
+                ) : (
+                  <LocalizedText
+                    text="Συνδέσου για να υποβάλεις πρόταση"
+                    engText="Sign in to submit a proposal"
+                  />
+                )}
               </p>
             </div>
             <svg
@@ -189,10 +205,23 @@ export default function WorkingGroupsContent() {
               viewBox="0 0 24 24"
               aria-hidden="true"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-          </a>
+          </button>
         </div>
+    </>
+  )
+
+  const proposeModal = (
+    <>
+      {proposeOpen && user && (
+        <WorkingGroupProposalModal
+          userName={user.Name}
+          userEmail={user.Email}
+          userPhone={user.Phone}
+          onClose={() => setProposeOpen(false)}
+        />
+      )}
     </>
   )
 
@@ -297,6 +326,7 @@ export default function WorkingGroupsContent() {
           {proposeCta}
         </div>
         {joinModal}
+        {proposeModal}
       </div>
     )
   }
@@ -335,6 +365,7 @@ export default function WorkingGroupsContent() {
       </div>
 
       {joinModal}
+      {proposeModal}
     </div>
   )
 }

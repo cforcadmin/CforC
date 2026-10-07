@@ -3381,3 +3381,62 @@ export function finalPaymentNoticeEmailHtml(
 
   return { subject: `Εκκρεμεί η εγγραφή σου — προθεσμία ${deadlineLabel}`, html }
 }
+
+/**
+ * ΠΡΟΤΑΣΗ ΝΕΑΣ ΟΜΑΔΑΣ ΕΡΓΑΣΙΑΣ — η ειδοποίηση που αντικαθιστά το
+ * «νέα απάντηση στη φόρμα» του Google.
+ *
+ * Πάει σε hello@ με κοινοποίηση σε it@ και στον ίδιο τον προτείνοντα: το
+ * αντίγραφό του είναι η απόδειξη παραλαβής — η φόρμα Google δεν έδινε καμία.
+ */
+export function workingGroupProposalEmailHtml(opts: {
+  title: string
+  theme: string
+  goal: string
+  moreInfo?: string
+  contactPerson: string
+  proposerName: string
+  proposerEmail: string
+  phone: string
+  facebook?: string
+  links?: string[]
+  memberAm?: number | null
+}): { subject: string; html: string } {
+  const { title, theme, goal, moreInfo, contactPerson, proposerName, proposerEmail, phone, facebook, links, memberAm } = opts
+  const row = (k: string, v: string) => `
+      <tr>
+        <td style="padding:6px 16px 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#6B6B6B;white-space:nowrap;vertical-align:top;">${k}</td>
+        <td style="padding:6px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#2D2D2D;">${v}</td>
+      </tr>`
+  const link = (url: string) =>
+    `<a href="${escapeHtml(url)}" style="color:#FF8B6A;text-decoration:none;">${escapeHtml(url)}</a>`
+  const para = (label: string, text: string) => `
+      <p style="margin:0 0 6px 0;font-size:14px;color:#6B6B6B;">${label}</p>
+      <p style="margin:0 0 20px 0;white-space:pre-line;">${escapeHtml(text)}</p>`
+  const allLinks = (links || []).filter(Boolean)
+  const body = `
+  <tr>
+    <td class="px" style="padding:36px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;">
+      <p style="margin:0 0 20px 0;">Νέα πρόταση Ομάδας Εργασίας από <strong>${escapeHtml(proposerName)}</strong>.</p>
+      ${para('Θεματική', theme)}
+      ${para('Στόχος', goal)}
+      ${moreInfo ? para('Μοιράστηκε επιπλέον', moreInfo) : ''}
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin:0 0 20px 0;">
+        ${row('Τίτλος', escapeHtml(title))}
+        ${row('Άτομο επικοινωνίας', escapeHtml(contactPerson))}
+        ${row('Προτείνων/ουσα', escapeHtml(proposerName) + (memberAm ? ` <span style="color:#6B6B6B;">(ΑΜ ${memberAm})</span>` : ''))}
+        ${row('Email', `<a href="mailto:${escapeHtml(proposerEmail)}" style="color:#FF8B6A;text-decoration:none;">${escapeHtml(proposerEmail)}</a>`)}
+        ${row('Τηλέφωνο', `<a href="tel:${escapeHtml(phone.replace(/\s+/g, ''))}" style="color:#FF8B6A;text-decoration:none;">${escapeHtml(phone)}</a>`)}
+        ${facebook ? row('Facebook', link(facebook)) : ''}
+        ${allLinks.length ? row(allLinks.length === 1 ? 'Σύνδεσμος' : 'Σύνδεσμοι', allLinks.map(link).join('<br>')) : ''}
+      </table>
+    </td>
+  </tr>`
+  return {
+    subject: `Πρόταση Ομάδας Εργασίας: ${title} — ${proposerName}`,
+    html: shell('Πρόταση Ομάδας Εργασίας', 'ΟΜΑΔΕΣ ΕΡΓΑΣΙΑΣ',
+      `${proposerName}: ${title}`,
+      body, `${SITE_URL}/oc`, 'Άνοιγμα OC',
+      'Η πρόταση καταγράφηκε και στο OC → Προτάσεις. Αυτό το μήνυμα είναι και η απόδειξη παραλαβής για τον/την προτείνοντα/ουσα.'),
+  }
+}

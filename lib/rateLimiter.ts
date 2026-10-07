@@ -106,6 +106,13 @@ export const workingGroupJoinLimiter = new RateLimiter(
   60 * 60 * 1000 // per hour
 )
 
+// Πρόταση νέας ομάδας εργασίας. Πιο σφιχτό από το αίτημα συμμετοχής: μια
+// πρόταση γράφεται μία φορά και κρίνεται, δεν στέλνεται σε πολλές ομάδες.
+export const workingGroupProposeLimiter = new RateLimiter(
+  3, // 3 προτάσεις
+  60 * 60 * 1000 // ανά ώρα, ανά IP
+)
+
 export const applyLimiter = new RateLimiter(
   3, // 3 membership applications
   60 * 60 * 1000 // per hour per IP
