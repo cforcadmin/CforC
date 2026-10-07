@@ -123,6 +123,33 @@ export async function POST(request: NextRequest) {
         Math.abs(Number(e.Amount) - c.amount) < 0.005 &&
         dayDiff(e.PaymentDate, c.date) <= 2
       )
+      /**
+       * (δ) ΑΘΡΟΙΣΜΑ — ΠΡΙΝ από κάθε άλλο βήμα, γιατί όλα τα άλλα ψάχνουν
+       * απόδειξη ΙΣΟΥ ποσού και φεύγουν από τη γραμμή όταν δεν τη βρουν.
+       *
+       * Δύο έτη συνδρομής σε μία κατάθεση των 70€ = 35 + 35: καμία απόδειξη
+       * των 70€ δεν υπάρχει, άρα το `window` είναι κενό και η γραμμή
+       * εγκαταλειπόταν πριν προλάβει να εξεταστεί. (Πρώτη μου εκδοχή το είχε
+       * ΜΕΤΑ την έξοδο — δεν έτρεξε ποτέ, 7/10/2026.)
+       *
+       * ΜΟΝΟ με όνομα και ΜΟΝΟ σε ακριβές άθροισμα: ένα «περίπου» εδώ θα
+       * έδενε αποδείξεις άσχετων ανθρώπων σε μία κατάθεση.
+       */
+      if (c.payerName) {
+        const sameName = untagged.filter(e =>
+          !claimed.has(e.documentId) &&
+          dayDiff(e.PaymentDate, c.date) <= 2 &&
+          ((e.MemberName && nameSimilarity(c.payerName!, e.MemberName) >= NAME_OK) ||
+           (e.PayerName && nameSimilarity(c.payerName!, e.PayerName) >= NAME_OK)))
+        if (sameName.length > 1) {
+          const total = sameName.reduce((t, e) => t + Number(e.Amount || 0), 0)
+          if (Math.abs(total - c.amount) < 0.005) {
+            for (const e of sameName) claimed.add(e.documentId)
+            fallbackMatches.set(c.txnId, sameName.map(e => ({ number: e.Number, docId: e.documentId })))
+            continue
+          }
+        }
+      }
       if (window.length === 0) continue
       // (α) με όνομα: ο πληρωτής μοιάζει με το όνομα μέλους/πληρωτή της απόδειξης
       let hit = null as any
@@ -157,32 +184,6 @@ export async function POST(request: NextRequest) {
       if (hit) {
         claimed.add(hit.documentId)
         fallbackMatches.set(c.txnId, [{ number: hit.Number, docId: hit.documentId }])
-        continue
-      }
-      /**
-       * (δ) ΑΘΡΟΙΣΜΑ: η πίστωση καλύπτει ΠΟΛΛΕΣ αποδείξεις του ίδιου ανθρώπου.
-       *
-       * Δύο έτη συνδρομής σε μία κατάθεση των 70€ = 35 + 35. Κανένα από τα
-       * προηγούμενα βήματα δεν το πιάνει, γιατί όλα ψάχνουν απόδειξη ΙΣΟΥ
-       * ποσού. Εδώ μαζεύουμε τις αταύτιστες αποδείξεις του ίδιου ονόματος
-       * μέσα στο παράθυρο ημερών και ελέγχουμε αν ΑΘΡΟΙΖΟΥΝ στο ποσό.
-       *
-       * ΜΟΝΟ με όνομα και ΜΟΝΟ όταν το άθροισμα βγαίνει ακριβώς: ένα
-       * «περίπου» εδώ θα έδενε αποδείξεις άσχετων ανθρώπων σε μία κατάθεση.
-       */
-      if (c.payerName) {
-        const sameName = untagged.filter(e =>
-          !claimed.has(e.documentId) &&
-          dayDiff(e.PaymentDate, c.date) <= 2 &&
-          ((e.MemberName && nameSimilarity(c.payerName!, e.MemberName) >= NAME_OK) ||
-           (e.PayerName && nameSimilarity(c.payerName!, e.PayerName) >= NAME_OK)))
-        if (sameName.length > 1) {
-          const total = sameName.reduce((t, e) => t + Number(e.Amount || 0), 0)
-          if (Math.abs(total - c.amount) < 0.005) {
-            for (const e of sameName) claimed.add(e.documentId)
-            fallbackMatches.set(c.txnId, sameName.map(e => ({ number: e.Number, docId: e.documentId })))
-          }
-        }
       }
     }
     // self-healing: σφράγισε τα σίγουρα ταιριάσματα με το txn id τους
