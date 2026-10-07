@@ -151,7 +151,10 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
           // Η απόδειξη υπερισχύει της πρότασης: γεγονός έναντι πιθανότητας
           memberName: r.existingName || r.suggestion?.name || '',
           query: '',
-          sendEmail: isSub,   // μόνο οι συνδρομές στέλνουν αυτόματα απόδειξη
+          // Μόνο οι συνδρομές στέλνουν αυτόματα απόδειξη — ΚΑΙ ΠΟΤΕ όσες την
+          // έχουν ήδη: ένα αναμμένο τσεκ σε τακτοποιημένη γραμμή διαβάζεται
+          // ως «θα σταλεί» ενώ δεν πρόκειται να γίνει τίποτα.
+          sendEmail: isSub && !(r.existingNumbers?.length || r.existingNumber),
           status: 'pending',
           resultText: '',
         }
