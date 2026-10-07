@@ -210,6 +210,16 @@ export async function POST(request: NextRequest) {
       const existingNumbers = existingByTxn.get(c.txnId)
         ?? fallbackMatches.get(c.txnId)?.map(m => m.number)
         ?? []
+      /**
+       * Το όνομα ΑΠΟ ΤΗΝ ΑΠΟΔΕΙΞΗ, όχι από εικασία.
+       *
+       * Όταν η κατάθεση είναι ήδη δεμένη, ο μόνος που ξέρει σίγουρα ποιος
+       * πλήρωσε είναι η απόδειξη. Υπερισχύει κάθε πρότασης του matcher —
+       * εκείνη είναι πιθανότητα, αυτό είναι γεγονός.
+       */
+      const existingName = existingNumbers.length
+        ? (allReceipts.find(e => e.Number === existingNumbers[0])?.MemberName || null)
+        : null
       let suggestion: any = null
       let candidates: any[] = []
       if (c.payerName) {
@@ -242,6 +252,7 @@ export async function POST(request: NextRequest) {
         kind: c.kind,
         existingNumbers,
         existingNumber: existingNumbers[0] ?? null,
+        existingName,
         suggestion,
         candidates,
       }

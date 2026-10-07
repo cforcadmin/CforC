@@ -33,6 +33,8 @@ interface IntakeRow {
   existingNumber: number | null
   /** ΟΛΕΣ οι αποδείξεις αυτής της κατάθεσης — 70€ = δύο έτη = δύο αποδείξεις */
   existingNumbers?: number[]
+  /** Το όνομα όπως το λέει η ίδια η απόδειξη */
+  existingName?: string | null
   suggestion: { source: 'alias' | 'match'; docId: string | null; name: string; am: number | null; email: string; confidence?: string; confirmations?: number } | null
   candidates: Array<{ docId: string; name: string; am: number; score: number; confidence: string }>
 }
@@ -146,7 +148,8 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
           funderType: '',
           year: String(new Date(r.date).getFullYear()),
           memberDocId: r.suggestion?.docId || null,
-          memberName: r.suggestion?.name || '',
+          // Η απόδειξη υπερισχύει της πρότασης: γεγονός έναντι πιθανότητας
+          memberName: r.existingName || r.suggestion?.name || '',
           query: '',
           sendEmail: isSub,   // μόνο οι συνδρομές στέλνουν αυτόματα απόδειξη
           status: 'pending',
@@ -426,13 +429,23 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
                       const st = state[r.txnId]
                       if (!st) return null
                       const isReg = r.kind === 'registration'
-                      const locked = st.status === 'done' || !!(r.existingNumbers?.length || r.existingNumber) || issuing
+                      /**
+                       * ΔΥΟ ΔΙΑΦΟΡΕΤΙΚΑ ΠΡΑΓΜΑΤΑ, ΟΧΙ ΕΝΑ.
+                       *
+                       * «Δεν εκδίδεται» ≠ «δεν αγγίζεται». Μια γραμμή με
+                       * δεμένη απόδειξη δεν πρέπει να ξαναβγάλει απόδειξη —
+                       * αλλά το όνομα πρέπει να διορθώνεται, γιατί από εκεί
+                       * μαθαίνει ο matcher για την επόμενη φορά.
+                       */
+                      const hasReceipt = !!(r.existingNumbers?.length || r.existingNumber)
+                      const cannotIssue = st.status === 'done' || hasReceipt || issuing
+                      const locked = st.status === 'done' || issuing
                       return (
                         <tr key={r.txnId} className={`border-b border-gray-100 dark:border-gray-700 align-top ${st.status === 'done' ? 'opacity-60' : ''}`}>
                           <td className="py-2.5 pr-2">
                             <input type="checkbox" className="w-4 h-4 accent-coral mt-1" checked={st.include}
                               onChange={e => patch(r.txnId, { include: e.target.checked })}
-                              disabled={locked || isReg || !canIssue}
+                              disabled={cannotIssue || isReg || !canIssue}
                               aria-label={`Επιλογή συναλλαγής ${r.txnId}`} />
                           </td>
                           <td className="py-2.5 pr-3 whitespace-nowrap text-gray-600 dark:text-gray-400 notranslate">
@@ -526,7 +539,7 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
                             {!isReg && (
                               <input type="checkbox" className="w-4 h-4 accent-coral mt-1" checked={st.sendEmail}
                                 onChange={e => patch(r.txnId, { sendEmail: e.target.checked })}
-                                disabled={locked || !canIssue} aria-label="Αποστολή απόδειξης με email" />
+                                disabled={cannotIssue || !canIssue} aria-label="Αποστολή απόδειξης με email" />
                             )}
                           </td>
                           <td className="py-2.5 whitespace-nowrap">
@@ -560,7 +573,9 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
                                   patch(r.txnId, {
                                     include: false,
                                     sendEmail: false,
-                                    ...(name ? { memberName: name, query: '' } : {}),
+                                    // Το όνομα ΑΝΤΙΚΑΘΙΣΤΑ ό,τι υπήρχε: η απόδειξη
+                                    // ξέρει ποιος πλήρωσε, η πρόταση μάντευε.
+                                    ...(name ? { memberDocId: null, memberName: name, query: '' } : {}),
                                   })
                                 }} />
                             )}
