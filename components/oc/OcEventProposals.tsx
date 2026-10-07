@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { grDate } from '@/lib/events'
 import { buildCsv, downloadCsv, datedFilename } from '@/lib/csv'
+import OcCsvPicker from '@/components/oc/OcCsvPicker'
 
 /**
  * ΠΡΟΤΑΣΕΙΣ ΔΡΑΣΕΩΝ — πλήρους πλάτους στην Επισκόπηση.
@@ -95,6 +96,7 @@ const STATUS_META: Record<Status, { label: string; cls: string }> = {
 const ORDER: Status[] = ['new', 'shortlisted', 'accepted', 'declined']
 
 export default function OcEventProposals() {
+  const [exportOpen, setExportOpen] = useState(false)
   const [rows, setRows] = useState<Proposal[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -124,9 +126,10 @@ export default function OcEventProposals() {
   const shown = filter === 'all' ? rows : rows.filter(r => r.Status === filter)
 
   /** Εξάγει ΟΣΕΣ δείχνει το φίλτρο — «Νέα» σημαίνει αρχείο μόνο με τις νέες */
-  function exportCsv() {
-    const csv = buildCsv(shown, PROPOSAL_EXPORT_COLUMNS.map(c => ({
-      header: c.label, value: (p: Proposal) => proposalCellValue(p, c.key),
+  function exportCsv(keys: string[]) {
+    const label = Object.fromEntries(PROPOSAL_EXPORT_COLUMNS.map(c => [c.key, c.label]))
+    const csv = buildCsv(shown, keys.map(k => ({
+      header: label[k] || k, value: (p: Proposal) => proposalCellValue(p, k),
     })))
     const tag = filter === 'all' ? 'ολες' : STATUS_META[filter as Status].label.toLowerCase()
     downloadCsv(csv, datedFilename(`CforC-προτάσεις-δράσεων-${tag}`))
@@ -160,7 +163,7 @@ export default function OcEventProposals() {
           </span>
         )}
         {!loading && rows.length > 0 && (
-          <button type="button" onClick={exportCsv}
+          <button type="button" onClick={() => setExportOpen(true)}
             title="Κατέβασε τις προτάσεις του φίλτρου σε CSV"
             className="ml-auto text-xs font-bold px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-coral">
             Εξαγωγή CSV
@@ -296,6 +299,22 @@ export default function OcEventProposals() {
             </div>
           )}
         </>
+      )}
+
+      {exportOpen && (
+        <OcCsvPicker
+          isOpen onClose={() => setExportOpen(false)}
+          title="Εξαγωγή προτάσεων"
+          columns={PROPOSAL_EXPORT_COLUMNS.map(c => ({
+            key: c.key, label: c.label,
+            ...(c.key === 'description' && { hint: '(ολόκληρη)' }),
+          }))}
+          defaultKeys={['title', 'status', 'proposer', 'event', 'type', 'cost', 'submitted']}
+          storageKey="oc-export-proposals"
+          rowCount={shown.length} rowNoun={['πρόταση', 'προτάσεις']}
+          scopeNote="Εξάγονται όσες δείχνει το φίλτρο που έχεις επιλέξει."
+          onDownload={exportCsv}
+        />
       )}
     </div>
   )

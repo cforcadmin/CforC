@@ -6,6 +6,7 @@ import { eventPhase, dateRangeLabel, athensToday, grDate } from '@/lib/events'
 import { CAPACITY_LABELS } from '@/lib/eventForm'
 import { buildCsv, downloadCsv, datedFilename } from '@/lib/csv'
 import { useColumnWidths } from '@/components/oc/useColumnWidths'
+import OcCsvPicker from '@/components/oc/OcCsvPicker'
 import OcEventEditor from '@/components/oc/OcEventEditor'
 
 /**
@@ -51,6 +52,7 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
   const [cols, setCols] = useState<string[]>(OC_EVENT_DEFAULT_COLS)
   const [showCols, setShowCols] = useState(false)
   const [full, setFull] = useState<{ title: string; who: string; text: string } | null>(null)
+  const [exporting, setExporting] = useState<Ev | null>(null)
   const { width, ResizeHandle, resetWidths, hasCustom } = useColumnWidths('event-registrations')
   // null = κλειστός· '' = νέα δράση· documentId = επεξεργασία
   const [editing, setEditing] = useState<string | null>(null)
@@ -107,14 +109,21 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
    * σε αρχείο. Όνομα και κατάσταση μπαίνουν πάντα — χωρίς αυτά η γραμμή δεν
    * λέει ποιανού είναι.
    */
-  function exportCsv(ev: Ev) {
-    const keys = ['name', 'status', ...OC_EVENT_COLUMNS.map(c => c.key).filter(k => cols.includes(k))]
-    const labels: Record<string, string> = {
-      name: 'Ονοματεπώνυμο', status: 'Κατάσταση',
-      ...Object.fromEntries(OC_EVENT_COLUMNS.map(c => [c.key, c.label])),
-    }
+  /** ΟΛΕΣ οι στήλες είναι διαθέσιμες στην εξαγωγή — όχι μόνο οι ορατές */
+  const exportColumns = [
+    { key: 'name', label: 'Ονοματεπώνυμο' },
+    { key: 'status', label: 'Κατάσταση' },
+    ...OC_EVENT_COLUMNS.map(c => ({
+      key: c.key,
+      label: c.label,
+      ...(c.key === 'dietary' && { hint: '(άρθρο 9)' }),
+    })),
+  ]
+
+  function exportCsv(ev: Ev, keys: string[]) {
+    const label = Object.fromEntries(exportColumns.map(c => [c.key, c.label]))
     const csv = buildCsv(regs, keys.map(k => ({
-      header: labels[k] || k,
+      header: label[k] || k,
       value: (r: Reg) => eventCellValue(r, k),
     })))
     downloadCsv(csv, datedFilename(`CforC-${ev.Slug}-συμμετέχοντες`))
@@ -219,7 +228,7 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
                           ΣΥΜΜΕΤΕΧΟΝΤΕΣ {regsBusy ? '…' : `(${regs.length})`}
                         </p>
                         <span className="flex items-center gap-2">
-                          <button type="button" onClick={() => exportCsv(e)} disabled={regs.length === 0}
+                          <button type="button" onClick={() => setExporting(e)} disabled={regs.length === 0}
                             title="Κατέβασε τις ορατές στήλες σε CSV"
                             className="text-xs font-bold px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-coral disabled:opacity-40">
                             Εξαγωγή CSV
@@ -339,6 +348,19 @@ export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
       {/* Η φόρμα ζει ΕΔΩ και όχι μέσα στη λίστα: είναι overlay σε όλη την
           οθόνη, και φωλιασμένη μέσα στις γραμμές θα κληρονομούσε το overflow
           του πίνακα συμμετεχόντων. */}
+      {exporting && (
+        <OcCsvPicker
+          isOpen onClose={() => setExporting(null)}
+          title="Εξαγωγή συμμετεχόντων"
+          columns={exportColumns}
+          defaultKeys={['name', 'status', ...cols]}
+          storageKey="oc-export-event-regs"
+          rowCount={regs.length} rowNoun={['δήλωση', 'δηλώσεις']}
+          scopeNote="Εξάγονται όλες οι δηλώσεις αυτής της δράσης, με τη σειρά του πίνακα."
+          onDownload={keys => exportCsv(exporting, keys)}
+        />
+      )}
+
       {full && (
         <FullTextModal title={full.title} who={full.who} text={full.text} onClose={() => setFull(null)} />
       )}

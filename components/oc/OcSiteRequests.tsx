@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { grDate } from '@/lib/events'
 import { buildCsv, downloadCsv, datedFilename } from '@/lib/csv'
+import OcCsvPicker from '@/components/oc/OcCsvPicker'
 import {
   REQUEST_STATUSES, REQUEST_STATUS_LABELS, canArchive, requestPreview,
   REQUEST_KIND_LABELS, REQUEST_CATEGORY_LABELS, REQUEST_CATEGORIES,
@@ -55,6 +56,7 @@ export default function OcSiteRequests({ canManage = false }: { canManage?: bool
   const [open, setOpen] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
+  const [exportOpen, setExportOpen] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -108,19 +110,42 @@ export default function OcSiteRequests({ canManage = false }: { canManage?: bool
     }
   }
 
-  function exportCsv() {
-    const csv = buildCsv(shown, [
-      { header: 'Ημερομηνία', value: (r: Req) => r.SubmittedAt || r.createdAt ? grDate(String(r.SubmittedAt || r.createdAt)) : '' },
-      { header: 'Κατάσταση', value: (r: Req) => REQUEST_STATUS_LABELS[r.Status] || r.Status },
-      { header: 'Είδος', value: (r: Req) => (r.Kind ? REQUEST_KIND_LABELS[r.Kind] : '') },
-      { header: 'Αφορά', value: (r: Req) => (r.Category ? REQUEST_CATEGORY_LABELS[r.Category] : '') },
-      { header: 'Αρχειοθετημένο', value: (r: Req) => (r.Archived ? 'Ναι' : 'Όχι') },
-      { header: 'Από', value: (r: Req) => String(r.SenderName || '').trim() },
-      { header: 'Email', value: (r: Req) => String(r.SenderEmail || '').trim() },
-      { header: 'Σελίδα', value: (r: Req) => String(r.PageUrl || '').trim() },
-      { header: 'Μήνυμα', value: (r: Req) => String(r.Message || '').replace(/\s*\n+\s*/g, ' ').trim() },
-      { header: 'Σημειώσεις', value: (r: Req) => String(r.Notes || '').replace(/\s*\n+\s*/g, ' ').trim() },
-    ])
+  /** Μία πηγή για τις στήλες: ίδιες ετικέτες στο παράθυρο και στο αρχείο */
+  const EXPORT_COLUMNS = [
+    { key: 'date', label: 'Ημερομηνία' },
+    { key: 'status', label: 'Κατάσταση' },
+    { key: 'kind', label: 'Είδος' },
+    { key: 'category', label: 'Αφορά' },
+    { key: 'archived', label: 'Αρχειοθετημένο' },
+    { key: 'sender', label: 'Από' },
+    { key: 'email', label: 'Email' },
+    { key: 'page', label: 'Σελίδα' },
+    { key: 'message', label: 'Μήνυμα', hint: '(ολόκληρο)' },
+    { key: 'notes', label: 'Σημειώσεις' },
+  ]
+
+  const cellValue = (r: Req, key: string): string => {
+    const flat = (v: unknown) => String(v ?? '').replace(/\s*\n+\s*/g, ' ').trim()
+    switch (key) {
+      case 'date': return r.SubmittedAt || r.createdAt ? grDate(String(r.SubmittedAt || r.createdAt)) : ''
+      case 'status': return REQUEST_STATUS_LABELS[r.Status] || r.Status
+      case 'kind': return r.Kind ? REQUEST_KIND_LABELS[r.Kind] : ''
+      case 'category': return r.Category ? REQUEST_CATEGORY_LABELS[r.Category] : ''
+      case 'archived': return r.Archived ? 'Ναι' : 'Όχι'
+      case 'sender': return flat(r.SenderName)
+      case 'email': return flat(r.SenderEmail)
+      case 'page': return flat(r.PageUrl)
+      case 'message': return flat(r.Message)
+      case 'notes': return flat(r.Notes)
+      default: return ''
+    }
+  }
+
+  function exportCsv(keys: string[]) {
+    const label = Object.fromEntries(EXPORT_COLUMNS.map(c => [c.key, c.label]))
+    const csv = buildCsv(shown, keys.map(k => ({
+      header: label[k] || k, value: (r: Req) => cellValue(r, k),
+    })))
     downloadCsv(csv, datedFilename('CforC-αιτήματα-ιστότοπου'))
   }
 
@@ -153,7 +178,7 @@ export default function OcSiteRequests({ canManage = false }: { canManage?: bool
           </button>
         ))}
         {shown.length > 0 && (
-          <button type="button" onClick={exportCsv}
+          <button type="button" onClick={() => setExportOpen(true)}
             className="ml-auto text-xs font-bold px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-coral">
             Εξαγωγή CSV
           </button>
@@ -263,6 +288,19 @@ export default function OcSiteRequests({ canManage = false }: { canManage?: bool
             )
           })}
         </div>
+      )}
+
+      {exportOpen && (
+        <OcCsvPicker
+          isOpen onClose={() => setExportOpen(false)}
+          title="Εξαγωγή αιτημάτων"
+          columns={EXPORT_COLUMNS}
+          defaultKeys={['date', 'status', 'kind', 'category', 'sender', 'message']}
+          storageKey="oc-export-site-requests"
+          rowCount={shown.length} rowNoun={['αίτημα', 'αιτήματα']}
+          scopeNote="Εξάγονται όσα δείχνουν τα φίλτρα που έχεις επιλέξει."
+          onDownload={exportCsv}
+        />
       )}
     </div>
   )
