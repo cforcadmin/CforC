@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import OcTasks from '@/components/oc/OcTasks'
 import OcSiteRequests from '@/components/oc/OcSiteRequests'
+import OcWorkingGroupProposals from '@/components/oc/OcWorkingGroupProposals'
 
 export const IT_BOARD_PREFIX = 'it-corrections-'
 
@@ -64,6 +65,18 @@ export default function OcCorrections() {
           εδώ αποκτά κατάσταση και κλείνει. Στην ολοκλήρωση ειδοποιείται ο αποστολέας, αν άφησε email.
         </p>
         <OcSiteRequests canManage />
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
+        <div className="flex flex-wrap items-baseline gap-3 mb-1">
+          <h3 className="text-lg font-bold text-charcoal dark:text-gray-100">Προτάσεις ομάδων εργασίας</h3>
+          <span className="text-sm text-gray-600 dark:text-gray-400">από τη φόρμα των Ομάδων Εργασίας</span>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-5 max-w-3xl">
+          Η ίδια λίστα φαίνεται και στα <strong>Έργα</strong>, όπου τη βλέπει όλο το ΔΣ — εδώ είναι
+          για ευκολία. Κρίνουν Συντονισμός, Κοινότητα ή IT.
+        </p>
+        <OcWorkingGroupProposals />
       </div>
 
       {OC_PAGES.map(p => {
