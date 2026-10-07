@@ -264,3 +264,99 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Αποτυχία ανάλυσης — έλεγξε τη μορφή της επικόλλησης' }, { status: 422 })
   }
 }
+
+/**
+ * ΧΕΙΡΟΚΙΝΗΤΗ ΣΥΝΔΕΣΗ ΥΠΑΡΧΟΥΣΑΣ ΑΠΟΔΕΙΞΗΣ ΜΕ ΜΙΑ ΚΑΤΑΘΕΣΗ.
+ *
+ * ΓΙΑΤΙ: οι ενδοτραπεζικές μεταφορές (τύπος 96) ΔΕΝ περνούν από την αναφορά
+ * «Εισερχόμενες εντολές» — άρα δεν αποκτούν ποτέ όνομα πληρωτή, και καμία
+ * αυτόματη ταύτιση δεν μπορεί να τις δέσει. Η αιτιολογία («ΣΥΝΔΡΟΜΗ C FOR C»)
+ * δεν ταυτοποιεί κανέναν, και κρύβει ακόμη και δύο αποδείξεις.
+ *
+ * Αντί να ΜΑΝΤΕΥΟΥΜΕ από την αιτιολογία, ο Financer δίνει ΒΕΒΑΙΟΤΗΤΑ: τον
+ * αριθμό ή τους αριθμούς απόδειξης. Τα υπόλοιπα συμπληρώνονται από την ίδια
+ * την απόδειξη.
+ *
+ * ΔΕΝ ΔΗΜΙΟΥΡΓΕΙ ΤΙΠΟΤΑ — δένει υπάρχοντα. Γι' αυτό είναι και πιο ασφαλές
+ * από την έκδοση: η χειρότερη περίπτωση λάθους ξεκλειδώνεται.
+ */
+export async function PUT(request: NextRequest) {
+  const cookieStore = await cookies()
+  const sessionCookie = cookieStore.get('session')
+  const decoded = sessionCookie ? verifyToken(sessionCookie.value) : null
+  if (!decoded || decoded.type !== 'session') {
+    return NextResponse.json({ error: 'Απαιτείται σύνδεση' }, { status: 401 })
+  }
+  const access = await resolveOcAccess(decoded.memberId)
+  if (!access.isBoard) return NextResponse.json({ error: 'Δεν επιτρέπεται' }, { status: 403 })
+  const seatCookie = cookieStore.get('oc-last-seat')?.value as OcSeat | undefined
+  const activeSeat = effectiveSeat(
+    access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
+  if (activeSeat !== 'financer') {
+    return NextResponse.json({ error: 'Μόνο ο/η Financer' }, { status: 403 })
+  }
+
+  let body: any
+  try { body = await request.json() } catch {
+    return NextResponse.json({ error: 'Μη έγκυρο αίτημα' }, { status: 400 })
+  }
+  const txnId = String(body?.txnId || '').trim()
+  const amount = Number(body?.amount)
+  const numbers: number[] = Array.isArray(body?.numbers)
+    ? Array.from(new Set(
+        (body.numbers as unknown[])
+          .map(n => Number(n))
+          .filter(n => Number.isInteger(n) && n > 0)))
+    : []
+  if (!txnId) return NextResponse.json({ error: 'Λείπει ο Αρ. Συναλλαγής' }, { status: 400 })
+  if (!numbers.length) return NextResponse.json({ error: 'Δώσε τουλάχιστον έναν αριθμό απόδειξης' }, { status: 400 })
+
+  // ΑΠΟΣΥΝΔΕΣΗ: κενή λίστα δεν φτάνει εδώ· το ρητό unlink είναι άλλη πράξη
+  const found: any[] = []
+  for (const n of numbers) {
+    const r = await strapi(
+      `/receipts?filters[Number][$eq]=${n}&pagination[limit]=1`
+      + '&fields[0]=Number&fields[1]=Amount&fields[2]=MemberName&fields[3]=TransactionId'
+      + '&fields[4]=Type&fields[5]=SubscriptionYear&fields[6]=PaymentDate')
+    const hit = r.json?.data?.[0]
+    if (!hit) return NextResponse.json({ error: `Η ΑΠ. ΕΙΣ. ${n} δεν βρέθηκε` }, { status: 404 })
+    found.push(hit)
+  }
+
+  // Ήδη δεμένη ΑΛΛΟΥ; Τότε κάτι δεν στέκει — δεν την κλέβουμε σιωπηλά.
+  const stolen = found.filter(f => f.TransactionId && f.TransactionId !== txnId)
+  if (stolen.length) {
+    return NextResponse.json({
+      error: `Η ΑΠ. ΕΙΣ. ${stolen.map(s => s.Number).join(', ')} είναι ήδη δεμένη σε άλλη συναλλαγή `
+        + '— αν είναι λάθος, ξεκλείδωσέ την πρώτα από εκείνη τη γραμμή.',
+    }, { status: 409 })
+  }
+
+  /**
+   * ΤΟ ΑΘΡΟΙΣΜΑ ΕΙΝΑΙ Ο ΕΛΕΓΧΟΣ. Ένας λάθος αριθμός πληκτρολογείται εύκολα·
+   * ένας λάθος αριθμός που ΤΥΧΑΙΝΕΙ να αθροίζει στο ακριβές ποσό της κίνησης,
+   * δύσκολα. Προτιμάμε να πούμε «δεν βγαίνει» παρά να δέσουμε λάθος απόδειξη.
+   */
+  const total = found.reduce((t, f) => t + Number(f.Amount || 0), 0)
+  if (Number.isFinite(amount) && Math.abs(total - amount) > 0.005) {
+    return NextResponse.json({
+      error: `Δεν βγαίνει: οι αποδείξεις αθροίζουν ${total.toFixed(2)}€ ενώ η κατάθεση είναι `
+        + `${amount.toFixed(2)}€. Λείπει ή περισσεύει κάποια.`,
+    }, { status: 422 })
+  }
+
+  for (const f of found) {
+    if (f.TransactionId === txnId) continue
+    const upd = await strapi(`/receipts/${f.documentId}`, 'PUT', { TransactionId: txnId })
+    if (!upd.ok) {
+      return NextResponse.json({ error: `Αποτυχία σύνδεσης της ΑΠ. ΕΙΣ. ${f.Number}` }, { status: 502 })
+    }
+  }
+
+  return NextResponse.json({
+    ok: true,
+    numbers: found.map(f => f.Number).sort((a, b) => a - b),
+    memberName: found[0]?.MemberName || null,
+    total,
+  })
+}

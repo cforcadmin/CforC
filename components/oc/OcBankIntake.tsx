@@ -542,7 +542,17 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
                             ) : st.status === 'issuing' ? (
                               <span className="text-gray-400">έκδοση…</span>
                             ) : (
-                              <span className="text-gray-400">—</span>
+                              /**
+                               * ΒΕΒΑΙΟΤΗΤΑ ΑΝΤΙ ΓΙΑ ΕΙΚΑΣΙΑ. Οι ενδοτραπεζικές
+                               * μεταφορές δεν αποκτούν ΠΟΤΕ όνομα πληρωτή, άρα
+                               * καμία αυτόματη ταύτιση δεν τις πιάνει. Αντί να
+                               * μαντεύουμε από την αιτιολογία, ο Financer δίνει
+                               * τον αριθμό — και πολλούς, για δύο έτη σε μία
+                               * κατάθεση. Ο server ελέγχει το ΑΘΡΟΙΣΜΑ.
+                               */
+                              <LinkReceipt txnId={r.txnId} amount={r.amount}
+                                onLinked={nums => setRows(rs => rs.map(x =>
+                                  x.txnId === r.txnId ? { ...x, existingNumbers: nums } : x))} />
                             )}
                           </td>
                         </tr>
@@ -594,5 +604,72 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * «Έχει ήδη απόδειξη — ποια;»
+ *
+ * Μικρό πεδίο που δέχεται έναν ή περισσότερους αριθμούς («367, 368»). Δεν
+ * εκδίδει τίποτα: ΔΕΝΕΙ υπάρχουσα απόδειξη με την κατάθεση, ώστε η γραμμή να
+ * μην ξαναπροσφερθεί για έκδοση και να μη δημιουργηθεί διπλή.
+ */
+function LinkReceipt({ txnId, amount, onLinked }: {
+  txnId: string
+  amount: number
+  onLinked: (numbers: number[]) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function link() {
+    const numbers = value.split(/[,\s]+/).map(v => Number(v.trim())).filter(n => Number.isInteger(n) && n > 0)
+    if (!numbers.length) { setError('Δώσε αριθμό απόδειξης'); return }
+    setBusy(true); setError(null)
+    try {
+      const res = await fetch('/api/oc/bank-intake', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ txnId, amount, numbers }),
+      })
+      const j = await res.json().catch(() => null)
+      if (!res.ok || !j?.ok) { setError(j?.error || 'Αποτυχία σύνδεσης'); return }
+      onLinked(j.numbers)
+      notifyFinanceChanged()
+    } catch {
+      setError('Δεν ολοκληρώθηκε η κλήση')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)}
+        title="Αν έχει ήδη εκδοθεί απόδειξη, δώσε τον αριθμό της"
+        className="text-[11px] text-coral hover:underline whitespace-nowrap">
+        — έχει απόδειξη;
+      </button>
+    )
+  }
+
+  return (
+    <span className="inline-flex flex-col gap-1">
+      <span className="inline-flex items-center gap-1">
+        <input autoFocus value={value} onChange={e => setValue(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') link(); if (e.key === 'Escape') setOpen(false) }}
+          placeholder="367, 368" aria-label="Αριθμοί απόδειξης"
+          className="w-24 px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-xs text-charcoal dark:text-gray-100 notranslate" />
+        <button type="button" onClick={link} disabled={busy}
+          className="text-[11px] font-bold text-coral hover:underline disabled:opacity-50">
+          {busy ? '…' : 'Σύνδεση'}
+        </button>
+        <button type="button" onClick={() => { setOpen(false); setError(null) }}
+          className="text-[11px] text-gray-500 hover:underline">άκυρο</button>
+      </span>
+      {error && <span className="text-[11px] text-red-600 dark:text-red-400 max-w-[16rem]">{error}</span>}
+    </span>
   )
 }
