@@ -124,6 +124,40 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
   /** Η κατηγορία διορθώνεται επιτόπου από όποιον μπορεί να κλείσει ή να στείλει τον μήνα */
   const canEdit = canReady || canDispatch
 
+  /** Ποια γραμμή έχει ανοιχτό τον μικρό επεξεργαστή πληρωμής */
+  const [payEdit, setPayEdit] = useState<string | null>(null)
+  const [payDraft, setPayDraft] = useState<{ method: string; date: string }>({ method: 'bank', date: '' })
+  const [savingPay, setSavingPay] = useState<string | null>(null)
+  const [payNote, setPayNote] = useState<string | null>(null)
+
+  /**
+   * Η ένδειξη «ανεξόφλητο» δεν είναι υπολογισμός: είναι το πεδίο
+   * PaymentMethod, που γραφόταν ΜΟΝΟ στην έγκριση από τη χρέωση που
+   * ταίριαξε τότε. Εδώ το διορθώνει άνθρωπος, χωρίς να ξανατρέξει τίποτα.
+   */
+  async function savePayment(documentId: string) {
+    setSavingPay(documentId)
+    try {
+      const res = await fetch('/api/oc/expense-intake', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          month, action: 'setPayment', id: documentId,
+          paymentMethod: payDraft.method,
+          paymentDate: payDraft.method === 'unpaid' ? null : payDraft.date,
+        }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(j?.error || 'Αποτυχία')
+      setPayEdit(null)
+      setPayNote(j.sheetUpdated === false
+        ? `${j.aa || ''}: η ένδειξη διορθώθηκε. Το φύλλο ΕΞΟΔΑ δεν χρειάστηκε αλλαγή — η γραμμή έχει ήδη πληρωμή εκεί.`
+        : `${j.aa || ''}: η πληρωμή καταχωρήθηκε σε βάση και φύλλο.`)
+      await load(month)
+    } catch (err: any) {
+      setError(err?.message || 'Αποτυχία σήμανσης πληρωμής')
+    } finally { setSavingPay(null) }
+  }
+
   async function setCategory(documentId: string, category: string) {
     setSavingCat(documentId)
     try {
@@ -270,6 +304,7 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
 
           {loading && <p className="text-sm text-gray-400">Φόρτωση…</p>}
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+          {payNote && <p className="text-sm text-green-700 dark:text-green-300">{payNote}</p>}
 
           {data && !loading && (
             <>
@@ -429,7 +464,52 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
                             <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400 notranslate">{e.docNumber || '—'}</td>
                             <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400 notranslate">{e.issueDate ? new Date(e.issueDate).toLocaleDateString('el-GR') : '—'}</td>
                             <td className="py-2.5 pr-4 notranslate">
-                              {e.method === 'unpaid' ? (
+                              {payEdit === e.documentId ? (
+                                <span className="flex flex-wrap items-center gap-1.5">
+                                  <select value={payDraft.method}
+                                    onChange={ev => setPayDraft(d => ({ ...d, method: ev.target.value }))}
+                                    aria-label={`Τρόπος πληρωμής για ${e.aa}`}
+                                    className="rounded-lg border border-gray-300 dark:border-gray-600 px-2 py-1 text-xs bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100">
+                                    <option value="bank">Τράπεζα</option>
+                                    <option value="cash">Μετρητά</option>
+                                    <option value="offset">Συμψηφισμός</option>
+                                    <option value="unpaid">Ανεξόφλητο</option>
+                                  </select>
+                                  {payDraft.method !== 'unpaid' && (
+                                    <input type="date" value={payDraft.date}
+                                      onChange={ev => setPayDraft(d => ({ ...d, date: ev.target.value }))}
+                                      aria-label={`Ημερομηνία πληρωμής για ${e.aa}`}
+                                      className="rounded-lg border border-gray-300 dark:border-gray-600 px-2 py-1 text-xs bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100" />
+                                  )}
+                                  <button type="button" disabled={savingPay === e.documentId || (payDraft.method !== 'unpaid' && !payDraft.date)}
+                                    onClick={() => savePayment(e.documentId)}
+                                    className="text-xs font-bold px-2 py-1 rounded-lg bg-coral text-charcoal disabled:opacity-40">
+                                    {savingPay === e.documentId ? '…' : 'OK'}
+                                  </button>
+                                  <button type="button" onClick={() => setPayEdit(null)}
+                                    className="text-xs px-1 text-gray-500 hover:text-charcoal dark:hover:text-gray-200"
+                                    aria-label="Άκυρο">✕</button>
+                                </span>
+                              ) : canEdit ? (
+                                <button type="button"
+                                  onClick={() => {
+                                    setPayEdit(e.documentId)
+                                    // Προεπιλογή: η ημερομηνία έκδοσης — για τα έξοδα που
+                                    // χρεώνονται αυθημερόν (τραπεζικά έξοδα) είναι η σωστή.
+                                    setPayDraft({
+                                      method: e.method === 'unpaid' ? 'bank' : e.method,
+                                      date: (e.paymentDate || e.issueDate || '').slice(0, 10),
+                                    })
+                                  }}
+                                  title="Σήμανση πληρωμής"
+                                  className={e.method === 'unpaid'
+                                    ? 'text-orange-600 dark:text-orange-400 underline decoration-dotted underline-offset-2'
+                                    : 'text-gray-500 dark:text-gray-400 underline decoration-dotted underline-offset-2'}>
+                                  {e.method === 'unpaid'
+                                    ? 'ανεξόφλητο'
+                                    : `${e.methodLabel}${e.paymentDate ? ` · ${new Date(e.paymentDate).toLocaleDateString('el-GR')}` : ''}`}
+                                </button>
+                              ) : e.method === 'unpaid' ? (
                                 <span className="text-orange-600 dark:text-orange-400">ανεξόφλητο</span>
                               ) : (
                                 <span className="text-gray-500 dark:text-gray-400">

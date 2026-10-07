@@ -144,6 +144,82 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
+  /**
+   * ΣΗΜΑΝΣΗ ΕΞΟΦΛΗΣΗΣ ΜΕ ΤΟ ΧΕΡΙ.
+   *
+   * Το PaymentMethod γραφόταν ΜΙΑ φορά, στην έγκριση, από τη χρέωση που
+   * ταίριαξε εκείνη τη στιγμή. Όταν δεν ταίριαζε καμία — επειδή η χρέωση
+   * δεν ήταν στην επικόλληση, ή επειδή δύο παραστατικά είχαν ΤΟ ΙΔΙΟ ποσό
+   * και η μία χρέωση πήγε στο παλαιότερο (9.7 και 9.11 των 4,00 €) — η
+   * γραμμή έμενε «ανεξόφλητη» για πάντα. Τίποτα δεν την ξανακοίταζε.
+   *
+   * Εδώ το λέει άνθρωπος. Γράφεται ΚΑΙ στο φύλλο, αλλιώς το λογιστήριο
+   * συνεχίζει να βλέπει ανεξόφλητο.
+   */
+  if (body?.action === 'setPayment') {
+    const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
+    const method = String(body?.paymentMethod || '').trim()
+    const date = String(body?.paymentDate || '').trim()
+    const ALLOWED = ['bank', 'cash', 'offset', 'unpaid']
+    if (!id) return NextResponse.json({ error: 'Λείπει η εγγραφή' }, { status: 400 })
+    if (!ALLOWED.includes(method)) {
+      return NextResponse.json({ error: 'Άγνωστος τρόπος πληρωμής' }, { status: 400 })
+    }
+    // «Ανεξόφλητο» σημαίνει ότι δεν υπάρχει ημερομηνία — και αντίστροφα,
+    // εξόφληση χωρίς ημερομηνία είναι η μισή πληροφορία που ξαναγεννά το ίδιο.
+    if (method !== 'unpaid' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return NextResponse.json({ error: 'Χρειάζεται ημερομηνία πληρωμής' }, { status: 400 })
+    }
+
+    const cur = await strapi(`/expenses/${id}?fields[0]=DocNumber&fields[1]=DocRef&fields[2]=PayableAmount&fields[3]=Aa`)
+    if (!cur.ok || !cur.json?.data) {
+      return NextResponse.json({ error: 'Η δαπάνη δεν βρέθηκε' }, { status: 404 })
+    }
+    const row = cur.json.data
+    const paymentDate = method === 'unpaid' ? null : date
+
+    // Πρώτα το φύλλο: αν αποτύχει, η γραμμή μένει όπως ήταν και ο χρήστης
+    // ξαναπροσπαθεί. Αντίστροφα θα έλεγε το Strapi «εξοφλήθηκε» και το
+    // λογιστήριο θα έβλεπε άλλα.
+    const sheet = await webApp('updateExpensePayment', {
+      docRef: row.DocNumber || row.DocRef || row.Aa,
+      amount: Number(row.PayableAmount) || 0,
+      paymentDate,
+      paymentMethod: method,
+    })
+    /**
+     * «ΔΕΝ ΒΡΕΘΗΚΕ ΓΡΑΜΜΗ» ΔΕΝ ΕΙΝΑΙ ΑΠΟΤΥΧΙΑ — ΕΙΝΑΙ Η ΣΥΝΗΘΗΣ ΠΕΡΙΠΤΩΣΗ.
+     *
+     * Το updateExpensePayment ψάχνει γραμμή ΑΝΕΞΟΦΛΗΤΗ στο φύλλο. Μετρημένο
+     * 7/10/2026 με μάρτυρα: η 8.9 Κληρόνομος, που ΕΙΧΕ εξοφληθεί από αυτό
+     * ακριβώς το action στις 2/9, απαντά σήμερα «δεν βρέθηκε» όταν της
+     * ξαναστείλεις τις ίδιες τιμές. Δηλαδή: μόλις η γραμμή αποκτήσει
+     * πληρωμή, παύει να βρίσκεται.
+     *
+     * Άρα οι πέντε ανεξόφλητες του Σεπτεμβρίου είναι ΗΔΗ πληρωμένες στο
+     * φύλλο — ανεξόφλητες μόνο στο Strapi, που είναι ό,τι βλέπει η οθόνη.
+     * Το να σκάει εδώ η σήμανση σήμαινε ότι η ΜΟΝΗ βάση που είναι λάθος
+     * είναι και η μόνη που δεν μπορούμε να διορθώσουμε.
+     */
+    const sheetMissing = /δεν βρέθηκε/i.test(String(sheet.error || ''))
+    if (!sheet.ok && !sheetMissing) {
+      console.error('setPayment: sheet update failed', sheet.error)
+      return NextResponse.json(
+        { error: `Το φύλλο ΕΞΟΔΑ δεν ενημερώθηκε: ${String(sheet.error || '').slice(0, 120)}` },
+        { status: 502 })
+    }
+
+    const r = await strapi(`/expenses/${id}`, 'PUT', {
+      PaymentMethod: method,
+      PaymentDate: paymentDate,
+    })
+    if (!r.ok) {
+      console.error('setPayment: strapi update failed', r.status, id)
+      return NextResponse.json({ error: 'Το φύλλο ενημερώθηκε αλλά όχι η βάση — ενημέρωσε το IT' }, { status: 502 })
+    }
+    return NextResponse.json({ ok: true, aa: row.Aa || null, sheetUpdated: !sheetMissing })
+  }
+
   if (body?.action === 'ackRecon') {
     const id = String(body?.id || '').replace(/[^a-z0-9]/gi, '')
     if (!id) return NextResponse.json({ error: 'Λείπει η εγγραφή' }, { status: 400 })
