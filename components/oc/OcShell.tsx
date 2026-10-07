@@ -15,7 +15,6 @@ import OcCampaigns from '@/components/oc/OcCampaigns'
 import OcIndicators from '@/components/oc/OcIndicators'
 import OcSecurity from '@/components/oc/OcSecurity'
 import OcCorrections from '@/components/oc/OcCorrections'
-import OcWorkingGroupProposals from '@/components/oc/OcWorkingGroupProposals'
 import type { OcOverviewData } from '@/lib/ocOverview'
 import { useNavMode } from '@/components/nav/useNavMode'
 
@@ -778,23 +777,6 @@ export default function OcShell({ seats, initialSeat, wearingSeat = null, seatMo
           )}
 
 
-          {/* Τα ΕΡΓΑ δεν απέδιδαν τίποτα: οι προτάσεις ομάδων είναι το πρώτο
-              πράγμα που ανήκει εδώ, και είναι ορατές σε ΟΛΟ το ΔΣ — αλλιώς
-              θα τις έκρινε μόνο όποιος μπαίνει στη σελίδα του IT. */}
-          {activeSection === 'projects' && (
-            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
-              <div className="flex flex-wrap items-baseline gap-3 mb-1">
-                <h3 className="text-lg font-bold text-charcoal dark:text-gray-100">Προτάσεις ομάδων εργασίας</h3>
-                <span className="text-sm text-gray-600 dark:text-gray-400">από μέλη, μέσα από τον ιστότοπο</span>
-              </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-5 max-w-3xl">
-                Ό,τι υποβάλλεται από τη φόρμα στις Ομάδες Εργασίας. Φτάνει και με email σε hello@ και it@·
-                εδώ αποκτά κατάσταση, σημειώσεις και αρχείο. Κρίνουν Συντονισμός, Κοινότητα ή IT.
-              </p>
-              <OcWorkingGroupProposals />
-            </div>
-          )}
-
           {activeSection === 'comms' && <OcComms />}
 
           {activeSection === 'reports' && <OcIndicators />}
@@ -815,7 +797,7 @@ export default function OcShell({ seats, initialSeat, wearingSeat = null, seatMo
             </div>
           )}
 
-          {activeSection !== 'overview' && activeSection !== 'settings' && activeSection !== 'members' && activeSection !== 'finances' && activeSection !== 'admin' && activeSection !== 'comms' && activeSection !== 'reports' && activeSection !== 'corrections' && activeSection !== 'security' && activeSection !== 'projects' && (
+          {activeSection !== 'overview' && activeSection !== 'settings' && activeSection !== 'members' && activeSection !== 'finances' && activeSection !== 'admin' && activeSection !== 'comms' && activeSection !== 'reports' && activeSection !== 'corrections' && activeSection !== 'security' && (
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-12 text-center">
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5"

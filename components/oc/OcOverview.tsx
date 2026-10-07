@@ -11,6 +11,7 @@ import OcTreasuryPopup from '@/components/oc/OcTreasuryPopup'
 import OcMyTasks from '@/components/oc/OcMyTasks'
 import OcEvents from '@/components/oc/OcEvents'
 import OcEventProposals from '@/components/oc/OcEventProposals'
+import OcWorkingGroupProposals from '@/components/oc/OcWorkingGroupProposals'
 import OcExportModal from '@/components/oc/OcExportModal'
 import OcPendingDeletions from '@/components/oc/OcPendingDeletions'
 import { useColumnWidths } from '@/components/oc/useColumnWidths'
@@ -1220,6 +1221,21 @@ export default function OcOverview({
       {/* Οι προτάσεις ακριβώς κάτω από τις δράσεις: γεννιούνται μέσα στις
           δηλώσεις τους και διαβάζονται μαζί τους. */}
       <OcEventProposals />
+
+      {/* ΠΡΟΤΑΣΕΙΣ ΟΜΑΔΩΝ ΕΡΓΑΣΙΑΣ — στην Επισκόπηση επειδή πρέπει να τις
+          βλέπει ΟΛΟ το ΔΣ. Στα ΕΡΓΑ τις έβλεπε όποιος πήγαινε να τις ψάξει·
+          στις ΠΡΟΤΑΣΕΙΣ (itOnly) μόνο το IT. */}
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8">
+        <div className="flex flex-wrap items-baseline gap-3 mb-1">
+          <h3 className="font-bold text-lg text-charcoal dark:text-gray-100">Προτάσεις ομάδων εργασίας</h3>
+          <span className="text-sm text-gray-600 dark:text-gray-400">από μέλη, μέσα από τον ιστότοπο</span>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-5 max-w-3xl">
+          Ό,τι υποβάλλεται από τη φόρμα στις Ομάδες Εργασίας. Φτάνει και με email σε hello@ και it@·
+          εδώ αποκτά κατάσταση, σημειώσεις και αρχείο. Κρίνουν Συντονισμός, Κοινότητα ή IT.
+        </p>
+        <OcWorkingGroupProposals />
+      </div>
 
       {/* Newsletter: 2 σειρές/μήνα — Μελών (Paid, ~10) και Κοινού (External, ~15),
           καθεμία με το τρέχον τεύχος + ιστορικό 3 προηγούμενων. Οι δοκιμαστικές
