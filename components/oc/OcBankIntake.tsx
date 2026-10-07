@@ -51,7 +51,7 @@ const FUNDER_TYPES: Array<{ key: string; label: string }> = [
 
 interface RowState {
   include: boolean
-  type: 'subscription' | 'extraordinary' | 'donation' | 'grant' | 'other' | 'record-grant'
+  type: 'subscription' | 'registration' | 'extraordinary' | 'donation' | 'grant' | 'other' | 'record-grant'
   funderType: string
   year: string
   memberDocId: string | null
@@ -144,7 +144,9 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
         init[r.txnId] = {
           // Προεπιλογή: όλα εκτός των εγγραφών (που περνούν από τις αιτήσεις)
           include: r.kind !== 'registration' && !(r.existingNumbers?.length || r.existingNumber),
-          type: r.kind === 'grant-like' ? 'record-grant' : 'subscription',
+          // Το ποσό το λέει ήδη: 45€ = εγγραφή + συνδρομή
+          type: r.kind === 'grant-like' ? 'record-grant'
+            : r.kind === 'registration' ? 'registration' : 'subscription',
           funderType: '',
           year: String(new Date(r.date).getFullYear()),
           memberDocId: r.suggestion?.docId || null,
@@ -518,10 +520,13 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
                               <select className={inputCls} value={st.type}
                                 onChange={e => {
                                   const t = e.target.value as RowState['type']
-                                  patch(r.txnId, { type: t, sendEmail: t === 'subscription' })
+                                  patch(r.txnId, { type: t, sendEmail: t === 'subscription' || t === 'registration' })
                                 }}
                                 disabled={locked || !canIssue} aria-label="Τύπος απόδειξης">
                                 <option value="subscription">Συνδρομή</option>
+                                {/* 45€ = 10 εγγραφή + 35 συνδρομή· τον διαχωρισμό τον
+                                    κάνει η διαδρομή των αποδείξεων, όχι η οθόνη */}
+                                <option value="registration">Εγγραφή + Ετήσια συνδρομή</option>
                                 <option value="extraordinary">Έκτακτη</option>
                                 <option value="donation">Δωρεά</option>
                                 <option value="grant">Χορηγία (με απόδειξη)</option>
@@ -537,7 +542,7 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
                                 {FUNDER_TYPES.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
                               </select>
                             )}
-                            {st.type === 'subscription' && (
+                            {(st.type === 'subscription' || st.type === 'registration') && (
                               <input type="number" className={`${inputCls} mt-1`} value={st.year}
                                 onChange={e => patch(r.txnId, { year: e.target.value })}
                                 disabled={locked || !canIssue}
