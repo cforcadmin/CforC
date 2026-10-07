@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { canRejectPayment } from '@/lib/businessDays'
 
-// PDF + emails χρειάζονται χρόνο — μην αφήσεις το Vercel default (10s) να τα κόψει
-export const maxDuration = 60
+/**
+ * 300s, ΟΧΙ 60 — και το 60 ήταν η αιτία πραγματικής ζημιάς (7/10/2026).
+ *
+ * Το «Πληρώθηκε» κάνει ΔΥΟ κλήσεις σε Apps Script (Μητρώο για την προαγωγή,
+ * ΕΣΟΔΑ+Drive για την απόδειξη) και καθεμιά, σε κρύα εκκίνηση, αργεί 40–60
+ * δευτερόλεπτα — μετρημένο 25/9/2026: 43,8s και 57,7s. Μαζί με PDF και δύο
+ * email, τα 60s δεν έφταναν ΠΟΤΕ.
+ *
+ * Τι συνέβη: το Μητρώο προήχθη κανονικά, η συνάρτηση σκοτώθηκε αμέσως μετά.
+ * Κανένα μέλος, καμία απόδειξη, καμία εγγραφή στα ΕΣΟΔΑ, κανένα email — και
+ * ΚΑΜΙΑ ένδειξη στην οθόνη, γιατί η απάντηση δεν γύρισε ποτέ. Ίδιο όριο με
+ * τη διαδρομή των αποδείξεων, που κάνει ΛΙΓΟΤΕΡΑ.
+ */
+export const maxDuration = 300
 import { cookies } from 'next/headers'
 import { verifyToken, generatePaymentClaimToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
