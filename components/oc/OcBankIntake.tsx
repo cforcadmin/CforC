@@ -551,8 +551,18 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
                                * κατάθεση. Ο server ελέγχει το ΑΘΡΟΙΣΜΑ.
                                */
                               <LinkReceipt txnId={r.txnId} amount={r.amount}
-                                onLinked={nums => setRows(rs => rs.map(x =>
-                                  x.txnId === r.txnId ? { ...x, existingNumbers: nums } : x))} />
+                                onLinked={(nums, name) => {
+                                  setRows(rs => rs.map(x =>
+                                    x.txnId === r.txnId ? { ...x, existingNumbers: nums } : x))
+                                  // Η γραμμή ΤΑΚΤΟΠΟΙΗΘΗΚΕ: δεν εκδίδεται ξανά και δεν
+                                  // στέλνεται δεύτερο email. Το όνομα έρχεται από την
+                                  // ίδια την απόδειξη — δεν το ξαναγράφει κανείς.
+                                  patch(r.txnId, {
+                                    include: false,
+                                    sendEmail: false,
+                                    ...(name ? { memberName: name, query: '' } : {}),
+                                  })
+                                }} />
                             )}
                           </td>
                         </tr>
@@ -617,7 +627,7 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
 function LinkReceipt({ txnId, amount, onLinked }: {
   txnId: string
   amount: number
-  onLinked: (numbers: number[]) => void
+  onLinked: (numbers: number[], memberName: string | null) => void
 }) {
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
@@ -636,7 +646,7 @@ function LinkReceipt({ txnId, amount, onLinked }: {
       })
       const j = await res.json().catch(() => null)
       if (!res.ok || !j?.ok) { setError(j?.error || 'Αποτυχία σύνδεσης'); return }
-      onLinked(j.numbers)
+      onLinked(j.numbers, j.memberName || null)
       notifyFinanceChanged()
     } catch {
       setError('Δεν ολοκληρώθηκε η κλήση')
