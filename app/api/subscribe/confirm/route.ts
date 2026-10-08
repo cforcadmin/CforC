@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
+import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
 
 function escapeHtml(str: string): string {
   return str
@@ -11,7 +12,7 @@ function escapeHtml(str: string): string {
 }
 
 export async function GET(request: Request) {
-  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://cultureforchange.net'
+  const SITE_URL = PUBLIC_SITE_URL
 
   try {
     const { searchParams } = new URL(request.url)

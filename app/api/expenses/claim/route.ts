@@ -11,6 +11,7 @@ import { resolveClaimToken } from '@/lib/claimToken'
 import { generateExpenseClaimPdf } from '@/lib/expenseClaimPdf'
 import { archiveExpenseClaim, type ArchiveAttachment } from '@/lib/expenseClaimArchive'
 import { sendOcEmail, expenseClaimSubmittedEmailHtml, expenseClaimReceivedEmailHtml, FINANCE_FROM, FINANCE_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
+import { ocUrl } from '@/lib/siteUrl'
 
 // Ανέβασμα παραστατικών + δημιουργία φακέλου: πολύ πάνω από τα 10s
 export const maxDuration = 60
@@ -394,7 +395,7 @@ export async function POST(request: NextRequest) {
       payable: money(payable), total: money(total), advance: advance > 0 ? money(advance) : null,
       accountHolder: entry.AccountHolder, bankName: entry.BankName, iban: entry.Iban,
       lines: lines.map(l => ({ date: grDate(l.date), type: l.receiptType, amount: money(Number(l.amount) || 0) })),
-      ocUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cultureforchange.net'}/oc?section=finances`,
+      ocUrl: ocUrl('finances'),
     })
     /**
      * ΔΥΟ ΓΡΑΜΜΑΤΑ, όχι ένα με κοινοποίηση.

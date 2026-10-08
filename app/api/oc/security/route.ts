@@ -20,6 +20,7 @@ import { CONTRACTS_SHEET_ID } from '@/lib/contractsSheet'
 import { LIBRARY_SHEET_ID } from '@/lib/librarySheet'
 import { LIBRARY_FOLDER_ID } from '@/lib/googleDrive'
 import { AGENDA_DOC_ID } from '@/lib/googleDocs'
+import { PUBLIC_SITE_HOST } from '@/lib/siteUrl'
 
 export const maxDuration = 60
 
@@ -34,8 +35,7 @@ export const maxDuration = 60
 
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
-const SITE_HOST = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cultureforchange.net')
-  .replace(/^https?:\/\//, '').replace(/\/.*$/, '')
+const SITE_HOST = PUBLIC_SITE_HOST
 
 async function authorizeIt() {
   const cookieStore = await cookies()

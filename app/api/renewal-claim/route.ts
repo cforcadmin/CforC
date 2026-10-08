@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export const maxDuration = 60
 import { verifyToken } from '@/lib/auth'
 import { sendOcEmail, FINANCE_EMAIL } from '@/lib/ocEmails'
+import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
 
 /**
  * Δήλωση «πλήρωσα τη συνδρομή μου» (ανανέωση μέλους) — από το κουμπί του
@@ -148,7 +149,7 @@ OC → Επισκόπηση → κλικ στο tile «Πληρωμένο» (ή 
 το μέλος είναι πρώτο με 💶 → «Έγκριση + απόδειξη» — η απόδειξη δημιουργείται, αποστέλλεται στο μέλος
 και ενημερώνει τις πληρωμές, όλα αυτόματα. Αν η κατάθεση δεν φανεί, «Αποτυχία» ενημερώνει το μέλος.</p>
 <p style="margin:20px 0 0 0;">
-<a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://cultureforchange.net'}/oc?open=renewals"
+<a href="${PUBLIC_SITE_URL}/oc?open=renewals"
    style="display:inline-block;background:#2D2D2D;color:#FFFFFF;font-weight:bold;font-size:14px;text-decoration:none;padding:12px 26px;border-radius:999px;">Άνοιγμα λίστας δηλώσεων →</a>
 </p>
 </div></body></html>`

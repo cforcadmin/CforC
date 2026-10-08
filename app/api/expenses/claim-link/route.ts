@@ -6,6 +6,7 @@ import { isReimbursed } from '@/lib/eventForm'
 import { athensToday } from '@/lib/events'
 import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { claimLinkEmailHtml } from '@/lib/eventEmails'
+import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
 
 export const maxDuration = 60
 
@@ -102,7 +103,7 @@ export async function POST(request: NextRequest) {
     return SAME_ANSWER()
   }
 
-  const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cultureforchange.net'
+  const site = PUBLIC_SITE_URL
   const url = `${site}/expenses?event=${encodeURIComponent(slug)}&t=${encodeURIComponent(raw)}`
   const tpl = claimLinkEmailHtml({
     firstName: String(row.FirstName || '').trim(),

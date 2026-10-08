@@ -4,6 +4,7 @@ import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { eventRegisteredEmailHtml } from '@/lib/eventEmails'
 import { getsExpensesNotice } from '@/lib/eventForm'
 import { dateRangeLabel } from '@/lib/events'
+import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
 
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
@@ -22,7 +23,7 @@ export const dynamic = 'force-dynamic'
 
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cultureforchange.net'
+const SITE = PUBLIC_SITE_URL
 
 async function strapi(path: string, method = 'GET', data?: unknown) {
   const res = await fetch(`${STRAPI_URL}/api${path}`, {

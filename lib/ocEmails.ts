@@ -8,6 +8,7 @@
  */
 
 import { FINANCE_MONTHLY_STEPS, renderGuideHtml, adminPhrase } from './financeMonthlyGuide'
+import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const FROM = 'Culture for Change <noreply@cultureforchange.net>'
@@ -69,9 +70,7 @@ export const UNSUBSCRIBE_CC = [
   'hello@cultureforchange.net',
   'community@cultureforchange.net',
 ]
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https')
-  ? process.env.NEXT_PUBLIC_SITE_URL
-  : 'https://www.cultureforchange.net'
+const SITE_URL = PUBLIC_SITE_URL
 
 /** Εσωτερική διεύθυνση οικονομικών ειδοποιήσεων */
 export const FINANCE_EMAIL = 'finance@cultureforchange.net'

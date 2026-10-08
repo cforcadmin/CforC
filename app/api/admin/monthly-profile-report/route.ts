@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { recordRun, cronAuthorized, triggerOf, type RunNote } from '@/lib/ocRunLog'
 import { getSeatHolder } from '@/lib/ocRoles'
 import { sendOcEmail, treasuryReminderEmailHtml, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
+import { ocUrl } from '@/lib/siteUrl'
 
 export const maxDuration = 60
 
@@ -95,7 +96,7 @@ async function sendTreasuryReminder(): Promise<string> {
     const firstName = (financer.name || '').trim().split(' ')[0] || ''
     const tpl = treasuryReminderEmailHtml(
       firstName, monthLabel, last,
-      `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cultureforchange.net'}/oc`,
+      ocUrl('members'),
     )
     // ΣΤΗ ΘΥΡΙΔΑ ΤΗΣ ΕΔΡΑΣ, ΟΧΙ στο προσωπικό email του ανθρώπου.
     //

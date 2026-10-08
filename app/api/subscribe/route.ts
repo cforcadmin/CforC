@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { newsletterLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 import { checkCsrf } from '@/lib/csrf'
 import { generateNewsletterToken } from '@/lib/auth'
+import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
 
 function escapeHtml(str: string): string {
   return str
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://cultureforchange.net'
+    const SITE_URL = PUBLIC_SITE_URL
 
     // Sanitize optional name fields
     const cleanFirst = typeof firstName === 'string' ? firstName.trim().slice(0, 100) : undefined

@@ -1,3 +1,4 @@
+import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
 /**
  * Email δηλώσεων συμμετοχής.
  *
@@ -9,7 +10,7 @@
  * ακριβώς αυτό που διαβάζει το Apple Mail.
  */
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cultureforchange.net'
+const SITE = PUBLIC_SITE_URL
 
 const esc = (s: string) => String(s || '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')

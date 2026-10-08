@@ -19,6 +19,7 @@ import {
   scheduleSenderCampaign, fillTagsForTest, getSenderCampaignStats,
 } from '@/lib/senderCampaigns'
 import { sendOcEmailResult } from '@/lib/ocEmails'
+import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
 
 // Η «Αποστολή» στέλνει ΤΩΡΑ ό,τι χωράει — χρειάζεται χρόνο, όχι 60 δευτερόλεπτα
 export const maxDuration = 300
@@ -1062,8 +1063,7 @@ function newsletterSlug(subject: string): string {
 
 /** Η διεύθυνση του τεύχους στο δικό μας αρχείο */
 function archiveUrlFor(slug: string): string {
-  const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://cultureforchange.net'
-  return `${site.replace(/\/$/, '')}/newsletters/${slug}`
+  return `${PUBLIC_SITE_URL}/newsletters/${slug}`
 }
 
 async function archiveNewsletter(

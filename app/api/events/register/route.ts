@@ -11,6 +11,7 @@ import type { CforcEvent } from '@/lib/types'
 import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { eventConfirmEmailHtml, eventRegisteredEmailHtml } from '@/lib/eventEmails'
 import { dateRangeLabel } from '@/lib/events'
+import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
 
 export const maxDuration = 60
 
@@ -249,7 +250,7 @@ export async function POST(request: NextRequest) {
   // ── Το email ──
   // ΑΝΑΜΕΝΕΤΑΙ πριν την απάντηση: μια μη αναμενόμενη αποστολή πεθαίνει όταν
   // παγώσει η συνάρτηση (δες το περιστατικό με το email αποχώρησης).
-  const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cultureforchange.net'
+  const site = PUBLIC_SITE_URL
   const dates = dateRangeLabel(ev.StartDate, ev.EndDate)
   const venue = [ev.Venue, ev.City].filter(Boolean).join(', ') || undefined
   try {

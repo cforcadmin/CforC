@@ -5,6 +5,7 @@ import { SEAT_MAILBOX } from '@/lib/ocRoles'
 import { buildBuckets, findUrgent, isDigestDay, totalCount, active, type ReminderContract, type ReminderItem } from '@/lib/contractReminders'
 import { claimsNeedingReminder, daysSince, ageLabel, type ClaimForReminder } from '@/lib/expenseClaimReminders'
 import { expenseClaimReminderEmailHtml } from '@/lib/ocEmails'
+import { ocUrl } from '@/lib/siteUrl'
 
 export const maxDuration = 60
 
@@ -31,7 +32,7 @@ export const maxDuration = 60
 const CRON_SECRET = process.env.CRON_SECRET
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
-const OC_URL = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cultureforchange.net'}/oc`
+const OC_URL = ocUrl()
 
 async function strapi(path: string, method = 'GET', data?: any) {
   const res = await fetch(`${STRAPI_URL}/api${path}`, {

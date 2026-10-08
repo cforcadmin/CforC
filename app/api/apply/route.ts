@@ -4,8 +4,9 @@ import { checkCsrf } from '@/lib/csrf'
 import { appendApplicantToSheet, sheetsConfigured } from '@/lib/googleSheets'
 import { sendOcEmail, applicationReceivedEmailHtml, COMMUNITY_FROM, COMMUNITY_EMAIL, APPLICATION_RECEIVED_CC } from '@/lib/ocEmails'
 import { getSeatHolder } from '@/lib/ocRoles'
+import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://cultureforchange.net'
+const SITE_URL = PUBLIC_SITE_URL
 
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN

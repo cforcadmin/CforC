@@ -7,6 +7,7 @@ import { resolveOcAccess, getSeatHolder, SEAT_MAILBOX, type OcSeat } from '@/lib
 import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { type ReceiptType } from '@/lib/receipts'
 import { sendOcEmail, sendOcEmailResult, monthlyDispatchEmailHtml, monthReadyEmailHtml, ADMIN_FROM, ADMIN_EMAIL, FINANCE_EMAIL, FINANCE_FROM } from '@/lib/ocEmails'
+import { ocUrl } from '@/lib/siteUrl'
 
 /**
  * Μηνιαία εικόνα ΕΣΟΔΩΝ + ΕΞΟΔΩΝ και κλείσιμο μήνα («εστάλη στο λογιστήριο»).
@@ -453,7 +454,7 @@ export async function POST(request: NextRequest) {
         const [adminSeat, financerSeat] = await Promise.all([getSeatHolder('admin'), getSeatHolder('financer')])
         const adminFirst = adminSeat?.name?.split(/\s+/)[0] || null
         const tpl = monthReadyEmailHtml(adminFirst, monthLabelOf(month), financerSeat?.name || null,
-          `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cultureforchange.net'}/oc`, summary)
+          ocUrl('admin'), summary)
         // Κοινοποίηση στο finance@: το μήνυμα φεύγει ΑΠΟ εκεί, και ο/η Financer
         // πρέπει να έχει αντίγραφο του τι ζητήθηκε από τη Διαχείριση και πότε.
         notified = await sendOcEmail(SEAT_MAILBOX.admin, tpl.subject, tpl.html, {

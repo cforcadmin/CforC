@@ -140,10 +140,42 @@ async function persistPrefs(prefs: { landing?: string; seat?: string; seatMode?:
 export default function OcShell({ seats, initialSeat, wearingSeat = null, seatMode = 'own', canWear = false, initialHeroCompact = false, initialLandingPref, applications = [], overview = null, tableCols, tableDensity, exitSurveys = [], initialOpenRenewals = false }: OcShellProps) {
   const pending = applications.filter(a => a.state === 'submitted')
   // Κάθε ρόλος προσγειώνεται εκεί που δουλεύει — όχι σε γενική επισκόπηση
-  const [activeSection, setActiveSection] = useState<SectionKey>(
-    initialOpenRenewals ? 'overview' : SEAT_LANDING[initialSeat || ''] || 'overview'
-  )
+  /**
+   * ΤΟ #hash ΕΙΝΑΙ ΔΙΕΥΘΥΝΣΗ, ΟΧΙ ΠΡΟΤΙΜΗΣΗ: «/oc#admin» σημαίνει ότι κάποιος
+   * — ένα email, ένα μήνυμα, ένας σελιδοδείκτης — έστειλε τον χρήστη ΕΚΕΙ.
+   * Γι' αυτό υπερισχύει της προσγείωσης της έδρας. Διαβάζεται μία φορά, στο
+   * άνοιγμα· από εκεί και πέρα τα chips γράφουν το hash, όχι το αντίστροφο.
+   */
+  const [activeSection, setActiveSection] = useState<SectionKey>(() => {
+    const hash = typeof window !== 'undefined' ? window.location.hash.replace(/^#/, '') : ''
+    if (hash && SECTIONS.some(s => s.key === hash)) return hash as SectionKey
+    return (initialOpenRenewals ? 'overview' : SEAT_LANDING[initialSeat || ''] || 'overview') as SectionKey
+  })
   const [landingPref, setLandingPref] = useState<string>(initialLandingPref)
+
+  /**
+   * Η γραμμή διευθύνσεων δείχνει ΠΑΝΤΑ πού είμαστε, ώστε να αντιγράφεται και
+   * να στέλνεται. `replaceState` και όχι νέα εγγραφή ιστορικού: το «πίσω» του
+   * browser πρέπει να βγάζει έξω από το OC, όχι να ξεφυλλίζει καρτέλες.
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const want = `#${activeSection}`
+    if (window.location.hash !== want) {
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${want}`)
+    }
+  }, [activeSection])
+
+  /** Αλλαγή hash από έξω (πίσω/εμπρός, ή δεύτερος σύνδεσμος στην ίδια καρτέλα) */
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const onHash = () => {
+      const h = window.location.hash.replace(/^#/, '')
+      if (h && SECTIONS.some(s => s.key === h)) setActiveSection(h as SectionKey)
+    }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
   // TEMPORARY: which seat a multi-seat member is acting as right now
   const [activeSeat, setActiveSeat] = useState<string | null>(
     initialSeat ?? (seats.length === 1 ? seats[0] : null)
