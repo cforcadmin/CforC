@@ -693,6 +693,22 @@ export async function POST(request: NextRequest) {
         Blocks: row.Blocks || [],
         Desk: auth.activeSeat,
         State: 'draft',
+        /**
+         * ΤΟ Recipients ΕΙΝΑΙ ΥΠΟΧΡΕΩΤΙΚΟ ΣΤΟ ΣΧΗΜΑ — και έλειπε.
+         *
+         * Το διπλότυπο έσκαγε ΠΑΝΤΑ με «Recipients must be defined» (400 από
+         * το Strapi), που η διαδρομή το τύλιγε σε ένα γυμνό «Αποτυχία
+         * διπλοτύπου». Άδειος πίνακας και όχι οι παραλήπτες της πηγής: το
+         * αντίγραφο είναι ΠΡΟΣΧΕΔΙΟ, και οι παραλήπτες υπολογίζονται ξανά
+         * από την επιλογή τη στιγμή που θα μπει στην ουρά — αλλιώς θα
+         * κουβαλούσε παγωμένη λίστα από την ημέρα της αρχικής αποστολής.
+         */
+        Recipients: [],
+        // Η ΕΠΙΛΟΓΗ όμως ταξιδεύει: «αντίγραφο» που χάνει σιωπηλά το κοινό
+        // του είναι η ίδια παγίδα από την άλλη πλευρά.
+        Selection: row.Selection ?? {},
+        Groups: row.Groups ?? [],
+        TotalCount: 0,
         FooterStyle: row.FooterStyle ?? null,
         FooterLook: row.FooterLook ?? null,
         FooterLogo: row.FooterLogo ?? null,
@@ -701,7 +717,14 @@ export async function POST(request: NextRequest) {
         Footer: row.Footer ?? null,
         CreatedByName: await authorName(auth),
       })
-      if (!copy.ok) return NextResponse.json({ error: 'Αποτυχία διπλοτύπου' }, { status: 502 })
+      if (!copy.ok) {
+        // Ο λόγος ΦΑΙΝΕΤΑΙ: ένα γυμνό «Αποτυχία» έστειλε τον χρήστη να
+        // μαντεύει, ενώ το Strapi έλεγε ακριβώς τι έλειπε.
+        const why = String(copy.json?.error?.message || '').slice(0, 120)
+        console.error('duplicate failed:', copy.status, why)
+        return NextResponse.json(
+          { error: why ? `Αποτυχία διπλοτύπου: ${why}` : 'Αποτυχία διπλοτύπου' }, { status: 502 })
+      }
       return NextResponse.json({ ok: true, id: copy.json?.data?.documentId || null })
     }
 
