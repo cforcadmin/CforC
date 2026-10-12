@@ -691,7 +691,17 @@ export async function POST(request: NextRequest) {
         Subject: subject,
         Kind: row.Kind || 'message',
         Blocks: row.Blocks || [],
-        Desk: auth.activeSeat,
+        /**
+         * ΤΟ ΓΡΑΦΕΙΟ ΕΙΝΑΙ ΤΗΣ ΠΗΓΗΣ, ΟΧΙ ΤΗΣ ΕΔΡΑΣ ΠΟΥ ΠΑΤΗΣΕ.
+         *
+         * Με `auth.activeSeat` το αντίγραφο ενός τεύχους της Επικοινωνίας
+         * προσγειωνόταν στο γραφείο του IT — δηλαδή ΕΞΑΦΑΝΙΖΟΤΑΝ από την
+         * οθόνη όπου πατήθηκε το κουμπί: «δημιουργήθηκε στα Προσχέδια», και
+         * στα Προσχέδια τίποτα (12/10/2026, τρία αόρατα αντίγραφα).
+         * Το deskOfRequest κρατά το φράγμα: αν η έδρα δεν επιτρέπεται να
+         * στείλει από εκείνο το γραφείο, πέφτει στο δικό της.
+         */
+        Desk: deskOfRequest(row.Desk, auth.activeSeat),
         State: 'draft',
         /**
          * ΤΟ Recipients ΕΙΝΑΙ ΥΠΟΧΡΕΩΤΙΚΟ ΣΤΟ ΣΧΗΜΑ — και έλειπε.
