@@ -3141,12 +3141,21 @@ function QueueView({ campaigns, onChanged, onEdit, onDuplicate, mode, bulk }: {
   const [onlyFailed, setOnlyFailed] = useState(false)
   const [sort, setSort] = useState('recent')
 
-  // Στα Προσχέδια δεν υπάρχει «Αρχείο»: ένα αρχειοθετημένο προσχέδιο δεν είναι
-  // πια δουλειά σε εξέλιξη — βρίσκεται στο Αρχείο των Αποστολών.
+  /**
+   * ΚΑΘΕ ΚΑΡΤΕΛΑ ΕΧΕΙ ΤΟ ΔΙΚΟ ΤΗΣ ΑΡΧΕΙΟ.
+   *
+   * Πριν, τα Προσχέδια δεν είχαν «Αρχείο» και ένα αρχειοθετημένο προσχέδιο
+   * προσγειωνόταν στο Αρχείο των ΑΠΟΣΤΟΛΩΝ. Το αρχειοθετείς από εδώ και
+   * εξαφανίζεται εκεί — σε μέρος που κανείς δεν ψάχνει ένα προσχέδιο.
+   * (12/10/2026: δύο newsletters «χάθηκαν» ακριβώς έτσι.)
+   *
+   * Τώρα το αρχείο του κάθε είδους μένει στο είδος του: προσχέδια με
+   * προσχέδια, αποστολές με αποστολές.
+   */
   const isDraft = (c: Campaign) => c.State === 'draft'
-  const archived = mode === 'drafts' ? false : box === 'archived'
+  const archived = box === 'archived'
   const inBox = campaigns.filter(c =>
-    !!c.Archived === archived && (mode === 'drafts' ? isDraft(c) : !isDraft(c) || !!c.Archived))
+    !!c.Archived === archived && (mode === 'drafts' ? isDraft(c) : !isDraft(c)))
   const authors = [...new Set(inBox.map(c => c.CreatedByName).filter(Boolean))] as string[]
 
   /** Η ημερομηνία που «μετράει» για μια αποστολή: πότε τελείωσε, αλλιώς πότε
@@ -3209,16 +3218,18 @@ function QueueView({ campaigns, onChanged, onEdit, onDuplicate, mode, bulk }: {
     } catch (e: any) { setErr(e?.message || 'Αποτυχία') } finally { setBusy(null) }
   }
 
-  const archivedCount = campaigns.filter(c => c.Archived).length
-  const activeCount = campaigns.filter(c => !c.Archived && c.State !== 'draft').length
+  // Οι μετρητές ακολουθούν την καρτέλα στην οποία ανήκουν
+  const ofMode = (c: Campaign) => (mode === 'drafts' ? isDraft(c) : !isDraft(c))
+  const archivedCount = campaigns.filter(c => c.Archived && ofMode(c)).length
+  const activeCount = campaigns.filter(c => !c.Archived && ofMode(c)).length
 
   return (
     <div className="grid gap-4">
-      {/* Το Αρχείο ανήκει στις Αποστολές. Τα Προσχέδια είναι δουλειά σε
-          εξέλιξη — δεν έχουν δικό τους αρχείο. */}
-      {mode === 'queue' && (
+      {/* Και οι δύο καρτέλες έχουν αρχείο — αλλιώς ό,τι αρχειοθετείς από τα
+          Προσχέδια δεν ξαναβρίσκεται από τα Προσχέδια. */}
       <div className="flex gap-1 p-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 self-start" role="tablist">
-        {([['active', `Απεσταλμένα ${activeCount || ''}`], ['archived', `Αρχείο ${archivedCount || ''}`]] as const).map(([k, label]) => (
+        {([['active', `${mode === 'drafts' ? 'Σε εξέλιξη' : 'Απεσταλμένα'} ${activeCount || ''}`],
+           ['archived', `Αρχείο ${archivedCount || ''}`]] as const).map(([k, label]) => (
           <button key={k} type="button" role="tab" aria-selected={box === k} onClick={() => setBox(k)}
             className={`px-4 min-h-11 rounded-full text-sm font-semibold ${
               box === k ? 'bg-coral text-charcoal' : 'text-gray-600 dark:text-gray-300'}`}>
@@ -3226,7 +3237,6 @@ function QueueView({ campaigns, onChanged, onEdit, onDuplicate, mode, bulk }: {
           </button>
         ))}
       </div>
-      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <input type="search" value={q} onChange={e => setQ(e.target.value)}
