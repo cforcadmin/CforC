@@ -141,17 +141,32 @@ export default function OcShell({ seats, initialSeat, wearingSeat = null, seatMo
   const pending = applications.filter(a => a.state === 'submitted')
   // Κάθε ρόλος προσγειώνεται εκεί που δουλεύει — όχι σε γενική επισκόπηση
   /**
+   * ΤΟ ΑΡΧΙΚΟ STATE ΕΙΝΑΙ ΙΔΙΟ ΣΕ SERVER ΚΑΙ CLIENT — ΑΛΛΙΩΣ ΣΠΑΕΙ Η ΕΝΥΔΑΤΩΣΗ.
+   *
+   * Το #hash ΔΕΝ διαβάζεται εδώ. Ο server δεν το βλέπει ποτέ (τα άγκιστρα δεν
+   * ταξιδεύουν στο αίτημα), οπότε μια ανάγνωση του `window` στον αρχικοποιητή
+   * έδινε άλλη ενότητα στον server και άλλη στον browser: «Hydration failed —
+   * aria-current="page" vs undefined» πάνω στα chips (12/10/2026).
+   * Το hash εφαρμόζεται ΜΕΤΑ την προσάρτηση, στο effect από κάτω.
+   */
+  const [activeSection, setActiveSection] = useState<SectionKey>(
+    initialOpenRenewals ? 'overview' : SEAT_LANDING[initialSeat || ''] || 'overview'
+  )
+  /** Το αρχικό hash εφαρμόστηκε; Μέχρι τότε δεν γράφουμε διεύθυνση. */
+  const hashApplied = useRef(false)
+  const [landingPref, setLandingPref] = useState<string>(initialLandingPref)
+
+  /**
    * ΤΟ #hash ΕΙΝΑΙ ΔΙΕΥΘΥΝΣΗ, ΟΧΙ ΠΡΟΤΙΜΗΣΗ: «/oc#admin» σημαίνει ότι κάποιος
    * — ένα email, ένα μήνυμα, ένας σελιδοδείκτης — έστειλε τον χρήστη ΕΚΕΙ.
-   * Γι' αυτό υπερισχύει της προσγείωσης της έδρας. Διαβάζεται μία φορά, στο
-   * άνοιγμα· από εκεί και πέρα τα chips γράφουν το hash, όχι το αντίστροφο.
+   * Γι' αυτό υπερισχύει της προσγείωσης της έδρας — αλλά εφαρμόζεται μετά την
+   * προσάρτηση, ώστε η πρώτη απόδοση να είναι ίδια με του server.
    */
-  const [activeSection, setActiveSection] = useState<SectionKey>(() => {
-    const hash = typeof window !== 'undefined' ? window.location.hash.replace(/^#/, '') : ''
-    if (hash && SECTIONS.some(s => s.key === hash)) return hash as SectionKey
-    return (initialOpenRenewals ? 'overview' : SEAT_LANDING[initialSeat || ''] || 'overview') as SectionKey
-  })
-  const [landingPref, setLandingPref] = useState<string>(initialLandingPref)
+  useEffect(() => {
+    const h = window.location.hash.replace(/^#/, '')
+    if (h && SECTIONS.some(s => s.key === h)) setActiveSection(h as SectionKey)
+    hashApplied.current = true
+  }, [])
 
   /**
    * Η γραμμή διευθύνσεων δείχνει ΠΑΝΤΑ πού είμαστε, ώστε να αντιγράφεται και
@@ -160,6 +175,10 @@ export default function OcShell({ seats, initialSeat, wearingSeat = null, seatMo
    */
   useEffect(() => {
     if (typeof window === 'undefined') return
+    // Πριν εφαρμοστεί το αρχικό hash θα γράφαμε την ενότητα της έδρας ΠΑΝΩ
+    // στη διεύθυνση που μόλις άνοιξε ο χρήστης — δηλαδή θα σβήναμε τον
+    // προορισμό του συνδέσμου πριν προλάβει να τον διαβάσει η οθόνη.
+    if (!hashApplied.current) return
     const want = `#${activeSection}`
     if (window.location.hash !== want) {
       window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${want}`)
