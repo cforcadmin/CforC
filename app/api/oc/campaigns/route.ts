@@ -349,8 +349,23 @@ async function assertKindMatches(id: string, kind: string): Promise<NextResponse
  * κολλούσαμε τη ζώνη με τα κοινωνικά δίκτυα και το σημείωμα GDPR, μια απλή
  * απόδειξη θα έμοιαζε με διαφημιστικό.
  */
-function nlFooter(body: any) {
-  return body?.kind === 'newsletter' ? normaliseNewsletterFooter(body?.footer) : null
+/**
+ * ΤΟ ΥΠΟΣΕΛΙΔΟ ΤΟΥ NEWSLETTER — και γιατί δεν ρωτάει μόνο το `kind`.
+ *
+ * 12/10/2026: η προεπισκόπηση έδειχνε το πορτοκαλί υποσέλιδο (λογότυπο,
+ * κοινωνικά, copyright) και το δοκιμαστικό γράμμα έφτανε με την υπογραφή του
+ * συντάκτη. Ίδιο πρότυπο, ίδια ορίσματα — ΕΝΑ πεδίο έλειπε: το `kind` ταξιδεύει
+ * μόνο στο «preview» και στην αποθήκευση· οι τρεις διαδρομές που ΣΤΕΛΝΟΥΝ
+ * (δοκιμή, τελική δοκιμή, αποστολή) δεν το έστελναν ποτέ, οπότε εδώ γύριζε
+ * null και το campaignEmailHtml έπεφτε στο υποσέλιδο υπογραφής.
+ *
+ * Γι' αυτό η διαδρομή το ΔΗΛΩΝΕΙ η ίδια: μια ενέργεια που λέγεται
+ * «newsletter-send» ΞΕΡΕΙ ότι είναι newsletter — δεν το ρωτάει τον browser.
+ */
+function nlFooter(body: any, isNewsletter = false) {
+  return isNewsletter || body?.kind === 'newsletter'
+    ? normaliseNewsletterFooter(body?.footer)
+    : null
 }
 
 function deskOfRequest(asked: string | null | undefined, seat: OcSeat): string | null {
@@ -787,7 +802,7 @@ export async function POST(request: NextRequest) {
         footerStyle: (body?.footerStyle || 'signature') as FooterStyle,
         footerLook: (body?.footerLook || 'plain') as FooterLook,
         footerLogo: !!body?.footerLogo,
-        newsletterFooter: nlFooter(body),
+        newsletterFooter: nlFooter(body, true),
         headerStyle: (body?.headerStyle || 'coral') as HeaderStyle,
         headerLogo: !!body?.headerLogo,
         unsubscribe: true,
@@ -828,7 +843,7 @@ export async function POST(request: NextRequest) {
         footerStyle: (body?.footerStyle || 'signature') as FooterStyle,
         footerLook: (body?.footerLook || 'plain') as FooterLook,
         footerLogo: !!body?.footerLogo,
-        newsletterFooter: nlFooter(body),
+        newsletterFooter: nlFooter(body, true),
         headerStyle: (body?.headerStyle || 'coral') as HeaderStyle,
         headerLogo: !!body?.headerLogo,
         unsubscribe: true,
@@ -884,7 +899,7 @@ export async function POST(request: NextRequest) {
         footerStyle: (body?.footerStyle || 'signature') as FooterStyle,
         footerLook: (body?.footerLook || 'plain') as FooterLook,
         footerLogo: !!body?.footerLogo,
-        newsletterFooter: nlFooter(body),
+        newsletterFooter: nlFooter(body, true),
         headerStyle: (body?.headerStyle || 'coral') as HeaderStyle,
         headerLogo: !!body?.headerLogo,
         unsubscribe: true,
@@ -932,7 +947,7 @@ export async function POST(request: NextRequest) {
         FooterStyle: String(body?.footerStyle || 'signature'),
         FooterLook: String(body?.footerLook || 'plain'),
         FooterLogo: !!body?.footerLogo,
-        Footer: nlFooter(body),
+        Footer: nlFooter(body, true),
         HeaderStyle: String(body?.headerStyle || 'coral'),
         HeaderLogo: !!body?.headerLogo,
         Signer: signer, SenderCampaignId: created.campaignId,

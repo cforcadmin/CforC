@@ -3036,6 +3036,9 @@ function CampaignDetail({ id }: { id: string }) {
             footerStyle: d.campaign?.FooterStyle, footerLook: d.campaign?.FooterLook,
             footerLogo: d.campaign?.FooterLogo, headerStyle: d.campaign?.HeaderStyle,
             headerLogo: d.campaign?.HeaderLogo,
+            // ΚΑΙ το είδος: χωρίς αυτό, ένα τεύχος newsletter ξαναποδιδόταν
+            // με το υποσέλιδο υπογραφής — όχι με το δικό του (12/10/2026)
+            kind: d.campaign?.Kind, footer: d.campaign?.Footer ?? undefined,
           }),
         })
         if (p.ok && alive) setHtml((await p.json()).html)

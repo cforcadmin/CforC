@@ -485,6 +485,45 @@ describe('Αποστολή newsletter μέσω Sender', () => {
     expect(html).not.toContain('{{')
     expect(html).toContain('Μαρία')
   })
+
+  /**
+   * 12/10/2026 — Η ΠΡΟΕΠΙΣΚΟΠΗΣΗ ΚΑΙ ΤΟ ΓΡΑΜΜΑ ΔΙΑΦΩΝΟΥΣΑΝ.
+   *
+   * Η οθόνη έδειχνε το υποσέλιδο του τεύχους (λογότυπο, κοινωνικά, GDPR) και
+   * στη θυρίδα έφτανε η υπογραφή του συντάκτη. Αιτία: το `kind` ταξίδευε μόνο
+   * στο «preview», οπότε οι διαδρομές αποστολής δεν ήξεραν ποτέ ότι
+   * πρόκειται για newsletter. Τα τεστ στέλνουν ΕΠΙΤΗΔΕΣ χωρίς `kind`.
+   */
+  const NL_MARKS = ['cforc_lockup', 'δεν τα χρησιμοποιεί για άλλους σκοπούς']
+
+  it('η δοκιμή φέρνει το υποσέλιδο ΤΕΥΧΟΥΣ — όχι την υπογραφή', async () => {
+    signedInAs('comms'); stub()
+    await post({ action: 'newsletter-test', subject: 'Δ', blocks: [{ type: 'text', html: '<p>σώμα</p>' }] })
+    const html = (sendOcEmailResult.mock.calls[0] as any[])[2]
+    for (const mark of NL_MARKS) expect(html).toContain(mark)
+    expect(html).not.toContain('Σόνια Ντόβα')
+  })
+
+  it('η τελική δοκιμή το ίδιο', async () => {
+    signedInAs('comms'); const seen = stub()
+    await post({ action: 'newsletter-final-test', subject: 'Δ', blocks: [{ type: 'text', html: '<p>σώμα</p>' }] })
+    for (const mark of NL_MARKS) expect(seen.sender[0].body.content).toContain(mark)
+  })
+
+  it('η ΑΛΗΘΙΝΗ αποστολή το ίδιο — και το κρατά στο αρχείο', async () => {
+    signedInAs('comms'); const seen = stub()
+    await send()
+    for (const mark of NL_MARKS) expect(seen.sender[0].body.content).toContain(mark)
+    // Χωρίς αυτό, ανοίγοντας το τεύχος από το αρχείο βλέπεις άλλο υποσέλιδο
+    expect(seen.strapi[0].Footer).toBeTruthy()
+    expect(seen.strapi[0].Footer.arrangement).toBeTruthy()
+  })
+
+  it('ο συντάκτης που διάλεξε υποσέλιδο το βλέπει να φεύγει', async () => {
+    signedInAs('comms'); const seen = stub()
+    await send({ footer: { copyright: 'Copyright © 2026 CforC', arrangement: 'stack' } })
+    expect(seen.sender[0].body.content).toContain('Copyright © 2026 CforC')
+  })
 })
 
 describe('Στατιστικά ανά τεύχος', () => {

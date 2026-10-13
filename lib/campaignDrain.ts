@@ -227,6 +227,9 @@ export async function drainCampaigns(opts: {
         signer,
         footerStyle: c.FooterStyle, footerLook: c.FooterLook, footerLogo: !!c.FooterLogo,
         headerStyle: c.HeaderStyle, headerLogo: !!c.HeaderLogo,
+        // Αποθηκευμένο υποσέλιδο newsletter, αν υπάρχει: η στράγγιση έστελνε
+        // πάντα υπογραφή, ακόμη κι όταν το τεύχος είχε δικό του (12/10/2026)
+        newsletterFooter: (c as any).Footer ?? null,
       })
 
       const res = await sendOcEmailResult(r.email, tpl.subject, applyMergeFields(tpl.html, values), {
