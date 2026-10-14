@@ -156,6 +156,8 @@ export default function OcCampaigns({ desk }: { desk: string }) {
   const [resolved, setResolved] = useState<{ count: number; days: number; summary: string; recipients: Recipient[] }>(
     { count: 0, days: 0, summary: '', recipients: [] })
   const [preview, setPreview] = useState('')
+  /** Η «Αντιγραφή για Gmail» λέει το αποτέλεσμά της ΠΑΝΩ στο κουμπί */
+  const [copied, setCopied] = useState<'' | 'ok' | 'err'>('')
   /**
    * Ποιο ΥΠΑΡΧΟΝ προσχέδιο επεξεργαζόμαστε.
    *
@@ -619,6 +621,46 @@ export default function OcCampaigns({ desk }: { desk: string }) {
       setConfirming(false)
       setNotice({ kind: 'err', text: e?.message || 'Αποτυχία' })
     } finally { setBusy(false) }
+  }
+
+  /**
+   * ΑΝΤΙΓΡΑΦΗ ΓΙΑ ΕΠΙΚΟΛΛΗΣΗ ΣΕ GMAIL.
+   *
+   * Για να απαντήσει κάποιος σε μήνυμα που ήρθε στη θυρίδα, η απάντηση
+   * πρέπει να φύγει ΑΠΟ ΤΟ GMAIL — αλλιώς δεν μπαίνει στο νήμα και δεν
+   * φαίνεται στα Απεσταλμένα, και ο επόμενος που θα ανοίξει τη θυρίδα
+   * βλέπει αναπάντητο μήνυμα και απαντά δεύτερη φορά.
+   *
+   * Η μορφή αντέχει την επικόλληση επειδή ΟΛΗ η διάταξη είναι inline styles
+   * σε πίνακες· το Gmail πετάει μόνο το <style> της κεφαλίδας, που κρατά
+   * αποκλειστικά τα responsive overrides.
+   *
+   * Ζητάμε ΚΑΘΑΡΗ απόδοση (annotate:false): η προεπισκόπηση φέρει σημάδια
+   * για το κλικ επιλογής, που δεν έχουν καμία δουλειά μέσα σε γράμμα.
+   */
+  const copyForGmail = async () => {
+    setCopied('')
+    try {
+      const res = await fetch('/api/oc/campaigns', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'preview', kind, subject, blocks, annotate: false,
+          footerStyle, footerLook, footerLogo, headerStyle, headerLogo, footer,
+        }),
+      })
+      const d = await res.json()
+      if (!res.ok || !d?.html) throw new Error(d?.error || 'Αποτυχία')
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html': new Blob([d.html], { type: 'text/html' }),
+          'text/plain': new Blob([d.text || ''], { type: 'text/plain' }),
+        }),
+      ])
+      setCopied('ok')
+    } catch {
+      setCopied('err')
+    }
+    setTimeout(() => setCopied(''), 2600)
   }
 
   /**
@@ -1103,7 +1145,24 @@ export default function OcCampaigns({ desk }: { desk: string }) {
           <aside ref={asideRef} className="relative lg:sticky min-w-0"
             style={{ top: PV_STICKY_TOP, ...(twoCol && pv.w ? { width: pv.w } : {}) }}>
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-5 sm:p-6 border border-gray-200 dark:border-gray-600">
-              <h3 className={`${EYEBROW} mb-3`}>ΠΡΟΕΠΙΣΚΟΠΗΣΗ</h3>
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <h3 className={EYEBROW}>ΠΡΟΕΠΙΣΚΟΠΗΣΗ</h3>
+                <button
+                  type="button"
+                  onClick={copyForGmail}
+                  disabled={!preview}
+                  title="Αντιγράφει το γράμμα όπως φαίνεται, για επικόλληση σε απάντηση Gmail"
+                  className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed ${
+                    copied === 'ok'
+                      ? 'border-green-600 bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-200'
+                      : copied === 'err'
+                        ? 'border-red-600 bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-200'
+                        : 'border-gray-300 dark:border-gray-500 text-charcoal dark:text-white hover:border-coral hover:text-coral'
+                  }`}
+                >
+                  {copied === 'ok' ? 'Αντιγράφηκε ✓' : copied === 'err' ? 'Δεν αντιγράφηκε' : 'Αντιγραφή'}
+                </button>
+              </div>
               {preview ? (
                 <PreviewFrame html={preview} onPick={focusBlock} goTo={goTo}
                   height={pv.h} maximized={maximized} onToggleMaximize={toggleMaximize} />
