@@ -124,7 +124,7 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
 
         <form onSubmit={submit} className="mt-8 grid gap-6">
           {/* ── Ιδιότητα: ΠΡΩΤΗ, γιατί ορίζει τα υπόλοιπα ── */}
-          <Card title="Η ιδιότητά σου">
+          <Card title="Η ιδιότητά σου" required>
             <div className="grid gap-2">
               {capacities.map(c => (
                 <Radio key={c} name="capacity" checked={d.Capacity === c}
@@ -181,7 +181,7 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
               </Card>
 
               {sessions.length > 0 && (
-                <Card title="Συμμετοχή στις δράσεις">
+                <Card title="Συμμετοχή στις δράσεις" required>
                   <div className="grid gap-5">
                     {sessions.map(s => (
                       <fieldset key={s.id}>
@@ -201,7 +201,7 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
               )}
 
               {options.map(o => (
-                <Card key={o.Key} title={o.Title}>
+                <Card key={o.Key} title={o.Title} required={!!o.Required && o.Key !== 'dietary'}>
                   {o.Description && (
                     <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 whitespace-pre-line">{o.Description}</p>
                   )}
@@ -477,10 +477,21 @@ function AfterSubmit({ ev, status, email }: { ev: CforcEvent; status: 'confirmed
 /* ── μικρά δομικά ── */
 const inputCls = 'w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral'
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+/**
+ * Ο ΑΣΤΕΡΙΣΚΟΣ ΕΙΝΑΙ ΥΠΟΣΧΕΣΗ, ΟΧΙ ΔΙΑΚΟΣΜΗΣΗ.
+ *
+ * Τα πεδία «Όνομα/Επίθετο/Email/Τηλέφωνο» τον είχαν, οι υποχρεωτικές
+ * ενότητες όχι — κι έτσι η ίδια φόρμα έλεγε δύο διαφορετικά πράγματα για το
+ * τι χρειάζεται συμπλήρωση. Όποια ενότητα κόβει την υποβολή, το δηλώνει.
+ */
+function Card({ title, children, required }: {
+  title: string; children: React.ReactNode; required?: boolean
+}) {
   return (
     <section className="rounded-3xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 p-6 sm:p-8">
-      <h2 className="text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400 mb-4">{upperGreek(title)}</h2>
+      <h2 className="text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400 mb-4">
+        {upperGreek(title)}{required && <span className="text-coral"> *</span>}
+      </h2>
       {children}
     </section>
   )

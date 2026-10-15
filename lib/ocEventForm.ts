@@ -17,7 +17,9 @@ import { CAPACITY_LABELS } from '@/lib/eventForm'
  * κενό έχει άλλο νόημα από το «τίποτα» — γράφουμε `null`.
  */
 
-export const OPTION_KEYS = ['travel', 'transport', 'accommodation', 'dietary', 'lunch', 'dinner', 'agenda'] as const
+export const OPTION_KEYS = ['travel', 'transport', 'accommodation', 'dietary', 'lunch', 'dinner', 'agenda',
+  // Στοιχεία ταυτότητας, όχι logistics — ό,τι ζητούσαν οι φόρμες Google
+  'gender', 'activity', 'entity'] as const
 export type OptionKey = (typeof OPTION_KEYS)[number]
 
 export const OPTION_KEY_LABELS: Record<OptionKey, string> = {
@@ -28,6 +30,9 @@ export const OPTION_KEY_LABELS: Record<OptionKey, string> = {
   lunch: 'Γεύμα',
   dinner: 'Δείπνο',
   agenda: 'Ατζέντα',
+  gender: 'Φύλο',
+  activity: 'Επαγγελματική δραστηριότητα',
+  entity: 'Φορέας που εκπροσωπεί',
 }
 
 export const AUDIENCES = ['member', 'non-member'] as const

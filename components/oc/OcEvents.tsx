@@ -411,6 +411,9 @@ export function eventCellValue(r: Reg, key: string): string {
     case 'meals': return [r.OptionAnswers?.lunch, r.OptionAnswers?.dinner].filter(Boolean).join(' · ')
     case 'dietary': return r.Dietary || ''
     case 'agenda': return r.AgendaTopic || ''
+    case 'gender': return r.OptionAnswers?.gender || ''
+    case 'activity': return r.OptionAnswers?.activity || ''
+    case 'entity': return r.OptionAnswers?.entity || ''
     case 'submitted': return r.SubmittedAt ? grDate(String(r.SubmittedAt)) : ''
     default: return ''
   }

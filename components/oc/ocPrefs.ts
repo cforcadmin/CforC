@@ -45,6 +45,9 @@ export const OC_EVENT_COLUMNS: Array<{ key: string; label: string }> = [
   // ανοίγει κανείς τη λίστα για άλλο λόγο.
   { key: 'dietary', label: 'Διατροφικά (άρθρο 9)' },
   { key: 'agenda', label: 'Θέμα ατζέντας' },
+  { key: 'gender', label: 'Φύλο' },
+  { key: 'activity', label: 'Δραστηριότητα' },
+  { key: 'entity', label: 'Φορέας' },
   { key: 'submitted', label: 'Υποβλήθηκε' },
 ]
 export const OC_EVENT_DEFAULT_COLS = ['capacity', 'email', 'sessions', 'travel', 'fromCity', 'transport', 'accommodation']

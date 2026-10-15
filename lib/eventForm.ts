@@ -96,10 +96,19 @@ export const emptyDraft = (): RegistrationDraft => ({
  * χρεώνουμε σε καμία από τις δύο πλευρές χωρίς λόγο.
  */
 export function capacitiesForPath(
-  ev: Pick<CforcEvent, 'Capacities'>,
+  ev: Pick<CforcEvent, 'Capacities' | 'ShowAllCapacities'>,
   isMember: boolean,
 ): EventCapacity[] {
   const offered = offeredCapacities(ev)
+  /**
+   * ΟΤΑΝ Η ΙΔΙΟΤΗΤΑ ΕΙΝΑΙ ΑΥΤΟΠΕΡΙΓΡΑΦΗ, ΟΧΙ ΠΥΛΗ.
+   *
+   * Ο διαχωρισμός από κάτω υπάρχει για να μη δηλώσει «μη μέλος» κάποιος που
+   * είναι συνδεδεμένο μέλος. Σε ανοιχτές δράσεις όμως — όπου η ερώτηση
+   * απλώς ρωτά ποιος είσαι — ο διαχωρισμός αφήνει μία ή δύο επιλογές και
+   * μοιάζει με χαλασμένη φόρμα. Η δράση το δηλώνει ρητά.
+   */
+  if (ev.ShowAllCapacities) return offered
   return offered.filter(c => (isMember ? MEMBER_CAPACITIES.includes(c) : !MEMBER_CAPACITIES.includes(c)))
 }
 

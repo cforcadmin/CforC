@@ -317,7 +317,8 @@ export interface EventSession {
 
 export interface EventOptionBlock {
   id: number;
-  Key: 'travel' | 'transport' | 'accommodation' | 'dietary' | 'lunch' | 'dinner' | 'agenda';
+  Key: 'travel' | 'transport' | 'accommodation' | 'dietary' | 'lunch' | 'dinner' | 'agenda'
+    | 'gender' | 'activity' | 'entity';
   Title: string;
   Description?: string;
   Required?: boolean;
@@ -357,6 +358,10 @@ export interface CforcEvent extends StrapiData<CforcEvent> {
   /** Η ανοιχτή πρόσκληση — μία ανά δράση, συμπληρώνεται ΜΕΣΑ στη φόρμα */
   OpenCall?: EventOpenCall | null;
   RegistrationOpen?: boolean;
+  /** Όλες οι ιδιότητες μαζί, χωρίς διαχωρισμό μέλους/επισκέπτη */
+  ShowAllCapacities?: boolean;
+  /** Τα μπλοκ της σελίδας «Περισσότερες πληροφορίες» αυτής της δράσης */
+  InfoBlocks?: unknown[] | null;
   ConsentText?: string;
   ConsentVersion?: string;
   PersonalDataMonths?: number;

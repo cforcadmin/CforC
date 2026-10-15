@@ -42,10 +42,22 @@ export default async function EventInfoPage({ params }: { params: Promise<{ slug
   const decoded = token ? verifyToken(token) : null
   const isMember = !!(decoded && decoded.type === 'session')
 
+  /**
+   * ΤΑ ΜΠΛΟΚ ΤΗΣ ΔΡΑΣΗΣ ΠΡΟΗΓΟΥΝΤΑΙ ΤΟΥ ΚΩΔΙΚΑ.
+   *
+   * Το `infoDocFor` είναι το ενημερωτικό του Midterm, γραμμένο στον κώδικα —
+   * και ΚΑΘΕ άλλη δράση έδειχνε εκείνο, με σωστό τίτλο και ξένο περιεχόμενο
+   * (το είδε ο Γιώργος στο ENCC Bridges Makers, 15/10/2026). Όποια δράση
+   * φέρνει δικά της InfoBlocks, δείχνει τα δικά της.
+   */
+  const own = Array.isArray(ev.InfoBlocks) && ev.InfoBlocks.length
+    ? (ev.InfoBlocks as Parameters<typeof renderDocumentHtml>[0]['blocks'])
+    : null
+
   // Ίδια κεφαλίδα και υπογραφή με τα email των μελών — όχι αντίγραφό τους
   const html = renderDocumentHtml({
     title: `${ev.Title} — Πληροφορίες`,
-    blocks: infoDocFor(isMember),
+    blocks: own || infoDocFor(isMember),
   })
 
   return (
