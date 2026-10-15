@@ -66,6 +66,24 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [d.Capacity])
 
+  /**
+   * ΜΙΑ ΜΟΝΗ ΔΥΝΑΤΗ ΑΠΑΝΤΗΣΗ ΔΕΝ ΕΙΝΑΙ ΕΡΩΤΗΣΗ.
+   *
+   * Όταν η διαδρομή αφήνει ακριβώς μία ιδιότητα — ο συνδεδεμένος είναι
+   * μέλος, ο επισκέπτης δεν είναι — το να τη ζητάμε είναι ένα κλικ χωρίς
+   * περιεχόμενο, και μια οθόνη παραπάνω πριν ξεκινήσει η φόρμα. Μπαίνει
+   * μόνη της και η κάρτα δεν εμφανίζεται καθόλου.
+   *
+   * Η ερώτηση ΕΠΙΣΤΡΕΦΕΙ από μόνη της σε δράσεις που ξεχωρίζουν ιδιότητες
+   * (π.χ. υπότροφοι START στο Midterm): εκεί οι επιλογές είναι δύο.
+   */
+  const autoCapacity = capacities.length === 1
+  useEffect(() => {
+    if (!autoCapacity) return
+    const only = capacities[0]
+    setD(prev => (prev.Capacity === only ? prev : { ...prev, Capacity: only }))
+  }, [autoCapacity, capacities])
+
   const set = (patch: Partial<RegistrationDraft>) => setD(prev => ({ ...prev, ...patch }))
   const setSession = (id: number, v: SessionChoice) =>
     setD(prev => ({ ...prev, SessionChoices: { ...prev.SessionChoices, [String(id)]: v } }))
@@ -124,19 +142,21 @@ export default function RegistrationForm({ ev, isMember, prefill }: {
 
         <form onSubmit={submit} className="mt-8 grid gap-6">
           {/* ── Ιδιότητα: ΠΡΩΤΗ, γιατί ορίζει τα υπόλοιπα ── */}
-          <Card title="Η ιδιότητά σου" required>
-            <div className="grid gap-2">
-              {capacities.map(c => (
-                <Radio key={c} name="capacity" checked={d.Capacity === c}
-                  onChange={() => set({ Capacity: c as EventCapacity })}
-                  label={CAPACITY_LABELS[c]} />
-              ))}
-            </div>
-            {d.Capacity === 'other' && (
-              <Input label="Γράψε μας την ιδιότητά σου" value={d.CapacityOther}
-                onChange={v => set({ CapacityOther: v })} />
-            )}
-          </Card>
+          {!autoCapacity && (
+            <Card title="Η ιδιότητά σου" required>
+              <div className="grid gap-2">
+                {capacities.map(c => (
+                  <Radio key={c} name="capacity" checked={d.Capacity === c}
+                    onChange={() => set({ Capacity: c as EventCapacity })}
+                    label={CAPACITY_LABELS[c]} />
+                ))}
+              </div>
+              {d.Capacity === 'other' && (
+                <Input label="Γράψε μας την ιδιότητά σου" value={d.CapacityOther}
+                  onChange={v => set({ CapacityOther: v })} />
+              )}
+            </Card>
+          )}
 
           {/* Ιδιότητα ΜΕΛΟΥΣ από μη συνδεδεμένο: σταματά ΕΔΩ.
               Ο server το απορρίπτει έτσι κι αλλιώς, αλλά αν το μάθαινε
