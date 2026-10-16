@@ -16,7 +16,7 @@
  * NODE_ENV !== 'production'.
  */
 
-interface Row { count: number; ms: number }
+interface Row { count: number }
 
 /**
  * Η ΚΑΤΑΣΤΑΣΗ ΖΕΙ ΣΤΟ globalThis, ΟΧΙ ΣΤΟ MODULE.
@@ -44,18 +44,17 @@ export function bucketOf(url: string): string | null {
   return `${collection}${one}${q}`
 }
 
-export function record(url: string, ms: number): void {
+export function record(url: string): void {
   const key = bucketOf(url)
   if (!key) return
-  const row = state.tally.get(key) || { count: 0, ms: 0 }
+  const row = state.tally.get(key) || { count: 0 }
   row.count += 1
-  row.ms += ms
   state.tally.set(key, row)
 }
 
 export function snapshot() {
   const rows = [...state.tally.entries()]
-    .map(([key, r]) => ({ key, count: r.count, avgMs: Math.round(r.ms / r.count) }))
+    .map(([key, r]) => ({ key, count: r.count }))
     .sort((a, b) => b.count - a.count)
   const total = rows.reduce((s, r) => s + r.count, 0)
   const minutes = Math.max(1, Math.round((Date.now() - state.since) / 60000))
@@ -68,25 +67,40 @@ export function reset(): void {
 }
 
 /**
- * Τυλίγει το fetch ΜΙΑ φορά. Η μέτρηση δεν αλλάζει ούτε την απάντηση ούτε
- * τη σειρά: καταγράφει και παραδίδει ό,τι γύρισε, ακόμη κι όταν σκάει.
+ * ΑΚΟΥΕΙ ΤΟ ΙΔΙΟ ΤΟ undici, ΟΧΙ ΤΟ fetch.
+ *
+ * Πρώτη εκδοχή τύλιγε το globalThis.fetch. Εγκαταστάθηκε κανονικά
+ * (installed: true) και μετρούσε ΜΗΔΕΝ ενώ το OC έκανε δεκάδες κλήσεις: το
+ * ίδιο το Next αντικαθιστά το fetch με δική του έκδοση που ξέρει από cache
+ * (το φωνάζουν τα «Failed to set fetch cache» στο log), και μέσα στην
+ * απόδοση η δική μου περιτύλιξη παρακάμπτεται.
+ *
+ * Το diagnostics_channel είναι ΚΑΤΩ από όλα αυτά: το undici — η μηχανή που
+ * τελικά κάνει κάθε fetch του Node — δημοσιεύει κάθε αίτημα εκεί, όποιος κι
+ * αν το ζήτησε και όσες περιτυλίξεις κι αν μεσολαβούν. Μηδέν εξαρτήσεις,
+ * μέρος του Node. (16/10/2026)
  */
 export function install(): void {
   if (state.installed) return
   const host = (process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL || '')
     .replace(/^https?:\/\//, '').replace(/\/.*$/, '')
   if (!host) return
-  const original = globalThis.fetch
-  globalThis.fetch = async (input: any, init?: any) => {
-    const url = typeof input === 'string' ? input : input?.url || String(input)
-    if (!url.includes(host)) return original(input, init)
-    const t0 = Date.now()
-    try {
-      return await original(input, init)
-    } finally {
-      record(url, Date.now() - t0)
-    }
+
+  try {
+    // require, όχι import: το instrumentation τρέχει πριν στηθεί το ESM graph
+    // σε ορισμένες εκδόσεις, και το diagnostics_channel είναι ενσωματωμένο.
+    const dc = require('node:diagnostics_channel')
+    dc.subscribe('undici:request:create', (msg: any) => {
+      try {
+        const origin = String(msg?.request?.origin || '')
+        const path = String(msg?.request?.path || '')
+        if (!origin.includes(host)) return
+        record(origin + path)
+      } catch { /* η μέτρηση δεν ρίχνει ΠΟΤΕ αίτημα */ }
+    })
+    state.installed = true
+    console.log(`[strapi-meter] ενεργός (undici) — μετράει ${host}`)
+  } catch (err) {
+    console.error('[strapi-meter] δεν στήθηκε:', (err as Error).message)
   }
-  state.installed = true
-  console.log('[strapi-meter] ενεργός — /api/dev/strapi-meter για τη μέτρηση')
 }

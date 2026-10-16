@@ -16,18 +16,18 @@ describe('Μετρητής κλήσεων Strapi', () => {
     expect(bucketOf('https://unrelated.example.com/thing')).toBeNull()
   })
 
-  it('μετράει πλήθος και μέσο χρόνο ανά είδος', () => {
-    record('https://x.strapiapp.com/api/members?a=1', 100)
-    record('https://x.strapiapp.com/api/members?a=2', 300)
-    record('https://x.strapiapp.com/api/events', 50)
+  it('μετράει πλήθος ανά είδος, με το πιο ακριβό πρώτο', () => {
+    record('https://x.strapiapp.com/api/members?a=1')
+    record('https://x.strapiapp.com/api/members?a=2')
+    record('https://x.strapiapp.com/api/events')
     const s = snapshot()
     expect(s.total).toBe(3)
-    expect(s.rows[0]).toEqual({ key: 'members', count: 2, avgMs: 200 })
-    expect(s.rows[1]).toEqual({ key: 'events', count: 1, avgMs: 50 })
+    expect(s.rows[0]).toEqual({ key: 'members', count: 2 })
+    expect(s.rows[1]).toEqual({ key: 'events', count: 1 })
   })
 
   it('ο μηδενισμός καθαρίζει τα πάντα — αλλιώς δεν μετριέται ΜΙΑ ενέργεια', () => {
-    record('https://x.strapiapp.com/api/members', 10)
+    record('https://x.strapiapp.com/api/members')
     reset()
     expect(snapshot().total).toBe(0)
   })
