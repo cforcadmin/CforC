@@ -59,21 +59,51 @@ export default function VotePanel({ applicationId, votedSeats, myVote, canOverri
     }
   }
 
-  const voteBtn = (vote: 'approve' | 'reject', label: string, cls: string, confirmCls: string) => (
-    <button
-      type="button"
-      disabled={busy}
-      onClick={() => cast(vote)}
-      className={`px-4 py-1.5 rounded-full text-sm font-bold transition-colors disabled:opacity-50 ${
-        confirming === vote ? confirmCls : cls
-      }`}
-    >
-      {confirming === vote ? 'Σίγουρα; Πάτησε ξανά' : label}
-    </button>
-  )
+  /**
+   * ΤΑ ΚΟΥΜΠΙΑ ΜΕΝΟΥΝ ΜΕΤΑ ΤΗΝ ΨΗΦΟ — ΚΑΙ ΤΩΡΑ ΤΟ ΛΕΝΕ.
+   *
+   * Η διαδρομή γράφει `votes[memberId] = …`, δηλαδή ΑΝΤΙΚΑΘΙΣΤΑ την
+   * προηγούμενη ψήφο — όσο η αίτηση είναι «submitted»· μόλις κριθεί,
+   * απαντά 409. Ο Γιώργος ψήφισε, είδε τα κουμπιά ακόμη εκεί και ρώτησε αν
+   * αλλάζει η ψήφος: η συμπεριφορά ήταν σωστή, η οθόνη σιωπηλή (16/10/2026).
+   *
+   * Το λύνουν το ✓ με το δαχτυλίδι στη δική σου ψήφο, η επιβεβαίωση που
+   * γίνεται «Αλλαγή;» όταν πατάς το άλλο, και μία σύντομη γραμμή από κάτω.
+   *
+   * ΟΙ ΕΤΙΚΕΤΕΣ ΜΕΝΟΥΝ ΚΟΝΤΕΣ. Πρώτη δοκιμή έγραφε «Αλλαγή σε Απόρριψη» και
+   * η εξήγηση έπιανε δύο γραμμές: η στήλη παίρνει το πλάτος της από τα
+   * κουμπιά, οπότε φάρδυνε, έσπρωξε το όνομα και κατέβασε το «Έχουν
+   * ψηφίσει». Η πληροφορία χωρά αλλού — στο title και στη γραμμή από κάτω.
+   */
+  const voteBtn = (vote: 'approve' | 'reject', label: string, cls: string, confirmCls: string) => {
+    const mine = localVote === vote
+    const changing = !!localVote && !mine
+    return (
+      <button
+        type="button"
+        disabled={busy}
+        aria-pressed={mine}
+        title={mine
+          ? 'Αυτή είναι η ψήφος σου. Μπορείς να την αλλάξεις όσο η αίτηση είναι σε εκκρεμότητα.'
+          : changing ? `Αλλάζει την ψήφο σου σε «${label}»` : undefined}
+        onClick={() => cast(vote)}
+        className={`px-4 py-1.5 rounded-full text-sm font-bold transition-colors disabled:opacity-50 ${
+          confirming === vote ? confirmCls : cls
+        } ${mine ? 'ring-2 ring-offset-2 ring-charcoal dark:ring-white dark:ring-offset-gray-900' : ''}`}
+      >
+        {confirming === vote
+          ? (changing ? 'Αλλαγή; Πάτησε ξανά' : 'Σίγουρα; Πάτησε ξανά')
+          : mine ? `✓ ${label}` : label}
+      </button>
+    )
+  }
 
   return (
-    <div className="flex flex-col items-end gap-2 min-w-0">
+    /* items-center, ΟΧΙ items-end: με δεξιά στοίχιση τα τρία παιδιά
+       (κουμπιά, γραμμή ψήφου, ποιοι ψήφισαν) έχουν άλλο πλάτος και
+       μοιάζουν κεντραρισμένα ΜΟΝΟ όσο το πάνελ κάθεται δεξιά από το
+       όνομα. Μόλις η κεφαλίδα στοιβαχτεί σε στήλη, όλα γέρνουν. */
+    <div className="flex flex-col items-center gap-3 min-w-0">
       <div className="flex gap-2">
         {voteBtn(
           'approve', 'Έγκριση',
@@ -92,8 +122,9 @@ export default function VotePanel({ applicationId, votedSeats, myVote, canOverri
         </p>
       )}
       {localVote && (
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Η ψήφος σου καταχωρήθηκε: <strong>{localVote === 'approve' ? 'Έγκριση' : 'Απόρριψη'}</strong>
+        <p className="text-center text-xs text-gray-500 dark:text-gray-400">
+          Η ψήφος σου: <strong>{localVote === 'approve' ? 'Έγκριση' : 'Απόρριψη'}</strong>
+          {' · '}αλλάζει μέχρι να ολοκληρωθεί η διαδικασία
         </p>
       )}
       {localSeats.length > 0 && (

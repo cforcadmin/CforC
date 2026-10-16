@@ -103,7 +103,10 @@ export default async function ApplicationReviewPage({ params }: Props) {
                 )}
               </div>
               <div className="p-6 md:p-8 flex-1">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
+                {/* gap-y-8: όταν η κεφαλίδα στοιβάζεται, τα κουμπιά ψήφου πέφτουν
+    ΑΚΡΙΒΩΣ κάτω από το όνομα. Με 16px έμοιαζαν μέρος του ονόματος·
+    η ψήφος είναι ενέργεια και θέλει τη δική της ανάσα. */}
+                <div className="flex items-start justify-between gap-x-4 gap-y-8 flex-wrap">
                   <div>
                     <h1 className="text-2xl md:text-3xl font-bold text-charcoal dark:text-coral notranslate">
                       {`${a.FirstName || ''} ${a.LastName || ''}`.trim().toLocaleUpperCase('el-GR')}
@@ -121,14 +124,14 @@ export default async function ApplicationReviewPage({ params }: Props) {
                     <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${state.cls}`}>{state.label}</span>
                   )}
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 mt-2">{a.Profession}</p>
-                <dl className="mt-4 space-y-1 text-sm">
+                <p className="text-gray-700 dark:text-gray-300 mt-6">{a.Profession}</p>
+                <dl className="mt-5 space-y-2 text-sm">
                   <Row k="Πόλη/εις δραστηριότητας" v={a.ActivityCityA} />
                   <Row k="Email" v={a.Email} />
                   <Row k="Τηλέφωνο" v={a.Phone} />
                   <Row k="Υποβλήθηκε" v={submitted} />
                 </dl>
-                <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
+                <p className="mt-6 text-xs leading-relaxed text-gray-400 dark:text-gray-500">
                   Η ψηφοφορία είναι τυφλή: φαίνεται ποιοι ρόλοι έχουν ψηφίσει, όχι τι. Ψηφίζουν τα
                   πέντε μέλη του ΔΣ — Συντονισμός, Επικοινωνία, Ταμίας, Κοινότητα, Outreach — και η
                   ψήφος της Προέδρου (Συντονισμός) μετράει διπλά, οπότε το 3–3 είναι εφικτή ισοπαλία
