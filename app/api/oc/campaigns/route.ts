@@ -150,6 +150,49 @@ async function newsletterLists() {
 }
 
 /** Όλα τα μέλη με ό,τι χρειάζεται η επιλογή — μία φορά, με pagination */
+/**
+ * ΤΟ ΜΗΤΡΩΟ ΤΟΥ ΣΥΝΘΕΤΗ, ΚΡΑΤΗΜΕΝΟ ΓΙΑ 90 ΔΕΥΤΕΡΟΛΕΠΤΑ.
+ *
+ * Κάθε άνοιγμα της οθόνης ξαναδιάβαζε ΟΛΟ το μητρώο — 117 μέλη σε σελίδες
+ * των 100, άρα δύο κλήσεις — συν τις ομάδες εργασίας, για δεδομένα που
+ * αλλάζουν μία φορά την εβδομάδα. Σε μια ώρα δουλειάς στην Επικοινωνία
+ * αυτό είναι δεκάδες κλήσεις για το ίδιο ακριβώς αποτέλεσμα.
+ *
+ * 90 ΔΕΥΤΕΡΟΛΕΠΤΑ, ΟΧΙ ΠΕΡΙΣΣΟΤΕΡΟ: αν προστεθεί μέλος και δεν εμφανιστεί
+ * στον επιλογέα, ο συντάκτης θα νομίσει ότι κάτι χάλασε. Ενάμισι λεπτό
+ * είναι κάτω από το όριο που θα το πρόσεχε κανείς, και πιάνει ολόκληρη τη
+ * συνεδρία σύνθεσης. Ο ίδιος κανόνας με το fetchCurrentTeams, που ήδη
+ * κρατά τις έδρες για 5 λεπτά. (16/10/2026, με 3.100 κλήσεις να απομένουν.)
+ *
+ * ΔΕΝ ΑΓΓΙΖΕΙ ΤΙΠΟΤΑ ΖΩΝΤΑΝΟ: καμπάνιες, παραλήπτες και καταστάσεις
+ * διαβάζονται πάντα φρέσκα.
+ */
+const ROSTER_TTL_MS = 90 * 1000
+let rosterCache: { at: number; members: CampaignMember[]; groups: string[] } | null = null
+
+/** Το ζευγάρι μητρώο+ομάδες, από τη μνήμη όσο είναι φρέσκο */
+async function loadRoster(): Promise<{ members: CampaignMember[]; groups: string[] }> {
+  // ΠΟΤΕ στα τεστ: η μνήμη ζει όσο το module, άρα το πρώτο τεστ θα τάιζε όλα
+  // τα επόμενα με το δικό του μητρώο — και η αποτυχία θα έδειχνε παντού
+  // εκτός από εδώ.
+  const live = process.env.NODE_ENV !== 'test'
+  if (live && rosterCache && Date.now() - rosterCache.at < ROSTER_TTL_MS) {
+    // ΑΝΤΙΓΡΑΦΟ: οι διαδρομές γράφουν πάνω στα μέλη (groups, status), και ένα
+    // κοινό αντικείμενο θα κουβαλούσε τις αλλαγές της μιας στην επόμενη.
+    return {
+      members: rosterCache.members.map(m => ({ ...m, groups: [...(m.groups || [])] })),
+      groups: [...rosterCache.groups],
+    }
+  }
+  const members = await loadMembers()
+  const groups = await attachGroups(members)
+  if (live) rosterCache = { at: Date.now(), members, groups }
+  return {
+    members: members.map(m => ({ ...m, groups: [...(m.groups || [])] })),
+    groups: [...groups],
+  }
+}
+
 async function loadMembers(): Promise<CampaignMember[]> {
   const out: CampaignMember[] = []
   let start = 0
@@ -429,8 +472,7 @@ export async function GET(request: NextRequest) {
       const senderStats = sid ? await getSenderCampaignStats(String(sid)) : null
       return NextResponse.json({ campaign: one.json?.data, senderStats })
     }
-    const members = await loadMembers()
-    const groups = await attachGroups(members)
+    const { members, groups } = await loadRoster()
     // Το Archived μπορεί να μην έχει βγει ακόμη στο Strapi Cloud: τότε το query
     // γυρίζει 400 «Invalid key» και η λίστα θα ερχόταν ΚΕΝΗ — δηλαδή οι
     // καμπάνιες θα «εξαφανίζονταν» ενώ υπάρχουν. Ξαναδοκιμάζουμε χωρίς αυτό.
@@ -516,8 +558,7 @@ export async function POST(request: NextRequest) {
 
   try {
     if (action === 'resolve') {
-      const members = await loadMembers()
-      await attachGroups(members)
+      const { members } = await loadRoster()
       const recipients = resolveRecipients(members, (body?.selection || {}) as RecipientSelection)
       return NextResponse.json({
         recipients,
@@ -560,8 +601,7 @@ export async function POST(request: NextRequest) {
     if (action === 'save' || action === 'queue') {
       const blocks: Block[] = Array.isArray(body?.blocks) ? body.blocks : []
       const subject = String(body?.subject || '').trim()
-      const members = await loadMembers()
-      await attachGroups(members)
+      const { members } = await loadRoster()
       const recipients = resolveRecipients(members, (body?.selection || {}) as RecipientSelection)
 
       if (action === 'queue') {
