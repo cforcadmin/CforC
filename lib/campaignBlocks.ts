@@ -1176,7 +1176,17 @@ export function renderCampaignText(blocks: Block[]): string {
  * προσθέτει, σβήνει και αναδιατάσσει ελεύθερα — απλώς δεν ξεκινά από λευκή
  * σελίδα, που είναι και ο λόγος που το MailChimp φαίνεται γρήγορο.
  */
-export interface Preset { id: string; label: string; hint: string; blocks: Block[] }
+export interface Preset {
+  id: string; label: string; hint: string; blocks: Block[]
+  /**
+   * Σε ποια γραφεία φαίνεται. Κενό = σε όλα.
+   *
+   * Τα σχέδια του IT δεν έχουν νόημα στο Ταμείο ή στην Επικοινωνία: μια
+   * σειρά από chips που δεν αφορούν κανέναν κάνει τα τέσσερα χρήσιμα πιο
+   * δύσκολα να βρεθούν. (16/10/2026)
+   */
+  desks?: string[]
+}
 
 export const PRESETS: Preset[] = [
   {
@@ -1228,7 +1238,98 @@ export const PRESETS: Preset[] = [
       { type: 'button', label: 'Τακτοποίησέ το', href: 'https://www.cultureforchange.net', style: 'coral' },
     ],
   },
+  // ── Μόνο στις Διορθώσεις/Προτάσεις, δηλαδή μόνο για το IT ──────────────
+  {
+    id: 'it-reply',
+    label: 'Απάντηση σε αίτημα',
+    hint: 'Σε αίτημα αλλαγής, διόρθωσης ή πρότασης μέλους',
+    desks: ['corrections'],
+    blocks: [
+      { type: 'greeting', html: '<p>Γεια σου {{όνομα}},</p>' },
+      {
+        type: 'text',
+        html: '<p>Ευχαριστούμε για το μήνυμά σου και την συνδρομή σου στο να βελτιωθεί η σελίδα μας!</p>',
+      },
+      {
+        type: 'box', tone: 'cream', title: 'Τι ζήτησες',
+        html: '<p>Γράψε εδώ, με τα λόγια του, τι ζήτησε. Το να το δει γραμμένο '
+          + 'σωστά είναι η απόδειξη ότι το καταλάβαμε.</p>',
+      },
+      { type: 'section', title: 'Τι γίνεται' },
+      {
+        type: 'text',
+        html: '<p>Εξήγησε τι άλλαξε ή τι θα αλλάξει — και αν δεν προχωρά, γιατί. '
+          + 'Μία παράγραφος αρκεί.</p>',
+      },
+      {
+        // ΟΧΙ mono: η μονόστοιχη είναι για κωδικούς και IBAN — μια ημερομηνία
+        // σε γραμματοσειρά τερματικού διαβάζεται σαν σφάλμα συστήματος.
+        type: 'box', tone: 'neutral', title: 'Πότε',
+        html: '<p>π.χ. έγινε ήδη · μέσα στην εβδομάδα · μπαίνει στη λίστα για τον επόμενο μήνα</p>',
+      },
+      { type: 'button', label: 'Δες το', href: 'https://www.cultureforchange.net/oc', style: 'coral' },
+    ],
+  },
+  {
+    id: 'it-done',
+    label: 'Η αλλαγή είναι ενεργή',
+    hint: 'Σύντομο «έγινε» — τι άλλαξε και πού να το δει',
+    desks: ['corrections'],
+    blocks: [
+      { type: 'greeting', html: '<p>Γεια σου {{όνομα}},</p>' },
+      { type: 'text', html: '<p>Η αλλαγή που ζήτησες είναι πλέον ενεργή.</p>' },
+      {
+        type: 'box', tone: 'cream', title: 'Τι άλλαξε',
+        html: '<p>Μία–δύο γραμμές: τι ακριβώς είναι διαφορετικό τώρα.</p>',
+      },
+      {
+        type: 'text', tone: 'soft',
+        html: '<p>Αν δεν το βλέπεις, κάνε ανανέωση της σελίδας — ο browser μπορεί '
+          + 'να κρατά την προηγούμενη έκδοση για λίγα λεπτά.</p>',
+      },
+      { type: 'button', label: 'Δες το', href: 'https://www.cultureforchange.net/oc', style: 'coral' },
+    ],
+  },
+  {
+    id: 'it-howto',
+    label: 'Οδηγίες σε βήματα',
+    hint: 'Πώς γίνεται κάτι στο OC — αριθμημένα, χωρίς τεχνικούς όρους',
+    desks: ['corrections'],
+    blocks: [
+      { type: 'greeting', html: '<p>Γεια σου {{όνομα}},</p>' },
+      { type: 'text', html: '<p>Ορίστε τα βήματα:</p>' },
+      {
+        type: 'text',
+        html: '<ol><li>Πρώτο βήμα — πού να πατήσει.</li>'
+          + '<li>Δεύτερο βήμα — τι θα δει.</li>'
+          + '<li>Τρίτο βήμα — πώς καταλαβαίνει ότι έγινε.</li></ol>',
+      },
+      {
+        type: 'box', tone: 'neutral', title: 'Αν κολλήσεις',
+        html: '<p>Γράψε μου στο <a href="mailto:it@cultureforchange.net">it@cultureforchange.net</a> '
+          + 'με ένα στιγμιότυπο της οθόνης — είναι ο γρηγορότερος τρόπος.</p>',
+      },
+    ],
+  },
 ]
+
+/**
+ * ΤΑ ΣΧΕΔΙΑ ΠΟΥ ΒΛΕΠΕΙ ΕΝΑ ΓΡΑΦΕΙΟ.
+ *
+ * Ο κανόνας είναι ΕΝΑΣ: όποιο γραφείο ορίζει δικά του σχέδια, χρησιμοποιεί
+ * ΜΟΝΟ τα δικά του. Τα τέσσερα γενικά (Ανακοίνωση, Πρόσκληση, Ενημερωτικό
+ * δελτίο, Υπενθύμιση) είναι η προεπιλογή για όσα δεν ορίζουν τίποτα.
+ *
+ * Γιατί έτσι κι όχι λίστα εξαιρέσεων σε κάθε γενικό σχέδιο: μια εξαίρεση
+ * πρέπει να θυμηθεί κανείς να τη συμπληρώσει κάθε φορά που γεννιέται
+ * γραφείο ή σχέδιο — και η πρώτη φορά που θα ξεχαστεί, το λάθος φαίνεται
+ * ως «γιατί μου βγάζει άσχετα chips;». (16/10/2026, για τις Διορθώσεις:
+ * απαντάς σε αίτημα μέλους, δεν στέλνεις πρόσκληση σε εκδήλωση.)
+ */
+export function presetsForDesk(desk: string | null | undefined): Preset[] {
+  const own = desk ? PRESETS.filter(p => p.desks?.includes(desk)) : []
+  return own.length ? own : PRESETS.filter(p => !p.desks)
+}
 
 /**
  * Τα έτοιμα σχέδια του NEWSLETTER — άλλα από του μηνύματος.
@@ -1244,6 +1345,7 @@ export const PRESETS: Preset[] = [
  * από κάτω σου επειδή κάποιος πείραξε ένα προσχέδιο είναι παγίδα, όχι
  * διευκόλυνση. Όταν αλλάξει το πρότυπο, ξανατρέχει η αντιγραφή συνειδητά.
  */
+import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
 import INTERNAL_NL_BLOCKS from '@/lib/presets/internalNewsletter.json'
 import EXTERNAL_NL_BLOCKS from '@/lib/presets/externalNewsletter.json'
 
@@ -1365,6 +1467,39 @@ export interface CampaignSigner {
  * δείχνει. Συνδυασμένοι θα έδιναν δεκαέξι επιλογές με ονόματα σαν
  * «Σύντομη σε σκούρα ζώνη» — και κάθε νέα ιδέα θα πολλαπλασίαζε τη λίστα.
  */
+/**
+ * Η ΡΗΤΡΑ ΕΜΠΙΣΤΕΥΤΙΚΟΤΗΤΑΣ ΤΟΥ it@ — ΣΕ ΚΑΘΕ ΕΜΦΑΝΙΣΗ ΥΠΟΓΡΑΦΗΣ.
+ *
+ * Υπάρχει ήδη σε όλα τα αυτόματα γράμματα του OC· έλειπε μόνο από ό,τι
+ * γράφεται στον συνθέτη. Ο Γιώργος τη θέλει ορατή σε ΟΛΕΣ τις επιλογές
+ * υπογραφής του it@ (16/10/2026) — άρα δεν είναι διακόπτης της οθόνης,
+ * είναι ιδιότητα της θυρίδας.
+ *
+ * ΜΠΑΙΝΕΙ ΕΞΩ ΑΠΟ ΤΗ ΧΡΩΜΑΤΙΣΤΗ ΖΩΝΗ, στο λευκό της κάρτας: μέσα σε coral ή
+ * ανθρακί ζώνη το γκρι 11px δεν διαβάζεται, και η ρήτρα που δεν διαβάζεται
+ * δεν είναι ρήτρα.
+ *
+ * Ο έλεγχος γίνεται στο τοπικό μέρος της διεύθυνσης και ΟΧΙ με import από
+ * το lib/ocRoles: εκείνο τραβά διαδρομές διακομιστή μέσα στο πακέτο του
+ * browser, για μια σύγκριση συμβολοσειράς.
+ */
+const isItMailbox = (email: string | null | undefined): boolean =>
+  /^it@/i.test(String(email ?? '').trim())
+
+const confidentialityRow = (): string => `
+  <tr>
+    <td class="px" align="center" style="padding:16px 48px 26px 48px;font-family:${FONT};font-size:11px;line-height:17px;color:${BRAND.inkMuted};mso-line-height-rule:exactly;">
+      _______________________________________________________________<br>This email may contain confidential information. Read full disclaimer <a href="${PUBLIC_SITE_URL}/email-confidentiality-disclaimer" style="color:${BRAND.coral};text-decoration:underline;">here</a>
+    </td>
+  </tr>`
+
+function footerHtml(
+  style: FooterStyle, look: FooterLook, signer: CampaignSigner, year: number, withLogo: boolean,
+): string {
+  return footerCore(style, look, signer, year, withLogo)
+    + (isItMailbox(signer.email) ? confidentialityRow() : '')
+}
+
 export const FOOTER_STYLES = [
   { id: 'signature', label: 'Υπογραφή', hint: '«Φιλικά», όνομα, ρόλος και θυρίδα — όπως στα αυτόματα email' },
   { id: 'compact', label: 'Σύντομη', hint: 'Όνομα και θυρίδα, χωρίς χαιρετισμό' },
@@ -1388,7 +1523,7 @@ export type FooterStyle = (typeof FOOTER_STYLES)[number]['id']
 
 const HAIRLINE = BRAND.rule
 
-function footerHtml(
+function footerCore(
   style: FooterStyle, look: FooterLook, signer: CampaignSigner, year: number, withLogo: boolean,
 ): string {
   const name = escapeHtml(signer.name)

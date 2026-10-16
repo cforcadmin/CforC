@@ -1,4 +1,4 @@
-import { PRESETS, NEWSLETTER_PRESETS } from '@/lib/campaignBlocks'
+import { PRESETS, NEWSLETTER_PRESETS, presetsForDesk } from '@/lib/campaignBlocks'
 
 /**
  * Τα τέσσερα έτοιμα σχέδια (Ανακοίνωση, Πρόσκληση, Ενημερωτικό δελτίο,
@@ -6,10 +6,37 @@ import { PRESETS, NEWSLETTER_PRESETS } from '@/lib/campaignBlocks'
  * άλλα: Εσωτερικό και Εξωτερικό NL.
  */
 describe('Έτοιμα σχέδια ανά είδος', () => {
-  it('το μήνυμα κρατά τα τέσσερα του email', () => {
-    expect(PRESETS.map(p => p.label)).toEqual([
+  it('κάθε γραφείο κρατά τα τέσσερα του email', () => {
+    expect(PRESETS.filter(p => !p.desks).map(p => p.label)).toEqual([
       'Ανακοίνωση', 'Πρόσκληση σε εκδήλωση', 'Ενημερωτικό δελτίο', 'Υπενθύμιση',
     ])
+  })
+
+  /**
+   * Τα σχέδια του IT φαίνονται ΜΟΝΟ στις Διορθώσεις. Χωρίς αυτό, ο Ταμίας
+   * θα έβλεπε «Απάντηση σε αίτημα» δίπλα στην «Ανακοίνωση» — και τα τέσσερα
+   * χρήσιμα θα γίνονταν πιο δύσκολα να βρεθούν. (16/10/2026)
+   */
+  it('οι Διορθώσεις δείχνουν ΜΟΝΟ τα τρία του IT — τα γενικά δεν ταιριάζουν εκεί', () => {
+    expect(presetsForDesk('corrections').map(p => p.label)).toEqual([
+      'Απάντηση σε αίτημα', 'Η αλλαγή είναι ενεργή', 'Οδηγίες σε βήματα',
+    ])
+  })
+
+  it('κάθε άλλο γραφείο — και το άγνωστο — παίρνει τα τέσσερα γενικά', () => {
+    for (const desk of ['admin', 'comms', 'finances', 'members', 'overview', '', null]) {
+      expect(presetsForDesk(desk).map(p => p.label)).toEqual([
+        'Ανακοίνωση', 'Πρόσκληση σε εκδήλωση', 'Ενημερωτικό δελτίο', 'Υπενθύμιση',
+      ])
+    }
+  })
+
+  it('τα σχέδια του IT ζουν μόνο στο γραφείο των Διορθώσεων', () => {
+    const scoped = PRESETS.filter(p => p.desks)
+    expect(scoped.map(p => p.label)).toEqual([
+      'Απάντηση σε αίτημα', 'Η αλλαγή είναι ενεργή', 'Οδηγίες σε βήματα',
+    ])
+    for (const p of scoped) expect(p.desks).toEqual(['corrections'])
   })
 
   it('το newsletter έχει ΔΙΚΑ του, δύο', () => {

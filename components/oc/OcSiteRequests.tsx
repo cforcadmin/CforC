@@ -1,5 +1,6 @@
 'use client'
 
+import { emitComposeReply } from '@/lib/ocComposeReply'
 import { useEffect, useMemo, useState } from 'react'
 import { grDate } from '@/lib/events'
 import { buildCsv, downloadCsv, datedFilename } from '@/lib/csv'
@@ -252,6 +253,21 @@ export default function OcSiteRequests({ canManage = false }: { canManage?: bool
                       {r.NotifiedAt && <p>Ειδοποιήθηκε: {grDate(String(r.NotifiedAt))}</p>}
                       {r.ArchivedAt && <p>Αρχειοθετήθηκε: {grDate(String(r.ArchivedAt))}</p>}
                     </div>
+
+                    {/* ΑΠΑΝΤΗΣΗ: μόνο όπου υπάρχει διεύθυνση. Κουμπί που οδηγεί σε
+                        αδιέξοδο είναι χειρότερο από κουμπί που λείπει. */}
+                    {canManage && r.SenderEmail && (
+                      <button type="button"
+                        onClick={() => emitComposeReply({
+                          name: r.SenderName || '',
+                          email: r.SenderEmail!,
+                          message: r.Message || '',
+                          pageUrl: r.PageUrl || null,
+                        })}
+                        className="px-4 py-2 rounded-full bg-coral text-charcoal font-bold text-sm hover:brightness-95 transition">
+                        Απάντηση ↓
+                      </button>
+                    )}
 
                     {canManage ? (
                       <div className="flex flex-wrap items-center gap-2 pt-1">

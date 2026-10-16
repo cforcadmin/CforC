@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, SEAT_LABELS, SEAT_MAILBOX, type OcSeat } from '@/lib/ocRoles'
 import { effectiveSeat, resolveSeatContext, attributionFor, OC_SEAT_MODE_COOKIE, type SeatContext } from '@/lib/ocSeatMode'
-import { campaignEmailHtml, PRESETS, NEWSLETTER_PRESETS, TOC_DEFAULT_TITLE, visibleBlocks, BLOCK_LABELS, BLOCK_VARIANTS, MERGE_FIELDS, FOOTER_STYLES, FOOTER_LOOKS, HEADER_STYLES, NEWSLETTER_FOOTERS, NEWSLETTER_FOOTER_DEFAULTS, normaliseNewsletterFooter, applyMergeFields, type Block, type FooterStyle, type FooterLook, type HeaderStyle, type CampaignSigner } from '@/lib/campaignBlocks'
+import { campaignEmailHtml, presetsForDesk, NEWSLETTER_PRESETS, TOC_DEFAULT_TITLE, visibleBlocks, BLOCK_LABELS, BLOCK_VARIANTS, MERGE_FIELDS, FOOTER_STYLES, FOOTER_LOOKS, HEADER_STYLES, NEWSLETTER_FOOTERS, NEWSLETTER_FOOTER_DEFAULTS, normaliseNewsletterFooter, applyMergeFields, type Block, type FooterStyle, type FooterLook, type HeaderStyle, type CampaignSigner } from '@/lib/campaignBlocks'
 import { drainCampaigns } from '@/lib/campaignDrain'
 import {
   resolveRecipients, toQueue, validateCampaign, daysNeeded, recipientSummary,
@@ -483,7 +483,9 @@ export async function GET(request: NextRequest) {
       seats: SEAT_AUDIENCES,
       blockLabels: BLOCK_LABELS,
       blockVariants: BLOCK_VARIANTS,
-      presets: PRESETS.map(p => ({ id: p.id, label: p.label, hint: p.hint, blocks: p.blocks })),
+      // Ανά γραφείο: όποιο ορίζει δικά του σχέδια παίρνει ΜΟΝΟ τα δικά του
+      presets: presetsForDesk(desk)
+        .map(p => ({ id: p.id, label: p.label, hint: p.hint, blocks: p.blocks })),
       // Τα έτοιμα σχέδια του newsletter είναι ΑΛΛΑ: τα τέσσερα παραπάνω
       // αφορούν μόνο την αποστολή email.
       newsletterPresets: NEWSLETTER_PRESETS.map(p => ({ id: p.id, label: p.label, hint: p.hint, blocks: p.blocks })),

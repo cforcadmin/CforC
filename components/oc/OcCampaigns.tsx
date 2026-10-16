@@ -3,6 +3,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import CampaignRichText from './CampaignRichText'
+import { OC_COMPOSE_REPLY, firstNameOf, replySubject, type ComposeReplyDetail } from '@/lib/ocComposeReply'
 import { moveUp, moveDown, moveToBottom, moveGroupTo, mergePaletteOrder, movePaletteChip } from '@/lib/blockOrder'
 import { PREVIEW_DESKTOP_WIDTH, fileSizeLabel } from '@/lib/campaignBlocks'
 import { usePreviewSize, PV_MIN_W, PV_MIN_H, PV_EDGE_GAP, PV_BASE_TRACK, PV_STICKY_TOP } from './usePreviewSize'
@@ -131,6 +132,10 @@ const STATE_LABELS: Record<string, string> = {
  *              Επισκόπηση είναι ένα κοινό τραπέζι για Συντονισμό και Outreach,
  *              ενώ τα Οικονομικά δεν βλέπουν τίποτα από τα Μέλη.
  */
+/** Το αίτημα το έγραψε άλλος — δεν μπαίνει ποτέ ωμό μέσα σε HTML */
+const escapeHtml = (v: string): string => String(v ?? '')
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
 export default function OcCampaigns({ desk }: { desk: string }) {
   const [tab, setTab] = useState<'compose' | 'drafts' | 'queue'>('compose')
   const [meta, setMeta] = useState<Meta | null>(null)
@@ -155,6 +160,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
   const [headerLogo, setHeaderLogo] = useState(false)
   const [resolved, setResolved] = useState<{ count: number; days: number; summary: string; recipients: Recipient[] }>(
     { count: 0, days: 0, summary: '', recipients: [] })
+  const rootRef = useRef<HTMLDivElement | null>(null)
   const [preview, setPreview] = useState('')
   /** Η «Αντιγραφή για Gmail» λέει το αποτέλεσμά της ΠΑΝΩ στο κουμπί */
   const [copied, setCopied] = useState<'' | 'ok' | 'err'>('')
@@ -718,6 +724,55 @@ export default function OcCampaigns({ desk }: { desk: string }) {
     field?.focus({ preventScroll: true })
   }, [])
 
+  /**
+   * «ΑΠΑΝΤΗΣΗ» ΑΠΟ ΤΗ ΛΙΣΤΑ ΑΙΤΗΜΑΤΩΝ — ΣΤΗΜΕΝΟ ΓΡΑΜΜΑ, ΟΧΙ ΛΕΥΚΗ ΣΕΛΙΔΑ.
+   *
+   * Το κουμπί ζει στα «Αιτήματα ιστότοπου», που είναι ΑΔΕΛΦΟΣ αυτής της
+   * οθόνης. Εδώ στήνεται ό,τι θα έγραφε ούτως ή άλλως με το χέρι: το σχέδιο
+   * «Απάντηση σε αίτημα», το όνομα στον χαιρετισμό, το αίτημα αυτούσιο στο
+   * «Τι ζήτησες», ο παραλήπτης και το θέμα.
+   *
+   * Η ΑΝΤΙΚΑΤΑΣΤΑΣΗ ΓΙΝΕΤΑΙ ΜΕ ΤΟ ΕΙΔΟΣ ΤΟΥ ΜΠΛΟΚ, όχι με αναζήτηση κειμένου
+   * μέσα στο σχέδιο: ένα σχέδιο του οποίου το κείμενο-οδηγός αλλάζει δεν
+   * πρέπει να σπάει σιωπηλά αυτή τη διαδρομή.
+   */
+  const composeReply = useCallback((d: ComposeReplyDetail) => {
+    const preset = (meta?.presets || []).find(p => p.id === 'it-reply')
+    if (!preset) return
+    const who = firstNameOf(d.name)
+    const quoted = String(d.message || '').trim()
+
+    const next = structuredClone(preset.blocks).map((b: any) => {
+      if (b.type === 'greeting') {
+        return { ...b, html: `<p>Γεια σου ${escapeHtml(who || '')},</p>`.replace(' ,', ',') }
+      }
+      if (b.type === 'box' && b.title === 'Τι ζήτησες') {
+        return { ...b, html: `<p>${escapeHtml(quoted).replace(/\n+/g, '<br>')}</p>` }
+      }
+      if (b.type === 'button' && d.pageUrl) return { ...b, href: d.pageUrl }
+      return b
+    })
+
+    setKind('message')
+    setTab('compose')
+    setEditingId(null); setEditingSubject('')
+    setBlocks(next)
+    setSubject(replySubject(quoted))
+    setSelection({ external: [d.email] })
+    setCc([])
+    // Το γράμμα στήθηκε παρακάτω· χωρίς κύλιση ο συντάκτης νομίζει ότι το
+    // κουμπί δεν έκανε τίποτα.
+    requestAnimationFrame(() => {
+      rootRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [meta])
+
+  useEffect(() => {
+    const onReply = (e: Event) => composeReply((e as CustomEvent<ComposeReplyDetail>).detail)
+    window.addEventListener(OC_COMPOSE_REPLY, onReply)
+    return () => window.removeEventListener(OC_COMPOSE_REPLY, onReply)
+  }, [composeReply])
+
   /** Καθαρή σύνθεση — και αποδέσμευση από το προσχέδιο που ήταν ανοιχτό */
   const newMessage = () => {
     setEditingId(null); setEditingSubject('')
@@ -838,7 +893,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
   if (loading) return <div className="text-sm text-gray-600 dark:text-gray-400">Φόρτωση…</div>
 
   return (
-    <div className="grid gap-6">
+    <div ref={rootRef} className="grid gap-6">
       <div className="flex flex-wrap items-end gap-4">
         <div className="min-w-0 flex-1">
           <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100">Αποστολή email</h2>
