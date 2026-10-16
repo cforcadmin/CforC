@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { sanitizeMember, sanitizeNestedMembers } from '@/lib/strapi'
+import { cachedJson } from '@/lib/strapiCache'
 
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN || process.env.NEXT_PUBLIC_STRAPI_API_TOKEN
@@ -55,16 +56,38 @@ export async function GET(
   const url = `${STRAPI_URL}${strapiPath}${searchParams ? `?${searchParams}` : ''}`
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(STRAPI_API_TOKEN && {
-          Authorization: `Bearer ${STRAPI_API_TOKEN}`,
-        }),
-      },
-    })
+    /**
+     * ΜΝΗΜΗ ΚΑΙ ΣΤΟΝ ΔΙΑΚΟΜΙΣΤΗ, ΟΧΙ ΜΟΝΟ ΣΤΟ CDN.
+     *
+     * Η κεφαλίδα Cache-Control παρακάτω τιμάται από το CDN του Vercel —
+     * στην παραγωγή. Στο localhost δεν υπάρχει CDN, οπότε ΚΑΘΕ φόρτωση
+     * σελίδας ξαναρωτούσε το Strapi: μετρημένο 16/10/2026, 13 κλήσεις για
+     * τα ίδια «featured projects» μέσα σε τέσσερα λεπτά περιήγησης, πάνω
+     * σε όριο που είχε 2.600 κλήσεις να δώσει.
+     *
+     * Το κλειδί είναι ΟΛΟΚΛΗΡΗ η διαδρομή με το ερώτημα: άλλο φίλτρο,
+     * άλλη απάντηση. Τα member-only δεν μπαίνουν — ο έλεγχος συνεδρίας
+     * έχει ήδη γίνει παραπάνω, αλλά μια κοινή μνήμη θα έδινε το ίδιο σώμα
+     * σε επόμενο αίτημα και δεν θέλουμε να το σκεφτόμαστε κάθε φορά.
+     */
+    const cacheable = !MEMBER_ONLY_COLLECTIONS.has(collection)
+    const fetchFresh = async () => {
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(STRAPI_API_TOKEN && {
+            Authorization: `Bearer ${STRAPI_API_TOKEN}`,
+          }),
+        },
+      })
+      return { status: response.status, ok: response.ok, body: await response.json() }
+    }
 
-    const data = await response.json()
+    const result = cacheable
+      ? await cachedJson(`proxy:${strapiPath}?${searchParams}`, 60_000, fetchFresh)
+      : await fetchFresh()
+    const response = { ok: result.ok, status: result.status }
+    const data = result.body
 
     // Strip auth internals + OC registry/financial member fields before
     // anything reaches a browser. This proxy is the only client-side data

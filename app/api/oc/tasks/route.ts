@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHoldersWithEmail, type OcSeat } from '@/lib/ocRoles'
+import { cachedJson, invalidate } from '@/lib/strapiCache'
 import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { strapiAll } from '@/lib/strapiPaged'
 
@@ -147,9 +148,22 @@ export async function GET(request: NextRequest) {
   const auth = await authorize()
   if ('error' in auth) return auth.error
   try {
+    /**
+     * ΚΡΑΤΙΟΥΝΤΑΙ ΓΙΑ 20 ΔΕΥΤΕΡΟΛΕΠΤΑ — ΚΑΙ ΣΒΗΝΟΝΤΑΙ ΣΕ ΚΑΘΕ ΕΓΓΡΑΦΗ.
+     *
+     * Η διαδρομή φέρνει ΟΛΟΥΣ τους πίνακες, ΟΛΕΣ τις εκκρεμότητες και ΟΛΑ
+     * τα μέλη ανεξάρτητα από το ?board= — το φιλτράρισμα γίνεται παρακάτω,
+     * στη μνήμη. Ανοίγοντας τα οκτώ κουτιά των Διορθώσεων, το ίδιο τρίο
+     * ταξίδευε οκτώ φορές (μετρημένο 16/10/2026: 44 από τις 188 κλήσεις).
+     *
+     * Τα 20 δευτερόλεπτα δεν κρύβουν δική σου αλλαγή: κάθε POST/PATCH/DELETE
+     * εδώ καθαρίζει τη μνήμη πριν απαντήσει.
+     */
     const [boardsRes, tasksRes, seatHolders, membersRes] = await Promise.all([
-      strapi('/oc-task-boards?sort[0]=SortIndex:asc&sort[1]=Title:asc&pagination[limit]=50'),
-      strapi(`/oc-tasks?pagination[limit]=500&sort[0]=SortIndex:asc&sort[1]=createdAt:asc&${TASK_FIELDS}`),
+      cachedJson('oc-tasks:boards', 20_000, () =>
+        strapi('/oc-task-boards?sort[0]=SortIndex:asc&sort[1]=Title:asc&pagination[limit]=50')),
+      cachedJson('oc-tasks:tasks', 20_000, () =>
+        strapi(`/oc-tasks?pagination[limit]=500&sort[0]=SortIndex:asc&sort[1]=createdAt:asc&${TASK_FIELDS}`)),
       getSeatHoldersWithEmail().catch(() => []),
       // Για πίνακες με εμβέλεια «μέλη»: ανάδοχος μπορεί να είναι οποιοδήποτε
       // μέλος, όχι μόνο οι επτά θέσεις
@@ -158,8 +172,10 @@ export async function GET(request: NextRequest) {
          Από τα 116 μέλη επέστρεφε 22: κρύβονταν σιωπηλά 69 μέλη που απλώς δεν
          είχαν ποτέ οριστεί (1/9/2026 — δεν εμφανιζόταν μέλος στις Παρουσίες
          ούτε ως ανάδοχος εκκρεμότητας). Ρητά λοιπόν: false Ή κενό. */
-      strapiAll('/members?sort=Name:asc&fields[0]=Name&fields[1]=AM'
-        + '&filters[$or][0][HideProfile][$eq]=false&filters[$or][1][HideProfile][$null]=true'),
+      // Το μητρώο αλλάζει μία φορά την εβδομάδα· 90 δευτερόλεπτα είναι ανεπαίσθητα
+      cachedJson('members:assignable', 90_000, () =>
+        strapiAll('/members?sort=Name:asc&fields[0]=Name&fields[1]=AM'
+          + '&filters[$or][0][HideProfile][$eq]=false&filters[$or][1][HideProfile][$null]=true')),
     ])
     if (!boardsRes.ok) {
       // Η συλλογή μπορεί να μην έχει φτάσει ακόμη στο Strapi Cloud
@@ -214,6 +230,7 @@ export async function POST(request: NextRequest) {
     console.error('task create failed', r.status, JSON.stringify(r.json?.error?.message || ''))
     return NextResponse.json({ error: 'Αποτυχία δημιουργίας' }, { status: 502 })
   }
+  invalidate('oc-tasks:')   // μετά την επιτυχία, όχι πριν την εγγραφή
   return NextResponse.json({ ok: true, documentId: r.json?.data?.documentId })
 }
 
@@ -231,6 +248,7 @@ export async function PATCH(request: NextRequest) {
     console.error('task update failed', r.status, JSON.stringify(r.json?.error?.message || ''))
     return NextResponse.json({ error: 'Αποτυχία ενημέρωσης' }, { status: 502 })
   }
+  invalidate('oc-tasks:')   // μετά την επιτυχία, όχι πριν την εγγραφή
   return NextResponse.json({ ok: true })
 }
 
@@ -242,5 +260,6 @@ export async function DELETE(request: NextRequest) {
   if (isItBoard(await taskBoardSlugOf(id)) && auth.activeSeat !== 'it') return forbiddenIt()
   const r = await strapi(`/oc-tasks/${id}`, 'DELETE')
   if (!r.ok && r.status !== 204) return NextResponse.json({ error: 'Αποτυχία διαγραφής' }, { status: 502 })
+  invalidate('oc-tasks:')   // μετά την επιτυχία, όχι πριν την εγγραφή
   return NextResponse.json({ ok: true })
 }
