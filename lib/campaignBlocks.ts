@@ -1486,6 +1486,19 @@ export interface CampaignSigner {
 const isItMailbox = (email: string | null | undefined): boolean =>
   /^it@/i.test(String(email ?? '').trim())
 
+/**
+ * ΤΟ ΤΗΛΕΦΩΝΟ ΤΟΥ IT — ΜΕΡΟΣ ΤΗΣ ΥΠΟΓΡΑΦΗΣ, ΟΧΙ ΤΗΣ ΡΗΤΡΑΣ.
+ *
+ * Το IT απαντά μέσα στο δίκτυο, σε ανθρώπους που συχνά έχουν κολλήσει μπροστά
+ * σε μια οθόνη: ένα νούμερο που πατιέται λύνει σε δύο λεπτά ό,τι θα έπαιρνε
+ * τρία email. Οι άλλες θυρίδες δεν το έχουν — εκεί η επικοινωνία είναι
+ * γραπτή εξ ορισμού. (16/10/2026)
+ *
+ * Γράφεται ΜΙΑ φορά: το `tel:` θέλει το νούμερο χωρίς κενά, η οθόνη το θέλει
+ * με κενά, και δύο χειρόγραφες εκδοχές αποκλίνουν στην πρώτη αλλαγή.
+ */
+const IT_PHONE = { dial: '+306906601429', shown: '+30 690 660 1429' } as const
+
 const confidentialityRow = (): string => `
   <tr>
     <td class="px" align="center" style="padding:16px 48px 26px 48px;font-family:${FONT};font-size:11px;line-height:17px;color:${BRAND.inkMuted};mso-line-height-rule:exactly;">
@@ -1566,7 +1579,16 @@ function footerCore(
         <tr><td style="font-family:${FONT};font-size:15px;line-height:22px;"><a href="https://www.cultureforchange.net" style="color:${skin.link};text-decoration:underline;">www.cultureforchange.net</a></td></tr>${gap(14)}
         <tr><td style="${tiny}">${org}</td></tr>`,
   }
-  const rows = bodies[style] || bodies.signature
+  /**
+   * Το τηλέφωνο μπαίνει ΜΕΣΑ στην υπογραφή, αμέσως μετά τη θυρίδα — είναι
+   * στοιχείο επικοινωνίας, όχι νομική σημείωση· η ρήτρα μπαίνει χωριστά, έξω
+   * από τη ζώνη. Ακολουθεί το χρώμα της εμφάνισης, άρα διαβάζεται και στη
+   * σκούρη ζώνη.
+   */
+  const phoneRow = isItMailbox(signer.email) ? `
+        <tr><td style="${small}"><a href="tel:${IT_PHONE.dial}" style="color:${skin.link};text-decoration:none;">${IT_PHONE.shown}</a> <span style="color:${skin.tiny};">· WhatsApp, Viber</span></td></tr>` : ''
+
+  const rows = (bodies[style] || bodies.signature) + phoneRow
 
   /** Το σήμα μπαίνει δεξιά από την υπογραφή, σε οποιαδήποτε εμφάνιση */
   const withMark = (inner: string) => withLogo ? `

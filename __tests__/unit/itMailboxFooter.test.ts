@@ -14,7 +14,22 @@ const render = (email: string, footerStyle: any, footerLook: any) => campaignEma
 const CLAUSE = 'This email may contain confidential information'
 const LINK = '/email-confidentiality-disclaimer'
 
-describe('Ρήτρα εμπιστευτικότητας του it@', () => {
+describe('Το υποσέλιδο της θυρίδας it@', () => {
+  it('το τηλέφωνο μπαίνει σε ΚΑΘΕ υπογραφή — και πατιέται', () => {
+    for (const st of FOOTER_STYLES) {
+      const html = render('it@cultureforchange.net', st.id, 'cream')
+      expect(html).toContain('tel:+306906601429')
+      expect(html).toContain('+30 690 660 1429')
+      expect(html).toContain('WhatsApp, Viber')
+    }
+  })
+
+  it('καμία άλλη θυρίδα δεν δίνει τηλέφωνο', () => {
+    for (const box of ['hello@cultureforchange.net', 'communication@cultureforchange.net']) {
+      expect(render(box, 'signature', 'cream')).not.toContain('tel:+30')
+    }
+  })
+
   it('φαίνεται σε ΚΑΘΕ συνδυασμό υπογραφής και εμφάνισης', () => {
     for (const s of FOOTER_STYLES) {
       for (const l of FOOTER_LOOKS) {
