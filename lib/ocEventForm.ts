@@ -176,6 +176,53 @@ function capacities(v: unknown): EventCapacity[] | null {
   return keep.length ? [...new Set(keep)] : null
 }
 
+/**
+ * ΩΡΑ ΑΘΗΝΑΣ ⇄ UTC — Η ΣΙΩΠΗΛΗ ΔΙΑΦΟΡΑ ΔΥΟ ΩΡΩΝ.
+ *
+ * Το πεδίο `datetime-local` δίνει και δέχεται ΤΟΠΙΚΟ ρολόι χωρίς ζώνη
+ * («2026-11-13T10:00»). Το Strapi αποθηκεύει στιγμή και διαβάζει τη γυμνή
+ * ώρα ως UTC. Χωρίς μετατροπή, «10:00» γινόταν 10:00Z και η σελίδα —
+ * που αποδίδει σωστά σε Europe/Athens — έδειχνε 12:00. Το ίδιο ανάποδα:
+ * ο συντάκτης έβλεπε 08:00 για συνεδρία που ξεκινά στις 10:00.
+ *
+ * Η διαφορά ΔΕΝ είναι σταθερή +2: τον Ιούλιο είναι +3. Γι' αυτό
+ * υπολογίζεται από την ίδια τη στιγμή, με το Intl, αντί να γραφτεί σταθερά.
+ * (16/10/2026 — φάνηκε στο ENCC Bridges Makers.)
+ */
+const ATHENS = 'Europe/Athens'
+
+/** Στιγμή → τοπικό ρολόι Αθήνας, στη μορφή που θέλει το datetime-local */
+export function utcIsoToAthensLocal(iso: string | null | undefined): string {
+  const raw = String(iso ?? '').trim()
+  if (!raw) return ''
+  const d = new Date(raw)
+  if (Number.isNaN(d.getTime())) return ''
+  // Το sv-SE δίνει «YYYY-MM-DD HH:mm» — ένα κενό μακριά από ISO
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone: ATHENS, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(d).replace(' ', 'T')
+}
+
+/** Τοπικό ρολόι Αθήνας → στιγμή σε UTC ISO */
+export function athensLocalToUtcIso(local: string | null | undefined): string {
+  const raw = String(local ?? '').trim()
+  if (!raw) return ''
+  const wanted = raw.length === 16 ? `${raw}:00` : raw
+  // Πρώτη εκτίμηση: η γυμνή ώρα ως UTC. Μετά διορθώνεται κατά τη διαφορά
+  // που προκύπτει ΓΙΑ ΕΚΕΙΝΗ τη στιγμή — δύο περάσματα καλύπτουν και τις
+  // ώρες αλλαγής θερινής/χειμερινής, όπου η πρώτη εκτίμηση πέφτει έξω.
+  let t = Date.parse(`${wanted}Z`)
+  if (Number.isNaN(t)) return ''
+  for (let i = 0; i < 2; i++) {
+    const back = utcIsoToAthensLocal(new Date(t).toISOString())
+    const drift = Date.parse(`${wanted}Z`) - Date.parse(`${back}:00Z`)
+    if (!drift) break
+    t += drift
+  }
+  return new Date(t).toISOString()
+}
+
 function sessions(list: unknown, errors: string[]): any[] {
   if (!Array.isArray(list)) return []
   return list.map((s: any, i: number) => {
@@ -197,8 +244,9 @@ function sessions(list: unknown, errors: string[]): any[] {
     return {
       Title: title,
       Subtitle: nullable(s?.Subtitle),
-      StartsAt: startsAt,
-      EndsAt: endsAt || null,
+      // Ό,τι έγραψε ο συντάκτης είναι ώρα ΑΘΗΝΑΣ· στο Strapi πάει στιγμή
+      StartsAt: athensLocalToUtcIso(startsAt),
+      EndsAt: endsAt ? athensLocalToUtcIso(endsAt) : null,
       AllowInPerson: inPerson,
       AllowOnline: online,
       VisibleFor: capacities(s?.VisibleFor),

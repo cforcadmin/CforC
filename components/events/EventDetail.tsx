@@ -223,8 +223,11 @@ function sessionWhen(startsAt: string, endsAt?: string): string {
     return Number.isNaN(d.getTime()) ? '' : new Intl.DateTimeFormat('el-GR', { timeZone: 'Europe/Athens', ...opts }).format(d)
   }
   const day = fmt(startsAt, { weekday: 'long', day: 'numeric', month: 'long' })
-  const from = fmt(startsAt, { hour: '2-digit', minute: '2-digit' })
-  const to = endsAt ? fmt(endsAt, { hour: '2-digit', minute: '2-digit' }) : ''
+  /* 24ωρο ΡΗΤΑ: χωρίς αυτό το el-GR έβγαζε «12:00 μ.μ.–09:00 μ.μ.» για ένα
+     πρόγραμμα που ο κόσμος διαβάζει ως «10.00–19.00». */
+  const HM: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', hour12: false }
+  const from = fmt(startsAt, HM)
+  const to = endsAt ? fmt(endsAt, HM) : ''
   if (!day) return ''
   return `${day}, ${from}${to ? `–${to}` : ''}`
 }

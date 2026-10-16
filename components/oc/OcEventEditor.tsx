@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { CAPACITY_LABELS } from '@/lib/eventForm'
-import { OPTION_KEYS, OPTION_KEY_LABELS, slugify, type OptionKey } from '@/lib/ocEventForm'
+import { descriptionHtml } from '@/lib/eventRichText'
+import { OPTION_KEYS, OPTION_KEY_LABELS, slugify, utcIsoToAthensLocal, type OptionKey } from '@/lib/ocEventForm'
 import CampaignRichText from '@/components/oc/CampaignRichText'
 
 /**
@@ -159,7 +160,23 @@ export default function OcEventEditor({ documentId, onClose, onSaved }: {
           RegistrationDeadline: e.RegistrationDeadline || '',
           City: e.City || '', Venue: e.Venue || '', HostedBy: e.HostedBy || '',
           Audience: e.Audience === 'non-member' ? 'non-member' : 'member',
-          Description: e.Description || '', DescriptionEn: e.DescriptionEn || '',
+          /**
+           * ΑΠΛΟ ΚΕΙΜΕΝΟ → ΠΑΡΑΓΡΑΦΟΙ, ΠΡΙΝ ΜΠΕΙ ΣΤΟΝ ΕΠΕΞΕΡΓΑΣΤΗ.
+           *
+           * Η στήλη κρατά ΔΥΟ μορφές (δες lib/eventRichText): παλιό απλό
+           * κείμενο με αλλαγές γραμμής, ή HTML από τον επεξεργαστή. Η σελίδα
+           * δέχεται και τα δύο· ο επεξεργαστής όμως διαβάζει HTML, οπότε οι
+           * αλλαγές γραμμής του απλού κειμένου ήταν γι' αυτόν ασήμαντα κενά
+           * και ΟΛΗ η περιγραφή κατέρρεε σε μία παράγραφο (16/10/2026).
+           *
+           * Δεν ήταν μόνο οπτικό: ένα «Αποθήκευση αλλαγών» από εκείνη την
+           * οθόνη έγραφε την κατάρρευση πίσω στο Strapi και χανόταν η
+           * μορφοποίηση της ζωντανής σελίδας.
+           *
+           * Η ΙΔΙΑ συνάρτηση με τη σελίδα: μία μετατροπή να συντηρείται.
+           */
+          Description: descriptionHtml(e.Description),
+          DescriptionEn: descriptionHtml(e.DescriptionEn),
           Capacities: Array.isArray(e.Capacities) ? e.Capacities : [],
           RegistrationOpen: e.RegistrationOpen !== false,
           ConsentText: e.ConsentText || '', ConsentVersion: e.ConsentVersion || '',
@@ -167,7 +184,9 @@ export default function OcEventEditor({ documentId, onClose, onSaved }: {
           DietaryPurgeDays: e.DietaryPurgeDays == null ? '' : String(e.DietaryPurgeDays),
           Sessions: (e.Sessions || []).map((s: any) => ({
             Title: s.Title || '', Subtitle: s.Subtitle || '',
-            StartsAt: (s.StartsAt || '').slice(0, 16), EndsAt: (s.EndsAt || '').slice(0, 16),
+            // ΟΧΙ slice: η γυμνή κοπή του ISO έδειχνε την ώρα UTC σαν τοπική,
+            // δηλαδή 08:00 για συνεδρία που ξεκινά στις 10:00 στην Αθήνα.
+            StartsAt: utcIsoToAthensLocal(s.StartsAt), EndsAt: utcIsoToAthensLocal(s.EndsAt),
             AllowInPerson: s.AllowInPerson !== false, AllowOnline: s.AllowOnline !== false,
             VisibleFor: Array.isArray(s.VisibleFor) ? s.VisibleFor : [],
           })),

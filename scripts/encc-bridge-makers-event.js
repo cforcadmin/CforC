@@ -215,13 +215,16 @@ const EVENT = {
     {
       Title: 'Παρασκευή 13 Νοεμβρίου | Κεντρική Εκδήλωση & Στρογγυλά Τραπέζια',
       Subtitle: 'Πολιτιστικό Κέντρο «Μελίνα» — Friday, 13 November | Main Event & Round Tables',
-      StartsAt: '2026-11-13T09:00:00.000Z', EndsAt: '2026-11-13T18:00:00.000Z',
+      // ΩΡΑ ΑΘΗΝΑΣ 10.00–19.00. Το πεδίο είναι UTC και ο Νοέμβριος είναι EET
+      // (UTC+2): ό,τι γράφεται εδώ εμφανίζεται ΔΥΟ ΩΡΕΣ ΑΡΓΟΤΕΡΑ στη σελίδα.
+      StartsAt: '2026-11-13T08:00:00.000Z', EndsAt: '2026-11-13T17:00:00.000Z',
       AllowInPerson: true, AllowOnline: false, VisibleFor: ALL, SortOrder: 1,
     },
     {
       Title: 'Σάββατο 14 Νοεμβρίου | Επισκέψεις Πεδίου',
       Subtitle: 'Πολιτιστικοί φορείς του Μεταξουργείου — Saturday, 14 November | Study Visits / Field Visits',
-      StartsAt: '2026-11-14T09:00:00.000Z', EndsAt: '2026-11-14T15:00:00.000Z',
+      // ΩΡΑ ΑΘΗΝΑΣ 10.00–14.00
+      StartsAt: '2026-11-14T08:00:00.000Z', EndsAt: '2026-11-14T12:00:00.000Z',
       AllowInPerson: true, AllowOnline: false, VisibleFor: ALL, SortOrder: 2,
     },
   ],
