@@ -5,7 +5,7 @@ import { verifyToken } from '@/lib/auth'
 import { checkCsrf } from '@/lib/csrf'
 import { eventRegisterLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 import { resolveEventAccess } from '@/lib/eventAccess'
-import { validateRegistration, offeredCapacities, visibleOptions, getsExpensesNotice } from '@/lib/eventForm'
+import { validateRegistration, offeredCapacities, visibleOptions, getsExpensesNotice, eventOffersTravel, eventHasOnline } from '@/lib/eventForm'
 import { validateProposal, costValue, openCallVisible, collectsInForm, emptyProposal, cleanProposalDescription, type ProposalDraft } from '@/lib/openCall'
 import type { CforcEvent } from '@/lib/types'
 import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
@@ -261,7 +261,10 @@ export async function POST(request: NextRequest) {
         // ΟΧΙ σε όποιον δεν καλύπτεται: ειδοποίηση για αποζημίωση που δεν
         // δικαιούται είναι υπόσχεση που θα πρέπει μετά να ανακληθεί. Οι
         // υπότροφοι START/BAN ΕΝΗΜΕΡΩΝΟΝΤΑΙ — απλώς δεν υποβάλλουν από τη φόρμα.
-        mayClaimExpenses: getsExpensesNotice(draft.Capacity as any),
+        // ΚΑΙ η δράση να το προσφέρει: η ιδιότητα μόνη της υποσχόταν κάλυψη
+        // σε δράσεις που δεν έχουν καν μπλοκ μετακίνησης.
+        mayClaimExpenses: getsExpensesNotice(draft.Capacity as any) && eventOffersTravel(ev),
+        hasOnlineOption: eventHasOnline(ev),
       })
       // Κοινοποίηση στο hello@: η ΟΣ θέλει να βλέπει τη δήλωση μόλις γίνει.
       // Μπαίνει ΜΟΝΟ εδώ, όχι στο email επιβεβαίωσης — εκείνο κουβαλά token.

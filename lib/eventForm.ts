@@ -55,6 +55,24 @@ export const isReimbursed = (c: EventCapacity | '' | null | undefined): boolean 
 export const getsExpensesNotice = (c: EventCapacity | '' | null | undefined): boolean =>
   isReimbursed(c) || c === 'non-member-ban'
 
+/**
+ * ΤΙ ΠΡΟΣΦΕΡΕΙ Η ΔΡΑΣΗ — ΟΧΙ ΤΙ ΔΙΚΑΙΟΥΤΑΙ Ο ΑΝΘΡΩΠΟΣ.
+ *
+ * Το γράμμα της εγγραφής υποσχόταν κάλυψη μετακίνησης και σύνδεσμο
+ * διαδικτυακής παρακολούθησης με κριτήριο ΜΟΝΟ την ιδιότητα. Σε δράση που
+ * δεν δίνει τίποτα από τα δύο — όπως το ENCC Bridges Makers — ένα μέλος
+ * έπαιρνε υπόσχεση που κανείς δεν σκόπευε να τηρήσει (16/10/2026).
+ *
+ * Οι δύο έλεγχοι διαβάζουν τα ΙΔΙΑ δεδομένα που στήνουν τη φόρμα: αν δεν
+ * υπάρχει μπλοκ μετακίνησης, δεν υπάρχει κάλυψη· αν καμία συνεδρία δεν
+ * δέχεται διαδικτυακή παρουσία, δεν υπάρχει σύνδεσμος να σταλεί.
+ */
+export const eventOffersTravel = (ev: Pick<CforcEvent, 'Options'>): boolean =>
+  (ev.Options || []).some(o => o?.Key === 'travel')
+
+export const eventHasOnline = (ev: Pick<CforcEvent, 'Sessions'>): boolean =>
+  (ev.Sessions || []).some(s => !!s?.AllowOnline)
+
 export type SessionChoice = 'in-person' | 'online' | 'absent'
 
 export interface RegistrationDraft {

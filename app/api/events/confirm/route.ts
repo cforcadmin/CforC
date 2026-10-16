@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'node:crypto'
 import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { eventRegisteredEmailHtml } from '@/lib/eventEmails'
-import { getsExpensesNotice } from '@/lib/eventForm'
+import { getsExpensesNotice, eventOffersTravel, eventHasOnline } from '@/lib/eventForm'
 import { dateRangeLabel } from '@/lib/events'
 import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
 
@@ -106,7 +106,8 @@ export async function GET(request: NextRequest) {
       isMember: false,
       eventUrl: `${SITE}/events/${ev?.Slug || ''}`,
       // Ίδιος κανόνας με την εγγραφή — η ιδιότητα βγαίνει από τη δήλωση
-      mayClaimExpenses: getsExpensesNotice(reg.Capacity),
+      mayClaimExpenses: getsExpensesNotice(reg.Capacity) && !!ev && eventOffersTravel(ev),
+      hasOnlineOption: !!ev && eventHasOnline(ev),
     })
     // Κοινοποίηση στο hello@ ΕΔΩ, στη στιγμή που η δήλωση γίνεται πραγματική
     // — όχι στο email με τον σύνδεσμο επιβεβαίωσης που στάλθηκε πριν.

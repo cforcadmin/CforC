@@ -153,6 +153,14 @@ export function eventRegisteredEmailHtml(opts: {
    * γραμματοκιβώτιο.
    */
   mayClaimExpenses?: boolean; isMember: boolean; eventUrl: string
+  /**
+   * Υπάρχει ΟΝΤΩΣ διαδικτυακή παρακολούθηση σε αυτή τη δράση;
+   *
+   * Χωρίς αυτό, το γράμμα υποσχόταν σύνδεσμο «όπου υπάρχει» ακόμη και σε
+   * δράση που γίνεται αποκλειστικά δια ζώσης — και ο παραλήπτης τον
+   * περίμενε. Η πρόταση λέει τώρα μόνο ό,τι ισχύει.
+   */
+  hasOnlineOption?: boolean
 }) {
   const inner = `
 <p style="margin:0 0 16px 0;">${esc(opts.firstName)},</p>
@@ -161,8 +169,9 @@ export function eventRegisteredEmailHtml(opts: {
   (${esc(opts.dates)}${opts.venue ? `, ${esc(opts.venue)}` : ''}) είναι <strong>καταχωρημένη</strong>.
 </p>
 <p style="margin:0 0 16px 0;">
-  Θα σου στείλουμε τις λεπτομέρειες — πρόγραμμα, οδηγίες και, όπου υπάρχει, τον σύνδεσμο
-  για διαδικτυακή παρακολούθηση — πιο κοντά στην ημερομηνία.
+  Θα σου στείλουμε τις λεπτομέρειες — πρόγραμμα${opts.hasOnlineOption
+    ? ', οδηγίες και, όπου υπάρχει, τον σύνδεσμο για διαδικτυακή παρακολούθηση'
+    : ' και οδηγίες'} — πιο κοντά στην ημερομηνία.
 </p>
 ${button(opts.eventUrl, 'Δες τη δράση')}
 ${opts.mayClaimExpenses ? `
