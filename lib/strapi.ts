@@ -33,9 +33,20 @@ async function fetchStrapi(endpoint: string, options: RequestInit = {}) {
     };
   }
 
+  /**
+   * ΟΙ ΑΝΑΓΝΩΣΕΙΣ ΤΟΥ SERVER ΚΡΑΤΙΟΥΝΤΑΙ 5 ΛΕΠΤΑ.
+   *
+   * Στο Next 15 το `fetch` είναι no-store από προεπιλογή: κάθε προβολή
+   * σελίδας ξαναρωτούσε το Strapi για δεδομένα που αλλάζουν μία φορά την
+   * εβδομάδα. Ισχύει ΜΟΝΟ για αναγνώσεις — μια εγγραφή δεν κρατιέται ποτέ.
+   */
+  const isRead = !options.method || String(options.method).toUpperCase() === 'GET'
+  const caching = isServer && isRead ? { next: { revalidate: 300 } } : {}
+
   try {
     const response = await fetch(url, {
       ...options,
+      ...caching,
       headers,
     });
 

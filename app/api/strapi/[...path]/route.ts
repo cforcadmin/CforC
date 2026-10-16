@@ -77,7 +77,29 @@ export async function GET(
       else if (data?.data) sanitizeNestedMembers(data.data)
     }
 
-    return NextResponse.json(data, { status: response.status })
+    /**
+     * ΚΡΑΤΙΕΤΑΙ ΣΤΟ CDN — ΓΙΑΤΙ ΚΑΘΕ ΕΠΙΣΚΕΨΗ ΧΤΥΠΟΥΣΕ ΤΟ STRAPI.
+     *
+     * Οι σελίδες /members και /news είναι client components: φέρνουν τα
+     * δεδομένα από εδώ σε ΚΑΘΕ φόρτωση. Με 380 μέλη και όριο σελίδας 100,
+     * μια επίσκεψη στα μέλη κόστιζε πέντε κλήσεις στο Strapi — κάθε φορά,
+     * για δεδομένα ίδια για όλους. Στις 16/10/2026 το μηνιαίο όριο ήταν
+     * 45.700/50.000 με δεκαπέντε μέρες μπροστά.
+     *
+     * ΤΙ ΑΛΛΑΖΕΙ ΓΙΑ ΤΟΝ ΕΠΙΣΚΕΠΤΗ: τίποτα στην εμφάνιση. Μόνο ότι νέο
+     * περιεχόμενο μπορεί να αργήσει έως πέντε λεπτά να φανεί.
+     *
+     * ΟΧΙ στα member-only: εκείνα περνούν από έλεγχο συνεδρίας και μια
+     * κοινή απάντηση στο CDN θα τα έδινε σε ΟΛΟΥΣ.
+     */
+    const res = NextResponse.json(data, { status: response.status })
+    res.headers.set(
+      'Cache-Control',
+      response.ok && !MEMBER_ONLY_COLLECTIONS.has(collection)
+        ? 'public, s-maxage=300, stale-while-revalidate=1800'
+        : 'private, no-store',
+    )
+    return res
   } catch (error) {
     console.error('Strapi proxy error:', error)
     return NextResponse.json(
