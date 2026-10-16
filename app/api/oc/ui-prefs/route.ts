@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { cachedJson, invalidate } from '@/lib/strapiCache'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess } from '@/lib/ocRoles'
@@ -80,11 +81,23 @@ function cleanLayout(raw: any): Record<string, Record<string, string[]>> {
   return out
 }
 
+/**
+ * ΟΙ ΠΡΟΤΙΜΗΣΕΙΣ ΔΙΑΒΑΖΟΝΤΑΙ ΣΕ ΚΑΘΕ ΑΛΛΑΓΗ ΕΝΟΤΗΤΑΣ.
+ *
+ * Μετρημένο 16/10/2026: 7 κλήσεις `/members/{id}` σε μία περιήγηση του OC —
+ * μία ανά ενότητα που άνοιξε. Οι προτιμήσεις αλλάζουν μόνο όταν τις αλλάξει
+ * ο ΙΔΙΟΣ, και τότε η PUT ακυρώνει τη μνήμη· άρα 60 δευτερόλεπτα δεν
+ * κρύβουν ποτέ δική του αλλαγή.
+ *
+ * Κλειδί ανά μέλος: δύο άνθρωποι στο OC δεν μοιράζονται διάταξη στηλών.
+ */
 async function readPrefs(memberId: string): Promise<OcUiPrefs> {
-  const r = await strapi(`/members/${memberId}?fields[0]=OcPrefs`)
-  const raw = r.json?.data?.OcPrefs
-  if (!raw || typeof raw !== 'object') return {}
-  return { colWidths: cleanWidths(raw.colWidths), layout: cleanLayout(raw.layout) }
+  return cachedJson(`ui-prefs:${memberId}`, 60_000, async () => {
+    const r = await strapi(`/members/${memberId}?fields[0]=OcPrefs`)
+    const raw = r.json?.data?.OcPrefs
+    if (!raw || typeof raw !== 'object') return {}
+    return { colWidths: cleanWidths(raw.colWidths), layout: cleanLayout(raw.layout) }
+  })
 }
 
 export async function GET() {
@@ -124,6 +137,8 @@ export async function PUT(request: Request) {
   }
 
   const r = await strapi(`/members/${auth.memberId}`, 'PUT', { OcPrefs: next })
+  // Μετά την εγγραφή: η επόμενη ανάγνωση πρέπει να δει τη νέα διάταξη
+  if (r.ok) invalidate(`ui-prefs:${auth.memberId}`)
   if (!r.ok) {
     console.error('oc/ui-prefs: save failed', r.status)
     return NextResponse.json({ error: 'Αποτυχία αποθήκευσης' }, { status: 502 })
