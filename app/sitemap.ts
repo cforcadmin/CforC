@@ -4,6 +4,22 @@ import type { Project, ProjectEntry, Activity } from '@/lib/types'
 
 const BASE_URL = 'https://cultureforchange.net'
 
+/**
+ * ΧΤΙΖΕΤΑΙ ΜΙΑ ΦΟΡΑ ΤΗΝ ΗΜΕΡΑ — ΟΧΙ ΣΕ ΚΑΘΕ ΕΠΙΣΚΕΨΗ ΑΡΑΧΝΗΣ.
+ *
+ * ΤΟ ΕΥΡΗΜΑ (17/10/2026, από τα logs του Strapi): ο χάρτης ζητούσε έργα +
+ * κάθε έργο ξεχωριστά + δράσεις + ολόκληρο το μητρώο = επτά κλήσεις, ΚΑΘΕ
+ * φορά που κάποιος κατέβαζε το /sitemap.xml. Οι αράχνες το κατεβάζουν
+ * συνέχεια: 29 φορές μέσα σε μία νύχτα, ~200 κλήσεις, με μηδέν ανθρώπους
+ * στον ιστότοπο. Ήταν το μεγαλύτερο μοτίβο ολόκληρης της ημέρας.
+ *
+ * Ένας χάρτης ιστότοπου ΔΕΝ χρειάζεται να είναι φρεσκότερος από μια μέρα:
+ * οι μηχανές αναζήτησης τον ξαναδιαβάζουν ούτως ή άλλως σε δικό τους ρυθμό,
+ * και μια δράση που ανακοινώθηκε πριν από μία ώρα δεν ευρετηριάζεται
+ * γρηγορότερα επειδή εμφανίστηκε νωρίτερα εδώ.
+ */
+export const revalidate = 86400
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
