@@ -20,6 +20,16 @@ const BASE_URL = 'https://cultureforchange.net'
  */
 export const revalidate = 86400
 
+/**
+ * ΤΟ ΙΔΙΟ ΠΑΡΑΘΥΡΟ ΠΕΡΝΑΕΙ ΚΑΙ ΣΤΑ FETCH ΑΠΟ ΜΕΣΑ.
+ *
+ * Το revalidate μιας διαδρομής στο Next γίνεται το ΕΛΑΧΙΣΤΟ ανάμεσα στη δική
+ * της τιμή και σε κάθε fetch που κάνει. Χωρίς αυτό, το 86400 από πάνω
+ * ακυρωνόταν από τα 300 δευτερόλεπτα που ορίζει το lib/strapi για όλες τις
+ * αναγνώσεις — και ο χάρτης συνέχιζε να ξαναχτίζεται κάθε πέντε λεπτά.
+ */
+const DAY = 86400
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
@@ -37,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const dynamicPages: MetadataRoute.Sitemap = []
 
   try {
-    const projectsResponse = await getProjects()
+    const projectsResponse = await getProjects(DAY)
     const projects: Project[] = projectsResponse.data || []
 
     for (const project of projects) {
@@ -50,7 +60,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
       // Fetch full project with entries to get public ones
       try {
-        const fullProjectResponse = await getProjectBySlug(project.slug)
+        const fullProjectResponse = await getProjectBySlug(project.slug, DAY)
         const fullProject = fullProjectResponse.data?.[0]
         if (fullProject?.project_entries) {
           const publicEntries = fullProject.project_entries.filter(
@@ -75,7 +85,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Add activity detail pages
   try {
-    const activitiesResponse = await getActivities()
+    const activitiesResponse = await getActivities(DAY)
     const activities: Activity[] = activitiesResponse.data || []
     for (const activity of activities) {
       const slug = activity.Slug || activity.documentId || activity.id
@@ -103,7 +113,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const RECRAWL_UNTIL = new Date('2026-07-03')
   const now = new Date()
   try {
-    const membersResponse = await getMembers()
+    const membersResponse = await getMembers(DAY)
     const members = membersResponse.data || []
     for (const member of members) {
       if (member.HideProfile) continue

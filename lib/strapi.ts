@@ -41,7 +41,18 @@ async function fetchStrapi(endpoint: string, options: RequestInit = {}) {
    * εβδομάδα. Ισχύει ΜΟΝΟ για αναγνώσεις — μια εγγραφή δεν κρατιέται ποτέ.
    */
   const isRead = !options.method || String(options.method).toUpperCase() === 'GET'
-  const caching = isServer && isRead ? { next: { revalidate: 300 } } : {}
+  /**
+   * Ο ΚΑΛΩΝ ΜΠΟΡΕΙ ΝΑ ΖΗΤΗΣΕΙ ΜΕΓΑΛΥΤΕΡΟ ΠΑΡΑΘΥΡΟ — ΚΑΙ ΠΡΕΠΕΙ.
+   *
+   * Στο Next το revalidate μιας διαδρομής γίνεται το ΕΛΑΧΙΣΤΟ ανάμεσα στη
+   * δική της τιμή και σε ΚΑΘΕ fetch που κάνει μέσα της. Ο χάρτης ιστότοπου
+   * δήλωνε 86400 και ξαναχτιζόταν κάθε 300 δευτερόλεπτα, επειδή αυτά τα 300
+   * ήταν γραμμένα εδώ για όλους — το είδα ως `x-vercel-cache: STALE` με
+   * ηλικία 47 λεπτών (18/10/2026). Η σταθερά μου ακύρωνε τη διόρθωσή μου.
+   */
+  const caching = isServer && isRead
+    ? { next: (options as any).next ?? { revalidate: 300 } }
+    : {}
 
   try {
     const response = await fetch(url, {
@@ -90,10 +101,10 @@ async function fetchStrapiAll(endpoint: string, options: RequestInit = {}) {
 /**
  * Get all activities
  */
-export async function getActivities() {
+export async function getActivities(revalidate?: number) {
   // Strapi v5: Explicitly populate Visuals field (media fields need explicit population)
   // Set pagination limit to 1000 to get all activities
-  return fetchStrapiAll('/activities?populate=Visuals');
+  return fetchStrapiAll('/activities?populate=Visuals', revalidate ? { next: { revalidate } } : {});
 }
 
 /**
@@ -168,8 +179,8 @@ export async function getOpenCallById(idOrSlug: string | number) {
 /**
  * Get all projects, ordered by sort_order
  */
-export async function getProjects() {
-  return fetchStrapiAll('/projects?populate[cover_image]=true&populate[partners][populate]=logo&populate[external_links]=true&sort=sort_order:asc');
+export async function getProjects(revalidate?: number) {
+  return fetchStrapiAll('/projects?populate[cover_image]=true&populate[partners][populate]=logo&populate[external_links]=true&sort=sort_order:asc', revalidate ? { next: { revalidate } } : {});
 }
 
 /**
@@ -182,8 +193,8 @@ export async function getFeaturedProjects() {
 /**
  * Get a single project by slug with all relations populated
  */
-export async function getProjectBySlug(slug: string) {
-  return fetchStrapi(`/projects?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[cover_image]=true&populate[project_images]=true&populate[partners][populate]=logo&populate[external_links]=true&populate[project_entries][populate][cover_image]=true&populate[supporters_banner_light]=true&populate[supporters_banner_dark]=true`);
+export async function getProjectBySlug(slug: string, revalidate?: number) {
+  return fetchStrapi(`/projects?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[cover_image]=true&populate[project_images]=true&populate[partners][populate]=logo&populate[external_links]=true&populate[project_entries][populate][cover_image]=true&populate[supporters_banner_light]=true&populate[supporters_banner_dark]=true`, revalidate ? { next: { revalidate } } : {});
 }
 
 /**
@@ -213,7 +224,7 @@ export async function getPageBySlug(slug: string) {
  * single call to a collection with >100 entries silently drops the overflow.
  * This loops until `meta.pagination.total` is satisfied.
  */
-async function fetchAllPaginated(basePath: string, pageSize = 100) {
+async function fetchAllPaginated(basePath: string, pageSize = 100, revalidate?: number) {
   const sep = basePath.includes('?') ? '&' : '?'
   const collected: any[] = []
   let start = 0
@@ -222,7 +233,8 @@ async function fetchAllPaginated(basePath: string, pageSize = 100) {
 
   while (start < total) {
     const page = await fetchStrapi(
-      `${basePath}${sep}pagination[start]=${start}&pagination[limit]=${pageSize}&pagination[withCount]=true`
+      `${basePath}${sep}pagination[start]=${start}&pagination[limit]=${pageSize}&pagination[withCount]=true`,
+      revalidate ? { next: { revalidate } } as any : {}
     )
     const rows = page?.data || []
     collected.push(...rows)
@@ -267,8 +279,8 @@ export function sanitizeNestedMembers(entity: Record<string, any> | null | undef
 /**
  * Get all members (paginated — Strapi caps single-page responses at 100)
  */
-export async function getMembers() {
-  const response = await fetchAllPaginated('/members?populate=*');
+export async function getMembers(revalidate?: number) {
+  const response = await fetchAllPaginated('/members?populate=*', 100, revalidate);
   (response.data || []).forEach(sanitizeMember);
   return response;
 }
