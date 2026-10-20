@@ -9,7 +9,7 @@ import {
 } from '@/lib/campaignBlocks'
 import { toPageSkin } from '@/lib/pageSkin'
 import {
-  CONTENT_TYPES, type ContentTypeKey, validateContent, articleHtmlFor,
+  CONTENT_TYPES, type ContentTypeKey, type ContentType, validateContent, articleHtmlFor,
   pageChromeHtml, contentRecord,
 } from '@/lib/ocContent'
 
@@ -39,19 +39,61 @@ export const maxDuration = 60
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
-async function strapi(path: string, method: string = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${STRAPI_API_TOKEN}`,
-      ...(data !== undefined && { 'Content-Type': 'application/json' }),
-    },
-    ...(data !== undefined && { body: JSON.stringify({ data }) }),
-    cache: 'no-store',
-  })
+/**
+ * ΤΟ ΔΙΚΤΥΟ ΠΟΥ ΔΕΝ ΑΠΑΝΤΗΣΕ ΔΕΝ ΕΙΝΑΙ ΤΟ ΙΔΙΟ ΜΕ ΤΟ STRAPI ΠΟΥ ΕΙΠΕ ΟΧΙ.
+ *
+ * 20/10/2026: η δημοσίευση έσκασε με `ECONNRESET` στο διάβασμα — η σύνδεση
+ * πέθανε πριν προλάβει να φτάσει το αίτημα. Μετρημένο: τίποτα δεν γράφτηκε
+ * στο Strapi, και δώδεκα αμέσως επόμενες εγγραφές πέρασαν καθαρά. Είναι
+ * παλιωμένη πρίζα της δεξαμενής συνδέσεων, όχι μέγεθος και όχι δεδομένα: οι
+ * προεπισκοπήσεις δεν αγγίζουν το Strapi, οπότε η σύνδεση κάθεται αδρανής
+ * όσο γράφει ο συντάκτης και σπάει ακριβώς στην πρώτη αποθήκευση.
+ *
+ * Στην οθόνη έβγαινε «Εσωτερικό σφάλμα» — το χειρότερο δυνατό μήνυμα, γιατί
+ * στέλνει τον συντάκτη να ψάξει το κείμενό του για το λάθος.
+ */
+class StrapiUnreachable extends Error {
+  constructor(readonly cause?: unknown) { super('Το Strapi δεν απάντησε') }
+}
+
+const isTransportFailure = (err: any): boolean =>
+  err instanceof TypeError || !!err?.cause?.code
+
+async function strapiOnce(path: string, method: string, data?: any) {
+  let res: Response
+  try {
+    res = await fetch(`${STRAPI_URL}/api${path}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${STRAPI_API_TOKEN}`,
+        ...(data !== undefined && { 'Content-Type': 'application/json' }),
+      },
+      ...(data !== undefined && { body: JSON.stringify({ data }) }),
+      cache: 'no-store',
+    })
+  } catch (err) {
+    if (isTransportFailure(err)) throw new StrapiUnreachable(err)
+    throw err
+  }
   let json: any = null
   try { json = await res.json() } catch { /* 204 */ }
   return { ok: res.ok, status: res.status, json }
+}
+
+/**
+ * Το POST ΔΕΝ ξαναστέλνεται στα τυφλά: μια αποτυχία στο διάβασμα δεν λέει αν
+ * το Strapi πρόλαβε να γράψει, και μια τυφλή επανάληψη φτιάχνει δεύτερο
+ * άρθρο. Η δεύτερη ευκαιρία του ζητιέται στο `save`, αφού ρωτηθεί πρώτα αν
+ * η εγγραφή υπάρχει. Τα υπόλοιπα είναι ακίνδυνα να επαναληφθούν.
+ */
+async function strapi(path: string, method: string = 'GET', data?: any) {
+  try {
+    return await strapiOnce(path, method, data)
+  } catch (err) {
+    if (!(err instanceof StrapiUnreachable) || method === 'POST') throw err
+    await new Promise(r => setTimeout(r, 400))
+    return await strapiOnce(path, method, data)
+  }
 }
 
 /**
@@ -107,6 +149,46 @@ async function authorize(write: boolean) {
       { status: 403 }) }
   }
   return { memberId: decoded.memberId, activeSeat }
+}
+
+/**
+ * Η ΔΕΥΤΕΡΗ ΕΥΚΑΙΡΙΑ ΤΗΣ ΔΗΜΙΟΥΡΓΙΑΣ, ΜΕ ΜΑΡΤΥΡΑ.
+ *
+ * Όταν η σύνδεση πεθάνει στο διάβασμα, δεν ξέρουμε αν το Strapi πρόλαβε να
+ * γράψει· μια τυφλή επανάληψη φτιάχνει δεύτερο άρθρο που μόνο άνθρωπος θα
+ * προσέξει. Ρωτάμε πρώτα: υπάρχει ήδη εγγραφή με αυτό το slug;
+ *
+ *  · Υπάρχει → το πρώτο αίτημα ΕΙΧΕ περάσει. Επιτυχία, μία φορά.
+ *  · Δεν υπάρχει → δεν έφτασε ποτέ. Ξαναστέλνεται με ήσυχη συνείδηση.
+ *
+ * Αν ΚΑΙ η ερώτηση πέσει, δεν ξαναστέλνεται τίποτα: άγνωστη κατάσταση
+ * λέγεται, δεν μαντεύεται.
+ */
+async function createWithWitness(t: ContentType, record: Record<string, any>) {
+  try {
+    return await strapiOnce(`/${t.path}`, 'POST', record)
+  } catch (err) {
+    if (!(err instanceof StrapiUnreachable)) throw err
+
+    const slug = String(record[t.slugField] || '')
+    const found = slug ? await landedAlready(t, slug) : null
+    if (found === true) return { ok: true, status: 200, json: { data: null } }
+    if (found === null) throw err   // δεν απαντά ούτε στην ερώτηση — σταματάμε
+
+    await new Promise(r => setTimeout(r, 400))
+    return await strapiOnce(`/${t.path}`, 'POST', record)
+  }
+}
+
+/** true = υπάρχει · false = δεν υπάρχει · null = δεν μπορέσαμε να δούμε */
+async function landedAlready(t: ContentType, slug: string): Promise<boolean | null> {
+  try {
+    const r = await strapi(
+      `/${t.path}?filters[${t.slugField}][$eq]=${encodeURIComponent(slug)}`
+      + `&fields[0]=${t.slugField}&pagination[limit]=1&status=draft`)
+    if (!r.ok || !Array.isArray(r.json?.data)) return null
+    return r.json.data.length > 0
+  } catch { return null }
 }
 
 const typeOf = (v: unknown): ContentTypeKey | null =>
@@ -222,7 +304,7 @@ export async function POST(request: NextRequest) {
 
       const r = id
         ? await strapi(`/${t.path}/${encodeURIComponent(id)}`, 'PUT', record)
-        : await strapi(`/${t.path}`, 'POST', { ...record, publishedAt: new Date().toISOString() })
+        : await createWithWitness(t, { ...record, publishedAt: new Date().toISOString() })
 
       if (!r.ok) {
         return NextResponse.json({
@@ -237,6 +319,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Μη έγκυρη ενέργεια' }, { status: 400 })
   } catch (err) {
     console.error('oc/content POST failed:', err)
+    /* «Εσωτερικό σφάλμα» για αποτυχία δικτύου στέλνει τον συντάκτη να ψάξει
+       το κείμενό του. Το πρόβλημα δεν είναι δικό του — και δεν χάθηκε
+       τίποτα, γιατί το αίτημα δεν έφτασε ποτέ. */
+    if (err instanceof StrapiUnreachable) {
+      return NextResponse.json({
+        error: 'Το Strapi δεν απάντησε — τίποτα δεν αποθηκεύτηκε και τίποτα δεν χάθηκε. '
+          + 'Ξαναπάτησε Δημοσίευση σε λίγο.',
+      }, { status: 503 })
+    }
     return NextResponse.json({ error: 'Εσωτερικό σφάλμα' }, { status: 500 })
   }
 }
