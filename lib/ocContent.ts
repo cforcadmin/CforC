@@ -24,6 +24,12 @@ export interface ContentField {
   options?: Array<{ value: string; label: string }>
   /** Πεδίο media που δέχεται ΠΟΛΛΑ αρχεία — το Strapi θέλει πίνακα, όχι id */
   multiple?: boolean
+  /**
+   * Λίστα χωρισμένη με κόμματα. Η οθόνη τη δείχνει ως φυσαλίδες και το
+   * Enter/κόμμα κλείνει την τρέχουσα — αλλιώς κανείς δεν ξέρει αν το κενό
+   * μετά το κόμμα μετράει, και οι ετικέτες βγαίνουν με κενά μπροστά.
+   */
+  chips?: boolean
   /** Τι κάνει το πεδίο στη ΣΕΛΙΔΑ — ο συντάκτης δεν μαντεύει */
   hint?: string
 }
@@ -39,6 +45,8 @@ export interface ContentType {
   englishField?: boolean
   sort: string
   listFields: string[]
+  /** Το πεδίο με το οποίο φιλτράρεται η λίστα στο OC — όπως στο site */
+  filterField?: { name: string; label: string }
   fields: ContentField[]
 }
 
@@ -53,6 +61,7 @@ export const CONTENT_TYPES: Record<ContentTypeKey, ContentType> = {
     englishField: true,
     sort: 'Date:desc',
     listFields: ['Title', 'Date', 'Category', 'Slug', 'Featured'],
+    filterField: { name: 'Category', label: 'Κατηγορία' },
     fields: [
       { name: 'Title', label: 'Τίτλος', kind: 'text', required: true },
       { name: 'EngTitle', label: 'Τίτλος (EN)', kind: 'text',
@@ -61,8 +70,8 @@ export const CONTENT_TYPES: Record<ContentTypeKey, ContentType> = {
         hint: 'Ορίζει αν το άρθρο μπαίνει στα «Τρέχοντα» ή στα «Προηγούμενα».' },
       { name: 'Category', label: 'Κατηγορία', kind: 'text',
         hint: 'Γίνεται φίλτρο με κλικ στην πίσω όψη της κάρτας.' },
-      { name: 'Tags', label: 'Ετικέτες', kind: 'text',
-        hint: 'Χωρισμένες με κόμμα. Κάθε μία γίνεται φίλτρο.' },
+      { name: 'Tags', label: 'Ετικέτες', kind: 'text', chips: true,
+        hint: 'Enter ή κόμμα για την επόμενη. Κάθε μία γίνεται φίλτρο στη σελίδα Νέα.' },
       { name: 'Excerpt', label: 'Περίληψη', kind: 'textarea', required: true,
         hint: 'Τρεις χρήσεις: πίσω όψη κάρτας · περιγραφή στο Google · αναζήτηση στο site.' },
       { name: 'ExcerptEn', label: 'Περίληψη (EN)', kind: 'textarea' },
@@ -84,6 +93,7 @@ export const CONTENT_TYPES: Record<ContentTypeKey, ContentType> = {
     slugField: 'slug',
     sort: 'sort_order:asc',
     listFields: ['title', 'slug', 'project_status', 'sort_order', 'featured'],
+    filterField: { name: 'project_status', label: 'Κατάσταση' },
     fields: [
       { name: 'title', label: 'Τίτλος', kind: 'text', required: true },
       { name: 'CforC_project_role', label: 'Ρόλος της CforC', kind: 'text',
@@ -95,8 +105,10 @@ export const CONTENT_TYPES: Record<ContentTypeKey, ContentType> = {
       ] },
       { name: 'start_date', label: 'Από', kind: 'date' },
       { name: 'end_date', label: 'Έως', kind: 'date' },
-      { name: 'category', label: 'Κατηγορίες', kind: 'text', hint: 'Χωρισμένες με κόμμα.' },
-      { name: 'project_partners', label: 'Εταίροι', kind: 'text', hint: 'Χωρισμένοι με κόμμα.' },
+      { name: 'category', label: 'Κατηγορίες', kind: 'text', chips: true,
+        hint: 'Enter ή κόμμα για την επόμενη.' },
+      { name: 'project_partners', label: 'Εταίροι', kind: 'text', chips: true,
+        hint: 'Enter ή κόμμα για τον επόμενο.' },
       { name: 'project_link', label: 'Σύνδεσμος έργου', kind: 'text' },
       { name: 'cover_image', label: 'Εικόνα εξωφύλλου', kind: 'media', required: true,
         hint: 'Η μπροστινή όψη της κάρτας του έργου.' },
@@ -117,10 +129,12 @@ export const CONTENT_TYPES: Record<ContentTypeKey, ContentType> = {
     slugField: 'slug',
     sort: 'publication_date:desc',
     listFields: ['title', 'slug', 'visibility', 'publication_date'],
+    filterField: { name: 'visibility', label: 'Ορατότητα' },
     fields: [
       { name: 'title', label: 'Τίτλος', kind: 'text', required: true },
       { name: 'category', label: 'Κατηγορία', kind: 'text' },
-      { name: 'tags', label: 'Ετικέτες', kind: 'text', hint: 'Χωρισμένες με κόμμα.' },
+      { name: 'tags', label: 'Ετικέτες', kind: 'text', chips: true,
+        hint: 'Enter ή κόμμα για την επόμενη.' },
       { name: 'entry_link', label: 'Σύνδεσμος', kind: 'text' },
       { name: 'visibility', label: 'Ορατότητα', kind: 'select', options: [
         { value: 'public', label: 'Δημόσια' },
@@ -229,4 +243,95 @@ export function toStrapiFields(
     }
   }
   return out
+}
+
+/**
+ * Η ΚΟΡΥΦΗ ΤΗΣ ΣΕΛΙΔΑΣ, ΓΙΑ ΤΗΝ ΠΡΟΕΠΙΣΚΟΠΗΣΗ.
+ *
+ * Το άρθρο από μόνο του δεν δείχνει τι βλέπει ο επισκέπτης: η σελίδα ξεκινά
+ * με κοραλί ήρωα και τον τίτλο, και από κάτω τα πλακίδια με ημερομηνία,
+ * κατηγορία και ετικέτες. Χωρίς αυτά η προεπισκόπηση κρίνεται στο κενό.
+ *
+ * Είναι ΑΝΑΠΑΡΑΣΤΑΣΗ, όχι η ίδια η σελίδα: εκεί τα φτιάχνει ο React με
+ * Tailwind, που δεν υπάρχει μέσα στο πλαίσιο της προεπισκόπησης. Αντιγράφει
+ * μεγέθη και χρώματα από ActivityDetailClient/ProjectDetail/EntryDetail.
+ */
+export function pageChromeHtml(key: ContentTypeKey, fields: Record<string, any>): string {
+  const t = CONTENT_TYPES[key]
+  const esc = (v: any) => String(v ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
+  const title = esc(fields[t.titleField] || `(χωρίς τίτλο)`)
+  const pills: string[] = []
+
+  const dateVal = fields.Date || fields.publication_date
+  if (dateVal) {
+    const label = greekDate(String(dateVal))
+    if (label) pills.push(pill(esc(label), 'date'))
+  }
+  if (key === 'projects' && fields.project_status) {
+    const label = t.fields.find(f => f.name === 'project_status')
+      ?.options?.find(o => o.value === fields.project_status)?.label
+    if (label) pills.push(pill(esc(label), 'accent'))
+  }
+  if (key === 'entries' && fields.visibility === 'private') {
+    pills.push(pill('Ιδιωτική — δεν φαίνεται στο site', 'accent'))
+  }
+  const cat = fields.Category || (key === 'projects' ? fields.category : '')
+  for (const c of splitList(cat)) pills.push(pill(esc(c), 'accent'))
+  for (const tag of splitList(fields.Tags || fields.tags)) pills.push(pill(esc(tag), 'tag'))
+
+  return `<div style="background-color:#FF8B6A;border-radius:0 0 24px 24px;padding:40px 32px;">
+  <div style="font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:1.2;font-weight:bold;color:#2D2D2D;">${title}</div>
+</div>
+<div style="padding:22px 32px 4px 32px;display:flex;flex-wrap:wrap;gap:8px;">${pills.join('')}</div>`
+}
+
+/**
+ * ΗΜΕΡΟΜΗΝΙΑ ΧΩΡΙΣ ΩΡΑ ΔΕΝ ΕΧΕΙ ΖΩΝΗ — ΚΑΙ ΔΕΝ ΠΡΕΠΕΙ ΝΑ ΑΠΟΚΤΗΣΕΙ.
+ *
+ * Το `new Date('2026-11-14')` το διαβάζει ως μεσάνυχτα UTC. Σε μηχάνημα πίσω
+ * από το UTC, το toLocaleDateString γυρίζει την ΠΡΟΗΓΟΥΜΕΝΗ μέρα: γράφτηκε
+ * 14 Νοεμβρίου και η προεπισκόπηση έδειχνε 13. Τα μέρη διαβάζονται αυτούσια.
+ *
+ * Μια ώρα (publication_date) είναι ΣΤΙΓΜΗ και σωστά μεταφράζεται σε τοπική
+ * ώρα — γι' αυτό κρατιέται μόνο το ημερολογιακό μέρος της.
+ */
+export function greekDate(value: string): string {
+  const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!m) return ''
+  const [, y, mo, d] = m
+  const months = ['Ιανουαρίου', 'Φεβρουαρίου', 'Μαρτίου', 'Απριλίου', 'Μαΐου', 'Ιουνίου',
+    'Ιουλίου', 'Αυγούστου', 'Σεπτεμβρίου', 'Οκτωβρίου', 'Νοεμβρίου', 'Δεκεμβρίου']
+  const name = months[Number(mo) - 1]
+  return name ? `${Number(d)} ${name} ${y}` : ''
+}
+
+const splitList = (v: any): string[] =>
+  String(v ?? '').split(',').map(x => x.trim()).filter(Boolean)
+
+/**
+ * ΤΟ ΧΡΩΜΑ ΤΟΥ ΚΕΙΜΕΝΟΥ ΑΚΟΛΟΥΘΕΙ ΤΟ ΦΟΝΤΟ ΤΟΥ, ΟΧΙ ΤΟ ΘΕΜΑ.
+ *
+ * Πρώτη εκδοχή έβαζε σταθερό ανοιχτό φόντο (κοραλί απόχρωση) και κείμενο
+ * `var(--cfc-ink)`. Στο σκοτεινό θέμα το ink γίνεται ΑΝΟΙΧΤΟ — ανοιχτά
+ * γράμματα πάνω σε ανοιχτό πλακίδιο, δηλαδή αόρατα. Φάνηκε μόνο κοιτώντας
+ * την προεπισκόπηση· κανένα τεστ δεν θα το έπιανε.
+ *
+ * Άρα: πλακίδιο με ΕΠΩΝΥΜΟ φόντο κρατά σκούρα γράμματα πάντα (όπως η κοραλί
+ * ζώνη), ενώ το ουδέτερο πλακίδιο αλλάζει μαζί με το θέμα.
+ */
+function pill(text: string, tone: 'date' | 'accent' | 'tag'): string {
+  const base = 'display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:13px;'
+    + 'padding:7px 14px;border-radius:999px;'
+  if (tone === 'accent') {
+    return `<span style="${base}background-color:#FFE7DF;color:#2D2D2D;`
+      + `border:1px solid #2D2D2D;">${text}</span>`
+  }
+  if (tone === 'date') {
+    return `<span style="${base}background-color:var(--cfc-tint,#FFF3EC);`
+      + `color:var(--cfc-ink,#2D2D2D);border:1px solid var(--cfc-ink,#2D2D2D);">${text}</span>`
+  }
+  return `<span style="${base}background-color:transparent;`
+    + `color:var(--cfc-ink,#2D2D2D);border:1px solid var(--cfc-ink,#2D2D2D);">${text}</span>`
 }

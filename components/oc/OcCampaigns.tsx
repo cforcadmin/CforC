@@ -91,7 +91,8 @@ type Meta = {
 const CARD = 'bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8 border border-gray-200 dark:border-gray-600'
 const EYEBROW = 'text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400'
 const FIELD = 'w-full min-h-11 px-4 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-base'
-const CONTROL = 'h-11 rounded-full px-4 text-sm glass-control'
+/** Το κοινό γυάλινο χειριστήριο — αναζήτηση, επιλογείς, φίλτρα παντού στο OC */
+export const CONTROL = 'h-11 rounded-full px-4 text-sm glass-control'
 const CHIP = 'px-3 py-1.5 rounded-full border text-sm min-h-11 sm:min-h-0 inline-flex items-center gap-1.5'
 /**
  * Έτοιμα κοινά. Σταθερά στον κώδικα — αν χρειαστεί νέο, μπαίνει εδώ.
@@ -2049,7 +2050,8 @@ export function BlockEditor({ blocks, setBlocks, meta, kind, onReveal }: {
   return (
     <div className={CARD}>
       <div className="flex flex-wrap items-baseline gap-2 mb-1">
-        <h3 className={EYEBROW}>ΣΩΜΑ ΜΗΝΥΜΑΤΟΣ</h3>
+        {/* Σε σελίδα του site δεν υπάρχει «μήνυμα»: το ίδιο κουτί γράφει άρθρο. */}
+        <h3 className={EYEBROW}>{kind === 'page' ? 'ΠΕΡΙΕΧΟΜΕΝΟ' : 'ΣΩΜΑ ΜΗΝΥΜΑΤΟΣ'}</h3>
         <span className="ml-auto text-sm text-gray-600 dark:text-gray-400 tabular-nums">
           {blocks.filter(b => !b.hidden).length} μπλοκ
           {blocks.some(b => b.hidden) && ` · ${blocks.filter(b => b.hidden).length} κρυφά`}
@@ -2071,7 +2073,9 @@ export function BlockEditor({ blocks, setBlocks, meta, kind, onReveal }: {
         στοιχεία και παραλλαγές.
       </p>
 
-      {blocks.length === 0 && (
+      {/* Χωρίς έτοιμα σχέδια η επικεφαλίδα υποσχόταν κάτι που δεν ακολουθούσε:
+          τα σχέδια των email μιλούν σε παραλήπτη και δεν ταιριάζουν σε άρθρο. */}
+      {blocks.length === 0 && (kind === 'newsletter' ? (meta.newsletterPresets || []) : meta.presets).length > 0 && (
         <div className="grid gap-2 mb-4">
           <span className="text-sm font-semibold">Ξεκίνα από ένα έτοιμο σχέδιο</span>
           <div className="flex flex-wrap gap-2">

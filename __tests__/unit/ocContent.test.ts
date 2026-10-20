@@ -5,7 +5,7 @@
  * στα Νέα και `title` στα Έργα. Μια «τακτοποίηση» εδώ θα έσπαγε κάθε
  * υπάρχουσα εγγραφή — γι' αυτό υπάρχει τεστ που τα καρφώνει.
  */
-import { CONTENT_TYPES, slugify, validateContent, articleHtmlFor, toStrapiFields } from '@/lib/ocContent'
+import { CONTENT_TYPES, slugify, validateContent, articleHtmlFor, toStrapiFields, greekDate, pageChromeHtml } from '@/lib/ocContent'
 
 describe('slugify', () => {
   it('μεταγράφει ελληνικά, αφού πρώτα βγάλει τους τόνους', () => {
@@ -129,5 +129,57 @@ describe('toStrapiFields', () => {
   it('αγνοεί ό,τι δεν ανήκει στο είδος — καμία έκπληξη στο Strapi', () => {
     expect(toStrapiFields('projects', { title: 'Τ', Html: '<p>x</p>', ζιζάνιο: 1 }))
       .toEqual({ title: 'Τ' })
+  })
+})
+
+describe('greekDate', () => {
+  /**
+   * ΤΟ ΠΕΡΙΣΤΑΤΙΚΟ (20/10/2026): γράφτηκε 14/11 και η προεπισκόπηση έδειχνε
+   * «13 Νοεμβρίου». Το new Date('2026-11-14') είναι μεσάνυχτα UTC· σε μηχάνημα
+   * πίσω από το UTC — το Mac είναι στο −03:00 — η τοπική μέρα είναι η
+   * προηγούμενη. Ημερομηνία χωρίς ώρα δεν έχει ζώνη και δεν πρέπει να αποκτήσει.
+   */
+  it('κρατά τη μέρα που γράφτηκε, ό,τι ζώνη κι αν έχει το μηχάνημα', () => {
+    expect(greekDate('2026-11-14')).toBe('14 Νοεμβρίου 2026')
+    expect(greekDate('2026-01-01')).toBe('1 Ιανουαρίου 2026')
+    expect(greekDate('2026-12-31')).toBe('31 Δεκεμβρίου 2026')
+  })
+  it('δέχεται και στιγμή, κρατώντας το ημερολογιακό της μέρος', () => {
+    expect(greekDate('2026-05-09T21:30:00.000Z')).toBe('9 Μαΐου 2026')
+  })
+  it('δεν βγάζει τίποτα από σκουπίδια', () => {
+    expect(greekDate('')).toBe('')
+    expect(greekDate('αύριο')).toBe('')
+  })
+})
+
+describe('pageChromeHtml', () => {
+  it('δείχνει τίτλο, ημερομηνία, κατηγορία και ετικέτες — την κορυφή της σελίδας', () => {
+    const html = pageChromeHtml('news', {
+      Title: 'Ο τίτλος', Date: '2026-11-14', Category: 'Δράσεις', Tags: 'δικτύωση, Αθήνα',
+    })
+    expect(html).toContain('Ο τίτλος')
+    expect(html).toContain('14 Νοεμβρίου 2026')
+    expect(html).toContain('Δράσεις')
+    expect(html).toContain('δικτύωση')
+    expect(html).toContain('Αθήνα')
+  })
+
+  /**
+   * Πλακίδιο με ΕΠΩΝΥΜΟ (ανοιχτό) φόντο κρατά σκούρα γράμματα πάντα. Με
+   * var(--cfc-ink) γινόταν ανοιχτό σε ανοιχτό στο σκοτεινό θέμα — αόρατο.
+   */
+  it('το πλακίδιο κατηγορίας δεν εξαφανίζεται στο σκοτεινό θέμα', () => {
+    const html = pageChromeHtml('news', { Title: 'Τ', Category: 'Δράσεις' })
+    expect(html).toContain('background-color:#FFE7DF;color:#2D2D2D')
+  })
+
+  it('ξεφεύγει ό,τι γράφει ο συντάκτης', () => {
+    expect(pageChromeHtml('news', { Title: '<script>alert(1)</script>' }))
+      .not.toContain('<script>')
+  })
+
+  it('χωρίς τίτλο δεν βγάζει κενή κοραλί ζώνη χωρίς εξήγηση', () => {
+    expect(pageChromeHtml('news', {})).toContain('χωρίς τίτλο')
   })
 })

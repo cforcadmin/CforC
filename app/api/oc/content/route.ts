@@ -9,7 +9,7 @@ import {
 } from '@/lib/campaignBlocks'
 import { toPageSkin } from '@/lib/pageSkin'
 import {
-  CONTENT_TYPES, type ContentTypeKey, validateContent, articleHtmlFor, slugify, toStrapiFields,
+  CONTENT_TYPES, type ContentTypeKey, validateContent, articleHtmlFor, slugify, toStrapiFields, pageChromeHtml,
 } from '@/lib/ocContent'
 
 export const maxDuration = 60
@@ -152,11 +152,17 @@ export async function POST(request: NextRequest) {
      * το «η προεπισκόπηση δείχνει άλλο από το δημοσιευμένο».
      */
     if (action === 'preview') {
+      const article = articleHtmlFor({
+        title: String(body?.fields?.[t.titleField] || ''),
+        blocks, headerStyle: body?.headerStyle, annotate: body?.annotate !== false,
+      })
+      /* Με την κορυφή της σελίδας: τίτλος και πλακίδια. Χωρίς αυτά η
+         προεπισκόπηση δείχνει ένα άρθρο που αιωρείται, και δεν απαντά στην
+         ερώτηση «πώς θα φαίνεται». */
+      const chrome = body?.chrome === false
+        ? '' : pageChromeHtml(key, body?.fields || {})
       return NextResponse.json({
-        html: articleHtmlFor({
-          title: String(body?.fields?.[t.titleField] || ''),
-          blocks, headerStyle: body?.headerStyle, annotate: body?.annotate !== false,
-        }),
+        html: previewDocument(chrome + article, body?.theme === 'dark'),
       })
     }
 
@@ -215,4 +221,37 @@ export async function POST(request: NextRequest) {
     console.error('oc/content POST failed:', err)
     return NextResponse.json({ error: 'Εσωτερικό σφάλμα' }, { status: 500 })
   }
+}
+
+/**
+ * ΤΟ ΠΛΑΙΣΙΟ ΤΗΣ ΠΡΟΕΠΙΣΚΟΠΗΣΗΣ ΕΙΝΑΙ ΑΛΛΟ ΕΓΓΡΑΦΟ.
+ *
+ * Δεν βλέπει το globals.css ούτε την κλάση `.dark` του OC, οπότε οι
+ * μεταβλητές θέματος έπεφταν στις εφεδρείες τους — δηλαδή ΠΑΝΤΑ στα χρώματα
+ * του email. Σε σκοτεινό OC η προεπισκόπηση έβγαινε κατάλευκη και δεν
+ * απαντούσε στην ερώτηση «πώς θα φαίνεται».
+ *
+ * Οι τιμές είναι ΟΙ ΙΔΙΕΣ με το .cfc-article στο globals.css. Αν αλλάξουν
+ * εκεί, αλλάζουν κι εδώ — είναι το τίμημα του ξεχωριστού εγγράφου.
+ */
+function previewDocument(inner: string, dark: boolean): string {
+  const tokens = dark
+    ? `--cfc-surface:#1F2937;--cfc-tint:#273243;--cfc-ink:#F3F4F6;--cfc-ink-soft:#B6BCC4;`
+      + `--cfc-ink-muted:#949BA4;--cfc-line:#374151;--cfc-hairline:#3A4049;`
+      + `--cfc-invert-bg:#F3F4F6;--cfc-invert-fg:#111827;`
+    : `--cfc-surface:#FFFFFF;--cfc-tint:#F5F0EB;--cfc-ink:#2D2D2D;--cfc-ink-soft:#5A5A5A;`
+      + `--cfc-ink-muted:#8A8A8A;--cfc-line:#E5E7EB;--cfc-hairline:#E0D8D0;`
+      + `--cfc-invert-bg:#2D2D2D;--cfc-invert-fg:#FFFFFF;`
+  return `<!DOCTYPE html><html lang="el"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{${tokens}}
+  body{margin:0;background-color:${dark ? '#111827' : '#F5F0EB'};}
+  img{max-width:100%;height:auto;}
+  @media only screen and (max-width:663px){
+    .px{padding-left:24px !important;padding-right:24px !important;}
+    .h1{font-size:26px !important;line-height:32px !important;}
+    .stack{display:block !important;width:100% !important;}
+  }
+</style></head><body>${inner}</body></html>`
 }
