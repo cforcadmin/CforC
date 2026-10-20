@@ -6,7 +6,8 @@ import CampaignRichText from './CampaignRichText'
 import { OC_COMPOSE_REPLY, firstNameOf, replySubject, type ComposeReplyDetail } from '@/lib/ocComposeReply'
 import { moveUp, moveDown, moveToBottom, moveGroupTo, mergePaletteOrder, movePaletteChip } from '@/lib/blockOrder'
 import { PREVIEW_DESKTOP_WIDTH, fileSizeLabel } from '@/lib/campaignBlocks'
-import { usePreviewSize, PV_MIN_W, PV_MIN_H, PV_EDGE_GAP, PV_BASE_TRACK, PV_STICKY_TOP } from './usePreviewSize'
+import { PV_BASE_TRACK, PV_STICKY_TOP } from './usePreviewSize'
+import { usePreviewPane, OcPreviewPane } from './OcPreviewPane'
 import { canNewsletterFrom, bulkLabel } from '@/components/oc/ocPrefs'
 import type { NewsletterFooter } from '@/lib/campaignBlocks'
 
@@ -88,8 +89,8 @@ type Meta = {
   signer?: { name: string; role: string; email: string }
 }
 
-const CARD = 'bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8 border border-gray-200 dark:border-gray-600'
-const EYEBROW = 'text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400'
+export const CARD = 'bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8 border border-gray-200 dark:border-gray-600'
+export const EYEBROW = 'text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400'
 const FIELD = 'w-full min-h-11 px-4 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-base'
 /** Το κοινό γυάλινο χειριστήριο — αναζήτηση, επιλογείς, φίλτρα παντού στο OC */
 export const CONTROL = 'h-11 rounded-full px-4 text-sm glass-control'
@@ -253,177 +254,16 @@ export default function OcCampaigns({ desk }: { desk: string }) {
    * καμία μάχη z-index: η γραμμή αποστολής (sticky bottom-3) μένει από πάνω
    * από μόνη της, επειδή τίποτα δεν βγαίνει από τη ροή.
    */
-  const pv = usePreviewSize(520)
-  const asideRef = useRef<HTMLElement>(null)
+  /** Ο συνθέτης που ΜΕΤΑΚΙΝΕΙΤΑΙ αριστερά όταν μεγαλώνει η προεπισκόπηση */
   const sectionRef = useRef<HTMLElement>(null)
-  const [maximized, setMaximized] = useState(false)
 
-  /* Το ρυθμιζόμενο πλάτος ισχύει ΜΟΝΟ στη διάταξη δύο στηλών. Από κάτω η
-     σελίδα είναι μονόστηλη και το πλάτος το ορίζει η οθόνη — ένα inline
-     width θα κόλλαγε τη στήλη σε μέγεθος υπολογιστή μέσα σε κινητό. */
-  const [twoCol, setTwoCol] = useState(false)
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 1024px)')
-    const sync = () => setTwoCol(mq.matches)
-    sync()
-    mq.addEventListener('change', sync)
-    return () => mq.removeEventListener('change', sync)
-  }, [])
-
-  /** Μέχρι πού φτάνει δεξιά: ό,τι μένει ως την άκρη της οθόνης, με μια ανάσα */
-  const maxPreviewW = useCallback(() => {
-    const el = asideRef.current
-    if (!el) return PV_MIN_W
-    const left = el.getBoundingClientRect().left
-    return Math.max(PV_MIN_W, Math.round(window.innerWidth - left - PV_EDGE_GAP))
-  }, [])
-
-  /** Μέχρι πού φτάνει κάτω: ως το τέλος της ΟΡΑΤΗΣ οθόνης, αφήνοντας τη
-   *  γραμμή αποστολής και τη λεζάντα να χωρέσουν από κάτω. */
-  const maxPreviewH = useCallback(() => {
-    const el = asideRef.current
-    if (!el) return PV_MIN_H
-    // ΟΧΙ η τωρινή κορυφή: αν δεν έχεις κυλήσει ακόμη, το aside κάθεται
-    // χαμηλά και η αφαίρεση θα έβγαζε μηδέν — η «Μεγέθυνση» θα ΜΙΚΡΑΙΝΕ την
-    // προεπισκόπηση. Μετράμε με την κορυφή που θα έχει ΚΟΛΛΗΜΕΝΟ, δηλαδή με
-    // το ύψος που θα δει τελικά το μάτι.
-    const top = Math.min(el.getBoundingClientRect().top, PV_STICKY_TOP)
-    return Math.max(PV_MIN_H, Math.round(window.innerHeight - top - 150))
-  }, [])
-
-  /** Πόσο ακόμη μπορεί να σπρωχτεί ο συνθέτης ΑΡΙΣΤΕΡΑ: όσο περιθώριο έχει
-   *  μείνει αχρησιμοποίητο στα αριστερά της σελίδας, με μια ανάσα. Στο
-   *  `rect.left` προστίθεται η ΤΩΡΙΝΗ σπρωξιά, γιατί το rect τη μετρά ήδη. */
-  const maxPreviewL = useCallback(() => {
-    const el = sectionRef.current
-    if (!el) return 0
-    return Math.max(0, Math.round(el.getBoundingClientRect().left + pv.l - PV_EDGE_GAP))
-  }, [pv.l])
-
-  const dragPreview = useCallback((axis: 'w' | 'h' | 'l') => (e: React.PointerEvent<HTMLElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const el = asideRef.current
-    if (!el) return
-    const startX = e.clientX
-    const startY = e.clientY
-    const startW = Math.round(el.getBoundingClientRect().width)
-    const startH = pv.h
-    const limW = maxPreviewW()
-    const target = e.currentTarget
-    target.setPointerCapture(e.pointerId)
-
-    // Η τελευταία τιμή ταξιδεύει σε ΤΟΠΙΚΗ μεταβλητή και δίνεται ρητά στην
-    // persist: το state της React δεν έχει προλάβει να ενημερωθεί όταν
-    // σηκώνεται το δάχτυλο.
-    const startL = pv.l
-    const limL = maxPreviewL()
-    let finalW = startW
-    let finalH = startH
-    let finalL = startL
-    const move = (ev: PointerEvent) => {
-      if (axis === 'w') {
-        finalW = Math.min(limW, Math.max(PV_MIN_W, startW + ev.clientX - startX))
-        pv.setW(finalW)
-        setMaximized(false)
-      } else if (axis === 'l') {
-        // Προς τα ΑΡΙΣΤΕΡΑ μεγαλώνει: το dx είναι αρνητικό, το γυρίζουμε.
-        finalL = Math.min(limL, Math.max(0, startL + (startX - ev.clientX)))
-        // Ό,τι κερδίζει ο συνθέτης αριστερά, το παίρνει η προεπισκόπηση —
-        // τα μπλοκ ΜΕΤΑΚΙΝΟΥΝΤΑΙ, δεν στενεύουν.
-        finalW = Math.max(PV_MIN_W, startW + (finalL - startL))
-        pv.setL(finalL)
-        pv.setW(finalW)
-        setMaximized(false)
-      } else {
-        finalH = Math.max(PV_MIN_H, startH + ev.clientY - startY)
-        pv.setH(finalH)
-      }
-    }
-    const up = () => {
-      target.removeEventListener('pointermove', move)
-      target.removeEventListener('pointerup', up)
-      document.body.style.userSelect = ''
-      pv.persist(
-        axis === 'w' ? { w: finalW }
-        : axis === 'l' ? { w: finalW, l: finalL }
-        : { h: finalH })
-    }
-    document.body.style.userSelect = 'none'
-    target.addEventListener('pointermove', move)
-    target.addEventListener('pointerup', up)
-  }, [pv, maxPreviewW, maxPreviewL])
-
-  /** Πληκτρολόγιο: τα βέλη αλλάζουν μέγεθος κατά 24px — χωρίς ποντίκι */
-  const keyPreview = useCallback((axis: 'w' | 'h' | 'l') => (e: React.KeyboardEvent) => {
-    // Στη λαβή ΑΡΙΣΤΕΡΑ το «μεγαλώνει» είναι το ←, αντίστροφα από τη δεξιά
-    const dec = axis === 'h' ? 'ArrowUp' : axis === 'l' ? 'ArrowRight' : 'ArrowLeft'
-    const inc = axis === 'h' ? 'ArrowDown' : axis === 'l' ? 'ArrowLeft' : 'ArrowRight'
-    if (e.key !== dec && e.key !== inc) return
-    e.preventDefault()
-    const step = e.key === inc ? 24 : -24
-    if (axis === 'l') {
-      const nextL = Math.min(maxPreviewL(), Math.max(0, pv.l + step))
-      const curW = pv.w ?? Math.round(asideRef.current?.getBoundingClientRect().width ?? PV_MIN_W)
-      const nextW = Math.max(PV_MIN_W, curW + (nextL - pv.l))
-      pv.setL(nextL)
-      pv.setW(nextW)
-      setMaximized(false)
-      pv.persist({ w: nextW, l: nextL })
-    } else if (axis === 'w') {
-      const cur = pv.w ?? Math.round(asideRef.current?.getBoundingClientRect().width ?? PV_MIN_W)
-      const next = Math.min(maxPreviewW(), Math.max(PV_MIN_W, cur + step))
-      pv.setW(next)
-      setMaximized(false)
-      pv.persist({ w: next })
-    } else {
-      const next = Math.max(PV_MIN_H, pv.h + step)
-      pv.setH(next)
-      pv.persist({ h: next })
-    }
-  }, [pv, maxPreviewW, maxPreviewL])
-
-  /** «Μεγέθυνση»: όσο πάει δεξιά και όσο πάει κάτω μέσα στην ορατή οθόνη.
-   *  Δεύτερο πάτημα — πίσω στις προεπιλογές. */
-  const toggleMaximize = useCallback(() => {
-    if (maximized) {
-      setMaximized(false)
-      pv.reset()
-      return
-    }
-    // Και τα ΔΥΟ περιθώρια: όσο πάει δεξιά (maxPreviewW) συν όσο μπορεί να
-    // σπρωχτεί ο συνθέτης αριστερά (maxPreviewL). Το όριο της σπρωξιάς
-    // κρατά τα μπλοκ μέσα στην οθόνη — δεν φεύγουν ποτέ έξω αριστερά.
-    const l = maxPreviewL()
-    const w = maxPreviewW() + l
-    const h = maxPreviewH()
-    pv.setL(l)
-    pv.setW(w)
-    pv.setH(h)
-    setMaximized(true)
-    pv.persist({ w, h, l })
-  }, [maximized, pv, maxPreviewW, maxPreviewH, maxPreviewL])
-
-  /* Αν στενέψει το παράθυρο, το αποθηκευμένο πλάτος μπορεί να ξεπερνά την
-     οθόνη και να γεννήσει οριζόντια μπάρα κύλισης. Το μαζεύουμε. */
-  useEffect(() => {
-    if (!twoCol || (pv.w === undefined && pv.l === 0)) return
-    const onResize = () => {
-      // Πρώτα η σπρωξιά: σε στενό παράθυρο μπορεί να μην υπάρχει πια
-      // περιθώριο αριστερά, και τα μπλοκ θα έβγαιναν έξω από την οθόνη.
-      if (pv.l > 0) {
-        const limL = maxPreviewL()
-        if (pv.l > limL) {
-          pv.setW(Math.max(PV_MIN_W, (pv.w ?? PV_MIN_W) - (pv.l - limL)))
-          pv.setL(limL)
-        }
-      }
-      const lim = maxPreviewW() + pv.l
-      if (pv.w !== undefined && pv.w > lim) pv.setW(lim)
-    }
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [twoCol, pv, maxPreviewW, maxPreviewL])
+  /**
+   * Μέγεθος και λαβές της προεπισκόπησης — ΚΟΙΝΟΣ κώδικας με τον συνθέτη
+   * περιεχομένου του site. Ζούσε εδώ ως 150 γραμμές· όταν χρειάστηκε δεύτερη
+   * οθόνη, αντιγράφηκε και απέκλινε αμέσως.
+   */
+  const pane = usePreviewPane({ defaultH: 520, minWidth: 1024, sectionRef })
+  const { pv, twoCol, maximized } = pane
 
   const seen = useRef<Set<number>>(new Set())
   useEffect(() => {
@@ -1221,11 +1061,10 @@ export default function OcCampaigns({ desk }: { desk: string }) {
 
           <PositionRail count={blocks.length} cursor={cursor} here={hereSection} onGo={goToPosition} />
 
-          <aside ref={asideRef} className="relative lg:sticky min-w-0"
-            style={{ top: PV_STICKY_TOP, ...(twoCol && pv.w ? { width: pv.w } : {}) }}>
-            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-5 sm:p-6 border border-gray-200 dark:border-gray-600">
-              <div className="flex items-center justify-between gap-3 mb-3">
-                <h3 className={EYEBROW}>ΠΡΟΕΠΙΣΚΟΠΗΣΗ</h3>
+          <OcPreviewPane pane={pane} withLeftHandle
+            empty="Γράψε θέμα και πρόσθεσε ένα μπλοκ"
+            caption="Έτσι θα φτάσει. Το email είναι πάντα φωτεινό, ανεξάρτητα από το θέμα του OC."
+            actions={
                 <button
                   type="button"
                   onClick={copyForGmail}
@@ -1241,45 +1080,12 @@ export default function OcCampaigns({ desk }: { desk: string }) {
                 >
                   {copied === 'ok' ? 'Αντιγράφηκε ✓' : copied === 'err' ? 'Δεν αντιγράφηκε' : 'Αντιγραφή'}
                 </button>
-              </div>
-              {preview ? (
-                <PreviewFrame html={preview} onPick={focusBlock} goTo={goTo}
-                  height={pv.h} maximized={maximized} onToggleMaximize={toggleMaximize} />
-              ) : (
-                <div className="h-[32rem] rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 grid place-items-center text-sm text-gray-500">
-                  Γράψε θέμα και πρόσθεσε ένα μπλοκ
-                </div>
-              )}
-              <p className="mt-3 text-xs text-gray-600 dark:text-gray-400">
-                Έτσι θα φτάσει. Το email είναι πάντα φωτεινό, ανεξάρτητα από το θέμα του OC.
-              </p>
-            </div>
-
-            {/* Οι δύο λαβές: στη ΜΕΣΗ της δεξιάς άκρης για πλάτος, στη ΜΕΣΗ
-                της κάτω άκρης για ύψος. Διακριτικές αλλά ορατές — αν δεν
-                φαίνονται, δεν υπάρχουν. Μόνο σε lg: από κάτω η διάταξη είναι
-                μονόστηλη και το πλάτος το ορίζει η οθόνη. */}
-            {/* Η ΑΡΙΣΤΕΡΗ λαβή: μεγαλώνει την προεπισκόπηση προς τα αριστερά
-                σπρώχνοντας τα μπλοκ του γράμματος στο κενό περιθώριο. */}
-            <span role="separator" aria-orientation="vertical" aria-label="Πλάτος προεπισκόπησης προς τα αριστερά"
-              tabIndex={0} onPointerDown={dragPreview('l')} onKeyDown={keyPreview('l')}
-              className="hidden lg:flex justify-center absolute top-1/2 -left-1 h-16 w-3 -translate-y-1/2 cursor-ew-resize touch-none group"
-              style={{ touchAction: 'none' }}>
-              <span className="block h-full w-1 rounded-full bg-coral/40 group-hover:bg-coral group-focus-visible:bg-coral transition-colors" aria-hidden="true" />
-            </span>
-            <span role="separator" aria-orientation="vertical" aria-label="Αλλαγή πλάτους προεπισκόπησης"
-              tabIndex={0} onPointerDown={dragPreview('w')} onKeyDown={keyPreview('w')}
-              className="hidden lg:flex justify-center absolute top-1/2 -right-1 h-16 w-3 -translate-y-1/2 cursor-ew-resize touch-none group"
-              style={{ touchAction: 'none' }}>
-              <span className="block h-full w-1 rounded-full bg-coral/40 group-hover:bg-coral group-focus-visible:bg-coral transition-colors" aria-hidden="true" />
-            </span>
-            <span role="separator" aria-orientation="horizontal" aria-label="Αλλαγή ύψους προεπισκόπησης"
-              tabIndex={0} onPointerDown={dragPreview('h')} onKeyDown={keyPreview('h')}
-              className="hidden lg:flex items-center absolute left-1/2 -bottom-1 w-16 h-3 -translate-x-1/2 cursor-ns-resize touch-none group"
-              style={{ touchAction: 'none' }}>
-              <span className="block w-full h-1 rounded-full bg-coral/40 group-hover:bg-coral group-focus-visible:bg-coral transition-colors" aria-hidden="true" />
-            </span>
-          </aside>
+            }>
+            {preview ? (
+              <PreviewFrame html={preview} onPick={focusBlock} goTo={goTo}
+                height={pv.h} maximized={maximized} onToggleMaximize={pane.toggleMaximize} />
+            ) : null}
+          </OcPreviewPane>
         </section>
       )}
 
@@ -1661,7 +1467,8 @@ const BLOCK_DND = 'application/x-oc-block'
  * παλιό `-webkit-appearance:slider-vertical` ΔΕΝ μπαίνει: βάζει το ελάχιστο
  * κάτω, δηλαδή ανάποδα, και τα δύο μαζί δίνουν διαφορετική φορά ανά browser.
  */
-function PositionRail({ count, cursor, here, onGo }: {
+/** Ο ολισθητήρας θέσης ανάμεσα στον συνθέτη και την προεπισκόπηση */
+export function PositionRail({ count, cursor, here, onGo }: {
   count: number; cursor: number; here: string; onGo: (i: number) => void
 }) {
   /**
