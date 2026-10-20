@@ -370,7 +370,16 @@ describe('Αποστολή newsletter μέσω Sender', () => {
         return opts.createOk === false ? json({ error: 'no' }, 422) : json({ data: { id: 'snd42' } })
       }
       if (url.includes('api.sender.net')) return json({ data: [] })
-      if (url.includes('/api/newsletters')) { seen.archive = JSON.parse(init.body).data; return json({ data: { documentId: 'arch1' } }) }
+      if (url.includes('/api/newsletters')) {
+        /* POST = γράψιμο στο αρχείο· GET = η λίστα με ό,τι υπάρχει ήδη, που
+           διαβάζεται ΠΡΙΝ γραφτεί ώστε να μη μπει δεύτερο αντίγραφο και να
+           κλειδώσει το slug που μπαίνει μέσα στο ίδιο το γράμμα. */
+        if (init?.method === 'POST') {
+          seen.archive = JSON.parse(init.body).data
+          return opts.archiveOk === false ? json({ error: 'forbidden' }, 403) : json({ data: { documentId: 'arch1' } })
+        }
+        return json({ data: opts.existingArchive ?? [] })
+      }
       if (url.includes('/api/oc-campaigns') && (init?.method === 'POST' || init?.method === 'PUT')) {
         seen.strapi.push(JSON.parse(init.body).data); return json({ data: { documentId: 'c9' } })
       }
@@ -426,6 +435,79 @@ describe('Αποστολή newsletter μέσω Sender', () => {
     signedInAs('comms'); const seen = stub()
     await send({ audiences: ['paid'] })
     expect(seen.archive.Audience).toBe('members')
+  })
+
+  /**
+   * Η ΤΡΥΠΑ: ο παλιός έλεγχος ήταν `audiences.length === 1 && [0] === 'paid'`,
+   * άρα ένα τεύχος προς «μέλη ΚΑΙ εξωτερικούς» γραφόταν ως δημόσιο — ορατό
+   * χωρίς σύνδεση και ευρετηριάσιμο, ενώ περιέχει εσωτερικά νέα.
+   */
+  it('τεύχος προς μέλη ΚΑΙ εξωτερικούς μένει εσωτερικό', async () => {
+    signedInAs('comms'); const seen = stub()
+    await send({ audiences: ['paid', 'external'] })
+    expect(seen.archive.Audience).toBe('members')
+  })
+
+  it('το εξώφυλλο είναι η πρώτη εικόνα του τεύχους', async () => {
+    signedInAs('comms'); const seen = stub()
+    await send({ blocks: [
+      { type: 'text', html: '<p>εισαγωγή</p>' },
+      { type: 'image', mediaId: 1410, url: 'https://x/y.jpg' },
+      { type: 'image', mediaId: 1411, url: 'https://x/z.jpg' },
+    ] })
+    expect(seen.archive.Image).toBe(1410)
+  })
+
+  it('το slug είναι λατινικό και χωρίς χρονοσφραγίδα', async () => {
+    signedInAs('comms'); const seen = stub()
+    await send()
+    expect(seen.archive.Slug).toBe('teyhos-oktovrioy')
+  })
+
+  /**
+   * Η σελίδα του αρχείου ΔΕΝ είναι γράμμα: οι ετικέτες απεγγραφής τις γεμίζει
+   * ο Sender ανά παραλήπτη, οπότε σε μια σελίδα θα έμεναν ορατές αυτούσιες.
+   */
+  it('το αρχειοθετημένο HTML δεν έχει ετικέτες του Sender', async () => {
+    signedInAs('comms'); const seen = stub()
+    await send()
+    expect(String(seen.archive.Html)).not.toContain('{{unsubscribe_link}}')
+    expect(String(seen.archive.Html)).not.toContain('{{ARCHIVE_URL}}')
+  })
+
+  it('δεν γράφει δεύτερο αντίγραφο τεύχους που υπάρχει ήδη', async () => {
+    const today = new Date().toISOString().slice(0, 10)
+    signedInAs('comms')
+    const seen = stub({ existingArchive: [{ Title: 'Τεύχος Οκτωβρίου', Date: today, Slug: 'teyhos-oktovrioy' }] })
+    const r = await send()
+    expect(r.status).toBe(200)
+    expect(seen.archive).toBeNull()
+    expect(r.json.archived).toBe(true)
+  })
+
+  /**
+   * ΤΟ ΠΕΡΙΣΤΑΤΙΚΟ: τεύχη έφυγαν και δεν μπήκαν στο αρχείο γιατί έλειπε το
+   * δικαίωμα `create`. Η απάντηση γύριζε σκέτο `archived: false` — σιωπηλή
+   * σημαία δίπλα σε ένα «στάλθηκε». Τώρα γυρίζει ΑΙΤΙΑ.
+   */
+  it('η αποστολή πετυχαίνει αλλά η αποτυχία του αρχείου ονομάζεται', async () => {
+    signedInAs('comms'); stub({ archiveOk: false })
+    const r = await send()
+    expect(r.status).toBe(200)
+    expect(r.json.archived).toBe(false)
+    expect(r.json.archiveError).toContain('create')
+  })
+
+  /**
+   * Το προγραμματισμένο τεύχος δεν έχει φύγει ακόμη: σελίδα τώρα θα το
+   * δημοσίευε νωρίς. Το αναλαμβάνει η συμφιλίωση, όταν ο Sender βεβαιώσει
+   * ότι στάλθηκε.
+   */
+  it('το προγραμματισμένο τεύχος δεν αρχειοθετείται κατά τον προγραμματισμό', async () => {
+    signedInAs('comms'); const seen = stub()
+    const r = await send({ scheduleAt: new Date(Date.now() + 86400_000).toISOString() })
+    expect(r.status).toBe(200)
+    expect(seen.archive).toBeNull()
   })
 
   it('χωρίς λίστα δεν φεύγει τίποτα', async () => {

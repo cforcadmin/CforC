@@ -614,11 +614,23 @@ export default function OcCampaigns({ desk }: { desk: string }) {
       const warn = (d.warnings || []).length
         ? ` Πεδία που ο Sender δεν αναγνωρίζει: ${d.warnings.join(', ')}.`
         : ''
+      /**
+       * Η ΑΠΟΤΥΧΙΑ ΤΗΣ ΑΡΧΕΙΟΘΕΤΗΣΗΣ ΒΑΦΕΤΑΙ ΚΟΚΚΙΝΗ.
+       *
+       * Μέχρι σήμερα το μήνυμα ήταν ΠΑΝΤΑ πράσινο και η προειδοποίηση ζούσε
+       * μέσα του ως δεύτερη πρόταση. Τρία τεύχη έφυγαν χωρίς να μπουν στο
+       * αρχείο και κανείς δεν το πρόσεξε: το μάτι διαβάζει «Ξεκίνησε η
+       * αποστολή» και φεύγει. Τώρα ονομάζεται και η ΑΙΤΙΑ — «δεν έχει
+       * δικαίωμα create» είναι κάτι που διορθώνεται, «δεν μπήκε» δεν είναι.
+       */
+      const failedArchive = !d.scheduled && !d.archived
       setNotice({
-        kind: 'ok',
+        kind: failedArchive ? 'err' : 'ok',
         text: d.scheduled
-          ? `Προγραμματίστηκε για ${new Date(d.scheduled).toLocaleString('el-GR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}.${warn}`
-          : `Ξεκίνησε η αποστολή από τον Sender.${d.archived ? ' Το τεύχος μπήκε στο αρχείο.' : ' ΠΡΟΣΟΧΗ: δεν μπήκε στο αρχείο — πρόσθεσέ το με το χέρι.'}${warn}`,
+          ? `Προγραμματίστηκε για ${new Date(d.scheduled).toLocaleString('el-GR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}. Μετά την αποστολή μπαίνει αυτόματα στο αρχείο.${warn}`
+          : failedArchive
+            ? `Η αποστολή ξεκίνησε ΚΑΝΟΝΙΚΑ από τον Sender — αλλά το τεύχος ΔΕΝ μπήκε στο αρχείο: ${d.archiveError || 'άγνωστη αιτία'}. Θα ξαναδοκιμάσει αύριο στις 08:15 μόνο του· αν επιμείνει, κοίτα το δικαίωμα create στα newsletters.${warn}`
+            : `Ξεκίνησε η αποστολή από τον Sender. Το τεύχος μπήκε στο αρχείο.${warn}`,
       })
       setConfirming(false)
       setTab('queue'); newMessage(); setScheduleAt('')

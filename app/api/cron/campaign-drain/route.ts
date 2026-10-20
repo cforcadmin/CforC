@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { recordRun, cronAuthorized, triggerOf, pruneRunLog, type RunNote } from '@/lib/ocRunLog'
 import { drainCampaigns } from '@/lib/campaignDrain'
+import { reconcileNewsletterArchives } from '@/lib/newsletterArchive'
 
 export const maxDuration = 300
 
@@ -23,6 +24,31 @@ async function runJob(request: NextRequest, log: RunNote) {
     const r = await drainCampaigns()
     const n = (r as { sent?: unknown })?.sent
     log.note(typeof n === 'number' ? `${n} ${n === 1 ? 'αποστολή' : 'αποστολές'}` : 'ολοκληρώθηκε')
+    /**
+     * ΤΑ ΤΕΥΧΗ ΠΟΥ ΔΕΝ ΜΠΗΚΑΝ ΣΤΟ ΑΡΧΕΙΟ, ΜΠΑΙΝΟΥΝ ΤΩΡΑ.
+     *
+     * Δύο τρύπες κλείνουν εδώ. Η μία: η αρχειοθέτηση τη στιγμή της αποστολής
+     * μπορεί να αποτύχει (έλειπε το δικαίωμα `create` και χάθηκαν τεύχη
+     * χωρίς καμία ένδειξη). Η άλλη: το ΠΡΟΓΡΑΜΜΑΤΙΣΜΕΝΟ τεύχος φεύγει από
+     * τον Sender ώρες μετά, χωρίς να περάσει ποτέ από τη διαδρομή αποστολής.
+     *
+     * Το τίμημα είναι καθυστέρηση έως μία ημέρα για τα προγραμματισμένα: η
+     * σελίδα του τεύχους εμφανίζεται στην επόμενη εκτέλεση (08:15). Η
+     * εναλλακτική — έλεγχος σε κάθε άνοιγμα του OC — κόστιζε κλήσεις Strapi
+     * σε κάθε φόρτωση οθόνης για κάτι που αφορά δύο τεύχη τον μήνα.
+     *
+     * Ποτέ δεν ρίχνει την αποστολή που ήδη έγινε.
+     */
+    try {
+      const arch = await reconcileNewsletterArchives()
+      if (arch.created.length) log.note(`${arch.created.length} ${arch.created.length === 1 ? 'τεύχος' : 'τεύχη'} στο αρχείο`)
+      if (arch.promoted.length) log.note(`${arch.promoted.length} προγραμματισμένα τεύχη βρέθηκαν σταλμένα`)
+      for (const f of arch.failed) log.note(`ΤΟ ΑΡΧΕΙΟ ΔΕΝ ΓΡΑΦΤΗΚΕ — «${f.subject}»: ${f.error}`)
+    } catch (err) {
+      console.error('[CAMPAIGN-DRAIN] συμφιλίωση αρχείου τευχών:', err)
+      log.note('η συμφιλίωση του αρχείου τευχών απέτυχε')
+    }
+
     // Καθαρισμός ημερολογίου, μία φορά την ημέρα. Δεν ρίχνει ποτέ την αποστολή.
     const pruned = await pruneRunLog()
     if (pruned.deleted) log.note(`καθαρίστηκαν ${pruned.deleted} παλιές εγγραφές`)

@@ -20,6 +20,9 @@ import {
 } from '@/lib/senderCampaigns'
 import { sendOcEmailResult } from '@/lib/ocEmails'
 import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
+import {
+  archiveCampaign, recentArchiveEntries, resolveArchiveSlug, newsletterSlugFor,
+} from '@/lib/newsletterArchive'
 
 // Η «Αποστολή» στέλνει ΤΩΡΑ ό,τι χωράει — χρειάζεται χρόνο, όχι 60 δευτερόλεπτα
 export const maxDuration = 300
@@ -954,7 +957,11 @@ export async function POST(request: NextRequest) {
        * υπολογίζεται εδώ και χρησιμοποιείται και στην εγγραφή του αρχείου —
        * ίδιο slug, αλλιώς ο σύνδεσμος θα οδηγούσε σε 404.
        */
-      const slug = newsletterSlug(tpl.subject)
+      const archiveEntries = await recentArchiveEntries()
+      const archiveDate = new Date().toISOString().slice(0, 10)
+      const slug = archiveEntries
+        ? resolveArchiveSlug(tpl.subject, archiveDate, archiveEntries)
+        : newsletterSlugFor(tpl.subject)
       // Οι ετικέτες μεταφράζονται, ΔΕΝ αποδίδονται: τις γεμίζει ο Sender
       const html = applySenderTags(tpl.html).replace(/\{\{ARCHIVE_URL\}\}/g, archiveUrlFor(slug))
 
@@ -1004,14 +1011,39 @@ export async function POST(request: NextRequest) {
         : await strapi('/oc-campaigns', 'POST', { ...record, CreatedByName: name })
       if (!saved.ok) console.error('oc/campaigns: newsletter saved at Sender but not in Strapi', saved.status)
 
-      // Το τεύχος μπαίνει στο δημόσιο αρχείο — best-effort, ΠΟΤΕ δεν ρίχνει
-      // την αποστολή που ήδη έφυγε
-      let archive: string | null = null
-      if (!when) archive = await archiveNewsletter(tpl.subject, html, audiences, slug)
+      /**
+       * ΤΟ ΤΕΥΧΟΣ ΣΤΟ ΑΡΧΕΙΟ.
+       *
+       * Παραμένει best-effort — το γράμμα έχει ΗΔΗ φύγει, και μια αποτυχία
+       * εδώ δεν επιτρέπεται να εμφανιστεί ως αποτυχία αποστολής: θα οδηγούσε
+       * σε δεύτερη αποστολή στους ίδιους ανθρώπους.
+       *
+       * ΑΛΛΑΖΕΙ ΟΜΩΣ ΤΟ ΤΙ ΛΕΓΕΤΑΙ. Μέχρι σήμερα η αποτυχία γύριζε ως
+       * `archived: false` — μια σιωπηλή σημαία δίπλα σε ένα «στάλθηκε!», που
+       * κανείς δεν κοίταξε για τρία τεύχη. Τώρα γυρίζει ΑΙΤΙΑ, και η οθόνη
+       * την δείχνει ως σφάλμα.
+       *
+       * Το προγραμματισμένο τεύχος ΔΕΝ αρχειοθετείται εδώ: δεν έχει φύγει
+       * ακόμη, και σελίδα πριν την αποστολή θα το δημοσίευε νωρίς. Το
+       * αναλαμβάνει η συμφιλίωση, όταν ο Sender βεβαιώσει ότι έφυγε.
+       */
+      let archived = false
+      let archiveError: string | null = null
+      if (when) {
+        archiveError = null
+      } else {
+        const res = await archiveCampaign(record, { known: archiveEntries ?? undefined, slug })
+        archived = res.ok
+        if (!res.ok) {
+          archiveError = res.error || 'άγνωστη αιτία'
+          console.error('oc/campaigns: newsletter NOT archived —', archiveError)
+        }
+      }
 
       return NextResponse.json({
         ok: true, campaignId: created.campaignId, scheduled: when || null,
-        archived: !!archive, warnings: unsupportedTags(tpl.html),
+        archived, archiveError, archiveSlug: archived ? slug : null,
+        warnings: unsupportedTags(tpl.html),
       })
     }
 
@@ -1146,38 +1178,9 @@ async function seatSubscriberStatus(email: string): Promise<string | null> {
  * δεν επιτρέπεται να εμφανιστεί ως αποτυχία αποστολής — θα οδηγούσε σε
  * δεύτερη αποστολή στους ίδιους ανθρώπους.
  */
-function newsletterSlug(subject: string): string {
-  const base = subject.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zα-ω0-9]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 60)
-  return `${base || 'newsletter'}-${Date.now().toString(36)}`
-}
-
 /** Η διεύθυνση του τεύχους στο δικό μας αρχείο */
 function archiveUrlFor(slug: string): string {
   return `${PUBLIC_SITE_URL}/newsletters/${slug}`
-}
-
-async function archiveNewsletter(
-  subject: string, html: string, audiences: string[], slug: string,
-): Promise<string | null> {
-  try {
-    const today = new Date()
-    const r = await strapi('/newsletters', 'POST', {
-      Title: subject,
-      Date: today.toISOString().slice(0, 10),
-      Html: html,
-      // Ένα τεύχος που πήγε ΜΟΝΟ στα μέλη δεν είναι δημόσιο υλικό
-      Audience: audiences.length === 1 && audiences[0] === 'paid' ? 'members' : 'public',
-      Slug: slug,
-      publishedAt: today.toISOString(),
-    })
-    if (!r.ok) { console.error('newsletter archive failed', r.status); return null }
-    return r.json?.data?.documentId || null
-  } catch (err) {
-    console.error('newsletter archive threw:', err)
-    return null
-  }
 }
 
 /** Το όνομα του μέλους για τη σφραγίδα «ποιος συνέθεσε» */

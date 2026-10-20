@@ -1760,7 +1760,22 @@ export function normaliseNewsletterFooter(v: Partial<NewsletterFooter> | null | 
   }
 }
 
-function newsletterFooterHtml(cfg: NewsletterFooter): string {
+/**
+ * `withUnsub = false` ΜΟΝΟ για τη σελίδα του αρχείου.
+ *
+ * Η ζώνη απεγγραφής ζει ΜΕΣΑ στο υποσέλιδο του newsletter, ανεξάρτητα από
+ * τη σημαία `unsubscribe` — αυτή αφορά το υποσέλιδο υπογραφής. Σε μια
+ * ΣΕΛΙΔΑ ο σύνδεσμος `{{unsubscribe_link}}` δεν γεμίζει από κανέναν: τον
+ * γεμίζει ο Sender ανά παραλήπτη τη στιγμή της αποστολής, οπότε στο αρχείο
+ * θα έμενε ορατός αυτούσιος.
+ *
+ * ΓΙΑΤΙ ΧΩΡΙΣΤΗ ΕΠΙΛΟΓΗ ΚΑΙ ΟΧΙ Η ΥΠΑΡΧΟΥΣΑ `unsubscribe`: η προεπισκόπηση
+ * καλεί με `unsubscribe: false` (το περνά μόνο για newsletter στη γραμμή
+ * 592 της διαδρομής). Αν η ζώνη άρχιζε να υπακούει σε εκείνη τη σημαία, η
+ * προεπισκόπηση θα έπαυε να δείχνει ό,τι φεύγει — ακριβώς το σφάλμα
+ * «προεπισκόπηση ≠ σταλμένο» που διορθώθηκε στις 20/10/2026.
+ */
+function newsletterFooterHtml(cfg: NewsletterFooter, withUnsub = true): string {
   interface Skin { bg: string; ink: string; soft: string; logo: string; icon: 'onDark' | 'onLight' }
   const skins: Record<'coral' | 'dark' | 'cream' | 'white', Skin> = {
     coral: { bg: BRAND.coral, ink: BRAND.ink, soft: BRAND.ink, logo: LOCKUP_LIGHT, icon: 'onDark' },
@@ -1797,6 +1812,7 @@ function newsletterFooterHtml(cfg: NewsletterFooter): string {
    * που είναι εξ ορισμού από άκρη σε άκρη.
    */
   const unsub = (rounded = true) => {
+    if (!withUnsub) return ''
     const text = `<a href="{{unsubscribe_link}}" style="color:${BRAND.inkSoft};text-decoration:underline;">${escapeHtml(cfg.unsubscribeLead)}</a>`
     const cell = `font-family:${FONT};font-size:13px;line-height:20px;color:${BRAND.inkSoft};`
     if (!rounded) {
@@ -2019,6 +2035,14 @@ export function campaignEmailHtml(opts: {
    */
   unsubscribe?: boolean
   /**
+   * Αφαιρεί τη ζώνη απεγγραφής από το υποσέλιδο του newsletter.
+   *
+   * ΜΟΝΟ για τη σελίδα του αρχείου: εκεί ο σύνδεσμος του Sender δεν γεμίζει
+   * ποτέ και θα φαινόταν ως «{{unsubscribe_link}}». Δεν το περνά ΚΑΜΙΑ
+   * διαδρομή αποστολής ή προεπισκόπησης.
+   */
+  omitUnsubscribe?: boolean
+  /**
    * Το υποσέλιδο του newsletter — αντικαθιστά ΟΛΟΚΛΗΡΗ την υπογραφή.
    *
    * Ένα τεύχος δεν το υπογράφει άνθρωπος: το στέλνει το δίκτυο. Γι' αυτό εδώ
@@ -2074,7 +2098,7 @@ ${headerHtml(headerStyle, subject, headerLogo)}
 ${renderCampaignBody(blocks, annotate)}
 
 ${opts.newsletterFooter
-  ? newsletterFooterHtml(normaliseNewsletterFooter(opts.newsletterFooter))
+  ? newsletterFooterHtml(normaliseNewsletterFooter(opts.newsletterFooter), !opts.omitUnsubscribe)
   : footerHtml(footerStyle, footerLook, signer, year, footerLogo) + (unsubscribe ? unsubscribeRow() : '')}
 </table>
 </td></tr>
