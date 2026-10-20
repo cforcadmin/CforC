@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * Οι ζωντανοί δείκτες του hero των μελών — ένα ελαφρύ αίτημα στη σύνδεση.
@@ -15,7 +16,7 @@ const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 const strapi = async (path: string) => {
-  const r = await fetch(`${STRAPI_URL}/api${path}`, {
+  const r = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     next: { revalidate: 300 },   // 5' — δείκτες είναι, όχι λογιστική
   })

@@ -4,6 +4,7 @@ import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { mirrorContractsToSheet, fetchFieldOptions, type ContractRecord } from '@/lib/contractsSheet'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -38,7 +39,7 @@ const DATE_FIELDS = ['StartDate', 'EndDate', 'NextPaymentDate'] as const
 const NUMBER_FIELDS = ['Aa', 'SortIndex'] as const
 
 async function strapi(path: string, method: string = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     ...(data !== undefined && { body: JSON.stringify({ data }) }),

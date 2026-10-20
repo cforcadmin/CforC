@@ -6,6 +6,7 @@ import { sendOcEmail, departureEmailHtml, farewellUrl, COMMUNITY_FROM, COMMUNITY
 import { getSeatHolder } from '@/lib/ocRoles'
 import { generateExitSurveyToken } from '@/lib/auth'
 import { processPaymentCompletion } from '@/lib/paymentCompletion'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * Reverse bridge: Μητρώο Google Sheet → site/Strapi.
@@ -29,7 +30,7 @@ const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 const SHEET_SECRET = process.env.SHEET_WEBAPP_SECRET
 
 async function strapi(path: string, method: string = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',

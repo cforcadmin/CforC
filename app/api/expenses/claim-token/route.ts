@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveClaimToken } from '@/lib/claimToken'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -16,8 +17,7 @@ const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 async function lookup(hash: string, slug: string) {
-  const res = await fetch(
-    `${STRAPI_URL}/api/event-registrations?filters[ClaimTokenHash][$eq]=${encodeURIComponent(hash)}`
+  const res = await strapiFetch(`${STRAPI_URL}/api/event-registrations?filters[ClaimTokenHash][$eq]=${encodeURIComponent(hash)}`
     + `&filters[event][Slug][$eq]=${encodeURIComponent(slug)}&pagination[limit]=1`,
     { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store' })
   if (!res.ok) return null

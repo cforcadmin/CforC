@@ -3,6 +3,7 @@ import { isValidEmail, verifyPassword, generateSessionToken } from '@/lib/auth'
 import { loginLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 import { checkCsrf } from '@/lib/csrf'
 import { cookies } from 'next/headers'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 const STRAPI_URL = process.env.STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
@@ -52,8 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find member by email (populate all needed fields including project images)
-    const membersResponse = await fetch(
-      `${STRAPI_URL}/api/members?filters[Email][$eq]=${encodeURIComponent(email)}&populate[0]=Image&populate[1]=Project1Pictures&populate[2]=Project2Pictures`,
+    const membersResponse = await strapiFetch(`${STRAPI_URL}/api/members?filters[Email][$eq]=${encodeURIComponent(email)}&populate[0]=Image&populate[1]=Project1Pictures&populate[2]=Project2Pictures`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -82,8 +82,7 @@ export async function POST(request: NextRequest) {
     const member = membersData.data[0]
 
     // Look up auth credentials from auth-tokens collection
-    const authTokenResponse = await fetch(
-      `${STRAPI_URL}/api/auth-tokens?filters[email][$eq]=${encodeURIComponent(email)}`,
+    const authTokenResponse = await strapiFetch(`${STRAPI_URL}/api/auth-tokens?filters[email][$eq]=${encodeURIComponent(email)}`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -121,8 +120,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update last login time in auth-tokens
-    await fetch(
-      `${STRAPI_URL}/api/auth-tokens/${authToken.documentId || authToken.id}`,
+    await strapiFetch(`${STRAPI_URL}/api/auth-tokens/${authToken.documentId || authToken.id}`,
       {
         method: 'PUT',
         headers: {

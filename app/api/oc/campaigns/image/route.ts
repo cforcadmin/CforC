@@ -3,6 +3,7 @@ import { authorizeOcUpload as authorize } from '@/lib/ocUploadAuth'
 import sharp from 'sharp'
 import path from 'path'
 import { readFile } from 'fs/promises'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest) {
         const ext = (src.split('?')[0].match(/\.([a-z0-9]+)$/i)?.[1] || 'png').toLowerCase()
         const fd = new FormData()
         fd.append('files', new Blob([new Uint8Array(buf)], { type }), `copy_${Date.now()}.${ext}`)
-        const up = await fetch(`${STRAPI_URL}/api/upload`, {
+        const up = await strapiFetch(`${STRAPI_URL}/api/upload`, {
           method: 'POST', headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, body: fd,
         })
         if (!up.ok) {
@@ -138,7 +139,7 @@ export async function POST(request: NextRequest) {
       const out = await brandImage(src, tone)
       const fd = new FormData()
       fd.append('files', new Blob([new Uint8Array(out)], { type: 'image/png' }), `branded_${tone}_${Date.now()}.png`)
-      const up = await fetch(`${STRAPI_URL}/api/upload`, {
+      const up = await strapiFetch(`${STRAPI_URL}/api/upload`, {
         method: 'POST', headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, body: fd,
       })
       if (!up.ok) {
@@ -167,7 +168,7 @@ export async function POST(request: NextRequest) {
 
     const fd = new FormData()
     fd.append('files', file, file.name)
-    const up = await fetch(`${STRAPI_URL}/api/upload`, {
+    const up = await strapiFetch(`${STRAPI_URL}/api/upload`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
       body: fd,
@@ -189,8 +190,7 @@ export async function POST(request: NextRequest) {
 
 /** Χρησιμοποιείται η εικόνα σε καμπάνια που ΔΕΝ είναι προσχέδιο; */
 async function usedByLiveCampaign(mediaId: number): Promise<string | null> {
-  const res = await fetch(
-    `${STRAPI_URL}/api/oc-campaigns?pagination[limit]=200&fields[0]=Subject&fields[1]=State&fields[2]=Blocks`,
+  const res = await strapiFetch(`${STRAPI_URL}/api/oc-campaigns?pagination[limit]=200&fields[0]=Subject&fields[1]=State&fields[2]=Blocks`,
     { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store' },
   )
   if (!res.ok) {
@@ -221,7 +221,7 @@ export async function DELETE(request: NextRequest) {
         error: `Η εικόνα χρησιμοποιείται σε απεσταλμένο μήνυμα («${usedBy}») — δεν διαγράφεται, αλλιώς θα έσπαγε στα γραμματοκιβώτια όσων το έλαβαν.`,
       }, { status: 409 })
     }
-    const del = await fetch(`${STRAPI_URL}/api/upload/files/${id}`, {
+    const del = await strapiFetch(`${STRAPI_URL}/api/upload/files/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     })

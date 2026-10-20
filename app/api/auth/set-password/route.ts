@@ -3,6 +3,7 @@ import { verifyToken, hashToken, validatePassword, hashPassword, generateSession
 import { setPasswordLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 import { checkCsrf } from '@/lib/csrf'
 import { cookies } from 'next/headers'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 const STRAPI_URL = process.env.STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
@@ -54,8 +55,7 @@ export async function POST(request: NextRequest) {
     const tokenHash = hashToken(token)
 
     // Look up the auth token in the auth-tokens collection
-    const authTokenResponse = await fetch(
-      `${STRAPI_URL}/api/auth-tokens?filters[email][$eq]=${encodeURIComponent(decoded.email)}&filters[tokenHash][$eq]=${tokenHash}&filters[tokenType][$eq]=magic-link`,
+    const authTokenResponse = await strapiFetch(`${STRAPI_URL}/api/auth-tokens?filters[email][$eq]=${encodeURIComponent(decoded.email)}&filters[tokenHash][$eq]=${tokenHash}&filters[tokenType][$eq]=magic-link`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -95,8 +95,7 @@ export async function POST(request: NextRequest) {
 
     // Fetch member from database using the email from auth-token
     // We use the email because the auth-token already has the correct email
-    const memberResponse = await fetch(
-      `${STRAPI_URL}/api/members?filters[Email][$eq]=${encodeURIComponent(authToken.email)}&populate[0]=Image&populate[1]=Project1Pictures&populate[2]=Project2Pictures`,
+    const memberResponse = await strapiFetch(`${STRAPI_URL}/api/members?filters[Email][$eq]=${encodeURIComponent(authToken.email)}&populate[0]=Image&populate[1]=Project1Pictures&populate[2]=Project2Pictures`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -151,8 +150,7 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hashPassword(password)
 
     // Update auth token record: set password, clear magic link fields, update last login
-    const updateResponse = await fetch(
-      `${STRAPI_URL}/api/auth-tokens/${authToken.documentId || authToken.id}`,
+    const updateResponse = await strapiFetch(`${STRAPI_URL}/api/auth-tokens/${authToken.documentId || authToken.id}`,
       {
         method: 'PUT',
         headers: {

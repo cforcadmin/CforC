@@ -8,6 +8,7 @@ import {
   spamCheckCallEmailHtml, paymentClaimUrl,
   COMMUNITY_FROM, COMMUNITY_EMAIL, ADMIN_EMAIL,
 } from '@/lib/ocEmails'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 // 300s μένουν παρότι έφυγε η αυτόματη διαγραφή: η διαδρομή στέλνει email ένα
 // προς ένα και το Strapi μπορεί να ξυπνά από ψυχρή εκκίνηση. Το περιθώριο δεν
@@ -42,7 +43,7 @@ const CRON_SECRET = process.env.CRON_SECRET
 const DEADLINE_DAYS = 30
 
 async function strapi(path: string, method = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     ...(data !== undefined && { body: JSON.stringify({ data }) }),

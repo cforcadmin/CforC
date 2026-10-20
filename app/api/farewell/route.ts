@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * Υποβολή φόρμας αποχώρησης → Strapi exit-survey.
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const res = await fetch(`${STRAPI_URL}/api/exit-surveys`, {
+    const res = await strapiFetch(`${STRAPI_URL}/api/exit-surveys`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

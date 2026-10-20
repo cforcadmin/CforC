@@ -5,6 +5,7 @@ import { resolveOcAccess, getSeatHoldersWithEmail, type OcSeat } from '@/lib/ocR
 import { cachedJson, invalidate } from '@/lib/strapiCache'
 import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { strapiAll } from '@/lib/strapiPaged'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -27,7 +28,7 @@ const STATUSES = ['not_started', 'in_progress', 'done'] as const
 const PRIORITIES = ['low', 'normal', 'high'] as const
 
 async function strapi(path: string, method: string = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     ...(data !== undefined && { body: JSON.stringify({ data }) }),

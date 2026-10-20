@@ -7,6 +7,7 @@ import { pendingClaims, pendingTotal, daysSince } from '@/lib/expenseClaimRemind
 import { getSeatHolder } from '@/lib/ocRoles'
 import { sendOcEmail, expenseClaimPaidEmailHtml, FINANCE_FROM, FINANCE_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { reArchiveExpenseClaim } from '@/lib/expenseClaimReArchive'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -26,7 +27,7 @@ const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 const VIEW_SEATS: OcSeat[] = ['financer', 'admin', 'it']
 
 async function strapi(path: string, method: string = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     ...(data !== undefined && { body: JSON.stringify({ data }) }),

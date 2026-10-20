@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authorizeOcUpload } from '@/lib/ocUploadAuth'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
 
   const fd = new FormData()
   fd.append('files', file, file.name)
-  const up = await fetch(`${STRAPI_URL}/api/upload`, {
+  const up = await strapiFetch(`${STRAPI_URL}/api/upload`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     body: fd,
@@ -112,7 +113,7 @@ export async function DELETE(request: NextRequest) {
   const id = String(new URL(request.url).searchParams.get('id') || '').replace(/[^0-9]/g, '')
   if (!id) return NextResponse.json({ error: 'Λείπει το αναγνωριστικό' }, { status: 400 })
 
-  const del = await fetch(`${STRAPI_URL}/api/upload/files/${id}`, {
+  const del = await strapiFetch(`${STRAPI_URL}/api/upload/files/${id}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
   })

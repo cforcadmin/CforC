@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -24,7 +25,7 @@ const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 const ALLOWED: OcSeat[] = ['financer', 'community', 'admin', 'it']
 
 async function strapi(path: string, method = 'GET', data?: unknown) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     ...(data !== undefined && { body: JSON.stringify({ data }) }),

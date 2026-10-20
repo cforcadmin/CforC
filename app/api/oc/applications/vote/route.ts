@@ -5,6 +5,7 @@ import { resolveOcAccess, getBoardRoster, getSeatHolder, isVoter, voteWeight, SE
 import { sendDecisionToSheet, sheetsConfigured } from '@/lib/googleSheets'
 import { sendOcEmail, approvedEmailHtml, approvedLegacyEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, FINANCE_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { OC_LAST_SEAT_COOKIE } from '@/components/oc/ocPrefs'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * OC voting on membership applications (simplified v1).
@@ -35,7 +36,7 @@ interface VoteRecord {
 }
 
 async function strapi(path: string, method: string = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',

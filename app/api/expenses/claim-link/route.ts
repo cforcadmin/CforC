@@ -7,6 +7,7 @@ import { athensToday } from '@/lib/events'
 import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { claimLinkEmailHtml } from '@/lib/eventEmails'
 import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -29,7 +30,7 @@ const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 const TOKEN_HOURS = 72
 
 async function strapi(path: string, method = 'GET', data?: unknown) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     ...(data !== undefined && { body: JSON.stringify({ data }) }),

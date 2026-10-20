@@ -22,6 +22,7 @@ import { effectiveSeat, isActingAsOtherSeat, RECEIPT_WEARING_REFUSAL, OC_SEAT_MO
 import { sendPaymentToSheet, sheetsConfigured } from '@/lib/googleSheets'
 import { sendOcEmail, reminderEmailHtml, paymentFailedEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
 import { processPaymentCompletion } from '@/lib/paymentCompletion'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * Financer actions on approved-awaiting-payment applications (OC popup):
@@ -40,7 +41,7 @@ const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 async function strapiGet(path: string) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     cache: 'no-store',
   })
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Αποτυχία αποστολής email' }, { status: 502 })
       }
       // Η δήλωση μηδενίζεται — το κουτί/entry επανέρχεται σε «αναμονή»
-      await fetch(`${STRAPI_URL}/api/membership-applications/${app.documentId}`, {
+      await strapiFetch(`${STRAPI_URL}/api/membership-applications/${app.documentId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
         body: JSON.stringify({ data: { PaymentClaimedAt: null } }),

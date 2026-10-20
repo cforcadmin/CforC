@@ -5,6 +5,7 @@ import { appendApplicantToSheet, sheetsConfigured } from '@/lib/googleSheets'
 import { sendOcEmail, applicationReceivedEmailHtml, COMMUNITY_FROM, COMMUNITY_EMAIL, APPLICATION_RECEIVED_CC } from '@/lib/ocEmails'
 import { getSeatHolder } from '@/lib/ocRoles'
 import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 const SITE_URL = PUBLIC_SITE_URL
 
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
     const uploadForm = new FormData()
     const safeName = `application_${Date.now()}.${photo.type === 'image/png' ? 'png' : photo.type === 'image/webp' ? 'webp' : 'jpg'}`
     uploadForm.append('files', photo, safeName)
-    const uploadRes = await fetch(`${STRAPI_URL}/api/upload`, {
+    const uploadRes = await strapiFetch(`${STRAPI_URL}/api/upload`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
       body: uploadForm,
@@ -147,7 +148,7 @@ export async function POST(request: NextRequest) {
     entry.FieldsOfActivity = String(data.FieldsOfActivity || '')
       .split(',').map((s: string) => s.trim()).filter(Boolean)
 
-    const createRes = await fetch(`${STRAPI_URL}/api/membership-applications`, {
+    const createRes = await strapiFetch(`${STRAPI_URL}/api/membership-applications`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -181,7 +182,7 @@ export async function POST(request: NextRequest) {
           activityCities: data.ActivityCityA.trim(),
           reviewUrl: `${SITE_URL}/oc/applications/${documentId}`,
         })
-        await fetch(`${STRAPI_URL}/api/membership-applications/${documentId}`, {
+        await strapiFetch(`${STRAPI_URL}/api/membership-applications/${documentId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
           body: JSON.stringify({ data: { SheetSynced: true } }),

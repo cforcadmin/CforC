@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { strapiAll } from '@/lib/strapiPaged'
 import { shapeItem } from '@/lib/library'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -43,12 +44,12 @@ export async function GET(_request: NextRequest) {
   let isLibrarian = false
   let pendingCount = 0
   try {
-    const meRes = await fetch(`${STRAPI_URL}/api/members/${decoded.memberId}?fields[0]=IsLibrarian`, {
+    const meRes = await strapiFetch(`${STRAPI_URL}/api/members/${decoded.memberId}?fields[0]=IsLibrarian`, {
       headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store',
     })
     isLibrarian = !!(await meRes.json().catch(() => null))?.data?.IsLibrarian
     if (isLibrarian) {
-      const pRes = await fetch(`${STRAPI_URL}/api/library-items?filters[State][$eq]=pending&pagination[pageSize]=1`, {
+      const pRes = await strapiFetch(`${STRAPI_URL}/api/library-items?filters[State][$eq]=pending&pagination[pageSize]=1`, {
         headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store',
       })
       pendingCount = (await pRes.json().catch(() => null))?.meta?.pagination?.total ?? 0

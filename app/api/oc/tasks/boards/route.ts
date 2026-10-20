@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /** Πίνακες «Διορθώσεις / Προτάσεις» — μόνο IT, ξεχωρίζουν από το slug */
 const IT_BOARD_PREFIX = 'it-corrections-'
@@ -24,7 +25,7 @@ const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 const SCOPES = ['coordination', 'members', 'project'] as const
 
 async function strapi(path: string, method: string = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     ...(data !== undefined && { body: JSON.stringify({ data }) }),

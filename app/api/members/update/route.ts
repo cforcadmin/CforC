@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 import { checkCsrf } from '@/lib/csrf'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 const STRAPI_URL = process.env.STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
@@ -187,8 +188,7 @@ export async function POST(request: NextRequest) {
 
     // Check email uniqueness if email is being changed
     if (updateData.Email) {
-      const emailCheckResponse = await fetch(
-        `${STRAPI_URL}/api/members?filters[Email][$eq]=${encodeURIComponent(updateData.Email)}&filters[documentId][$ne]=${encodeURIComponent(memberId)}&fields[0]=id`,
+      const emailCheckResponse = await strapiFetch(`${STRAPI_URL}/api/members?filters[Email][$eq]=${encodeURIComponent(updateData.Email)}&filters[documentId][$ne]=${encodeURIComponent(memberId)}&fields[0]=id`,
         {
           headers: {
             Authorization: `Bearer ${STRAPI_API_TOKEN}`
@@ -290,7 +290,7 @@ export async function POST(request: NextRequest) {
       const imageFormData = new FormData()
       imageFormData.append('files', imageFile)
 
-      const uploadResponse = await fetch(`${STRAPI_URL}/api/upload`, {
+      const uploadResponse = await strapiFetch(`${STRAPI_URL}/api/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${STRAPI_API_TOKEN}`
@@ -304,8 +304,7 @@ export async function POST(request: NextRequest) {
           imageId = uploadResult[0].id
 
           // Get current member to remove old image
-          const currentMemberResponse = await fetch(
-            `${STRAPI_URL}/api/members/${memberId}?populate=Image`,
+          const currentMemberResponse = await strapiFetch(`${STRAPI_URL}/api/members/${memberId}?populate=Image`,
             {
               headers: {
                 'Authorization': `Bearer ${STRAPI_API_TOKEN}`
@@ -321,7 +320,7 @@ export async function POST(request: NextRequest) {
             if (oldImages && Array.isArray(oldImages)) {
               for (const img of oldImages) {
                 if (img.id) {
-                  await fetch(`${STRAPI_URL}/api/upload/files/${img.id}`, {
+                  await strapiFetch(`${STRAPI_URL}/api/upload/files/${img.id}`, {
                     method: 'DELETE',
                     headers: {
                       'Authorization': `Bearer ${STRAPI_API_TOKEN}`
@@ -349,7 +348,7 @@ export async function POST(request: NextRequest) {
           project1FormData.append('files', file)
         })
 
-        const uploadResponse = await fetch(`${STRAPI_URL}/api/upload`, {
+        const uploadResponse = await strapiFetch(`${STRAPI_URL}/api/upload`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${STRAPI_API_TOKEN}`
@@ -384,7 +383,7 @@ export async function POST(request: NextRequest) {
           project2FormData.append('files', file)
         })
 
-        const uploadResponse = await fetch(`${STRAPI_URL}/api/upload`, {
+        const uploadResponse = await strapiFetch(`${STRAPI_URL}/api/upload`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${STRAPI_API_TOKEN}`
@@ -410,8 +409,7 @@ export async function POST(request: NextRequest) {
 
     // Find member by documentId first to ensure we're updating the right one
     console.log('[UPDATE] Finding member by documentId:', memberId)
-    const findResponse = await fetch(
-      `${STRAPI_URL}/api/members?filters[documentId][$eq]=${encodeURIComponent(memberId)}`,
+    const findResponse = await strapiFetch(`${STRAPI_URL}/api/members?filters[documentId][$eq]=${encodeURIComponent(memberId)}`,
       {
         headers: {
           'Authorization': `Bearer ${STRAPI_API_TOKEN}`
@@ -444,8 +442,7 @@ export async function POST(request: NextRequest) {
     // Fetch existing member with all fields populated for change detection
     let existingPopulated: any = existingMember
     try {
-      const populatedRes = await fetch(
-        `${STRAPI_URL}/api/members/${memberId}?populate=*`,
+      const populatedRes = await strapiFetch(`${STRAPI_URL}/api/members/${memberId}?populate=*`,
         { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` } }
       )
       if (populatedRes.ok) {
@@ -541,7 +538,7 @@ export async function POST(request: NextRequest) {
       console.log('[UPDATE] Χωρίς ΑΜ — το προφίλ παραμένει κρυμμένο')
     }
 
-    const updateResponse = await fetch(`${STRAPI_URL}/api/members/${updateId}`, {
+    const updateResponse = await strapiFetch(`${STRAPI_URL}/api/members/${updateId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -591,8 +588,7 @@ export async function POST(request: NextRequest) {
 
       (async () => {
         try {
-          const existingLogRes = await fetch(
-            `${STRAPI_URL}/api/profile-change-logs?filters[memberEmail][$eq]=${encodeURIComponent(memberEmail)}&filters[changedAt][$gte]=${encodeURIComponent(monthStart)}&filters[changedAt][$lte]=${encodeURIComponent(monthEnd)}&pagination[limit]=1`,
+          const existingLogRes = await strapiFetch(`${STRAPI_URL}/api/profile-change-logs?filters[memberEmail][$eq]=${encodeURIComponent(memberEmail)}&filters[changedAt][$gte]=${encodeURIComponent(monthStart)}&filters[changedAt][$lte]=${encodeURIComponent(monthEnd)}&pagination[limit]=1`,
             { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` } }
           )
 
@@ -608,7 +604,7 @@ export async function POST(request: NextRequest) {
 
               console.log('[UPDATE] Found existing log entry, merging. logId:', logId, 'existingFields:', existingFields, 'newFields:', displayNames)
 
-              const mergeRes = await fetch(`${STRAPI_URL}/api/profile-change-logs/${logId}`, {
+              const mergeRes = await strapiFetch(`${STRAPI_URL}/api/profile-change-logs/${logId}`, {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json',
@@ -634,7 +630,7 @@ export async function POST(request: NextRequest) {
           }
 
           // No existing entry this month — create new
-          await fetch(`${STRAPI_URL}/api/profile-change-logs`, {
+          await strapiFetch(`${STRAPI_URL}/api/profile-change-logs`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

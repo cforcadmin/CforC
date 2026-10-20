@@ -19,6 +19,7 @@ import { formatAmountForName } from '@/lib/invoiceFilename'
 import { generateReceiptPdf } from '@/lib/receiptPdf'
 import { sendOcEmail, manualReceiptEmailHtml, FINANCE_FROM, FINANCE_EMAIL, RECEIPT_CC } from '@/lib/ocEmails'
 import { upsertAlias } from '@/lib/payerAliases'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * Χειροκίνητη έκδοση αποδείξεων από τον/τη Financer (OC → Οικονομικά).
@@ -46,7 +47,7 @@ const TYPE_LABELS: Record<ReceiptType, string> = {
 }
 
 async function strapi(path: string, method: string = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',

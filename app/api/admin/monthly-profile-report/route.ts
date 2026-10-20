@@ -3,6 +3,7 @@ import { recordRun, cronAuthorized, triggerOf, type RunNote } from '@/lib/ocRunL
 import { getSeatHolder } from '@/lib/ocRoles'
 import { sendOcEmail, treasuryReminderEmailHtml, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
 import { ocUrl } from '@/lib/siteUrl'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -30,7 +31,7 @@ async function captureListSnapshot(): Promise<string> {
     // Και το μέγεθος του μητρώου, για να συγκρίνεται η λίστα με τα μέλη
     let membersTotal: number | null = null
     try {
-      const m = await fetch(`${STRAPI}/api/members?pagination[limit]=1&fields[0]=AM`, {
+      const m = await strapiFetch(`${STRAPI}/api/members?pagination[limit]=1&fields[0]=AM`, {
         headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` }, cache: 'no-store',
       })
       if (m.ok) membersTotal = (await m.json())?.meta?.pagination?.total ?? null
@@ -46,12 +47,11 @@ async function captureListSnapshot(): Promise<string> {
       Members: membersTotal,
       CapturedAt: now.toISOString(),
     }
-    const dup = await fetch(`${STRAPI}/api/list-snapshots?filters[Month][$eq]=${month}&pagination[limit]=1`, {
+    const dup = await strapiFetch(`${STRAPI}/api/list-snapshots?filters[Month][$eq]=${month}&pagination[limit]=1`, {
       headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` }, cache: 'no-store',
     })
     const existing = dup.ok ? (await dup.json())?.data?.[0] : null
-    const w = await fetch(
-      `${STRAPI}/api/list-snapshots${existing ? '/' + existing.documentId : ''}`,
+    const w = await strapiFetch(`${STRAPI}/api/list-snapshots${existing ? '/' + existing.documentId : ''}`,
       {
         method: existing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` },
@@ -79,7 +79,7 @@ async function sendTreasuryReminder(): Promise<string> {
     const STRAPI = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
     let last: { amount: string; date: string } | null = null
     try {
-      const r = await fetch(`${STRAPI}/api/treasury-balances?sort=AsOf:desc&pagination[limit]=1`, {
+      const r = await strapiFetch(`${STRAPI}/api/treasury-balances?sort=AsOf:desc&pagination[limit]=1`, {
         headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` }, cache: 'no-store',
       })
       const row = r.ok ? (await r.json())?.data?.[0] : null

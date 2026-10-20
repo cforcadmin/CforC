@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { feedbackLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 import { checkCsrf } from '@/lib/csrf'
 import { isRequestKind, isRequestCategory, guessCategory } from '@/lib/siteRequests'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 
@@ -114,7 +115,7 @@ export async function POST(request: Request) {
       const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
       const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
       if (STRAPI_URL && STRAPI_API_TOKEN) {
-        const res = await fetch(`${STRAPI_URL}/api/site-requests`, {
+        const res = await strapiFetch(`${STRAPI_URL}/api/site-requests`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
           body: JSON.stringify({

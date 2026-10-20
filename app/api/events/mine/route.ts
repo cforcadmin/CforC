@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * Οι δράσεις και οι ΔΙΚΕΣ ΜΟΥ δηλώσεις — για το /profile#events.
@@ -18,7 +19,7 @@ const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 async function strapi(path: string) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store',
   })
   let json: any = null

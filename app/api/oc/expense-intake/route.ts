@@ -9,6 +9,7 @@ import { parseInvoiceFilename, type ParsedInvoiceName } from '@/lib/invoiceFilen
 import { getSupplierAliases, lookupAlias, upsertSupplierAlias, type ExpenseCategory } from '@/lib/supplierAliases'
 import { buildApprovedFilename } from '@/lib/invoiceFilename'
 import { parseKiniseis } from '@/lib/bankStatement'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * ΕΞΟΔΑ — ανάλυση παραστατικών του μήνα (ΜΟΝΟ ανάγνωση, καμία εγγραφή).
@@ -30,7 +31,7 @@ const WEBAPP_URL = process.env.FINANCE_SHEET_WEBAPP_URL
 const WEBAPP_SECRET = process.env.FINANCE_SHEET_WEBAPP_SECRET
 
 async function strapi(path: string, method: string = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',

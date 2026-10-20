@@ -4,6 +4,7 @@ import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { canArchive, statusPatch, PROPOSAL_STATUSES, type ProposalStatus } from '@/lib/workingGroupProposals'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * ΠΡΟΤΑΣΕΙΣ ΝΕΩΝ ΟΜΑΔΩΝ ΕΡΓΑΣΙΑΣ — ανάγνωση για όλο το ΔΣ, απόφαση από
@@ -23,7 +24,7 @@ const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 async function strapi(path: string, method: string = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: {
       Authorization: `Bearer ${STRAPI_API_TOKEN}`,

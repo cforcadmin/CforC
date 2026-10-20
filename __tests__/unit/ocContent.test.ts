@@ -299,3 +299,41 @@ describe('οι ελληνικοί τύποι των τριών ειδών', () =
     expect(CONTENT_TYPES.entries.forms.demonstrative).toBe('Αυτή η καταχώρηση')
   })
 })
+
+/**
+ * ΜΙΑ ΚΑΤΑΧΩΡΗΣΗ ΧΩΡΙΣ ΕΡΓΟ ΕΙΝΑΙ ΑΟΡΑΤΗ.
+ *
+ * Δεν έχει δική της σελίδα: η διεύθυνσή της είναι
+ * `/projects/<έργο>/entries/<καταχώρηση>` και το site τη φτάνει μόνο μέσα
+ * από το έργο της. Αποθηκευόταν κανονικά και δεν την έβλεπε κανείς.
+ */
+describe('Το «Έργο» των Καταχωρήσεων', () => {
+  const projectField = CONTENT_TYPES.entries.fields.find(f => f.name === 'project')!
+
+  it('είναι σχέση προς τα Έργα, και υποχρεωτικό', () => {
+    expect(projectField.kind).toBe('relation')
+    expect(projectField.required).toBe(true)
+    expect(projectField.relation?.path).toBe('projects')
+  })
+
+  it('φεύγει στο Strapi ως documentId', () => {
+    expect(toStrapiFields('entries', { project: 'abc123' }).project).toBe('abc123')
+  })
+
+  it('κενή επιλογή φεύγει ως null, όχι ως κενό κείμενο', () => {
+    expect(toStrapiFields('entries', { project: '' }).project).toBeNull()
+  })
+
+  it('η αποθήκευση σταματά όταν δεν έχει επιλεγεί έργο', () => {
+    const v = validateContent('entries',
+      { title: 'Τ', Excerpt: 'Π' }, [{ type: 'text', html: '<p>x</p>' }] as any)
+    expect(v.ok).toBe(false)
+    expect(v.errors).toContain('Λείπει: Έργο')
+  })
+
+  it('με έργο, περνά', () => {
+    const v = validateContent('entries',
+      { title: 'Τ', Excerpt: 'Π', project: 'abc123' }, [{ type: 'text', html: '<p>x</p>' }] as any)
+    expect(v.ok).toBe(true)
+  })
+})

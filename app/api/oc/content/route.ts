@@ -12,6 +12,7 @@ import {
   CONTENT_TYPES, type ContentTypeKey, type ContentType, validateContent, articleHtmlFor,
   pageChromeHtml, contentRecord,
 } from '@/lib/ocContent'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -62,7 +63,7 @@ const isTransportFailure = (err: any): boolean =>
 async function strapiOnce(path: string, method: string, data?: any) {
   let res: Response
   try {
-    res = await fetch(`${STRAPI_URL}/api${path}`, {
+    res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
       method,
       headers: {
         Authorization: `Bearer ${STRAPI_API_TOKEN}`,
@@ -200,6 +201,30 @@ async function landedAlready(t: ContentType, slug: string): Promise<boolean | nu
   } catch { return null }
 }
 
+/**
+ * ΟΙ ΕΠΙΛΟΓΕΣ ΕΝΟΣ ΠΕΔΙΟΥ ΣΧΕΣΗΣ — ΔΙΑΒΑΣΜΕΝΕΣ, ΟΧΙ ΓΡΑΜΜΕΝΕΣ.
+ *
+ * Σήμερα το μόνο τέτοιο πεδίο είναι το «Έργο» των Καταχωρήσεων. Φεύγει ΜΙΑ
+ * κλήση όταν ανοίγει η καρτέλα, και μόνο για τα είδη που έχουν σχέση —
+ * στα Νέα και στα Έργα δεν ρωτιέται τίποτα.
+ *
+ * Αν η ανάγνωση πέσει, γυρνά άδεια λίστα αντί να ρίξει την καρτέλα: ο
+ * συντάκτης βλέπει τα υπάρχοντα και το λέει το ίδιο το πεδίο.
+ */
+async function relationOptions(t: ContentType) {
+  const out: Record<string, Array<{ value: string; label: string }>> = {}
+  for (const f of t.fields) {
+    if (f.kind !== 'relation' || !f.relation) continue
+    const { path, labelField, sort } = f.relation
+    const r = await strapi(
+      `/${path}?fields[0]=${encodeURIComponent(labelField)}&sort=${sort}`
+      + `&pagination[limit]=200&status=draft`)
+    out[f.name] = (r.ok && Array.isArray(r.json?.data) ? r.json.data : [])
+      .map((x: any) => ({ value: String(x.documentId), label: String(x[labelField] || '(χωρίς τίτλο)') }))
+  }
+  return out
+}
+
 const typeOf = (v: unknown): ContentTypeKey | null =>
   typeof v === 'string' && v in CONTENT_TYPES ? v as ContentTypeKey : null
 
@@ -247,6 +272,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     meta: composerMeta(),
     items: (r.json?.data || []).map((x: any) => ({ ...x, hasBlocks: undefined })),
+    relations: await relationOptions(t),
   })
 }
 

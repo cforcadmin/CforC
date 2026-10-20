@@ -4,6 +4,7 @@ export const maxDuration = 60
 import { verifyToken } from '@/lib/auth'
 import { sendOcEmail, FINANCE_EMAIL } from '@/lib/ocEmails'
 import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * Δήλωση «πλήρωσα τη συνδρομή μου» (ανανέωση μέλους) — από το κουμπί του
@@ -72,8 +73,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const res = await fetch(
-      `${STRAPI_URL}/api/members/${decoded.memberId}?fields[0]=Name&fields[1]=Email&fields[2]=AM&fields[3]=Payments&fields[4]=RegistrationYear&fields[5]=RenewalClaimedAt`,
+    const res = await strapiFetch(`${STRAPI_URL}/api/members/${decoded.memberId}?fields[0]=Name&fields[1]=Email&fields[2]=AM&fields[3]=Payments&fields[4]=RegistrationYear&fields[5]=RenewalClaimedAt`,
       { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store' }
     )
     const member = res.ok ? (await res.json())?.data : null
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       : receipt.type === 'image/webp' ? 'webp' : 'jpg'
     const uploadForm = new FormData()
     uploadForm.append('files', receipt, `renewal_${member.AM ?? member.id}_${Date.now()}.${ext}`)
-    const up = await fetch(`${STRAPI_URL}/api/upload`, {
+    const up = await strapiFetch(`${STRAPI_URL}/api/upload`, {
       method: 'POST', headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, body: uploadForm,
     })
     if (!up.ok) {
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     if (receiptId) payload.RenewalReceipt = receiptId
 
     // ΠΡΟΣΟΧΗ: το custom member controller δέχεται ΜΟΝΟ αριθμητικό id στο PUT
-    const put = (data: Record<string, any>) => fetch(`${STRAPI_URL}/api/members/${member.id}`, {
+    const put = (data: Record<string, any>) => strapiFetch(`${STRAPI_URL}/api/members/${member.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
       body: JSON.stringify({ data }),

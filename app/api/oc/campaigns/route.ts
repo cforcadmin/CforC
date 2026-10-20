@@ -23,6 +23,7 @@ import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
 import {
   archiveCampaign, recentArchiveEntries, resolveArchiveSlug, newsletterSlugFor,
 } from '@/lib/newsletterArchive'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 // Η «Αποστολή» στέλνει ΤΩΡΑ ό,τι χωράει — χρειάζεται χρόνο, όχι 60 δευτερόλεπτα
 export const maxDuration = 300
@@ -67,7 +68,7 @@ const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 const ALLOWED_SEATS = OC_EMAIL_SEATS as OcSeat[]
 
 async function strapi(path: string, method = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     ...(data !== undefined && { body: JSON.stringify({ data }) }),
@@ -1137,7 +1138,7 @@ export async function DELETE(request: NextRequest) {
     const kept: number[] = []
     for (const m of mine) {
       if (usedElsewhere.has(m)) { kept.push(m); continue }
-      const d = await fetch(`${STRAPI_URL}/api/upload/files/${m}`, {
+      const d = await strapiFetch(`${STRAPI_URL}/api/upload/files/${m}`, {
         method: 'DELETE', headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
       }).catch(() => null)
       if (d?.ok || d?.status === 404) deleted.push(m)

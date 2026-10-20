@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * Οι μετρητές της σελίδας «Σχετικά με εμάς»: ΔΡΑΣΕΙΣ και ΜΕΛΗ.
@@ -24,7 +25,7 @@ const FALLBACK = { members: 112, activities: 65 }
 
 async function total(path: string): Promise<number | null> {
   try {
-    const res = await fetch(`${STRAPI_URL}/api/${path}`, {
+    const res = await strapiFetch(`${STRAPI_URL}/api/${path}`, {
       headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
       next: { revalidate },
     })

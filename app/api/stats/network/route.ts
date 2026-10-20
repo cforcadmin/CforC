@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 // Δημόσια στατιστικά δικτύου για το υποσέλιδο: πλήθος ενεργών μελών (με ΑΜ —
 // ο ίδιος ορισμός με την Επισκόπηση του OC) και πλήθος περιφερειών με μέλη.
@@ -20,8 +21,7 @@ export async function GET() {
     let members = 0
     const provinces = new Set<string>()
     while (true) {
-      const res = await fetch(
-        `${STRAPI_URL}/api/members?fields[0]=AM&fields[1]=Province&pagination[start]=${start}&pagination[limit]=100&pagination[withCount]=true`,
+      const res = await strapiFetch(`${STRAPI_URL}/api/members?fields[0]=AM&fields[1]=Province&pagination[start]=${start}&pagination[limit]=100&pagination[withCount]=true`,
         { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, next: { revalidate: 3600 } }
       )
       if (!res.ok) return NextResponse.json(FALLBACK)

@@ -6,6 +6,7 @@ import { buildBuckets, findUrgent, isDigestDay, totalCount, active, type Reminde
 import { claimsNeedingReminder, daysSince, ageLabel, type ClaimForReminder } from '@/lib/expenseClaimReminders'
 import { expenseClaimReminderEmailHtml } from '@/lib/ocEmails'
 import { ocUrl } from '@/lib/siteUrl'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -35,7 +36,7 @@ const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 const OC_URL = ocUrl()
 
 async function strapi(path: string, method = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     ...(data !== undefined && { body: JSON.stringify({ data }) }),

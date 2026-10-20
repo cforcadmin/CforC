@@ -6,6 +6,7 @@ import { workingGroupProposeLimiter, getRateLimitErrorMessage } from '@/lib/rate
 import { validateProposal } from '@/lib/workingGroupProposals'
 import { sendOcEmail, workingGroupProposalEmailHtml, ADMIN_FROM, ADMIN_EMAIL, IT_EMAIL } from '@/lib/ocEmails'
 import { SEAT_MAILBOX } from '@/lib/ocRoles'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * ΠΡΟΤΑΣΗ ΝΕΑΣ ΟΜΑΔΑΣ ΕΡΓΑΣΙΑΣ — η διαδρομή που αντικαθιστά τη φόρμα Google.
@@ -63,8 +64,7 @@ export async function POST(request: Request) {
   // στέλνει ο πελάτης για ταυτότητα είναι πρόταση, όχι απόδειξη.
   let memberAm: number | null = null
   try {
-    const res = await fetch(
-      `${STRAPI_URL}/api/members/${decoded.memberId}?fields[0]=AM`,
+    const res = await strapiFetch(`${STRAPI_URL}/api/members/${decoded.memberId}?fields[0]=AM`,
       { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store' }
     )
     if (res.ok) {
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
 
   let documentId: string | null = null
   try {
-    const res = await fetch(`${STRAPI_URL}/api/working-group-proposals`, {
+    const res = await strapiFetch(`${STRAPI_URL}/api/working-group-proposals`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
       body: JSON.stringify(payload),
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
       cc: [IT_EMAIL, clean.proposerEmail],
     })
     if (notified && documentId) {
-      await fetch(`${STRAPI_URL}/api/working-group-proposals/${documentId}`, {
+      await strapiFetch(`${STRAPI_URL}/api/working-group-proposals/${documentId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
         body: JSON.stringify({ data: { NotifiedAt: new Date().toISOString() } }),

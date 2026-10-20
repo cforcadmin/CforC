@@ -4,6 +4,7 @@ import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { buildDataMap, summariseMap, findDrift, CATALOG, PROCESSORS } from '@/lib/dataMap'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -42,7 +43,7 @@ async function authorizeIt() {
  * είναι όλη η ουσία: το δεύτερο θα εμφάνιζε ψεύτικη απόκλιση.
  */
 async function liveFieldNames(plural: string, timeoutMs = 10000): Promise<string[] | null> {
-  const res = await fetch(`${STRAPI_URL}/api/${plural}?pagination[limit]=1`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api/${plural}?pagination[limit]=1`, {
     headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     cache: 'no-store',
     signal: AbortSignal.timeout(timeoutMs),

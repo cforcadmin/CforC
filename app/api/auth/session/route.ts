@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 const STRAPI_URL = process.env.STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
@@ -42,8 +43,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch member from database using documentId
-    const memberResponse = await fetch(
-      `${STRAPI_URL}/api/members?filters[documentId][$eq]=${encodeURIComponent(decoded.memberId)}&populate[0]=Image&populate[1]=Project1Pictures&populate[2]=Project2Pictures`,
+    const memberResponse = await strapiFetch(`${STRAPI_URL}/api/members?filters[documentId][$eq]=${encodeURIComponent(decoded.memberId)}&populate[0]=Image&populate[1]=Project1Pictures&populate[2]=Project2Pictures`,
       {
         headers: {
           'Content-Type': 'application/json',

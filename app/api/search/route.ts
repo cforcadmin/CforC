@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_TOKEN = process.env.STRAPI_API_TOKEN
 
 async function strapiGet(path: string) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     headers: { Authorization: `Bearer ${STRAPI_TOKEN}` },
   })
   if (!res.ok) return null

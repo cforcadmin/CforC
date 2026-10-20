@@ -21,9 +21,14 @@ export type ContentTypeKey = 'news' | 'projects' | 'entries'
 export interface ContentField {
   name: string
   label: string
-  kind: 'text' | 'textarea' | 'date' | 'datetime' | 'number' | 'boolean' | 'select' | 'media'
+  kind: 'text' | 'textarea' | 'date' | 'datetime' | 'number' | 'boolean' | 'select' | 'media' | 'relation'
   required?: boolean
   options?: Array<{ value: string; label: string }>
+  /**
+   * Πεδίο που δείχνει σε ΑΛΛΗ συλλογή. Οι επιλογές δεν γράφονται εδώ —
+   * διαβάζονται από το Strapi όταν ανοίγει η καρτέλα, μία κλήση.
+   */
+  relation?: { path: string; labelField: string; sort: string }
   /** Πεδίο media που δέχεται ΠΟΛΛΑ αρχεία — το Strapi θέλει πίνακα, όχι id */
   multiple?: boolean
   /**
@@ -169,6 +174,17 @@ export const CONTENT_TYPES: Record<ContentTypeKey, ContentType> = {
     filterField: { name: 'visibility', label: 'Ορατότητα' },
     fields: [
       { name: 'title', label: 'Τίτλος', kind: 'text', required: true },
+      /**
+       * ΥΠΟΧΡΕΩΤΙΚΟ, ΚΑΙ ΟΧΙ ΑΠΟ ΑΥΣΤΗΡΟΤΗΤΑ.
+       *
+       * Μια καταχώρηση ΔΕΝ έχει δική της σελίδα: η διεύθυνσή της είναι
+       * `/projects/<έργο>/entries/<καταχώρηση>`, και το site τη φτάνει
+       * μόνο μέσα από το έργο της. Χωρίς έργο αποθηκεύεται κανονικά και
+       * δεν τη βλέπει ΚΑΝΕΙΣ — υπάρχει και είναι αόρατη.
+       */
+      { name: 'project', label: 'Έργο', kind: 'relation', required: true,
+        relation: { path: 'projects', labelField: 'title', sort: 'title:asc' },
+        hint: 'Η καταχώρηση ζει μέσα στο έργο — χωρίς αυτό δεν έχει διεύθυνση στο site.' },
       { name: 'category', label: 'Κατηγορία', kind: 'text' },
       { name: 'tags', label: 'Ετικέτες', kind: 'text', chips: true,
         hint: 'Enter ή κόμμα για την επόμενη.' },
@@ -351,6 +367,10 @@ export function toStrapiFields(
       const album: number[] = Array.isArray(value?.mediaIds)
         ? value.mediaIds.filter((x: any) => Number.isInteger(x)) : []
       out[name] = album.length && album[0] === id ? album : [id]
+    } else if (f.kind === 'relation') {
+      /* Το Strapi v5 δέχεται το documentId απευθείας για manyToOne. */
+      const id = String(value ?? '').trim()
+      out[name] = id || null
     } else if (f.kind === 'number') {
       out[name] = value === '' || value === null || value === undefined ? null : Number(value)
     } else if (f.kind === 'boolean') {

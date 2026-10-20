@@ -12,6 +12,7 @@ import { generateExpenseClaimPdf } from '@/lib/expenseClaimPdf'
 import { archiveExpenseClaim, type ArchiveAttachment } from '@/lib/expenseClaimArchive'
 import { sendOcEmail, expenseClaimSubmittedEmailHtml, expenseClaimReceivedEmailHtml, FINANCE_FROM, FINANCE_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { ocUrl } from '@/lib/siteUrl'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 // Ανέβασμα παραστατικών + δημιουργία φακέλου: πολύ πάνω από τα 10s
 export const maxDuration = 60
@@ -37,7 +38,7 @@ const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 async function strapi(path: string, method: string = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     ...(data !== undefined && { body: JSON.stringify({ data }) }),
@@ -243,7 +244,7 @@ export async function POST(request: NextRequest) {
       })
       const fd = new FormData()
       fd.append('files', f, name)
-      const up = await fetch(`${STRAPI_URL}/api/upload`, {
+      const up = await strapiFetch(`${STRAPI_URL}/api/upload`, {
         method: 'POST', headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, body: fd,
       })
       if (!up.ok) {

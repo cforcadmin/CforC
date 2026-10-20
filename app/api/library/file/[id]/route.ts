@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { getAccessToken, SCOPES } from '@/lib/googleAuth'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -41,8 +42,7 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
   }
 
   // Υπάρχει τεκμήριο με αυτό το αρχείο; Αλλιώς δεν το δίνουμε.
-  const look = await fetch(
-    `${STRAPI_URL}/api/library-items?filters[DriveFileId][$eq]=${encodeURIComponent(id)}`
+  const look = await strapiFetch(`${STRAPI_URL}/api/library-items?filters[DriveFileId][$eq]=${encodeURIComponent(id)}`
     + '&fields[0]=FileName&fields[1]=MimeType&fields[2]=State&pagination[pageSize]=1',
     { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store' },
   )

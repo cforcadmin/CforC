@@ -21,6 +21,7 @@ import { LIBRARY_SHEET_ID } from '@/lib/librarySheet'
 import { LIBRARY_FOLDER_ID } from '@/lib/googleDrive'
 import { AGENDA_DOC_ID } from '@/lib/googleDocs'
 import { PUBLIC_SITE_HOST } from '@/lib/siteUrl'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -173,7 +174,7 @@ export async function GET() {
     // ── Strapi: η μόνη βάση. Αν πέσει, δεν λειτουργεί τίποτα.
     guard('strapi', 'Strapi', async () => {
       const t0 = Date.now()
-      const r = await fetch(`${STRAPI_URL}/api/oc-campaigns?pagination[limit]=1&fields[0]=Subject`, {
+      const r = await strapiFetch(`${STRAPI_URL}/api/oc-campaigns?pagination[limit]=1&fields[0]=Subject`, {
         headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store',
       })
       return judgeStrapi(r.ok, Date.now() - t0)
@@ -330,7 +331,7 @@ export async function GET() {
     guard('applications', 'Αιτήσεις εγγραφής', async () => {
       const q = '/api/membership-applications?pagination[limit]=100'
         + '&fields[0]=ApplicationState&fields[1]=DecisionDate'
-      const res = await fetch(`${STRAPI_URL}${q}`, {
+      const res = await strapiFetch(`${STRAPI_URL}${q}`, {
         headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store',
       })
       if (!res.ok) return { state: 'unknown' as const, detail: `Strapi ${res.status}` }
@@ -391,8 +392,7 @@ export async function GET() {
 
     // ── Εξοδολόγια που δεν έφτασαν ποτέ στο Drive (σιωπηλή αποτυχία, 28/9/2026)
     guard('claims', 'Αρχειοθέτηση εξοδολογίων', async () => {
-      const r = await fetch(
-        `${STRAPI_URL}/api/expense-claims?pagination[limit]=100&fields[0]=FolderUrl&fields[1]=ClaimNumber`,
+      const r = await strapiFetch(`${STRAPI_URL}/api/expense-claims?pagination[limit]=100&fields[0]=FolderUrl&fields[1]=ClaimNumber`,
         { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store' })
       if (!r.ok) return { state: 'unknown' as const, detail: `Strapi ${r.status}` }
       const rows: any[] = (await r.json())?.data || []

@@ -9,6 +9,7 @@ import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { parseKiniseis, parseIncoming, joinStatement } from '@/lib/bankStatement'
 import { matchPayerToMembers, payerAliasKey, nameSimilarity, type MatchableMember } from '@/lib/memberMatcher'
 import { getAliasesFor } from '@/lib/payerAliases'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * Μηνιαία επικόλληση κινήσεων τράπεζας — ΜΟΝΟ ανάλυση, καμία εγγραφή.
@@ -26,7 +27,7 @@ const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 async function strapi(path: string, method: string = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',

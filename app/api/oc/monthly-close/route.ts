@@ -8,6 +8,7 @@ import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { type ReceiptType } from '@/lib/receipts'
 import { sendOcEmail, sendOcEmailResult, monthlyDispatchEmailHtml, monthReadyEmailHtml, ADMIN_FROM, ADMIN_EMAIL, FINANCE_EMAIL, FINANCE_FROM } from '@/lib/ocEmails'
 import { ocUrl } from '@/lib/siteUrl'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * Μηνιαία εικόνα ΕΣΟΔΩΝ + ΕΞΟΔΩΝ και κλείσιμο μήνα («εστάλη στο λογιστήριο»).
@@ -88,7 +89,7 @@ const METHOD_LABELS: Record<string, string> = {
 }
 
 async function strapi(path: string, method: string = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',

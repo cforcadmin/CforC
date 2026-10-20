@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 function escapeHtml(str: string): string {
   return str
@@ -63,7 +64,7 @@ export async function GET(request: Request) {
     }
 
     // Create subscriber record in Strapi
-    const createResponse = await fetch(`${STRAPI_URL}/api/newsletter-subscribers`, {
+    const createResponse = await strapiFetch(`${STRAPI_URL}/api/newsletter-subscribers`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

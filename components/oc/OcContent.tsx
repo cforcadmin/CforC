@@ -59,6 +59,8 @@ export default function OcContent() {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<Notice>(null)
   const [preview, setPreview] = useState('')
+  /** Οι επιλογές των πεδίων σχέσης — σήμερα μόνο το «Έργο» των Καταχωρήσεων */
+  const [relations, setRelations] = useState<Record<string, Array<{ value: string; label: string }>>>({})
   const [goTo, setGoTo] = useState<{ i: number; n: number } | null>(null)
   const [cursor, setCursor] = useState(0)
 
@@ -173,6 +175,7 @@ export default function OcContent() {
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία')
       setItems(d.items || [])
       if (d.meta) setMeta(d.meta)
+      setRelations(d.relations || {})
     } catch (e: any) {
       setNotice({ kind: 'err', text: e?.message || 'Αποτυχία φόρτωσης' })
     } finally { setLoading(false) }
@@ -243,6 +246,10 @@ export default function OcContent() {
           fields[f.name] = m
             ? { mediaId: m.id, src: m.url, alt: '', ...(all.length > 1 ? { mediaIds: all } : {}) }
             : undefined
+        } else if (f.kind === 'relation') {
+          /* Το Strapi γυρίζει ολόκληρη τη συνδεδεμένη εγγραφή· η οθόνη
+             κρατά μόνο το αναγνωριστικό, που είναι και η τιμή του μενού. */
+          fields[f.name] = (v && typeof v === 'object' ? (v as any).documentId : v) ?? ''
         } else fields[f.name] = v ?? ''
       }
 
@@ -370,6 +377,7 @@ export default function OcContent() {
               <div className="space-y-3">
                 {t.fields.map(f => (
                   <Field key={f.name} field={f} value={draft.fields[f.name]}
+                    options={relations[f.name]}
                     onChange={v => setField(f.name, v)} />
                 ))}
               </div>
@@ -580,8 +588,10 @@ function labelFor(type: ContentTypeKey, field: string, value: any): string {
 }
 
 /** Ένα πεδίο — η μορφή του βγαίνει από το είδος, όχι από αντιγραμμένο JSX */
-function Field({ field: f, value, onChange }: {
+function Field({ field: f, value, onChange, options }: {
   field: ContentField; value: any; onChange: (v: any) => void
+  /** Οι επιλογές ενός πεδίου σχέσης — έρχονται από το Strapi, όχι από τον κώδικα */
+  options?: Array<{ value: string; label: string }>
 }) {
   const label = (
     <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
@@ -601,6 +611,27 @@ function Field({ field: f, value, onChange }: {
           onChange={p => onChange(p.mediaId !== undefined && p.mediaId !== value?.mediaId
             ? { ...(value || {}), ...p, mediaIds: undefined }
             : { ...(value || {}), ...p })} />
+        {hint}
+      </div>
+    )
+  }
+
+  if (f.kind === 'relation') {
+    const list = options || []
+    return (
+      <div>
+        {label}
+        <select className={cls} value={value ?? ''} onChange={e => onChange(e.target.value)}>
+          <option value="">— διάλεξε —</option>
+          {list.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        {/* Άδειο μενού σημαίνει ότι δεν διαβάστηκαν τα έργα, όχι ότι δεν
+            υπάρχουν — αλλιώς ο συντάκτης ψάχνει λάθος πράγμα. */}
+        {!list.length && (
+          <p className="text-[11px] text-coral-dark dark:text-coral-light mt-1 leading-snug">
+            Δεν διαβάστηκαν τα έργα. Ανανέωσε τη σελίδα.
+          </p>
+        )}
         {hint}
       </div>
     )

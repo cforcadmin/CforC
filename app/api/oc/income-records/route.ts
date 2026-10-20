@@ -6,6 +6,7 @@ import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { parseInvoiceFilename, buildApprovedFilename } from '@/lib/invoiceFilename'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * Έσοδα ΧΩΡΙΣ απόδειξη — χορηγίες, επιχορηγήσεις, λοιπά.
@@ -79,8 +80,7 @@ export async function POST(request: NextRequest) {
   try {
     // Διπλοεγγραφή; ίδια συναλλαγή ήδη καταχωρημένη
     if (txnId) {
-      const dup = await fetch(
-        `${STRAPI_URL}/api/income-records?filters[TransactionId][$eq]=${encodeURIComponent(txnId)}&fields[0]=Aa&pagination[limit]=1`,
+      const dup = await strapiFetch(`${STRAPI_URL}/api/income-records?filters[TransactionId][$eq]=${encodeURIComponent(txnId)}&fields[0]=Aa&pagination[limit]=1`,
         { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store' },
       )
       const hit = dup.ok ? (await dup.json())?.data?.[0] : null
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 3) εγγραφή στο Strapi
-    const created = await fetch(`${STRAPI_URL}/api/income-records`, {
+    const created = await strapiFetch(`${STRAPI_URL}/api/income-records`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
       body: JSON.stringify({

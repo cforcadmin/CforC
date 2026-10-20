@@ -3,6 +3,7 @@ import { cachedJson, invalidate } from '@/lib/strapiCache'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import { resolveOcAccess } from '@/lib/ocRoles'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * Προτιμήσεις οθόνης του OC ανά χρήστη: πλάτη στηλών και σειρά καρτών.
@@ -28,7 +29,7 @@ export interface OcUiPrefs {
 }
 
 async function strapi(path: string, method = 'GET', data?: any) {
-  const res = await fetch(`${STRAPI_URL}/api${path}`, {
+  const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     ...(data !== undefined && { body: JSON.stringify({ data }) }),

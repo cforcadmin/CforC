@@ -6,6 +6,7 @@ import { trashFile, untrashFile, ALLOWED_MIME, MAX_FILE_BYTES, LIBRARY_FOLDER_ID
 import { getAccessToken, SCOPES } from '@/lib/googleAuth'
 import { LIBRARY_TAXONOMY, getSubLabel } from '@/lib/memberTaxonomy'
 import { updateLibraryRow, clearLibraryRow } from '@/lib/librarySheet'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -19,7 +20,7 @@ const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 const strapi = (path: string, init?: RequestInit) =>
-  fetch(`${STRAPI_URL}/api${path}`, {
+  strapiFetch(`${STRAPI_URL}/api${path}`, {
     ...init,
     headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}`, 'Content-Type': 'application/json', ...init?.headers },
     cache: 'no-store',

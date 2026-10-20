@@ -3,6 +3,7 @@ import { Resend } from 'resend'
 import { isValidEmail, generateMagicLinkToken, hashToken } from '@/lib/auth'
 import { magicLinkLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 import { checkCsrf } from '@/lib/csrf'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const STRAPI_URL = process.env.STRAPI_URL
@@ -34,8 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if email exists in Members collection
-    const membersResponse = await fetch(
-      `${STRAPI_URL}/api/members?filters[Email][$eq]=${encodeURIComponent(email)}&populate=*`,
+    const membersResponse = await strapiFetch(`${STRAPI_URL}/api/members?filters[Email][$eq]=${encodeURIComponent(email)}&populate=*`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -73,8 +73,7 @@ export async function POST(request: NextRequest) {
     expiryTime.setHours(expiryTime.getHours() + 6)
 
     // Check if auth token record exists for this email
-    const existingTokensResponse = await fetch(
-      `${STRAPI_URL}/api/auth-tokens?filters[email][$eq]=${encodeURIComponent(email)}`,
+    const existingTokensResponse = await strapiFetch(`${STRAPI_URL}/api/auth-tokens?filters[email][$eq]=${encodeURIComponent(email)}`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -91,8 +90,7 @@ export async function POST(request: NextRequest) {
       if (existingTokens.data && existingTokens.data.length > 0) {
         // Update existing record (preserves passwordHash)
         const existingToken = existingTokens.data[0]
-        tokenResponse = await fetch(
-          `${STRAPI_URL}/api/auth-tokens/${existingToken.documentId || existingToken.id}`,
+        tokenResponse = await strapiFetch(`${STRAPI_URL}/api/auth-tokens/${existingToken.documentId || existingToken.id}`,
           {
             method: 'PUT',
             headers: {
@@ -110,8 +108,7 @@ export async function POST(request: NextRequest) {
         )
       } else {
         // Create new auth token record
-        tokenResponse = await fetch(
-          `${STRAPI_URL}/api/auth-tokens`,
+        tokenResponse = await strapiFetch(`${STRAPI_URL}/api/auth-tokens`,
           {
             method: 'POST',
             headers: {
@@ -131,8 +128,7 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // Create new auth token record
-      tokenResponse = await fetch(
-        `${STRAPI_URL}/api/auth-tokens`,
+      tokenResponse = await strapiFetch(`${STRAPI_URL}/api/auth-tokens`,
         {
           method: 'POST',
           headers: {

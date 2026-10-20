@@ -5,6 +5,7 @@ import { strapiAll } from '@/lib/strapiPaged'
 import { shapeItem } from '@/lib/library'
 import { trashFile } from '@/lib/googleDrive'
 import { sharedWordCount } from '@/lib/library'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 
@@ -20,7 +21,7 @@ const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 const strapi = (path: string, init?: RequestInit) =>
-  fetch(`${STRAPI_URL}/api${path}`, {
+  strapiFetch(`${STRAPI_URL}/api${path}`, {
     ...init,
     headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}`, 'Content-Type': 'application/json', ...init?.headers },
     cache: 'no-store',

@@ -7,6 +7,7 @@ import { verifyToken, generateRenewalClaimToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
 import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { sendOcEmail, renewalPaymentFailedEmailHtml, renewalClaimUrl, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * «Αποτυχία» σε δήλωση πληρωμής συνδρομής (ανανέωση) — ΜΟΝΟ Financer.
@@ -51,8 +52,7 @@ export async function POST(request: NextRequest) {
   if (!memberDocId) return NextResponse.json({ error: 'Λείπει μέλος' }, { status: 400 })
 
   try {
-    const res = await fetch(
-      `${STRAPI_URL}/api/members/${memberDocId}?fields[0]=Name&fields[1]=Email&fields[2]=Payments&fields[3]=RegistrationYear&fields[4]=RenewalClaimedAt`,
+    const res = await strapiFetch(`${STRAPI_URL}/api/members/${memberDocId}?fields[0]=Name&fields[1]=Email&fields[2]=Payments&fields[3]=RegistrationYear&fields[4]=RenewalClaimedAt`,
       { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store' },
     )
     const member = res.ok ? (await res.json())?.data : null
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     if (!sent) return NextResponse.json({ error: 'Αποτυχία αποστολής email' }, { status: 502 })
 
     // Μηδενισμός δήλωσης — ΜΟΝΟ αριθμητικό id στο PUT
-    const upd = await fetch(`${STRAPI_URL}/api/members/${member.id}`, {
+    const upd = await strapiFetch(`${STRAPI_URL}/api/members/${member.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
       body: JSON.stringify({ data: { RenewalClaimedAt: null } }),

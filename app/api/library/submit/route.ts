@@ -6,6 +6,7 @@ import { titleKey, titleSimilarity, isLikelyDuplicate, sharedWordCount, LIMITS }
 import { uploadToLibrary, trashFile, ALLOWED_MIME, MAX_FILE_BYTES, LIBRARY_FOLDER_ID } from '@/lib/googleDrive'
 import { LIBRARY_TAXONOMY, getSubLabel } from '@/lib/memberTaxonomy'
 import { getAccessToken, SCOPES } from '@/lib/googleAuth'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 // Ανέβασμα στο Drive + έλεγχος διπλοεγγραφών + email: πολύ πάνω από τα 10s
 export const maxDuration = 60
@@ -14,7 +15,7 @@ const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 
 const strapi = (path: string, init?: RequestInit) =>
-  fetch(`${STRAPI_URL}/api${path}`, {
+  strapiFetch(`${STRAPI_URL}/api${path}`, {
     ...init,
     headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}`, 'Content-Type': 'application/json', ...init?.headers },
     cache: 'no-store',

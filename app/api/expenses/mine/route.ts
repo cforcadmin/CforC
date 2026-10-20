@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * Τα εξοδολόγια ΤΟΥ μέλους που ρωτάει — κανενός άλλου.
@@ -21,14 +22,13 @@ export async function GET() {
     return NextResponse.json({ error: 'Απαιτείται σύνδεση' }, { status: 401 })
   }
 
-  const meRes = await fetch(`${STRAPI_URL}/api/members/${decoded.memberId}?fields[0]=Email`, {
+  const meRes = await strapiFetch(`${STRAPI_URL}/api/members/${decoded.memberId}?fields[0]=Email`, {
     headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store',
   })
   const email = String((await meRes.json().catch(() => null))?.data?.Email || '').trim()
   if (!email) return NextResponse.json({ error: 'Δεν βρέθηκε το μέλος' }, { status: 404 })
 
-  const res = await fetch(
-    `${STRAPI_URL}/api/expense-claims?filters[MemberEmail][$eqi]=${encodeURIComponent(email)}` +
+  const res = await strapiFetch(`${STRAPI_URL}/api/expense-claims?filters[MemberEmail][$eqi]=${encodeURIComponent(email)}` +
     '&sort=SubmittedAt:desc&pagination[limit]=100',
     { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store' },
   )

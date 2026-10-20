@@ -1,3 +1,5 @@
+import { strapiFetch } from '@/lib/strapiFetch'
+
 /**
  * Strapi API Utility Functions
  * Centralized functions for fetching data from Strapi CMS
@@ -55,7 +57,7 @@ async function fetchStrapi(endpoint: string, options: RequestInit = {}) {
     : {}
 
   try {
-    const response = await fetchWithRetry(url, { ...options, ...caching, headers }, isRead);
+    const response = await strapiFetch(url, { ...options, ...caching, headers });
 
     if (!response.ok) {
       throw new Error(`Strapi API error: ${response.status} ${response.statusText}`);
@@ -68,40 +70,6 @@ async function fetchStrapi(endpoint: string, options: RequestInit = {}) {
   }
 }
 
-/**
- * ΜΙΑ ΠΕΣΜΕΝΗ ΣΥΝΔΕΣΗ ΔΕΝ ΠΡΕΠΕΙ ΝΑ ΡΙΧΝΕΙ ΟΛΟΚΛΗΡΗ ΤΗ ΣΕΛΙΔΑ.
- *
- * 20/10/2026, μετρημένο: σε ~60 κλήσεις προς το Strapi Cloud, τέσσερις
- * γύρισαν `ECONNRESET` — σε ριπές, και δύο φορές ΔΥΟ στη σειρά. Δεν φταίει
- * ούτε το μέγεθος ούτε τα δεδομένα· η σύνδεση κόβεται από την άλλη πλευρά.
- * Μία τέτοια αστοχία σε server component πετάει ολόκληρη την απόδοση στο
- * `app/error.tsx` — ο επισκέπτης βλέπει σελίδα σφάλματος επειδή μια πρίζα
- * ήταν μπαγιάτικη.
- *
- * ΜΟΝΟ ΓΙΑ ΑΝΑΓΝΩΣΕΙΣ. Μια εγγραφή που δεν απάντησε μπορεί να έχει ήδη
- * περάσει, και η τυφλή επανάληψή της γράφει δεύτερη φορά — αυτό λύνεται με
- * μάρτυρα (βλ. `createWithWitness` στο api/oc/content), όχι εδώ.
- *
- * Δύο επιπλέον προσπάθειες, γιατί μία δεν καλύπτει τις διπλές ριπές που
- * μετρήθηκαν.
- */
-const isTransportFailure = (err: any): boolean =>
-  err instanceof TypeError || !!err?.cause?.code
-
-async function fetchWithRetry(url: string, init: RequestInit, isRead: boolean): Promise<Response> {
-  const attempts = isRead ? 3 : 1
-  let last: unknown
-  for (let i = 0; i < attempts; i++) {
-    try {
-      return await fetch(url, init)
-    } catch (err) {
-      last = err
-      if (!isTransportFailure(err) || i === attempts - 1) throw err
-      await new Promise(r => setTimeout(r, 250 * (i + 1)))
-    }
-  }
-  throw last
-}
 
 /**
  * Same as fetchStrapi, but reads EVERY page.

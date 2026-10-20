@@ -6,6 +6,7 @@ import { verifyToken, generateRenewalClaimToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
 import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { sendOcEmail, subscriptionReminderEmailHtml, renewalClaimUrl, FINANCE_FROM, FINANCE_EMAIL, COMMUNITY_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * Υπενθύμιση συνδρομής σε μέλος — από τα bubbles «Προς ειδοποίηση /
@@ -52,8 +53,7 @@ export async function POST(request: NextRequest) {
   if (!memberDocId) return NextResponse.json({ error: 'Λείπει μέλος' }, { status: 400 })
 
   try {
-    const res = await fetch(
-      `${STRAPI_URL}/api/members/${memberDocId}`,
+    const res = await strapiFetch(`${STRAPI_URL}/api/members/${memberDocId}`,
       { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store' },
     )
     const member = res.ok ? (await res.json())?.data : null
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     // Πρώτη φορά με ιστορικό: κρατάμε και την παλιά μεμονωμένη σφραγίδα
     if (log.length === 0 && member.ReminderSentAt) log.push(String(member.ReminderSentAt))
     log.push(now)
-    const stamp = await fetch(`${STRAPI_URL}/api/members/${member.id}`, {
+    const stamp = await strapiFetch(`${STRAPI_URL}/api/members/${member.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
       body: JSON.stringify({ data: { ReminderSentAt: now, ReminderLog: log.slice(-20) } }),

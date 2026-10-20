@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 import { sendOcEmail, paymentClaimNoticeHtml, FINANCE_EMAIL } from '@/lib/ocEmails'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
  * Δήλωση «πλήρωσα» από τον σύνδεσμο των emails (μετά το επιβεβαιωτικό κλικ):
@@ -61,8 +62,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const res = await fetch(
-      `${STRAPI_URL}/api/membership-applications/${decoded.applicationId}`,
+    const res = await strapiFetch(`${STRAPI_URL}/api/membership-applications/${decoded.applicationId}`,
       { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store' }
     )
     const app = res.ok ? (await res.json())?.data : null
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
         : receipt.type === 'image/webp' ? 'webp' : 'jpg'
       const uploadForm = new FormData()
       uploadForm.append('files', receipt, `receipt_${decoded.applicationId}_${Date.now()}.${ext}`)
-      const up = await fetch(`${STRAPI_URL}/api/upload`, {
+      const up = await strapiFetch(`${STRAPI_URL}/api/upload`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
         body: uploadForm,
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     if (firstClaim) data.PaymentClaimedAt = new Date().toISOString()
     if (receiptId) data.PaymentReceipt = receiptId
     if (Object.keys(data).length > 0) {
-      const put = await fetch(`${STRAPI_URL}/api/membership-applications/${app.documentId}`, {
+      const put = await strapiFetch(`${STRAPI_URL}/api/membership-applications/${app.documentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

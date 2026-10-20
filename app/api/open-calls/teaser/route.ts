@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { strapiFetch } from '@/lib/strapiFetch'
 
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN || process.env.NEXT_PUBLIC_STRAPI_API_TOKEN
@@ -19,7 +20,7 @@ export async function GET() {
   ].join('&')
 
   try {
-    const response = await fetch(`${STRAPI_URL}/api/open-calls?${qs}`, {
+    const response = await strapiFetch(`${STRAPI_URL}/api/open-calls?${qs}`, {
       headers: {
         'Content-Type': 'application/json',
         ...(STRAPI_API_TOKEN && { Authorization: `Bearer ${STRAPI_API_TOKEN}` }),
