@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { usePreviewPane, OcPreviewPane } from './OcPreviewPane'
+import { usePreviewPane, OcPreviewPane, previewTrack } from './OcPreviewPane'
 import { BlockEditor, PreviewFrame, ImageField, PositionRail, CONTROL, CARD, EYEBROW, type EditorBlock } from '@/components/oc/OcCampaigns'
 import { CONTENT_TYPES, type ContentTypeKey, type ContentField } from '@/lib/ocContent'
 
@@ -69,8 +69,29 @@ export default function OcContent() {
    * email. Δική μου υλοποίηση εδώ θα απέκλινε στην πρώτη διόρθωση — και
    * απέκλινε ήδη μία φορά, σε τέσσερις γύρους σχολίων.
    */
-  const pane = usePreviewPane({ defaultH: 520 })
+  const gridRef = useRef<HTMLElement>(null)
+  const pane = usePreviewPane({ defaultH: 520, sectionRef: gridRef })
   const [copied, setCopied] = useState<'ok' | 'err' | null>(null)
+
+  /**
+   * ΤΟ ΘΕΜΑ ΤΗΣ ΠΡΟΕΠΙΣΚΟΠΗΣΗΣ ΑΚΟΛΟΥΘΕΙ ΤΟ OC, ΖΩΝΤΑΝΑ.
+   *
+   * Το πλαίσιο είναι ΑΛΛΟ έγγραφο: δεν βλέπει ούτε το globals.css ούτε την
+   * κλάση `.dark`. Το θέμα πάει ρητά στον server — οπότε χρειάζεται και
+   * παρατηρητής, αλλιώς η προεπισκόπηση μένει στο θέμα που ίσχυε όταν
+   * αποδόθηκε και δεν αλλάζει ποτέ.
+   *
+   * ΔΕΝ αφορά το δημοσιευμένο άρθρο: εκεί αποθηκεύονται μεταβλητές
+   * (`var(--cfc-ink,…)`) και το θέμα το δίνει η σελίδα του ΕΠΙΣΚΕΠΤΗ.
+   */
+  const [dark, setDark] = useState(false)
+  useEffect(() => {
+    const read = () => setDark(document.documentElement.classList.contains('dark'))
+    read()
+    const mo = new MutationObserver(read)
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => mo.disconnect()
+  }, [])
 
   /** Ο ολισθητήρας κινεί ΚΑΙ τα στοιχεία ΚΑΙ την προεπισκόπηση */
   const goToPosition = useCallback((i: number) => {
@@ -134,7 +155,7 @@ export default function OcContent() {
             action: 'preview', type,
             fields: draft.fields, blocks: draft.blocks, headerStyle: draft.headerStyle,
             /* Το πλαίσιο είναι ξεχωριστό έγγραφο και δεν ξέρει το θέμα του OC */
-            theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+            theme: dark ? 'dark' : 'light',
           }),
         })
         const d = await res.json()
@@ -142,7 +163,7 @@ export default function OcContent() {
       } catch { /* η προεπισκόπηση δεν σταματά τη δουλειά */ }
     }, 400)
     return () => window.clearTimeout(previewTimer.current)
-  }, [draft, type])
+  }, [draft, type, dark])
 
   /**
    * ΕΝΑΛΛΑΓΗ: δεύτερο πάτημα κλείνει ό,τι άνοιξε το πρώτο.
@@ -284,9 +305,15 @@ export default function OcContent() {
          * Χωρίζει από τις 768px, νωρίτερα κι από το email, γιατί εδώ η
          * αριστερή στήλη είναι φόρμα και χωράει στενότερη.
          */
-        <div
-          style={pane.twoCol && pane.pv.w
-            ? { gridTemplateColumns: `minmax(0,1fr) auto ${pane.pv.w}px` } : undefined}
+        <section
+          ref={gridRef}
+          style={pane.twoCol && (pane.pv.l || pane.pv.w) ? {
+            /* ΑΡΙΣΤΕΡΑ μεγαλώνει σπρώχνοντας ΟΛΟΚΛΗΡΟ τον συνθέτη στο
+               αχρησιμοποίητο περιθώριο — τα μπλοκ ΜΕΤΑΚΙΝΟΥΝΤΑΙ, δεν
+               στενεύουν. Η γραμμή του πλέγματος μεγαλώνει μαζί. */
+            marginLeft: pane.pv.l ? -pane.pv.l : undefined,
+            gridTemplateColumns: `minmax(0,1fr) auto ${previewTrack(pane)}`,
+          } : undefined}
           className="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,22rem)] xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,30rem)] items-start">
           <div className="space-y-5 min-w-0">
             <section className={CARD}>
@@ -323,11 +350,10 @@ export default function OcContent() {
           <PositionRail count={draft.blocks.length} cursor={cursor}
             here={hereSection} onGo={goToPosition} />
 
-          <div className="space-y-4 min-w-0">
-            <OcPreviewPane
-              pane={pane}
+          <OcPreviewPane
+              pane={pane} withLeftHandle
               empty="Συμπλήρωσε τίτλο και πρόσθεσε ένα μπλοκ"
-              caption="Έτσι θα φαίνεται στο site, με το θέμα που έχεις εσύ τώρα."
+              caption="Έτσι θα φαίνεται στο site. Το δημοσιευμένο άρθρο ακολουθεί το θέμα του ΕΠΙΣΚΕΠΤΗ — εδώ δείχνει το δικό σου."
               actions={
                 <button type="button" onClick={copyHtml} disabled={!preview}
                   title="Αντιγράφει το HTML του άρθρου όπως φαίνεται"
@@ -340,14 +366,33 @@ export default function OcContent() {
                   }`}>
                   {copied === 'ok' ? 'Αντιγράφηκε ✓' : copied === 'err' ? 'Δεν αντιγράφηκε' : 'Αντιγραφή HTML'}
                 </button>
-              }>
+            }
+            after={
+              <div className={`${CARD} space-y-3`}>
+                {missing.length > 0 && (
+                  <p className="text-xs text-coral-dark dark:text-coral-light">Λείπουν: {missing.join(' · ')}</p>
+                )}
+                <div className="flex gap-2">
+                  <button type="button" onClick={save} disabled={busy || missing.length > 0}
+                    className="flex-1 px-5 min-h-11 rounded-full bg-coral text-white text-sm font-bold hover:bg-coral-dark disabled:opacity-40">
+                    {busy ? 'Αποθήκευση…' : draft.id ? 'Αποθήκευση' : `Δημοσίευση ${t.singular}`}
+                  </button>
+                  <button type="button" onClick={() => { setDraft(null); setNotice(null) }}
+                    className={`${CONTROL} font-semibold`}>
+                    Κλείσιμο
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Η διαγραφή γίνεται από το Strapi — το διακριτικό του site δεν τη δικαιούται.
+                </p>
+              </div>
+            }>
               {preview ? (
                 <PreviewFrame html={preview} goTo={goTo} height={pane.pv.h}
                   maximized={pane.maximized} onToggleMaximize={pane.toggleMaximize} />
               ) : null}
             </OcPreviewPane>
-          </div>
-        </div>
+        </section>
       )}
     </div>
   )

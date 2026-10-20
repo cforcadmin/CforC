@@ -212,7 +212,7 @@ const GRIP = 'rounded-full bg-coral/40 group-hover:bg-coral group-focus-visible:
  * το ορίζει η οθόνη.
  */
 export function OcPreviewPane({
-  pane, title = 'ΠΡΟΕΠΙΣΚΟΠΗΣΗ', actions, caption, empty, children, withLeftHandle,
+  pane, title = 'ΠΡΟΕΠΙΣΚΟΠΗΣΗ', actions, caption, empty, children, withLeftHandle, after,
 }: {
   pane: PreviewPane
   title?: string
@@ -224,12 +224,20 @@ export function OcPreviewPane({
   /** Το ίδιο το πλαίσιο· null όταν δεν υπάρχει περιεχόμενο */
   children: ReactNode | null
   withLeftHandle?: boolean
+  /**
+   * Ό,τι μπαίνει ΚΑΤΩ από το πλαίσιο, ΜΕΣΑ στο ίδιο κολλημένο στοιχείο.
+   *
+   * Χωρίς αυτό, η οθόνη τύλιγε το aside σε ένα div για να βάλει από κάτω τα
+   * κουμπιά — και το `sticky` έπαυε να πιάνει, γιατί κολλούσε μέσα σε ένα
+   * κοντό κουτί αντί για τη στήλη του πλέγματος.
+   */
+  after?: ReactNode
 }) {
   const { pv, asideRef, twoCol } = pane
   // Μία μετατροπή στο σύνορο: ο τύπος που γυρίζει το useRef δεν ταιριάζει με
   // το `ref` του JSX όταν δηλώνεται ρητά στη διεπαφή.
   return (
-    <aside ref={asideRef as React.Ref<HTMLElement>} className="relative md:sticky min-w-0"
+    <aside ref={asideRef as React.Ref<HTMLElement>} className="relative md:sticky min-w-0 space-y-4"
       style={{ top: PV_STICKY_TOP, ...(twoCol && pv.w ? { width: pv.w } : {}) }}>
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-5 sm:p-6 border border-gray-200 dark:border-gray-600">
         <div className="flex items-center justify-between gap-3 mb-3">
@@ -243,6 +251,7 @@ export function OcPreviewPane({
         )}
         {caption && <p className="mt-3 text-xs text-gray-600 dark:text-gray-400">{caption}</p>}
       </div>
+      {after}
 
       {withLeftHandle && (
         <span role="separator" aria-orientation="vertical" aria-label="Πλάτος προεπισκόπησης προς τα αριστερά"
