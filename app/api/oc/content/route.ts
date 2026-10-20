@@ -87,12 +87,14 @@ async function strapiOnce(path: string, method: string, data?: any) {
  * η εγγραφή υπάρχει. Τα υπόλοιπα είναι ακίνδυνα να επαναληφθούν.
  */
 async function strapi(path: string, method: string = 'GET', data?: any) {
-  try {
-    return await strapiOnce(path, method, data)
-  } catch (err) {
-    if (!(err instanceof StrapiUnreachable) || method === 'POST') throw err
-    await new Promise(r => setTimeout(r, 400))
-    return await strapiOnce(path, method, data)
+  /* Τρεις προσπάθειες, όχι δύο: μετρήθηκαν ΔΥΟ διαδοχικές αστοχίες σε ριπή. */
+  for (let i = 0; ; i++) {
+    try {
+      return await strapiOnce(path, method, data)
+    } catch (err) {
+      if (!(err instanceof StrapiUnreachable) || method === 'POST' || i >= 2) throw err
+      await new Promise(r => setTimeout(r, 250 * (i + 1)))
+    }
   }
 }
 
@@ -176,7 +178,14 @@ async function createWithWitness(t: ContentType, record: Record<string, any>) {
     if (found === null) throw err   // δεν απαντά ούτε στην ερώτηση — σταματάμε
 
     await new Promise(r => setTimeout(r, 400))
-    return await strapiOnce(`/${t.path}`, 'POST', record)
+    try {
+      return await strapiOnce(`/${t.path}`, 'POST', record)
+    } catch (again) {
+      /* Δεύτερη αστοχία στη ΣΕΙΡΑ — μετρήθηκε ότι συμβαίνει. Δεν ξαναρωτάμε
+         και δεν ξαναστέλνουμε: ο μάρτυρας είπε «δεν υπάρχει» ΠΡΙΝ από αυτή
+         την προσπάθεια, άρα τώρα η κατάσταση είναι ξανά άγνωστη. */
+      throw again
+    }
   }
 }
 

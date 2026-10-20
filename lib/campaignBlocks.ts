@@ -2031,7 +2031,16 @@ export function campaignPageHtml(opts: {
 }): string {
   const { title, blocks, headerStyle = 'coral', headerLogo = false, annotate = false } = opts
   const head = headerStyle === 'none' ? '' : headerHtml(headerStyle as HeaderStyle, title, headerLogo)
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${CONTENT_WIDTH}" style="width:100%;max-width:${CONTENT_WIDTH}px;background-color:${BRAND.white};border-radius:24px;overflow:hidden;">
+  /**
+   * ΧΩΡΙΣ ΤΟ ΦΡΑΓΜΑ ΤΩΝ 640px — ΕΙΝΑΙ ΣΕΛΙΔΑ, ΟΧΙ ΓΡΑΜΜΑ.
+   *
+   * Το `CONTENT_WIDTH` υπάρχει επειδή το Outlook θέλει πίνακα σταθερού
+   * πλάτους. Μια σελίδα δεν έχει τέτοιον περιορισμό, και η στενή στήλη
+   * φαινόταν σπασμένη κάτω από μια εικόνα διπλάσιου πλάτους. Το πλάτος το
+   * δίνει ο περιέκτης της σελίδας· το φρένο ανάγνωσης ζει στο globals.css
+   * (`.cfc-article > table`), σε ένα σημείο για όλα τα άρθρα.
+   */
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;background-color:${BRAND.white};border-radius:24px;overflow:hidden;">
 ${head}
 ${renderCampaignBody(blocks, annotate)}
 </table>`
