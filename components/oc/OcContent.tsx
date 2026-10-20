@@ -222,8 +222,20 @@ export default function OcContent() {
          * στήλες. Με όριο μόνο στο `xl` η προεπισκόπηση έπεφτε κάτω από τα
          * πάντα σε κανονικό παράθυρο, που είναι σαν να μην υπάρχει.
          */
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[280px_minmax(0,1fr)_420px] gap-5 items-start">
-          <div className="space-y-5 2xl:contents">
+        /**
+         * ΙΔΙΑ ΔΟΜΗ ΜΕ ΤΟΝ ΣΥΝΘΕΤΗ EMAIL: ΜΙΑ στήλη με ό,τι γράφεται, και η
+         * προεπισκόπηση σε κολλημένο <aside> στα δεξιά.
+         *
+         * Η προηγούμενη εκδοχή είχε τρεις στήλες με `2xl:contents` — δικιά μου
+         * επινόηση που χρειαζόταν 1536px για να ανοίξει, και σε μη
+         * μεγιστοποιημένο παράθυρο τα πάντα στοιβάζονταν: η προεπισκόπηση
+         * κατέληγε ΚΑΤΩ από τον συνθέτη, δηλαδή άχρηστη.
+         *
+         * Χωρίζει από τις 768px, νωρίτερα κι από το email, γιατί εδώ η
+         * αριστερή στήλη είναι φόρμα και χωράει στενότερη.
+         */
+        <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] xl:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] items-start">
+          <div className="space-y-5 min-w-0">
             <section className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
               <h3 className="px-4 py-3 text-xs font-bold tracking-wider uppercase text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
                 Στοιχεία κάρτας
@@ -257,7 +269,7 @@ export default function OcContent() {
             </section>
           </div>
 
-          <section className="space-y-4 lg:sticky lg:top-4">
+          <aside className="space-y-4 min-w-0 md:sticky md:top-4">
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
               <h3 className="px-4 py-3 text-xs font-bold tracking-wider uppercase text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
                 Πώς φαίνεται στη σελίδα
@@ -283,7 +295,7 @@ export default function OcContent() {
                 Η διαγραφή γίνεται από το Strapi — το διακριτικό του site δεν τη δικαιούται.
               </p>
             </div>
-          </section>
+          </aside>
         </div>
       )}
     </div>
