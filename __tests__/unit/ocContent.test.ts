@@ -5,7 +5,7 @@
  * στα Νέα και `title` στα Έργα. Μια «τακτοποίηση» εδώ θα έσπαγε κάθε
  * υπάρχουσα εγγραφή — γι' αυτό υπάρχει τεστ που τα καρφώνει.
  */
-import { CONTENT_TYPES, slugify, validateContent, articleHtmlFor, toStrapiFields, greekDate, pageChromeHtml } from '@/lib/ocContent'
+import { CONTENT_TYPES, type ContentTypeKey, slugify, validateContent, articleHtmlFor, toStrapiFields, greekDate, pageChromeHtml, contentRecord } from '@/lib/ocContent'
 
 describe('slugify', () => {
   it('μεταγράφει ελληνικά, αφού πρώτα βγάλει τους τόνους', () => {
@@ -181,5 +181,121 @@ describe('pageChromeHtml', () => {
 
   it('χωρίς τίτλο δεν βγάζει κενή κοραλί ζώνη χωρίς εξήγηση', () => {
     expect(pageChromeHtml('news', {})).toContain('χωρίς τίτλο')
+  })
+})
+
+/**
+ * Η ΣΥΜΦΩΝΙΑ ΜΕ ΤΟ STRAPI, ΔΙΑΒΑΣΜΕΝΗ ΑΠΟ ΤΟ ΙΔΙΟ ΤΟ ΣΧΗΜΑ.
+ *
+ * 20/10/2026: κάθε δημοσίευση Νέου γύριζε 400. Το `Description` είναι
+ * `required: true` στο activity και ο συνθέτης δεν το έστελνε ποτέ — γράφει
+ * `Html`. Ένα τεστ με καρφωμένη λίστα πεδίων δεν θα το έπιανε, γιατί θα
+ * ήταν καρφωμένο από τον ίδιο που έκανε την παράλειψη. Αυτό διαβάζει το
+ * schema.json και σπάει μόνο του όταν προστεθεί νέο υποχρεωτικό πεδίο.
+ */
+describe('contentRecord — συμφωνία με το σχήμα του Strapi', () => {
+  const fs = require('fs') as typeof import('fs')
+  const path = require('path') as typeof import('path')
+
+  const SCHEMAS: Record<ContentTypeKey, string> = {
+    news: 'activity',
+    projects: 'project',
+    entries: 'project-entry',
+  }
+
+  const requiredOf = (api: string): string[] => {
+    const file = path.join(process.cwd(),
+      'StrapiDBforCforC/src/api', api, 'content-types', api, 'schema.json')
+    const attrs = JSON.parse(fs.readFileSync(file, 'utf8')).attributes as Record<string, any>
+    return Object.entries(attrs).filter(([, v]) => v?.required).map(([k]) => k)
+  }
+
+  /** Μια πλήρης εγγραφή, όπως θα την έστελνε ο συντάκτης */
+  const draftFor = (key: ContentTypeKey): Record<string, any> => {
+    const out: Record<string, any> = {}
+    for (const f of CONTENT_TYPES[key].fields) {
+      if (!f.required) continue
+      out[f.name] = f.kind === 'media' ? { mediaId: 7, src: '/uploads/a.jpg' }
+        : f.kind === 'date' ? '2026-11-14'
+          : 'κείμενο'
+    }
+    return out
+  }
+
+  const blocks = [{ type: 'text', html: '<p>Το σώμα του άρθρου.</p>' }] as any
+
+  it.each(Object.keys(SCHEMAS) as ContentTypeKey[])(
+    '%s: η νέα εγγραφή έχει ΚΑΘΕ υποχρεωτικό πεδίο του Strapi', key => {
+      const record = contentRecord({ key, fields: draftFor(key), blocks, isNew: true })
+      for (const name of requiredOf(SCHEMAS[key])) {
+        expect(record[name]).toBeDefined()
+        expect(record[name]).not.toBeNull()
+      }
+    })
+
+  it('το υποχρεωτικό Description γεμίζει με το ΚΕΙΜΕΝΟ του άρθρου, όχι με γέμισμα', () => {
+    const record = contentRecord({ key: 'news', fields: draftFor('news'), blocks, isNew: true })
+    expect(record.Description).toEqual([
+      { type: 'paragraph', children: [{ type: 'text', text: 'Το σώμα του άρθρου.' }] },
+    ])
+  })
+
+  it('άρθρο μόνο με εικόνες δεν αφήνει το Description κενό', () => {
+    const record = contentRecord({
+      key: 'news', fields: { ...draftFor('news'), Excerpt: 'Η περίληψη' },
+      blocks: [{ type: 'image', src: 'x.jpg', alt: '' }] as any, isNew: true,
+    })
+    expect(record.Description?.[0]?.children?.[0]?.text).toBe('Η περίληψη')
+  })
+
+  /** Το παλιό κείμενο ανήκει σε όποιον το έγραψε στο Strapi. */
+  it('η ΕΝΗΜΕΡΩΣΗ δεν ακουμπά το παλιό πεδίο κειμένου', () => {
+    const record = contentRecord({ key: 'news', fields: draftFor('news'), blocks, isNew: false })
+    expect('Description' in record).toBe(false)
+  })
+})
+
+describe('toStrapiFields — το άλμπουμ εικόνων', () => {
+  it('κρατά ΟΛΕΣ τις εικόνες όταν η πρώτη δεν άλλαξε', () => {
+    const out = toStrapiFields('news', { Visuals: { mediaId: 3, mediaIds: [3, 9, 12] } })
+    expect(out.Visuals).toEqual([3, 9, 12])
+  })
+  it('αντικατάσταση της εικόνας αντικαθιστά το άλμπουμ', () => {
+    const out = toStrapiFields('news', { Visuals: { mediaId: 55, mediaIds: [3, 9, 12] } })
+    expect(out.Visuals).toEqual([55])
+  })
+  it('χωρίς άλμπουμ, μία εικόνα σε πίνακα', () => {
+    expect(toStrapiFields('news', { Visuals: { mediaId: 3 } }).Visuals).toEqual([3])
+  })
+})
+
+describe('pageChromeHtml — η εικόνα της σελίδας', () => {
+  it('δείχνει την εικόνα κάρτας, που έλειπε εντελώς από την προεπισκόπηση', () => {
+    const html = pageChromeHtml('news', {
+      Title: 'Τ', ImageAltText: 'Μια περιγραφή',
+      Visuals: { mediaId: 1, src: 'https://cdn.example/a.jpg' },
+    })
+    expect(html).toContain('https://cdn.example/a.jpg')
+    expect(html).toContain('alt="Μια περιγραφή"')
+  })
+  it('τα Έργα λένε το πεδίο αλλιώς — και φαίνεται κι εκεί', () => {
+    expect(pageChromeHtml('projects', { title: 'Τ', cover_image: { mediaId: 1, src: 'https://cdn.example/b.jpg' } }))
+      .toContain('https://cdn.example/b.jpg')
+  })
+  it('χωρίς εικόνα δεν βγάζει σπασμένο <img>', () => {
+    expect(pageChromeHtml('news', { Title: 'Τ' })).not.toContain('<img')
+  })
+})
+
+describe('οι ελληνικοί τύποι των τριών ειδών', () => {
+  it('η γενική δεν είναι η ονομαστική — «Δημοσίευση άρθρου», όχι «άρθρο»', () => {
+    expect(CONTENT_TYPES.news.forms.genitive).toBe('άρθρου')
+    expect(CONTENT_TYPES.projects.forms.genitive).toBe('έργου')
+    expect(CONTENT_TYPES.entries.forms.genitive).toBe('καταχώρησης')
+  })
+  it('η καταχώρηση είναι θηλυκή — «Καμία», όχι «Κανένα»', () => {
+    expect(CONTENT_TYPES.entries.forms.none).toBe('Καμία καταχώρηση')
+    expect(CONTENT_TYPES.entries.forms.nominative).toBe('Η καταχώρηση')
+    expect(CONTENT_TYPES.entries.forms.demonstrative).toBe('Αυτή η καταχώρηση')
   })
 })

@@ -1,4 +1,6 @@
-import { campaignPageHtml, type Block, type HeaderStyle } from '@/lib/campaignBlocks'
+import {
+  campaignPageHtml, renderCampaignText, visibleBlocks, type Block, type HeaderStyle,
+} from '@/lib/campaignBlocks'
 import { toPageSkin } from '@/lib/pageSkin'
 
 /**
@@ -34,11 +36,40 @@ export interface ContentField {
   hint?: string
 }
 
+/**
+ * ΟΙ ΚΛΙΣΕΙΣ ΓΡΑΦΟΝΤΑΙ, ΔΕΝ ΠΑΡΑΓΟΝΤΑΙ.
+ *
+ * Το κουμπί έλεγε «Δημοσίευση άρθρο» — ονομαστική εκεί που η γλώσσα θέλει
+ * γενική. Και το ίδιο μοτίβο έβγαζε «Κανένα καταχώρηση», λάθος γένος. Δεν
+ * υπάρχει κανόνας που να βγάλει με ασφάλεια «καταχώρησης» από «καταχώρηση»·
+ * οι τέσσερις τύποι που χρειάζεται η οθόνη δηλώνονται.
+ */
+export interface ContentForms {
+  /** «Δημοσίευση ___» */
+  genitive: string
+  /** «___ αποθηκεύτηκε» — με το άρθρο του */
+  nominative: string
+  /** «___ γράφτηκε στο Strapi» */
+  demonstrative: string
+  /** «___ ακόμη» */
+  none: string
+}
+
 export interface ContentType {
   label: string
   singular: string
+  forms: ContentForms
   /** Η συλλογή στο Strapi */
   path: string
+  /**
+   * ΤΟ ΠΑΛΙΟ ΠΕΔΙΟ ΚΕΙΜΕΝΟΥ ΤΗΣ ΣΥΛΛΟΓΗΣ (τύπου `blocks` στο Strapi).
+   *
+   * Δεν το γράφει ο συνθέτης — το σώμα του άρθρου ζει στο `Html`. Αλλά στα
+   * Νέα είναι `required: true`, οπότε ΚΑΘΕ δημιουργία γύριζε 400. Γεμίζει
+   * με το κείμενο του άρθρου, ΜΟΝΟ στη δημιουργία: σε υπάρχουσα εγγραφή θα
+   * έσβηνε ό,τι είχε γράψει κάποιος στο Strapi.
+   */
+  bodyField: string
   titleField: string
   slugField: string
   engTitleField?: string
@@ -54,7 +85,9 @@ export const CONTENT_TYPES: Record<ContentTypeKey, ContentType> = {
   news: {
     label: 'Νέα',
     singular: 'άρθρο',
+    forms: { genitive: 'άρθρου', nominative: 'Το άρθρο', demonstrative: 'Αυτό το άρθρο', none: 'Κανένα άρθρο' },
     path: 'activities',
+    bodyField: 'Description',
     titleField: 'Title',
     slugField: 'Slug',
     engTitleField: 'EngTitle',
@@ -88,7 +121,9 @@ export const CONTENT_TYPES: Record<ContentTypeKey, ContentType> = {
   projects: {
     label: 'Έργα',
     singular: 'έργο',
+    forms: { genitive: 'έργου', nominative: 'Το έργο', demonstrative: 'Αυτό το έργο', none: 'Κανένα έργο' },
     path: 'projects',
+    bodyField: 'full_description',
     titleField: 'title',
     slugField: 'slug',
     sort: 'sort_order:asc',
@@ -124,7 +159,9 @@ export const CONTENT_TYPES: Record<ContentTypeKey, ContentType> = {
   entries: {
     label: 'Καταχωρήσεις',
     singular: 'καταχώρηση',
+    forms: { genitive: 'καταχώρησης', nominative: 'Η καταχώρηση', demonstrative: 'Αυτή η καταχώρηση', none: 'Καμία καταχώρηση' },
     path: 'project-entries',
+    bodyField: 'description',
     titleField: 'title',
     slugField: 'slug',
     sort: 'publication_date:desc',
@@ -189,6 +226,77 @@ export function articleHtmlFor(opts: {
   }))
 }
 
+/**
+ * Η ΕΓΓΡΑΦΗ ΟΠΩΣ ΦΤΑΝΕΙ ΣΤΟ STRAPI — ΣΕ ΣΥΝΑΡΤΗΣΗ, ΟΧΙ ΜΕΣΑ ΣΤΗ ΔΙΑΔΡΟΜΗ.
+ *
+ * Όσο χτιζόταν μέσα στο POST, το μόνο που μπορούσε να την ελέγξει ήταν μια
+ * πραγματική αποστολή στο Strapi — δηλαδή κανείς. Έτσι έλειπε το
+ * υποχρεωτικό `Description` και φάνηκε μόνο ως «HTTP 400» στην οθόνη του
+ * συντάκτη. Εδώ, ένα τεστ τη συγκρίνει με το ΑΛΗΘΙΝΟ schema.json της
+ * συλλογής και η επόμενη τέτοια παράλειψη σκάει στο `npm test`.
+ */
+export function contentRecord(opts: {
+  key: ContentTypeKey
+  fields: Record<string, any>
+  blocks: Block[]
+  blocksEn?: Block[]
+  headerStyle?: HeaderStyle | 'none'
+  /** Δημιουργία ή ενημέρωση — αλλάζει ΤΙ επιτρέπεται να γραφτεί */
+  isNew: boolean
+}): Record<string, any> {
+  const t = CONTENT_TYPES[opts.key]
+  const fields = opts.fields || {}
+  const title = String(fields[t.titleField] || '').trim()
+  const html = articleHtmlFor({ title, blocks: opts.blocks, headerStyle: opts.headerStyle })
+  const htmlEn = t.englishField && opts.blocksEn?.length
+    ? articleHtmlFor({
+      title: String(fields[t.engTitleField!] || title),
+      blocks: opts.blocksEn, headerStyle: opts.headerStyle,
+    })
+    : null
+
+  return {
+    ...toStrapiFields(opts.key, fields),
+    [t.slugField]: String(fields[t.slugField] || '').trim() || slugify(title),
+    Blocks: {
+      blocks: opts.blocks,
+      ...(htmlEn ? { blocksEn: opts.blocksEn } : {}),
+      headerStyle: opts.headerStyle || 'none',
+    },
+    Html: html,
+    ...(htmlEn ? { HtmlEn: htmlEn } : {}),
+    /* ΜΟΝΟ ΣΤΗ ΔΗΜΙΟΥΡΓΙΑ. Στα Νέα το παλιό πεδίο κειμένου είναι
+       υποχρεωτικό, οπότε χωρίς αυτό καμία νέα εγγραφή δεν περνά. Σε
+       ΥΠΑΡΧΟΥΣΑ εγγραφή δεν ακουμπιέται: θα έσβηνε ό,τι είχε γράψει
+       κάποιος στο Strapi πριν υπάρξει αυτή η οθόνη. */
+    ...(opts.isNew
+      ? { [t.bodyField]: legacyBodyBlocks(opts.blocks, String(fields.Excerpt || title)) }
+      : {}),
+  }
+}
+
+/**
+ * ΤΟ ΠΑΛΙΟ ΠΕΔΙΟ ΚΕΙΜΕΝΟΥ, ΓΕΜΙΣΜΕΝΟ ΜΕ ΤΟ ΑΡΘΡΟ ΣΕ ΑΠΛΟ ΚΕΙΜΕΝΟ.
+ *
+ * Το `Description` των Νέων είναι `required: true` στο Strapi και δεν γίνεται
+ * να μείνει κενό — η δημιουργία γύριζε 400 χωρίς να πει ποιο πεδίο φταίει.
+ * Δεν μπαίνει γέμισμα: μπαίνει το ΙΔΙΟ κείμενο, περασμένο από τον κειμενικό
+ * αποδότη του newsletter. Έτσι ό,τι διαβάζει ακόμη το παλιό πεδίο — η
+ * αναζήτηση στα Νέα, η περιγραφή στο Google, η πίσω όψη της κάρτας όταν
+ * λείπει η Περίληψη — βρίσκει αληθινό κείμενο αντί για παύλα.
+ *
+ * Η μορφή είναι αυτή που θέλει ο τύπος `blocks` του Strapi: κόμβοι
+ * παραγράφου με παιδιά κειμένου.
+ */
+export function legacyBodyBlocks(blocks: Block[], fallback: string): Array<Record<string, any>> {
+  const text = renderCampaignText(visibleBlocks(blocks))
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
+  /* Άρθρο μόνο από εικόνες δίνει κενό κείμενο — και κενό `blocks` ξανασκάει
+     στον ίδιο υποχρεωτικό έλεγχο. Πέφτει στην Περίληψη ή στον τίτλο. */
+  if (!lines.length) lines.push(String(fallback || '').trim() || '—')
+  return lines.map(line => ({ type: 'paragraph', children: [{ type: 'text', text: line }] }))
+}
+
 export interface ContentValidation { ok: boolean; errors: string[] }
 
 /** Ό,τι είναι υποχρεωτικό στο Strapi, είναι υποχρεωτικό και εδώ — αλλιώς η
@@ -219,6 +327,13 @@ export function validateContent(
  * το `src` για να τη δείξει. Το Strapi όμως θέλει ΜΟΝΟ το αναγνωριστικό, και
  * πίνακα όταν το πεδίο δέχεται πολλά. Χωρίς αυτή τη μετατροπή η αποθήκευση
  * γυρίζει 400 χωρίς να λέει γιατί.
+ *
+ * ΚΑΙ ΤΟ ΥΠΟΛΟΙΠΟ ΑΛΜΠΟΥΜ ΕΠΙΖΕΙ. Τα Νέα κρατούν ΠΟΛΛΕΣ εικόνες (καρουζέλ
+ * στη σελίδα), αλλά η οθόνη δείχνει μόνο την πρώτη — την κάρτα. Αν έφευγε
+ * σκέτο `[πρώτη]`, το άνοιγμα ενός παλιού άρθρου και μια αποθήκευση θα
+ * έσβηνε τις υπόλοιπες φωτογραφίες του, χωρίς να το ζητήσει κανείς. Το
+ * `mediaIds` κουβαλά ολόκληρο το άλμπουμ και χάνεται μόνο όταν ο συντάκτης
+ * ΑΝΤΙΚΑΤΑΣΤΗΣΕΙ την εικόνα.
  */
 export function toStrapiFields(
   key: ContentTypeKey, fields: Record<string, any>,
@@ -232,7 +347,10 @@ export function toStrapiFields(
     if (f.kind === 'media') {
       const id = value?.mediaId
       if (!Number.isInteger(id)) continue
-      out[name] = f.multiple ? [id] : id
+      if (!f.multiple) { out[name] = id; continue }
+      const album: number[] = Array.isArray(value?.mediaIds)
+        ? value.mediaIds.filter((x: any) => Number.isInteger(x)) : []
+      out[name] = album.length && album[0] === id ? album : [id]
     } else if (f.kind === 'number') {
       out[name] = value === '' || value === null || value === undefined ? null : Number(value)
     } else if (f.kind === 'boolean') {
@@ -249,8 +367,14 @@ export function toStrapiFields(
  * Η ΚΟΡΥΦΗ ΤΗΣ ΣΕΛΙΔΑΣ, ΓΙΑ ΤΗΝ ΠΡΟΕΠΙΣΚΟΠΗΣΗ.
  *
  * Το άρθρο από μόνο του δεν δείχνει τι βλέπει ο επισκέπτης: η σελίδα ξεκινά
- * με κοραλί ήρωα και τον τίτλο, και από κάτω τα πλακίδια με ημερομηνία,
- * κατηγορία και ετικέτες. Χωρίς αυτά η προεπισκόπηση κρίνεται στο κενό.
+ * με κοραλί ήρωα και τον τίτλο, από κάτω τα πλακίδια με ημερομηνία,
+ * κατηγορία και ετικέτες, ΚΑΙ ΜΕΤΑ Η ΕΙΚΟΝΑ. Χωρίς αυτά η προεπισκόπηση
+ * κρίνεται στο κενό.
+ *
+ * Η εικόνα έλειπε, και είναι το μεγαλύτερο στοιχείο της σελίδας: και οι
+ * τρεις σελίδες λεπτομέρειας (ActivityDetailClient, ProjectDetail,
+ * EntryDetail) τη δείχνουν ΠΑΝΩ από το κείμενο. Μια προεπισκόπηση που την
+ * παραλείπει απαντά σε άλλη ερώτηση από το «πώς θα φαίνεται».
  *
  * Είναι ΑΝΑΠΑΡΑΣΤΑΣΗ, όχι η ίδια η σελίδα: εκεί τα φτιάχνει ο React με
  * Tailwind, που δεν υπάρχει μέσα στο πλαίσιο της προεπισκόπησης. Αντιγράφει
@@ -281,11 +405,34 @@ export function pageChromeHtml(key: ContentTypeKey, fields: Record<string, any>)
   for (const c of splitList(cat)) pills.push(pill(esc(c), 'accent'))
   for (const tag of splitList(fields.Tags || fields.tags)) pills.push(pill(esc(tag), 'tag'))
 
+  /* Η ΠΡΩΤΗ εικόνα του πρώτου πεδίου media — αυτή που γίνεται η μπροστινή
+     όψη της κάρτας και η κορυφή της σελίδας. Το πεδίο δεν γράφεται με το
+     χέρι εδώ: τα τρία είδη το λένε αλλιώς (Visuals / cover_image). */
+  const mediaField = t.fields.find(f => f.kind === 'media')
+  const shot = mediaField ? fields[mediaField.name] : null
+  const src = shot?.src ? mediaUrl(String(shot.src)) : ''
+  const altText = esc(fields.ImageAltText || shot?.alt || fields[t.titleField] || '')
+  const image = src
+    ? `<div style="padding:20px 32px 0 32px;">`
+      + `<img src="${esc(src)}" alt="${altText}" `
+      + `style="display:block;width:100%;border-radius:16px;"></div>`
+    : ''
+
   return `<div style="background-color:#FF8B6A;border-radius:0 0 24px 24px;padding:40px 32px;">
   <div style="font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:1.2;font-weight:bold;color:#2D2D2D;">${title}</div>
 </div>
-<div style="padding:22px 32px 4px 32px;display:flex;flex-wrap:wrap;gap:8px;">${pills.join('')}</div>`
+<div style="padding:22px 32px 4px 32px;display:flex;flex-wrap:wrap;gap:8px;">${pills.join('')}</div>${image}`
 }
+
+/**
+ * Το πλαίσιο της προεπισκόπησης είναι άλλο έγγραφο: μια σχετική διαδρομή
+ * (`/uploads/…`) θα ζητιόταν από το OC, όχι από το Strapi, και θα έβγαινε
+ * σπασμένη εικόνα. Το Strapi Cloud γυρίζει απόλυτες — αλλά όχι το τοπικό.
+ */
+const mediaUrl = (u: string): string =>
+  /^(https?:)?\/\//i.test(u) || u.startsWith('data:')
+    ? u
+    : `${(process.env.NEXT_PUBLIC_STRAPI_URL || '').replace(/\/+$/, '')}${u}`
 
 /**
  * ΗΜΕΡΟΜΗΝΙΑ ΧΩΡΙΣ ΩΡΑ ΔΕΝ ΕΧΕΙ ΖΩΝΗ — ΚΑΙ ΔΕΝ ΠΡΕΠΕΙ ΝΑ ΑΠΟΚΤΗΣΕΙ.

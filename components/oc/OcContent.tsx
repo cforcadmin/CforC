@@ -236,7 +236,13 @@ export default function OcContent() {
         const v = item[f.name]
         if (f.kind === 'media') {
           const m = Array.isArray(v) ? v[0] : v
-          fields[f.name] = m ? { mediaId: m.id, src: m.url, alt: '' } : undefined
+          /* ΟΛΟ το άλμπουμ ταξιδεύει, όχι μόνο η εικόνα που δείχνεται:
+             αλλιώς η πρώτη αποθήκευση ενός παλιού άρθρου θα έσβηνε τις
+             υπόλοιπες φωτογραφίες του καρουζέλ. */
+          const all = Array.isArray(v) ? v.map((x: any) => x?.id).filter(Number.isInteger) : []
+          fields[f.name] = m
+            ? { mediaId: m.id, src: m.url, alt: '', ...(all.length > 1 ? { mediaIds: all } : {}) }
+            : undefined
         } else fields[f.name] = v ?? ''
       }
 
@@ -246,7 +252,7 @@ export default function OcContent() {
          Ανοίγει με άδειο συνθέτη και μια σημείωση, αντί να σβήσει ό,τι υπάρχει. */
       if (!blocks.length) {
         setNotice({ kind: 'ok', text:
-          `Αυτό το ${t.singular} γράφτηκε στο Strapi, όχι εδώ — το κείμενό του δεν έχει μπλοκ. `
+          `${t.forms.demonstrative} γράφτηκε στο Strapi, όχι εδώ — το κείμενό του δεν έχει μπλοκ. `
           + 'Όσο ο συνθέτης μένει άδειος, η σελίδα συνεχίζει να δείχνει το παλιό κείμενο.' })
       }
     } catch (e: any) {
@@ -270,7 +276,7 @@ export default function OcContent() {
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d?.error || 'Αποτυχία αποθήκευσης')
-      setNotice({ kind: 'ok', text: `Το ${t.singular} αποθηκεύτηκε και είναι ζωντανό στο site.` })
+      setNotice({ kind: 'ok', text: `${t.forms.nominative} αποθηκεύτηκε και είναι ζωντανό στο site.` })
       setDraft(dr => dr ? { ...dr, id: d.id } : dr)
       await load(type)
     } catch (e: any) {
@@ -418,7 +424,7 @@ export default function OcContent() {
                 <div className="flex gap-2">
                   <button type="button" onClick={save} disabled={busy || missing.length > 0}
                     className="flex-1 px-5 min-h-11 rounded-full bg-coral text-white text-sm font-bold hover:bg-coral-dark disabled:opacity-40">
-                    {busy ? 'Αποθήκευση…' : draft.id ? 'Αποθήκευση' : `Δημοσίευση ${t.singular}`}
+                    {busy ? 'Αποθήκευση…' : draft.id ? 'Αποθήκευση' : `Δημοσίευση ${t.forms.genitive}`}
                   </button>
                   <button type="button" onClick={() => { setDraft(null); setNotice(null) }}
                     className={`${CONTROL} font-semibold`}>
@@ -513,7 +519,7 @@ function ContentList({ items, type, loading, onOpen, busy }: {
 
       {!visible.length ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          {items.length ? 'Κανένα αποτέλεσμα με αυτά τα φίλτρα.' : `Κανένα ${t.singular} ακόμη.`}
+          {items.length ? 'Κανένα αποτέλεσμα με αυτά τα φίλτρα.' : `${t.forms.none} ακόμη.`}
         </p>
       ) : (
         <>
@@ -590,7 +596,11 @@ function Field({ field: f, value, onChange }: {
       <div>
         {label}
         <ImageField src={value?.src || ''} alt={value?.alt || ''} mediaId={value?.mediaId}
-          onChange={p => onChange({ ...(value || {}), ...p })} />
+          /* Αντικατάσταση εικόνας = νέο άλμπουμ. Χωρίς αυτό το παλιό
+             `mediaIds` θα επέζησε και θα ξανάφερνε τη σβησμένη εικόνα. */
+          onChange={p => onChange(p.mediaId !== undefined && p.mediaId !== value?.mediaId
+            ? { ...(value || {}), ...p, mediaIds: undefined }
+            : { ...(value || {}), ...p })} />
         {hint}
       </div>
     )

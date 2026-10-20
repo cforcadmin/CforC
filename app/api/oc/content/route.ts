@@ -9,7 +9,8 @@ import {
 } from '@/lib/campaignBlocks'
 import { toPageSkin } from '@/lib/pageSkin'
 import {
-  CONTENT_TYPES, type ContentTypeKey, validateContent, articleHtmlFor, slugify, toStrapiFields, pageChromeHtml,
+  CONTENT_TYPES, type ContentTypeKey, validateContent, articleHtmlFor,
+  pageChromeHtml, contentRecord,
 } from '@/lib/ocContent'
 
 export const maxDuration = 60
@@ -51,6 +52,30 @@ async function strapi(path: string, method: string = 'GET', data?: any) {
   let json: any = null
   try { json = await res.json() } catch { /* 204 */ }
   return { ok: res.ok, status: res.status, json }
+}
+
+/**
+ * ΤΟ STRAPI ΞΕΡΕΙ ΠΟΙΟ ΠΕΔΙΟ ΦΤΑΙΕΙ — ΑΠΛΩΣ ΔΕΝ ΤΟΝ ΡΩΤΑΓΕ ΚΑΝΕΙΣ.
+ *
+ * Η οθόνη έδειχνε «Η αποθήκευση απέτυχε (HTTP 400)» και η απάντηση έλεγε
+ * «Description must be defined» — ένα υποχρεωτικό πεδίο που ο συνθέτης δεν
+ * στέλνει. Ένα σφάλμα που δεν λέει τι φταίει στέλνει τον συντάκτη σε εμένα·
+ * ένα που το λέει, τον στέλνει στο πεδίο.
+ */
+const detailOf = (json: any): string => {
+  const d = strapiError(json)
+  return d ? ` — ${d}` : ''
+}
+
+function strapiError(json: any): string {
+  const e = json?.error
+  if (!e) return ''
+  const list = Array.isArray(e?.details?.errors) ? e.details.errors : []
+  const parts = list.map((x: any) => {
+    const path = Array.isArray(x?.path) ? x.path.join('.') : String(x?.path || '')
+    return [path, x?.message].filter(Boolean).join(': ')
+  }).filter(Boolean)
+  return (parts.length ? parts.join(' · ') : String(e.message || '')).slice(0, 300)
 }
 
 /**
@@ -176,7 +201,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           error: r.status === 403
             ? 'Η διαγραφή γίνεται μόνο από το Strapi — το διακριτικό του site δεν τη δικαιούται'
-            : `Η διαγραφή απέτυχε (HTTP ${r.status})`,
+            : `Η διαγραφή απέτυχε (HTTP ${r.status})${detailOf(r.json)}`,
         }, { status: r.status })
       }
       return NextResponse.json({ ok: true })
@@ -187,21 +212,14 @@ export async function POST(request: NextRequest) {
       const v = validateContent(key, fields, visibleBlocks(blocks))
       if (!v.ok) return NextResponse.json({ error: v.errors.join(' · '), errors: v.errors }, { status: 400 })
 
-      const title = String(fields[t.titleField] || '').trim()
-      const html = articleHtmlFor({ title, blocks, headerStyle: body?.headerStyle })
-      const htmlEn = t.englishField && Array.isArray(body?.blocksEn) && body.blocksEn.length
-        ? articleHtmlFor({ title: String(fields[t.engTitleField!] || title), blocks: body.blocksEn, headerStyle: body?.headerStyle })
-        : null
-
-      const record: Record<string, any> = {
-        ...toStrapiFields(key, fields),
-        [t.slugField]: String(fields[t.slugField] || '').trim() || slugify(title),
-        Blocks: { blocks, ...(htmlEn ? { blocksEn: body.blocksEn } : {}), headerStyle: body?.headerStyle || 'none' },
-        Html: html,
-        ...(htmlEn ? { HtmlEn: htmlEn } : {}),
-      }
-
       const id = String(body?.id || '').trim()
+      const record = contentRecord({
+        key, fields, blocks,
+        blocksEn: Array.isArray(body?.blocksEn) ? body.blocksEn : undefined,
+        headerStyle: body?.headerStyle,
+        isNew: !id,
+      })
+
       const r = id
         ? await strapi(`/${t.path}/${encodeURIComponent(id)}`, 'PUT', record)
         : await strapi(`/${t.path}`, 'POST', { ...record, publishedAt: new Date().toISOString() })
@@ -210,7 +228,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           error: r.status === 403
             ? `Το διακριτικό του site δεν έχει δικαίωμα ${id ? 'update' : 'create'} στα «${t.label}» — Strapi Cloud → Settings → API Tokens`
-            : `Η αποθήκευση απέτυχε (HTTP ${r.status})`,
+            : `Η αποθήκευση απέτυχε (HTTP ${r.status})${detailOf(r.json)}`,
         }, { status: r.status })
       }
       return NextResponse.json({ ok: true, id: r.json?.data?.documentId || id })
