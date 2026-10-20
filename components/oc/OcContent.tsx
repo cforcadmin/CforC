@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { usePreviewSize, PV_MIN_W, PV_MIN_H, PV_EDGE_GAP, PV_STICKY_TOP } from './usePreviewSize'
 import { BlockEditor, PreviewFrame, ImageField, CONTROL, type EditorBlock } from '@/components/oc/OcCampaigns'
 import { CONTENT_TYPES, type ContentTypeKey, type ContentField } from '@/lib/ocContent'
 
@@ -62,6 +63,114 @@ export default function OcContent() {
 
   const t = CONTENT_TYPES[type]
 
+  /**
+   * ΤΟ ΜΕΓΕΘΟΣ ΤΗΣ ΠΡΟΕΠΙΣΚΟΠΗΣΗΣ — ΙΔΙΟΣ ΜΗΧΑΝΙΣΜΟΣ ΜΕ ΤΟ EMAIL.
+   *
+   * Το usePreviewSize κρατά πλάτος και ύψος ανά μέλος στον server, οπότε το
+   * μέγεθος που διάλεξε κανείς το βρίσκει και αύριο. Εδώ η λαβή ΑΡΙΣΤΕΡΑ
+   * αλλάζει τον χωρισμό των δύο στηλών: ό,τι παίρνει η προεπισκόπηση το
+   * δίνει ο συνθέτης, που είναι ακριβώς ο διαχωριστής ανάμεσά τους.
+   */
+  const pv = usePreviewSize(520)
+  const asideRef = useRef<HTMLElement>(null)
+  const [maximized, setMaximized] = useState(false)
+  const [twoCol, setTwoCol] = useState(false)
+  const [copied, setCopied] = useState<'ok' | 'err' | null>(null)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const sync = () => setTwoCol(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
+
+  /** Όσο φτάνει δεξιά ως την άκρη της οθόνης, με μια ανάσα */
+  const maxPreviewW = useCallback(() => {
+    const el = asideRef.current
+    if (!el) return PV_MIN_W
+    return Math.max(PV_MIN_W, Math.round(window.innerWidth - el.getBoundingClientRect().left - PV_EDGE_GAP))
+  }, [])
+
+  /** Όσο φτάνει κάτω μέσα στην ΟΡΑΤΗ οθόνη. Μετριέται με την κορυφή που θα
+   *  έχει ΚΟΛΛΗΜΕΝΟ: αλλιώς, πριν κυλήσει κανείς, η «μεγέθυνση» θα ΜΙΚΡΑΙΝΕ. */
+  const maxPreviewH = useCallback(() => {
+    const el = asideRef.current
+    if (!el) return PV_MIN_H
+    const top = Math.min(el.getBoundingClientRect().top, PV_STICKY_TOP)
+    return Math.max(PV_MIN_H, Math.round(window.innerHeight - top - 150))
+  }, [])
+
+  const dragPreview = useCallback((axis: 'w' | 'h') => (e: React.PointerEvent<HTMLElement>) => {
+    e.preventDefault(); e.stopPropagation()
+    const el = asideRef.current
+    if (!el) return
+    const startX = e.clientX, startY = e.clientY
+    const startW = Math.round(el.getBoundingClientRect().width)
+    const startH = pv.h
+    const limW = maxPreviewW()
+    const target = e.currentTarget
+    target.setPointerCapture(e.pointerId)
+
+    /* Η τελική τιμή ταξιδεύει σε ΤΟΠΙΚΗ μεταβλητή: το state της React δεν
+       προλαβαίνει να ενημερωθεί όταν σηκώνεται το δάχτυλο, και μια persist()
+       χωρίς ορίσματα θα έγραφε το μέγεθος ΠΡΙΝ το σύρσιμο. */
+    let finalW = startW, finalH = startH
+    const move = (ev: PointerEvent) => {
+      if (axis === 'w') {
+        /* Η λαβή είναι στην ΑΡΙΣΤΕΡΗ άκρη: προς τα αριστερά μεγαλώνει. */
+        finalW = Math.min(limW, Math.max(PV_MIN_W, startW + (startX - ev.clientX)))
+        pv.setW(finalW); setMaximized(false)
+      } else {
+        finalH = Math.max(PV_MIN_H, startH + ev.clientY - startY)
+        pv.setH(finalH)
+      }
+    }
+    const up = () => {
+      target.removeEventListener('pointermove', move)
+      target.removeEventListener('pointerup', up)
+      document.body.style.userSelect = ''
+      pv.persist(axis === 'w' ? { w: finalW } : { h: finalH })
+    }
+    document.body.style.userSelect = 'none'
+    target.addEventListener('pointermove', move)
+    target.addEventListener('pointerup', up)
+  }, [pv, maxPreviewW])
+
+  /** Πληκτρολόγιο: τα βέλη αλλάζουν μέγεθος κατά 24px — χωρίς ποντίκι */
+  const keyPreview = useCallback((axis: 'w' | 'h') => (e: React.KeyboardEvent) => {
+    const dec = axis === 'h' ? 'ArrowUp' : 'ArrowRight'
+    const inc = axis === 'h' ? 'ArrowDown' : 'ArrowLeft'
+    if (e.key !== dec && e.key !== inc) return
+    e.preventDefault()
+    const step = e.key === inc ? 24 : -24
+    if (axis === 'w') {
+      const cur = pv.w ?? Math.round(asideRef.current?.getBoundingClientRect().width ?? PV_MIN_W)
+      const next = Math.min(maxPreviewW(), Math.max(PV_MIN_W, cur + step))
+      pv.setW(next); setMaximized(false); pv.persist({ w: next })
+    } else {
+      const next = Math.max(PV_MIN_H, pv.h + step)
+      pv.setH(next); pv.persist({ h: next })
+    }
+  }, [pv, maxPreviewW])
+
+  /** «Μεγέθυνση»: όσο πάει δεξιά και κάτω. Δεύτερο πάτημα — πίσω στα αρχικά. */
+  const toggleMaximize = useCallback(() => {
+    if (maximized) { setMaximized(false); pv.reset(); return }
+    const w = maxPreviewW(), h = maxPreviewH()
+    pv.setW(w); pv.setH(h); pv.persist({ w, h })
+    setMaximized(true)
+  }, [maximized, pv, maxPreviewW, maxPreviewH])
+
+  /** Το HTML του άρθρου στο πρόχειρο — για επικόλληση όπου χρειαστεί */
+  const copyHtml = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(preview)
+      setCopied('ok')
+    } catch { setCopied('err') }
+    window.setTimeout(() => setCopied(null), 2200)
+  }, [preview])
+
   const load = useCallback(async (which: ContentTypeKey) => {
     setLoading(true)
     try {
@@ -105,7 +214,18 @@ export default function OcContent() {
     return () => window.clearTimeout(previewTimer.current)
   }, [draft, type])
 
-  const openNew = () => { setDraft(emptyDraft()); setPreview(''); setNotice(null) }
+  /**
+   * ΕΝΑΛΛΑΓΗ: δεύτερο πάτημα κλείνει ό,τι άνοιξε το πρώτο.
+   *
+   * Η ετικέτα αλλάζει μαζί. Ένα κουμπί που λέει «Νέα καταχώρηση» και στην
+   * πραγματικότητα κλείνει τον συνθέτη είναι χειρότερο από το να μην
+   * κλείνει καθόλου.
+   */
+  const toggleComposer = () => {
+    setNotice(null)
+    if (draft) { setDraft(null); setPreview(''); return }
+    setDraft(emptyDraft()); setPreview('')
+  }
 
   const openItem = async (id: string) => {
     setBusy(true); setNotice(null)
@@ -191,9 +311,9 @@ export default function OcContent() {
             </button>
           ))}
         </div>
-        <button type="button" onClick={openNew}
+        <button type="button" onClick={toggleComposer} aria-expanded={!!draft}
           className="ml-auto px-5 min-h-11 rounded-full bg-coral text-white text-sm font-bold hover:bg-coral-dark">
-          + Νέο {t.singular}
+          {draft ? 'Κλείσιμο' : '+ Νέα καταχώρηση'}
         </button>
       </div>
 
@@ -234,7 +354,9 @@ export default function OcContent() {
          * Χωρίζει από τις 768px, νωρίτερα κι από το email, γιατί εδώ η
          * αριστερή στήλη είναι φόρμα και χωράει στενότερη.
          */
-        <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] xl:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] items-start">
+        <div
+          style={twoCol && pv.w ? { gridTemplateColumns: `minmax(0,1fr) ${pv.w}px` } : undefined}
+          className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] xl:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] items-start">
           <div className="space-y-5 min-w-0">
             <section className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
               <h3 className="px-4 py-3 text-xs font-bold tracking-wider uppercase text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
@@ -269,13 +391,46 @@ export default function OcContent() {
             </section>
           </div>
 
-          <aside className="space-y-4 min-w-0 md:sticky md:top-4">
+          <aside ref={asideRef} className="relative space-y-4 min-w-0 md:sticky"
+            style={{ top: PV_STICKY_TOP, ...(twoCol && pv.w ? { width: pv.w } : {}) }}>
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <h3 className="px-4 py-3 text-xs font-bold tracking-wider uppercase text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                Πώς φαίνεται στη σελίδα
-              </h3>
-              <PreviewFrame html={preview} goTo={goTo} height={520} />
+              <div className="flex items-center justify-between gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-xs font-bold tracking-wider uppercase text-gray-500 dark:text-gray-400">
+                  Πώς φαίνεται στη σελίδα
+                </h3>
+                <button type="button" onClick={copyHtml} disabled={!preview}
+                  title="Αντιγράφει το HTML του άρθρου όπως φαίνεται"
+                  className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed ${
+                    copied === 'ok'
+                      ? 'border-green-600 bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-200'
+                      : copied === 'err'
+                        ? 'border-red-600 bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-200'
+                        : 'border-gray-300 dark:border-gray-500 text-charcoal dark:text-white hover:border-coral hover:text-coral'
+                  }`}>
+                  {copied === 'ok' ? 'Αντιγράφηκε ✓' : copied === 'err' ? 'Δεν αντιγράφηκε' : 'Αντιγραφή HTML'}
+                </button>
+              </div>
+              <PreviewFrame html={preview} goTo={goTo} height={pv.h}
+                maximized={maximized} onToggleMaximize={toggleMaximize} />
             </div>
+
+            {/* Οι λαβές: στη ΜΕΣΗ της αριστερής άκρης για το πλάτος — εκεί
+                ακριβώς περνά ο διαχωριστής με τον συνθέτη — και στη μέση της
+                κάτω άκρης για το ύψος. Διακριτικές αλλά ορατές: αν δεν
+                φαίνονται, δεν υπάρχουν. Κρύβονται στη μονόστηλη διάταξη,
+                όπου το πλάτος το ορίζει η οθόνη. */}
+            <span role="separator" aria-orientation="vertical" aria-label="Αλλαγή πλάτους προεπισκόπησης"
+              tabIndex={0} onPointerDown={dragPreview('w')} onKeyDown={keyPreview('w')}
+              className="hidden md:flex justify-center absolute top-1/2 -left-4 h-16 w-3 -translate-y-1/2 cursor-ew-resize touch-none group"
+              style={{ touchAction: 'none' }}>
+              <span className="block h-full w-1 rounded-full bg-coral/40 group-hover:bg-coral group-focus-visible:bg-coral transition-colors" aria-hidden="true" />
+            </span>
+            <span role="separator" aria-orientation="horizontal" aria-label="Αλλαγή ύψους προεπισκόπησης"
+              tabIndex={0} onPointerDown={dragPreview('h')} onKeyDown={keyPreview('h')}
+              className="hidden md:flex items-center absolute left-1/2 -bottom-1 w-16 h-3 -translate-x-1/2 cursor-ns-resize touch-none group"
+              style={{ touchAction: 'none' }}>
+              <span className="block w-full h-1 rounded-full bg-coral/40 group-hover:bg-coral group-focus-visible:bg-coral transition-colors" aria-hidden="true" />
+            </span>
 
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
               {missing.length > 0 && (
