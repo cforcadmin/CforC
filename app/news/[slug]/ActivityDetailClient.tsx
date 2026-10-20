@@ -13,6 +13,7 @@ import { getActivityById, getActivities } from '@/lib/strapi'
 import type { StrapiResponse, Activity } from '@/lib/types'
 import LocalizedText from '@/components/LocalizedText'
 import LocalizedBlocks from '@/components/LocalizedBlocks'
+import LocalizedArticle from '@/components/LocalizedArticle'
 import NewsFlipCard from '@/components/shared/NewsFlipCard'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import { renderBlocks, extractTextFromBlocks } from '@/lib/renderBlocks'
@@ -304,9 +305,16 @@ function ActivityDetailPageContent({ initialActivity }: { initialActivity?: any 
           )}
 
           {/* Description */}
-          <div className="prose prose-lg max-w-none">
-            <LocalizedBlocks blocks={activity.Description} engBlocks={activity.EngDescription} className="text-gray-700 dark:text-gray-300 leading-relaxed" />
-          </div>
+          {/* ΤΟ ΣΥΝΘΕΤΟ ΑΡΘΡΟ ΕΧΕΙ ΠΡΟΤΕΡΑΙΟΤΗΤΑ, ΑΛΛΙΩΣ ΤΟ ΠΑΛΙΟ ΚΕΙΜΕΝΟ.
+              Έτσι τίποτα από όσα υπάρχουν σήμερα δεν αλλάζει: η νέα απόδοση
+              ισχύει μόνο για ό,τι ξαναγράφτηκε στον συνθέτη του OC. */}
+          {(activity as any).Html ? (
+            <LocalizedArticle html={(activity as any).Html} htmlEn={(activity as any).HtmlEn} />
+          ) : (
+            <div className="prose prose-lg max-w-none">
+              <LocalizedBlocks blocks={activity.Description} engBlocks={activity.EngDescription} className="text-gray-700 dark:text-gray-300 leading-relaxed" />
+            </div>
+          )}
         </div>
       </section>
 

@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 import { getActivityById } from '@/lib/strapi'
 import { extractTextFromBlocks } from '@/lib/renderBlocks'
+import { summaryOf } from '@/lib/articleText'
 import ActivityDetailClient from './ActivityDetailClient'
 
 /**
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const activity = response.data
     if (!activity) return { title: 'Δεν βρέθηκε' }
 
-    const description = extractTextFromBlocks(activity.Description)?.slice(0, 160) || ''
+    const description = summaryOf(activity.Excerpt, extractTextFromBlocks(activity.Description), activity.Html).slice(0, 160)
     const imageUrl = activity.Visuals?.[0]?.url || null
 
     return {
@@ -55,7 +56,7 @@ async function ActivityJsonLd({ slug }: { slug: string }) {
     const activity = response.data
     if (!activity) return null
 
-    const description = extractTextFromBlocks(activity.Description)?.slice(0, 300) || ''
+    const description = summaryOf(activity.Excerpt, extractTextFromBlocks(activity.Description), activity.Html).slice(0, 300)
     const imageUrl = activity.Visuals?.[0]?.url || null
 
     const jsonLd = {

@@ -10,6 +10,7 @@ import OcOverview from '@/components/oc/OcOverview'
 import OcFinances from '@/components/oc/OcFinances'
 import OcMonthlyView from '@/components/oc/OcMonthlyView'
 import OcComms from '@/components/oc/OcComms'
+import OcContent from '@/components/oc/OcContent'
 import OcAdmin from '@/components/oc/OcAdmin'
 import OcCampaigns from '@/components/oc/OcCampaigns'
 import OcIndicators from '@/components/oc/OcIndicators'
@@ -829,6 +830,11 @@ export default function OcShell({ seats, initialSeat, wearingSeat = null, seatMo
 
 
           {activeSection === 'comms' && <OcComms />}
+
+          {/* Το περιεχόμενο του site — Νέα, Έργα, Καταχωρήσεις — δίπλα στο
+              email και στο newsletter, γιατί είναι η ίδια δουλειά με τα ίδια
+              μπλοκ: ό,τι ανακοινώνεται φεύγει και ως γράμμα και ως σελίδα. */}
+          {activeSection === 'comms' && <div className="mt-8"><OcContent /></div>}
 
           {activeSection === 'reports' && <OcIndicators />}
 

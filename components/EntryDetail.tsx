@@ -13,6 +13,7 @@ import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import { getProjectEntryBySlug } from '@/lib/strapi'
 import type { ProjectEntry } from '@/lib/types'
 import { renderBlocks } from '@/lib/renderBlocks'
+import LocalizedArticle from '@/components/LocalizedArticle'
 
 interface Props {
   projectSlug: string
@@ -275,11 +276,16 @@ export default function EntryDetail({ projectSlug, entrySlug }: Props) {
                   </div>
 
                   {/* Description */}
-                  {entry.description && (
+                  {/* ΤΟ ΣΥΝΘΕΤΟ ΑΡΘΡΟ ΕΧΕΙ ΠΡΟΤΕΡΑΙΟΤΗΤΑ, ΑΛΛΙΩΣ ΤΟ ΠΑΛΙΟ ΚΕΙΜΕΝΟ.
+                      Έτσι τίποτα από όσα υπάρχουν σήμερα δεν αλλάζει: η νέα
+                      απόδοση ισχύει μόνο για ό,τι ξαναγράφτηκε στο OC. */}
+                  {(entry as any).Html ? (
+                    <LocalizedArticle html={(entry as any).Html} />
+                  ) : entry.description ? (
                     <div className="prose dark:prose-invert max-w-none">
                       {renderBlocks(entry.description)}
                     </div>
-                  )}
+                  ) : null}
 
                 </div>
               )}

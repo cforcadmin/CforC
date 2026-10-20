@@ -14,6 +14,7 @@ import { getProjectBySlug } from '@/lib/strapi'
 import { useTheme } from '@/components/ThemeProvider'
 import type { Project, ProjectEntry } from '@/lib/types'
 import { renderBlocks } from '@/lib/renderBlocks'
+import LocalizedArticle from '@/components/LocalizedArticle'
 
 const STATUS_LABELS: Record<string, string> = {
   active: 'Ενεργό',
@@ -270,11 +271,16 @@ export default function ProjectDetail({ slug }: Props) {
                   </div>
 
                   {/* Full description */}
-                  {project.full_description && (
+                  {/* ΤΟ ΣΥΝΘΕΤΟ ΑΡΘΡΟ ΕΧΕΙ ΠΡΟΤΕΡΑΙΟΤΗΤΑ, ΑΛΛΙΩΣ ΤΟ ΠΑΛΙΟ ΚΕΙΜΕΝΟ.
+                      Έτσι τίποτα από όσα υπάρχουν σήμερα δεν αλλάζει: η νέα
+                      απόδοση ισχύει μόνο για ό,τι ξαναγράφτηκε στο OC. */}
+                  {(project as any).Html ? (
+                    <LocalizedArticle html={(project as any).Html} />
+                  ) : project.full_description ? (
                     <div className="prose dark:prose-invert max-w-none">
                       {renderBlocks(project.full_description)}
                     </div>
-                  )}
+                  ) : null}
                   {/* Supporters Banner */}
                   {(() => {
                     const bannerSource = theme === 'dark' ? project.supporters_banner_dark : project.supporters_banner_light

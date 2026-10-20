@@ -1,4 +1,5 @@
 'use client'
+import { summaryOf } from '@/lib/articleText'
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
@@ -89,7 +90,7 @@ export default function ProjectFlipCard({ project, cool }: { project: Project; c
   const imageUrl = getImageUrl(project.cover_image)
   const statusInfo = project.project_status ? STATUS_LABELS[project.project_status] : null
   const dateRange = formatDateRange(project.start_date, project.end_date)
-  const descriptionText = extractTextFromBlocks(project.full_description)
+  const descriptionText = summaryOf((project as any).Excerpt, extractTextFromBlocks(project.full_description), (project as any).Html)
   const categories = project.category
     ? project.category.split(',').map(c => c.trim()).filter(Boolean)
     : []

@@ -1,4 +1,5 @@
 'use client'
+import { summaryOf } from '@/lib/articleText'
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
@@ -36,8 +37,12 @@ export default function NewsFlipCard({ activity, fromTab, cool }: { activity: Ac
   // Determine which tab this activity belongs to (current or previous)
   const activityTab = fromTab || (new Date(activity.Date) >= new Date(new Date().toDateString()) ? 'current' : 'previous')
 
-  const descriptionText = extractTextFromBlocks(activity.Description)
-  const engDescriptionText = activity.EngDescription ? extractTextFromBlocks(activity.EngDescription) : null
+  // Η γραμμένη περίληψη πρώτη: μόλις ένα άρθρο γραφτεί στον συνθέτη του OC,
+  // το πεδίο Description μένει άδειο και η πίσω όψη θα άδειαζε μαζί του.
+  const descriptionText = summaryOf((activity as any).Excerpt, extractTextFromBlocks(activity.Description), (activity as any).Html)
+  const engDescriptionText = (activity as any).ExcerptEn
+    || (activity.EngDescription ? extractTextFromBlocks(activity.EngDescription) : null)
+    || null
   const href = `/news/${activity.Slug || activity.documentId || activity.id}${fromTab ? `?from=${fromTab}` : ''}`
 
   const imageUrl = activity.Visuals && activity.Visuals.length > 0

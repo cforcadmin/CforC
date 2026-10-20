@@ -1,4 +1,5 @@
 'use client'
+import { summaryOf } from '@/lib/articleText'
 
 import { useEffect, useState, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -234,7 +235,7 @@ function ActivitiesPageContent() {
       const q = searchQuery.toLowerCase()
       result = result.filter(a =>
         a.Title.toLowerCase().includes(q) ||
-        extractTextFromBlocks(a.Description).toLowerCase().includes(q) ||
+        summaryOf((a as any).Excerpt, extractTextFromBlocks(a.Description), (a as any).Html).toLowerCase().includes(q) ||
         (a.Tags && a.Tags.toLowerCase().includes(q))
       )
     }

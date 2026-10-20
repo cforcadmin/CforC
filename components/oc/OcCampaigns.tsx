@@ -33,7 +33,18 @@ import type { NewsletterFooter } from '@/lib/campaignBlocks'
  * γράμμα και θα έδειχνε διαφορετικό απ' ό,τι φτάνει στο inbox.
  */
 
-type Block = Record<string, any> & { type: string }
+/**
+ * Ο ΣΥΝΘΕΤΗΣ ΜΙΛΑΕΙ ΧΑΛΑΡΟ ΤΥΠΟ, ΕΠΙΤΗΔΕΣ.
+ *
+ * Ένα μπλοκ υπό επεξεργασία είναι ημιτελές: ο χρήστης μόλις το πρόσθεσε και
+ * δεν έχει συμπληρώσει τίποτα. Ο αυστηρός τύπος του lib/campaignBlocks
+ * περιγράφει ΕΓΚΥΡΟ μπλοκ — τον ελέγχει η διαδρομή πριν αποθηκεύσει.
+ *
+ * Εξάγεται ώστε όποια άλλη οθόνη δανείζεται τον συνθέτη (π.χ. το περιεχόμενο
+ * του site) να κρατά τα μπλοκ της στον ΙΔΙΟ τύπο, αντί να γεμίσει casts.
+ */
+export type EditorBlock = Record<string, any> & { type: string }
+type Block = EditorBlock
 type Recipient = { email: string; name: string; via: string; am?: number | null }
 type Selection = {
   allMembers?: boolean
@@ -1391,7 +1402,7 @@ export default function OcCampaigns({ desk }: { desk: string }) {
  * με transform, οπότε βλέπεις τη διάταξη υπολογιστή· ο διακόπτης δείχνει και
  * τη μορφή κινητού, που είναι υπαρκτή και σκόπιμη.
  */
-function PreviewFrame({ html, onPick, goTo, height = 520, maximized, onToggleMaximize }: {
+export function PreviewFrame({ html, onPick, goTo, height = 520, maximized, onToggleMaximize }: {
   html: string
   onPick?: (i: number) => void
   /** Εντολή «πήγαινε σε αυτό το μπλοκ». Το n αλλάζει σε κάθε κλικ, ώστε δύο
@@ -1759,10 +1770,14 @@ function NewsletterFooterFields({ options, value, onChange }: {
   )
 }
 
-function BlockEditor({ blocks, setBlocks, meta, kind, onReveal }: {
+export function BlockEditor({ blocks, setBlocks, meta, kind, onReveal }: {
   blocks: Block[]; setBlocks: (b: Block[]) => void; meta: Meta
-  /** Τα έτοιμα σχέδια διαφέρουν: του μηνύματος δεν ταιριάζουν σε newsletter */
-  kind: 'message' | 'newsletter'
+  /**
+   * Τα έτοιμα σχέδια διαφέρουν: του μηνύματος δεν ταιριάζουν σε newsletter.
+   * Το 'page' είναι περιεχόμενο του site — εκεί δεν υπάρχει παραλήπτης, άρα
+   * ούτε ετικέτες προσωποποίησης.
+   */
+  kind: 'message' | 'newsletter' | 'page'
   /** Ζητά από την προεπισκόπηση να δείξει αυτό το μπλοκ */
   onReveal?: (i: number) => void
 }) {
@@ -2168,7 +2183,9 @@ function BlockEditor({ blocks, setBlocks, meta, kind, onReveal }: {
         {paletteChips(type => insertAt(blocks.length, type))}
       </div>
 
-      <details className="mt-4">
+      {/* Σε σελίδα του site δεν υπάρχει παραλήπτης: οι ετικέτες δεν θα
+          γέμιζαν ποτέ και θα φαίνονταν αυτούσιες ως «{{ firstname }}». */}
+      <details className="mt-4" hidden={kind === 'page' || !meta.mergeFields.length}>
         <summary className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer">Πεδία που συμπληρώνονται ανά παραλήπτη</summary>
         <div className="flex flex-wrap gap-2 mt-2">
           {meta.mergeFields.map(f => (
@@ -2438,7 +2455,7 @@ function BlockFields({ block: b, onChange, tocDefault = '' }: {
  * σβήσουμε αργότερα. Μια εικόνα με σκέτο σύνδεσμο (εξωτερική) ΔΕΝ σβήνεται —
  * δεν είναι δική μας.
  */
-function ImageField({ src, alt, mediaId, branded, origSrc, origMediaId, onChange }: {
+export function ImageField({ src, alt, mediaId, branded, origSrc, origMediaId, onChange }: {
   src: string; alt: string; mediaId?: number
   branded?: 'light' | 'dark'; origSrc?: string; origMediaId?: number
   onChange: (p: Record<string, any>) => void
