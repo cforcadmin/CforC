@@ -2009,6 +2009,33 @@ ${inner}
 </table>`
 }
 
+/**
+ * ΤΟ ΙΔΙΟ ΠΕΡΙΕΧΟΜΕΝΟ, ΩΣ ΣΕΛΙΔΑ ΤΟΥ SITE.
+ *
+ * Επιστρέφει ΜΟΝΟ την κάρτα — όχι `<!DOCTYPE>`, όχι `<body>`, όχι υποσέλιδο.
+ * Η σελίδα έχει ήδη τα δικά της: κεφαλίδα, πλοήγηση, footer. Ένα γράμμα
+ * υπογράφεται από άνθρωπο και κλείνει με απεγγραφή· ένα άρθρο όχι.
+ *
+ * Το πλάτος και οι αποστάσεις μένουν ίδια με το γράμμα — εκεί είναι όλη η
+ * οπτική ταυτότητα. Τα χρώματα τα περνά μετά το `toPageSkin`, που τα κάνει
+ * μεταβλητές ώστε να δουλεύουν και στο σκοτεινό θέμα.
+ */
+export function campaignPageHtml(opts: {
+  title: string
+  blocks: Block[]
+  /** 'none' όταν η σελίδα βάζει τη δική της επικεφαλίδα */
+  headerStyle?: HeaderStyle | 'none'
+  headerLogo?: boolean
+  annotate?: boolean
+}): string {
+  const { title, blocks, headerStyle = 'coral', headerLogo = false, annotate = false } = opts
+  const head = headerStyle === 'none' ? '' : headerHtml(headerStyle as HeaderStyle, title, headerLogo)
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${CONTENT_WIDTH}" style="width:100%;max-width:${CONTENT_WIDTH}px;background-color:${BRAND.white};border-radius:24px;overflow:hidden;">
+${head}
+${renderCampaignBody(blocks, annotate)}
+</table>`
+}
+
 export function campaignEmailHtml(opts: {
   subject: string
   blocks: Block[]

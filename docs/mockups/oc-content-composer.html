@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Σύνθεση περιεχομένου στο OC</title>
+<style>
+  :root{
+    --coral:#FF8B6A; --coral-dark:#C9552F; --ink:#2D2D2D; --ink-soft:#5A5A5A;
+    --cream:#F5F0EB; --white:#fff; --line:#E5E7EB; --pink:#D96AA7; --blue:#4A90D9;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#EFEAE4;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--ink)}
+  .wrap{max-width:1500px;margin:0 auto;padding:28px 20px 60px}
+  .screen{background:var(--white);border-radius:24px;box-shadow:0 2px 16px rgba(0,0,0,.08);margin-bottom:40px;overflow:hidden}
+  .screen > header{padding:14px 22px;background:#FAF7F4;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .screen > header .n{width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700;flex:none}
+  .screen > header h2{margin:0;font-size:16px}
+  .screen > header .note{font-size:12.5px;color:var(--ink-soft);margin-left:auto}
+  .pad{padding:22px}
+
+  /* ── ψεύτικη πλοήγηση OC ── */
+  .ocnav{display:flex;gap:6px;flex-wrap:wrap;padding:12px 22px;background:#fff;border-bottom:1px solid var(--line)}
+  .ocnav span{font-size:11.5px;letter-spacing:.9px;font-weight:700;padding:7px 11px;border-radius:9px;color:#8A8FA3;background:#F3F4F6}
+  .ocnav span.on{background:var(--pink);color:#fff}
+  .ocnav span.alt{background:var(--blue);color:#fff}
+
+  /* ── καρτέλες τύπου ── */
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+  .tab{font-size:13px;font-weight:600;padding:9px 15px;border-radius:11px;border:1.5px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer}
+  .tab.on{border-color:var(--ink);background:var(--ink);color:#fff}
+  .tab .c{opacity:.55;font-weight:400;margin-left:5px}
+
+  /* ── τρεις στήλες ── */
+  .cols{display:grid;grid-template-columns:270px 1fr 330px;gap:18px;align-items:start}
+  .panel{border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden}
+  .panel > h3{margin:0;font-size:11.5px;letter-spacing:1.1px;text-transform:uppercase;color:var(--ink-soft);padding:11px 14px;background:#FAFAFA;border-bottom:1px solid var(--line)}
+  .panel .body{padding:14px}
+
+  .f{margin-bottom:12px}
+  .f label{display:block;font-size:11.5px;font-weight:700;color:var(--ink-soft);margin-bottom:4px}
+  .f label .req{color:var(--coral-dark)}
+  .f input,.f select,.f textarea{width:100%;font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink)}
+  .f .hint{font-size:11px;color:#9AA0A6;margin-top:3px;line-height:1.45}
+  .f.auto input{background:#F7F7F8;color:#6B7280}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+  .chip{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--cream);border:1px solid #E6DED5}
+
+  /* ── ο συνθέτης ── */
+  .blocks{display:flex;flex-direction:column;gap:9px}
+  .blk{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff;display:flex;gap:10px;align-items:flex-start}
+  .blk .grip{color:#C9CDD2;font-size:14px;cursor:grab;line-height:1.2;flex:none}
+  .blk .k{font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--coral-dark);font-weight:700;margin-bottom:3px}
+  .blk .t{font-size:13px;color:var(--ink);line-height:1.5}
+  .blk .acts{margin-left:auto;display:flex;gap:4px;flex:none}
+  .blk .acts i{width:22px;height:22px;border-radius:6px;background:#F3F4F6;display:grid;place-items:center;font-size:11px;color:#6B7280;font-style:normal}
+  .blk.mast{background:linear-gradient(90deg,var(--coral) 0 6px,#fff 6px)}
+  .addbar{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+  .addbar b{font-size:11.5px;color:var(--ink-soft);align-self:center;margin-right:3px}
+  .addbar span{font-size:12px;padding:5px 10px;border-radius:9px;background:var(--cream);border:1px solid #E6DED5;cursor:pointer}
+
+  /* ── κάρτα που γυρίζει ── */
+  .flipwrap{perspective:1200px;margin-bottom:10px}
+  .flip{position:relative;width:100%;height:320px;transition:transform .55s;transform-style:preserve-3d;cursor:pointer}
+  .flip.turned{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#fff;display:flex;flex-direction:column}
+  .face.back{transform:rotateY(180deg);padding:16px}
+  .face .ph{height:168px;background:linear-gradient(135deg,#E8DFD6,#D8CEC2);display:grid;place-items:center;color:#A99E92;font-size:12px}
+  .face .meta{padding:12px 14px}
+  .dt{font-size:11.5px;color:var(--ink-soft)}
+  .cat{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--cream);color:var(--coral-dark);margin-left:7px}
+  .ttl{font-size:15px;font-weight:700;margin:7px 0 0;line-height:1.35}
+  .exc{font-size:12.5px;color:var(--ink-soft);line-height:1.55;margin:9px 0 0}
+  .flaghint{font-size:11px;color:#9AA0A6;text-align:center}
+
+  /* ── η σελίδα που βγαίνει ── */
+  .page{background:var(--cream);padding:26px 14px;border-radius:0}
+  .art{max-width:640px;margin:0 auto;background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.06)}
+  .art .head{background:var(--coral);padding:30px 40px 26px}
+  .art .head .kick{font-size:12px;letter-spacing:1.6px;font-weight:700;color:#fff}
+  .art .head h1{margin:16px 0 0;font-size:27px;line-height:1.2;color:var(--ink)}
+  .art .head .sub{margin-top:12px;font-size:12.5px;color:#7A3B26}
+  .art .b{padding:22px 40px 10px;font-size:15px;line-height:1.7}
+  .art .b p{margin:0 0 15px}
+  .art figure{margin:0 0 18px}
+  .art figure div{height:190px;background:linear-gradient(135deg,#E8DFD6,#D8CEC2);border-radius:16px;display:grid;place-items:center;color:#A99E92;font-size:12px}
+  .art figure figcaption{font-size:11.5px;color:var(--ink-soft);margin-top:7px}
+  .art .cta{margin:4px 40px 30px;text-align:center}
+  .art .cta a{display:inline-block;background:var(--ink);color:#fff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 26px;border-radius:999px}
+  .cut{margin:0;border:0;border-top:1px dashed #D9D2C9}
+  .nofoot{text-align:center;font-size:11.5px;color:#9AA0A6;padding:12px}
+
+  .legend{display:flex;gap:16px;flex-wrap:wrap;padding:12px 22px;background:#FAF7F4;border-top:1px solid var(--line);font-size:12px;color:var(--ink-soft)}
+  .legend b{color:var(--ink)}
+  .k1,.k2{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:middle;margin-right:5px}
+  .k1{background:var(--coral)} .k2{background:#F7F7F8;border:1px solid var(--line)}
+  @media (max-width:1180px){.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ░░ 1 ░░ -->
+  <section class="screen">
+    <header>
+      <span class="n">1</span>
+      <h2>OC → Επικοινωνία → <strong>Νέα</strong> · σύνθεση άρθρου</h2>
+      <span class="note">Η κάρτα δεξιά γυρίζει με κλικ — όπως στο site</span>
+    </header>
+
+    <div class="ocnav">
+      <span>ΕΠΙΣΚΟΠΗΣΗ</span><span>ΜΕΛΗ</span><span>ΟΙΚΟΝΟΜΙΚΑ</span><span>ΔΙΑΧΕΙΡΙΣΗ</span>
+      <span class="alt">ΕΡΓΑ</span><span class="on">ΕΠΙΚΟΙΝΩΝΙΑ</span><span>ΑΝΑΦΟΡΕΣ</span><span>ΡΥΘΜΙΣΕΙΣ</span>
+    </div>
+
+    <div class="pad">
+      <div class="tabs">
+        <div class="tab on">Νέα <span class="c">· 48</span></div>
+        <div class="tab">Newsletter <span class="c">· 3</span></div>
+        <div class="tab">Μηνύματα</div>
+      </div>
+
+      <div class="cols">
+
+        <!-- μεταδεδομένα -->
+        <div class="panel">
+          <h3>Στοιχεία κάρτας</h3>
+          <div class="body">
+            <div class="f">
+              <label>Τίτλος <span class="req">*</span></label>
+              <input value="Το CforC στο Bridge Makers Athens">
+            </div>
+            <div class="f">
+              <label>Τίτλος (EN)</label>
+              <input value="CforC at Bridge Makers Athens">
+              <div class="hint">Χωρίς αυτό η αγγλική προβολή δείχνει τον ελληνικό τίτλο.</div>
+            </div>
+            <div class="f">
+              <label>Ημερομηνία <span class="req">*</span></label>
+              <input value="2026-11-14">
+              <div class="hint">Ορίζει «Τρέχοντα» ή «Προηγούμενα» στη σελίδα Νέα.</div>
+            </div>
+            <div class="f">
+              <label>Κατηγορία</label>
+              <select><option>Δράσεις</option><option>Συνέδρια</option><option>Ανακοινώσεις</option></select>
+              <div class="hint">Γίνεται φίλτρο με κλικ στην πίσω όψη.</div>
+            </div>
+            <div class="f">
+              <label>Ετικέτες</label>
+              <input value="δικτύωση, Αθήνα, ENCC">
+              <div class="chips"><span class="chip">δικτύωση</span><span class="chip">Αθήνα</span><span class="chip">ENCC</span></div>
+            </div>
+            <div class="f">
+              <label>Περίληψη <span class="req">*</span></label>
+              <textarea rows="3">Η CforC συμμετείχε στο Bridge Makers με δύο εργαστήρια και μία παρέμβαση για τη χρηματοδότηση.</textarea>
+              <div class="hint"><strong>Τρεις χρήσεις:</strong> πίσω όψη κάρτας · περιγραφή Google · αναζήτηση στο site.</div>
+            </div>
+            <div class="f">
+              <label>Εικόνα κάρτας <span class="req">*</span> &nbsp;+ alt</label>
+              <input value="bridge-makers-athens.jpg">
+              <input style="margin-top:6px" value="Συμμετέχοντες σε κυκλική διάταξη">
+            </div>
+            <div class="f auto">
+              <label>Slug</label>
+              <input value="to-cforc-sto-bridge-makers-athens" readonly>
+              <div class="hint">Υπολογίζεται από τον τίτλο.</div>
+            </div>
+            <div class="f">
+              <label><input type="checkbox" checked style="width:auto;margin-right:6px">Προβεβλημένο</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- συνθέτης -->
+        <div class="panel">
+          <h3>Περιεχόμενο — ίδια μπλοκ με το newsletter</h3>
+          <div class="body">
+            <div class="blocks">
+              <div class="blk mast">
+                <span class="grip">⠿</span>
+                <div><div class="k">Επικεφαλίδα</div><div class="t">Το CforC στο Bridge Makers Athens</div></div>
+                <div class="acts"><i>👁</i><i>✎</i><i>⌫</i></div>
+              </div>
+              <div class="blk">
+                <span class="grip">⠿</span>
+                <div><div class="k">Κείμενο</div><div class="t">Στις 12–14 Νοεμβρίου η CforC βρέθηκε στην Αθήνα…</div></div>
+                <div class="acts"><i>👁</i><i>✎</i><i>⌫</i></div>
+              </div>
+              <div class="blk">
+                <span class="grip">⠿</span>
+                <div><div class="k">Εικόνα + λεζάντα</div><div class="t">bridge-makers-01.jpg — «Το εργαστήριο της Παρασκευής»</div></div>
+                <div class="acts"><i>👁</i><i>✎</i><i>⌫</i></div>
+              </div>
+              <div class="blk">
+                <span class="grip">⠿</span>
+                <div><div class="k">Κουμπί</div><div class="t">«Δες το πρόγραμμα» → encc.eu/bridge-makers</div></div>
+                <div class="acts"><i>👁</i><i>✎</i><i>⌫</i></div>
+              </div>
+            </div>
+            <div class="addbar">
+              <b>Πρόσθεσε:</b>
+              <span>Κείμενο</span><span>Εικόνα</span><span>Εικόνα + κείμενο</span>
+              <span>Κουμπί</span><span>Παράθεμα</span><span>Διαχωριστικό</span><span>Λίστα</span>
+            </div>
+            <hr class="cut" style="margin:16px 0">
+            <div class="f" style="margin:0">
+              <label>Αγγλικό περιεχόμενο</label>
+              <select><option>Ίδια μπλοκ, αγγλικό κείμενο (αντιγραφή)</option><option>Χωριστή σύνθεση</option><option>Χωρίς αγγλικά</option></select>
+              <div class="hint">Σήμερα στο Strapi υπάρχει <strong>EngDescription</strong>· αν δεν συμπληρωθεί, η αγγλική προβολή πέφτει στα ελληνικά.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- προεπισκόπηση -->
+        <div class="panel">
+          <h3>Πώς φαίνεται στο site</h3>
+          <div class="body">
+            <div class="flipwrap">
+              <div class="flip" id="fc" onclick="this.classList.toggle('turned')">
+                <div class="face">
+                  <div class="ph">εικόνα κάρτας</div>
+                  <div class="meta">
+                    <span class="dt">14/11/2026</span><span class="cat">Δράσεις</span>
+                    <p class="ttl">Το CforC στο Bridge Makers Athens</p>
+                  </div>
+                </div>
+                <div class="face back">
+                  <span class="dt">14/11/2026</span><span class="cat">Δράσεις</span>
+                  <p class="ttl">Το CforC στο Bridge Makers Athens</p>
+                  <p class="exc">Η CforC συμμετείχε στο Bridge Makers με δύο εργαστήρια και μία παρέμβαση για τη χρηματοδότηση.</p>
+                  <div class="chips"><span class="chip">δικτύωση</span><span class="chip">Αθήνα</span><span class="chip">ENCC</span></div>
+                </div>
+              </div>
+            </div>
+            <p class="flaghint">↻ κλικ για την πίσω όψη</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><span class="k1"></span><b>Κοραλί</b> = η ταυτότητα του newsletter, αυτούσια</span>
+      <span><span class="k2"></span><b>Γκρι πεδίο</b> = υπολογίζεται, δεν γράφεται</span>
+      <span><b>*</b> = υποχρεωτικό ήδη στο Strapi</span>
+    </div>
+  </section>
+
+  <!-- ░░ 2 ░░ -->
+  <section class="screen">
+    <header>
+      <span class="n">2</span>
+      <h2>Το αποτέλεσμα: <strong>/news/to-cforc-sto-bridge-makers-athens</strong></h2>
+      <span class="note">Ίδια μπλοκ, χωρίς υποσέλιδο — είναι σελίδα, όχι γράμμα</span>
+    </header>
+    <div class="page">
+      <article class="art">
+        <div class="head">
+          <div class="kick">CULTURE FOR CHANGE</div>
+          <h1>Το CforC στο Bridge Makers Athens</h1>
+          <div class="sub">14 Νοεμβρίου 2026 · Δράσεις</div>
+        </div>
+        <div class="b">
+          <p>Στις 12–14 Νοεμβρίου η CforC βρέθηκε στην Αθήνα για το Bridge Makers, με δύο εργαστήρια και μία παρέμβαση για τη χρηματοδότηση του πολιτιστικού τομέα.</p>
+          <figure>
+            <div>bridge-makers-01.jpg</div>
+            <figcaption>Το εργαστήριο της Παρασκευής</figcaption>
+          </figure>
+          <p>Η συζήτηση κατέληξε σε τρία αιτήματα προς τους φορείς, τα οποία το δίκτυο θα καταθέσει τον Δεκέμβριο.</p>
+        </div>
+        <div class="cta"><a href="#">Δες το πρόγραμμα</a></div>
+      </article>
+      <p class="nofoot">— εδώ σταματά το άρθρο· ακολουθεί το κανονικό footer του site —</p>
+    </div>
+  </section>
+
+  <!-- ░░ 3 ░░ -->
+  <section class="screen">
+    <header>
+      <span class="n">3</span>
+      <h2>OC → <strong>ΕΡΓΑ</strong> · Έργα και Καταχωρήσεις</h2>
+      <span class="note">Η ενότητα υπάρχει ήδη και λέει «Σύντομα διαθέσιμο»</span>
+    </header>
+    <div class="ocnav">
+      <span>ΕΠΙΣΚΟΠΗΣΗ</span><span>ΜΕΛΗ</span><span>ΟΙΚΟΝΟΜΙΚΑ</span><span>ΔΙΑΧΕΙΡΙΣΗ</span>
+      <span class="alt" style="outline:3px solid #BBD7F2">ΕΡΓΑ</span><span>ΕΠΙΚΟΙΝΩΝΙΑ</span><span>ΑΝΑΦΟΡΕΣ</span><span>ΡΥΘΜΙΣΕΙΣ</span>
+    </div>
+    <div class="pad">
+      <div class="tabs">
+        <div class="tab on">Έργα <span class="c">· 11</span></div>
+        <div class="tab">Καταχωρήσεις <span class="c">· 63</span></div>
+      </div>
+      <div class="cols">
+        <div class="panel">
+          <h3>Στοιχεία έργου</h3>
+          <div class="body">
+            <div class="f"><label>Τίτλος <span class="req">*</span></label><input value="ReStart Reunion"></div>
+            <div class="f"><label>Ρόλος της CforC</label><input value="Συνδιοργανωτής"><div class="hint">Εμφανίζεται στην ΜΠΡΟΣΤΙΝΗ όψη της κάρτας.</div></div>
+            <div class="f"><label>Κατάσταση</label><select><option>Σε εξέλιξη</option><option>Ενεργό</option><option>Ολοκληρωμένο</option></select></div>
+            <div class="f row2">
+              <div><label>Από</label><input value="2026-03-01"></div>
+              <div><label>Έως</label><input value="2026-12-20"></div>
+            </div>
+            <div class="f"><label>Κατηγορίες</label><input value="δικτύωση, κατάρτιση"></div>
+            <div class="f"><label>Σειρά εμφάνισης</label><input value="3"><div class="hint">Μικρότερο = ψηλότερα.</div></div>
+            <div class="f"><label>Εταίροι</label><input value="ENCC, Goethe-Institut"></div>
+            <div class="f"><label>Σύνδεσμος έργου</label><input value="https://…"></div>
+            <div class="f"><label><input type="checkbox" checked style="width:auto;margin-right:6px">Προβεβλημένο</label></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Περιεχόμενο έργου</h3>
+          <div class="body">
+            <div class="blocks">
+              <div class="blk mast"><span class="grip">⠿</span><div><div class="k">Επικεφαλίδα</div><div class="t">ReStart Reunion</div></div><div class="acts"><i>✎</i></div></div>
+              <div class="blk"><span class="grip">⠿</span><div><div class="k">Κείμενο</div><div class="t">Το έργο φέρνει ξανά κοντά τους συμμετέχοντες…</div></div><div class="acts"><i>✎</i></div></div>
+              <div class="blk"><span class="grip">⠿</span><div><div class="k">Εικόνα + κείμενο</div><div class="t">restart-01.jpg + «Η πρώτη συνάντηση»</div></div><div class="acts"><i>✎</i></div></div>
+            </div>
+            <div class="addbar"><b>Πρόσθεσε:</b><span>Κείμενο</span><span>Εικόνα</span><span>Εικόνα + κείμενο</span><span>Κουμπί</span><span>Παράθεμα</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Κάρτα έργου</h3>
+          <div class="body">
+            <div class="flipwrap">
+              <div class="flip" onclick="this.classList.toggle('turned')">
+                <div class="face">
+                  <div class="ph">cover_image</div>
+                  <div class="meta">
+                    <p class="ttl" style="margin-top:0">ReStart Reunion</p>
+                    <span class="dt">Συνδιοργανωτής</span>
+                  </div>
+                </div>
+                <div class="face back">
+                  <p class="ttl" style="margin-top:0">ReStart Reunion</p>
+                  <span class="cat" style="margin:0">Σε εξέλιξη</span>
+                  <p class="exc">Μάρτιος – Δεκέμβριος 2026</p>
+                  <p class="exc" style="margin-top:4px">Το έργο φέρνει ξανά κοντά τους συμμετέχοντες…</p>
+                  <div class="chips"><span class="chip">ENCC</span><span class="chip">Goethe-Institut</span></div>
+                </div>
+              </div>
+            </div>
+            <p class="flaghint">↻ κλικ για την πίσω όψη</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="legend">
+      <span>Οι <b>Καταχωρήσεις</b> προσθέτουν: ορατότητα (δημόσια/ιδιωτική), ημερομηνία δημοσίευσης, λήξη, και σε ποιο <b>Έργο</b> ανήκουν.</span>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

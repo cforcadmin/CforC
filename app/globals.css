@@ -2397,3 +2397,67 @@ select.glass-control {
 .rich-text-body strong { font-weight: 700; }
 .rich-text-body em { font-style: italic; }
 .rich-text-body u { text-decoration: underline; }
+
+/* ════════════════════════════════════════════════════════════════════
+   ΑΡΘΡΟ ΣΥΝΤΕΘΕΙΜΕΝΟ ΣΤΟ OC — η ταυτότητα του newsletter, ως σελίδα.
+
+   Το HTML έρχεται από τον συνθέτη με ΕΝΣΩΜΑΤΑ χρώματα (έτσι πρέπει, για τα
+   γραμματοκιβώτια). Το lib/pageSkin τα έχει μετατρέψει σε μεταβλητές, με
+   εφεδρεία το αρχικό χρώμα: αν αυτό το φύλλο δεν φορτώσει, η σελίδα δείχνει
+   ακριβώς ό,τι δείχνει το γράμμα.
+
+   ΤΙ ΑΛΛΑΖΕΙ ΚΑΙ ΤΙ ΟΧΙ ΣΤΟ ΣΚΟΤΕΙΝΟ ΘΕΜΑ:
+   · αλλάζει  — η επιφάνεια της κάρτας, το κείμενο, οι γραμμές
+   · αντιστρέφεται — τα κουμπιά (αλλιώς σκούρο πάνω σε σκούρο)
+   · ΜΕΝΕΙ ΙΔΙΟ — το κοραλί, το κρεμ, οι τονισμένες ζώνες. Είναι η ταυτότητα,
+     όπως το λογότυπο· δεν βάφεται ξανά επειδή άλλαξε το θέμα.
+   ════════════════════════════════════════════════════════════════════ */
+.cfc-article {
+  --cfc-surface: #FFFFFF;
+  --cfc-tint: #F5F0EB;
+  --cfc-ink: #2D2D2D;
+  --cfc-ink-soft: #5A5A5A;
+  --cfc-ink-muted: #8A8A8A;
+  --cfc-line: #E5E7EB;
+  --cfc-hairline: #E0D8D0;
+  --cfc-invert-bg: #2D2D2D;
+  --cfc-invert-fg: #FFFFFF;
+
+  display: block;
+  width: 100%;
+}
+
+.dark .cfc-article {
+  --cfc-surface: #1F2937;
+  --cfc-tint: #273243;
+  --cfc-ink: #F3F4F6;
+  --cfc-ink-soft: #B6BCC4;
+  --cfc-ink-muted: #949BA4;
+  --cfc-line: #374151;
+  --cfc-hairline: #3A4049;
+  /* Το κουμπί αντιστρέφεται: ανοιχτό πλακίδιο με σκούρα γράμματα */
+  --cfc-invert-bg: #F3F4F6;
+  --cfc-invert-fg: #111827;
+}
+
+/* Η κάρτα κεντράρεται από τη σελίδα, όχι από εξωτερικό πίνακα όπως στο email */
+.cfc-article > table { margin: 0 auto; }
+
+/* Οι εικόνες του άρθρου δεν ξεχειλίζουν σε στενή οθόνη */
+.cfc-article img { max-width: 100%; height: auto; }
+
+/* Ο σύνδεσμος μέσα στο άρθρο κρατά το χρώμα της μάρκας και στα δύο θέματα */
+.cfc-article a { color: var(--coral); }
+.cfc-article [style*="background-color:#FF8B6A"] a { color: inherit; }
+
+/* Στοιβάζει ΜΟΝΟ όταν η κάρτα δεν χωράει πια — ίδιο όριο με το γράμμα, ώστε
+   η προεπισκόπηση του συνθέτη και η σελίδα να σπάνε στο ίδιο σημείο. */
+@media only screen and (max-width: 663px) {
+  .cfc-article .px { padding-left: 24px !important; padding-right: 24px !important; }
+  .cfc-article .h1 { font-size: 26px !important; line-height: 32px !important; }
+  .cfc-article .stack { display: block !important; width: 100% !important; }
+  .cfc-article .logocell { width: 64px !important; }
+  .cfc-article .logoimg { width: 56px !important; max-width: 56px !important; }
+  .cfc-article .markcell { width: 52px !important; }
+  .cfc-article .markimg { width: 44px !important; max-width: 44px !important; }
+}
