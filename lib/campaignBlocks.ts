@@ -1092,7 +1092,8 @@ export function renderCampaignBody(blocks: Block[], annotate = false): string {
  * allow-same-origin, οπότε δεν μπορεί να αγγίξει τη σελίδα μας — μόνο να
  * στείλει μήνυμα.
  */
-const PICK_SCRIPT = `<script>
+/** Στέλνει στο OC ποιο μπλοκ πατήθηκε μέσα στην προεπισκόπηση */
+export const PICK_SCRIPT = `<script>
 document.addEventListener('click', function (e) {
   var el = e.target;
   while (el && el !== document.body && !el.getAttribute?.('data-b')) el = el.parentElement;

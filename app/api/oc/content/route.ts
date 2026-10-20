@@ -5,7 +5,7 @@ import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
 import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import {
   campaignPageHtml, BLOCK_LABELS, BLOCK_VARIANTS, TOC_DEFAULT_TITLE,
-  visibleBlocks, type Block,
+  visibleBlocks, PICK_SCRIPT, type Block,
 } from '@/lib/campaignBlocks'
 import { toPageSkin } from '@/lib/pageSkin'
 import {
@@ -242,6 +242,11 @@ function previewDocument(inner: string, dark: boolean): string {
     : `--cfc-surface:#FFFFFF;--cfc-tint:#F5F0EB;--cfc-ink:#2D2D2D;--cfc-ink-soft:#5A5A5A;`
       + `--cfc-ink-muted:#8A8A8A;--cfc-line:#E5E7EB;--cfc-hairline:#E0D8D0;`
       + `--cfc-invert-bg:#2D2D2D;--cfc-invert-fg:#FFFFFF;`
+  /* ΤΟ ΣΕΝΑΡΙΟ ΕΠΙΛΟΓΗΣ ΖΕΙ ΣΤΟ ΕΓΓΡΑΦΟ, ΟΧΙ ΣΤΑ ΜΠΛΟΚ.
+     Τα μπλοκ παίρνουν σημάδια από το renderCampaignBody, αλλά αυτό που
+     στέλνει το μήνυμα «πατήθηκε το 3ο» στο OC είναι το σενάριο — και το
+     πρόσθετε μόνο το campaignEmailHtml. Χωρίς αυτό, το κλικ στην
+     προεπισκόπηση δεν έκανε απολύτως τίποτα. */
   return `<!DOCTYPE html><html lang="el"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -253,5 +258,5 @@ function previewDocument(inner: string, dark: boolean): string {
     .h1{font-size:26px !important;line-height:32px !important;}
     .stack{display:block !important;width:100% !important;}
   }
-</style></head><body>${inner}</body></html>`
+</style></head><body>${inner}${PICK_SCRIPT}</body></html>`
 }

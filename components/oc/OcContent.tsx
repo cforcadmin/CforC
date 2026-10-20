@@ -93,6 +93,49 @@ export default function OcContent() {
     return () => mo.disconnect()
   }, [])
 
+  /**
+   * ΚΛΙΚ ΣΤΗΝ ΠΡΟΕΠΙΣΚΟΠΗΣΗ → Ο ΣΥΝΤΑΚΤΗΣ ΠΑΕΙ ΕΚΕΙ.
+   *
+   * Η σύντομη λάμψη δεν είναι στολίδι: σε μεγάλο άρθρο, χωρίς αυτήν δεν
+   * καταλαβαίνεις πού σε πήγε.
+   */
+  const focusBlock = useCallback((i: number) => {
+    setCursor(i)
+    const el = document.getElementById(`oc-block-${i}`)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el.classList.add('oc-flash')
+    window.setTimeout(() => el.classList.remove('oc-flash'), 1400)
+    const field = el.querySelector<HTMLElement>('input, textarea, [contenteditable="true"]')
+    field?.focus({ preventScroll: true })
+  }, [])
+
+  /**
+   * Ο ΟΛΙΣΘΗΤΗΡΑΣ ΑΚΟΛΟΥΘΕΙ ΤΟΝ ΣΥΝΤΑΚΤΗ.
+   *
+   * Χωρίς αυτόν τον παρατηρητή ο δείκτης κουνιόταν μόνο όταν τον έσερνε
+   * κανείς: κυλούσες τα μπλοκ και η ένδειξη έμενε στο «1/8». Το κάτω
+   * περιθώριο κρατά ως «τρέχον» το μπλοκ στο πάνω μισό της οθόνης.
+   */
+  const seen = useRef<Set<number>>(new Set())
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined' || !draft) return
+    const io = new IntersectionObserver(entries => {
+      for (const e of entries) {
+        const i = Number((e.target as HTMLElement).dataset.blockIndex)
+        if (!Number.isInteger(i)) continue
+        if (e.isIntersecting) seen.current.add(i)
+        else seen.current.delete(i)
+      }
+      if (seen.current.size) setCursor(Math.min(...seen.current))
+    }, { rootMargin: '-110px 0px -55% 0px' })
+    for (let i = 0; i < draft.blocks.length; i++) {
+      const el = document.getElementById(`oc-block-${i}`)
+      if (el) io.observe(el)
+    }
+    return () => { io.disconnect(); seen.current.clear() }
+  }, [draft?.blocks.length, !!draft])
+
   /** Ο ολισθητήρας κινεί ΚΑΙ τα στοιχεία ΚΑΙ την προεπισκόπηση */
   const goToPosition = useCallback((i: number) => {
     const blocks = draft?.blocks ?? []
@@ -332,7 +375,7 @@ export default function OcContent() {
                 setBlocks={b => setDraft(d => d ? { ...d, blocks: b } : d)}
                 meta={meta as any}
                 kind="page"
-                onReveal={i => setGoTo(g => ({ i, n: (g?.n ?? 0) + 1 }))}
+                onReveal={i => { setCursor(i); setGoTo(g => ({ i, n: (g?.n ?? 0) + 1 })) }}
               />
               <div className={CARD}>
                 <label className="text-sm text-charcoal dark:text-gray-200 flex items-center gap-2">
@@ -388,7 +431,7 @@ export default function OcContent() {
               </div>
             }>
               {preview ? (
-                <PreviewFrame html={preview} goTo={goTo} height={pane.pv.h}
+                <PreviewFrame html={preview} onPick={focusBlock} goTo={goTo} height={pane.pv.h}
                   maximized={pane.maximized} onToggleMaximize={pane.toggleMaximize} />
               ) : null}
             </OcPreviewPane>
