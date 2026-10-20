@@ -17,7 +17,7 @@ import NewsFlipCard from '@/components/shared/NewsFlipCard'
 import { AccessibilityButton } from '@/components/AccessibilityMenu'
 import { renderBlocks, extractTextFromBlocks } from '@/lib/renderBlocks'
 
-function ActivityDetailPageContent() {
+function ActivityDetailPageContent({ initialActivity }: { initialActivity?: any }) {
   const params = useParams()
   const searchParams = useSearchParams()
   const slug = decodeURIComponent(params.slug as string)
@@ -60,7 +60,10 @@ function ActivityDetailPageContent() {
         setLoading(true)
 
         // Fetch current activity
-        const activityResponse = await getActivityById(slug)
+        // Ήρθε έτοιμο από τον διακομιστή; Τότε δεν ξαναζητιέται.
+        const activityResponse = initialActivity
+          ? { data: initialActivity }
+          : await getActivityById(slug)
         setActivity(activityResponse.data)
 
         // Fetch all activities for related section
@@ -390,7 +393,7 @@ function ActivityDetailPageContent() {
   )
 }
 
-export default function ActivityDetailClient() {
+export default function ActivityDetailClient({ initialActivity = null }: { initialActivity?: any } = {}) {
   return (
     <Suspense fallback={
       <main className="min-h-screen dark:bg-gray-900">
@@ -411,7 +414,7 @@ export default function ActivityDetailClient() {
         <Footer />
       </main>
     }>
-      <ActivityDetailPageContent />
+      <ActivityDetailPageContent initialActivity={initialActivity} />
     </Suspense>
   )
 }

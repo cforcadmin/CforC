@@ -198,7 +198,15 @@ function getHeroName(name: string): string {
   return withoutPunctuation.toLocaleUpperCase('el-GR')
 }
 
-export default function MemberDetailClient() {
+/**
+ * ΤΟ ΜΕΛΟΣ ΜΠΟΡΕΙ ΝΑ ΕΡΘΕΙ ΕΤΟΙΜΟ ΑΠΟ ΤΟΝ ΔΙΑΚΟΜΙΣΤΗ.
+ *
+ * Όταν το `initialMember` δίνεται, ο πελάτης ΔΕΝ ξαναρωτά το μητρώο — μόνο
+ * τις ομάδες συντονισμού, που είναι άλλο δεδομένο. Χωρίς αυτό, κάθε προβολή
+ * προφίλ κόστιζε μια τρίτη ταυτόσημη κλήση. Μένει προαιρετικό: αν λείψει
+ * (π.χ. αποτυχία στον διακομιστή), η οθόνη δουλεύει όπως πριν.
+ */
+export default function MemberDetailClient({ initialMember = null }: { initialMember?: any } = {}) {
   const params = useParams()
   const searchParams = useSearchParams()
   const cameFromMap = searchParams.get('from') === 'map'
@@ -240,7 +248,8 @@ export default function MemberDetailClient() {
     const fetchMember = async () => {
       try {
         const [result, ctData] = await Promise.all([
-          getMemberBySlugOrId(memberSlug),
+          // Ήρθε από τον διακομιστή; Τότε δεν ξαναζητιέται.
+          initialMember ? Promise.resolve({ data: initialMember }) : getMemberBySlugOrId(memberSlug),
           getCoordinationTeams(),
         ])
         if (result.data) {

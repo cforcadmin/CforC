@@ -1,8 +1,16 @@
+import { cache } from 'react'
 import type { Metadata } from 'next'
 import Script from 'next/script'
 import { getActivityById } from '@/lib/strapi'
 import { extractTextFromBlocks } from '@/lib/renderBlocks'
 import ActivityDetailClient from './ActivityDetailClient'
+
+/**
+ * ΕΝΑ ΑΙΤΗΜΑ, ΜΙΑ ΚΛΗΣΗ — ίδιο μοτίβο με τη σελίδα μέλους (20/10/2026).
+ * generateMetadata και JSON-LD ζητούσαν το ίδιο άρθρο ξεχωριστά, κι έπειτα
+ * το ξαναζητούσε ο πελάτης.
+ */
+const activityOnce = cache((slug: string) => getActivityById(slug))
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -11,7 +19,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   try {
-    const response = await getActivityById(decodeURIComponent(slug))
+    const response = await activityOnce(decodeURIComponent(slug))
     const activity = response.data
     if (!activity) return { title: 'Δεν βρέθηκε' }
 
@@ -43,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 async function ActivityJsonLd({ slug }: { slug: string }) {
   try {
-    const response = await getActivityById(decodeURIComponent(slug))
+    const response = await activityOnce(decodeURIComponent(slug))
     const activity = response.data
     if (!activity) return null
 
@@ -80,10 +88,13 @@ async function ActivityJsonLd({ slug }: { slug: string }) {
 
 export default async function ActivityDetailPage({ params }: Props) {
   const { slug } = await params
+  let initialActivity = null
+  try { initialActivity = (await activityOnce(decodeURIComponent(slug))).data ?? null }
+  catch { /* ο πελάτης θα το φέρει μόνος του */ }
   return (
     <>
       <ActivityJsonLd slug={slug} />
-      <ActivityDetailClient />
+      <ActivityDetailClient initialActivity={initialActivity} />
     </>
   )
 }

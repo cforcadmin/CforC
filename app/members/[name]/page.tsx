@@ -1,8 +1,21 @@
-import { Suspense } from 'react'
+import { Suspense, cache } from 'react'
 import type { Metadata } from 'next'
 import Script from 'next/script'
 import { getMemberBySlugOrId } from '@/lib/strapi'
 import MemberDetailClient from './MemberDetailClient'
+
+/**
+ * ΕΝΑ ΑΙΤΗΜΑ, ΜΙΑ ΚΛΗΣΗ.
+ *
+ * Η σελίδα ζητούσε ΤΡΕΙΣ φορές το ίδιο μέλος: generateMetadata, το JSON-LD,
+ * και ξανά ο πελάτης μέσα από το proxy. Φαινόταν στα logs του Strapi ως δύο
+ * πανομοιότυπα ερωτήματα με διαφορά έξι δευτερολέπτων, και έκανε το
+ * /api/members την πιο πολυσύχναστη διαδρομή (706 αιτήματα σε 24 ώρες).
+ *
+ * Το `cache` της React ενώνει τις δύο κλήσεις του ΔΙΑΚΟΜΙΣΤΗ μέσα στο ίδιο
+ * αίτημα· η τρίτη φεύγει δίνοντας στον πελάτη ό,τι ήδη έχουμε. (20/10/2026)
+ */
+const memberOnce = cache((slug: string) => getMemberBySlugOrId(slug))
 
 interface Props {
   params: Promise<{ name: string }>
@@ -12,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { name } = await params
   const slug = decodeURIComponent(name)
   try {
-    const response = await getMemberBySlugOrId(slug)
+    const response = await memberOnce(slug)
     const member = response.data
     if (!member || member.HideProfile) return { title: 'Μέλος δεν βρέθηκε' }
 
@@ -47,7 +60,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 async function MemberJsonLd({ name }: { name: string }) {
   const slug = decodeURIComponent(name)
   try {
-    const response = await getMemberBySlugOrId(slug)
+    const response = await memberOnce(slug)
     const member = response.data
     if (!member || member.HideProfile) return null
 
@@ -76,11 +89,18 @@ async function MemberJsonLd({ name }: { name: string }) {
 
 export default async function MemberDetailPage({ params }: Props) {
   const { name } = await params
+  // Το ίδιο αποτέλεσμα που πήραν ήδη τα metadata — δεν ξαναζητιέται
+  let initialMember = null
+  try {
+    const r = await memberOnce(decodeURIComponent(name))
+    if (r.data && !r.data.HideProfile) initialMember = r.data
+  } catch { /* ο πελάτης θα το φέρει μόνος του */ }
+
   return (
     <>
       <MemberJsonLd name={name} />
       <Suspense>
-        <MemberDetailClient />
+        <MemberDetailClient initialMember={initialMember} />
       </Suspense>
     </>
   )
