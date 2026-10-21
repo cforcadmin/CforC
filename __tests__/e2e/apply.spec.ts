@@ -41,7 +41,6 @@ test.describe('Αίτηση εγγραφής', () => {
 
   test('η σελίδα /apply φορτώνει τη φόρμα αίτησης', async ({ page }) => {
     await page.goto('/apply')
-    await page.waitForLoadState('networkidle')
 
     // ΠΡΟΣΟΧΗ: το getByText δεν πιάνει ελληνικό κείμενο που τελειώνει σε
     // σίγμα («ΕΓΓΡΑΦΗ» βρίσκεται, «ΕΓΓΡΑΦΗΣ» όχι). Ο ρόλος είναι ασφαλής.

@@ -13,8 +13,9 @@ import { STORAGE_STATE } from './global-setup'
 test.describe('OC — φράγμα πρόσβασης', () => {
   test('χωρίς σύνδεση, το /oc διώχνει', async ({ page }) => {
     await page.goto('/oc')
-    await page.waitForLoadState('networkidle')
-    expect(new URL(page.url()).pathname).not.toMatch(/^\/oc/)
+    /* Η εκδίωξη μπορεί να γίνει και από τον client — το poll περιμένει
+       την τελική διεύθυνση αντί για ησυχία στο δίκτυο. */
+    await expect.poll(() => new URL(page.url()).pathname).not.toMatch(/^\/oc/)
   })
 
   test.describe('συνδεδεμένο απλό μέλος', () => {
@@ -22,8 +23,7 @@ test.describe('OC — φράγμα πρόσβασης', () => {
 
     test('το /oc διώχνει σιωπηλά στην αρχική', async ({ page }) => {
       await page.goto('/oc')
-      await page.waitForLoadState('networkidle')
-      expect(new URL(page.url()).pathname).not.toMatch(/^\/oc/)
+      await expect.poll(() => new URL(page.url()).pathname).not.toMatch(/^\/oc/)
     })
 
     test('τα API του OC αρνούνται', async ({ request }) => {
@@ -35,7 +35,7 @@ test.describe('OC — φράγμα πρόσβασης', () => {
 
     test('το κουμπί ΟC δεν εμφανίζεται στο μενού', async ({ page }) => {
       await page.goto('/')
-      await page.waitForLoadState('networkidle')
+      /* Το toHaveCount ξαναδοκιμάζει μόνο του μέχρι το timeout. */
       await expect(page.locator('a[href="/oc"]')).toHaveCount(0)
     })
   })
