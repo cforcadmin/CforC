@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import CampaignRichText from './CampaignRichText'
 import { OC_COMPOSE_REPLY, firstNameOf, replySubject, type ComposeReplyDetail } from '@/lib/ocComposeReply'
 import { moveUp, moveDown, moveToBottom, moveGroupTo, mergePaletteOrder, movePaletteChip } from '@/lib/blockOrder'
-import { PREVIEW_DESKTOP_WIDTH, fileSizeLabel } from '@/lib/campaignBlocks'
+import { PREVIEW_DESKTOP_WIDTH, fileSizeLabel, BLOCK_ALIGNS, ALIGN_LABELS, type TextAlign } from '@/lib/campaignBlocks'
 import { PV_BASE_TRACK, PV_STICKY_TOP } from './usePreviewSize'
 import { usePreviewPane, OcPreviewPane } from './OcPreviewPane'
 import { canNewsletterFrom, bulkLabel } from '@/components/oc/ocPrefs'
@@ -1578,6 +1578,31 @@ function NewsletterFooterFields({ options, value, onChange }: {
   )
 }
 
+/**
+ * Το εικονίδιο της στοίχισης: τέσσερις γραμμές κειμένου σε μικρογραφία.
+ *
+ * Σχεδιασμένες, όχι χαρακτήρες: τα unicode «▤▥▦» είναι μοτίβα πλακιδίων
+ * και δεν διαβάζονται ως στοίχιση. Εδώ η ΔΕΥΤΕΡΗ και η ΤΕΤΑΡΤΗ γραμμή
+ * είναι κοντές — εκεί φαίνεται η διαφορά ανάμεσα σε αριστερά, κέντρο,
+ * δεξιά και πλήρη.
+ */
+function AlignIcon({ align }: { align: TextAlign }) {
+  // [πλάτος, αρχή] ανά γραμμή, σε πλέγμα 14 μονάδων
+  const rows: Record<TextAlign, Array<[number, number]>> = {
+    left:    [[14, 0], [9, 0], [14, 0], [9, 0]],
+    center:  [[14, 0], [9, 2.5], [14, 0], [9, 2.5]],
+    right:   [[14, 0], [9, 5], [14, 0], [9, 5]],
+    justify: [[14, 0], [14, 0], [14, 0], [14, 0]],
+  }
+  return (
+    <svg viewBox="0 0 14 11" width="14" height="11" aria-hidden="true" className="mx-auto">
+      {rows[align].map(([w, x], n) => (
+        <rect key={n} x={x} y={n * 3} width={w} height="1.6" rx="0.8" fill="currentColor" />
+      ))}
+    </svg>
+  )
+}
+
 export function BlockEditor({ blocks, setBlocks, meta, kind, onReveal }: {
   blocks: Block[]; setBlocks: (b: Block[]) => void; meta: Meta
   /**
@@ -1942,6 +1967,24 @@ export function BlockEditor({ blocks, setBlocks, meta, kind, onReveal }: {
                   className="text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-2 py-1">
                   {meta.blockVariants[b.type].options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
+              )}
+              {/* ΣΤΟΙΧΙΣΗ: τέσσερα κουμπιά, όχι μενού. Είναι η ίδια επιλογή
+                  που έχει κάθε επεξεργαστής κειμένου και αναγνωρίζεται με
+                  το μάτι — ένα «Πλήρης» κρυμμένο σε dropdown δεν το βρίσκει
+                  κανείς. Δεύτερο πάτημα στην ίδια = επαναφορά. */}
+              {BLOCK_ALIGNS[b.type as keyof typeof BLOCK_ALIGNS] && (
+                <div className="flex gap-0.5 p-0.5 rounded-lg glass-control" role="group" aria-label="Στοίχιση">
+                  {BLOCK_ALIGNS[b.type as keyof typeof BLOCK_ALIGNS]!.map((a: TextAlign) => (
+                    <button key={a} type="button" title={ALIGN_LABELS[a]} aria-label={ALIGN_LABELS[a]}
+                      aria-pressed={b.align === a}
+                      onClick={() => update(i, { align: b.align === a ? undefined : a })}
+                      className={`w-7 h-6 rounded-md text-[13px] leading-none ${b.align === a
+                        ? 'bg-coral text-white'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
+                      <AlignIcon align={a} />
+                    </button>
+                  ))}
+                </div>
               )}
               <div className="ml-auto flex gap-1">
                 <button type="button" onClick={() => move(i, -1)} aria-label="Πάνω"

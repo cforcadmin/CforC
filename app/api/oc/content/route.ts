@@ -397,11 +397,10 @@ function previewDocument(inner: string, dark: boolean): string {
   :root{${tokens}}
   body{margin:0;background-color:${dark ? '#111827' : '#F5F0EB'};}
   img{max-width:100%;height:auto;}
-  /* Ο ΙΔΙΟΣ ΚΑΝΟΝΑΣ ΜΕ ΤΗ ΣΕΛΙΔΑ (globals.css, .cfc-article): πλατύ για τα
-     μάτια, στενό για το διάβασμα. Χωρίς αυτόν η προεπισκόπηση θα έδειχνε
-     γραμμές άλλου μήκους από το δημοσιευμένο — ακριβώς το πράγμα που
-     υποτίθεται ότι απαντά. */
-  p, li{max-width:85ch;}
+  /* Καμία ιδιαίτερη μεταχείριση στο κείμενο: ό,τι ισχύει στη σελίδα
+     (globals.css, .cfc-article) ισχύει κι εδώ — κάθε μπλοκ στο ίδιο
+     πλάτος. Διαφορετικός κανόνας εδώ σημαίνει προεπισκόπηση που δείχνει
+     άλλο από το δημοσιευμένο. */
   @media only screen and (max-width:663px){
     .px{padding-left:24px !important;padding-right:24px !important;}
     .h1{font-size:26px !important;line-height:32px !important;}

@@ -165,9 +165,46 @@ export function richText(html: string): string {
  * Και οι δύο μοιράζονται τις ίδιες επτά εμφανίσεις — πέντε σε πλήρες πλάτος
  * και δύο ένθετες — ώστε ένα τεύχος να μη μοιάζει με δύο διαφορετικά έντυπα.
  */
+/**
+ * Η ΣΤΟΙΧΙΣΗ ΤΟΥ ΚΕΙΜΕΝΟΥ — ΧΕΙΡΙΣΤΗΡΙΟ, ΟΧΙ ΧΕΙΡΟΓΡΑΦΟ CSS.
+ *
+ * Ο καθαριστής δεχόταν ήδη `text-align` μέσα στο HTML της παραγράφου, αλλά
+ * μόνο αν το έγραφε κανείς με το χέρι — δηλαδή για κανέναν συντάκτη. Και η
+ * επικεφαλίδα ενότητας δεν είχε καν επιλογή: ο τίτλος πήγαινε πάντα στην
+ * ΑΝΤΙΘΕΤΗ πλευρά από το σήμα, γι' αυτό καθόταν δεξιά χωρίς να το ζητήσει
+ * κανείς. (22/10/2026)
+ *
+ * Η στοίχιση του μπλοκ είναι ΠΡΟΕΠΙΛΟΓΗ: μια παράγραφος που κουβαλά δική
+ * της `text-align` υπερισχύει, όπως πρέπει.
+ */
+export type TextAlign = 'left' | 'center' | 'right' | 'justify'
+
+export const ALIGN_LABELS: Record<TextAlign, string> = {
+  left: 'Αριστερά', center: 'Κέντρο', right: 'Δεξιά', justify: 'Πλήρης',
+}
+
+/**
+ * Ποια μπλοκ στοιχίζονται, και με ποιες επιλογές.
+ *
+ * Η «πλήρης» (justify) έχει νόημα μόνο σε ΠΟΛΛΕΣ γραμμές — σε έναν τίτλο
+ * μιας γραμμής δεν κάνει τίποτα, οπότε δεν προσφέρεται και δεν μπερδεύει.
+ * Η κάρτα μένει απ' έξω επίτηδες: έχει δικό της σύστημα έξι θέσεων για την
+ * εικόνα, και μια στοίχιση κειμένου από πάνω θα πάλευε μαζί του.
+ */
+export const BLOCK_ALIGNS: Partial<Record<Block['type'], TextAlign[]>> = {
+  text: ['left', 'center', 'right', 'justify'],
+  box: ['left', 'center', 'right', 'justify'],
+  quote: ['left', 'center', 'right', 'justify'],
+  section: ['left', 'center', 'right'],
+}
+
+/** Κενό όταν δεν έχει επιλεγεί τίποτα — κρατά το CSS καθαρό */
+const alignCss = (a?: TextAlign) => (a ? `text-align:${a};` : '')
+
 export type SectionBlock = {
   type: 'section'
   title: string
+  align?: TextAlign
   variant?: 'modern' | 'classic'
   look?: 'coral' | 'dark' | 'cream' | 'tint' | 'outline' | 'pill' | 'pillOutline'
   logo?: boolean
@@ -184,6 +221,7 @@ export type TextBlock = {
   type: 'text'
   html: string
   tone?: 'normal' | 'soft' | 'cream' | 'coral' | 'dark'
+  align?: TextAlign
 }
 /**
  * Η εικόνα, σε τρεις ανεξάρτητους άξονες.
@@ -233,7 +271,7 @@ export type CardBlock = {
 export type PersonBlock = { type: 'person'; src?: string; alt?: string; name: string; role?: string; html: string; side?: 'left' | 'right' }
 export type LogosBlock = { type: 'logos'; items: Array<{ src: string; alt: string; href?: string }>; note?: string }
 export type ButtonBlock = { type: 'button'; label: string; href: string; style?: 'coral' | 'outline' | 'dark' }
-export type BoxBlock = { type: 'box'; title?: string; html: string; tone?: 'cream' | 'neutral' | 'warning' | 'alert' }
+export type BoxBlock = { type: 'box'; title?: string; html: string; tone?: 'cream' | 'neutral' | 'warning' | 'alert'; align?: TextAlign }
 export type DividerBlock = { type: 'divider'; style?: 'line' | 'space' }
 /**
  * Συνημμένα.
@@ -275,7 +313,7 @@ export type AgendaBlock = {
   type: 'agenda'
   rows: Array<{ date: string; title: string; place?: string; href?: string }>
 }
-export type QuoteBlock = { type: 'quote'; html: string; who?: string; tone?: 'cream' | 'coral' }
+export type QuoteBlock = { type: 'quote'; html: string; who?: string; tone?: 'cream' | 'coral'; align?: TextAlign }
 export type StatsBlock = { type: 'stats'; items: Array<{ value: string; label: string }> }
 export type SocialBlock = {
   type: 'social'
@@ -519,7 +557,7 @@ function renderBlock(b: Block, i: number): string {
         const accent = look === 'dark' ? BRAND.ink : look === 'cream' || look === 'tint' ? BRAND.coralDeep : BRAND.coralDeep
         return row(`${anchor}
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${inset ? '' : '100%'}" style="margin:8px 0 4px 0;">
-        <tr><td style="font-family:${FONT};font-size:12px;line-height:16px;letter-spacing:1.2px;color:${accent};font-weight:bold;mso-line-height-rule:exactly;">${escapeHtml(upperGreek(b.title))}</td></tr>
+        <tr><td style="font-family:${FONT};font-size:12px;line-height:16px;letter-spacing:1.2px;color:${accent};font-weight:bold;mso-line-height-rule:exactly;${alignCss(b.align)}">${escapeHtml(upperGreek(b.title))}</td></tr>
         <tr><td height="6" style="height:6px;line-height:6px;font-size:0;">&nbsp;</td></tr>
         <tr><td style="border-top:2px solid ${look === 'dark' ? BRAND.ink : BRAND.coral};font-size:0;line-height:0;">&nbsp;</td></tr>
       </table>`, '20px 48px 0 48px')
@@ -530,7 +568,10 @@ function renderBlock(b: Block, i: number): string {
       const mark = showLogo
         ? `<td width="40" style="width:40px;vertical-align:middle;padding:0 12px;"><img src="${sk.logo}" alt="" width="26" style="display:block;width:26px;max-width:26px;height:auto;border:0;" /></td>`
         : ''
-      const title = `<td style="vertical-align:middle;padding:14px 18px;font-family:${FONT};font-size:19px;line-height:26px;color:${sk.ink};font-weight:bold;mso-line-height-rule:exactly;" align="${b.logoSide === 'right' ? 'left' : 'right'}">${escapeHtml(b.title)}</td>`
+      /* Χωρίς ρητή επιλογή μένει η παλιά συμπεριφορά — αντίθετα από το
+         σήμα — ώστε καμία υπάρχουσα καμπάνια να μην αλλάξει όψη μόνη της. */
+      const titleAlign = b.align || (b.logoSide === 'right' ? 'left' : 'right')
+      const title = `<td style="vertical-align:middle;padding:14px 18px;font-family:${FONT};font-size:19px;line-height:26px;color:${sk.ink};font-weight:bold;mso-line-height-rule:exactly;${alignCss(b.align)}" align="${titleAlign}">${escapeHtml(b.title)}</td>`
       const cells = b.logoSide === 'right' ? `${title}${mark}` : `${mark}${title}`
       const band = `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" ${inset ? '' : 'width="100%"'} bgcolor="${sk.bg}"
@@ -542,7 +583,7 @@ function renderBlock(b: Block, i: number): string {
 
     case 'text': {
       const band = b.tone ? TEXT_BANDS[b.tone] : undefined
-      if (!band) return row(`<div style="${bodyText(b.tone)}">${richText(b.html)}</div>`, '16px 48px 0 48px')
+      if (!band) return row(`<div style="${bodyText(b.tone)}${alignCss(b.align)}">${richText(b.html)}</div>`, '16px 48px 0 48px')
       // Οι σύνδεσμοι μέσα στη ζώνη πρέπει να αλλάξουν κι αυτοί χρώμα, αλλιώς
       // ένα coralDeep πάνω σε σκούρο φόντο γίνεται αδιάβαστο.
       const inner = richText(b.html).replace(
@@ -550,7 +591,7 @@ function renderBlock(b: Block, i: number): string {
       return row(`
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${band.bg}" style="background-color:${band.bg};border-radius:16px;">
         <tr><td style="padding:20px 22px;">
-          <div style="${bodyText()}color:${band.ink};">${inner}</div>
+          <div style="${bodyText()}color:${band.ink};${alignCss(b.align)}">${inner}</div>
         </td></tr>
       </table>`, '16px 48px 0 48px')
     }
@@ -789,7 +830,7 @@ function renderBlock(b: Block, i: number): string {
       const ink = tone === 'warning' ? BRAND.warnInk : tone === 'alert' ? BRAND.alertInk : BRAND.ink
       return row(`
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="${skin}border-radius:16px;">
-        <tr><td style="padding:20px;font-family:${FONT};font-size:15px;line-height:24px;color:${ink};mso-line-height-rule:exactly;">
+        <tr><td style="padding:20px;font-family:${FONT};font-size:15px;line-height:24px;color:${ink};mso-line-height-rule:exactly;${alignCss(b.align)}">
           ${b.title ? `<strong style="display:block;margin-bottom:6px;">${escapeHtml(b.title)}</strong>` : ''}
           ${richText(b.html)}
         </td></tr>
@@ -858,7 +899,7 @@ function renderBlock(b: Block, i: number): string {
       const ink = BRAND.ink
       return row(`
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${bg};border-radius:16px;">
-        <tr><td style="padding:22px 24px;">
+        <tr><td style="padding:22px 24px;${alignCss(b.align)}">
           <div style="font-family:${FONT};font-size:19px;line-height:29px;color:${ink};font-style:italic;mso-line-height-rule:exactly;">${richText(b.html)}</div>
           ${b.who ? `<div style="font-family:${FONT};font-size:13px;line-height:20px;color:${coral ? ink : BRAND.inkSoft};font-weight:bold;padding-top:10px;">— ${escapeHtml(b.who)}</div>` : ''}
         </td></tr>

@@ -1,7 +1,7 @@
 import {
   campaignEmailHtml, richText, renderCampaignBody, renderCampaignText, sanitizeInline,
   applyMergeFields, PRESETS, BLOCK_LABELS, BLOCK_VARIANTS, BRAND, type Block,
-  TOC_DEFAULT_TITLE, visibleBlocks, INNER_WIDTH, PREVIEW_DESKTOP_WIDTH,
+  TOC_DEFAULT_TITLE, visibleBlocks, INNER_WIDTH, PREVIEW_DESKTOP_WIDTH, BLOCK_ALIGNS,
 } from '@/lib/campaignBlocks'
 
 /**
@@ -1046,5 +1046,59 @@ describe('Πλοήγηση συνθέτη ⇄ προεπισκόπησης', () 
     const sent = campaignEmailHtml({ subject: 'Θ', blocks: [{ type: 'text', html: '<p>α</p>' }] as any }).html
     expect(sent).not.toContain('oc-editor')
     expect(sent).not.toContain('scrollIntoView')
+  })
+})
+
+/**
+ * Η ΣΤΟΙΧΙΣΗ ΤΟΥ ΚΕΙΜΕΝΟΥ.
+ *
+ * 22/10/2026: ο καθαριστής δεχόταν ήδη `text-align` μέσα στο HTML της
+ * παραγράφου — αλλά μόνο αν το έγραφε κανείς με το χέρι, δηλαδή για κανέναν
+ * συντάκτη. Και η επικεφαλίδα ενότητας δεν είχε καν επιλογή: ο τίτλος
+ * πήγαινε πάντα στην ΑΝΤΙΘΕΤΗ πλευρά από το σήμα, γι' αυτό καθόταν δεξιά
+ * χωρίς να το ζητήσει κανείς.
+ */
+describe('στοίχιση μπλοκ', () => {
+  const render = (b: any) => renderCampaignBody([b])
+
+  it.each(['left', 'center', 'right', 'justify'] as const)(
+    'η παράγραφος στοιχίζεται: %s', a => {
+      expect(render({ type: 'text', html: '<p>κείμενο</p>', align: a }))
+        .toContain(`text-align:${a};`)
+    })
+
+  it('η στοίχιση ισχύει και μέσα σε χρωματιστή ζώνη', () => {
+    expect(render({ type: 'text', html: '<p>κ</p>', tone: 'cream', align: 'center' }))
+      .toContain('text-align:center;')
+  })
+
+  it.each(['box', 'quote'] as const)('το %s στοιχίζεται', type => {
+    expect(render({ type, html: '<p>κ</p>', align: 'right' })).toContain('text-align:right;')
+  })
+
+  it('η επικεφαλίδα ενότητας δέχεται στοίχιση', () => {
+    expect(render({ type: 'section', title: 'Τίτλος', align: 'center' })).toContain('align="center"')
+  })
+
+  /** Καμία υπάρχουσα καμπάνια δεν αλλάζει όψη από μόνη της. */
+  it('χωρίς επιλογή, η ενότητα κρατά την παλιά της συμπεριφορά', () => {
+    expect(render({ type: 'section', title: 'Τ' })).toContain('align="right"')
+    expect(render({ type: 'section', title: 'Τ', logoSide: 'right' })).toContain('align="left"')
+  })
+
+  it('χωρίς επιλογή, η παράγραφος δεν αποκτά text-align', () => {
+    expect(render({ type: 'text', html: '<p>κ</p>' })).not.toContain('text-align')
+  })
+
+  /** Η παράγραφος με δική της στοίχιση νικά την προεπιλογή του μπλοκ. */
+  it('η στοίχιση του μπλοκ είναι ΠΡΟΕΠΙΛΟΓΗ, όχι επιβολή', () => {
+    const html = render({ type: 'text', html: '<p style="text-align:right">κ</p>', align: 'left' })
+    expect(html).toContain('text-align:left;')
+    expect(html).toContain('text-align:right;')
+  })
+
+  it('η «πλήρης» δεν προσφέρεται σε τίτλο μίας γραμμής', () => {
+    expect(BLOCK_ALIGNS.section).not.toContain('justify')
+    expect(BLOCK_ALIGNS.text).toContain('justify')
   })
 })
