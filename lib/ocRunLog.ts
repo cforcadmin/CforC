@@ -63,6 +63,7 @@ const LABELS: Record<string, string> = {
   '/api/cron/sync-unsubscribes': 'Συγχρονισμός απεγγραφών',
   '/api/admin/monthly-profile-report': 'Μηνιαία αναφορά προφίλ',
   '/api/cron/event-data-purge': 'Διαγραφή προσωπικών δεδομένων δράσεων',
+  '/api/cron/drive-backup': 'Αντίγραφο ασφαλείας αρχείων Google',
 }
 
 export const CRON_JOBS: CronJob[] =

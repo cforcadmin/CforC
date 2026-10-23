@@ -82,6 +82,9 @@ export const KEY_CATALOGUE: KeySpec[] = [
   { key: 'CONTRACTS_SHEET_ID', need: 'optional', what: 'συμβάσεις (εφεδρική στο lib/contractsSheet.ts)' },
   { key: 'GOOGLE_LIBRARY_SHEET_ID', need: 'optional', what: 'Βιβλιοθήκη (εφεδρική στο lib/librarySheet.ts)' },
   { key: 'GOOGLE_LIBRARY_FOLDER_ID', need: 'optional', what: 'φάκελος Βιβλιοθήκης (εφεδρική στο lib/googleDrive.ts)' },
+  { key: 'BACKUP_DRIVE_FOLDER_ID', need: 'optional', what: 'ο Κοινόχρηστος δίσκος των αντιγράφων (εφεδρική στο lib/driveBackup.ts)' },
+  { key: 'REGISTRY_SHEET_ID', need: 'optional', what: 'το Μητρώο ως ΑΡΧΕΙΟ — για το αντίγραφο, όχι για γράψιμο (εφεδρική στο lib/driveBackup.ts)' },
+  { key: 'FINANCE_SHEET_ID', need: 'optional', what: 'τα ΕΣΟΔΑ-ΕΞΟΔΑ ως ΑΡΧΕΙΟ — για το αντίγραφο (εφεδρική στο lib/driveBackup.ts)' },
 
   // ── Φύλλα με Apps Script
   { key: 'FINANCE_SHEET_WEBAPP_URL', need: 'required', what: 'ΕΣΟΔΑ-ΕΞΟΔΑ' },
