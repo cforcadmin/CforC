@@ -62,6 +62,7 @@ const LABELS: Record<string, string> = {
   '/api/cron/finance-monthly-reminder': 'Μηνιαίο κλείσιμο οικονομικών',
   '/api/cron/sync-unsubscribes': 'Συγχρονισμός απεγγραφών',
   '/api/admin/monthly-profile-report': 'Μηνιαία αναφορά προφίλ',
+  '/api/cron/event-data-purge': 'Διαγραφή προσωπικών δεδομένων δράσεων',
 }
 
 export const CRON_JOBS: CronJob[] =

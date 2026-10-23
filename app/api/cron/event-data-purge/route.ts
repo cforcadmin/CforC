@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { athensToday } from '@/lib/events'
 import { strapiFetch } from '@/lib/strapiFetch'
+import { recordRun, triggerOf, type RunNote } from '@/lib/ocRunLog'
 
 export const maxDuration = 60
 
@@ -49,7 +50,7 @@ function authorized(request: NextRequest): boolean {
   return !!request.headers.get('x-vercel-cron')
 }
 
-export async function GET(request: NextRequest) {
+async function runJob(request: NextRequest, log: RunNote) {
   if (!authorized(request)) {
     return NextResponse.json({ error: 'Δεν επιτρέπεται' }, { status: 401 })
   }
@@ -91,5 +92,25 @@ export async function GET(request: NextRequest) {
     else report.errors.push(`personal ${r.documentId}`)
   }
 
-  return NextResponse.json({ ok: report.errors.length === 0, today, ...report })
+  /**
+   * ΤΙ ΕΚΑΝΕ ΠΡΑΓΜΑΤΙ. Χωρίς αυτό, «δεν είχε τίποτα να σβήσει» και «έσπασε
+   * σιωπηλά» γράφονται ίδια στο ημερολόγιο — και η διαφορά τους είναι
+   * ολόκληρη η απόδειξη συμμόρφωσης.
+   */
+  log.note(`διατροφικά ${report.dietaryPurged} · προσωπικά ${report.personalPurged}`)
+  if (report.errors.length) log.note(`ΑΠΕΤΥΧΑΝ: ${report.errors.slice(0, 10).join(', ')}`)
+
+  return NextResponse.json({ ok: report.errors.length === 0, today, ...report },
+    { status: report.errors.length ? 500 : 200 })
+}
+
+/**
+ * Το περίβλημα καταγραφής — ίδιο σχήμα με τα υπόλοιπα cron.
+ *
+ * Έτρεχε ΚΑΘΕ ΜΕΡΑ χωρίς να γράφει γραμμή: στα Ζωτικά φαινόταν σαν εργασία
+ * που δεν έτρεξε ποτέ, είτε δούλευε είτε όχι. Μια διαγραφή προσωπικών
+ * δεδομένων χωρίς ίχνος δεν αποδεικνύει τίποτα σε κανέναν.
+ */
+export async function GET(request: NextRequest) {
+  return recordRun('/api/cron/event-data-purge', log => runJob(request, log), { trigger: triggerOf(request) })
 }
