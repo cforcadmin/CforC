@@ -125,8 +125,9 @@ export function eventRetryConfirmEmailHtml(opts: {
 <p style="margin:0 0 16px 0;">${esc(opts.firstName)},</p>
 <p style="margin:0 0 16px 0;">
   είχες δηλώσει συμμετοχή στο <strong>${esc(opts.eventTitle)}</strong>
-  (${esc(opts.dates)}${opts.venue ? `, ${esc(opts.venue)}` : ''}) και, όταν πάτησες το κουμπί
-  επιβεβαίωσης, είδες ένα μήνυμα ότι ο σύνδεσμος δεν ισχύει.
+  (${esc(opts.dates)}${opts.venue ? `, ${esc(opts.venue)}` : ''}), αλλά η δήλωσή σου έμεινε
+  ανολοκλήρωτη: <strong>ο σύνδεσμος επιβεβαίωσης που σου στείλαμε δεν δούλευε.</strong>
+  Αν τον πάτησες, θα είδες ένα μήνυμα ότι δήθεν δεν ισχύει.
 </p>
 <p style="margin:0 0 16px 0;">
   <strong>Το λάθος ήταν δικό μας, όχι δικό σου</strong> — ο σύνδεσμός σου ήταν μια χαρά.

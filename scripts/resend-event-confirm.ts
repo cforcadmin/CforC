@@ -37,11 +37,20 @@ const EVENT = args.includes('--event') ? args[args.indexOf('--event') + 1] : nul
 
 async function main() {
   if (PREVIEW) {
+    /** Με --event παίρνει τα ΑΛΗΘΙΝΑ στοιχεία της δράσης, ώστε το δείγμα να
+     *  είναι ακριβώς αυτό που θα λάβουν — όχι μια παρόμοια εκδοχή. */
+    let ev: any = null
+    if (EVENT) {
+      const er = await fetch(`${U}/api/events?filters[Slug][$eq]=${encodeURIComponent(EVENT)}`, { headers: H, cache: 'no-store' })
+      ev = (await er.json())?.data?.[0] || null
+      if (!ev) { console.log(`Δεν βρέθηκε δράση με slug «${EVENT}».`); process.exit(1) }
+    }
     const tpl = eventRetryConfirmEmailHtml({
       firstName: 'ΔΗΜΗΤΡΑ',
-      eventTitle: 'ENCC Bridges Makers | Αθήνα 2026',
-      dates: '13–14 Νοεμβρίου 2026',
-      venue: 'Πολιτιστικό Κέντρο «Μελίνα», Αθήνα',
+      eventTitle: ev?.Title || 'ENCC Bridges Makers | Αθήνα 2026',
+      dates: ev ? dateRangeLabel(ev.StartDate, ev.EndDate) : '13–14 Νοεμβρίου 2026',
+      venue: ev ? ([ev.Venue, ev.City].filter(Boolean).join(', ') || undefined)
+                : 'Πολιτιστικό Κέντρο «Μελίνα», Αθήνα',
       confirmUrl: `${SITE}/api/events/confirm?token=DEIGMA-O-SYNDESMOS-DEN-DOULEUEI`,
     })
     const sent = await sendOcEmail(PREVIEW, `[ΔΕΙΓΜΑ] ${tpl.subject}`, tpl.html,
