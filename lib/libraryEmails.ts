@@ -263,7 +263,7 @@ export function libraryRejectedHtml(opts: {
 
 // ── Αποστολή ───────────────────────────────────────────────────
 
-import { sendOcEmail } from '@/lib/ocEmails'
+import { sendOcEmail, sendOcEmailOrWarn } from '@/lib/ocEmails'
 import { strapiAll } from '@/lib/strapiPaged'
 
 const firstNameOf = (full: string) => String(full || '').trim().split(/\s+/)[0] || 'μέλος'
@@ -302,7 +302,7 @@ export async function notifyLibrariansOfDuplicate(opts: {
       sharedWords: opts.sharedWords,
       reviewUrl,
     })
-    await sendOcEmail(l.email, subject, html, { from: LIBRARY_FROM })
+    await sendOcEmailOrWarn('libraryEmails: ειδοποίηση βιβλιοθηκάριου', l.email, subject, html, { from: LIBRARY_FROM })
   }
 }
 

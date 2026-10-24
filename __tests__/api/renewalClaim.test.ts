@@ -7,6 +7,7 @@
 
 jest.mock('@/lib/ocEmails', () => ({
   sendOcEmail: jest.fn(async () => true),
+  sendOcEmailOrWarn: jest.fn(async () => true),
   FINANCE_EMAIL: 'finance@cultureforchange.net',
 }))
 

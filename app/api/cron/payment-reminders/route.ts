@@ -3,11 +3,7 @@ import { recordRun, cronAuthorized, triggerOf, type RunNote } from '@/lib/ocRunL
 import { recordOutcome, outcomeExists } from '@/lib/applicationOutcome'
 import { generatePaymentClaimToken } from '@/lib/auth'
 import { getSeatHolder } from '@/lib/ocRoles'
-import {
-  sendOcEmail, paymentReminderEmailHtml, applicationDeletionDueEmailHtml,
-  spamCheckCallEmailHtml, paymentClaimUrl,
-  COMMUNITY_FROM, COMMUNITY_EMAIL, ADMIN_EMAIL,
-} from '@/lib/ocEmails'
+import { sendOcEmail, paymentReminderEmailHtml, applicationDeletionDueEmailHtml, spamCheckCallEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, ADMIN_EMAIL, sendOcEmailOrWarn } from '@/lib/ocEmails'
 import { strapiFetch } from '@/lib/strapiFetch'
 
 // 300s μένουν παρότι έφυγε η αυτόματη διαγραφή: η διαδρομή στέλνει email ένα
@@ -218,10 +214,13 @@ async function runJob(request: NextRequest, log: RunNote) {
       }
 
       const tpl = applicationDeletionDueEmailHtml({ name, email, decisionDate: app.DecisionDate, days })
-      await sendOcEmail(COMMUNITY_EMAIL, tpl.subject, tpl.html, {
+      const sent = await sendOcEmailOrWarn('payment-reminders: λήξη διατήρησης αίτησης', COMMUNITY_EMAIL, tpl.subject, tpl.html, {
         from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL,
       })
-      deletionDue.push(`${name} (ημέρα ${days})`)
+      // Η ειδοποίηση που ΔΕΝ έφυγε δεν γράφεται ως σταλμένη: αλλιώς τα Ζωτικά
+      // θα έλεγαν «ειδοποιήθηκε» για κάποιον που δεν ειδοποιήθηκε ποτέ.
+      if (sent) deletionDue.push(`${name} (ημέρα ${days})`)
+      else skipped.push(`${email}: η ειδοποίηση διαγραφής ΔΕΝ στάλθηκε`)
     }
 
     console.log(`[PAYMENT-REMINDERS] sent ${sent.length}${sent.length ? ': ' + sent.join(', ') : ''}`)

@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { verifyToken, generatePaymentClaimToken } from '@/lib/auth'
 import { resolveOcAccess, getBoardRoster, getSeatHolder, isVoter, voteWeight, SEAT_LABELS, type OcSeat } from '@/lib/ocRoles'
 import { sendDecisionToSheet, sheetsConfigured } from '@/lib/googleSheets'
-import { sendOcEmail, approvedEmailHtml, approvedLegacyEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, FINANCE_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, approvedEmailHtml, approvedLegacyEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, FINANCE_EMAIL, ADMIN_EMAIL, sendOcEmailOrWarn } from '@/lib/ocEmails'
 import { OC_LAST_SEAT_COOKIE } from '@/components/oc/ocPrefs'
 import { strapiFetch } from '@/lib/strapiFetch'
 
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
     // Κοινοποίηση σε Οικονομικά, Γραμματεία και Κοινότητα: η έγκριση ανοίγει
     // εκκρεμότητα πληρωμής που την παρακολουθούν και οι τρεις — ισχύει και για
     // το κανονικό και για το «παλιάς φόρμας» πρότυπο.
-    await sendOcEmail(String(app.Email).trim(), tpl.subject, tpl.html, {
+    await sendOcEmailOrWarn('applications/vote: έγκριση αίτησης', String(app.Email).trim(), tpl.subject, tpl.html, {
       from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL,
       cc: [FINANCE_EMAIL, ADMIN_EMAIL, COMMUNITY_EMAIL],
     })

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { applyLimiter, getRateLimitErrorMessage } from '@/lib/rateLimiter'
 import { checkCsrf } from '@/lib/csrf'
 import { appendApplicantToSheet, sheetsConfigured } from '@/lib/googleSheets'
-import { sendOcEmail, applicationReceivedEmailHtml, COMMUNITY_FROM, COMMUNITY_EMAIL, APPLICATION_RECEIVED_CC } from '@/lib/ocEmails'
+import { sendOcEmail, applicationReceivedEmailHtml, COMMUNITY_FROM, COMMUNITY_EMAIL, APPLICATION_RECEIVED_CC, sendOcEmailOrWarn } from '@/lib/ocEmails'
 import { getSeatHolder } from '@/lib/ocRoles'
 import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
 import { strapiFetch } from '@/lib/strapiFetch'
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
       const signer = await getSeatHolder('community')
       const signerName = signer?.engName || signer?.name || 'Culture for Change — Community'
       const tpl = applicationReceivedEmailHtml(data.FirstName.trim(), signerName)
-      await sendOcEmail(data.Email.trim(), tpl.subject, tpl.html, {
+      await sendOcEmailOrWarn('apply: επιβεβαίωση αίτησης', data.Email.trim(), tpl.subject, tpl.html, {
         from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL, cc: APPLICATION_RECEIVED_CC,
       })
     } catch (emailErr) {

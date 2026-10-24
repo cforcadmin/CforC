@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
-import { sendOcEmail, paymentClaimNoticeHtml, FINANCE_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, paymentClaimNoticeHtml, FINANCE_EMAIL, sendOcEmailOrWarn } from '@/lib/ocEmails'
 import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     if (firstClaim || receiptId) {
       const name = `${app.FirstName || ''} ${app.LastName || ''}`.trim() || '—'
       const notice = paymentClaimNoticeHtml(name, String(app.Email || ''), app.documentId, receiptUrl)
-      await sendOcEmail(FINANCE_EMAIL, notice.subject, notice.html)
+      await sendOcEmailOrWarn('payment-claim: ειδοποίηση finance', FINANCE_EMAIL, notice.subject, notice.html)
     }
     return NextResponse.json({ ok: true, receiptStored: !!receiptId })
   } catch (error) {

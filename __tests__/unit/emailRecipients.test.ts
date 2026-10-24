@@ -36,8 +36,10 @@ describe('Αντίγραφα έγκρισης αίτησης', () => {
 
   it('ισχύει και για το «παλιάς φόρμας» πρότυπο — μία κοινή αποστολή', () => {
     const src = fs.readFileSync('app/api/oc/applications/vote/route.ts', 'utf8')
-    // Ένα sendOcEmail για τα δύο πρότυπα: αν γίνουν δύο, το cc θα ξεχαστεί στο ένα
-    expect(src.match(/await sendOcEmail\(/g) || []).toHaveLength(1)
+    // Ένα ΚΑΙ ΜΟΝΟ σημείο αποστολής για τα δύο πρότυπα: αν γίνουν δύο, το cc
+    // θα ξεχαστεί στο ένα. Πιάνει και τις δύο μορφές κλήσης — από 24/10/2026
+    // η διαδρομή χρησιμοποιεί sendOcEmailOrWarn, που ΕΛΕΓΧΕΙ το αποτέλεσμα.
+    expect(src.match(/await sendOcEmail(?:OrWarn)?\(/g) || []).toHaveLength(1)
     expect(src).toContain('app.Photo ? approvedEmailHtml : approvedLegacyEmailHtml')
   })
 })

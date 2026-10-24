@@ -8,7 +8,7 @@ import { resolveEventAccess } from '@/lib/eventAccess'
 import { validateRegistration, offeredCapacities, visibleOptions, getsExpensesNotice, eventOffersTravel, eventHasOnline } from '@/lib/eventForm'
 import { validateProposal, costValue, openCallVisible, collectsInForm, emptyProposal, cleanProposalDescription, type ProposalDraft } from '@/lib/openCall'
 import type { CforcEvent } from '@/lib/types'
-import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL, sendOcEmailOrWarn } from '@/lib/ocEmails'
 import { eventConfirmEmailHtml, eventRegisteredEmailHtml } from '@/lib/eventEmails'
 import { dateRangeLabel } from '@/lib/events'
 import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
@@ -254,6 +254,7 @@ export async function POST(request: NextRequest) {
   const site = PUBLIC_SITE_URL
   const dates = dateRangeLabel(ev.StartDate, ev.EndDate)
   const venue = [ev.Venue, ev.City].filter(Boolean).join(', ') || undefined
+  let emailSent = false
   try {
     if (isMember) {
       const tpl = eventRegisteredEmailHtml({
@@ -269,7 +270,7 @@ export async function POST(request: NextRequest) {
       })
       // Κοινοποίηση στο hello@: η ΟΣ θέλει να βλέπει τη δήλωση μόλις γίνει.
       // Μπαίνει ΜΟΝΟ εδώ, όχι στο email επιβεβαίωσης — εκείνο κουβαλά token.
-      await sendOcEmail(draft.Email, tpl.subject, tpl.html, {
+      emailSent = await sendOcEmailOrWarn('events/register: δήλωση μέλους', draft.Email, tpl.subject, tpl.html, {
         from: ADMIN_FROM, replyTo: ADMIN_EMAIL, cc: [ADMIN_EMAIL],
       })
     } else {
@@ -277,7 +278,7 @@ export async function POST(request: NextRequest) {
         firstName: draft.FirstName.trim(), eventTitle: ev.Title, dates, venue,
         confirmUrl: `${site}/api/events/confirm?token=${encodeURIComponent(rawToken!)}`,
       })
-      await sendOcEmail(draft.Email, tpl.subject, tpl.html, { from: ADMIN_FROM, replyTo: ADMIN_EMAIL })
+      emailSent = await sendOcEmailOrWarn('events/register: σύνδεσμος επιβεβαίωσης', draft.Email, tpl.subject, tpl.html, { from: ADMIN_FROM, replyTo: ADMIN_EMAIL })
     }
   } catch (err) {
     // Η δήλωση ΕΧΕΙ αποθηκευτεί· ένα email που δεν έφυγε δεν τη σβήνει.
@@ -286,6 +287,12 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     status: isMember ? 'confirmed' : 'pending',
+    /**
+     * ΟΧΙ διακοσμητικό. Για μη μέλος, email που δεν έφυγε σημαίνει δήλωση που
+     * ΔΕΝ ΜΠΟΡΕΙ να ολοκληρωθεί: ο σύνδεσμος ζει μόνο μέσα σε εκείνο το γράμμα.
+     * Μέχρι σήμερα αυτό ήταν αόρατο και από τις δύο πλευρές.
+     */
+    emailSent,
     documentId: created.json?.data?.documentId || null,
     proposal: proposes ? { saved: !!proposalId, title: proposal.EventProposalTitle.trim() } : null,
   })

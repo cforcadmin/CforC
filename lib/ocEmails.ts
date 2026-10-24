@@ -147,6 +147,34 @@ export async function sendOcEmailResult(
   }
 }
 
+/**
+ * ΣΤΕΙΛΕ, ΚΑΙ ΑΝ ΑΠΟΤΥΧΕΙ ΦΩΝΑΞΕ.
+ *
+ * 24/10/2026: μέλος δήλωσε συμμετοχή και είπε ότι δεν πήρε email. Η απάντηση
+ * βρέθηκε μόνο ρωτώντας ΑΠΕΥΘΕΙΑΣ το Resend — γιατί η διαδρομή έκανε σκέτο
+ * `await sendOcEmail(...)` χωρίς να κοιτάξει το αποτέλεσμα. Και η sendOcEmail
+ * ΔΕΝ ρίχνει σφάλμα όταν αποτύχει: γυρίζει `false`. Άρα το try/catch από πάνω
+ * δεν έπιανε τίποτα, και μια απόρριψη του Resend θα ήταν ΕΝΤΕΛΩΣ αόρατη —
+ * η εγγραφή περασμένη, το γράμμα πουθενά, κανένα ίχνος.
+ *
+ * Εδώ το γράμμα που δεν έφυγε αφήνει ΠΑΝΤΑ γραμμή, με παραλήπτη και αιτία,
+ * κάτω από ένα πρόθεμα που ψάχνεται: `[EMAIL-FAIL]`.
+ *
+ * ΔΕΝ ρίχνει: μια ειδοποίηση που δεν έφυγε δεν ακυρώνει τη δουλειά που έγινε.
+ * Γυρίζει false, ώστε ο καλών να το πει κι αυτός παραπέρα αν μπορεί.
+ */
+export async function sendOcEmailOrWarn(
+  context: string,
+  to: string,
+  subject: string,
+  html: string,
+  opts?: { from?: string; replyTo?: string; cc?: string[]; attachments?: Array<{ filename: string; content: string }> },
+): Promise<boolean> {
+  const r = await sendOcEmailResult(to, subject, html, opts)
+  if (!r.ok) console.error(`[EMAIL-FAIL] ${context} → ${to}: ${r.error || 'άγνωστη αιτία'}`)
+  return r.ok
+}
+
 /** Συμβατή μορφή για όσους δεν χρειάζονται τον λόγο */
 export async function sendOcEmail(
   to: string,

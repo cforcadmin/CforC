@@ -4,7 +4,7 @@ import { eventRegisterLimiter, getRateLimitErrorMessage } from '@/lib/rateLimite
 import { eventFromSlug, claimWindow, CLAIMS_LATE_CONTACT } from '@/lib/expenseClaims'
 import { isReimbursed } from '@/lib/eventForm'
 import { athensToday } from '@/lib/events'
-import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, ADMIN_FROM, ADMIN_EMAIL, sendOcEmailOrWarn } from '@/lib/ocEmails'
 import { claimLinkEmailHtml } from '@/lib/eventEmails'
 import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
 import { strapiFetch } from '@/lib/strapiFetch'
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
     hours: TOKEN_HOURS,
   })
   try {
-    await sendOcEmail(String(row.Email), tpl.subject, tpl.html, {
+    await sendOcEmailOrWarn('expenses/claim-link: σύνδεσμος εξοδολογίου', String(row.Email), tpl.subject, tpl.html, {
       from: ADMIN_FROM, replyTo: ADMIN_EMAIL,
     })
   } catch (err) {

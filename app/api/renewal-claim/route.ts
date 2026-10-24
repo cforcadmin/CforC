@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const maxDuration = 60
 import { verifyToken } from '@/lib/auth'
-import { sendOcEmail, FINANCE_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, FINANCE_EMAIL, sendOcEmailOrWarn } from '@/lib/ocEmails'
 import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
 import { strapiFetch } from '@/lib/strapiFetch'
 
@@ -153,7 +153,7 @@ OC → Επισκόπηση → κλικ στο tile «Πληρωμένο» (ή 
    style="display:inline-block;background:#2D2D2D;color:#FFFFFF;font-weight:bold;font-size:14px;text-decoration:none;padding:12px 26px;border-radius:999px;">Άνοιγμα λίστας δηλώσεων →</a>
 </p>
 </div></body></html>`
-    await sendOcEmail(FINANCE_EMAIL, `Δήλωση πληρωμής συνδρομής — ${name}`, html)
+    await sendOcEmailOrWarn('renewal-claim: ειδοποίηση finance', FINANCE_EMAIL, `Δήλωση πληρωμής συνδρομής — ${name}`, html)
 
     return NextResponse.json({ ok: true, already, receiptStored: !!receiptId })
   } catch (err) {

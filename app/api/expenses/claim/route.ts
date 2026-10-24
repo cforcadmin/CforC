@@ -10,7 +10,7 @@ import {
 import { resolveClaimToken, CLAIM_TOKEN_MESSAGES } from '@/lib/claimToken'
 import { generateExpenseClaimPdf } from '@/lib/expenseClaimPdf'
 import { archiveExpenseClaim, type ArchiveAttachment } from '@/lib/expenseClaimArchive'
-import { sendOcEmail, expenseClaimSubmittedEmailHtml, expenseClaimReceivedEmailHtml, FINANCE_FROM, FINANCE_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, expenseClaimSubmittedEmailHtml, expenseClaimReceivedEmailHtml, FINANCE_FROM, FINANCE_EMAIL, ADMIN_EMAIL, sendOcEmailOrWarn } from '@/lib/ocEmails'
 import { ocUrl } from '@/lib/siteUrl'
 import { strapiFetch, StrapiQueryError, strapiErrorText } from '@/lib/strapiFetch'
 
@@ -421,7 +421,7 @@ export async function POST(request: NextRequest) {
      * (1 + 1 cc) + 1.
      */
     const attach = pdfBase64 ? { attachments: [{ filename: pdfName, content: pdfBase64 }] } : {}
-    await sendOcEmail(FINANCE_EMAIL, tpl.subject, tpl.html, {
+    await sendOcEmailOrWarn('expenses/claim: αντίγραφο προς finance', FINANCE_EMAIL, tpl.subject, tpl.html, {
       from: FINANCE_FROM,
       replyTo: member.email,
       cc: [ADMIN_EMAIL],
@@ -438,7 +438,7 @@ export async function POST(request: NextRequest) {
       lines: lines.map(l => ({ date: grDate(l.date), type: l.receiptType, amount: money(Number(l.amount) || 0) })),
     })
     // Χωρίς cc — και απάντηση στο finance@, εκεί λύνονται οι απορίες
-    await sendOcEmail(member.email, mine.subject, mine.html, {
+    await sendOcEmailOrWarn('expenses/claim: αντίγραφο προς το μέλος', member.email, mine.subject, mine.html, {
       from: FINANCE_FROM,
       replyTo: FINANCE_EMAIL,
       ...attach,
