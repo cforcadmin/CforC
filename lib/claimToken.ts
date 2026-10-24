@@ -26,22 +26,25 @@ export interface ClaimIdentity {
   eventTitle: string
 }
 
-type ClaimTokenFailure = 'bad-request' | 'not-found' | 'expired' | 'used' | 'too-early'
+type ClaimTokenFailure = 'bad-request' | 'not-found' | 'expired' | 'used' | 'too-early' | 'lookup-failed'
 
 export type ClaimTokenResult =
   | { ok: true; identity: ClaimIdentity }
   | { ok: false; reason: ClaimTokenFailure; message: string }
 
-const MESSAGES: Record<ClaimTokenFailure, string> = {
+export const CLAIM_TOKEN_MESSAGES: Record<ClaimTokenFailure, string> = {
   'bad-request': 'Ο σύνδεσμος δεν είναι έγκυρος.',
   'not-found': 'Ο σύνδεσμος δεν είναι έγκυρος ή ακυρώθηκε. Ζήτα καινούργιον από τη σελίδα του εξοδολογίου.',
   expired: 'Ο σύνδεσμος έληξε. Ζήτα καινούργιον από τη σελίδα του εξοδολογίου.',
   used: 'Ο σύνδεσμος έχει ήδη χρησιμοποιηθεί. Αν χρειάζεσαι άλλον, ζήτα καινούργιον.',
   'too-early': 'Τα εξοδολόγια για τη δράση δεν έχουν ανοίξει ακόμη.',
+  /** ΔΙΚΟ ΜΑΣ πρόβλημα, όχι του συνδέσμου. Δεν λέμε στον κόσμο «άκυρος
+   *  σύνδεσμος» για βλάβη που φταίμε εμείς — τον στέλνει να ψάχνει το email του. */
+  'lookup-failed': 'Κάτι δεν πήγε καλά από τη δική μας πλευρά — ο σύνδεσμός σου μάλλον είναι μια χαρά. Δοκίμασε σε λίγο ή γράψε μας στο hello@cultureforchange.net.',
 }
 
 const fail = (reason: ClaimTokenFailure): ClaimTokenResult =>
-  ({ ok: false, reason, message: MESSAGES[reason] })
+  ({ ok: false, reason, message: CLAIM_TOKEN_MESSAGES[reason] })
 
 export const hashClaimToken = (raw: string): string =>
   crypto.createHash('sha256').update(raw).digest('hex')

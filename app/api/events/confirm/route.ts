@@ -5,7 +5,7 @@ import { eventRegisteredEmailHtml } from '@/lib/eventEmails'
 import { getsExpensesNotice, eventOffersTravel, eventHasOnline } from '@/lib/eventForm'
 import { dateRangeLabel } from '@/lib/events'
 import { PUBLIC_SITE_URL } from '@/lib/siteUrl'
-import { strapiFetch } from '@/lib/strapiFetch'
+import { strapiFetch, strapiErrorText } from '@/lib/strapiFetch'
 
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
@@ -65,6 +65,19 @@ export async function GET(request: NextRequest) {
   const res = await strapi(
     `/event-registrations?filters[ConfirmTokenHash][$eq]=${encodeURIComponent(hash)}`
     + '&populate[event]=true&pagination[limit]=1')
+  /**
+   * ΠΡΩΤΑ αν ΑΠΕΤΥΧΕ το ερώτημα, μετά αν δεν βρέθηκε. Τα δύο έμοιαζαν ίδια
+   * και κόστισαν 16 κολλημένες δηλώσεις: το `ConfirmTokenHash` ήταν private,
+   * το Strapi απέρριπτε το φίλτρο με 400, και ο κόσμος διάβαζε «ίσως
+   * αντιγράφηκε μισός» για σύνδεσμο που ήταν ολόκληρος και σωστός.
+   */
+  if (!res.ok) {
+    console.error('events/confirm: το ερώτημα απέτυχε —', strapiErrorText(res.json))
+    return page('Κάτι δεν πήγε καλά από τη δική μας πλευρά',
+      'Ο σύνδεσμός σου μάλλον είναι μια χαρά — το πρόβλημα είναι δικό μας. '
+      + 'Δοκίμασε ξανά σε λίγο ή γράψε μας στο hello@cultureforchange.net και θα σε καταχωρήσουμε εμείς.', false)
+  }
+
   const reg = res.json?.data?.[0]
   if (!reg) {
     return page('Ο σύνδεσμος δεν ισχύει',

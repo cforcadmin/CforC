@@ -7,12 +7,12 @@ import {
   buildAttachmentName, buildClaimPdfName, receiptSpec, MAX_FILE_BYTES, MAX_TOTAL_BYTES,
   ALLOWED_FILE_TYPES, MAX_LINES, eventCap, countCoTravellers, type ClaimLine,
 } from '@/lib/expenseClaims'
-import { resolveClaimToken } from '@/lib/claimToken'
+import { resolveClaimToken, CLAIM_TOKEN_MESSAGES } from '@/lib/claimToken'
 import { generateExpenseClaimPdf } from '@/lib/expenseClaimPdf'
 import { archiveExpenseClaim, type ArchiveAttachment } from '@/lib/expenseClaimArchive'
 import { sendOcEmail, expenseClaimSubmittedEmailHtml, expenseClaimReceivedEmailHtml, FINANCE_FROM, FINANCE_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { ocUrl } from '@/lib/siteUrl'
-import { strapiFetch } from '@/lib/strapiFetch'
+import { strapiFetch, StrapiQueryError, strapiErrorText } from '@/lib/strapiFetch'
 
 // Ανέβασμα παραστατικών + δημιουργία φακέλου: πολύ πάνω από τα 10s
 export const maxDuration = 60
@@ -72,9 +72,12 @@ type Claimant = {
 
 /** Η δήλωση πίσω από ένα διακριτικό — ΜΟΝΟ με τη σύνοψη, ποτέ με το ίδιο */
 async function lookupClaimRegistration(hash: string, slug: string) {
-  const r = await strapi(
-    `/event-registrations?filters[ClaimTokenHash][$eq]=${encodeURIComponent(hash)}`
-    + `&filters[event][Slug][$eq]=${encodeURIComponent(slug)}&pagination[limit]=1`)
+  const path = `/event-registrations?filters[ClaimTokenHash][$eq]=${encodeURIComponent(hash)}`
+    + `&filters[event][Slug][$eq]=${encodeURIComponent(slug)}&pagination[limit]=1`
+  const r = await strapi(path)
+  // Αποτυχία ερωτήματος ΔΕΝ είναι «δεν βρέθηκε» — αλλιώς μια βλάβη δική μας
+  // παρουσιάζεται στον κόσμο ως άκυρος σύνδεσμος.
+  if (!r.ok) throw new StrapiQueryError(r.status, strapiErrorText(r.json), 'event-registrations')
   return r.json?.data?.[0] || null
 }
 
@@ -182,8 +185,15 @@ export async function POST(request: NextRequest) {
   let member: Claimant | null = sessionMember
 
   if (!member && input?.claimToken) {
-    const tok = await resolveClaimToken(
-      String(input.eventSlug || ''), String(input.claimToken || ''), lookupClaimRegistration)
+    let tok
+    try {
+      tok = await resolveClaimToken(
+        String(input.eventSlug || ''), String(input.claimToken || ''), lookupClaimRegistration)
+    } catch (err) {
+      // 503, ΟΧΙ 403: δεν είναι «δεν επιτρέπεται», είναι «δεν μπορέσαμε».
+      console.error('expenses/claim: αποτυχία αναζήτησης διακριτικού —', err)
+      return NextResponse.json({ error: CLAIM_TOKEN_MESSAGES['lookup-failed'] }, { status: 503 })
+    }
     if (!tok.ok) return NextResponse.json({ error: tok.message }, { status: 403 })
     member = {
       id: null, documentId: null,

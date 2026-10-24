@@ -30,6 +30,31 @@
  */
 
 /** Αστοχία ΜΕΤΑΦΟΡΑΣ: δεν πήραμε απάντηση. Διαφέρει από «το Strapi είπε όχι». */
+/**
+ * Το ΕΡΩΤΗΜΑ απέτυχε — δεν είναι «δεν βρέθηκε».
+ *
+ * 23/10/2026: το `ConfirmTokenHash` ήταν `private` στο Strapi, που κόβει τα
+ * private πεδία από τα φίλτρα και μετά απορρίπτει το ερώτημα με
+ * 400 «Invalid key». Και οι τρεις διαδρομές διάβαζαν σκέτο `json?.data?.[0]`,
+ * οπότε το σφάλμα έφτανε στον κόσμο ως «ο σύνδεσμος δεν ισχύει, ίσως
+ * αντιγράφηκε μισός» — μήνυμα που έστειλε και τον κόσμο και εμάς να ψάχνουμε
+ * κομμένο σύνδεσμο που δεν υπήρξε ποτέ. Δεκαέξι δηλώσεις κόλλησαν.
+ *
+ * Ένα αποτυχημένο ερώτημα ΔΕΝ επιτρέπεται να μοιάζει με άδειο αποτέλεσμα.
+ */
+export class StrapiQueryError extends Error {
+  constructor(public status: number, public detail: string, public path: string) {
+    super(`Strapi ${status} στο ${path}: ${detail}`)
+    this.name = 'StrapiQueryError'
+  }
+}
+
+/** Βγάζει το μήνυμα του Strapi από την απάντηση, για να μη χαθεί η αιτία. */
+export function strapiErrorText(json: unknown): string {
+  const e = (json as { error?: { name?: string; message?: string } } | null)?.error
+  return [e?.name, e?.message].filter(Boolean).join(' — ') || 'άγνωστο σφάλμα'
+}
+
 export function isTransportFailure(err: unknown): boolean {
   if (err instanceof DOMException && err.name === 'AbortError') return false
   return err instanceof TypeError || !!(err as any)?.cause?.code
