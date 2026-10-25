@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { appeared } from './ready'
+import { appeared, DEV_COMPILE } from './ready'
 
 test.describe('Members', () => {
   test('members page loads and shows member cards', async ({ page }) => {
@@ -35,11 +35,12 @@ test.describe('Members', () => {
     await appeared(memberLink)
     if (await memberLink.isVisible()) {
       await memberLink.click()
-      await expect(page).toHaveURL(/\/members\/.+/)
+      // Η πρώτη επίσκεψη στο /members/[name] μεταγλωττίζεται on demand
+      await expect(page).toHaveURL(/\/members\/.+/, { timeout: DEV_COMPILE })
 
       // Should have a heading with the member name
       const h1 = page.locator('h1').first()
-      await expect(h1).toBeVisible()
+      await expect(h1).toBeVisible({ timeout: DEV_COMPILE })
     }
   })
 
