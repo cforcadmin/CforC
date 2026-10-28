@@ -194,7 +194,7 @@ export async function drainCampaigns(opts: {
     const costPer = 1 + cc.length
     const signer: CampaignSigner = c.Signer && typeof c.Signer === 'object'
       ? c.Signer
-      : { name: 'Culture for Change', role: 'Γραμματεία', email: 'hello@cultureforchange.net' }
+      : { name: 'Culture for Change', role: 'Admin', email: 'hello@cultureforchange.net' }
 
     if (c.State !== 'sending') await strapi(`/oc-campaigns/${c.documentId}`, 'PUT', { State: 'sending' })
 

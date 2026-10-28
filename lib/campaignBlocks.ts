@@ -2132,7 +2132,7 @@ export function campaignEmailHtml(opts: {
 }): { subject: string; html: string; text: string } {
   const { subject, blocks, preheader, footerStyle = 'signature', footerLook = 'plain', footerLogo = false, headerStyle = 'coral', headerLogo = false, unsubscribe = false, annotate = false } = opts
   const signer: CampaignSigner = opts.signer || {
-    name: 'Culture for Change', role: 'Γραμματεία', email: 'hello@cultureforchange.net',
+    name: 'Culture for Change', role: 'Admin', email: 'hello@cultureforchange.net',
   }
   const year = new Date().getFullYear()
   const html = `<!DOCTYPE html>

@@ -11,21 +11,29 @@ jest.mock('next/headers', () => ({
 const resolveOcAccess = jest.fn()
 const getBoardRoster = jest.fn(async () => [])
 const getSeatHolder = jest.fn(async () => ({ name: 'Σόνια Ντόβα', engName: 'Sonia Ntova' }))
-jest.mock('@/lib/ocRoles', () => ({
-  get resolveOcAccess() { return resolveOcAccess },
-  get getBoardRoster() { return getBoardRoster },
-  get getSeatHolder() { return getSeatHolder },
-  SEAT_LABELS: {
+jest.mock('@/lib/ocRoles', () => {
+  const SEAT_LABELS: Record<string, string> = {
     admin: 'Γραμματεία', it: 'IT', financer: 'Ταμίας', comms: 'Επικοινωνία',
     community: 'Κοινότητα', coordinator: 'Συντονισμός', outreach: 'Outreach', media: 'Media',
-  },
-  SEAT_MAILBOX: {
-    admin: 'hello@cultureforchange.net', it: 'it@cultureforchange.net',
-    financer: 'finance@cultureforchange.net', comms: 'communication@cultureforchange.net',
-    community: 'community@cultureforchange.net', coordinator: 'coordination@cultureforchange.net',
-    outreach: 'outreach@cultureforchange.net', media: 'media@cultureforchange.net',
-  },
-}))
+  }
+  // Ο ρόλος της υπογραφής διαφέρει από το θεσμικό όνομα της έδρας — ο ψεύτης
+  // κρατά ΤΗΝ ΙΔΙΑ δομή με το αληθινό module, αλλιώς το τεστ περνά για λάθος λόγο.
+  const SIGNATURE_ROLES: Record<string, string> = { admin: 'Admin' }
+  return {
+    get resolveOcAccess() { return resolveOcAccess },
+    get getBoardRoster() { return getBoardRoster },
+    get getSeatHolder() { return getSeatHolder },
+    SEAT_LABELS,
+    SIGNATURE_ROLES,
+    signatureRole: (seat: string) => SIGNATURE_ROLES[seat] || SEAT_LABELS[seat] || '',
+    SEAT_MAILBOX: {
+      admin: 'hello@cultureforchange.net', it: 'it@cultureforchange.net',
+      financer: 'finance@cultureforchange.net', comms: 'communication@cultureforchange.net',
+      community: 'community@cultureforchange.net', coordinator: 'coordination@cultureforchange.net',
+      outreach: 'outreach@cultureforchange.net', media: 'media@cultureforchange.net',
+    },
+  }
+})
 const sendOcEmailResult = jest.fn(async () => ({ ok: true }))
 jest.mock('@/lib/ocEmails', () => ({
   get sendOcEmailResult() { return sendOcEmailResult },
@@ -1050,7 +1058,11 @@ describe('Υπογραφή', () => {
     const { json } = await post({ action: 'preview', subject: 'Θ', blocks: [{ type: 'text', html: 'x' }] })
     expect(json.html).toContain('Σόνια Ντόβα')
     expect(json.html).toContain('hello@cultureforchange.net')
-    expect(json.html).toContain('Γραμματεία')
+    // Η ΥΠΟΓΡΑΦΗ λέει «Admin», όχι «Γραμματεία»: το θεσμικό όνομα της έδρας
+    // μένει για τις αρμοδιότητες, η υπογραφή δείχνει ιδιότητα ανθρώπου
+    // (28/10/2026) — ίδια λέξη με τον επιλογέα παραληπτών.
+    expect(json.html).toContain('Admin')
+    expect(json.html).not.toContain('Γραμματεία')
   })
 
   it('η εμφάνιση του υποσέλιδου αλλάζει ανεξάρτητα από το περιεχόμενο', async () => {
