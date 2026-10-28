@@ -126,7 +126,7 @@ const AUDIENCES: Array<{ id: string; label: string; hint: string; build: (m: Met
  * που χρειάζεται κάθε φορά είναι διαφορετικός, και τα κουμπιά προστίθενται.
  */
 const CC_SEATS: Array<{ label: string; email: string }> = [
-  { label: 'Γραμματεία', email: 'hello@cultureforchange.net' },
+  { label: 'Admin', email: 'hello@cultureforchange.net' },
   { label: 'Επικοινωνία', email: 'communication@cultureforchange.net' },
   { label: 'Κοινότητα', email: 'community@cultureforchange.net' },
   { label: 'Συντονισμός', email: 'coordination@cultureforchange.net' },

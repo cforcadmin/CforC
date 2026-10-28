@@ -91,10 +91,14 @@ export const SEAT_AUDIENCES: Array<{ id: string; label: string; email: string }>
   { id: 'outreach', label: 'Outreach', email: 'outreach@cultureforchange.net' },
 ]
 
-/** Τα ελληνικά ονόματα των εδρών, για να μη μπερδεύονται με ομάδες εργασίας */
-export const SEAT_LABEL_SET = new Set([
-  'Γραμματεία', 'Επικοινωνία', 'Κοινότητα', 'Συντονισμός', 'Ταμίας', 'IT', 'Outreach', 'Media',
-])
+/**
+ * Τα ονόματα των εδρών, για να μη μπερδεύονται με ομάδες εργασίας.
+ *
+ * ΒΓΑΙΝΕΙ από το SEAT_AUDIENCES, δεν ξαναγράφεται: χειρόγραφο, μια
+ * μετονομασία έδρας θα άφηνε το νέο όνομα να εμφανιστεί ως «ομάδα εργασίας»
+ * στον επιλογέα παραληπτών — ακριβώς αυτό που το σύνολο υπάρχει να εμποδίσει.
+ */
+export const SEAT_LABEL_SET = new Set(SEAT_AUDIENCES.map(s => s.label))
 
 export interface CampaignMember {
   docId: string

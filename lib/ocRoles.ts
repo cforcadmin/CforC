@@ -30,32 +30,13 @@ const SEAT_FIELDS: Array<{ field: string; seat: OcSeat }> = [
 
 export const SEAT_LABELS: Record<OcSeat, string> = {
   coordinator: 'Συντονισμός',
-  admin: 'Γραμματεία',
+  admin: 'Admin',
   comms: 'Επικοινωνία',
   it: 'IT',
   community: 'Κοινότητα',
   financer: 'Ταμίας',
   outreach: 'Outreach',
   media: 'Media',
-}
-
-/**
- * Ο ρόλος ΟΠΩΣ ΥΠΟΓΡΑΦΕΙ ΠΡΟΣ ΤΑ ΕΞΩ — όχι όπως τον λέει το OC μέσα του.
- *
- * Το «Γραμματεία» είναι το θεσμικό όνομα της έδρας και μένει εκεί που μιλάμε
- * για αρμοδιότητες («Μόνο IT/Γραμματεία»). Στην υπογραφή ενός γράμματος
- * στέκεται όμως ΑΝΘΡΩΠΟΣ με ιδιότητα, και η ιδιότητα που θέλει το γραφείο
- * είναι «Admin» — η ίδια λέξη που δείχνει ήδη ο επιλογέας παραληπτών
- * (SEAT_AUDIENCES). Ο πίνακας κρατά ΜΟΝΟ τις έδρες που διαφέρουν· οι
- * υπόλοιπες υπογράφουν με το SEAT_LABELS τους.
- */
-export const SIGNATURE_ROLES: Partial<Record<OcSeat, string>> = {
-  admin: 'Admin',
-}
-
-/** Τι γράφει η γραμμή ρόλου στην υπογραφή αυτής της έδρας. */
-export function signatureRole(seat: OcSeat): string {
-  return SIGNATURE_ROLES[seat] || SEAT_LABELS[seat] || ''
 }
 
 /**

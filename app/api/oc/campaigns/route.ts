@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
-import { resolveOcAccess, getSeatHolder, SEAT_LABELS, SEAT_MAILBOX, signatureRole, type OcSeat } from '@/lib/ocRoles'
+import { resolveOcAccess, getSeatHolder, SEAT_LABELS, SEAT_MAILBOX, type OcSeat } from '@/lib/ocRoles'
 import { effectiveSeat, resolveSeatContext, attributionFor, OC_SEAT_MODE_COOKIE, type SeatContext } from '@/lib/ocSeatMode'
 import { campaignEmailHtml, presetsForDesk, NEWSLETTER_PRESETS, TOC_DEFAULT_TITLE, visibleBlocks, BLOCK_LABELS, BLOCK_VARIANTS, MERGE_FIELDS, FOOTER_STYLES, FOOTER_LOOKS, HEADER_STYLES, NEWSLETTER_FOOTERS, NEWSLETTER_FOOTER_DEFAULTS, normaliseNewsletterFooter, applyMergeFields, type Block, type FooterStyle, type FooterLook, type HeaderStyle, type CampaignSigner } from '@/lib/campaignBlocks'
 import { drainCampaigns } from '@/lib/campaignDrain'
@@ -267,7 +267,7 @@ async function signerFor(seat: OcSeat): Promise<CampaignSigner> {
   const holder = await getSeatHolder(seat).catch(() => null)
   return {
     name: holder?.name || holder?.engName || 'Culture for Change',
-    role: signatureRole(seat),
+    role: SEAT_LABELS[seat] || '',
     email: SEAT_MAILBOX[seat] || 'hello@cultureforchange.net',
   }
 }

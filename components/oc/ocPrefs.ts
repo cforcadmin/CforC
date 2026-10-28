@@ -54,7 +54,7 @@ export const OC_EVENT_DEFAULT_COLS = ['capacity', 'email', 'sessions', 'travel',
 
 export const OC_SEAT_LABELS: Record<string, string> = {
   coordinator: 'Συντονισμός',
-  admin: 'Γραμματεία',
+  admin: 'Admin',
   comms: 'Επικοινωνία',
   it: 'IT',
   community: 'Κοινότητα',

@@ -11,29 +11,21 @@ jest.mock('next/headers', () => ({
 const resolveOcAccess = jest.fn()
 const getBoardRoster = jest.fn(async () => [])
 const getSeatHolder = jest.fn(async () => ({ name: 'Σόνια Ντόβα', engName: 'Sonia Ntova' }))
-jest.mock('@/lib/ocRoles', () => {
-  const SEAT_LABELS: Record<string, string> = {
-    admin: 'Γραμματεία', it: 'IT', financer: 'Ταμίας', comms: 'Επικοινωνία',
+jest.mock('@/lib/ocRoles', () => ({
+  get resolveOcAccess() { return resolveOcAccess },
+  get getBoardRoster() { return getBoardRoster },
+  get getSeatHolder() { return getSeatHolder },
+  SEAT_LABELS: {
+    admin: 'Admin', it: 'IT', financer: 'Ταμίας', comms: 'Επικοινωνία',
     community: 'Κοινότητα', coordinator: 'Συντονισμός', outreach: 'Outreach', media: 'Media',
-  }
-  // Ο ρόλος της υπογραφής διαφέρει από το θεσμικό όνομα της έδρας — ο ψεύτης
-  // κρατά ΤΗΝ ΙΔΙΑ δομή με το αληθινό module, αλλιώς το τεστ περνά για λάθος λόγο.
-  const SIGNATURE_ROLES: Record<string, string> = { admin: 'Admin' }
-  return {
-    get resolveOcAccess() { return resolveOcAccess },
-    get getBoardRoster() { return getBoardRoster },
-    get getSeatHolder() { return getSeatHolder },
-    SEAT_LABELS,
-    SIGNATURE_ROLES,
-    signatureRole: (seat: string) => SIGNATURE_ROLES[seat] || SEAT_LABELS[seat] || '',
-    SEAT_MAILBOX: {
-      admin: 'hello@cultureforchange.net', it: 'it@cultureforchange.net',
-      financer: 'finance@cultureforchange.net', comms: 'communication@cultureforchange.net',
-      community: 'community@cultureforchange.net', coordinator: 'coordination@cultureforchange.net',
-      outreach: 'outreach@cultureforchange.net', media: 'media@cultureforchange.net',
-    },
-  }
-})
+  },
+  SEAT_MAILBOX: {
+    admin: 'hello@cultureforchange.net', it: 'it@cultureforchange.net',
+    financer: 'finance@cultureforchange.net', comms: 'communication@cultureforchange.net',
+    community: 'community@cultureforchange.net', coordinator: 'coordination@cultureforchange.net',
+    outreach: 'outreach@cultureforchange.net', media: 'media@cultureforchange.net',
+  },
+}))
 const sendOcEmailResult = jest.fn(async () => ({ ok: true }))
 jest.mock('@/lib/ocEmails', () => ({
   get sendOcEmailResult() { return sendOcEmailResult },
@@ -102,7 +94,7 @@ describe('Φράγμα πρόσβασης', () => {
 
   // Κάθε έδρα έχει πλέον δικό της γραφείο αποστολής στη δική της ενότητα
   it.each([
-    ['admin', 'Γραμματεία'], ['it', 'IT'], ['financer', 'Ταμίας'],
+    ['admin', 'Admin'], ['it', 'IT'], ['financer', 'Ταμίας'],
     ['community', 'Κοινότητα'], ['comms', 'Επικοινωνία'],
     ['coordinator', 'Συντονισμός'], ['outreach', 'Outreach'],
   ])('%s → περνά', async (seat) => {
@@ -1058,9 +1050,8 @@ describe('Υπογραφή', () => {
     const { json } = await post({ action: 'preview', subject: 'Θ', blocks: [{ type: 'text', html: 'x' }] })
     expect(json.html).toContain('Σόνια Ντόβα')
     expect(json.html).toContain('hello@cultureforchange.net')
-    // Η ΥΠΟΓΡΑΦΗ λέει «Admin», όχι «Γραμματεία»: το θεσμικό όνομα της έδρας
-    // μένει για τις αρμοδιότητες, η υπογραφή δείχνει ιδιότητα ανθρώπου
-    // (28/10/2026) — ίδια λέξη με τον επιλογέα παραληπτών.
+    // Η έδρα λέγεται «Admin», μέσα και έξω (28/10/2026) — ίδια λέξη με τον
+    // επιλογέα παραληπτών, που την έδειχνε έτσι από την αρχή.
     expect(json.html).toContain('Admin')
     expect(json.html).not.toContain('Γραμματεία')
   })
