@@ -15,7 +15,7 @@ interface VotePanelProps {
   votedSeats: string[]
   /** Η δική μου καταχωρημένη ψήφος, αν υπάρχει */
   myVote: 'approve' | 'reject' | null
-  /** IT/Γραμματεία: η ψήφος οριστικοποιεί την απόφαση αμέσως */
+  /** IT/Admin: η ψήφος οριστικοποιεί την απόφαση αμέσως */
   canOverride: boolean
 }
 
@@ -118,7 +118,7 @@ export default function VotePanel({ applicationId, votedSeats, myVote, canOverri
       </div>
       {canOverride && (
         <p className="text-[11px] text-gray-400 dark:text-gray-500 text-right">
-          Ως IT/Γραμματεία, η επιλογή σου οριστικοποιεί την απόφαση για όλους.
+          Ως IT/Admin, η επιλογή σου οριστικοποιεί την απόφαση για όλους.
         </p>
       )}
       {localVote && (

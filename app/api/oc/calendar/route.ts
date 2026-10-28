@@ -19,7 +19,7 @@ export const maxDuration = 60
  *  DELETE ?id=            → διαγραφή (ανακτήσιμη 30 μέρες από τον κάδο του
  *                           Google — δεν χάνεται οριστικά με ένα κλικ)
  *
- * Γράφουν ΜΟΝΟ Γραμματεία/IT και Επικοινωνία: είναι το κοινό ημερολόγιο
+ * Γράφουν ΜΟΝΟ Admin/IT και Επικοινωνία: είναι το κοινό ημερολόγιο
  * του δικτύου, όχι προσωπική ατζέντα.
  */
 
@@ -39,7 +39,7 @@ async function authorize(needWrite: boolean) {
     const activeSeat: OcSeat | null =
       effectiveSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
     if (!activeSeat || !WRITERS.includes(activeSeat)) {
-      return { error: NextResponse.json({ error: 'Το ημερολόγιο το ενημερώνουν Γραμματεία/IT και Επικοινωνία' }, { status: 403 }) }
+      return { error: NextResponse.json({ error: 'Το ημερολόγιο το ενημερώνουν Admin/IT και Επικοινωνία' }, { status: 403 }) }
     }
   }
   return { memberId: decoded.memberId }

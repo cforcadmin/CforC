@@ -40,7 +40,7 @@ async function strapi(path: string, method: string = 'GET', data?: any) {
 }
 
 /**
- * Ποιος ΓΡΑΦΕΙ δράσεις: Γραμματεία και IT. Καμία άλλη έδρα.
+ * Ποιος ΓΡΑΦΕΙ δράσεις: Admin και IT. Καμία άλλη έδρα.
  *
  * Η ανάγνωση μένει όπως ήταν — ολόκληρο το ΔΣ βλέπει τις δράσεις και τους
  * συμμετέχοντες. Το φράγμα μπαίνει ΜΟΝΟ στο γράψιμο, γιατί μια δράση είναι
@@ -62,7 +62,7 @@ async function authorizeWrite() {
     access.seats as OcSeat[], seatCookie, store.get(OC_SEAT_MODE_COOKIE)?.value)
   if (!activeSeat || !EVENT_WRITER_SEATS.includes(activeSeat)) {
     return { error: NextResponse.json(
-      { error: 'Μόνο η Γραμματεία και το IT δημιουργούν ή αλλάζουν δράσεις' }, { status: 403 }) }
+      { error: 'Μόνο το Admin και το IT δημιουργούν ή αλλάζουν δράσεις' }, { status: 403 }) }
   }
   return { memberId: decoded.memberId, activeSeat }
 }

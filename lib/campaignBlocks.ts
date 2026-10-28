@@ -1495,7 +1495,7 @@ function headerHtml(style: HeaderStyle, subject: string, withLogo: boolean): str
  * Ποιος στέλνει. Η θυρίδα και ο ρόλος βγαίνουν από την ΕΔΡΑ που συνθέτει —
  * finance@ για τον Ταμία, community@ για την Κοινότητα, coordination@ για τον
  * Συντονισμό, outreach@ για το Outreach, communication@ για την Επικοινωνία,
- * hello@ για τη Γραμματεία — και το όνομα από τον τρέχοντα κάτοχό της, ποτέ
+ * hello@ για το Admin — και το όνομα από τον τρέχοντα κάτοχό της, ποτέ
  * γραμμένο στο χέρι: οι εκλογές αλλάζουν πρόσωπα, όχι πρότυπα.
  */
 export interface CampaignSigner {

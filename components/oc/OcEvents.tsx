@@ -40,7 +40,7 @@ type Filter = 'all' | 'running' | 'upcoming' | 'past'
 const CARD = 'bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 sm:p-8 border border-gray-200 dark:border-gray-600'
 const EYEBROW = 'text-xs font-bold tracking-wider text-gray-600 dark:text-gray-400'
 
-/** Γραμματεία και IT γράφουν δράσεις· όλοι οι άλλοι μόνο διαβάζουν. */
+/** Admin και IT γράφουν δράσεις· όλοι οι άλλοι μόνο διαβάζουν. */
 export default function OcEvents({ canEdit = false }: { canEdit?: boolean }) {
   const [events, setEvents] = useState<Ev[]>([])
   const [loading, setLoading] = useState(true)

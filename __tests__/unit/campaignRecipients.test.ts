@@ -13,7 +13,7 @@ const members: CampaignMember[] = [
   { docId: 'a', name: 'Μαρία Κολιοπούλου', email: 'maria@x.gr', am: 34, payments: { '2026': 1 }, groups: ['Κοινότητα'] },
   { docId: 'b', name: 'Νίκος Βανδώρος', email: 'nikos@x.gr', am: 55, payments: { '2026': 0 }, groups: [] },
   { docId: 'c', name: 'Βάσια Βαλκανιώτη', email: 'vasia@x.gr', am: 71, payments: {}, groups: ['Επικοινωνία'] },
-  { docId: 'd', name: 'Χωρίς ΑΜ', email: 'noam@x.gr', am: null, payments: {}, groups: ['Γραμματεία'] },
+  { docId: 'd', name: 'Χωρίς ΑΜ', email: 'noam@x.gr', am: null, payments: {}, groups: ['Admin'] },
   { docId: 'e', name: 'Χωρίς email', email: '', am: 90, payments: {}, groups: [] },
 ]
 
@@ -47,13 +47,13 @@ describe('Ποιος μπαίνει στη λίστα', () => {
   })
 
   it('κάτοχος έδρας ΧΩΡΙΣ ΑΜ μπαίνει — η έδρα δεν απαιτεί ιδιότητα μέλους', () => {
-    // Η Γραμματεία στηρίζει το ΔΣ χωρίς να είναι μέλος του· με φίλτρο ΑΜ
+    // Το Admin στηρίζει το ΔΣ χωρίς να είναι μέλος του· με φίλτρο ΑΜ
     // η επιλογή δύο εδρών έδινε έναν παραλήπτη.
-    expect(resolveRecipients(members, { groups: ['Γραμματεία'] }).map(x => x.email)).toEqual(['noam@x.gr'])
+    expect(resolveRecipients(members, { groups: ['Admin'] }).map(x => x.email)).toEqual(['noam@x.gr'])
   })
 
   it('δύο έδρες → δύο παραλήπτες, ακόμη κι αν ο ένας δεν έχει ΑΜ', () => {
-    expect(resolveRecipients(members, { groups: ['Γραμματεία', 'Κοινότητα'] })).toHaveLength(2)
+    expect(resolveRecipients(members, { groups: ['Admin', 'Κοινότητα'] })).toHaveLength(2)
   })
 
   it('μεμονωμένο μέλος μπαίνει ακόμη και χωρίς ΑΜ — είναι ρητή επιλογή', () => {
@@ -171,7 +171,7 @@ describe('Έδρες → θυρίδες', () => {
     }
   })
 
-  it('η Γραμματεία εμφανίζεται ως «Admin» και πάει στο hello@', () => {
+  it('η έδρα admin εμφανίζεται ως «Admin» και πάει στο hello@', () => {
     const admin = SEAT_AUDIENCES.find(s => s.id === 'admin')!
     expect(admin.label).toBe('Admin')
     expect(admin.email).toBe('hello@cultureforchange.net')

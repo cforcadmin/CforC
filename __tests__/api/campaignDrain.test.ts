@@ -130,7 +130,7 @@ describe('Στράγγιση', () => {
   it('υπογράφει με τον ΑΠΟΘΗΚΕΥΜΕΝΟ υπογράφοντα, όχι τον τρέχοντα', async () => {
     mockStrapi([campaign({
       Recipients: recip(1),
-      Signer: { name: 'Σόνια Ντόβα', role: 'Γραμματεία', email: 'hello@cultureforchange.net' },
+      Signer: { name: 'Σόνια Ντόβα', role: 'Admin', email: 'hello@cultureforchange.net' },
     })])
     await run()
     const opts = sendOcEmailResult.mock.calls[0][3] as any

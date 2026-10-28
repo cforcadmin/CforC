@@ -620,7 +620,7 @@ export default function OcMonthlyView({ mode, canReady = false, canDispatch = fa
                       disabled={!canDispatch || closing || data.status !== 'ready'}
                       title={data.status !== 'ready'
                         ? 'Ενεργοποιείται όταν ο/η Financer εγκρίνει τον μήνα'
-                        : canDispatch ? undefined : 'Μόνο Διαχείριση (Γραμματεία/IT)'}
+                        : canDispatch ? undefined : 'Μόνο Διαχείριση (Admin/IT)'}
                       className="px-6 py-2.5 rounded-full bg-coral text-white text-sm font-bold hover:bg-coral/90 disabled:opacity-40">
                       Αποστολή στο λογιστήριο 📤
                     </button>

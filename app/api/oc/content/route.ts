@@ -124,7 +124,7 @@ function strapiError(json: any): string {
 }
 
 /**
- * Ποιος ΓΡΑΦΕΙ περιεχόμενο: Επικοινωνία, Media, Γραμματεία, IT.
+ * Ποιος ΓΡΑΦΕΙ περιεχόμενο: Επικοινωνία, Media, Admin, IT.
  *
  * Το φράγμα μπαίνει στο γράψιμο, όχι στην ανάγνωση: όλο το ΔΣ βλέπει τι
  * υπάρχει, αλλά ένα άρθρο είναι ΔΗΜΟΣΙΑ σελίδα — δημοσιεύεται στο όνομα του
@@ -148,7 +148,7 @@ async function authorize(write: boolean) {
 
   if (write && (!activeSeat || !CONTENT_WRITER_SEATS.includes(activeSeat))) {
     return { error: NextResponse.json(
-      { error: 'Το περιεχόμενο του site το γράφουν η Επικοινωνία, το Media, η Γραμματεία και το IT' },
+      { error: 'Το περιεχόμενο του site το γράφουν η Επικοινωνία, το Media, το Admin και το IT' },
       { status: 403 }) }
   }
   return { memberId: decoded.memberId, activeSeat }

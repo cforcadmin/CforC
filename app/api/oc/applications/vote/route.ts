@@ -10,13 +10,13 @@ import { strapiFetch } from '@/lib/strapiFetch'
 /**
  * OC voting on membership applications (simplified v1).
  *
- * - Το ΔΣ είναι ΠΕΝΤΕ θέσεις (VOTING_SEATS). Η Γραμματεία δεν είναι μέλος του
+ * - Το ΔΣ είναι ΠΕΝΤΕ θέσεις (VOTING_SEATS). Το Admin δεν είναι μέλος του
  *   ΔΣ — στηρίζει το ΔΣ — και δεν ψηφίζει· ούτε το IT.
  * - Votes are blind: the UI shows WHO (which roles) voted, never what.
  * - Η αίτηση κρίνεται όταν ψηφίσουν ΟΛΑ τα μέλη με δικαίωμα ψήφου. Η ψήφος
  *   της Προέδρου (Συντονισμός) μετράει διπλά, άρα σύνολο 6: η ισοπαλία 3–3
  *   είναι εφικτή και κρατά την αίτηση εκκρεμή.
- * - IT και Γραμματεία είναι το δίχτυ ασφαλείας, όχι στάδιο έγκρισης: η ψήφος
+ * - IT και Admin είναι το δίχτυ ασφαλείας, όχι στάδιο έγκρισης: η ψήφος
  *   τους αποφασίζει αμέσως (καθολική απόφαση), για όταν κάποιος δεν ψηφίζει
  *   ή όταν έχει δώσει προφορική συγκατάθεση.
  * - On decision the Sheet row is moved too (web app action "decide");
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
   // Ο ρόλος με τον οποίο ΕΝΕΡΓΕΙ τώρα (επιλογή στο OC, httpOnly cookie) —
   // όχι όλοι οι ρόλοι που κατέχει. Ένα μέλος με IT+Financer που ενεργεί ως
   // Financer ψηφίζει σαν Financer· το override ισχύει ΜΟΝΟ όταν ενεργεί
-  // ρητά ως IT ή Γραμματεία.
+  // ρητά ως IT ή Admin.
   //
   // ΔΕΝ ΠΕΡΝΑ ΑΠΟ ΤΟ effectiveSeat — ΕΠΙΤΗΔΕΣ, και είναι η μόνη εξαίρεση.
   // Όλες οι άλλες διαδρομές τιμούν το «ενεργώ ως»: το IT μπορεί να εκδώσει
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
     decisionBy = `OC — ${SEAT_LABELS[activeSeat!]} (καθολική απόφαση)`
   } else {
     const roster = await getBoardRoster()
-    // ΜΟΝΟ όσοι έχουν δικαίωμα ψήφου: η Γραμματεία δεν κρατά την αίτηση όμηρο
+    // ΜΟΝΟ όσοι έχουν δικαίωμα ψήφου: το Admin δεν κρατά την αίτηση όμηρο
     const voters = roster.filter(r => isVoter(r.seats))
     const allVoted = voters.length > 0 && voters.every(r => votes[r.memberDocumentId])
     if (allVoted) {
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
       )
       if (tally.approve > tally.reject) finalState = 'approved'
       else if (tally.reject > tally.approve) finalState = 'rejected'
-      // Ισοψηφία: παραμένει submitted — IT/Γραμματεία λύνει
+      // Ισοψηφία: παραμένει submitted — IT/Admin λύνει
       decisionBy = finalState ? `OC — ψηφοφορία ΔΣ (${tally.approve}-${tally.reject})` : ''
     }
   }
@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
     // email ζητά επιπλέον φωτογραφία προφίλ και στοιχεία τιμολόγησης
     const template = app.Photo ? approvedEmailHtml : approvedLegacyEmailHtml
     const tpl = template(String(app.FirstName || '').trim() || 'μέλος', claim, signerName)
-    // Κοινοποίηση σε Οικονομικά, Γραμματεία και Κοινότητα: η έγκριση ανοίγει
+    // Κοινοποίηση σε Οικονομικά, Admin και Κοινότητα: η έγκριση ανοίγει
     // εκκρεμότητα πληρωμής που την παρακολουθούν και οι τρεις — ισχύει και για
     // το κανονικό και για το «παλιάς φόρμας» πρότυπο.
     await sendOcEmailOrWarn('applications/vote: έγκριση αίτησης', String(app.Email).trim(), tpl.subject, tpl.html, {

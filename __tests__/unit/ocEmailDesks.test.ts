@@ -29,7 +29,7 @@ describe('Γραφεία αποστολής email ανά ενότητα', () => 
     expect(canSendEmailFrom('comms', 'outreach')).toBe(false)
   })
 
-  it('Διαχείριση: μόνο η Γραμματεία', () => {
+  it('Διαχείριση: μόνο το Admin', () => {
     expect(canSendEmailFrom('admin', 'admin')).toBe(true)
     expect(canSendEmailFrom('admin', 'comms')).toBe(false)
   })

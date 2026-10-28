@@ -43,7 +43,7 @@ describe('Φρένα ασφαλείας', () => {
 })
 
 describe('Κοινοποίηση απεγγραφής', () => {
-  it('ενημερώνονται IT, Γραμματεία και Κοινότητα', () => {
+  it('ενημερώνονται IT, Admin και Κοινότητα', () => {
     // Η απεγγραφή γίνεται στον Sender· χωρίς κοινοποίηση δεν τη μαθαίνει κανείς
     expect(UNSUBSCRIBE_CC).toEqual(expect.arrayContaining([
       'it@cultureforchange.net',
@@ -53,7 +53,7 @@ describe('Κοινοποίηση απεγγραφής', () => {
     expect(UNSUBSCRIBE_CC).toHaveLength(3)
   })
 
-  it('ποτέ στο admin@ — είναι θυρίδα του IT, η Γραμματεία διαβάζει στο hello@', () => {
+  it('ποτέ στο admin@ — είναι θυρίδα του IT, το Admin διαβάζει στο hello@', () => {
     expect(UNSUBSCRIBE_CC).not.toContain('admin@cultureforchange.net')
   })
 

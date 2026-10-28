@@ -56,7 +56,7 @@ function emptyStrapi(onCreate?: (body: any) => void) {
 describe('Φράγμα έδρας', () => {
   afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks() })
 
-  it('η Γραμματεία δημιουργεί', async () => {
+  it('το Admin δημιουργεί', async () => {
     signedInAs('admin'); emptyStrapi()
     expect((await post()).status).toBe(200)
   })
@@ -71,7 +71,7 @@ describe('Φράγμα έδρας', () => {
       signedInAs(seat); emptyStrapi()
       const r = await post()
       expect(r.status).toBe(403)
-      expect(r.json.error).toMatch(/Γραμματεία και το IT/)
+      expect(r.json.error).toMatch(/Admin και το IT/)
     })
 
   it('χωρίς συνεδρία στο ΔΣ: 403', async () => {
@@ -91,7 +91,7 @@ describe('Φράγμα έδρας', () => {
 
   /* Το «ενεργώ ως» ισχύει και εδώ: η δημιουργία δράσης είναι ΕΡΓΑΣΙΑ της
      έδρας, όχι προσωπική κρίση όπως η ψήφος. */
-  it('IT που ενεργεί ως Γραμματεία: περνά', async () => {
+  it('IT που ενεργεί ως Admin: περνά', async () => {
     signedInAs('it', { seatMode: 'admin:act' }); emptyStrapi()
     expect((await post()).status).toBe(200)
   })

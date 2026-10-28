@@ -49,7 +49,7 @@ async function authorize() {
   const activeSeat: OcSeat | null =
     effectiveSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
   if (!activeSeat || !ALLOWED.includes(activeSeat)) {
-    return { error: NextResponse.json({ error: 'Μόνο Ταμίας, Κοινότητα ή Γραμματεία' }, { status: 403 }) }
+    return { error: NextResponse.json({ error: 'Μόνο Ταμίας, Κοινότητα ή Admin' }, { status: 403 }) }
   }
   return { seat: activeSeat }
 }

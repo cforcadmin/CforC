@@ -9,7 +9,7 @@ import { sendOcEmail, departureEmailHtml, farewellUrl, COMMUNITY_FROM, COMMUNITY
 import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
- * Member deletion from the OC Μητρώο μελών table — IT/Γραμματεία acting
+ * Member deletion from the OC Μητρώο μελών table — IT/Admin acting
  * seat only. ΗΠΙΑ αφαίρεση (same semantics as the Sheet-initiated flow):
  * the member loses the ΑΜ and the profile is hidden; account and data
  * are kept — permanent erasure stays a manual Strapi admin act.
@@ -50,13 +50,13 @@ export async function POST(request: NextRequest) {
   if (!access.isBoard) {
     return NextResponse.json({ error: 'Δεν επιτρέπεται' }, { status: 403 })
   }
-  // Μόνο ο ΕΝΕΡΓΟΣ ρόλος IT/Γραμματεία μπορεί να διαγράψει (ίδια λογική με
+  // Μόνο ο ΕΝΕΡΓΟΣ ρόλος IT/Admin μπορεί να διαγράψει (ίδια λογική με
   // το override της ψηφοφορίας)
   const seatCookie = cookieStore.get(OC_LAST_SEAT_COOKIE)?.value as OcSeat | undefined
   const activeSeat: OcSeat | null =
     effectiveSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
   if (activeSeat !== 'it' && activeSeat !== 'admin') {
-    return NextResponse.json({ error: 'Μόνο IT/Γραμματεία μπορούν να διαγράψουν μέλος' }, { status: 403 })
+    return NextResponse.json({ error: 'Μόνο IT/Admin μπορούν να διαγράψουν μέλος' }, { status: 403 })
   }
 
   let body: any

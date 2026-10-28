@@ -12,7 +12,7 @@ export const maxDuration = 60
  *
  * Οι υπενθυμίσεις δεν τρέχουν από μόνες τους: κάποιος τις ενεργοποιεί —
  * για μία αίτηση ή για όλη τη λίστα των εγκεκριμένων που δεν πλήρωσαν.
- * Επιτρέπεται σε Ταμία, Κοινότητα και Γραμματεία/IT.
+ * Επιτρέπεται σε Ταμία, Κοινότητα και Admin/IT.
  */
 
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
   const activeSeat: OcSeat | null =
     effectiveSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
   if (!activeSeat || !ALLOWED.includes(activeSeat)) {
-    return NextResponse.json({ error: 'Μόνο Ταμίας, Κοινότητα ή Γραμματεία' }, { status: 403 })
+    return NextResponse.json({ error: 'Μόνο Ταμίας, Κοινότητα ή Admin' }, { status: 403 })
   }
 
   const body = await request.json().catch(() => null)

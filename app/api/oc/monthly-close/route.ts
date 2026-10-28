@@ -122,7 +122,7 @@ async function authorize(gate: Gate) {
       return { error: NextResponse.json({ error: 'Μόνο ο/η Financer' }, { status: 403 }) }
     }
     if (gate === 'admin' && activeSeat !== 'admin' && activeSeat !== 'it') {
-      return { error: NextResponse.json({ error: 'Μόνο Διαχείριση (Γραμματεία/IT)' }, { status: 403 }) }
+      return { error: NextResponse.json({ error: 'Μόνο Διαχείριση (Admin/IT)' }, { status: 403 }) }
     }
   }
   return { memberId: decoded.memberId }

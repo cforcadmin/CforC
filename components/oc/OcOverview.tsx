@@ -279,7 +279,7 @@ interface TablePrefs {
 function MembersTable({ members, currentYear, canDelete, initialPrefs }: {
   members: OcMemberRow[]
   currentYear: number
-  /** Ενεργός ρόλος IT/Γραμματεία → εμφανίζεται η Διαγραφή μέλους */
+  /** Ενεργός ρόλος IT/Admin → εμφανίζεται η Διαγραφή μέλους */
   canDelete: boolean
   initialPrefs: TablePrefs
 }) {
@@ -683,7 +683,7 @@ interface OcOverviewProps {
   canRecordPayments?: boolean
   /** Ενεργός ρόλος financer/community → υπενθυμίσεις συνδρομής */
   canRemind?: boolean
-  /** Γραμματεία + IT: δημιουργία και αλλαγή δράσεων */
+  /** Admin + IT: δημιουργία και αλλαγή δράσεων */
   canEditEvents?: boolean
   /** Deep link /oc?open=renewals → popup δηλώσεων ανοιχτό στο φόρτωμα */
   initialShowRenewals?: boolean
