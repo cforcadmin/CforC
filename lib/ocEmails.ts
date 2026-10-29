@@ -3467,3 +3467,148 @@ export function workingGroupProposalEmailHtml(opts: {
       'Η πρόταση καταγράφηκε και στο OC → Προτάσεις. Αυτό το μήνυμα είναι και η απόδειξη παραλαβής για τον/την προτείνοντα/ουσα.'),
   }
 }
+
+/**
+ * Email-changed notice — φεύγει από it@ όταν η θέση IT αλλάζει το email ενός
+ * μέλους από το OC (Ασφάλεια++ → «Αλλαγή email μέλους»). Πάει στο ΝΕΟ email
+ * με κοινοποίηση στο ΠΑΛΙΟ: και οι δύο θυρίδες ανήκουν στο ίδιο άτομο, και
+ * αν την αλλαγή δεν τη ζήτησε εκείνο, το παλιό γραμματοκιβώτιο είναι το μόνο
+ * που θα το μάθει. Ίδιο κέλυφος με το welcome (υπογραφή IT).
+ */
+export function emailChangedEmailHtml(
+  firstName: string, oldEmail: string, newEmail: string, signerName = 'Culture for Change — IT',
+): { subject: string; html: string } {
+  const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = `<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>Το email σου άλλαξε — Culture for Change</title>
+<!--[if mso]>
+<style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
+<![endif]-->
+<style>
+  @media only screen and (max-width:620px){
+    .px{padding-left:24px !important;padding-right:24px !important;}
+    .stack{display:block !important;width:100% !important;}
+    .btn a{display:block !important;}
+    .h1{font-size:26px !important;line-height:32px !important;}
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F0EB;">
+<span style="display:none;font-size:1px;color:#F5F0EB;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Το email του λογαριασμού σου στο Culture for Change άλλαξε σε ${esc(newEmail)}.</span>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;">
+<tr><td align="center" style="padding:32px 12px 48px 12px;">
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #E5E7EB;">
+
+  <!-- Header -->
+  <tr>
+    <td class="px" style="background-color:#FF8B6A;padding:36px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:16px;letter-spacing:1.6px;color:#FFFFFF;font-weight:bold;mso-line-height-rule:exactly;">CULTURE FOR CHANGE</td>
+        </tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr>
+          <td class="h1" style="font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:36px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">ΤΟ EMAIL ΣΟΥ ΑΛΛΑΞΕ</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Body -->
+  <tr>
+    <td class="px" style="padding:40px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 20px 0;">Αγαπητή/αγαπητέ ${esc(firstName)},</p>
+      <p style="margin:0 0 20px 0;">Το email του λογαριασμού σου ως μέλος του <strong>Culture For Change</strong> άλλαξε. Το στέλνουμε και στις δύο διευθύνσεις, για να το ξέρεις όπου κι αν διαβάζεις.</p>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:8px 48px 0 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;border-radius:16px;">
+        <tr><td style="padding:16px 20px 4px 20px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;letter-spacing:1.4px;color:#FF8B6A;font-weight:bold;mso-line-height-rule:exactly;">ΠΑΛΙΟ</td></tr>
+        <tr><td style="padding:0 20px 12px 20px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#5A5A5A;text-decoration:line-through;mso-line-height-rule:exactly;">${esc(oldEmail)}</td></tr>
+        <tr><td style="padding:0 20px 4px 20px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;letter-spacing:1.4px;color:#FF8B6A;font-weight:bold;mso-line-height-rule:exactly;">ΝΕΟ</td></tr>
+        <tr><td style="padding:0 20px 16px 20px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">${esc(newEmail)}</td></tr>
+      </table>
+    </td>
+  </tr>
+
+<tr><td class="px" style="padding:28px 48px 4px 48px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;letter-spacing:1.4px;color:#FF8B6A;font-weight:bold;mso-line-height-rule:exactly;">ΤΙ ΑΛΛΑΖΕΙ ΓΙΑ ΣΕΝΑ</td></tr>
+  <tr>
+    <td class="px" style="padding:12px 48px 0 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;padding:0 0 10px 0;">•&nbsp;&nbsp;Συνδέεσαι πλέον με το <strong>νέο</strong> email στο <a href="https://cultureforchange.net/login" style="color:#C9552F;text-decoration:underline;">cultureforchange.net/login</a> — ο κωδικός σου μένει ίδιος. Το παλιό δεν συνδέεται πια.</td></tr>
+<tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;padding:0 0 10px 0;">•&nbsp;&nbsp;Ο σύνδεσμος «Πρώτη Σύνδεση» / επαναφοράς κωδικού πάει στο νέο email.</td></tr>
+<tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;padding:0 0 10px 0;">•&nbsp;&nbsp;Το newsletter των μελών και οι ενημερώσεις του δικτύου έρχονται στο νέο email.</td></tr>
+<tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#2D2D2D;padding:0 0 10px 0;">•&nbsp;&nbsp;Οι αποδείξεις που έχεις ήδη λάβει μένουν ως έχουν — ιστορικά έγγραφα.</td></tr>
+      </table>
+    </td>
+  </tr>
+
+<tr><td class="px" style="padding:28px 48px 4px 48px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;letter-spacing:1.4px;color:#FF8B6A;font-weight:bold;mso-line-height-rule:exactly;">ΔΕΝ ΤΟ ΖΗΤΗΣΕΣ ΕΣΥ;</td></tr>
+  <tr>
+    <td class="px" style="padding:12px 48px 8px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;border-radius:16px;">
+        <tr><td style="padding:16px 20px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#2D2D2D;mso-line-height-rule:exactly;">⚠️ Αν δεν ζήτησες εσύ αυτή την αλλαγή, απάντησε σε αυτό το email <strong>αμέσως</strong> — θα την αναιρέσουμε και θα ελέγξουμε τον λογαριασμό σου.</td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Signature -->
+  <tr>
+    <td class="px" style="padding:32px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 20px 0;">Είμαστε στη διάθεσή σου για οτιδήποτε χρειαστείς — απάντησε σε αυτό το email αν έχεις ερωτήσεις.</p>
+      <p style="margin:0;">Φιλικά,</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" style="padding:16px 48px 40px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:#E5E7EB;">&nbsp;</td></tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:24px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">${esc(signerName)}</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">IT - Culture for Change</td></tr>
+        <tr><td height="6" style="height:6px;line-height:6px;font-size:0;">&nbsp;</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;mso-line-height-rule:exactly;"><a href="mailto:it@cultureforchange.net" style="color:#C9552F;text-decoration:underline;">it@cultureforchange.net</a></td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Footer -->
+  <tr>
+    <td class="px" align="center" style="background-color:#2D2D2D;padding:32px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#F5F0EB;font-weight:bold;mso-line-height-rule:exactly;">Join our Social Networks &amp; Get Involved!</td></tr>
+        <tr><td height="14" style="height:14px;line-height:14px;font-size:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:26px;color:#F5F0EB;mso-line-height-rule:exactly;">
+          <a href="https://cultureforchange.net" style="color:#FF8B6A;text-decoration:none;">Website</a>&nbsp; |&nbsp;
+          <a href="https://www.facebook.com/cultureforchange" style="color:#FF8B6A;text-decoration:none;">Facebook</a>&nbsp; |&nbsp;
+          <a href="https://www.instagram.com/cultureforchange" style="color:#FF8B6A;text-decoration:none;">Instagram</a>&nbsp; |&nbsp;
+          <a href="https://www.linkedin.com/company/cultureforchange" style="color:#FF8B6A;text-decoration:none;">LinkedIn</a>&nbsp; |&nbsp;
+          <a href="https://www.youtube.com/@cultureforchange" style="color:#FF8B6A;text-decoration:none;">YouTube</a>
+        </td></tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#A0A0A0;mso-line-height-rule:exactly;">Δίκτυο Culture for Change — Αθήνα, Ελλάδα<br>Λαμβάνεις αυτό το email επειδή άλλαξε το email του λογαριασμού σου ως μέλος.</td></tr>
+        <tr><td height="18" style="height:18px;line-height:18px;font-size:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:17px;color:#8A8A8A;mso-line-height-rule:exactly;">_______________________________________________________________<br>This email may contain confidential information. Read full disclaimer <a href="https://www.cultureforchange.net/email-confidentiality-disclaimer" style="color:#FF8B6A;text-decoration:underline;">here</a></td></tr>
+      </table>
+    </td>
+  </tr>
+
+</table>
+
+</td></tr>
+</table>
+</body>
+</html>
+`
+  return { subject: 'Το email του λογαριασμού σου στο Culture for Change άλλαξε', html }
+}

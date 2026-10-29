@@ -257,3 +257,59 @@ export async function recordSubscriptionYearInSheet(
   }
   throw new Error(`Sheet web app: ${lastError}${definitive ? '' : ' (3 προσπάθειες)'}`)
 }
+
+/**
+ * Αλλαγή email μέλους στο Μητρώο: το Apps Script (ενέργεια «updateEmail»,
+ * βλ. docs/AppsScript-Αλλαγή-Email.md) αντικαθιστά ΚΑΘΕ κελί που ισούται με
+ * το παλιό email, σε ΟΛΑ τα φύλλα (Επισκόπηση, Συνδρομές, Νέα Μέλη, …).
+ * Γυρίζει πόσα κελιά άλλαξαν και σε ποια φύλλα. Πετάει σε αποτυχία — ο
+ * caller το δείχνει ως βήμα που απέτυχε, δεν το καταπίνει.
+ *
+ * Επανάληψη όπως στο removeApplicantFromSheet, για τον ίδιο μετρημένο λόγο:
+ * σε κρύα εκκίνηση η κλήση που ΟΝΤΩΣ γράφει χάνει την απάντησή της. Ασφαλής
+ * επειδή η ενέργεια είναι idempotent — τη δεύτερη φορά δεν βρίσκει πια το
+ * παλιό email και γυρίζει replaced 0. Γι' αυτό γυρίζουμε και `lostReply`:
+ * «0 κελιά» μετά από χαμένη απάντηση σημαίνει «μάλλον άλλαξε στην πρώτη»,
+ * όχι «δεν υπήρχε» — και η οθόνη πρέπει να το πει έτσι.
+ */
+export async function updateMemberEmailInSheet(
+  oldEmail: string, newEmail: string,
+): Promise<{ replaced: number; sheets: string[]; lostReply: boolean }> {
+  if (!WEBAPP_URL || !WEBAPP_SECRET) throw new Error('Sheet web app not configured')
+  const deadline = Date.now() + 120_000
+  let lastError = ''
+  let definitive = false
+  let lostReply = false
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    if (attempt > 1 && Date.now() > deadline) { lastError += ' — λήξη χρόνου'; break }
+    if (attempt > 1) await new Promise(r => setTimeout(r, 3000))
+    try {
+      const res = await fetch(WEBAPP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret: WEBAPP_SECRET, action: 'updateEmail', oldEmail, newEmail }),
+        redirect: 'follow',
+      })
+      const text = await res.text()
+      if (!res.ok) { lastError = `HTTP ${res.status}`; lostReply = true; continue }
+      let json: any = null
+      try { json = JSON.parse(text) } catch {
+        // HTML σελίδα ή το κείμενο του doGet — όχι απάντηση της ενέργειας
+        lastError = 'μη αναγνωρίσιμη απάντηση (κρύα εκκίνηση;)'
+        lostReply = true
+        continue
+      }
+      // Καθαρή απάντηση με ok:false είναι ΚΡΙΣΗ του script (π.χ. άγνωστη
+      // ενέργεια — δεν μπήκε ακόμη ο κώδικας), όχι δικτυακή αστοχία.
+      if (!json?.ok) { lastError = String(json?.error || 'unknown error'); definitive = true; break }
+      return {
+        replaced: Number(json.replaced || 0),
+        sheets: Array.isArray(json.sheets) ? json.sheets.map(String) : [],
+        lostReply,
+      }
+    } catch (e) {
+      lastError = (e as Error).message
+    }
+  }
+  throw new Error(`Sheet web app: ${lastError}${definitive ? '' : ' (3 προσπάθειες)'}`)
+}

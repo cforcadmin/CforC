@@ -9,6 +9,7 @@
 // βλ. docs/OC-Asfaleia-Plus-Plus.md.
 
 import { useCallback, useEffect, useState } from 'react'
+import OcMemberEmailChange from '@/components/oc/OcMemberEmailChange'
 
 type HealthState = 'ok' | 'warn' | 'down' | 'unknown'
 
@@ -420,6 +421,9 @@ export default function OcSecurity() {
           </>
         )}
       </div>
+
+      {/* Εργαλείο IT: αλλαγή email μέλους σε όλα τα σημεία που ζει */}
+      <OcMemberEmailChange />
 
       {/* ΧΩΡΙΣ κουτί «ΕΠΟΜΕΝΑ».
           Το τέταρτο κουτί («AI & δεδομένα» — ανώνυμα δεδομένα ανάπτυξης)
