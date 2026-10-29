@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
-import { resolveOcAccess, type OcSeat } from '@/lib/ocRoles'
+import { verifyToken, generateRenewalClaimToken } from '@/lib/auth'
+import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
 import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { OC_LAST_SEAT_COOKIE } from '@/components/oc/ocPrefs'
 import { updateMemberEmailInSheet, sheetsConfigured } from '@/lib/googleSheets'
 import { changeNewsletterSubscriberEmail, changeSenderSubscriberEmail, type StepResult } from '@/lib/memberEmailChange'
 import { EMAIL_CHANGE_REQUEST_SOURCES } from '@/lib/memberEmailChangeOptions'
+import { owedSubscriptionYears, SUBSCRIPTION_FEE } from '@/lib/subscriptionOwed'
+import { normaliseGreek } from '@/lib/greekText'
 import { strapiFetch } from '@/lib/strapiFetch'
-import { getSeatHolder } from '@/lib/ocRoles'
-import { sendOcEmail, emailChangedEmailHtml, IT_FROM, IT_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
+import { sendOcEmail, emailChangedEmailHtml, renewalClaimUrl, IT_FROM, IT_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
 
 /**
  * Αλλαγή email μέλους από το OC (Ασφάλεια++, θέση IT μόνο).
@@ -28,16 +29,20 @@ import { sendOcEmail, emailChangedEmailHtml, IT_FROM, IT_EMAIL, ADMIN_EMAIL } fr
  * ένα βήμα που απέτυχε φαίνεται στην οθόνη με το όνομά του, ώστε να γίνει
  * με το χέρι ακριβώς αυτό και όχι όλα από την αρχή.
  *
- * POST { currentEmail, newEmail, dryRun?, requestedVia, requestedDetail? }
- *   dryRun: βρίσκει το μέλος και λέει ΠΟΥ υπάρχει το παλιό email, χωρίς
- *   καμία αλλαγή — η οθόνη το δείχνει πριν το «Αλλαγή».
+ * GET ?q=όνομα
+ *   Αναζήτηση μέλους κατά όνομα (ελληνικά χωρίς τόνους/πεζά-κεφαλαία, ή
+ *   λατινικό όνομα, ή κομμάτι email). Τα ονόματα ΔΕΝ είναι μοναδικά — κάθε
+ *   αποτέλεσμα φέρει ΑΜ και τρέχον email, ώστε το IT να διαλέξει ρητά.
+ *
+ * POST { memberDocId, newEmail, dryRun?, requestedVia, requestedDetail?, includeOwedReminder? }
+ *   dryRun: λέει ΠΟΥ υπάρχει το τρέχον email και αν εκκρεμούν συνδρομές,
+ *   χωρίς καμία αλλαγή — η οθόνη το δείχνει μόλις επιλεγεί το μέλος.
  *   requestedVia: ΠΩΣ ζητήθηκε η αλλαγή (μία από EMAIL_CHANGE_REQUEST_SOURCES) —
  *   υποχρεωτικό στην αλλαγή, γράφεται στο AdminNotes μαζί με ημερομηνία/ώρα.
  *   requestedDetail: υποχρεωτικό όταν requestedVia = «Άλλο».
+ *   includeOwedReminder: αν το μέλος οφείλει συνδρομές, να μπει το ευγενικό
+ *   σημείωμα πληρωμής στην ειδοποίηση (προεπιλογή: ναι — το IT το ξετικάρει).
  */
-
-/** Ημερομηνία + ώρα Ελλάδας — ο server τρέχει σε UTC, το ίχνος πρέπει να διαβάζεται από άνθρωπο στην Αθήνα */
-const athensNow = () => new Date().toLocaleString('el-GR', { timeZone: 'Europe/Athens', dateStyle: 'short', timeStyle: 'short' })
 
 // Τα βήματα προς Apps Script + Sender είναι αργά (κρύα εκκίνηση ~55s)
 export const maxDuration = 120
@@ -45,6 +50,10 @@ export const maxDuration = 120
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const MEMBER_FIELDS = '&fields[0]=Email&fields[1]=AM&fields[2]=AdminNotes&fields[3]=Name&fields[4]=Payments&fields[5]=RegistrationYear'
+
+/** Ημερομηνία + ώρα Ελλάδας — ο server τρέχει σε UTC, το ίχνος πρέπει να διαβάζεται από άνθρωπο στην Αθήνα */
+const athensNow = () => new Date().toLocaleString('el-GR', { timeZone: 'Europe/Athens', dateStyle: 'short', timeStyle: 'short' })
 
 async function strapi(path: string, method: string = 'GET', data?: any) {
   const res = await strapiFetch(`${STRAPI_URL}/api${path}`, {
@@ -61,7 +70,8 @@ async function strapi(path: string, method: string = 'GET', data?: any) {
 const byEmail = (collection: string, email: string, extra = '') =>
   `/${collection}?filters[Email][$eqi]=${encodeURIComponent(email)}&pagination[limit]=2${extra}`
 
-export async function POST(request: NextRequest) {
+/** Σύνδεση + ενεργή θέση IT, αλλιώς η απάντηση-άρνηση */
+async function requireItSeat(): Promise<NextResponse | null> {
   const cookieStore = await cookies()
   const sessionCookie = cookieStore.get('session')
   const decoded = sessionCookie ? verifyToken(sessionCookie.value) : null
@@ -78,22 +88,47 @@ export async function POST(request: NextRequest) {
   if (activeSeat !== 'it') {
     return NextResponse.json({ error: 'Μόνο η θέση IT αλλάζει email μέλους' }, { status: 403 })
   }
+  return null
+}
+
+export async function GET(request: NextRequest) {
+  const denied = await requireItSeat()
+  if (denied) return denied
+  const q = normaliseGreek(request.nextUrl.searchParams.get('q') || '')
+  if (q.length < 2) return NextResponse.json({ ok: true, matches: [] })
+  try {
+    // Όλα τα μέλη (λίγες εκατοντάδες) και φιλτράρισμα εδώ: το Strapi
+    // «containsi» αγνοεί πεζά/κεφαλαία αλλά ΟΧΙ τόνους — «Γιωργος» δεν
+    // θα έβρισκε ποτέ τον «Γιώργο».
+    const r = await strapi('/members?fields[0]=Name&fields[1]=EngName&fields[2]=Email&fields[3]=AM&pagination[limit]=1000&sort=Name:asc')
+    if (!r.ok) return NextResponse.json({ error: `Το Strapi δεν απάντησε (${r.status})` }, { status: 502 })
+    const matches = (r.json?.data || [])
+      .filter((m: any) => [m.Name, m.EngName, m.Email].some(v => normaliseGreek(String(v || '')).includes(q)))
+      .slice(0, 12)
+      .map((m: any) => ({ docId: String(m.documentId || ''), name: String(m.Name || ''), engName: String(m.EngName || ''), am: m.AM ?? null, email: String(m.Email || '') }))
+    return NextResponse.json({ ok: true, matches })
+  } catch (error) {
+    console.error('oc member email search error:', error)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const denied = await requireItSeat()
+  if (denied) return denied
 
   let body: any
   try { body = await request.json() } catch {
     return NextResponse.json({ error: 'Μη έγκυρο αίτημα' }, { status: 400 })
   }
-  const currentEmail = String(body?.currentEmail || '').trim().toLowerCase()
+  const memberDocId = String(body?.memberDocId || '').replace(/[^a-z0-9]/gi, '')
   const newEmail = String(body?.newEmail || '').trim().toLowerCase()
   const dryRun = body?.dryRun === true
-  if (!EMAIL_RE.test(currentEmail)) {
-    return NextResponse.json({ error: 'Μη έγκυρο τρέχον email' }, { status: 400 })
+  if (!memberDocId) {
+    return NextResponse.json({ error: 'Διάλεξε μέλος' }, { status: 400 })
   }
   if (!dryRun && !EMAIL_RE.test(newEmail)) {
     return NextResponse.json({ error: 'Μη έγκυρο νέο email' }, { status: 400 })
-  }
-  if (!dryRun && newEmail === currentEmail) {
-    return NextResponse.json({ error: 'Το νέο email είναι ίδιο με το τρέχον' }, { status: 400 })
   }
   const requestedVia = String(body?.requestedVia || '').trim()
   const requestedDetail = String(body?.requestedDetail || '').trim().slice(0, 500)
@@ -104,23 +139,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Για «Άλλο» γράψε πώς ζητήθηκε η αλλαγή' }, { status: 400 })
   }
   const requestedLabel = requestedVia === 'Άλλο' ? `Άλλο: ${requestedDetail}` : requestedVia
+  const includeOwedReminder = body?.includeOwedReminder !== false
 
   try {
     // ── Το μέλος (πηγή αλήθειας) ──
-    const found = await strapi(byEmail('members', currentEmail,
-      '&fields[0]=Email&fields[1]=AM&fields[2]=AdminNotes&fields[3]=Name'))
-    const rows: any[] = found.json?.data || []
-    if (!found.ok) {
+    const found = await strapi(`/members/${memberDocId}?${MEMBER_FIELDS.slice(1)}`)
+    if (!found.ok && found.status !== 404) {
       return NextResponse.json({ error: `Το Strapi δεν απάντησε (${found.status})` }, { status: 502 })
     }
-    if (rows.length === 0) {
-      return NextResponse.json({ error: 'Δεν βρέθηκε μέλος με αυτό το email' }, { status: 404 })
+    const member = found.json?.data
+    if (!member) {
+      return NextResponse.json({ error: 'Το μέλος δεν βρέθηκε' }, { status: 404 })
     }
-    if (rows.length > 1) {
-      return NextResponse.json({ error: 'Δύο μέλη με το ίδιο email — διόρθωσέ το πρώτα στο Strapi' }, { status: 409 })
+    const currentEmail = String(member.Email || '').trim().toLowerCase()
+    if (!currentEmail) {
+      return NextResponse.json({ error: 'Το μέλος δεν έχει email στο Strapi — βάλ' + 'το πρώτα εκεί' }, { status: 422 })
     }
-    const member = rows[0]
-    const memberInfo = { name: String(member.Name || ''), am: member.AM ?? null, docId: String(member.documentId || '') }
+    if (!dryRun && newEmail === currentEmail) {
+      return NextResponse.json({ error: 'Το νέο email είναι ίδιο με το τρέχον' }, { status: 400 })
+    }
+    const memberInfo = { name: String(member.Name || ''), am: member.AM ?? null, docId: String(member.documentId || ''), email: currentEmail }
+    // Εκκρεμείς συνδρομές — μπαίνουν ως ευγενικό σημείωμα στην ειδοποίηση (ίδια λογική με το Finance)
+    const owedYears = owedSubscriptionYears(member)
 
     // Το νέο email δεν πρέπει να ανήκει σε άλλο μέλος
     if (newEmail) {
@@ -131,14 +171,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ── Πού αλλού ζει το παλιό email (για την προεπισκόπηση ΚΑΙ για τα βήματα) ──
+    // ── Πού αλλού ζει το τρέχον email (για την προεπισκόπηση ΚΑΙ για τα βήματα) ──
     const appRes = await strapi(byEmail('membership-applications', currentEmail, '&sort=SubmittedAt:desc&fields[0]=Email'))
     const application = appRes.json?.data?.[0] || null
 
     if (dryRun) {
       const nl = await strapi(byEmail('newsletter-subscribers', currentEmail, '&fields[0]=Email'))
       return NextResponse.json({
-        ok: true, member: memberInfo,
+        ok: true, member: memberInfo, owedYears,
         found: {
           application: !!application,
           newsletter: (nl.json?.data || []).length > 0,
@@ -203,12 +243,16 @@ export async function POST(request: NextRequest) {
     try {
       const firstName = String(member.Name || '').trim().split(' ')[0] || 'μέλος'
       const itSigner = await getSeatHolder('it')
-      const tpl = emailChangedEmailHtml(firstName, currentEmail, newEmail, itSigner?.engName || itSigner?.name || 'Culture for Change — IT')
+      const owed = owedYears.length && includeOwedReminder
+        ? { years: owedYears, amount: owedYears.length * SUBSCRIPTION_FEE, memberFullName: String(member.Name || '').trim(),
+            claimUrl: renewalClaimUrl(generateRenewalClaimToken(memberInfo.docId)) }
+        : null
+      const tpl = emailChangedEmailHtml(firstName, currentEmail, newEmail, itSigner?.engName || itSigner?.name || 'Culture for Change — IT', owed)
       // cc: το παλιό email (για να το μάθει και εκεί), it@ και hello@ (ίχνος στις θυρίδες των ρόλων)
       const cc = [currentEmail, IT_EMAIL, ADMIN_EMAIL]
       const sent = await sendOcEmail(newEmail, tpl.subject, tpl.html, { from: IT_FROM, replyTo: IT_EMAIL, cc })
       steps.notice = sent
-        ? { state: 'done', detail: `στάλθηκε ${athensNow()} στο ${newEmail}, κοινοποίηση: ${cc.join(', ')}` }
+        ? { state: 'done', detail: `στάλθηκε ${athensNow()} στο ${newEmail}, κοινοποίηση: ${cc.join(', ')}${owed ? ` · με σημείωμα συνδρομής (${owed.years.join(', ')})` : owedYears.length ? ' · ΧΩΡΙΣ σημείωμα συνδρομής (επιλογή IT)' : ''}` }
         : { state: 'failed', detail: 'το Resend δεν δέχτηκε το email — ενημέρωσε το μέλος με το χέρι' }
     } catch (err) {
       steps.notice = { state: 'failed', detail: `${err instanceof Error ? err.message : 'σφάλμα'} — ενημέρωσε το μέλος με το χέρι` }

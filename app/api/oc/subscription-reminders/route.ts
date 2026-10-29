@@ -7,6 +7,7 @@ import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
 import { effectiveSeat, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
 import { sendOcEmail, subscriptionReminderEmailHtml, renewalClaimUrl, FINANCE_FROM, FINANCE_EMAIL, COMMUNITY_EMAIL, ADMIN_EMAIL } from '@/lib/ocEmails'
 import { strapiFetch } from '@/lib/strapiFetch'
+import { owedSubscriptionYears, SUBSCRIPTION_FEE } from '@/lib/subscriptionOwed'
 
 /**
  * Υπενθύμιση συνδρομής σε μέλος — από τα bubbles «Προς ειδοποίηση /
@@ -61,16 +62,8 @@ export async function POST(request: NextRequest) {
     const email = String(member.Email || '').trim()
     if (!email) return NextResponse.json({ error: 'Το μέλος δεν έχει email' }, { status: 422 })
 
-    // Ποια έτη εκκρεμούν (ίδια σημασιολογία με την Επισκόπηση: 1=πληρωμένο,
-    // 0=δεν όφειλε, οτιδήποτε άλλο=εκκρεμεί)
-    const year = new Date().getFullYear()
-    const p = (member.Payments && typeof member.Payments === 'object') ? member.Payments : {}
-    const regYear = typeof member.RegistrationYear === 'number' ? member.RegistrationYear : null
-    const owed: number[] = []
-    const prev = p[String(year - 1)]
-    if (prev !== 1 && prev !== 0 && (regYear === null || regYear <= year - 1)) owed.push(year - 1)
-    const cur = p[String(year)]
-    if (cur !== 1 && cur !== 0) owed.push(year)
+    // Ποια έτη εκκρεμούν — κοινή λογική με την ειδοποίηση αλλαγής email (lib/subscriptionOwed)
+    const owed = owedSubscriptionYears(member)
     if (owed.length === 0) {
       return NextResponse.json({ error: 'Το μέλος δεν οφείλει — καμία υπενθύμιση', upToDate: true }, { status: 409 })
     }
@@ -80,7 +73,7 @@ export async function POST(request: NextRequest) {
     const finSigner = await getSeatHolder('financer')
     const claimUrl = renewalClaimUrl(generateRenewalClaimToken(memberDocId))
     const tpl = subscriptionReminderEmailHtml(
-      firstName, name, owed, owed.length * 35, claimUrl,
+      firstName, name, owed, owed.length * SUBSCRIPTION_FEE, claimUrl,
       finSigner?.engName || finSigner?.name || 'Culture for Change — Finance',
     )
     const sent = await sendOcEmail(email, tpl.subject, tpl.html, {
@@ -106,7 +99,7 @@ export async function POST(request: NextRequest) {
     })
     if (!stamp.ok) console.error('subscription-reminders: ReminderSentAt stamp failed', stamp.status)
 
-    return NextResponse.json({ ok: true, to: email, owedYears: owed, amount: owed.length * 35 })
+    return NextResponse.json({ ok: true, to: email, owedYears: owed, amount: owed.length * SUBSCRIPTION_FEE })
   } catch (err) {
     console.error('subscription-reminders failed:', err)
     return NextResponse.json({ error: 'Αποτυχία αποστολής υπενθύμισης' }, { status: 502 })

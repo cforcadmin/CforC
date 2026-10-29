@@ -3475,10 +3475,54 @@ export function workingGroupProposalEmailHtml(opts: {
  * αν την αλλαγή δεν τη ζήτησε εκείνο, το παλιό γραμματοκιβώτιο είναι το μόνο
  * που θα το μάθει. Ίδιο κέλυφος με το welcome (υπογραφή IT).
  */
+export interface EmailChangedOwed {
+  years: number[]          // εκκρεμή έτη, π.χ. [2025, 2026]
+  amount: number           // σύνολο σε €
+  memberFullName: string   // για την αιτιολογία κατάθεσης
+  claimUrl: string         // «Έκανα την κατάθεση» (ίδιος σύνδεσμος με την υπενθύμιση συνδρομής)
+}
+
 export function emailChangedEmailHtml(
   firstName: string, oldEmail: string, newEmail: string, signerName = 'Culture for Change — IT',
+  owed?: EmailChangedOwed | null,
 ): { subject: string; html: string } {
   const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  // Με την ευκαιρία της αλλαγής: αν εκκρεμούν συνδρομές, μια ευγενική
+  // υπενθύμιση με τα ίδια στοιχεία πληρωμής και το ίδιο κουμπί που στέλνει
+  // το Finance — όχι δεύτερο «μήνυμα πίεσης», ένα απλό σημείωμα.
+  const owedSection = owed && owed.years.length ? `
+<tr><td class="px" style="padding:28px 48px 4px 48px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;letter-spacing:1.4px;color:#FF8B6A;font-weight:bold;mso-line-height-rule:exactly;">ΜΕ ΤΗΝ ΕΥΚΑΙΡΙΑ</td></tr>
+  <tr>
+    <td class="px" style="padding:12px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 16px 0;">Αφού ενημερώναμε τα στοιχεία σου, είδαμε ότι στο Μητρώο εκκρεμεί η συνδρομή σου για ${owed.years.length > 1 ? `τα έτη ${esc(owed.years.join(' και '))}` : `το έτος ${esc(String(owed.years[0]))}`}. Η ετήσια συνδρομή είναι το πιο άμεσο στήριγμα της δράσης του δικτύου — αν μπορείς να την τακτοποιήσεις, θα το εκτιμήσουμε πολύ. Αν έχεις ήδη πληρώσει, αγνόησε αυτή την παράγραφο ή απάντησέ μας για να το ελέγξουμε.</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" style="padding:0 48px 0 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;border-radius:16px;">
+        <tr><td style="padding:16px 20px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#2D2D2D;mso-line-height-rule:exactly;">
+          <p style="margin:0 0 6px 0;"><strong>Ποσό:</strong> ${esc(String(owed.amount))},00 €</p>
+          <p style="margin:0 0 6px 0;"><strong>Τράπεζα:</strong> ALPHA BANK</p>
+          <p style="margin:0 0 6px 0;"><strong>IBAN:</strong> <span style="white-space:nowrap;">GR71 0140 1420 1420 0232 0005 140</span></p>
+          <p style="margin:0 0 6px 0;"><strong>Δικαιούχος:</strong> Culture for Change — Σωματείο</p>
+          <p style="margin:0;"><strong>Αιτιολογία:</strong> ${esc(owed.memberFullName)} — Συνδρομή</p>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" style="padding:16px 48px 0 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td class="btn" align="center" bgcolor="#FF8B6A" style="background-color:#FF8B6A;border-radius:999px;">
+            <a href="${owed.claimUrl}" style="display:block;padding:16px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:bold;color:#2D2D2D;text-decoration:none;border-radius:999px;mso-line-height-rule:exactly;">Έκανα την κατάθεση — ανέβασε το αποδεικτικό ✓</a>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#8A8A8A;">Μόλις καταχωρηθεί η πληρωμή σου θα λάβεις την απόδειξή σου με email, στο νέο σου email.</p>
+    </td>
+  </tr>
+` : ''
   const html = `<!DOCTYPE html>
 <html lang="el">
 <head>
@@ -3553,6 +3597,7 @@ export function emailChangedEmailHtml(
     </td>
   </tr>
 
+${owedSection}
 <tr><td class="px" style="padding:28px 48px 4px 48px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;letter-spacing:1.4px;color:#FF8B6A;font-weight:bold;mso-line-height-rule:exactly;">ΔΕΝ ΤΟ ΖΗΤΗΣΕΣ ΕΣΥ;</td></tr>
   <tr>
     <td class="px" style="padding:12px 48px 8px 48px;">
