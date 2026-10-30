@@ -807,7 +807,8 @@ export default function OcShell({ seats, initialSeat, wearingSeat = null, seatMo
               canIssue={activeSeat === 'financer'}
               canManual={activeSeat === 'it'}
               canRemind={activeSeat === 'financer' || activeSeat === 'community'}
-              canContracts={activeSeat === 'financer' || activeSeat === 'admin' || activeSeat === 'it'}
+              canContracts={activeSeat === 'financer' || activeSeat === 'admin' || activeSeat === 'it' || activeSeat === 'coordinator'}
+              contractsReadOnly={activeSeat === 'coordinator'}
               seat={activeSeat}
               members={(overview?.members || []).map(m => ({
                 docId: m.docId, name: m.name, am: m.am, email: m.email,
@@ -823,7 +824,8 @@ export default function OcShell({ seats, initialSeat, wearingSeat = null, seatMo
             <OcAdmin
               canEdit={activeSeat === 'admin' || activeSeat === 'it'}
               canDispatch={activeSeat === 'admin' || activeSeat === 'it'}
-              canContracts={activeSeat === 'financer' || activeSeat === 'admin' || activeSeat === 'it'}
+              canContracts={activeSeat === 'financer' || activeSeat === 'admin' || activeSeat === 'it' || activeSeat === 'coordinator'}
+              contractsReadOnly={activeSeat === 'coordinator'}
               seat={activeSeat}
             />
           )}

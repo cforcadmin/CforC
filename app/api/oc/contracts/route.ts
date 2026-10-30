@@ -19,14 +19,17 @@ export const maxDuration = 60
  *   PATCH  {id, …πεδία}    → ενημέρωση
  *   PATCH  {id, archived}  → αρχειοθέτηση/επαναφορά (δεν υπάρχει διαγραφή)
  *
- * Πρόσβαση: ΜΟΝΟ Financer, Διαχείριση (admin) και IT — και ο έλεγχος γίνεται
- * εδώ, στον server, όχι μόνο στην οθόνη. Το περιεχόμενο (ΑΦΜ, IBAN, αμοιβές)
+ * Πρόσβαση: γράφουν ΜΟΝΟ Financer, Διαχείριση (admin) και IT. Η Συντονίστρια
+ * (coordinator) ΒΛΕΠΕΙ μόνο (GET) — 29/10/2026, αίτημα coordination@. Ο
+ * έλεγχος γίνεται εδώ, στον server, όχι μόνο στην οθόνη. Το περιεχόμενο (ΑΦΜ, IBAN, αμοιβές)
  * δεν γράφεται ΠΟΤΕ σε logs: στα σφάλματα καταγράφεται μόνο κατάσταση και id.
  */
 
 const STRAPI_URL = process.env.STRAPI_URL || process.env.NEXT_PUBLIC_STRAPI_URL
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN
 const ALLOWED_SEATS: OcSeat[] = ['financer', 'admin', 'it']
+/** Μόνο ανάγνωση: η Συντονίστρια βλέπει το μητρώο, δεν το αλλάζει */
+const READ_SEATS: OcSeat[] = [...ALLOWED_SEATS, 'coordinator']
 
 /** Τα πεδία που δέχεται το API — ό,τι άλλο έρθει αγνοείται σιωπηλά */
 const TEXT_FIELDS = [
@@ -50,7 +53,7 @@ async function strapi(path: string, method: string = 'GET', data?: any) {
   return { ok: res.ok, status: res.status, json }
 }
 
-async function authorize() {
+async function authorize(allowed: OcSeat[] = ALLOWED_SEATS) {
   const cookieStore = await cookies()
   const sessionCookie = cookieStore.get('session')
   const decoded = sessionCookie ? verifyToken(sessionCookie.value) : null
@@ -62,8 +65,8 @@ async function authorize() {
   const seatCookie = cookieStore.get('oc-last-seat')?.value as OcSeat | undefined
   const activeSeat: OcSeat | null =
     effectiveSeat(access.seats as OcSeat[], seatCookie, cookieStore.get(OC_SEAT_MODE_COOKIE)?.value)
-  if (!activeSeat || !ALLOWED_SEATS.includes(activeSeat)) {
-    return { error: NextResponse.json({ error: 'Το μητρώο συμβάσεων ανήκει σε Οικονομικά, Διαχείριση και IT' }, { status: 403 }) }
+  if (!activeSeat || !allowed.includes(activeSeat)) {
+    return { error: NextResponse.json({ error: 'Το μητρώο συμβάσεων το αλλάζουν μόνο Οικονομικά, Διαχείριση και IT — η Συντονίστρια το βλέπει μόνο' }, { status: 403 }) }
   }
   return { memberId: decoded.memberId, activeSeat }
 }
@@ -124,7 +127,7 @@ function readInput(body: any, requireName: boolean): { data: Record<string, any>
 }
 
 export async function GET(request: NextRequest) {
-  const auth = await authorize()
+  const auth = await authorize(READ_SEATS)
   if ('error' in auth) return auth.error
   try {
     const withArchived = request.nextUrl.searchParams.get('archived') === '1'

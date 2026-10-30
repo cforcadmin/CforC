@@ -76,7 +76,7 @@ const CONNECTION_MESSAGES: Record<string, { title: string; detail: string }> = {
   },
 }
 
-export default function OcFinances({ canIssue, canManual = false, canRemind, members, subMembers, canContracts = false, seat = null }: {
+export default function OcFinances({ canIssue, canManual = false, canRemind, members, subMembers, canContracts = false, contractsReadOnly = false, seat = null }: {
   canIssue: boolean
   /** IT: μόνο χειροκίνητες καταχωρήσεις εξόδων */
   canManual?: boolean
@@ -85,6 +85,7 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
   subMembers: SubMemberRow[]
   /** Μητρώο συμβάσεων: Financer, Διαχείριση και IT (ίδιο με το API) */
   canContracts?: boolean
+  contractsReadOnly?: boolean
   /** Ενεργή θέση — κάθε ρόλος έχει τη δική του σειρά καρτών */
   seat?: string | null
 }) {
@@ -746,7 +747,7 @@ export default function OcFinances({ canIssue, canManual = false, canRemind, mem
       <OcMonthlyView key="monthly" mode="financer" canReady={canIssue} />
 
       {/* Μητρώο συμβάσεων — ίδια κάρτα και στη Διαχείριση, μία υλοποίηση */}
-      {canContracts ? <OcContracts key="contracts" canEdit={canContracts} /> : null}
+      {canContracts ? <OcContracts key="contracts" canEdit={canContracts && !contractsReadOnly} /> : null}
 
       {/* Λίστα αποδείξεων: πρόσφατες / όλες */}
       <div key="receipts" className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">

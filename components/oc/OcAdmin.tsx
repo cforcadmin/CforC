@@ -30,7 +30,7 @@ const LINKS = [
 ]
 
 
-export default function OcAdmin({ canEdit, canDispatch, canContracts = false, seat = null }: { canEdit: boolean; canDispatch: boolean; canContracts?: boolean; seat?: string | null }) {
+export default function OcAdmin({ canEdit, canDispatch, canContracts = false, contractsReadOnly = false, seat = null }: { canEdit: boolean; canDispatch: boolean; canContracts?: boolean; contractsReadOnly?: boolean; seat?: string | null }) {
   const [events, setEvents] = useState<CalEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -138,7 +138,7 @@ export default function OcAdmin({ canEdit, canDispatch, canContracts = false, se
       <OcMonthlyView key="monthly" mode="admin" canDispatch={canDispatch} />
 
       {/* Μητρώο συμβάσεων — η ίδια κάρτα με τα Οικονομικά */}
-      {canContracts ? <OcContracts key="contracts" canEdit={canContracts} /> : null}
+      {canContracts ? <OcContracts key="contracts" canEdit={canContracts && !contractsReadOnly} /> : null}
 
       {/* Σύνδεσμοι */}
       <div key="links" className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">

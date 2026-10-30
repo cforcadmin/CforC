@@ -302,11 +302,16 @@ export default function OcContracts({ canEdit }: { canEdit: boolean }) {
                 </svg>
               </button>
 
-              {canEdit && (
+              {canEdit ? (
                 <button type="button" onClick={() => setCreating(true)}
                   className="h-9 px-5 rounded-full bg-coral text-white text-sm font-bold hover:bg-coral/90">
                   + Νέα σύμβαση
                 </button>
+              ) : (
+                <span className="h-9 px-4 inline-flex items-center rounded-full border border-gray-300 dark:border-gray-600 text-xs text-gray-600 dark:text-gray-400"
+                  title="Η θέση σου βλέπει το μητρώο συμβάσεων, δεν το αλλάζει">
+                  Μόνο ανάγνωση
+                </span>
               )}
             </span>
           </div>
