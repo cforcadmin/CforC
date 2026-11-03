@@ -44,10 +44,10 @@ describe('Φραγμός χρόνου στον βρόχο επανάληψης',
     expect(calls).toHaveLength(2)
   }, 20000)
 
-  it('και οι τρεις βρόχοι έχουν φραγμό', () => {
+  it('και οι τέσσερις βρόχοι έχουν φραγμό (Μητρώο: πληρωμή, έτος συνδρομής, αλλαγή email · Finance: 1)', () => {
     const gs = fs.readFileSync('lib/googleSheets.ts', 'utf8')
     const fin = fs.readFileSync('lib/financeSheet.ts', 'utf8')
-    expect((gs.match(/const deadline = Date\.now\(\)/g) || []).length).toBe(2)
+    expect((gs.match(/const deadline = Date\.now\(\)/g) || []).length).toBe(3)
     expect((fin.match(/const deadline = Date\.now\(\)/g) || []).length).toBe(1)
   })
 })

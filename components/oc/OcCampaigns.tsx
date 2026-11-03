@@ -10,6 +10,7 @@ import { PV_BASE_TRACK, PV_STICKY_TOP } from './usePreviewSize'
 import { usePreviewPane, OcPreviewPane } from './OcPreviewPane'
 import { canNewsletterFrom, bulkLabel } from '@/components/oc/ocPrefs'
 import type { NewsletterFooter } from '@/lib/campaignBlocks'
+import { extractEmails, emailCandidates, normaliseEmail, isValidEmail, looksLikeEmailList } from '@/lib/emailList'
 
 /**
  * Αποστολή email — το γραφείο αποστολής της κάθε έδρας.
@@ -2845,7 +2846,7 @@ function RecipientPicker({ meta, selection, setSelection }: { meta: Meta; select
       <div>
         <h4 className="text-sm font-semibold mb-2">Εξωτερικές διευθύνσεις</h4>
         <EmailAdder values={selection.external || []} onChange={v => setSelection({ ...selection, external: v })}
-          placeholder="όνομα@παράδειγμα.gr" />
+          placeholder="όνομα@παράδειγμα.gr" listImport />
       </div>
     </div>
   )
@@ -2916,26 +2917,81 @@ function MemberAdder({ people, values, onChange }: {
   )
 }
 
-function EmailAdder({ values, onChange, placeholder }: { values: string[]; onChange: (v: string[]) => void; placeholder: string }) {
+/**
+ * Διευθύνσεις ως φυσαλίδες. Enter, κόμμα ή το κουμπί κλείνουν τη μία και
+ * περιμένουν την επόμενη· μια επικολλημένη λίστα (στήλη φύλλου, «a, b; c»,
+ * «Όνομα <email>») μπαίνει ολόκληρη με μία κίνηση — οι άκυρες μένουν στο
+ * πεδίο με μήνυμα, δεν χάνονται.
+ *
+ * listImport: κουμπί «Προσθήκη μέσω λίστας» — επικόλληση σε πλαίσιο, μία
+ * επεξεργάσιμη γραμμή ανά διεύθυνση (διόρθωση, αφαίρεση, νέα γραμμή), και
+ * προσθήκη μόνο των έγκυρων. Χωρίς μορφή: ό,τι έχει «@» είναι υποψήφιο, τα
+ * ονόματα και οι επικεφαλίδες της στήλης αγνοούνται.
+ */
+function EmailAdder({ values, onChange, placeholder, listImport }: {
+  values: string[]; onChange: (v: string[]) => void; placeholder: string; listImport?: boolean
+}) {
   const [draft, setDraft] = useState('')
   const [err, setErr] = useState('')
-  const add = () => {
-    const v = draft.trim().toLowerCase()
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { setErr('Μη έγκυρη διεύθυνση'); return }
-    if (values.includes(v)) { setErr('Υπάρχει ήδη'); return }
-    onChange([...values, v]); setDraft(''); setErr('')
+  const [panel, setPanel] = useState(false)
+
+  /* Προσθήκη ΠΟΛΛΩΝ μαζί: οι έγκυρες γίνονται φυσαλίδες, οι άκυρες γυρίζουν
+     στο πεδίο για διόρθωση. Αν δεν βρεθεί τίποτα με «@», το κείμενο μένει
+     όπως είναι — δεν σβήνουμε ό,τι έγραψε ο χρήστης. */
+  const addMany = (text: string) => {
+    const { valid, invalid } = extractEmails(text)
+    if (!valid.length && !invalid.length) { setErr('Μη έγκυρη διεύθυνση'); return }
+    const fresh = valid.filter(v => !values.includes(v))
+    if (fresh.length) onChange([...values, ...fresh])
+    const dup = valid.length - fresh.length
+    const bits: string[] = []
+    if (invalid.length) bits.push(`Μη έγκυρη: ${invalid.join(', ')}`)
+    if (dup) bits.push(dup === 1 ? 'Μία υπήρχε ήδη' : `${dup} υπήρχαν ήδη`)
+    setErr(bits.join(' · '))
+    setDraft(invalid.join(', '))
   }
+  const add = () => { if (draft.trim()) addMany(draft) }
+
   return (
     <div>
       <div className="flex gap-2">
         <input type="email" value={draft} translate="no" placeholder={placeholder}
-          onChange={e => { setDraft(e.target.value); setErr('') }}
+          onChange={e => {
+            const v = e.target.value
+            /* Το κόμμα κλείνει τη διεύθυνση τη στιγμή που γράφεται. */
+            if (v.includes(',')) addMany(v)
+            else { setDraft(v); setErr('') }
+          }}
+          onPaste={e => {
+            /* Το πεδίο μίας γραμμής κολλάει τις γραμμές μιας στήλης χωρίς
+               διαχωριστικό — διαβάζουμε το πρόχειρο πριν προλάβει. Μία σκέτη
+               διεύθυνση επικολλάται κανονικά, για να διορθωθεί πριν μπει. */
+            const t = e.clipboardData.getData('text')
+            if (looksLikeEmailList(t)) { e.preventDefault(); addMany(draft ? `${draft} ${t}` : t) }
+          }}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add() } }}
           className={`flex-1 min-w-0 ${FIELD}`} />
         <button type="button" onClick={add}
           className="px-4 min-h-11 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-700">Προσθήκη</button>
       </div>
-      {err && <p className="mt-1.5 text-sm text-red-700 dark:text-red-300">{err}</p>}
+      {err && <p className="mt-1.5 text-sm text-red-700 dark:text-red-300" translate="no">{err}</p>}
+      {listImport && !panel && (
+        <button type="button" onClick={() => setPanel(true)}
+          className="mt-2 text-sm text-gray-700 dark:text-gray-300 underline underline-offset-2 hover:text-coral">
+          Προσθήκη μέσω λίστας
+        </button>
+      )}
+      {listImport && panel && (
+        <EmailListPanel existing={values}
+          onAdd={fresh => onChange([...values, ...fresh])}
+          onClose={() => setPanel(false)} />
+      )}
+      {values.length >= 2 && (
+        <div className="flex items-center justify-between mt-3 text-xs text-gray-600 dark:text-gray-400">
+          <span className="tabular-nums">{values.length} διευθύνσεις</span>
+          <button type="button" onClick={() => onChange([])} className="underline underline-offset-2 hover:text-red-600">Καθαρισμός όλων</button>
+        </div>
+      )}
       <div className="flex flex-wrap gap-2 mt-2">
         {values.map(v => (
           <span key={v} className={`${CHIP} border-gray-300 dark:border-gray-600`} translate="no">
@@ -2944,6 +3000,134 @@ function EmailAdder({ values, onChange, placeholder }: { values: string[]; onCha
               className="text-gray-500 hover:text-red-600">✕</button>
           </span>
         ))}
+      </div>
+    </div>
+  )
+}
+
+type EmailRow = { id: number; text: string }
+type EmailRowState = 'ok' | 'invalid' | 'dup' | 'empty'
+
+/**
+ * Το πλαίσιο της λίστας: επικόλληση πάνω, μία γραμμή ανά διεύθυνση κάτω.
+ * Κάθε γραμμή διορθώνεται επί τόπου· η κατάστασή της (έγκυρη / άκυρη /
+ * υπάρχει ήδη / κενή) φαίνεται δίπλα της, όχι σε μπάνερ. «Προσθήκη Ν» βάζει
+ * ΜΟΝΟ τις έγκυρες και αφήνει τις άλλες στο πλαίσιο για να διορθωθούν.
+ */
+function EmailListPanel({ existing, onAdd, onClose }: {
+  existing: string[]; onAdd: (fresh: string[]) => void; onClose: () => void
+}) {
+  const [rows, setRows] = useState<EmailRow[]>([])
+  const [pasteText, setPasteText] = useState('')
+  const [added, setAdded] = useState(0)
+  const nextId = useRef(1)
+  const focusId = useRef<number | null>(null)
+
+  const appendRows = (texts: string[]) => {
+    if (!texts.length) return
+    setRows(r => [...r, ...texts.map(t => ({ id: nextId.current++, text: t }))])
+  }
+  const ingest = (text: string) => {
+    const found = emailCandidates(text)
+    appendRows(found)
+    setPasteText('')
+    return found.length
+  }
+  const newRow = () => {
+    const id = nextId.current++
+    focusId.current = id
+    setRows(r => [...r, { id, text: '' }])
+  }
+
+  const stateOf = (row: EmailRow, i: number): EmailRowState => {
+    const e = normaliseEmail(row.text)
+    if (!e) return 'empty'
+    if (!isValidEmail(e)) return 'invalid'
+    if (existing.includes(e)) return 'dup'
+    if (rows.slice(0, i).some(o => normaliseEmail(o.text) === e)) return 'dup'
+    return 'ok'
+  }
+  const states = rows.map(stateOf)
+  const n = { ok: 0, invalid: 0, dup: 0, empty: 0 }
+  for (const st of states) n[st]++
+
+  const commit = () => {
+    const fresh = rows.filter((_, i) => states[i] === 'ok').map(r => normaliseEmail(r.text))
+    const rest = rows.filter((_, i) => states[i] !== 'ok' && states[i] !== 'empty')
+    if (fresh.length) onAdd(fresh)
+    setAdded(a => a + fresh.length)
+    setRows(rest)
+    if (!rest.length) onClose()
+  }
+
+  const LABEL: Record<EmailRowState, string> = { ok: '', invalid: 'άκυρη', dup: 'υπάρχει ήδη', empty: 'κενή' }
+  const BORDER: Record<EmailRowState, string> = {
+    ok: 'border-gray-200 dark:border-gray-600', invalid: 'border-red-500', dup: 'border-amber-500', empty: 'border-gray-200 dark:border-gray-600',
+  }
+
+  return (
+    <div className="mt-3 rounded-2xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-4 grid gap-3">
+      <div>
+        <div className="text-sm font-semibold mb-1">Προσθήκη μέσω λίστας</div>
+        <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+          Επικόλλησε τη στήλη με τα email από το φύλλο — ή οποιαδήποτε λίστα. Δεν χρειάζεται μορφή: ονόματα και επικεφαλίδες αγνοούνται.
+        </p>
+        <textarea value={pasteText} translate="no" rows={2}
+          placeholder="Επικόλλησε εδώ…"
+          onChange={e => setPasteText(e.target.value)}
+          onPaste={e => { e.preventDefault(); ingest(pasteText ? `${pasteText}\n${e.clipboardData.getData('text')}` : e.clipboardData.getData('text')) }}
+          className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm" />
+        {pasteText.trim() && (
+          <button type="button" onClick={() => ingest(pasteText)}
+            className="mt-1.5 text-sm underline underline-offset-2">Ανάλυση κειμένου</button>
+        )}
+      </div>
+
+      {rows.length > 0 && (
+        <div className="grid gap-1.5">
+          {rows.map((row, i) => {
+            const st = states[i]
+            return (
+              <div key={row.id} className="flex items-center gap-2">
+                <input type="text" value={row.text} translate="no" autoComplete="off"
+                  autoFocus={focusId.current === row.id}
+                  onChange={e => setRows(r => r.map(x => x.id === row.id ? { ...x, text: e.target.value } : x))}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); newRow() } }}
+                  className={`flex-1 min-w-0 min-h-11 px-3 rounded-xl border bg-white dark:bg-gray-800 text-sm ${BORDER[st]}`} />
+                <span className={`w-24 shrink-0 text-xs ${st === 'invalid' ? 'text-red-700 dark:text-red-300' : st === 'dup' ? 'text-amber-700 dark:text-amber-300' : 'text-gray-500'}`}>
+                  {LABEL[st]}
+                </span>
+                <button type="button" onClick={() => setRows(r => r.filter(x => x.id !== row.id))}
+                  aria-label={`Αφαίρεση ${row.text || 'γραμμής'}`}
+                  className="min-h-11 min-w-11 text-gray-500 hover:text-red-600">✕</button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-600 dark:text-gray-400">
+        <button type="button" onClick={newRow} className="text-sm underline underline-offset-2">+ Νέα γραμμή</button>
+        {rows.length > 0 && (
+          <span className="tabular-nums">
+            {n.ok} έτοιμες
+            {n.invalid > 0 && <> · <span className="text-red-700 dark:text-red-300">{n.invalid} άκυρες</span></>}
+            {n.dup > 0 && <> · <span className="text-amber-700 dark:text-amber-300">{n.dup} υπάρχουν ήδη</span></>}
+            {n.empty > 0 && <> · {n.empty} κενές</>}
+          </span>
+        )}
+        {added > 0 && <span className="tabular-nums text-green-700 dark:text-green-300">προστέθηκαν {added}</span>}
+      </div>
+
+      <div className="flex gap-2">
+        <button type="button" onClick={commit} disabled={!n.ok}
+          className="px-4 min-h-11 rounded-full bg-coral text-white text-sm font-semibold disabled:opacity-40">
+          Προσθήκη {n.ok > 0 ? n.ok : ''}
+        </button>
+        <button type="button" onClick={onClose}
+          className="px-4 min-h-11 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-700">
+          Κλείσιμο
+        </button>
       </div>
     </div>
   )
