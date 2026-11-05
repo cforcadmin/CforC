@@ -1,5 +1,5 @@
 import {
-  computeTotals, eventDays, ibanLooksValid, normaliseIban, validateClaim,
+  computeTotals, eventDays, ibanLooksValid, normaliseIban, validateClaim, validateClaimDetail,
   buildAttachmentName, buildClaimPdfName, formatClaimNumber, receiptSpec,
   buildReturnLegs, allLegs, missingTravelLines, TRAVEL_MODES, RECEIPT_TYPES,
   type ClaimLine, eventFromSlug, claimWindowOpen, claimWindow, banSeatNote, MIDTERM_2026 } from '@/lib/expenseClaims'
@@ -88,8 +88,8 @@ describe('εξοδολόγια — έλεγχος υποβολής', () => {
   })
 
   it('απορρίπτει άγνωστη κατηγορία ή είδος παραστατικού', () => {
-    expect(validateClaim(claim({ lines: [line({ category: 'Καύσιμα' })] }) as any)).toMatch(/κατηγορία/)
-    expect(validateClaim(claim({ lines: [line({ receiptType: 'Κάτι άλλο' })] }) as any)).toMatch(/είδος παραστατικού/)
+    expect(validateClaim(claim({ lines: [line({ category: 'Καύσιμα' })] }) as any)).toMatch(/ΕΞΟΔΟ 1: διάλεξε «Κατηγορία»/)
+    expect(validateClaim(claim({ lines: [line({ receiptType: 'Κάτι άλλο' })] }) as any)).toMatch(/ΕΞΟΔΟ 1: διάλεξε «Είδος παραστατικού»/)
   })
 
   it('απορρίπτει άκυρες ημερομηνίες και αρνητικά ποσά', () => {
@@ -326,5 +326,21 @@ describe('claimWindow', () => {
   it('το παράθυρο ανοίγει ΜΕΤΑ τη δράση και κλείνει μέσα στον ίδιο μήνα', () => {
     expect(MIDTERM_2026.claimsCloseOn > MIDTERM_2026.end).toBe(true)
     expect(MIDTERM_2026.claimsCloseOn.startsWith('2026-11')).toBe(true)
+  })
+})
+
+describe('validateClaimDetail — θέση του σφάλματος', () => {
+  it('κενή «Έναρξη» στη δεύτερη γραμμή: line 1, field date, λέξεις της οθόνης', () => {
+    const p = validateClaimDetail(claim({ lines: [line(), line({ date: '' })] }) as any)
+    expect(p).toMatchObject({ line: 1, field: 'date' })
+    expect(p!.message).toMatch(/^ΕΞΟΔΟ 2: συμπλήρωσε την «Έναρξη»/)
+  })
+  it('σφάλμα εκτός γραμμών: χωρίς line/field', () => {
+    const p = validateClaimDetail(claim({ eventType: 'Project' }) as any)
+    expect(p!.line).toBeUndefined()
+    expect(p!.field).toBeUndefined()
+  })
+  it('validateClaim = μόνο το μήνυμα', () => {
+    expect(validateClaim(claim({ lines: [line(), line({ date: '' })] }) as any)).toBe(validateClaimDetail(claim({ lines: [line(), line({ date: '' })] }) as any)!.message)
   })
 })

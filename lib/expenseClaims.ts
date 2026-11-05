@@ -415,42 +415,52 @@ export function ibanLooksValid(raw: string): boolean {
 }
 
 /** Ο server ΔΕΝ εμπιστεύεται τη φόρμα: ό,τι φτάνει εδώ ξαναελέγχεται */
-export function validateClaim(input: ClaimInput): string | null {
-  if (!EVENT_TYPES.includes(input.eventType as EventType)) return 'Διάλεξε αφορμή μετακίνησης'
+/** Ποιο πεδίο μιας γραμμής εξόδου φταίει — για να το δείξει η φόρμα ΕΠΙ ΤΟΠΟΥ. */
+export type ClaimLineField = 'category' | 'receiptType' | 'amount' | 'date' | 'dateEnd' | 'file1' | 'file2'
+export type ClaimProblem = { message: string; line?: number; field?: ClaimLineField }
+
+/**
+ * Ο ΙΔΙΟΣ έλεγχος με το validateClaim, με θέση: ποια γραμμή (0-based) και
+ * ποιο πεδίο. Τα μηνύματα χρησιμοποιούν τις ΛΕΞΕΙΣ ΤΗΣ ΟΘΟΝΗΣ («ΕΞΟΔΟ 2»,
+ * «Έναρξη») — το «Γραμμή 2: ημερομηνία έναρξης» διαβάστηκε ως η ημερομηνία
+ * της δράσης, που ήταν συμπληρωμένη (5/11/2026).
+ */
+export function validateClaimDetail(input: ClaimInput): ClaimProblem | null {
+  if (!EVENT_TYPES.includes(input.eventType as EventType)) return { message: 'Διάλεξε αφορμή μετακίνησης' }
   if (EVENT_NEEDS_NAME.includes(input.eventType as EventType) && !String(input.eventName || '').trim()) {
-    return 'Συμπλήρωσε για ποια δράση ή project πρόκειται'
+    return { message: 'Συμπλήρωσε για ποια δράση ή project πρόκειται' }
   }
   const days = eventDays(input.eventStart, input.eventEnd)
-  if (days === null) return 'Οι ημερομηνίες διεξαγωγής δεν είναι έγκυρες'
-  if (days > 60) return 'Οι ημερομηνίες διεξαγωγής μοιάζουν λάθος (πάνω από 60 ημέρες)'
+  if (days === null) return { message: 'Οι ημερομηνίες διεξαγωγής δεν είναι έγκυρες' }
+  if (days > 60) return { message: 'Οι ημερομηνίες διεξαγωγής μοιάζουν λάθος (πάνω από 60 ημέρες)' }
 
   const legs = Array.isArray(input.travelLegs) ? input.travelLegs : []
   for (const [i, l] of legs.entries()) {
     const from = String(l?.from || '').trim()
     const to = String(l?.to || '').trim()
     if (!from && !to) continue
-    if (!from || !to) return `Σκέλος ${i + 1}: συμπλήρωσε και τις δύο πόλεις`
-    if (!String(l?.mode || '').trim()) return `Σκέλος ${i + 1}: διάλεξε μέσο μετακίνησης`
+    if (!from || !to) return { message: `Σκέλος ${i + 1}: συμπλήρωσε και τις δύο πόλεις` }
+    if (!String(l?.mode || '').trim()) return { message: `Σκέλος ${i + 1}: διάλεξε μέσο μετακίνησης` }
   }
 
   const lines = Array.isArray(input.lines) ? input.lines : []
-  if (!lines.length) return 'Πρόσθεσε τουλάχιστον ένα έξοδο'
-  if (lines.length > MAX_LINES) return `Το πολύ ${MAX_LINES} γραμμές εξόδων`
+  if (!lines.length) return { message: 'Πρόσθεσε τουλάχιστον ένα έξοδο' }
+  if (lines.length > MAX_LINES) return { message: `Το πολύ ${MAX_LINES} γραμμές εξόδων` }
   for (const [i, l] of lines.entries()) {
     const n = i + 1
-    if (!EXPENSE_CATEGORIES.includes(l.category as ExpenseLineCategory)) return `Γραμμή ${n}: διάλεξε κατηγορία`
+    if (!EXPENSE_CATEGORIES.includes(l.category as ExpenseLineCategory)) return { message: `ΕΞΟΔΟ ${n}: διάλεξε «Κατηγορία»`, line: i, field: 'category' }
     const spec = receiptSpec(l.category, l.receiptType)
-    if (!spec) return `Γραμμή ${n}: διάλεξε είδος παραστατικού`
-    if (!(Number(l.amount) > 0)) return `Γραμμή ${n}: το ποσό πρέπει να είναι μεγαλύτερο από 0`
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(l.date || ''))) return `Γραμμή ${n}: συμπλήρωσε ημερομηνία έναρξης`
+    if (!spec) return { message: `ΕΞΟΔΟ ${n}: διάλεξε «Είδος παραστατικού»`, line: i, field: 'receiptType' }
+    if (!(Number(l.amount) > 0)) return { message: `ΕΞΟΔΟ ${n}: το «Ποσό» πρέπει να είναι μεγαλύτερο από 0`, line: i, field: 'amount' }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(l.date || ''))) return { message: `ΕΞΟΔΟ ${n}: συμπλήρωσε την «Έναρξη» — την ημερομηνία του εξόδου`, line: i, field: 'date' }
     if (l.dateEnd) {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(l.dateEnd))) return `Γραμμή ${n}: μη έγκυρη ημερομηνία ολοκλήρωσης`
-      if (l.dateEnd < l.date) return `Γραμμή ${n}: η ολοκλήρωση δεν μπορεί να προηγείται της έναρξης`
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(l.dateEnd))) return { message: `ΕΞΟΔΟ ${n}: μη έγκυρη «Ολοκλήρωση»`, line: i, field: 'dateEnd' }
+      if (l.dateEnd < l.date) return { message: `ΕΞΟΔΟ ${n}: η «Ολοκλήρωση» δεν μπορεί να προηγείται της «Έναρξης»`, line: i, field: 'dateEnd' }
     }
     const files = Array.isArray(l.files) ? l.files : []
-    if (!files.some(f => f.slot === 1)) return `Γραμμή ${n}: επισύναψε το παραστατικό`
+    if (!files.some(f => f.slot === 1)) return { message: `ΕΞΟΔΟ ${n}: επισύναψε το παραστατικό`, line: i, field: 'file1' }
     if (spec.pair && !files.some(f => f.slot === 2)) {
-      return `Γραμμή ${n} (${spec.label}): λείπει η ${spec.pair.second}`
+      return { message: `ΕΞΟΔΟ ${n} (${spec.label}): λείπει η ${spec.pair.second}`, line: i, field: 'file2' }
     }
   }
 
@@ -458,13 +468,18 @@ export function validateClaim(input: ClaimInput): string | null {
   // από αυτό που γράφεται, και περνά αίτηση που μετά βγαίνει μηδενική.
   const capForCheck = eventCap(String(input.eventType || ''), countCoTravellers(input.coTravellers))
   const { total, payable } = computeTotals(lines, input.advance, capForCheck)
-  if (total <= 0) return 'Το σύνολο πρέπει να είναι μεγαλύτερο από 0'
-  if (payable < 0) return 'Η προκαταβολή δεν μπορεί να ξεπερνά το ποσό που καλύπτεται'
-  if (payable === 0) return 'Το πληρωτέο είναι 0 — δεν χρειάζεται εξοδολόγιο'
+  if (total <= 0) return { message: 'Το σύνολο πρέπει να είναι μεγαλύτερο από 0' }
+  if (payable < 0) return { message: 'Η προκαταβολή δεν μπορεί να ξεπερνά το ποσό που καλύπτεται' }
+  if (payable === 0) return { message: 'Το πληρωτέο είναι 0 — δεν χρειάζεται εξοδολόγιο' }
 
-  if (!String(input.accountHolder || '').trim()) return 'Συμπλήρωσε το όνομα δικαιούχου'
-  if (!ibanLooksValid(input.iban)) return 'Το IBAN δεν είναι έγκυρο'
+  if (!String(input.accountHolder || '').trim()) return { message: 'Συμπλήρωσε το όνομα δικαιούχου' }
+  if (!ibanLooksValid(input.iban)) return { message: 'Το IBAN δεν είναι έγκυρο' }
   return null
+}
+
+/** Μόνο το μήνυμα — για τον server και τα τεστ. */
+export function validateClaim(input: ClaimInput): string | null {
+  return validateClaimDetail(input)?.message ?? null
 }
 
 /** Ο αριθμός εξοδολογίου: ΕΞ-2026-014 */

@@ -15,7 +15,8 @@ import { useAuth } from '@/components/AuthProvider'
 import {
   EVENT_TYPES, EVENT_NEEDS_NAME, EXPENSE_CATEGORIES, RECEIPT_TYPES, receiptSpec,
   BANKS, BANK_OTHER, TRAVEL_MODES, buildReturnLegs, allLegs, missingTravelLines, computeTotals, eventDays,
-  ibanLooksValid, validateClaim, MIDTERM_2026, eventCap, countCoTravellers,
+  ibanLooksValid, validateClaimDetail, MIDTERM_2026, eventCap, countCoTravellers,
+  type ClaimProblem, type ClaimLineField,
   eventFromSlug, claimWindow, CLAIMS_LATE_CONTACT,
   type ClaimLine, type TravelLeg,
 } from '@/lib/expenseClaims'
@@ -83,7 +84,18 @@ export default function ExpenseClaimShell(
   const [showGuide, setShowGuide] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  /* Το ίδιο σφάλμα, με θέση: η γραμμή και το πεδίο που φταίει, για να
+     φωτιστεί επί τόπου — το μπάνερ στο τέλος της φόρμας δεν αρκεί. */
+  const [problem, setProblem] = useState<ClaimProblem | null>(null)
   const [done, setDone] = useState<{ claimNumber: string; payable: number } | null>(null)
+
+  /* Η «Έναρξη» κάθε εξόδου προσυμπληρώνεται με την έναρξη της δράσης — το
+     συνηθισμένο — και αλλάζει μόνο όπου διαφέρει. Πιάνει και τις γραμμές
+     που υπήρχαν πριν γραφτεί η ημερομηνία της δράσης. */
+  useEffect(() => {
+    if (!eventStart) return
+    setLines(prev => prev.some(l => !l.date) ? prev.map(l => (l.date ? l : { ...l, date: eventStart })) : prev)
+  }, [eventStart])
 
   /* Με διακριτικό στη διεύθυνση, το ποιος είναι ο άνθρωπος το λέει ο SERVER:
      η οθόνη δεν αποφασίζει ποτέ μόνη της ότι κάποιος δικαιούται να υποβάλει. */
@@ -183,7 +195,7 @@ export default function ExpenseClaimShell(
   function duplicateLine(i: number) {
     setLines(prev => {
       const src = prev[i]
-      const copy: Draft = { ...emptyLine(), category: src.category, receiptType: src.receiptType }
+      const copy: Draft = { ...emptyLine(), category: src.category, receiptType: src.receiptType, date: src.date, dateEnd: src.dateEnd }
       return [...prev.slice(0, i + 1), copy, ...prev.slice(i + 1)]
     })
   }
@@ -191,18 +203,21 @@ export default function ExpenseClaimShell(
   /** Γραμμή για σκέλος που λείπει, με το μέσο και τη διαδρομή συμπληρωμένα */
   function addLineForLeg(leg: { from: string; to: string; mode: string }) {
     setLines(prev => [...prev, {
-      ...emptyLine(), category: 'Ταξίδι', receiptType: leg.mode,
+      ...emptyLine(), category: 'Ταξίδι', receiptType: leg.mode, date: eventStart,
       description: `${leg.from} → ${leg.to}`,
     }])
   }
 
   function patch(i: number, changes: Partial<Draft>) {
+    // Μόλις αγγιχτεί το πεδίο που φταίει, σβήνει η επισήμανσή του
+    if (problem && problem.line === i && problem.field && problem.field in changes) { setProblem(null); setError(null) }
     setLines(prev => prev.map((l, idx) => (idx === i ? { ...l, ...changes } : l)))
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    setProblem(null)
 
     const payload = {
       phone,
@@ -226,8 +241,15 @@ export default function ExpenseClaimShell(
       ;(payload as any).claimToken = claimToken
       ;(payload as any).eventSlug = eventSlug
     }
-    const problem = validateClaim(payload as any)
-    if (problem) { setError(problem); return }
+    const found = validateClaimDetail(payload as any)
+    if (found) {
+      setError(found.message)
+      setProblem(found)
+      if (found.line != null) {
+        requestAnimationFrame(() => document.getElementById(`expense-line-${found.line}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+      }
+      return
+    }
 
     setBusy(true)
     try {
@@ -580,14 +602,19 @@ export default function ExpenseClaimShell(
           <div className="space-y-6">
             {lines.map((line, i) => {
               const spec = receiptSpec(line.category, line.receiptType)
+              /* Το μήνυμα για ΑΥΤΟ το πεδίο αυτής της γραμμής — ή τίποτα */
+              const fe = (f: ClaimLineField) => (problem?.line === i && problem.field === f ? problem.message : null)
+              const cls = (f: ClaimLineField) => (fe(f) ? inputErrClass : inputClass)
+              const FieldErr = ({ f }: { f: ClaimLineField }) => fe(f) ? <p className="mt-1.5 text-sm font-bold text-coral dark:text-coral-light">{fe(f)}</p> : null
               return (
-                <div key={i} className="rounded-2xl border border-gray-200 dark:border-gray-600 p-5 sm:p-6 space-y-5">
+                <div key={i} id={`expense-line-${i}`}
+                  className={`rounded-2xl border p-5 sm:p-6 space-y-5 ${problem?.line === i ? 'border-coral ring-2 ring-coral/30' : 'border-gray-200 dark:border-gray-600'}`}>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold tracking-wide text-gray-500 dark:text-gray-400">ΕΞΟΔΟ {i + 1}</span>
                     <span className="flex items-center gap-4">
                       {line.receiptType && (
                         <button type="button" onClick={() => duplicateLine(i)}
-                          title="Ίδιο είδος παραστατικού, κενά ποσό και αρχεία"
+                          title="Ίδιο είδος παραστατικού και ημερομηνίες, κενά ποσό και αρχεία"
                           className="text-xs font-bold text-coral dark:text-coral-light hover:underline">
                           + Ακόμη ένα ίδιο
                         </button>
@@ -604,43 +631,50 @@ export default function ExpenseClaimShell(
                       {isMidterm2026 ? (
                         <LockedValue title="Αποζημιώνονται μόνο έξοδα ταξιδιού">{MIDTERM_2026.lockedCategory}</LockedValue>
                       ) : (
-                        <select value={line.category} onChange={e => patch(i, { category: e.target.value, receiptType: '' })} className={inputClass}>
+                        <select value={line.category} onChange={e => patch(i, { category: e.target.value, receiptType: '' })} className={cls('category')}>
                           {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                       )}
+                      <FieldErr f="category" />
                     </Field>
                     <Field label="Είδος παραστατικού" required>
-                      <select value={line.receiptType} onChange={e => patch(i, { receiptType: e.target.value, file2: null })} className={inputClass}>
+                      <select value={line.receiptType} onChange={e => patch(i, { receiptType: e.target.value, file2: null })} className={cls('receiptType')}>
                         <option value="">— διάλεξε —</option>
                         {RECEIPT_TYPES[line.category as keyof typeof RECEIPT_TYPES].map(r => (
                           <option key={r.label} value={r.label}>{r.label}</option>
                         ))}
                       </select>
+                      <FieldErr f="receiptType" />
                     </Field>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-x-6 gap-y-5">
                     <Field label="Έναρξη" required>
-                      <input type="date" value={line.date} onChange={e => patch(i, { date: e.target.value })} className={inputClass} />
+                      <input type="date" value={line.date} onChange={e => patch(i, { date: e.target.value })} className={cls('date')} />
+                      <FieldErr f="date" />
                     </Field>
                     <Field label="Ολοκλήρωση" tip="Για έξοδα που κρατούν μέρες — π.χ. ξενοδοχείο 3 βραδιών ή ενοικίαση αυτοκινήτου. Άφησέ το κενό αν το έξοδο αφορά μία μέρα.">
                       <input type="date" value={line.dateEnd || ''} min={line.date || undefined}
-                        onChange={e => patch(i, { dateEnd: e.target.value })} className={inputClass} />
+                        onChange={e => patch(i, { dateEnd: e.target.value })} className={cls('dateEnd')} />
+                      <FieldErr f="dateEnd" />
                     </Field>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-x-6 gap-y-5">
                     <Field label="Ποσό (€)" required>
-                      <input type="number" step="0.01" min="0" value={line.amount || ''} onChange={e => patch(i, { amount: Number(e.target.value) })} className={inputClass} />
+                      <input type="number" step="0.01" min="0" value={line.amount || ''} onChange={e => patch(i, { amount: Number(e.target.value) })} className={cls('amount')} />
+                      <FieldErr f="amount" />
                     </Field>
                     <Field label="Περιγραφή" tip="Τι ακριβώς κάλυψε το έξοδο, με δυο λέξεις: «βενζίνη Αθήνα–Ιωάννινα», «δύο διανυκτερεύσεις», «γεύμα ομάδας». Βοηθά τα Οικονομικά να αναγνωρίσουν τη δαπάνη χωρίς να ανοίξουν το παραστατικό.">
                       <input type="text" value={line.description} onChange={e => patch(i, { description: e.target.value })} className={inputClass} />
                     </Field>
                   </div>
                   <Field label={spec?.pair ? `Αρχείο 1 — ${spec.pair.first}` : 'Παραστατικό'} required>
-                    <input type="file" accept="application/pdf,image/*" onChange={e => patch(i, { file1: e.target.files?.[0] || null })} className={fileClass} />
+                    <input type="file" accept="application/pdf,image/*" onChange={e => patch(i, { file1: e.target.files?.[0] || null })} className={fe('file1') ? fileErrClass : fileClass} />
+                    <FieldErr f="file1" />
                   </Field>
                   {spec?.pair && (
                     <Field label={`Αρχείο 2 — ${spec.pair.second}`} required>
-                      <input type="file" accept="application/pdf,image/*" onChange={e => patch(i, { file2: e.target.files?.[0] || null })} className={fileClass} />
+                      <input type="file" accept="application/pdf,image/*" onChange={e => patch(i, { file2: e.target.files?.[0] || null })} className={fe('file2') ? fileErrClass : fileClass} />
+                      <FieldErr f="file2" />
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                         Φωτογραφία ή στιγμιότυπο από το κινητό είναι μια χαρά.
                       </p>
@@ -669,7 +703,7 @@ export default function ExpenseClaimShell(
             </div>
           )}
 
-          <button type="button" onClick={() => setLines(prev => [...prev, emptyLine()])}
+          <button type="button" onClick={() => setLines(prev => [...prev, { ...emptyLine(), date: eventStart }])}
             className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-coral text-coral dark:text-coral-light font-bold text-sm hover:bg-coral hover:text-white transition-colors">
             + Προσθήκη εξόδου
           </button>
@@ -771,7 +805,11 @@ export default function ExpenseClaimShell(
 
 // ── Μικρά δομικά ──────────────────────────────────────────────────
 const inputClass = 'w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-charcoal dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-coral'
+/* Το πεδίο που φταίει: κοραλί περίγραμμα αντί για γκρι — αντικατάσταση, όχι
+   προσθήκη, γιατί δύο κλάσεις περιγράμματος μαζί κερδίζει όποια τύχει στο CSS. */
+const inputErrClass = inputClass.replace('border-gray-300 dark:border-gray-600', 'border-coral dark:border-coral ring-2 ring-coral/30')
 const fileClass = 'w-full text-sm py-1 text-gray-600 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-coral/10 file:text-coral dark:file:bg-coral/20 dark:file:text-coral-light hover:file:bg-coral/20 cursor-pointer'
+const fileErrClass = fileClass + ' rounded-xl ring-2 ring-coral/60 px-2'
 
 /**
  * Κλειδωμένη τιμή — ΚΕΙΜΕΝΟ, όχι disabled πεδίο.
