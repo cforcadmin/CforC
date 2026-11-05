@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Navigation from '@/components/Navigation'
 import { verifyToken } from '@/lib/auth'
-import { resolveOcAccess, SEAT_LABELS, type OcSeat } from '@/lib/ocRoles'
+import { resolveOcAccess, SEAT_LABELS, VOTING_SEATS, type OcSeat } from '@/lib/ocRoles'
 import VotePanel from '@/components/oc/VotePanel'
 
 export const metadata: Metadata = {
@@ -69,6 +69,11 @@ export default async function ApplicationReviewPage({ params }: Props) {
     ? seatCookie
     : access.seats.length === 1 ? access.seats[0] : null
   const canOverride = activeSeat === 'it' || activeSeat === 'admin'
+  const overrideSeatLabel = canOverride ? SEAT_LABELS[activeSeat as OcSeat] : null
+  // Το μέλος που κατέχει ΚΑΙ θέση με ψήφο (π.χ. IT + Ταμίας) πιθανότατα ήθελε
+  // να ψηφίσει — το παράθυρο του λέει πώς
+  const ownVotingSeat = access.seats.find(s => VOTING_SEATS.includes(s))
+  const votingSeatLabel = canOverride && ownVotingSeat ? SEAT_LABELS[ownVotingSeat] : null
   const submitted = a.SubmittedAt
     ? new Intl.DateTimeFormat('el-GR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Athens' }).format(new Date(a.SubmittedAt))
     : '—'
@@ -119,6 +124,8 @@ export default async function ApplicationReviewPage({ params }: Props) {
                       votedSeats={votedSeats}
                       myVote={myVote}
                       canOverride={canOverride}
+                      overrideSeatLabel={overrideSeatLabel}
+                      votingSeatLabel={votingSeatLabel}
                     />
                   ) : (
                     <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${state.cls}`}>{state.label}</span>

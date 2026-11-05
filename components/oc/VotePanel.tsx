@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import ConfirmationModal from '@/components/ConfirmationModal'
 
 /**
  * Voting bubbles on the application review page (board members only —
@@ -17,9 +18,13 @@ interface VotePanelProps {
   myVote: 'approve' | 'reject' | null
   /** IT/Admin: η ψήφος οριστικοποιεί την απόφαση αμέσως */
   canOverride: boolean
+  /** Ο ενεργός ρόλος που αποφασίζει μόνος του — «IT» ή «Admin» */
+  overrideSeatLabel?: string | null
+  /** Θέση με δικαίωμα ψήφου που ΕΠΙΣΗΣ κατέχει το μέλος — π.χ. «Ταμίας» */
+  votingSeatLabel?: string | null
 }
 
-export default function VotePanel({ applicationId, votedSeats, myVote, canOverride }: VotePanelProps) {
+export default function VotePanel({ applicationId, votedSeats, myVote, canOverride, overrideSeatLabel, votingSeatLabel }: VotePanelProps) {
   const router = useRouter()
   const [confirming, setConfirming] = useState<'approve' | 'reject' | null>(null)
   const [busy, setBusy] = useState(false)
@@ -27,21 +32,40 @@ export default function VotePanel({ applicationId, votedSeats, myVote, canOverri
   const [sheetWarn, setSheetWarn] = useState(false)
   const [localVote, setLocalVote] = useState<'approve' | 'reject' | null>(myVote)
   const [localSeats, setLocalSeats] = useState<string[]>(votedSeats)
+  /**
+   * ΔΕΥΤΕΡΗ ΕΠΙΒΕΒΑΙΩΣΗ ΓΙΑ IT/ADMIN — παράθυρο, όχι δεύτερο κλικ.
+   *
+   * 5/11/2026: μέλος με θέσεις IT ΚΑΙ Ταμία πάτησε «Έγκριση» για να ψηφίσει,
+   * με ενεργό ρόλο το IT. Η ψήφος αποφάσισε μόνη της, με δύο ψήφους από
+   * πέντε, και το γράμμα έγκρισης με τις οδηγίες πληρωμής έφυγε αμέσως. Το
+   * «Σίγουρα; Πάτησε ξανά» δεν το έπιασε: είναι ΙΔΙΟ με της απλής ψήφου,
+   * άρα δεν λέει ότι εδώ συμβαίνει κάτι άλλο. Η γκρίζα γραμμή από κάτω το
+   * έλεγε, αλλά μια γραμμή 11px δεν σταματά χέρι που ξέρει τη διαδρομή.
+   */
+  const [overrideAsk, setOverrideAsk] = useState<'approve' | 'reject' | null>(null)
 
-  async function cast(vote: 'approve' | 'reject') {
+  function cast(vote: 'approve' | 'reject') {
     if (confirming !== vote) {
       setConfirming(vote)
       setError(null)
       return
     }
     setConfirming(null)
+    // Ως IT/Admin δεν φεύγει ΤΙΠΟΤΑ από εδώ: ανοίγει το παράθυρο
+    if (canOverride) { setOverrideAsk(vote); return }
+    void send(vote, false)
+  }
+
+  async function send(vote: 'approve' | 'reject', confirmOverride: boolean) {
     setBusy(true)
     setError(null)
     try {
       const res = await fetch('/api/oc/applications/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ applicationId, vote }),
+        // Το confirmOverride στέλνεται ΜΟΝΟ από το παράθυρο· ο server αρνείται
+        // καθολική απόφαση χωρίς αυτό
+        body: JSON.stringify({ applicationId, vote, ...(confirmOverride && { confirmOverride: true }) }),
       })
       const json = await res.json().catch(() => null)
       if (!res.ok || !json?.ok) {
@@ -146,6 +170,40 @@ export default function VotePanel({ applicationId, votedSeats, myVote, canOverri
           Η απόφαση καταχωρήθηκε, αλλά το Μητρώο (Sheet) δεν ενημερώθηκε — μετέφερε τη γραμμή χειροκίνητα.
         </p>
       )}
+      {(() => {
+        const seat = overrideSeatLabel || 'IT/Admin'
+        const approving = overrideAsk === 'approve'
+        return (
+          <ConfirmationModal
+            isOpen={overrideAsk !== null}
+            variant={approving ? 'warning' : 'danger'}
+            title={approving ? `Έγκριση για όλους, ως ${seat};` : `Απόρριψη για όλους, ως ${seat};`}
+            message={`Ενεργείς ως ${seat}. Αυτό δεν μετράει ως μία ψήφος: ${approving ? 'εγκρίνει' : 'απορρίπτει'} την αίτηση αμέσως, χωρίς να ψηφίσουν τα υπόλοιπα μέλη του ΔΣ.`}
+            confirmText={approving ? 'Έγκριση για όλους' : 'Απόρριψη για όλους'}
+            cancelText="Ακύρωση"
+            onCancel={() => setOverrideAsk(null)}
+            onConfirm={() => { const v = overrideAsk; setOverrideAsk(null); if (v) void send(v, true) }}
+          >
+            <ul className="space-y-2 text-sm text-left text-charcoal dark:text-gray-200 list-disc pl-5">
+              {approving && (
+                <li>Το <strong>email έγκρισης με τις οδηγίες πληρωμής</strong> φεύγει αμέσως προς τον άνθρωπο που έκανε την αίτηση. Δεν ανακαλείται.</li>
+              )}
+              <li>Η γραμμή στο Μητρώο μετακινείται στα {approving ? 'ΕΓΚΕΚΡΙΜΕΝΑ' : 'ΜΗ ΕΓΚΕΚΡΙΜΕΝΑ'}.</li>
+              <li>
+                {localSeats.length
+                  ? <>Έχουν ψηφίσει ως τώρα: <strong>{localSeats.join(', ')}</strong>.</>
+                  : <>Δεν έχει ψηφίσει κανείς ακόμη.</>}
+              </li>
+              {votingSeatLabel && (
+                <li>
+                  Αν ήθελες απλώς να <strong>ψηφίσεις ως {votingSeatLabel}</strong>: πάτησε «Ακύρωση», άλλαξε
+                  τον ενεργό ρόλο σου σε {votingSeatLabel} και ψήφισε από εκεί.
+                </li>
+              )}
+            </ul>
+          </ConfirmationModal>
+        )
+      })()}
     </div>
   )
 }

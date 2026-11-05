@@ -78,20 +78,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Μη έγκυρο αίτημα' }, { status: 400 })
   }
 
-  // populate=Photo: στο Strapi v5 τα media ΔΕΝ έρχονται χωρίς ρητό populate,
-  // και η ύπαρξη φωτογραφίας είναι αυτή που ξεχωρίζει τις μεταφερμένες αιτήσεις
-  const appRes = await strapi(`/membership-applications/${applicationId}?populate=Photo`)
-  const app = appRes.json?.data
-  if (!app) {
-    return NextResponse.json({ error: 'Η αίτηση δεν βρέθηκε' }, { status: 404 })
-  }
-  if (app.ApplicationState !== 'submitted') {
-    return NextResponse.json(
-      { error: 'Η αίτηση έχει ήδη κριθεί', state: app.ApplicationState },
-      { status: 409 }
-    )
-  }
-
   // Ο ρόλος με τον οποίο ΕΝΕΡΓΕΙ τώρα (επιλογή στο OC, httpOnly cookie) —
   // όχι όλοι οι ρόλοι που κατέχει. Ένα μέλος με IT+Financer που ενεργεί ως
   // Financer ψηφίζει σαν Financer· το override ισχύει ΜΟΝΟ όταν ενεργεί
@@ -107,6 +93,37 @@ export async function POST(request: NextRequest) {
   const activeSeat: OcSeat | null =
     seatCookie && access.seats.includes(seatCookie) ? seatCookie
       : access.seats.length === 1 ? access.seats[0] : null
+  const isOverride = activeSeat !== null && OVERRIDE_SEATS.includes(activeSeat)
+
+  /**
+   * ΚΑΘΟΛΙΚΗ ΑΠΟΦΑΣΗ ΜΟΝΟ ΜΕ ΡΗΤΗ ΕΠΙΒΕΒΑΙΩΣΗ.
+   *
+   * Το παράθυρο της οθόνης είναι η ερώτηση· αυτό εδώ είναι η εγγύηση. Χωρίς
+   * `confirmOverride` — που το στέλνει ΜΟΝΟ το κουμπί «… για όλους» — η ψήφος
+   * ως IT/Admin δεν γράφει τίποτα: ούτε παλιά καρτέλα, ούτε άλλη οθόνη, ούτε
+   * διπλό κλικ φτάνουν στο γράμμα έγκρισης. Ελέγχεται ΠΡΙΝ διαβαστεί η αίτηση,
+   * ώστε η άρνηση να μην αγγίζει καθόλου τα δεδομένα. (5/11/2026)
+   */
+  if (isOverride && body?.confirmOverride !== true) {
+    return NextResponse.json({
+      error: `Ως ${SEAT_LABELS[activeSeat!]} η ψήφος σου αποφασίζει για όλους — χρειάζεται ρητή επιβεβαίωση. Ανανέωσε τη σελίδα και δοκίμασε ξανά.`,
+      needsOverrideConfirm: true,
+    }, { status: 409 })
+  }
+
+  // populate=Photo: στο Strapi v5 τα media ΔΕΝ έρχονται χωρίς ρητό populate,
+  // και η ύπαρξη φωτογραφίας είναι αυτή που ξεχωρίζει τις μεταφερμένες αιτήσεις
+  const appRes = await strapi(`/membership-applications/${applicationId}?populate=Photo`)
+  const app = appRes.json?.data
+  if (!app) {
+    return NextResponse.json({ error: 'Η αίτηση δεν βρέθηκε' }, { status: 404 })
+  }
+  if (app.ApplicationState !== 'submitted') {
+    return NextResponse.json(
+      { error: 'Η αίτηση έχει ήδη κριθεί', state: app.ApplicationState },
+      { status: 409 }
+    )
+  }
 
   const votes: Record<string, VoteRecord> =
     app.Votes && typeof app.Votes === 'object' && !Array.isArray(app.Votes) ? { ...app.Votes } : {}
@@ -115,8 +132,6 @@ export async function POST(request: NextRequest) {
     vote,
     at: new Date().toISOString(),
   }
-
-  const isOverride = activeSeat !== null && OVERRIDE_SEATS.includes(activeSeat)
 
   let finalState: 'approved' | 'rejected' | null = null
   let decisionBy = ''

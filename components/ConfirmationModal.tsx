@@ -12,6 +12,8 @@ interface ConfirmationModalProps {
   onConfirm: () => void
   onCancel: () => void
   variant?: 'danger' | 'warning' | 'info'
+  /** Προαιρετικές λεπτομέρειες κάτω από το μήνυμα — π.χ. τι ακριβώς θα συμβεί */
+  children?: React.ReactNode
 }
 
 export default function ConfirmationModal({
@@ -22,7 +24,8 @@ export default function ConfirmationModal({
   cancelText = 'Ακύρωση',
   onConfirm,
   onCancel,
-  variant = 'info'
+  variant = 'info',
+  children
 }: ConfirmationModalProps) {
   // Close on Escape key
   useEffect(() => {
@@ -122,6 +125,7 @@ export default function ConfirmationModal({
         <p className="text-center text-gray-600 dark:text-gray-300 mb-6">
           {message}
         </p>
+        {children && <div className="-mt-2 mb-6">{children}</div>}
 
         {/* Actions */}
         <div className="flex gap-3">
