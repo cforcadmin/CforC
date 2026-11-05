@@ -280,7 +280,11 @@ export function allLegs(outbound: TravelLeg[], returnIncluded: boolean): TravelL
 }
 
 export interface ClaimLineFile {
-  /** Θέση στο ζεύγος: 1 = πληρωμή, 2 = κάρτα επιβίβασης */
+  /**
+   * Θέση στο ζεύγος: 1 = πληρωμή, 2 = κάρτα επιβίβασης.
+   * Η θέση 2 μπορεί να έχει ΠΟΛΛΑ αρχεία: ένα εισιτήριο μετ' επιστροφής
+   * έχει δύο κάρτες, μια πτήση με ανταπόκριση τέσσερις.
+   */
   slot: 1 | 2
   name: string
   size: number
@@ -301,6 +305,13 @@ export interface ClaimLine {
   dateEnd?: string      // yyyy-MM-dd
   amount: number
   files: ClaimLineFile[]
+  /**
+   * Ένα παραστατικό για πήγαινε ΚΑΙ έλα — εισιτήριο μετ' επιστροφής.
+   * Το ποσό είναι ΜΙΑ πληρωμή και καλύπτει δύο σκέλη της διαδρομής· χωρίς
+   * αυτό, το μέλος αναγκαζόταν να «μοιράσει» το ποσό σε δύο γραμμές ή να
+   * βάλει 0 στην επιστροφή, που απορρίπτεται. (5/11/2026, Midterm)
+   */
+  coversReturn?: boolean
 }
 
 /**
@@ -317,12 +328,13 @@ export interface ClaimLine {
  */
 export function missingTravelLines(
   legs: TravelLeg[],
-  lines: Array<{ receiptType: string }>,
+  lines: Array<{ receiptType: string; coversReturn?: boolean }>,
 ): TravelLeg[] {
   const counted = new Map<string, number>()
   for (const l of lines) {
     const t = String(l.receiptType || '').trim()
-    if (t) counted.set(t, (counted.get(t) || 0) + 1)
+    // Το μετ' επιστροφής μετράει για δύο σκέλη του ίδιου μέσου
+    if (t) counted.set(t, (counted.get(t) || 0) + (l.coversReturn ? 2 : 1))
   }
   const missing: TravelLeg[] = []
   for (const leg of legs) {
@@ -502,12 +514,18 @@ export function buildAttachmentName(opts: {
   claimNumber: string
   slot: 1 | 2
   pair?: { first: string; second: string }
+  /** Όταν η θέση έχει πολλά αρχεία: ποιο είναι αυτό (από 1) και πόσα είναι όλα */
+  seq?: number
+  count?: number
   ext: string
 }): string {
   const [y, m, d] = opts.date.split('-')
   const amount = opts.amount.toFixed(2).replace('.', ',')
+  // Δύο κάρτες επιβίβασης δεν γίνεται να έχουν το ΙΔΙΟ όνομα: «κάρτα
+  // επιβίβασης 1», «κάρτα επιβίβασης 2» — μόνο όταν όντως είναι πάνω από μία
+  const multi = (opts.count ?? 1) > 1 && opts.seq ? ` ${opts.seq}` : ''
   const part = opts.pair
-    ? `_${opts.slot}of2-${clean(opts.slot === 1 ? opts.pair.first : opts.pair.second)}`
+    ? `_${opts.slot}of2-${clean(opts.slot === 1 ? opts.pair.first : opts.pair.second)}${multi}`
     : ''
   const ext = opts.ext.replace(/^\./, '').toLowerCase() || 'pdf'
   return `${clean(opts.memberName)}_${clean(opts.receiptType)}_${d}-${m}-${y}_${amount}_${opts.claimNumber}${part}.${ext}`

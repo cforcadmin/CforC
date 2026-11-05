@@ -225,6 +225,39 @@ describe('εξοδολόγια — τι λείπει από τη διαδρομ�
   it('αγνοεί μισοσυμπληρωμένα σκέλη και σκέλη χωρίς μέσο', () => {
     expect(missingTravelLines([leg('Αθήνα', '', 'Αεροπορικό εισιτήριο'), leg('Αθήνα', 'Πάτρα', '')], [])).toHaveLength(0)
   })
+  it('μετ’ επιστροφής: ΜΙΑ γραμμή καλύπτει και τα δύο σκέλη του μέσου της', () => {
+    const legs = [leg('Αθήνα', 'Θεσσαλονίκη', 'Αεροπορικό εισιτήριο'), leg('Θεσσαλονίκη', 'Αθήνα', 'Αεροπορικό εισιτήριο', 'return')]
+    expect(missingTravelLines(legs, [{ receiptType: 'Αεροπορικό εισιτήριο', coversReturn: true }])).toHaveLength(0)
+    // αλλά ΟΧΙ σκέλος άλλου μέσου
+    const mixed = [leg('Αθήνα', 'Ιωάννινα', 'Αεροπορικό εισιτήριο'), leg('Ιωάννινα', 'Αθήνα', 'Εισιτήριο ΚΤΕΛ / λεωφορείου', 'return')]
+    expect(missingTravelLines(mixed, [{ receiptType: 'Αεροπορικό εισιτήριο', coversReturn: true }]).map(l => l.mode))
+      .toEqual(['Εισιτήριο ΚΤΕΛ / λεωφορείου'])
+  })
+})
+
+describe('εξοδολόγια — πολλές κάρτες επιβίβασης', () => {
+  it('δέχεται δύο αρχεία στη θέση 2 και το μετ’ επιστροφής', () => {
+    const air = line({
+      category: 'Ταξίδι', receiptType: 'Αεροπορικό εισιτήριο', amount: 145, coversReturn: true,
+      files: [
+        { slot: 1, name: 'payment.pdf', size: 1000 },
+        { slot: 2, name: 'boarding-out.jpg', size: 500 },
+        { slot: 2, name: 'boarding-back.jpg', size: 500 },
+      ],
+    })
+    expect(validateClaim(claim({ lines: [air] }))).toBeNull()
+  })
+
+  it('αριθμεί τις κάρτες στο όνομα μόνο όταν είναι πάνω από μία', () => {
+    const base = {
+      memberName: 'ΜΠΑΡΑΤΑ ΑΡΓΥΡΩ', receiptType: 'Αεροπορικό εισιτήριο', date: '2026-12-22',
+      amount: 145, claimNumber: 'ΕΞ-2026-020', slot: 2 as const,
+      pair: receiptSpec('Ταξίδι', 'Αεροπορικό εισιτήριο')!.pair, ext: 'jpg',
+    }
+    expect(buildAttachmentName({ ...base, seq: 1, count: 2 })).toMatch(/_2of2-κάρτα επιβίβασης 1\.jpg$/)
+    expect(buildAttachmentName({ ...base, seq: 2, count: 2 })).toMatch(/_2of2-κάρτα επιβίβασης 2\.jpg$/)
+    expect(buildAttachmentName({ ...base, seq: 1, count: 1 })).toMatch(/_2of2-κάρτα επιβίβασης\.jpg$/)
+  })
 })
 
 describe('eventFromSlug', () => {

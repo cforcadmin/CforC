@@ -206,22 +206,32 @@ export async function POST(request: NextRequest) {
   }
   if (!member) return NextResponse.json({ error: 'Απαιτείται σύνδεση' }, { status: 401 })
 
-  // ── Τα αρχεία: κάθε γραμμή δηλώνει ποια «κουτάκια» της ανήκουν (line-θέση)
+  // ── Τα αρχεία: κάθε γραμμή δηλώνει ποια «κουτάκια» της ανήκουν (line-θέση).
+  //    Η θέση 1 είναι ΕΝΑ αρχείο· η θέση 2 (κάρτα επιβίβασης) μπορεί να είναι
+  //    πολλά, με το ίδιο κλειδί — μετ' επιστροφής, ανταποκρίσεις.
+  //    Κρατάμε το ίδιο το File δίπλα στην περιγραφή του, στην ΙΔΙΑ σειρά:
+  //    το form.get() θα γύριζε πάντα το πρώτο της θέσης.
   const lines: ClaimLine[] = Array.isArray(input?.lines) ? input.lines.slice(0, MAX_LINES) : []
+  const lineFiles: File[][] = lines.map(() => [])
   let totalBytes = 0
   for (const [i, line] of lines.entries()) {
     line.files = []
+    line.coversReturn = !!line.coversReturn
     for (const slot of [1, 2] as const) {
-      const f = form.get(`file-${i}-${slot}`)
-      if (!(f instanceof File) || f.size === 0) continue
-      if (f.size > MAX_FILE_BYTES) {
-        return NextResponse.json({ error: `Γραμμή ${i + 1}: το αρχείο ξεπερνά τα 10MB` }, { status: 400 })
+      const key = `file-${i}-${slot}`
+      const picked = slot === 1 ? [form.get(key)] : form.getAll(key)
+      for (const f of picked) {
+        if (!(f instanceof File) || f.size === 0) continue
+        if (f.size > MAX_FILE_BYTES) {
+          return NextResponse.json({ error: `ΕΞΟΔΟ ${i + 1}: το αρχείο «${f.name}» ξεπερνά τα 10MB` }, { status: 400 })
+        }
+        if (!ALLOWED_FILE_TYPES.includes(f.type)) {
+          return NextResponse.json({ error: `ΕΞΟΔΟ ${i + 1}: επιτρέπονται PDF και εικόνες («${f.name}»)` }, { status: 400 })
+        }
+        totalBytes += f.size
+        line.files.push({ slot, name: f.name, size: f.size })
+        lineFiles[i].push(f)
       }
-      if (!ALLOWED_FILE_TYPES.includes(f.type)) {
-        return NextResponse.json({ error: `Γραμμή ${i + 1}: επιτρέπονται PDF και εικόνες` }, { status: 400 })
-      }
-      totalBytes += f.size
-      line.files.push({ slot, name: f.name, size: f.size })
     }
   }
   if (totalBytes > MAX_TOTAL_BYTES) {
@@ -245,12 +255,16 @@ export async function POST(request: NextRequest) {
   const uploadedIds: number[] = []
   for (const [i, line] of lines.entries()) {
     const spec = receiptSpec(line.category, line.receiptType)
-    for (const file of line.files) {
-      const f = form.get(`file-${i}-${file.slot}`) as File
+    const perSlot = (slot: 1 | 2) => line.files.filter(x => x.slot === slot).length
+    const seen: Record<1 | 2, number> = { 1: 0, 2: 0 }
+    for (const [k, file] of line.files.entries()) {
+      const f = lineFiles[i][k]
       const ext = (file.name.split('.').pop() || 'pdf').toLowerCase()
+      seen[file.slot] += 1
       const name = buildAttachmentName({
         memberName: member.name, receiptType: line.receiptType, date: line.date,
         amount: Number(line.amount), claimNumber, slot: file.slot, pair: spec?.pair, ext,
+        seq: seen[file.slot], count: perSlot(file.slot),
       })
       const fd = new FormData()
       fd.append('files', f, name)
@@ -343,6 +357,8 @@ export async function POST(request: NextRequest) {
     timeZone: 'Europe/Athens', year: 'numeric', month: '2-digit', day: '2-digit',
   }).format(submittedAt)
   const money = (n: number) => `${n.toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+  // Ο Ταμίας βλέπει ΜΙΑ γραμμή απέναντι σε ΔΥΟ σκέλη — του λέμε γιατί
+  const lineType = (l: ClaimLine) => (l.coversReturn ? `${l.receiptType} (μετ' επιστροφής)` : l.receiptType)
   const grDate = (iso: string) => {
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''))
     return m ? `${m[3]}/${m[2]}/${m[1]}` : '—'
@@ -372,8 +388,8 @@ export async function POST(request: NextRequest) {
   if (pdfBase64) {
     const extras: ArchiveAttachment[] = []
     for (const [i, line] of lines.entries()) {
-      for (const f of line.files) {
-        const file = form.get(`file-${i}-${f.slot}`) as File | null
+      for (const [k, f] of line.files.entries()) {
+        const file = lineFiles[i][k]
         if (!file) continue
         extras.push({
           name: f.name,
@@ -405,7 +421,7 @@ export async function POST(request: NextRequest) {
       route,
       payable: money(payable), total: money(total), advance: advance > 0 ? money(advance) : null,
       accountHolder: entry.AccountHolder, bankName: entry.BankName, iban: entry.Iban,
-      lines: lines.map(l => ({ date: grDate(l.date), type: l.receiptType, amount: money(Number(l.amount) || 0) })),
+      lines: lines.map(l => ({ date: grDate(l.date), type: lineType(l), amount: money(Number(l.amount) || 0) })),
       ocUrl: ocUrl('finances'),
     })
     /**
@@ -435,7 +451,7 @@ export async function POST(request: NextRequest) {
       route,
       payable: money(payable), total: money(total), advance: advance > 0 ? money(advance) : null,
       accountHolder: entry.AccountHolder, bankName: entry.BankName, iban: entry.Iban,
-      lines: lines.map(l => ({ date: grDate(l.date), type: l.receiptType, amount: money(Number(l.amount) || 0) })),
+      lines: lines.map(l => ({ date: grDate(l.date), type: lineType(l), amount: money(Number(l.amount) || 0) })),
     })
     // Χωρίς cc — και απάντηση στο finance@, εκεί λύνονται οι απορίες
     await sendOcEmailOrWarn('expenses/claim: αντίγραφο προς το μέλος', member.email, mine.subject, mine.html, {

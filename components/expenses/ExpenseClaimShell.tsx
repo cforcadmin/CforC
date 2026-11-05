@@ -30,11 +30,13 @@ import {
  * ζουν στο lib/expenseClaims και είναι οι ΙΔΙΟΙ με του server.
  */
 
-type Draft = Omit<ClaimLine, 'files'> & { file1: File | null; file2: File | null }
+/* Η θέση 2 (κάρτα επιβίβασης) είναι ΛΙΣΤΑ: μετ' επιστροφής = δύο κάρτες,
+   ανταπόκριση = περισσότερες. Μαζεύονται μία μία, δεν αντικαθίστανται. */
+type Draft = Omit<ClaimLine, 'files'> & { file1: File | null; file2: File[] }
 
 const emptyLine = (): Draft => ({
   category: 'Ταξίδι', receiptType: '', description: '', date: '', dateEnd: '', amount: 0,
-  file1: null, file2: null,
+  file1: null, file2: [], coversReturn: false,
 })
 
 /** Η επομένη μιας ISO ημερομηνίας — «ανοίγει από τις 23/11» αντί «μετά τις 22/11» */
@@ -229,9 +231,10 @@ export default function ExpenseClaimShell(
       lines: lines.map(l => ({
         category: l.category, receiptType: l.receiptType, description: l.description,
         date: l.date, dateEnd: l.dateEnd || undefined, amount: Number(l.amount) || 0,
+        coversReturn: !!l.coversReturn,
         files: [
           ...(l.file1 ? [{ slot: 1 as const, name: l.file1.name, size: l.file1.size }] : []),
-          ...(l.file2 ? [{ slot: 2 as const, name: l.file2.name, size: l.file2.size }] : []),
+          ...l.file2.map(f => ({ slot: 2 as const, name: f.name, size: f.size })),
         ],
       })),
     }
@@ -257,7 +260,8 @@ export default function ExpenseClaimShell(
       fd.append('data', JSON.stringify(payload))
       lines.forEach((l, i) => {
         if (l.file1) fd.append(`file-${i}-1`, l.file1)
-        if (l.file2) fd.append(`file-${i}-2`, l.file2)
+        // Ίδιο κλειδί για κάθε κάρτα: ο server τα διαβάζει με getAll
+        l.file2.forEach(f => fd.append(`file-${i}-2`, f))
       })
       const res = await fetch('/api/expenses/claim', { method: 'POST', body: fd })
       const data = await res.json()
@@ -638,7 +642,7 @@ export default function ExpenseClaimShell(
                       <FieldErr f="category" />
                     </Field>
                     <Field label="Είδος παραστατικού" required>
-                      <select value={line.receiptType} onChange={e => patch(i, { receiptType: e.target.value, file2: null })} className={cls('receiptType')}>
+                      <select value={line.receiptType} onChange={e => patch(i, { receiptType: e.target.value, file2: [] })} className={cls('receiptType')}>
                         <option value="">— διάλεξε —</option>
                         {RECEIPT_TYPES[line.category as keyof typeof RECEIPT_TYPES].map(r => (
                           <option key={r.label} value={r.label}>{r.label}</option>
@@ -672,13 +676,53 @@ export default function ExpenseClaimShell(
                     <FieldErr f="file1" />
                   </Field>
                   {spec?.pair && (
-                    <Field label={`Αρχείο 2 — ${spec.pair.second}`} required>
-                      <input type="file" accept="application/pdf,image/*" onChange={e => patch(i, { file2: e.target.files?.[0] || null })} className={fe('file2') ? fileErrClass : fileClass} />
+                    <Field label={`Αρχείο 2 — ${spec.pair.second}`} required
+                      tip="Μία κάρτα ανά σκέλος: για μετ' επιστροφής δύο, για πτήση με ανταπόκριση μία ανά πτήση. Διάλεξέ τες μαζί ή μία μία — προστίθενται, δεν αντικαθίστανται.">
+                      {/* Το επόμενο διάλεγμα ΠΡΟΣΤΙΘΕΤΑΙ στα προηγούμενα: το native
+                          input αντικαθιστά την επιλογή του σε κάθε άνοιγμα, και από
+                          κινητό οι κάρτες έρχονται μία μία */}
+                      {/* Το native input μένει κρυφό: μετά από κάθε διάλεγμα θα έγραφε
+                          «No file chosen» κάτω από μια λίστα με δύο αρχεία. Το κουμπί
+                          λέει τι κάνει: «Επιλογή» ή «+ Ακόμη μία». */}
+                      <input id={`expense-line-${i}-file2`} type="file" accept="application/pdf,image/*" multiple className="sr-only"
+                        onChange={e => { const add = Array.from(e.target.files || []); if (add.length) patch(i, { file2: [...line.file2, ...add] }); e.target.value = '' }} />
+                      <button type="button"
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); document.getElementById(`expense-line-${i}-file2`)?.click() }}
+                        className={`inline-flex items-center py-2 px-4 rounded-full text-sm font-bold bg-coral/10 text-coral dark:bg-coral/20 dark:text-coral-light hover:bg-coral/20 ${fe('file2') ? 'ring-2 ring-coral/60' : ''}`}>
+                        {line.file2.length ? `+ Ακόμη μία ${spec.pair.second}` : `Επιλογή — ${spec.pair.second}`}
+                      </button>
                       <FieldErr f="file2" />
+                      {line.file2.length > 0 && (
+                        <ul className="mt-2 space-y-1">
+                          {line.file2.map((f, k) => (
+                            <li key={`${f.name}-${f.size}-${k}`} className="flex items-center justify-between gap-3 text-sm text-charcoal dark:text-gray-200">
+                              <span className="truncate">{spec.pair!.second}{line.file2.length > 1 ? ` ${k + 1}` : ''} · {f.name}</span>
+                              {/* Μέσα σε <label>: χωρίς preventDefault το κλικ θα άνοιγε τον επιλογέα αρχείων */}
+                              <button type="button"
+                                onClick={e => { e.preventDefault(); e.stopPropagation(); patch(i, { file2: line.file2.filter((_, idx) => idx !== k) }) }}
+                                className="shrink-0 text-xs font-bold text-coral dark:text-coral-light hover:underline">Αφαίρεση</button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                         Φωτογραφία ή στιγμιότυπο από το κινητό είναι μια χαρά.
+                        {line.file2.length === 0 && ' Μπορείς να ανεβάσεις περισσότερες από μία.'}
                       </p>
                     </Field>
+                  )}
+                  {/* Εισιτήριο μετ' επιστροφής: ΜΙΑ πληρωμή για δύο σκέλη. Χωρίς αυτό
+                      το μέλος έβαζε 0 € στην επιστροφή, που απορρίπτεται. Φαίνεται
+                      μόνο όπου έχει νόημα: ταξίδι, με επιστροφή στη διαδρομή. */}
+                  {line.category === 'Ταξίδι' && line.receiptType && returnIncluded && (
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input type="checkbox" checked={!!line.coversReturn} onChange={e => patch(i, { coversReturn: e.target.checked })}
+                        className="mt-1 w-4 h-4 text-coral rounded focus:ring-coral" />
+                      <span className="text-sm text-charcoal dark:text-gray-200">
+                        <span className="font-bold">Μετ' επιστροφής</span> — το ποσό καλύπτει και τα δύο σκέλη.
+                        {spec?.pair && ` Ανέβασε πιο πάνω μία ${spec.pair.second} για κάθε σκέλος.`}
+                      </span>
+                    </label>
                   )}
                 </div>
               )

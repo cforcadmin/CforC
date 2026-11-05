@@ -182,7 +182,9 @@ export async function generateExpenseClaimPdf(d: ExpenseClaimPdfData): Promise<U
       : grDate(l.date)
     page.drawText(fit(dates, regular, 8.5, 122), { x: M + 8, y, size: 9, font: regular, color: VALUE })
     page.drawText(fit(l.receiptType, regular, 9, 112), { x: M + 132, y, size: 9, font: regular, color: VALUE })
-    page.drawText(fit(l.description || '—', regular, 9, 145), { x: M + 250, y, size: 9, font: regular, color: MUTED })
+    // Μετ' επιστροφής: μία γραμμή για δύο σκέλη — να το διαβάζει ο Ταμίας
+    const desc = l.coversReturn ? `πήγαινε-έλα${l.description ? ` · ${l.description}` : ''}` : (l.description || '—')
+    page.drawText(fit(desc, regular, 9, 145), { x: M + 250, y, size: 9, font: regular, color: MUTED })
     const amount = money(Number(l.amount) || 0)
     page.drawText(amount, { x: W - M - 8 - regular.widthOfTextAtSize(amount, 9.5), y, size: 9.5, font: regular, color: VALUE })
     y -= 10
