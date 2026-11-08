@@ -179,6 +179,21 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
     if (st.type === 'record-grant') return true   // το όνομα το δίνει η τράπεζα
     return st.memberDocId || st.memberName.trim()
   }).length
+  // Δύο διαφορετικές πράξεις πίσω από ένα κουμπί: απόδειξη με αριθμό ΑΠ. ΕΙΣ.
+  // ή σκέτη γραμμή στο ΕΣΟΔΑ. Το κουμπί τις ονομάζει ξεχωριστά — το «Έκδοση 2
+  // αποδείξεων» σε δύο χορηγίες διαβαζόταν ως «θα βγάλει απόδειξη».
+  const recordCount = selected.filter(r => state[r.txnId]?.type === 'record-grant').length
+  const receiptCount = readyCount - recordCount
+  const actionLabel = recordCount === 0
+    ? `Έκδοση ${readyCount} αποδείξεων`
+    : receiptCount === 0
+      ? `Καταχώρηση ${recordCount} στο ΕΣΟΔΑ χωρίς απόδειξη`
+      : `Έκδοση ${receiptCount} αποδείξεων · ${recordCount} στο ΕΣΟΔΑ χωρίς απόδειξη`
+  const confirmLabel = recordCount === 0
+    ? `Σίγουρα; Θα εκδοθούν ${readyCount} αποδείξεις με τους επόμενους αριθμούς της σειράς.`
+    : receiptCount === 0
+      ? `Σίγουρα; Θα γραφτούν ${recordCount} γραμμές στο ΕΣΟΔΑ, χωρίς αριθμό ΑΠ. ΕΙΣ. και χωρίς email.`
+      : `Σίγουρα; Θα εκδοθούν ${receiptCount} αποδείξεις με τους επόμενους αριθμούς της σειράς και θα γραφτούν ${recordCount} γραμμές στο ΕΣΟΔΑ χωρίς απόδειξη.`
 
   async function issueSelected() {
     setIssuing(true); setConfirming(false)
@@ -569,6 +584,12 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
                               <span className="text-red-600 dark:text-red-400">{st.resultText}</span>
                             ) : st.status === 'issuing' ? (
                               <span className="text-gray-400">έκδοση…</span>
+                            ) : st.type === 'record-grant' ? (
+                              /* Χορηγία χωρίς απόδειξη: δεν υπάρχει αριθμός να δεθεί —
+                                 το «έχει απόδειξη;» εδώ διαβαζόταν ως απαίτηση εγγράφου. */
+                              <span className="text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                καταχώρηση χωρίς απόδειξη
+                              </span>
                             ) : (
                               /**
                                * ΒΕΒΑΙΟΤΗΤΑ ΑΝΤΙ ΓΙΑ ΕΙΚΑΣΙΑ. Οι ενδοτραπεζικές
@@ -607,12 +628,12 @@ export default function OcBankIntake({ canIssue, canManual = false, members, onI
                   <button type="button" onClick={() => setConfirming(true)}
                     disabled={!canIssue || issuing || readyCount === 0}
                     className="px-6 py-2.5 rounded-full bg-[#6A994E] text-white text-sm font-bold hover:opacity-90 disabled:opacity-40">
-                    Έκδοση {readyCount} αποδείξεων
+                    {actionLabel}
                   </button>
                 ) : (
                   <>
                     <span className="text-sm font-medium text-charcoal dark:text-gray-200">
-                      Σίγουρα; Θα εκδοθούν {readyCount} αποδείξεις με τους επόμενους αριθμούς της σειράς.
+                      {confirmLabel}
                     </span>
                     <button type="button" onClick={issueSelected} disabled={issuing}
                       className="px-5 py-2 rounded-full bg-[#6A994E] text-white text-sm font-bold hover:opacity-90 disabled:opacity-40">
