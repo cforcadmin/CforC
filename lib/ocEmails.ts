@@ -3332,6 +3332,143 @@ ${pendingBlock}`
 }
 
 /**
+ * Λήξη εγκεκριμένης αίτησης που δεν πληρώθηκε — προς τον/την αιτούντα/ούσα.
+ *
+ * Φεύγει ΜΟΝΟ με το χέρι, από τον/την Financer («Λήξη αίτησης» στην
+ * Επισκόπηση), αφού περάσουν οι 30 ημέρες που υπόσχονται τα γράμματα των 15
+ * και 28 ημερών. Από την Community, όπως το email έγκρισης: είναι το τέλος
+ * της ίδιας συζήτησης, όχι θέμα πληρωμής.
+ *
+ * Το «παρά τις υπενθυμίσεις μας» μπαίνει ΜΟΝΟ αν έφυγε όντως υπενθύμιση —
+ * ένα γράμμα που επικαλείται υπενθυμίσεις που δεν στάλθηκαν ποτέ είναι
+ * άδικο προς τον άνθρωπο που το διαβάζει.
+ */
+export function applicationExpiredEmailHtml(opts: {
+  firstName: string
+  decisionDate: string | null
+  remindersSent: boolean
+  signerName?: string
+}): { subject: string; html: string } {
+  const { firstName, decisionDate, remindersSent } = opts
+  const signerName = opts.signerName || 'Culture for Change — Community'
+  const dateLabel = decisionDate
+    ? new Date(decisionDate).toLocaleDateString('el-GR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : null
+  const approvedWhen = dateLabel ? ` στις ${dateLabel}` : ''
+  const despite = remindersSent ? ', παρά τις υπενθυμίσεις που σου στείλαμε' : ''
+  const applyUrl = `${SITE_URL}/apply`
+  const html = `<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>Λήξη αίτησης εγγραφής — Culture for Change</title>
+<!--[if mso]>
+<style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important;}</style>
+<![endif]-->
+<style>
+  @media only screen and (max-width:620px){
+    .px{padding-left:24px !important;padding-right:24px !important;}
+    .btn a{display:block !important;}
+    .h1{font-size:26px !important;line-height:32px !important;}
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F0EB;">
+<span style="display:none;font-size:1px;color:#F5F0EB;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Η αίτηση εγγραφής σου στο Culture for Change έληξε, επειδή δεν ολοκληρώθηκε η πληρωμή. Μπορείς να υποβάλεις νέα αίτηση όποτε θέλεις.</span>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F0EB;">
+<tr><td align="center" style="padding:32px 12px 48px 12px;">
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #E5E7EB;">
+
+  <!-- Header -->
+  <tr>
+    <td class="px" style="background-color:#FF8B6A;padding:36px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:16px;letter-spacing:1.6px;color:#FFFFFF;font-weight:bold;mso-line-height-rule:exactly;">CULTURE FOR CHANGE</td>
+        </tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr>
+          <td class="h1" style="font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:36px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">ΛΗΞΗ ΑΙΤΗΣΗΣ ΕΓΓΡΑΦΗΣ</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Body -->
+  <tr>
+    <td class="px" style="padding:40px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 20px 0;">Aγαπητή/αγαπητέ ${escapeHtml(firstName)},</p>
+      <p style="margin:0 0 20px 0;">Η αίτησή σου για εγγραφή στο Culture for Change εγκρίθηκε από το ΔΣ${approvedWhen}. Για να ολοκληρωθεί η εγγραφή χρειαζόταν η καταβολή της εγγραφής και της ετήσιας συνδρομής μέσα σε 30 ημέρες από την έγκριση.</p>
+      <p style="margin:0 0 20px 0;">Η προθεσμία αυτή πέρασε χωρίς να λάβουμε την πληρωμή${despite}, και έτσι <strong>η αίτησή σου έληξε</strong>: η έγκριση δεν ισχύει πια και όποιος σύνδεσμος πληρωμής σου είχε σταλεί δεν ισχύει. Αν στο μεταξύ έκανες την κατάθεση, απάντησε σε αυτό το email για να το ελέγξουμε.</p>
+      <p style="margin:0 0 20px 0;">Αν εξακολουθείς να θέλεις να γίνεις μέλος, είσαι ευπρόσδεκτη/ος να υποβάλεις <strong>νέα αίτηση</strong> από την ιστοσελίδα μας. Η νέα αίτηση θα περάσει ξανά από ολόκληρη τη διαδικασία, όπως κάθε αίτηση.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td class="btn" align="center" bgcolor="#FF8B6A" style="background-color:#FF8B6A;border-radius:999px;">
+            <a href="${applyUrl}" style="display:block;padding:16px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:bold;color:#2D2D2D;text-decoration:none;border-radius:999px;mso-line-height-rule:exactly;">Νέα αίτηση εγγραφής</a>
+          </td>
+        </tr>
+        <tr><td height="24" style="height:24px;line-height:24px;font-size:0;">&nbsp;</td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Signature -->
+  <tr>
+    <td class="px" style="padding:16px 48px 0 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;mso-line-height-rule:exactly;">
+      <p style="margin:0 0 20px 0;">Σε ευχαριστούμε για το ενδιαφέρον σου για το Δίκτυο και είμαστε στη διάθεσή σου για οτιδήποτε.</p>
+      <p style="margin:0;">Φιλικά,</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="px" style="padding:16px 48px 40px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:#E5E7EB;">&nbsp;</td></tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:24px;color:#2D2D2D;font-weight:bold;mso-line-height-rule:exactly;">${escapeHtml(signerName)}</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#5A5A5A;mso-line-height-rule:exactly;">Secretary General<br>Community - Culture for Change</td></tr>
+        <tr><td height="6" style="height:6px;line-height:6px;font-size:0;">&nbsp;</td></tr>
+        <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;mso-line-height-rule:exactly;"><a href="mailto:community@cultureforchange.net" style="color:#C9552F;text-decoration:underline;">community@cultureforchange.net</a></td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Footer -->
+  <tr>
+    <td class="px" align="center" style="background-color:#2D2D2D;padding:32px 48px 32px 48px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#F5F0EB;font-weight:bold;mso-line-height-rule:exactly;">Join our Social Networks &amp; Get Involved!</td></tr>
+        <tr><td height="14" style="height:14px;line-height:14px;font-size:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:26px;color:#F5F0EB;mso-line-height-rule:exactly;">
+          <a href="https://cultureforchange.net" style="color:#FF8B6A;text-decoration:none;">Website</a>&nbsp; |&nbsp;
+          <a href="https://www.facebook.com/cultureforchange" style="color:#FF8B6A;text-decoration:none;">Facebook</a>&nbsp; |&nbsp;
+          <a href="https://www.instagram.com/cultureforchange" style="color:#FF8B6A;text-decoration:none;">Instagram</a>&nbsp; |&nbsp;
+          <a href="https://www.linkedin.com/company/cultureforchange" style="color:#FF8B6A;text-decoration:none;">LinkedIn</a>&nbsp; |&nbsp;
+          <a href="https://www.youtube.com/@cultureforchange" style="color:#FF8B6A;text-decoration:none;">YouTube</a>
+        </td></tr>
+        <tr><td height="20" style="height:20px;line-height:20px;font-size:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#A0A0A0;mso-line-height-rule:exactly;">Δίκτυο Culture for Change — Αθήνα, Ελλάδα<br>Λαμβάνεις αυτό το email επειδή υπέβαλες αίτημα εγγραφής μέλους.</td></tr>
+        <tr><td height="18" style="height:18px;line-height:18px;font-size:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:17px;color:#8A8A8A;mso-line-height-rule:exactly;">_______________________________________________________________<br>This email may contain confidential information. Read full disclaimer <a href="https://www.cultureforchange.net/email-confidentiality-disclaimer" style="color:#FF8B6A;text-decoration:underline;">here</a></td></tr>
+      </table>
+    </td>
+  </tr>
+
+</table>
+
+</td></tr>
+</table>
+</body>
+</html>
+`
+  return { subject: 'Η αίτηση εγγραφής σου έληξε — Culture for Change', html }
+}
+
+/**
  * Τελευταία ειδοποίηση πληρωμής για ΗΔΗ εγκεκριμένα μέλη που δεν πλήρωσαν.
  *
  * ΔΕΝ είναι το email έγκρισης: αυτοί το έχουν ήδη λάβει (από το community@,

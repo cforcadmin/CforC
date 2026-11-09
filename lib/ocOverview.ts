@@ -67,6 +67,8 @@ export interface OcOverviewData {
   approvedApps: Array<{
     id: string; name: string; submittedAt: string | null; decisionDate: string | null
     claimedAt: string | null; armed: boolean; daysSinceDecision: number | null
+    /** Ημέρες από έγκριση — ή από υποβολή/εισαγωγή για ιστορικές εγγραφές χωρίς DecisionDate. Για το «Λήξη αίτησης». */
+    daysWaiting: number | null
   }>
   /** Πόσοι έχουν δηλώσει ότι πλήρωσαν (εκκρεμεί επιβεβαίωση Financer) */
   paymentClaims: number
@@ -231,7 +233,7 @@ export async function fetchOcOverview(): Promise<OcOverviewData> {
   const approvedRes = await strapiGet(
     `/membership-applications?filters[ApplicationState][$eq]=approved&pagination[limit]=100` +
     `&sort=DecisionDate:desc&fields[0]=FirstName&fields[1]=LastName&fields[2]=SubmittedAt` +
-    `&fields[3]=DecisionDate&fields[4]=PaymentClaimedAt&fields[5]=AutoRemindersArmed`
+    `&fields[3]=DecisionDate&fields[4]=PaymentClaimedAt&fields[5]=AutoRemindersArmed&fields[6]=createdAt`
   )
   const approvedApps = (approvedRes?.data || []).map((a: any) => ({
     id: a.documentId,
@@ -243,6 +245,9 @@ export async function fetchOcOverview(): Promise<OcOverviewData> {
     // Για την ένδειξη «η προθεσμία έληξε» στις 30 μέρες (§4α)
     daysSinceDecision: a.DecisionDate
       ? Math.floor((Date.now() - new Date(a.DecisionDate).getTime()) / 86400000)
+      : null,
+    daysWaiting: (a.DecisionDate || a.SubmittedAt || a.createdAt)
+      ? Math.floor((Date.now() - new Date(a.DecisionDate || a.SubmittedAt || a.createdAt).getTime()) / 86400000)
       : null,
   }))
   // Νεότερη έγκριση πρώτη (χωρίς ημ. έγκρισης → κατά υποβολή)

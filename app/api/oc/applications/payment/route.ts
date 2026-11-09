@@ -19,8 +19,8 @@ import { cookies } from 'next/headers'
 import { verifyToken, generatePaymentClaimToken } from '@/lib/auth'
 import { resolveOcAccess, getSeatHolder, type OcSeat } from '@/lib/ocRoles'
 import { effectiveSeat, isActingAsOtherSeat, RECEIPT_WEARING_REFUSAL, OC_SEAT_MODE_COOKIE } from '@/lib/ocSeatMode'
-import { sendPaymentToSheet, sheetsConfigured } from '@/lib/googleSheets'
-import { sendOcEmail, reminderEmailHtml, paymentFailedEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, FINANCE_FROM, FINANCE_EMAIL } from '@/lib/ocEmails'
+import { sendPaymentToSheet, sheetsConfigured, removeApplicantFromSheet } from '@/lib/googleSheets'
+import { sendOcEmail, reminderEmailHtml, paymentFailedEmailHtml, applicationExpiredEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, FINANCE_FROM, FINANCE_EMAIL, ADMIN_EMAIL, IT_EMAIL } from '@/lib/ocEmails'
 import { processPaymentCompletion } from '@/lib/paymentCompletion'
 import { strapiFetch } from '@/lib/strapiFetch'
 
@@ -34,6 +34,12 @@ import { strapiFetch } from '@/lib/strapiFetch'
  *  - "failed": για δηλωμένη-αλλά-μη-εμφανισθείσα πληρωμή — ευγενικό email
  *              «δεν έφτασε η κατάθεση, ξαναέλεγξε» και μηδενισμός της
  *              δήλωσης (PaymentClaimedAt) ώστε το κουτί να επανέλθει.
+ *  - "expire": εγκεκριμένη που ΔΕΝ πλήρωσε μέσα στις 30 ημέρες και δεν
+ *              δήλωσε πληρωμή. Η αίτηση γίνεται `rejected` με σημείωση,
+ *              οι αυτόματες υπενθυμίσεις σβήνουν, η γραμμή της καθαρίζεται
+ *              από τα ΕΓΚΕΚΡΙΜΕΝΑ του Μητρώου, και ο άνθρωπος ενημερώνεται
+ *              (από Community, cc finance@/it@/hello@) ότι μπορεί να
+ *              ξαναϋποβάλει. Κάθε βήμα επιστρέφει χωριστά στην οθόνη.
  * Acting seat MUST be financer — no other role, by design.
  */
 
@@ -80,7 +86,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Μη έγκυρο αίτημα' }, { status: 400 })
   }
   const applicationId = String(body?.applicationId || '').replace(/[^a-z0-9]/gi, '')
-  const action = ['paid', 'remind', 'failed'].includes(body?.action) ? body.action as 'paid' | 'remind' | 'failed' : null
+  const action = ['paid', 'remind', 'failed', 'expire'].includes(body?.action) ? body.action as 'paid' | 'remind' | 'failed' | 'expire' : null
   if (!applicationId || !action) {
     return NextResponse.json({ error: 'Μη έγκυρο αίτημα' }, { status: 400 })
   }
@@ -138,6 +144,76 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({ data: { PaymentClaimedAt: null } }),
       }).catch(() => {})
       return NextResponse.json({ ok: true, action: 'failed', to: email })
+    }
+
+    if (action === 'expire') {
+      /**
+       * ΔΥΟ ΠΡΟΫΠΟΘΕΣΕΙΣ, ΚΑΙ ΟΙ ΔΥΟ ΣΤΟΝ SERVER — το κουμπί μπορεί να είναι
+       * παλιό tab. Δηλωμένη πληρωμή: δεν «λήγει», ελέγχεται («Αποτυχία
+       * πληρωμής»). Λιγότερες από 30 μέρες: τα γράμματα υποσχέθηκαν 30.
+       *
+       * Αφετηρία η έγκριση· οι ιστορικές εισαγωγές δεν έχουν DecisionDate,
+       * οπότε μετράμε από την υποβολή — αλλιώς δεν θα έληγαν ποτέ.
+       */
+      if (app.PaymentClaimedAt) {
+        return NextResponse.json(
+          { error: 'Έχει δηλώσει πληρωμή — αν δεν φάνηκε η κατάθεση, χρησιμοποίησε «Αποτυχία πληρωμής».' },
+          { status: 409 },
+        )
+      }
+      const since = app.DecisionDate || app.SubmittedAt || app.createdAt
+      const days = since ? Math.floor((Date.now() - new Date(since).getTime()) / 86400000) : null
+      if (days === null || days < 30) {
+        return NextResponse.json(
+          { error: `Δεν έχουν περάσει 30 ημέρες από την έγκριση (${days ?? ';'}) — η προθεσμία που ανακοινώσαμε δεν έχει λήξει.`, tooSoon: true },
+          { status: 409 },
+        )
+      }
+
+      // 1) Strapi: η απόφαση αλλάζει. Αν αποτύχει εδώ, δεν συνεχίζουμε —
+      //    ένα email «έληξε» για αίτηση που μένει approved θα ήταν ψέμα.
+      const stamp = new Date().toLocaleDateString('el-GR')
+      const note = `Λήξη προθεσμίας πληρωμής: ${days} ημέρες χωρίς καταβολή — ακύρωση από Ταμία ${stamp}`
+        + (app.DecisionNote ? ` · ${app.DecisionNote}` : '')
+      const put = await strapiFetch(`${STRAPI_URL}/api/membership-applications/${app.documentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${STRAPI_API_TOKEN}` },
+        body: JSON.stringify({ data: {
+          ApplicationState: 'rejected',
+          DecisionNote: note,
+          AutoRemindersArmed: false, AutoRemindersArmedAt: null, AutoRemindersArmedBy: null,
+        } }),
+      })
+      if (!put.ok) {
+        return NextResponse.json({ error: `Το Strapi δεν δέχτηκε την αλλαγή (${put.status}) — τίποτα δεν άλλαξε` }, { status: 502 })
+      }
+
+      // 2) Μητρώο: καθαρισμός της γραμμής στα ΕΓΚΕΚΡΙΜΕΝΑ. Μη-θανατηφόρο:
+      //    η αστοχία ΕΠΙΣΤΡΕΦΕΤΑΙ, δεν καταπίνεται.
+      let sheetCleared = false
+      let sheetError: string | null = null
+      if (sheetsConfigured()) {
+        try { await removeApplicantFromSheet(email); sheetCleared = true }
+        catch (err: any) { sheetError = String(err?.message || err).slice(0, 160) }
+      } else {
+        sheetError = 'Το Μητρώο δεν είναι ρυθμισμένο'
+      }
+
+      // 3) Email στον άνθρωπο — από Community, όπως η έγκριση.
+      const signer = await getSeatHolder('community')
+      const signerName = signer?.engName || signer?.name || 'Culture for Change — Community'
+      const tpl = applicationExpiredEmailHtml({
+        firstName,
+        decisionDate: app.DecisionDate || null,
+        remindersSent: !!(app.Reminder15SentAt || app.Reminder28SentAt),
+        signerName,
+      })
+      const emailSent = await sendOcEmail(email, tpl.subject, tpl.html, {
+        from: COMMUNITY_FROM, replyTo: COMMUNITY_EMAIL,
+        cc: [FINANCE_EMAIL, IT_EMAIL, ADMIN_EMAIL],
+      })
+
+      return NextResponse.json({ ok: true, action: 'expire', to: email, days, sheetCleared, sheetError, emailSent })
     }
 
     // action === 'paid'

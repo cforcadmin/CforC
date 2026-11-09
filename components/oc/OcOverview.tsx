@@ -698,16 +698,18 @@ export default function OcOverview({
   const router = useRouter()
   const [payConfirm, setPayConfirm] = useState<string | null>(null)
   const [failWarn, setFailWarn] = useState<string | null>(null)
+  const [expireWarn, setExpireWarn] = useState<string | null>(null)
   const [payBusy, setPayBusy] = useState<string | null>(null)
   const [payNotes, setPayNotes] = useState<Record<string, string>>({})
 
-  async function financerAction(appId: string, action: 'paid' | 'remind' | 'failed') {
+  async function financerAction(appId: string, action: 'paid' | 'remind' | 'failed' | 'expire') {
     if (action === 'paid' && payConfirm !== appId) {
       setPayConfirm(appId)
       return
     }
     setPayConfirm(null)
     setFailWarn(null)
+    setExpireWarn(null)
     setPayBusy(appId + action)
     try {
       const res = await fetch('/api/oc/applications/payment', {
@@ -724,6 +726,14 @@ export default function OcOverview({
         setPayNotes(n => ({ ...n, [appId]: 'Η υπενθύμιση εστάλη ✓' }))
       } else if (action === 'failed') {
         setPayNotes(n => ({ ...n, [appId]: 'Το email αποτυχίας εστάλη — η δήλωση μηδενίστηκε ✓' }))
+        router.refresh()
+      } else if (action === 'expire') {
+        // Τρία συστήματα, τρεις απαντήσεις — ποτέ ένα σκέτο «έγινε»
+        setPayNotes(n => ({
+          ...n,
+          [appId]: `Η αίτηση έληξε ✓ · email ${json.emailSent ? 'στάλθηκε ✓' : 'ΔΕΝ στάλθηκε ✗'}`
+            + ` · Μητρώο: ${json.sheetCleared ? 'η γραμμή καθαρίστηκε ✓' : `ΔΕΝ καθαρίστηκε — σβήσε τη γραμμή με το χέρι (${json.sheetError || 'άγνωστο σφάλμα'})`}`,
+        }))
         router.refresh()
       } else {
         setPayNotes(n => ({
@@ -1047,6 +1057,43 @@ export default function OcOverview({
                           >
                             {payBusy === app.id + 'remind' ? 'Αποστολή…' : 'Υπενθύμιση'}
                           </button>
+                        )}
+                        {!app.claimedAt && app.daysWaiting !== null && app.daysWaiting >= 30 && (
+                          <button
+                            type="button"
+                            disabled={payBusy !== null}
+                            onClick={() => { setFailWarn(null); setExpireWarn(app.id) }}
+                            title="Η προθεσμία των 30 ημερών πέρασε χωρίς πληρωμή — λήξη της αίτησης και ενημέρωση του/της αιτούντα/ούσας"
+                            className="px-3 py-1 rounded-full text-xs font-bold border border-red-300 text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
+                          >
+                            {payBusy === app.id + 'expire' ? 'Λήξη…' : 'Λήξη αίτησης'}
+                          </button>
+                        )}
+                        {expireWarn === app.id && (
+                          <div className="w-full mt-2 p-3 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-xs text-red-900 dark:text-red-100">
+                            <p className="mb-2">
+                              Η αίτηση θα απορριφθεί ως <strong>ληγμένη</strong> ({app.daysWaiting} μέρες χωρίς πληρωμή).
+                              Θα σταλεί email στον/στην <strong>{app.name}</strong> από την Community, με κοινοποίηση σε finance@, it@ και hello@,
+                              και η γραμμή θα σβηστεί από τα ΕΓΚΕΚΡΙΜΕΝΑ του Μητρώου. Αν θελήσει, κάνει νέα αίτηση από την αρχή. Δεν αναιρείται.
+                            </p>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setExpireWarn(null)}
+                                className="px-3 py-1 rounded-full font-bold bg-white dark:bg-gray-700 text-charcoal dark:text-gray-200 border border-gray-300 dark:border-gray-500"
+                              >
+                                Άκυρο
+                              </button>
+                              <button
+                                type="button"
+                                disabled={payBusy !== null}
+                                onClick={() => financerAction(app.id, 'expire')}
+                                className="px-3 py-1 rounded-full font-bold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                              >
+                                Λήξη αίτησης και email
+                              </button>
+                            </div>
+                          </div>
                         )}
                         {failWarn === app.id && (
                           <div className="w-full mt-2 p-3 rounded-xl bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 text-xs text-orange-900 dark:text-orange-100">
