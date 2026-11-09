@@ -22,6 +22,7 @@ import { effectiveSeat, isActingAsOtherSeat, RECEIPT_WEARING_REFUSAL, OC_SEAT_MO
 import { sendPaymentToSheet, sheetsConfigured, removeApplicantFromSheet } from '@/lib/googleSheets'
 import { sendOcEmail, reminderEmailHtml, paymentFailedEmailHtml, applicationExpiredEmailHtml, paymentClaimUrl, COMMUNITY_FROM, COMMUNITY_EMAIL, FINANCE_FROM, FINANCE_EMAIL, ADMIN_EMAIL, IT_EMAIL } from '@/lib/ocEmails'
 import { processPaymentCompletion } from '@/lib/paymentCompletion'
+import { recordOutcome, confirmOutcomeDeletion } from '@/lib/applicationOutcome'
 import { strapiFetch } from '@/lib/strapiFetch'
 
 /**
@@ -35,11 +36,14 @@ import { strapiFetch } from '@/lib/strapiFetch'
  *              «δεν έφτασε η κατάθεση, ξαναέλεγξε» και μηδενισμός της
  *              δήλωσης (PaymentClaimedAt) ώστε το κουτί να επανέλθει.
  *  - "expire": εγκεκριμένη που ΔΕΝ πλήρωσε μέσα στις 30 ημέρες και δεν
- *              δήλωσε πληρωμή. Η αίτηση γίνεται `rejected` με σημείωση,
- *              οι αυτόματες υπενθυμίσεις σβήνουν, η γραμμή της καθαρίζεται
- *              από τα ΕΓΚΕΚΡΙΜΕΝΑ του Μητρώου, και ο άνθρωπος ενημερώνεται
- *              (από Community, cc finance@/it@/hello@) ότι μπορεί να
- *              ξαναϋποβάλει. Κάθε βήμα επιστρέφει χωριστά στην οθόνη.
+ *              δήλωσε πληρωμή. Ο άνθρωπος ενημερώνεται (από Community,
+ *              cc finance@/it@/hello@) ότι η αίτηση έληξε, ότι τα στοιχεία
+ *              του διαγράφονται (GDPR) και ότι μπορεί να ξαναϋποβάλει — και
+ *              μετά τα στοιχεία ΟΝΤΩΣ διαγράφονται: γραμμή Μητρώου,
+ *              φωτογραφία, αίτηση. ΠΡΩΤΑ γράφεται η ανώνυμη απόδειξη
+ *              (oc-application-outcomes)· χωρίς απόδειξη δεν σβήνουμε.
+ *              Ο άνθρωπος πατά, το σύστημα εκτελεί (απόφαση ΟΣ 29/9/2026:
+ *              καμία ΑΥΤΟΜΑΤΗ διαγραφή). Κάθε βήμα επιστρέφει χωριστά.
  * Acting seat MUST be financer — no other role, by design.
  */
 
@@ -92,7 +96,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const appRes = await strapiGet(`/membership-applications/${applicationId}`)
+    // Η φωτογραφία δεν φεύγει μαζί με την αίτηση — χρειάζεται το id της
+    const appRes = await strapiGet(`/membership-applications/${applicationId}?populate[Photo][fields][0]=id`)
     const app = appRes?.data
     if (!app) {
       return NextResponse.json({ error: 'Η αίτηση δεν βρέθηκε' }, { status: 404 })
@@ -170,8 +175,28 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      // 0) Η ΑΠΟΔΕΙΞΗ ΠΡΩΤΑ, ΧΩΡΙΣ ΠΡΟΣΩΠΙΚΑ ΔΕΔΟΜΕΝΑ. Αν δεν γραφτεί, τίποτα
+      //    δεν αλλάζει: σβησμένη αίτηση χωρίς απόδειξη δεν αποδεικνύεται ποτέ.
+      const now = new Date().toISOString()
+      const proven = await recordOutcome({
+        ApplicationRef: app.documentId,
+        Outcome: 'no-payment-30d',
+        DecisionDate: app.DecisionDate || null,
+        DeadlineExpiredAt: now,
+        DaysElapsed: days,
+        Reminder15SentAt: app.Reminder15SentAt || null,
+        Reminder28SentAt: app.Reminder28SentAt || null,
+        DeletionRequestedAt: now,
+        DeletionConfirmedAt: null,
+      })
+      if (!proven) {
+        return NextResponse.json({ error: 'Δεν γράφτηκε η απόδειξη τήρησης της διαδικασίας — τίποτα δεν άλλαξε, δοκίμασε ξανά' }, { status: 502 })
+      }
+
       // 1) Strapi: η απόφαση αλλάζει. Αν αποτύχει εδώ, δεν συνεχίζουμε —
       //    ένα email «έληξε» για αίτηση που μένει approved θα ήταν ψέμα.
+      //    Μένει ως δίχτυ: αν αργότερα αποτύχει η διαγραφή, η αίτηση είναι
+      //    τουλάχιστον rejected με σημείωση, όχι approved.
       const stamp = new Date().toLocaleDateString('el-GR')
       const note = `Λήξη προθεσμίας πληρωμής: ${days} ημέρες χωρίς καταβολή — ακύρωση από Ταμία ${stamp}`
         + (app.DecisionNote ? ` · ${app.DecisionNote}` : '')
@@ -199,7 +224,8 @@ export async function POST(request: NextRequest) {
         sheetError = 'Το Μητρώο δεν είναι ρυθμισμένο'
       }
 
-      // 3) Email στον άνθρωπο — από Community, όπως η έγκριση.
+      // 3) Email στον άνθρωπο — από Community, όπως η έγκριση. ΠΡΙΝ τη
+      //    διαγραφή: μετά δεν θα υπάρχει διεύθυνση να του γράψουμε.
       const signer = await getSeatHolder('community')
       const signerName = signer?.engName || signer?.name || 'Culture for Change — Community'
       const tpl = applicationExpiredEmailHtml({
@@ -213,7 +239,28 @@ export async function POST(request: NextRequest) {
         cc: [FINANCE_EMAIL, IT_EMAIL, ADMIN_EMAIL],
       })
 
-      return NextResponse.json({ ok: true, action: 'expire', to: email, days, sheetCleared, sheetError, emailSent })
+      // 4) Φωτογραφία: ζει στη Βιβλιοθήκη Πολυμέσων, ΔΕΝ σβήνεται με την αίτηση.
+      let photoRemoved: boolean | null = null   // null = δεν είχε
+      const photoId = app.Photo?.id
+      if (photoId) {
+        const del = await strapiFetch(`${STRAPI_URL}/api/upload/files/${photoId}`, {
+          method: 'DELETE', headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
+        }).catch(() => null)
+        photoRemoved = !!(del && (del.ok || del.status === 404))
+      }
+
+      // 5) Η ίδια η αίτηση. Μετά, η σφραγίδα «σβήστηκε» στην απόδειξη — ΜΟΝΟ
+      //    αν όντως έφυγε.
+      const gone = await strapiFetch(`${STRAPI_URL}/api/membership-applications/${app.documentId}`, {
+        method: 'DELETE', headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
+      }).catch(() => null)
+      const applicationDeleted = !!(gone && (gone.ok || gone.status === 404))
+      const proofConfirmed = applicationDeleted ? await confirmOutcomeDeletion(app.documentId) : false
+
+      return NextResponse.json({
+        ok: true, action: 'expire', to: email, days,
+        sheetCleared, sheetError, emailSent, photoRemoved, applicationDeleted, proofConfirmed,
+      })
     }
 
     // action === 'paid'

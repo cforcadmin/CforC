@@ -732,7 +732,10 @@ export default function OcOverview({
         setPayNotes(n => ({
           ...n,
           [appId]: `Η αίτηση έληξε ✓ · email ${json.emailSent ? 'στάλθηκε ✓' : 'ΔΕΝ στάλθηκε ✗'}`
-            + ` · Μητρώο: ${json.sheetCleared ? 'η γραμμή καθαρίστηκε ✓' : `ΔΕΝ καθαρίστηκε — σβήσε τη γραμμή με το χέρι (${json.sheetError || 'άγνωστο σφάλμα'})`}`,
+            + ` · Μητρώο: ${json.sheetCleared ? 'η γραμμή καθαρίστηκε ✓' : `ΔΕΝ καθαρίστηκε — σβήσε τη γραμμή με το χέρι (${json.sheetError || 'άγνωστο σφάλμα'})`}`
+            + ` · φωτογραφία: ${json.photoRemoved === null ? 'δεν είχε' : json.photoRemoved ? 'σβήστηκε ✓' : 'ΔΕΝ σβήστηκε — Βιβλιοθήκη Πολυμέσων, με το χέρι'}`
+            + ` · αίτηση: ${json.applicationDeleted ? 'σβήστηκε από το Strapi ✓' : 'ΔΕΝ σβήστηκε — μένει rejected, σβήσε την με το χέρι'}`
+            + (json.applicationDeleted && !json.proofConfirmed ? ' · η απόδειξη δεν σφραγίστηκε — πάτησε «Έγινε» στις εκκρεμείς διαγραφές' : ''),
         }))
         router.refresh()
       } else {
@@ -1072,9 +1075,10 @@ export default function OcOverview({
                         {expireWarn === app.id && (
                           <div className="w-full mt-2 p-3 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-xs text-red-900 dark:text-red-100">
                             <p className="mb-2">
-                              Η αίτηση θα απορριφθεί ως <strong>ληγμένη</strong> ({app.daysWaiting} μέρες χωρίς πληρωμή).
-                              Θα σταλεί email στον/στην <strong>{app.name}</strong> από την Community, με κοινοποίηση σε finance@, it@ και hello@,
-                              και η γραμμή θα σβηστεί από τα ΕΓΚΕΚΡΙΜΕΝΑ του Μητρώου. Αν θελήσει, κάνει νέα αίτηση από την αρχή. Δεν αναιρείται.
+                              Η αίτηση θα λήξει ({app.daysWaiting} μέρες χωρίς πληρωμή). Θα σταλεί email στον/στην <strong>{app.name}</strong> από
+                              την Community, με κοινοποίηση σε finance@, it@ και hello@, και μετά <strong>τα στοιχεία διαγράφονται</strong> (GDPR):
+                              γραμμή από τα ΕΓΚΕΚΡΙΜΕΝΑ του Μητρώου, φωτογραφία, αίτηση. Μένει μόνο ανώνυμη απόδειξη ότι τηρήθηκε η διαδικασία.
+                              Αν θελήσει, κάνει νέα αίτηση από την αρχή. Δεν αναιρείται.
                             </p>
                             <div className="flex gap-2">
                               <button

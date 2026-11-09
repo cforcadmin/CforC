@@ -76,6 +76,28 @@ export async function recordOutcome(rec: OutcomeRecord): Promise<boolean> {
   }
 }
 
+/**
+ * Σφραγίζει την απόδειξη ως «η διαγραφή έγινε». Επιστρέφει `false` αν δεν
+ * βρέθηκε ή δεν γράφτηκε — ο καλών το αναφέρει, δεν το καταπίνει.
+ *
+ * ΤΗΝ ΚΑΛΕΙ ΜΟΝΟ ΟΠΟΙΟΣ ΜΟΛΙΣ ΕΣΒΗΣΕ την αίτηση και το επαλήθευσε: μια
+ * σφραγίδα πάνω σε αίτηση που στέκει ακόμη είναι ψέμα σε αρχείο δεκαετίας.
+ */
+export async function confirmOutcomeDeletion(applicationRef: string): Promise<boolean> {
+  try {
+    const find = await strapi(
+      `/oc-application-outcomes?pagination[limit]=1&fields[0]=DeletionConfirmedAt`
+      + `&filters[ApplicationRef][$eq]=${encodeURIComponent(applicationRef)}`)
+    const doc = (find.json?.data || [])[0]
+    if (!doc) return false
+    if (doc.DeletionConfirmedAt) return true
+    const put = await strapi(`/oc-application-outcomes/${doc.documentId}`, 'PUT', { DeletionConfirmedAt: new Date().toISOString() })
+    return put.ok
+  } catch {
+    return false
+  }
+}
+
 /** Οι αποδείξεις, νεότερη πρώτη — για την οθόνη και για έλεγχο */
 export async function fetchOutcomes(limit = 100): Promise<OutcomeRecord[]> {
   const r = await strapi(`/oc-application-outcomes?pagination[limit]=${limit}&sort[0]=DeadlineExpiredAt:desc`)
