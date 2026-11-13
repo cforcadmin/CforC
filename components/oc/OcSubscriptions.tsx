@@ -25,6 +25,15 @@ export interface SubMemberRow {
 
 type SendState = 'idle' | 'sending' | 'sent' | 'error' | 'issuing' | 'issued' | 'issue-error'
 
+/** Αποτέλεσμα μίας αποστολής — ό,τι χρειάζεται το popup της μαζικής */
+interface SendResult {
+  docId: string
+  name: string
+  ok: boolean
+  /** Το μήνυμα λάθους του server (ή του δικτύου) — μόνο όταν ok === false */
+  error?: string
+}
+
 /**
  * Οι κουκκίδες των υπενθυμίσεων: μία ανά αποστολή, με χρώμα που εντείνεται.
  *
@@ -56,6 +65,87 @@ function reminderTitle(log: string[]): string {
   return `${count} · ${dates.join(', ')} — κλικ για νέα`
 }
 
+/**
+ * Απολογισμός μαζικής αποστολής: «Στάλθηκαν 11 από 12» + ποιοι απέτυχαν
+ * και γιατί. Οι αποτυχίες πρώτες· όταν δεν υπάρχουν, η λίστα των
+ * επιτυχιών μένει πτυσσόμενη για να μη γεμίζει την οθόνη με 50 ✓.
+ */
+function BulkResultPopup({ results, onClose }: { results: SendResult[]; onClose: () => void }) {
+  const failed = results.filter(r => !r.ok)
+  const sent = results.filter(r => r.ok)
+  const allOk = failed.length === 0
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="bulk-result-title"
+      onClick={onClose}
+    >
+      <div
+        className="menu-glass rounded-3xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 sm:p-8"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <h3 id="bulk-result-title" className="font-bold text-lg text-charcoal dark:text-gray-100">
+            Υπενθυμίσεις συνδρομής — απολογισμός
+          </h3>
+          <button type="button" onClick={onClose}
+            className="text-gray-400 hover:text-charcoal dark:hover:text-gray-200 text-xl leading-none" aria-label="Κλείσιμο">
+            ✕
+          </button>
+        </div>
+        <p className={`text-sm font-medium mb-4 notranslate ${allOk ? 'text-green-700 dark:text-green-300' : 'text-red-600 dark:text-red-400'}`} role="status">
+          {allOk
+            ? `✉✓ Στάλθηκαν και οι ${results.length} υπενθυμίσεις.`
+            : `Στάλθηκαν ${sent.length} από ${results.length} · ${failed.length} ${failed.length === 1 ? 'απέτυχε' : 'απέτυχαν'}.`}
+        </p>
+
+        {failed.length > 0 && (
+          <div className="mb-4">
+            <p className="text-xs font-bold text-red-700 dark:text-red-300 mb-1.5">Δεν στάλθηκαν</p>
+            <ul className="space-y-1">
+              {failed.map(r => (
+                <li key={r.docId} className="text-sm text-charcoal dark:text-gray-100 flex items-baseline gap-2">
+                  <span className="text-red-600 dark:text-red-400" aria-hidden="true">✗</span>
+                  <span>{r.name}
+                    <span className="block text-xs text-gray-500 dark:text-gray-400">{r.error || 'Αποτυχία αποστολής'}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Κλικ στο όνομα στη λίστα για να ξαναστείλεις μόνο σε αυτούς.
+            </p>
+          </div>
+        )}
+
+        {sent.length > 0 && (
+          <details open={!allOk && sent.length <= 5}>
+            <summary className="text-xs font-bold text-green-700 dark:text-green-300 cursor-pointer select-none">
+              Στάλθηκαν ({sent.length})
+            </summary>
+            <ul className="mt-1.5 space-y-0.5">
+              {sent.map(r => (
+                <li key={r.docId} className="text-sm text-charcoal dark:text-gray-100 flex items-baseline gap-2">
+                  <span className="text-green-700 dark:text-green-300" aria-hidden="true">✓</span>{r.name}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
+
+        <div className="mt-5 flex justify-end">
+          <button type="button" onClick={onClose}
+            className="px-4 py-1.5 rounded-full bg-[#6A994E] text-white text-xs font-bold hover:opacity-90">
+            ΟΚ
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function OcSubscriptions({ members, canRemind, canIssue, onIssued }: {
   members: SubMemberRow[]
   canRemind: boolean
@@ -68,6 +158,10 @@ export default function OcSubscriptions({ members, canRemind, canIssue, onIssued
   const [confirmFor, setConfirmFor] = useState<string | null>(null)   // docId ή 'all:notify' / 'all:delete'
   const [bulkRunning, setBulkRunning] = useState(false)
   const [bulkProgress, setBulkProgress] = useState('')
+  /** Το popup απολογισμού μετά το «Σε όλους» — null = κλειστό */
+  const [bulkResult, setBulkResult] = useState<SendResult[] | null>(null)
+  /** Αιτία αποτυχίας ανά μέλος (tooltip στο ✗ του chip) */
+  const [sendError, setSendError] = useState<Record<string, string>>({})
 
   const year = new Date().getFullYear()
   const paidCurrent = members.filter(m => m.payments[String(year)] === 1).length
@@ -76,7 +170,12 @@ export default function OcSubscriptions({ members, canRemind, canIssue, onIssued
   const deleteList = members.filter(m => m.status === 'owes-2')
   const claimsCount = [...notifyList, ...deleteList].filter(m => m.renewalClaimedAt).length
 
-  async function sendOne(docId: string): Promise<boolean> {
+  /**
+   * Μία υπενθύμιση. Επιστρέφει ΚΑΙ την αιτία αποτυχίας: ένα σκέτο «✗» στο
+   * chip έστελνε τον Financer να ψάχνει στον server κάτι που ο server είχε
+   * ήδη πει (π.χ. «Το μέλος δεν έχει email», «Αποτυχία αποστολής email»).
+   */
+  async function sendOne(docId: string): Promise<{ ok: boolean; error?: string }> {
     setSendState(s => ({ ...s, [docId]: 'sending' }))
     try {
       const res = await fetch('/api/oc/subscription-reminders', {
@@ -84,12 +183,17 @@ export default function OcSubscriptions({ members, canRemind, canIssue, onIssued
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ memberDocId: docId }),
       })
-      if (!res.ok) throw new Error(String(res.status))
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        throw new Error(data?.error || `Σφάλμα ${res.status}`)
+      }
       setSendState(s => ({ ...s, [docId]: 'sent' }))
-      return true
-    } catch {
+      return { ok: true }
+    } catch (err: any) {
+      const error = err?.message || 'Χωρίς απάντηση από τον server'
       setSendState(s => ({ ...s, [docId]: 'error' }))
-      return false
+      setSendError(e => ({ ...e, [docId]: error }))
+      return { ok: false, error }
     }
   }
 
@@ -133,13 +237,18 @@ export default function OcSubscriptions({ members, canRemind, canIssue, onIssued
   async function sendAll(list: SubMemberRow[]) {
     setConfirmFor(null)
     setBulkRunning(true)
-    let ok = 0
+    const results: SendResult[] = []
     for (let i = 0; i < list.length; i++) {
       setBulkProgress(`${i + 1}/${list.length}…`)
-      if (await sendOne(list[i].docId)) ok++
+      const r = await sendOne(list[i].docId)
+      results.push({ docId: list[i].docId, name: list[i].name, ok: r.ok, error: r.error })
     }
+    const ok = results.filter(r => r.ok).length
     setBulkProgress(`${ok}/${list.length} στάλθηκαν`)
     setBulkRunning(false)
+    // Ο απολογισμός ανοίγει ΠΑΝΤΑ — η γραμμή προόδου πάνω από τις λίστες
+    // περνούσε απαρατήρητη και τα 12 «✉✓» δεν λένε αν κάποιο λείπει.
+    setBulkResult(results)
   }
 
   function chip(m: SubMemberRow, tone: 'orange' | 'red') {
@@ -180,7 +289,9 @@ export default function OcSubscriptions({ members, canRemind, canIssue, onIssued
           <ReminderDots log={remLog} />
           {st === 'sending' && <span className="ml-1.5 text-xs">…</span>}
           {st === 'sent' && <span className="ml-1.5 text-xs" aria-label="Η υπενθύμιση στάλθηκε">✉✓</span>}
-          {st === 'error' && <span className="ml-1.5 text-xs text-red-600 dark:text-red-400">✗</span>}
+          {st === 'error' && (
+            <span className="ml-1.5 text-xs text-red-600 dark:text-red-400" title={sendError[m.docId] || 'Αποτυχία αποστολής'}>✗</span>
+          )}
           {st === 'issuing' && <span className="ml-1.5 text-xs">έκδοση…</span>}
           {st === 'issued' && <span className="ml-1.5 text-xs" aria-label="Η απόδειξη εκδόθηκε">🧾✓</span>}
           {st === 'issue-error' && <span className="ml-1.5 text-xs text-red-600 dark:text-red-400">αποτυχία έκδοσης</span>}
@@ -260,6 +371,10 @@ export default function OcSubscriptions({ members, canRemind, canIssue, onIssued
           <span className={`text-coral transition-transform inline-block ${open ? 'rotate-180' : ''}`} aria-hidden="true">▼</span>
         </button>
       </div>
+
+      {bulkResult && (
+        <BulkResultPopup results={bulkResult} onClose={() => setBulkResult(null)} />
+      )}
 
       {showPopup && (
         <OcRenewalsPopup
