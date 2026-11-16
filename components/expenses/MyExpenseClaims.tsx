@@ -21,6 +21,9 @@ interface MyClaim {
   payable: number
   state: 'submitted' | 'paid' | 'cancelled'
   paidAt: string | null
+  /** Τι κατατέθηκε (μόνο σε πληρωμένο)· < payable σε μερική πληρωμή */
+  paidAmount?: number | null
+  paymentNote?: string | null
   lines: number
   pdfUrl: string | null
   folderUrl: string | null
@@ -88,6 +91,7 @@ export default function MyExpenseClaims() {
       <div className="space-y-4">
         {(claims || []).map(c => {
           const state = STATE[c.state] || STATE.submitted
+          const partial = c.state === 'paid' && c.paidAmount != null && c.paidAmount < c.payable
           return (
             <div key={c.claimNumber}
               className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 p-5 sm:p-6">
@@ -96,8 +100,24 @@ export default function MyExpenseClaims() {
                   <span className="font-bold text-charcoal dark:text-gray-100">{c.eventLabel}</span>
                   <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 notranslate">{c.claimNumber}</span>
                 </div>
-                <span className="text-xl font-bold text-charcoal dark:text-gray-100 notranslate">{money(c.payable)} €</span>
+                <span className="text-xl font-bold text-charcoal dark:text-gray-100 notranslate">
+                  {partial ? (
+                    <>
+                      {money(c.paidAmount as number)} €
+                      <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400 line-through">{money(c.payable)} €</span>
+                    </>
+                  ) : `${money(c.payable)} €`}
+                </span>
               </div>
+
+              {/* Μερική πληρωμή: το ίδιο που είπε το email, για να μην ψάχνει
+                  το μέλος τη διαφορά στην τράπεζα */}
+              {partial && (
+                <p className="mt-2 text-sm text-amber-800 dark:text-amber-200">
+                  Κατατέθηκαν {money(c.paidAmount as number)} € από τα {money(c.payable)} € του εξοδολογίου.
+                  {c.paymentNote ? ` ${c.paymentNote}` : ''}
+                </p>
+              )}
 
               <div className="flex flex-wrap items-center gap-3 mt-3">
                 <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${state.className}`}>

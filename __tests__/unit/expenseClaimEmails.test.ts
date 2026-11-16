@@ -1,5 +1,5 @@
 import {
-  expenseClaimSubmittedEmailHtml, expenseClaimReceivedEmailHtml,
+  expenseClaimSubmittedEmailHtml, expenseClaimReceivedEmailHtml, expenseClaimPaidEmailHtml,
 } from '@/lib/ocEmails'
 
 const base = {
@@ -61,5 +61,43 @@ describe('Εξοδολόγιο — τα δύο γράμματα της υποβ�
     const html = expenseClaimReceivedEmailHtml({ ...base, memberName: '<script>x</script>' }).html
     expect(html).not.toContain('<script>x</script>')
     expect(html).toContain('&lt;script&gt;')
+  })
+})
+
+describe('Εξοδολόγιο — το γράμμα «πληρώθηκε» λέει ΤΙ κατατέθηκε', () => {
+  const paid = {
+    firstName: 'Έφη', claimNumber: 'ΕΞ-2026-002', payable: '120,00 €',
+    accountHolder: 'Έφη Πρόικου', bankName: 'ALPHA BANK', ibanTail: '5140',
+    financerName: 'Γιώργος Στυλ',
+  }
+
+  it('ολική πληρωμή: ούτε λέξη για μικρότερο ποσό', () => {
+    const { html } = expenseClaimPaidEmailHtml(paid)
+    expect(html).toContain('120,00 €')
+    expect(html).not.toContain('μικρότερο')
+    expect(html).not.toContain('αντί για')
+  })
+
+  it('μερική πληρωμή: το ποσό που μπήκε, το ζητούμενο και ο λόγος — αυτούσιος', () => {
+    const { html } = expenseClaimPaidEmailHtml({
+      ...paid, claimed: '150,00 €', shortfallNote: 'Δεν καλύπτεται το γεύμα της 2ης ημέρας.',
+    })
+    expect(html).toContain('120,00 €')
+    expect(html).toContain('αντί για 150,00 € του εξοδολογίου')
+    expect(html).toContain('είναι μικρότερο</strong> από το ποσό του εξοδολογίου (150,00 €)')
+    expect(html).toContain('Δεν καλύπτεται το γεύμα της 2ης ημέρας.')
+  })
+
+  it('μερική χωρίς λόγο: η πρόταση κλείνει μετά το ποσό, χωρίς «undefined»', () => {
+    const { html } = expenseClaimPaidEmailHtml({ ...paid, claimed: '150,00 €', shortfallNote: null })
+    expect(html).toContain('(150,00 €).</p>')
+    expect(html).not.toContain('undefined')
+    expect(html).not.toContain('null')
+  })
+
+  it('ο λόγος περνά από escaping', () => {
+    const { html } = expenseClaimPaidEmailHtml({ ...paid, claimed: '150,00 €', shortfallNote: '<b>x</b> & y' })
+    expect(html).toContain('&lt;b&gt;x&lt;/b&gt; &amp; y')
+    expect(html).not.toContain('<b>x</b>')
   })
 })

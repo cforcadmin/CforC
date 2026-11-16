@@ -47,6 +47,9 @@ export async function GET() {
       payable: Number(c.Payable) || 0,
       state: c.State,
       paidAt: c.PaidAt || null,
+      // Τι κατατέθηκε — διαφέρει από το payable μόνο σε μερική πληρωμή
+      paidAmount: c.State === 'paid' ? (c.PaidAmount != null && Number(c.PaidAmount) > 0 ? Number(c.PaidAmount) : Number(c.Payable) || 0) : null,
+      paymentNote: c.State === 'paid' ? (c.PaymentNote || null) : null,
       lines: Array.isArray(c.Lines) ? c.Lines.length : 0,
       pdfUrl: c.PdfUrl || null,
       folderUrl: c.FolderUrl || null,

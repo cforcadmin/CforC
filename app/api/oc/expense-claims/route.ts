@@ -15,7 +15,10 @@ export const maxDuration = 60
  * Εξοδολόγια στο OC.
  *
  *   GET                        → όσα περιμένουν πληρωμή (+ τα 20 τελευταία πληρωμένα)
- *   POST {id, action:'paid'}    → σημειώνεται η πληρωμή, σταματούν οι υπενθυμίσεις
+ *   POST {id, action:'paid', amount?, note?}
+ *                               → σημειώνεται η πληρωμή, σταματούν οι υπενθυμίσεις·
+ *                                 amount < Payable = μερική πληρωμή (PaidAmount)
+ *                                 και το email λέει το πραγματικό ποσό + τον λόγο
  *   POST {id, action:'archive'} → ξανα-ανεβάζει στο Drive ό,τι δεν έφτασε
  *
  * Βλέπουν Financer, Διαχείριση και IT· σημειώνει πληρωμή ΜΟΝΟ ο/η Financer —
@@ -103,9 +106,12 @@ export async function GET() {
   const prev = new Date(Date.UTC(y, mo - 2, 15))
   const lastMonth = `${prev.getUTCFullYear()}-${String(prev.getUTCMonth() + 1).padStart(2, '0')}`
 
+  // Τι κατατέθηκε: το PaidAmount όταν υπάρχει, αλλιώς όσο ζητούσε το εξοδολόγιο
+  const paidOf = (c: any): number => (c.PaidAmount != null && Number(c.PaidAmount) > 0 ? Number(c.PaidAmount) : Number(c.Payable) || 0)
   const brief = (c: any) => ({
     id: c.documentId, claimNumber: c.ClaimNumber, memberName: c.MemberName,
     payable: Number(c.Payable) || 0, submittedAt: c.SubmittedAt, paidAt: c.PaidAt || null,
+    paidAmount: c.State === 'paid' ? paidOf(c) : null,
     state: c.State, pdfUrl: c.PdfUrl || null, folderUrl: c.FolderUrl || null,
   })
   const submittedIn = (m: string) => all
@@ -118,7 +124,8 @@ export async function GET() {
     .sort((a: any, b: any) => String(b.PaidAt).localeCompare(String(a.PaidAt)))
     .map((c: any) => ({
       id: c.documentId, claimNumber: c.ClaimNumber, memberName: c.MemberName,
-      payable: c.Payable, paidAt: c.PaidAt, paidBy: c.PaidBy,
+      payable: c.Payable, paidAmount: paidOf(c), paymentNote: c.PaymentNote || null,
+      paidAt: c.PaidAt, paidBy: c.PaidBy,
       pdfUrl: c.PdfUrl, folderUrl: c.FolderUrl,
     }))
 
@@ -128,7 +135,7 @@ export async function GET() {
     lastMonth,
     lastMonthSubmitted: submittedIn(lastMonth),
     paidThisMonth,
-    paidThisMonthTotal: Math.round(paidThisMonth.reduce((s: number, c: any) => s + (Number(c.payable) || 0), 0) * 100) / 100,
+    paidThisMonthTotal: Math.round(paidThisMonth.reduce((s: number, c: any) => s + (Number(c.paidAmount) || 0), 0) * 100) / 100,
     month,
     total: pendingTotal(all),
     canPay: auth.activeSeat === 'financer',
@@ -189,16 +196,45 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, alreadyPaid: true, claimNumber: claim.ClaimNumber })
   }
 
+  // ── Ποσό που κατατέθηκε. Χωρίς `amount` = ολόκληρο. Λιγότερο = μερική
+  //    πληρωμή: μένει ΚΑΙ το Payable (τι ζήτησε) ΚΑΙ το PaidAmount (τι πήρε).
+  //    Περισσότερο δεν γίνεται — ένα λάθος πληκτρολόγησης δεν στέλνει email
+  //    που υπόσχεται παραπάνω χρήματα.
+  const payable = Math.round((Number(claim.Payable) || 0) * 100) / 100
+  const rawAmount = body?.amount
+  let paidAmount = payable
+  if (rawAmount !== undefined && rawAmount !== null && String(rawAmount).trim() !== '') {
+    const n = Number(String(rawAmount).replace(',', '.'))
+    if (!Number.isFinite(n) || n <= 0) {
+      return NextResponse.json({ error: 'Μη έγκυρο ποσό πληρωμής' }, { status: 400 })
+    }
+    paidAmount = Math.round(n * 100) / 100
+    if (paidAmount > payable) {
+      return NextResponse.json({ error: `Το ποσό δεν μπορεί να ξεπερνά το εξοδολόγιο (${payable.toFixed(2).replace('.', ',')} €)` }, { status: 400 })
+    }
+  }
+  const isPartial = paidAmount < payable
+  const note = String(body?.note || '').trim().slice(0, 1000) || null
+
   const who = await strapi(`/members/${auth.memberId}?fields[0]=Name`)
   const r = await strapi(`/expense-claims/${id}`, 'PUT', {
     State: 'paid',
     PaidAt: new Date().toISOString(),
     PaidBy: String(who.json?.data?.Name || '').trim() || 'Financer',
-    PaymentNote: String(body?.note || '').trim() || null,
+    PaymentNote: note,
+    // Το πεδίο γράφεται ΜΟΝΟ σε μερική πληρωμή: αν το Strapi δεν το έχει
+    // ακόμη, η ολική πληρωμή συνεχίζει να δουλεύει και η μερική αποτυγχάνει
+    // ΦΩΝΑΧΤΑ, αντί να σημειωθεί «πληρωμένο» χωρίς το ποσό.
+    ...(isPartial && { PaidAmount: paidAmount }),
   })
   if (!r.ok) {
-    console.error('oc/expense-claims: mark paid failed', r.status)
-    return NextResponse.json({ error: 'Αποτυχία ενημέρωσης' }, { status: 502 })
+    console.error('oc/expense-claims: mark paid failed', r.status, JSON.stringify(r.json?.error || null))
+    const detail = String(r.json?.error?.message || '')
+    return NextResponse.json({
+      error: isPartial && /PaidAmount/i.test(detail)
+        ? 'Το Strapi δεν δέχεται ακόμη το πεδίο PaidAmount — η μερική πληρωμή ΔΕΝ καταχωρήθηκε'
+        : 'Αποτυχία ενημέρωσης',
+    }, { status: 502 })
   }
 
   // ── Ειδοποίηση στο μέλος: τι να περιμένει και πότε να ανησυχήσει.
@@ -214,10 +250,13 @@ export async function POST(request: NextRequest) {
       financerPhone = String(f.json?.data?.[0]?.Phone || '').trim() || null
     }
     const iban = String(claim.Iban || '')
+    const eur = (n: number) => `${n.toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
     const tpl = expenseClaimPaidEmailHtml({
       firstName: String(claim.MemberName || '').trim().split(/\s+/)[0] || 'μέλος',
       claimNumber: claim.ClaimNumber,
-      payable: `${Number(claim.Payable || 0).toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`,
+      payable: eur(paidAmount),
+      claimed: isPartial ? eur(payable) : null,
+      shortfallNote: isPartial ? note : null,
       accountHolder: claim.AccountHolder || claim.MemberName,
       bankName: claim.BankName || null,
       ibanTail: iban.slice(-4) || '—',
@@ -234,5 +273,5 @@ export async function POST(request: NextRequest) {
     console.error('oc/expense-claims: paid email failed', e)
   }
 
-  return NextResponse.json({ ok: true, claimNumber: claim.ClaimNumber, emailSent })
+  return NextResponse.json({ ok: true, claimNumber: claim.ClaimNumber, emailSent, paidAmount, partial: isPartial })
 }

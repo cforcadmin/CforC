@@ -8,7 +8,8 @@ import { useCallback, useEffect, useState } from 'react'
  * Δείχνει ΤΟ ΠΟΣΟ πρώτα: αυτό είναι που πρέπει να φύγει από τον λογαριασμό.
  * Μέσα στο popup υπάρχουν τα στοιχεία κατάθεσης (δικαιούχος, IBAN) ώστε ο/η
  * Financer να ανοίξει το e-banking χωρίς να ψάξει πουθενά αλλού, και το
- * κουμπί «Πληρώθηκε» που σταματά τις υπενθυμίσεις.
+ * κουμπί «Επιβεβαίωση κατάθεσης →» που ανοίγει ποσό + αιτιολόγηση και,
+ * με το δεύτερο κλικ, σημειώνει την πληρωμή και σταματά τις υπενθυμίσεις.
  */
 
 interface PaidClaim {
@@ -16,6 +17,9 @@ interface PaidClaim {
   claimNumber: string
   memberName: string
   payable: number
+  /** Τι κατατέθηκε — < payable σε μερική πληρωμή */
+  paidAmount: number
+  paymentNote: string | null
   paidAt: string
   paidBy: string | null
   pdfUrl: string | null
@@ -103,6 +107,13 @@ export default function OcExpenseClaims() {
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  /**
+   * Το βήμα επιβεβαίωσης πριν το «Πληρώθηκε»: ποσό (προσυμπληρωμένο με
+   * όσο ζητά το εξοδολόγιο, αλλάζει μόνο προς τα κάτω) και προαιρετική
+   * αιτιολόγηση. Μέχρι τώρα ένα κλικ έστελνε email «ολόκληρο το ποσό» —
+   * ακόμη κι όταν ο/η Financer είχε καταθέσει λιγότερα.
+   */
+  const [confirmPay, setConfirmPay] = useState<{ id: string; amount: string; note: string } | null>(null)
 
   const load = useCallback(() => {
     fetch('/api/oc/expense-claims')
@@ -121,16 +132,26 @@ export default function OcExpenseClaims() {
   }, [])
   useEffect(() => { load() }, [load])
 
-  async function markPaid(claim: PendingClaim) {
+  /** «1.234,56» ή «1234.56» → 1234.56· NaN όταν δεν είναι ποσό */
+  const parseAmount = (s: string) => Number(String(s).trim().replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '') || 'x')
+  const parseAmountLoose = (s: string) => {
+    // Δέχεται και «120.50» (τελεία ως δεκαδικό) και «1.234,56» (ελληνική μορφή)
+    const t = String(s).trim()
+    return /,/.test(t) ? parseAmount(t) : Number(t.replace(/[^\d.]/g, '') || 'x')
+  }
+
+  async function markPaid(claim: PendingClaim, amount: number, note: string) {
     setBusy(claim.id)
     setError(null)
     try {
       const res = await fetch('/api/oc/expense-claims', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: claim.id, action: 'paid' }),
+        body: JSON.stringify({ id: claim.id, action: 'paid', amount, note: note.trim() || undefined }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json?.error || 'Αποτυχία')
+      setConfirmPay(null)
+      if (json?.emailSent === false) setError(`Η πληρωμή του ${json?.claimNumber || claim.claimNumber} καταχωρήθηκε, αλλά το email στο μέλος ΔΕΝ στάλθηκε.`)
       load()
     } catch (err: any) {
       setError(err?.message || 'Κάτι πήγε στραβά')
@@ -302,13 +323,76 @@ export default function OcExpenseClaims() {
                       <a href={`mailto:${c.memberEmail}`}
                         className="text-sm text-gray-600 dark:text-gray-300 hover:underline">{c.memberEmail}</a>
                     )}
-                    {data.canPay && (
-                      <button type="button" onClick={() => markPaid(c)} disabled={busy === c.id}
+                    {data.canPay && confirmPay?.id !== c.id && (
+                      <button type="button"
+                        onClick={() => setConfirmPay({ id: c.id, amount: c.payable.toFixed(2).replace('.', ','), note: '' })}
+                        disabled={busy === c.id}
                         className="ml-auto bg-coral text-white font-bold rounded-full px-5 py-2 text-sm hover:bg-coral/90 transition-colors disabled:opacity-50">
-                        {busy === c.id ? 'Καταχώρηση…' : 'Πληρώθηκε ✓'}
+                        {busy === c.id ? 'Καταχώρηση…' : 'Επιβεβαίωση κατάθεσης →'}
                       </button>
                     )}
                   </div>
+                  {data.canPay && confirmPay?.id !== c.id && (
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-right">
+                      Δεν καταχωρεί τίποτα ακόμη: ανοίγει το ποσό (μπορείς να το μειώσεις) και προαιρετική αιτιολόγηση· η πληρωμή και το email φεύγουν με το επόμενο κουμπί.
+                    </p>
+                  )}
+
+                  {data.canPay && confirmPay?.id === c.id && (() => {
+                    const amt = parseAmountLoose(confirmPay.amount)
+                    const valid = Number.isFinite(amt) && amt > 0 && amt <= c.payable + 0.004
+                    const partial = valid && amt < c.payable - 0.004
+                    return (
+                      <div className="mt-4 rounded-xl border border-coral/40 bg-coral/5 dark:bg-coral/10 p-4">
+                        <p className="text-sm font-bold text-charcoal dark:text-gray-100">Επιβεβαίωση κατάθεσης</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
+                          Το μέλος θα λάβει email με το ποσό που γράφεις εδώ. Άλλαξέ το μόνο αν κατέθεσες λιγότερα από όσα ζητά το εξοδολόγιο.
+                        </p>
+                        <div className="mt-3 flex flex-wrap items-end gap-3">
+                          <label className="text-xs font-bold text-gray-600 dark:text-gray-300">
+                            Ποσό που κατατέθηκε (€)
+                            <input type="text" inputMode="decimal" value={confirmPay.amount}
+                              onChange={e => setConfirmPay(p => p && ({ ...p, amount: e.target.value }))}
+                              aria-invalid={!valid}
+                              className={`mt-1 block w-36 rounded-lg border px-3 py-2 text-base font-bold text-charcoal dark:text-gray-100 bg-white dark:bg-gray-800 notranslate ${
+                                valid ? 'border-gray-300 dark:border-gray-600' : 'border-red-500'
+                              }`} />
+                          </label>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 pb-2.5 notranslate">
+                            εξοδολόγιο: {money(c.payable)} €
+                          </span>
+                        </div>
+                        {!valid && (
+                          <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">
+                            Γράψε ποσό μεγαλύτερο από 0 και έως {money(c.payable)} € — ποτέ περισσότερα από το εξοδολόγιο.
+                          </p>
+                        )}
+                        {partial && (
+                          <p className="text-xs text-amber-800 dark:text-amber-200 mt-1.5">
+                            Μερική πληρωμή: το email θα γράφει «{money(amt)} € αντί για {money(c.payable)} €». Ο λόγος, αν τον γράψεις, μπαίνει αυτούσιος στο email.
+                          </p>
+                        )}
+                        <label className="block mt-3 text-xs font-bold text-gray-600 dark:text-gray-300">
+                          Αιτιολόγηση {partial ? '(προαιρετική — φαίνεται στο email)' : '(προαιρετική — εσωτερική σημείωση)'}
+                          <textarea value={confirmPay.note} rows={2}
+                            onChange={e => setConfirmPay(p => p && ({ ...p, note: e.target.value }))}
+                            placeholder={partial ? 'π.χ. Δεν καλύπτεται το γεύμα της 2ης ημέρας, σύμφωνα με τον κανονισμό εξόδων.' : ''}
+                            className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm text-charcoal dark:text-gray-100 bg-white dark:bg-gray-800" />
+                        </label>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <button type="button" onClick={() => markPaid(c, Math.round(amt * 100) / 100, confirmPay.note)}
+                            disabled={!valid || busy === c.id}
+                            className="bg-coral text-white font-bold rounded-full px-5 py-2 text-sm hover:bg-coral/90 transition-colors disabled:opacity-50">
+                            {busy === c.id ? 'Καταχώρηση…' : partial ? `Πληρώθηκε ${money(amt)} € + email` : 'Πληρώθηκε ολόκληρο + email'}
+                          </button>
+                          <button type="button" onClick={() => setConfirmPay(null)} disabled={busy === c.id}
+                            className="rounded-full border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm text-charcoal dark:text-gray-200 disabled:opacity-50">
+                            Άκυρο
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
               ))}
             </div>
@@ -374,7 +458,17 @@ export default function OcExpenseClaims() {
                       <span className="text-gray-500 dark:text-gray-400 notranslate">{dayOf(c.paidAt)}</span>
                       <span className="text-charcoal dark:text-gray-200">{c.memberName}</span>
                       <span className="text-xs text-gray-500 dark:text-gray-400 notranslate">{c.claimNumber}</span>
-                      <span className="ml-auto font-bold text-charcoal dark:text-gray-100 notranslate">{money(c.payable)} €</span>
+                      {/* Μερική πληρωμή: το ποσό που μπήκε, δίπλα το ζητούμενο διαγραμμένο·
+                          ο λόγος στο tooltip */}
+                      <span className="ml-auto font-bold text-charcoal dark:text-gray-100 notranslate"
+                        title={c.paidAmount < c.payable ? `Μερική πληρωμή${c.paymentNote ? ` — ${c.paymentNote}` : ''}` : undefined}>
+                        {money(c.paidAmount)} €
+                        {c.paidAmount < c.payable && (
+                          <span className="ml-1.5 text-xs font-normal text-amber-700 dark:text-amber-300">
+                            <span className="line-through text-gray-400">{money(c.payable)} €</span> μερική
+                          </span>
+                        )}
+                      </span>
                       {c.pdfUrl && (
                         <a href={c.pdfUrl} target="_blank" rel="noopener noreferrer"
                           className="text-coral dark:text-coral-light font-bold hover:underline">↗</a>

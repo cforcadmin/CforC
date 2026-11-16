@@ -2989,7 +2989,12 @@ export function expenseClaimReminderEmailHtml(opts: {
 export function expenseClaimPaidEmailHtml(opts: {
   firstName: string
   claimNumber: string
+  /** Το ποσό που ΚΑΤΑΤΕΘΗΚΕ — όχι απαραίτητα όσο ζητούσε το εξοδολόγιο */
   payable: string
+  /** Το ποσό του εξοδολογίου, ΜΟΝΟ όταν κατατέθηκε λιγότερο */
+  claimed?: string | null
+  /** Γιατί λιγότερο — όπως το έγραψε ο/η Financer, προαιρετικό */
+  shortfallNote?: string | null
   accountHolder: string
   bankName: string | null
   ibanTail: string
@@ -2998,6 +3003,13 @@ export function expenseClaimPaidEmailHtml(opts: {
 }): { subject: string; html: string } {
   const phone = opts.financerPhone
     ? ` ή τηλεφωνικά στο <span style="white-space:nowrap;">${escapeHtml(opts.financerPhone)}</span>`
+    : ''
+  // Μερική πληρωμή: το email λέει ΤΙ μπήκε και ΤΙ ζητήθηκε, ώστε το μέλος
+  // να μη νομίσει ότι η τράπεζα κράτησε τη διαφορά.
+  const partial = opts.claimed
+    ? `<p style="margin:0 0 14px 0;"><strong>Το ποσό που κατατέθηκε είναι μικρότερο</strong> από το ποσό του εξοδολογίου (${escapeHtml(opts.claimed)}).${
+        opts.shortfallNote ? ` ${escapeHtml(opts.shortfallNote)}` : ''
+      }</p>`
     : ''
   const html = `<!DOCTYPE html>
 <html lang="el">
@@ -3043,6 +3055,7 @@ export function expenseClaimPaidEmailHtml(opts: {
         <tr><td style="padding:22px 24px;font-family:Arial,Helvetica,sans-serif;">
           <div style="font-size:12px;letter-spacing:1.2px;color:#FF8B6A;font-weight:bold;">ΠΟΣΟ</div>
           <div style="font-size:26px;line-height:34px;color:#2D2D2D;font-weight:bold;">${escapeHtml(opts.payable)}</div>
+          ${opts.claimed ? `<div style="font-size:14px;line-height:22px;color:#C9552F;font-weight:bold;margin-top:2px;">αντί για ${escapeHtml(opts.claimed)} του εξοδολογίου</div>` : ''}
           <div style="font-size:14px;line-height:22px;color:#5A5A5A;margin-top:6px;">
             προς ${escapeHtml(opts.accountHolder)}${opts.bankName ? ` · ${escapeHtml(opts.bankName)}` : ''} · λογαριασμός που λήγει σε ${escapeHtml(opts.ibanTail)}
           </div>
@@ -3052,6 +3065,7 @@ export function expenseClaimPaidEmailHtml(opts: {
   </tr>
   <tr>
     <td class="px ink" style="padding:24px 48px 8px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#2D2D2D;">
+      ${partial}
       <p style="margin:0 0 14px 0;font-weight:bold;">Τι να περιμένεις</p>
       <p style="margin:0 0 14px 0;">Συνήθως τα χρήματα φαίνονται στον λογαριασμό σου <strong>σχεδόν αμέσως</strong>.</p>
       <p style="margin:0 0 14px 0;">Αν η κατάθεση έγινε <strong>Σαββατοκύριακο ή αργία</strong>, οι τράπεζες την επεξεργάζονται την επόμενη εργάσιμη — περίμενε ως τη Δευτέρα ή την Τρίτη.</p>
