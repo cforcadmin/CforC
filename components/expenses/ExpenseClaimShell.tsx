@@ -20,6 +20,7 @@ import {
   eventFromSlug, claimWindow, CLAIMS_LATE_CONTACT,
   type ClaimLine, type TravelLeg,
 } from '@/lib/expenseClaims'
+import { shrinkImageFile, totalBytes, tooLargeMessage, readJsonResponse, MAX_REQUEST_BYTES } from '@/lib/claimUpload'
 
 /**
  * Εξοδολόγιο — η φόρμα που αντικαθιστά το αρχείο Word.
@@ -256,16 +257,29 @@ export default function ExpenseClaimShell(
 
     setBusy(true)
     try {
+      // Φωτογραφίες από κινητό (2–4 MB η καθεμία) μικραίνουν ΕΔΩ, πριν φύγουν:
+      // το Vercel κόβει το αίτημα στα 4,5 MB πριν τρέξει η διαδρομή μας.
+      const shrunk = await Promise.all(lines.map(async l => ({
+        file1: l.file1 ? await shrinkImageFile(l.file1) : null,
+        file2: await Promise.all(l.file2.map(shrinkImageFile)),
+      })))
+      const allFiles = shrunk.flatMap(s => [...(s.file1 ? [s.file1] : []), ...s.file2])
+      const total = totalBytes(allFiles)
+      if (total > MAX_REQUEST_BYTES) {
+        setError(tooLargeMessage(total))
+        return
+      }
       const fd = new FormData()
       fd.append('data', JSON.stringify(payload))
-      lines.forEach((l, i) => {
-        if (l.file1) fd.append(`file-${i}-1`, l.file1)
+      shrunk.forEach((s, i) => {
+        if (s.file1) fd.append(`file-${i}-1`, s.file1)
         // Ίδιο κλειδί για κάθε κάρτα: ο server τα διαβάζει με getAll
-        l.file2.forEach(f => fd.append(`file-${i}-2`, f))
+        s.file2.forEach(f => fd.append(`file-${i}-2`, f))
       })
       const res = await fetch('/api/expenses/claim', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data?.error || 'Αποτυχία υποβολής')
+      // Ποτέ res.json() στα τυφλά: ένα 413 του Vercel είναι κείμενο, όχι JSON
+      const { data, error: apiError } = await readJsonResponse(res)
+      if (apiError) throw new Error(apiError)
       setDone({ claimNumber: data.claimNumber, payable: data.payable })
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err: any) {
