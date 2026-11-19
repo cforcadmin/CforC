@@ -2107,6 +2107,14 @@ function BlockFields({ block: b, onChange, tocDefault = '' }: {
       <input value={b[key] || ''} onChange={e => onChange({ [key]: e.target.value })} className={IN} placeholder={placeholder} />
     </label>
   )
+  // Όπως το line, αλλά με Enter: για ετικέτες που θέλουν τίτλο και υπότιτλο
+  const lines = (label: string, key: string, placeholder = '', rows = 2) => (
+    <label className="grid gap-1">
+      <span className="text-xs text-gray-600 dark:text-gray-400">{label}</span>
+      <textarea value={b[key] || ''} onChange={e => onChange({ [key]: e.target.value })} rows={rows}
+        className={`${IN} py-2 min-h-0 resize-y`} placeholder={placeholder} />
+    </label>
+  )
 
   switch (b.type) {
     case 'section': return (
@@ -2223,7 +2231,7 @@ function BlockFields({ block: b, onChange, tocDefault = '' }: {
     case 'person': return <div className="grid gap-2">{line('Όνομα', 'name')}{line('Ιδιότητα', 'role')}<ImageField src={b.src || ''} alt={b.alt || ''} mediaId={b.mediaId} branded={b.branded} origSrc={b.origSrc} origMediaId={b.origMediaId} onChange={onChange} />{rich('Κείμενο')}</div>
     case 'button': return <div className="grid gap-2">{line('Ετικέτα', 'label')}{line('Σύνδεσμος', 'href', 'https://…')}</div>
     case 'box': return <div className="grid gap-2">{line('Τίτλος (προαιρετικό)', 'title')}{rich('Κείμενο')}</div>
-    case 'mono': return <div className="grid gap-2">{line('Ετικέτα', 'label', 'π.χ. IBAN')}{line('Τιμή', 'value')}</div>
+    case 'mono': return <div className="grid gap-2">{lines('Ετικέτα', 'label', 'π.χ. IBAN — Enter για δεύτερη γραμμή')}{line('Τιμή', 'value')}</div>
     case 'logos': return <LogosFields items={b.items || []} onChange={items => onChange({ items })} />
     case 'attachment': return <AttachmentFields items={b.items || []} note={b.note || ''} onChange={onChange} />
     case 'amounts': return <AmountsFields rows={b.rows || []} total={b.total || ''} onChange={onChange} />

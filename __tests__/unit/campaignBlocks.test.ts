@@ -858,6 +858,15 @@ describe('Μονόστοιχο κουτί', () => {
   it('χωρίς ετικέτα δεν αφήνει κενή γραμμή', () => {
     expect(body({ label: '' })).not.toContain('letter-spacing:1px')
   })
+
+  it('η ετικέτα σπάει με Enter σε τίτλο και υπότιτλο', () => {
+    // Αίτημα επικοινωνίας 19/11/26: «IBAN» πάνω, «Συνδρομή 2026» από κάτω
+    const h = body({ label: 'IBAN\n\nΣυνδρομή 2026\n' })
+    expect(h).toContain('IBAN<br>ΣΥΝΔΡΟΜΗ 2026')
+    expect(h).not.toContain('<br><br>')
+    const t = renderCampaignText([{ type: 'mono', label: 'IBAN\nΣυνδρομή 2026', value: 'GR12' }] as any)
+    expect(t).toContain('IBAN — Συνδρομή 2026: GR12')
+  })
 })
 
 describe('Εικόνα + κείμενο', () => {

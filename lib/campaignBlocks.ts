@@ -73,6 +73,11 @@ export function upperGreek(v: string): string {
   return String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
 }
 
+/** Η ετικέτα του μονόστοιχου κουτιού σπάει με Enter σε τίτλο/υπότιτλο· κενές γραμμές πετιούνται */
+export function monoLabelLines(label: string): string[] {
+  return String(label ?? '').split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+}
+
 export function escapeHtml(v: string): string {
   return String(v ?? '').replace(/[&<>"']/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string))
@@ -298,6 +303,7 @@ export type AmountsBlock = { type: 'amounts'; rows: Array<{ label: string; amoun
  */
 export type MonoBlock = {
   type: 'mono'
+  /** Μία ή περισσότερες γραμμές (Enter): τίτλος και υπότιτλος πάνω από την τιμή */
   label?: string
   value: string
   look?: 'cream' | 'coral' | 'dark' | 'tint' | 'outline' | 'pill' | 'pillOutline'
@@ -874,7 +880,7 @@ function renderBlock(b: Block, i: number): string {
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" ${inset ? '' : 'width="100%"'} bgcolor="${sk.bg}"
         style="${inset ? '' : 'width:100%;'}background-color:${sk.bg};border-radius:16px;${sk.border ? `border:2px solid ${sk.border};` : ''}">
         <tr><td style="padding:18px 20px;">
-          ${b.label ? `<div style="font-family:${FONT};font-size:12px;line-height:16px;letter-spacing:1px;color:${sk.label};font-weight:bold;">${escapeHtml(upperGreek(b.label))}</div>` : ''}
+          ${b.label ? `<div style="font-family:${FONT};font-size:12px;line-height:16px;letter-spacing:1px;color:${sk.label};font-weight:bold;">${monoLabelLines(b.label).map(l => escapeHtml(upperGreek(l))).join('<br>')}</div>` : ''}
           <div style="font-family:'Courier New',Courier,monospace;font-size:17px;line-height:26px;color:${sk.ink};font-weight:bold;word-break:break-all;padding-top:4px;">${escapeHtml(b.value)}</div>
         </td></tr>
       </table>`, '16px 48px 0 48px')
@@ -1190,7 +1196,7 @@ export function renderCampaignText(blocks: Block[]): string {
       case 'button': out.push(`${b.label}: ${b.href}`); break
       case 'attachment': out.push((b.items || []).map(it => `${it.name} (${fileSizeLabel(it.size)}): ${it.url}`).join('\n')); break
       case 'amounts': out.push(b.rows.map(r => `${r.label}: ${r.amount}`).join('\n') + (b.total ? `\nΣύνολο: ${b.total}` : '')); break
-      case 'mono': out.push(`${b.label ? `${b.label}: ` : ''}${b.value}`); break
+      case 'mono': out.push(`${b.label ? `${monoLabelLines(b.label).join(' — ')}: ` : ''}${b.value}`); break
       case 'image': out.push(b.alt ? `[${b.alt}]` : ''); break
       case 'logos': out.push(b.items.map(l => l.alt).join(' · ')); break
       case 'greeting': out.push(strip(b.html)); break
@@ -1741,7 +1747,7 @@ export interface SocialLink { network: string; href: string }
 
 export interface NewsletterFooter {
   arrangement: NewsletterFooterId
-  /** «Copyright © 2026 Culture for Change, All rights reserved.» */
+  /** «Copyright © 2026 Culture for Change. All rights reserved.» */
   copyright: string
   /** Γιατί το λαμβάνεις και τι κάνουμε με τα στοιχεία σου */
   notice: string
@@ -1771,7 +1777,7 @@ export type NewsletterFooterId = (typeof NEWSLETTER_FOOTERS)[number]['id']
 
 export const NEWSLETTER_FOOTER_DEFAULTS: NewsletterFooter = {
   arrangement: 'stack',
-  copyright: `Copyright © ${new Date().getFullYear()} Culture for Change, All rights reserved.`,
+  copyright: `Copyright © ${new Date().getFullYear()} Culture for Change. All rights reserved.`,
   notice: 'Λαμβάνετε αυτό το email, επειδή έχετε εγγραφεί στη λίστα συνδρομητών του Culture for Change. '
     + 'Το Culture for Change χρησιμοποιεί τα στοιχεία επικοινωνίας σας αποκλειστικά για ενημέρωση των δράσεων '
     + 'και των πρωτοβουλιών του και δεν τα χρησιμοποιεί για άλλους σκοπούς ούτε τα παραχωρεί σε τρίτους.',
